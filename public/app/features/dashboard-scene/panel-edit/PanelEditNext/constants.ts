@@ -1,4 +1,4 @@
-import { IconName } from '@grafana/data';
+import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -8,6 +8,7 @@ export enum QueryEditorType {
   Query = 'query',
   Expression = 'expression',
   Transformation = 'transformation',
+  Alert = 'alert',
 }
 
 export enum SidebarSize {
@@ -28,6 +29,30 @@ export interface QueryEditorTypeConfig {
   getLabel: () => string;
 }
 
+/**
+ * Gets the color for an alert based on its state from the theme.
+ * Used for alert card borders and indicators.
+ */
+export function getAlertStateColor(theme: GrafanaTheme2, state: AlertState | null): string {
+  if (!state) {
+    return theme.colors.text.secondary;
+  }
+
+  switch (state) {
+    case AlertState.Alerting:
+      return theme.colors.error.main;
+    case AlertState.Pending:
+      return theme.colors.warning.main;
+    case AlertState.NoData:
+      return theme.colors.info.main;
+    case AlertState.Paused:
+      return theme.colors.text.disabled;
+    case AlertState.OK:
+    default:
+      return theme.colors.success.main;
+  }
+}
+
 export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
   [QueryEditorType.Query]: {
     icon: 'database',
@@ -43,6 +68,13 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     icon: 'process',
     color: QUERY_EDITOR_COLORS.transformation,
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    // Note: For alerts, use getAlertStateColor() instead of this static color
+    // This placeholder is only used when alert state is unknown
+    color: '#6E6E6E',
+    getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
   },
 } as const;
 
