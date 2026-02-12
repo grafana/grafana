@@ -1,3 +1,16 @@
+<!-- 12.2.5 START -->
+
+# 12.2.5 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117710](https://github.com/grafana/grafana/pull/117710), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116958](https://github.com/grafana/grafana/pull/116958), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117472](https://github.com/grafana/grafana/pull/117472), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117861](https://github.com/grafana/grafana/pull/117861), [@github-actions[bot]](https://github.com/github-actions[bot])
+- **Security(TraceView):** Sanitize html [#117867](https://github.com/grafana/grafana/pull/117867), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.2.5 END -->
 <!-- 12.3.2+security-01 START -->
 
 # 12.3.2+security-01 (2026-02-11)
