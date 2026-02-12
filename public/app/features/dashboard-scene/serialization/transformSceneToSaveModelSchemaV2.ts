@@ -907,7 +907,7 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
         !datasource ||
         (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
 
-      if (!datasource || (panelDS?.uid !== datasource.uid && notMixed && notExpr)) {
+      if (notMixed && (!datasource || (panelDS?.uid !== datasource.uid && notExpr))) {
         datasource = panelDS;
       }
     }
