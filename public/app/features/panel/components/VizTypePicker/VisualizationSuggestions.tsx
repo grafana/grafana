@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAsyncRetry, useMeasure } from 'react-use';
 
+import { useAssistant } from '@grafana/assistant';
 import {
   GrafanaTheme2,
+  LoadingState,
   PanelData,
   PanelModel,
   PanelPluginMeta,
@@ -17,6 +19,7 @@ import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { getAllPanelPluginMeta } from '../../state/util';
+import { useAISuggestions } from '../../suggestions/ai';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
@@ -34,15 +37,85 @@ export interface Props {
   isNewPanel?: boolean;
 }
 
-const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
-  const [hasFetched, setHasFetched] = useState(false);
-  const structureRev = data?.structureRev ?? data?.series?.length ?? 0;
+interface SuggestionsValue {
+  suggestions: PanelPluginVisualizationSuggestion[];
+  hasErrors: boolean;
+  isAIPowered: boolean;
+}
 
-  const { value, loading, error, retry } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
-    setHasFetched(true);
-    return await getAllSuggestions(data?.series);
-  }, [hasFetched, structureRev]);
+// Module-level cache to persist suggestions across tab switches
+// Key: requestId (unique per query execution), Value: cached suggestions result
+let suggestionsCache: { key: string; value: SuggestionsValue } | null = null;
+
+// Check if data is valid for AI suggestions (has data, not loading/error state)
+function hasValidData(data?: PanelData): boolean {
+  if (!data || !hasData(data)) {
+    return false;
+  }
+  // Don't generate AI suggestions for error or loading states
+  if (data.state === LoadingState.Error || data.state === LoadingState.Loading) {
+    return false;
+  }
+  return true;
+}
+
+const useSuggestions = (
+  data: PanelData | undefined,
+  searchQuery: string | undefined,
+  isNewPanel: boolean | undefined,
+  currentVisualization: string | undefined
+) => {
+  // Use requestId as cache key - changes when query/datasource changes
+  const requestId = data?.request?.requestId ?? '';
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  const { getAISuggestions } = useAISuggestions();
+
+  // Check if we have a valid cache hit (same request)
+  const cachedValue = requestId && suggestionsCache?.key === requestId ? suggestionsCache.value : null;
+
+  const { value, loading, error, retry } = useAsyncRetry(async (): Promise<SuggestionsValue> => {
+    // Return cached value if available (same query request)
+    if (cachedValue) {
+      return cachedValue;
+    }
+
+    // If AI is available and we have valid data, try AI suggestions first
+    if (isAssistantAvailable && hasValidData(data)) {
+      try {
+        const panelState = isNewPanel ? 'new' : 'editing';
+        const aiResult = await getAISuggestions(data, panelState, currentVisualization);
+
+        // If we got AI suggestions, use them exclusively
+        if (aiResult.aiSuggestions.length > 0) {
+          const result = {
+            suggestions: aiResult.aiSuggestions,
+            hasErrors: aiResult.hasErrors,
+            isAIPowered: true,
+          };
+          if (requestId) {
+            suggestionsCache = { key: requestId, value: result };
+          }
+          return result;
+        }
+        // AI returned no suggestions, fall through to rule-based
+      } catch (err) {
+        console.warn('AI suggestions failed, falling back to rule-based:', err);
+        // Fall through to rule-based suggestions
+      }
+    }
+
+    // Fallback: get rule-based suggestions
+    const ruleBasedResult = await getAllSuggestions(data?.series);
+    const result = {
+      suggestions: ruleBasedResult.suggestions,
+      hasErrors: ruleBasedResult.hasErrors,
+      isAIPowered: false,
+    };
+    if (requestId) {
+      suggestionsCache = { key: requestId, value: result };
+    }
+    return result;
+  }, [requestId, isAssistantAvailable, isNewPanel, currentVisualization, cachedValue]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
@@ -63,13 +136,22 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
     };
   }, [value, searchQuery]);
 
-  return { value: filteredValue, loading, error, retry };
+  // Check if we're loading AI suggestions (assistant available and has valid data)
+  const isLoadingAI = loading && !cachedValue && isAssistantAvailable && hasValidData(data);
+
+  return { value: filteredValue, loading: loading && !cachedValue, error, retry, isLoadingAI };
 };
 
 export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
+  const currentVisualization = panel?.type;
 
-  const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
+  const { value: result, loading, error, retry, isLoadingAI } = useSuggestions(
+    data,
+    searchQuery,
+    isNewPanel,
+    currentVisualization
+  );
 
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
@@ -177,7 +259,18 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
   if (loading || !data) {
     return (
       <div className={styles.loadingContainer}>
-        <Spinner size="xxl" />
+        {isLoadingAI ? (
+          <>
+            <Icon name="ai" size="xxl" className={styles.aiLoadingIcon} />
+            <span className={styles.pulsingText}>
+              <Trans i18nKey="panel.visualization-suggestions.ai-loading">
+                Assistant is generating suggestions...
+              </Trans>
+            </span>
+          </>
+        ) : (
+          <Spinner size="xxl" />
+        )}
       </div>
     );
   }
@@ -301,10 +394,27 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     loadingContainer: css({
       display: 'flex',
+      flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
+      gap: theme.spacing(2),
       width: '100%',
       marginTop: theme.spacing(6),
+    }),
+    aiLoadingIcon: css({
+      color: theme.colors.text.secondary,
+    }),
+    pulsingText: css({
+      color: theme.colors.text.secondary,
+      animation: 'textPulse 1.5s ease-in-out infinite',
+      '@keyframes textPulse': {
+        '0%, 100%': {
+          opacity: 1,
+        },
+        '50%': {
+          opacity: 0.4,
+        },
+      },
     }),
     alertContent: css({
       display: 'flex',
