@@ -353,7 +353,7 @@ Content-Type: application/json
 
 ### Receiver permissions
 
-The receiver permissions endpoints manage access control for contact point receivers. These endpoints require Grafana Enterprise and allow you to assign permissions to users, teams, or built-in roles for specific receivers.
+The receiver permissions endpoints manage access control for contact point receivers. These endpoints allow you to assign permissions to users, teams, or built-in roles for specific receivers.
 
 | Method | URI                                                          | Name                                                                            | Summary                                                     |
 | ------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -433,12 +433,22 @@ Content-Type: application/json
 }
 ```
 
-**Available Permissions:**
+**Available Permissions sets:**
+- `View` - Read-only access to the receiver.
+  - Grants `alert.notifications.receivers:read`.
+- `Edit` - Ability to update and test the receiver.
+  - Grants `View` actions plus:
+    - `alert.notifications.receivers:write`
+    - `alert.notifications.receivers:delete`
+    - `alert.notifications.receivers.test:create`
+- `Admin` - Full access including managing permissions and reading secrets.
+  - Grants `Edit` actions plus:
+    - `alert.notifications.receivers.secrets:read`
+    - `receivers.permissions:read`
+    - `receivers.permissions:write`
+    - `alert.notifications.receivers.protected:write`
+- Empty string (`""`) - Removes the permission.
 
-- `View` - Read-only access to the receiver
-- `Edit` - Ability to update the receiver
-- `Admin` - Full access including managing permissions
-- Empty string (`""`) - Removes the permission
 
 ### Notification policies
 
