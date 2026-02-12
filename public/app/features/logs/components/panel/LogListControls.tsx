@@ -427,7 +427,13 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   aria-pressed={unwrappedColumns}
                   className={unwrappedColumns ? styles.controlButtonActive : styles.controlButton}
                   onClick={onSetUnwrappedColumnsClick}
-                  label={t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not suported')}
+                  label={
+                    wrapLogMessage
+                      ? t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not supported')
+                      : unwrappedColumns
+                        ? t('logs.logs-controls.unwrapped-columns.disabled', 'Columns enabled')
+                        : t('logs.logs-controls.unwrapped-columns.enabled', 'Columns disabled')
+                  }
                   tooltip={
                     wrapLogMessage
                       ? t(
