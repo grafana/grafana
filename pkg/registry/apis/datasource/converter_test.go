@@ -1,4 +1,4 @@
-package v0alpha1
+package datasource
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/authlib/types"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -33,7 +34,7 @@ func TestConverter(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				obj := &DataSource{}
+				obj := &datasourceV0.DataSource{}
 				fpath := filepath.Join("testdata", tt.name+".json")
 				raw, err := os.ReadFile(fpath) // nolint:gosec
 				require.NoError(t, err)
@@ -168,7 +169,7 @@ func TestConverter(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ds := &DataSource{}
+				ds := &datasourceV0.DataSource{}
 				fpath := filepath.Join("testdata", tt.name+".json")
 				raw, err := os.ReadFile(fpath) // nolint:gosec
 				require.NoError(t, err)
