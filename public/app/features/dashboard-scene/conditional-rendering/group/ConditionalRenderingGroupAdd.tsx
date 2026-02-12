@@ -9,32 +9,31 @@ import { type ObjectsWithConditionalRendering } from '../object';
 
 import { type GroupConditionConditionType } from './types';
 
+import { conditionRegistry } from '../conditions/conditionRegistry';
+import { ObjectsWithConditionalRendering } from '../object';
+
 interface Props {
   objectType: ObjectsWithConditionalRendering;
   hasVariables: boolean;
-  onAdd: (option: SelectableValue<GroupConditionConditionType>) => void;
+  onAdd: (option: SelectableValue<string>) => void;
 }
 
 export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }: Props) => {
-  const options = useMemo<Array<SelectableValue<GroupConditionConditionType>>>(() => {
-    const allOptions: Array<SelectableValue<GroupConditionConditionType>> = [
-      { label: t('dashboard.conditional-rendering.conditions.group.add.data', 'Query result'), value: 'data' },
-      {
-        label: t('dashboard.conditional-rendering.conditions.group.add.variable', 'Template variable'),
-        value: 'variable',
-        isDisabled: !hasVariables,
-      },
-      {
-        label: t('dashboard.conditional-rendering.conditions.group.add.time-range-size', 'Time range less than'),
-        value: 'timeRangeSize',
-      },
-    ];
-
-    if (objectType !== 'panel') {
-      allOptions.shift();
-    }
-
-    return allOptions;
+  const options = useMemo<Array<SelectableValue<string>>>(() => {
+    return conditionRegistry
+      .list()
+      .filter((item) => {
+        if (item.isApplicable && !item.isApplicable(objectType)) {
+          return false;
+        }
+        return true;
+      })
+      .map((item) => ({
+        label: item.name,
+        value: item.id,
+        // Disable the variable condition when there are no variables defined
+        isDisabled: item.id === 'ConditionalRenderingVariable' && !hasVariables,
+      }));
   }, [objectType, hasVariables]);
 
   const onAddRuleClick = (option: SelectableValue<GroupConditionConditionType>) => {

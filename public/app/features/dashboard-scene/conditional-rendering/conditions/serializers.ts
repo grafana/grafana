@@ -9,21 +9,18 @@ import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { type ConditionalRenderingConditions } from './types';
+import { ConditionalRenderingData } from './ConditionalRenderingData';
+import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
+import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
+import { conditionRegistry } from './conditionRegistry';
 
-export type ConditionalRenderingConditionsKindTypes =
-  | ConditionalRenderingVariableKind
-  | ConditionalRenderingDataKind
-  | ConditionalRenderingTimeRangeSizeKind;
+// Re-export the kind types union from conditionRegistry for backward compatibility.
+export type { ConditionalRenderingConditionsKindTypes } from './conditionRegistry';
 
-export interface ConditionalRenderingConditionsSerializerRegistryItem extends RegistryItem {
-  deserialize(model: ConditionalRenderingConditionsKindTypes): ConditionalRenderingConditions;
-}
-
-export const conditionalRenderingSerializerRegistry =
-  new Registry<ConditionalRenderingConditionsSerializerRegistryItem>(() => {
-    return [
-      ConditionalRenderingVariable.serializer,
-      ConditionalRenderingData.serializer,
-      ConditionalRenderingTimeRangeSize.serializer,
-    ];
-  });
+// Initialize the condition registry with the built-in condition types.
+// New condition types can be registered elsewhere via conditionRegistry.register().
+conditionRegistry.setInit(() => [
+  ConditionalRenderingVariable.registryItem,
+  ConditionalRenderingData.registryItem,
+  ConditionalRenderingTimeRangeSize.registryItem,
+]);

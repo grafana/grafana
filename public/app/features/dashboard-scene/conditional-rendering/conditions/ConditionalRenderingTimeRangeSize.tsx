@@ -12,6 +12,7 @@ import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { ConditionRegistryItem } from './conditionRegistry';
 import { checkGroup, getObjectType } from './utils';
 
 interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {
@@ -22,10 +23,13 @@ interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {
 export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<ConditionalRenderingTimeRangeSizeState> {
   public static Component = ConditionalRenderingTimeRangeSizeRenderer;
 
-  public static serializer: ConditionalRenderingConditionsSerializerRegistryItem = {
+  public static registryItem: ConditionRegistryItem = {
     id: 'ConditionalRenderingTimeRangeSize',
-    name: 'Time Range Size',
-    deserialize: this.deserialize,
+    name: 'Time range less than',
+    deserialize: (model) =>
+      ConditionalRenderingTimeRangeSize.deserialize(model as ConditionalRenderingTimeRangeSizeKind),
+    createEmpty: () => new ConditionalRenderingTimeRangeSize({ value: '7d', result: undefined }),
+    isApplicable: () => true,
   };
 
   public readonly validateIntervalRegex = /^(\d+(?:\.\d+)?)[Mwdhmsy]$/;
