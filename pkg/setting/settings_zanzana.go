@@ -31,10 +31,27 @@ type ZanzanaClientSettings struct {
 	TokenNamespace string
 }
 
+// ZanzanaStorageMode selects how tuple data is stored.
+type ZanzanaStorageMode string
+
+const (
+	ZanzanaStorageModeSQL    ZanzanaStorageMode = "sql"
+	ZanzanaStorageModeCustom ZanzanaStorageMode = "custom"
+)
+
 type ZanzanaServerSettings struct {
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
+	// StorageMode selects the tuple storage backend: "sql" (default) or "custom".
+	// When "custom", TupleServiceAddr must point to a gRPC TupleStorageService.
+	StorageMode ZanzanaStorageMode
+	// TupleServiceAddr is the gRPC address of the TupleStorageService (e.g. "host:port").
+	// Only used when StorageMode is "custom".
+	TupleServiceAddr string
+	// TupleServiceTLSCert is an optional path to a TLS cert for the tuple service.
+	// Only used when StorageMode is "custom".
+	TupleServiceTLSCert string
 	// Cache settings
 	CacheSettings OpenFgaCacheSettings
 	// OpenFGA server settings
@@ -228,6 +245,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
+	zs.StorageMode = ZanzanaStorageMode(serverSec.Key("storage_mode").MustString("sql"))
+	if zs.StorageMode != ZanzanaStorageModeSQL && zs.StorageMode != ZanzanaStorageModeCustom {
+		cfg.Logger.Warn("Invalid zanzana storage mode, using sql", "got", zs.StorageMode)
+		zs.StorageMode = ZanzanaStorageModeSQL
+	}
+	zs.TupleServiceAddr = serverSec.Key("tuple_service_addr").MustString("")
+	zs.TupleServiceTLSCert = serverSec.Key("tuple_service_tls_cert").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)

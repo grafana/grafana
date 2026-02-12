@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
+
+package authz.tuple.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// TupleStorageService is the minimal interface for tuple storage.
+service TupleStorageService {
+  // WriteTuples atomically writes and deletes tuples and records changelog entries.
+  rpc WriteTuples(WriteTuplesRequest) returns (WriteTuplesResponse);
+
+  // ReadTuples queries tuples by object (forward lookup for Check).
+  rpc ReadTuples(ReadTuplesRequest) returns (stream StorageTuple);
+
+  // ReadTuplesByUser queries tuples by user (reverse lookup for ListObjects).
+  rpc ReadTuplesByUser(ReadTuplesByUserRequest) returns (stream StorageTuple);
+
+  // ReadChanges returns changelog entries for Watch/consistency.
+  rpc ReadChanges(ReadChangesRequest) returns (ReadChangesResponse);
+}
+
+// StorageTuple represents a single relationship tuple.
+message StorageTuple {
+  string object_type = 1;
+  string object_id = 2;
+  string relation = 3;
+  string user_type = 4;
+  string user_id = 5;
+  string user_relation = 6;
+  string condition_name = 7;
+  bytes condition_context = 8;
+  google.protobuf.Timestamp timestamp = 9;
+}
+
+// StorageTupleKey identifies a tuple without condition or timestamp.
+message StorageTupleKey {
+  string object_type = 1;
+  string object_id = 2;
+  string relation = 3;
+  string user_type = 4;
+  string user_id = 5;
+  string user_relation = 6;
+}
+
+// StorageTupleWrite is a tuple to write with optional condition.
+message StorageTupleWrite {
+  StorageTupleKey key = 1;
+  string condition_name = 2;
+  bytes condition_context = 3;
+}
+
+// WriteTuplesRequest for atomic tuple writes and deletes.
+message WriteTuplesRequest {
+  string store_id = 1;
+  repeated StorageTupleWrite writes = 2;
+  repeated StorageTupleKey deletes = 3;
+}
+
+message WriteTuplesResponse {}
+
+// UserFilter for exact user match (ReadUserTuple).
+message UserFilter {
+  string user_type = 1;
+  string user_id = 2;
+  string user_relation = 3;
+}
+
+// UserTypeFilter for allowed user types (ReadUsersetTuples).
+message UserTypeFilter {
+  string user_type = 1;
+  string user_relation = 2;
+}
+
+// ReadTuplesRequest for forward lookup by object.
+message ReadTuplesRequest {
+  string store_id = 1;
+  string object_type = 2;
+  string object_id = 3;  // optional; empty means all objects of type
+  string relation = 4;
+  UserFilter user_filter = 5;  // optional: exact match
+  repeated UserTypeFilter user_type_filters = 6;  // optional: type restrictions
+  int32 page_size = 7;
+  string page_token = 8;
+}
+
+// UserRef identifies a user or userset for reverse lookup.
+message UserRef {
+  string user_type = 1;
+  string user_id = 2;
+  string user_relation = 3;
+}
+
+// ReadTuplesByUserRequest for reverse lookup by user(s).
+message ReadTuplesByUserRequest {
+  string store_id = 1;
+  repeated UserRef users = 2;
+  string object_type = 3;
+  string relation = 4;
+  repeated string object_ids = 5;  // optional filter
+  repeated string condition_names = 6;  // optional filter
+  bool sort_ascending = 7;
+}
+
+// ReadChangesRequest for changelog reads.
+message ReadChangesRequest {
+  string store_id = 1;
+  string object_type = 2;  // optional filter
+  string after_token = 3;
+  int32 page_size = 4;
+  int64 horizon_seconds = 5;  // exclude changes newer than now - horizon
+}
+
+// Operation for changelog entry.
+enum Operation {
+  OPERATION_UNSPECIFIED = 0;
+  OPERATION_WRITE = 1;
+  OPERATION_DELETE = 2;
+}
+
+// StorageTupleChange is a changelog entry.
+message StorageTupleChange {
+  StorageTuple tuple = 1;
+  Operation operation = 2;
+  string ulid = 3;
+}
+
+message ReadChangesResponse {
+  repeated StorageTupleChange changes = 1;
+  string continuation_token = 2;
+}

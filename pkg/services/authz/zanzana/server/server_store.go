@@ -51,15 +51,23 @@ func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openf
 		}
 	}
 
-	createStoreRes, err := s.openFGAClient.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
+	_, err = s.openFGAClient.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
 	if err != nil {
 		return nil, err
 	}
 
-	return &openfgav1.Store{
-		Id:   createStoreRes.GetId(),
-		Name: createStoreRes.GetName(),
-	}, nil
+	// List again so we use the store as returned by the backend (e.g. correct ULID).
+	// This is a bit of a hack
+	res, err = s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list stores after create: %w", err)
+	}
+	for _, st := range res.GetStores() {
+		if st.GetName() == namespace {
+			return st, nil
+		}
+	}
+	return nil, fmt.Errorf("store %q not found after create", namespace)
 }
 
 func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
