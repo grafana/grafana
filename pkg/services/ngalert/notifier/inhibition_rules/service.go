@@ -2,31 +2,14 @@ package inhibition_rules
 
 import (
 	"context"
-	"encoding/binary"
-	"fmt"
-	"hash/fnv"
-	"slices"
-	"strings"
-
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
-
-type routeProvenanceStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
-	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
-	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
-	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
-}
-
-type transactionManager interface {
-	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
-}
 
 type alertmanagerConfigStore interface {
 	Get(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error)
@@ -35,8 +18,6 @@ type alertmanagerConfigStore interface {
 
 type Service struct {
 	configStore             alertmanagerConfigStore
-	provenanceStore         routeProvenanceStore
-	xact                    transactionManager
 	log                     log.Logger
 	validator               validation.ProvenanceStatusTransitionValidator
 	multiplePoliciesEnabled bool
@@ -44,15 +25,11 @@ type Service struct {
 
 func NewService(
 	config alertmanagerConfigStore,
-	prov routeProvenanceStore,
-	xact transactionManager,
 	log log.Logger,
 	multiplePoliciesEnabled bool,
 ) *Service {
 	return &Service{
 		configStore:             config,
-		provenanceStore:         prov,
-		xact:                    xact,
 		log:                     log,
 		validator:               validation.ValidateProvenanceRelaxed,
 		multiplePoliciesEnabled: multiplePoliciesEnabled,
@@ -67,35 +44,21 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]mode
 		return nil, err
 	}
 
-	inhibitRules := rev.Config.AlertmanagerConfig.InhibitRules
+	managedRules := rev.Config.ManagedInhibitionRules
 	importedRules := svc.getImportedInhibitRules(rev)
 
-	if len(inhibitRules) == 0 && len(importedRules) == 0 {
+	if len(managedRules) == 0 && len(importedRules) == 0 {
 		return []models.InhibitionRule{}, nil
 	}
 
-	provenances, err := svc.provenanceStore.GetProvenances(ctx, orgID, models.ResourceTypeInhibitionRule)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]models.InhibitionRule, 0, len(inhibitRules)+len(importedRules))
-
-	// Add Grafana-managed rules
-	for i := range inhibitRules {
-		uid := generateInhibitionRuleUID(&inhibitRules[i])
-		prov, ok := provenances[uid]
-		if !ok {
-			prov = models.ProvenanceNone
-		}
-
-		result = append(result, newInhibitionRule(&inhibitRules[i], uid, prov))
+	result := make([]models.InhibitionRule, 0, len(managedRules)+len(importedRules))
+	for _, r := range managedRules {
+		result = append(result, *r)
 	}
 
 	// Add imported rules with ProvenanceConvertedPrometheus
-	for i := range importedRules {
-		uid := generateInhibitionRuleUID(&importedRules[i])
-		result = append(result, newInhibitionRule(&importedRules[i], uid, models.ProvenanceConvertedPrometheus))
+	for _, r := range importedRules {
+		result = append(result, *r)
 	}
 
 	return result, nil
@@ -103,13 +66,13 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]mode
 
 // GetInhibitionRule returns a single inhibition rule by UID.
 // Includes both Grafana-managed and imported rules.
-func (svc *Service) GetInhibitionRule(ctx context.Context, uid string, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID int64) (models.InhibitionRule, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return models.InhibitionRule{}, err
 	}
 
-	result, found, err := svc.getInhibitionRuleByUID(ctx, revision, uid, orgID)
+	result, found, err := svc.getInhibitionRuleByName(ctx, revision, name, orgID)
 	if err != nil {
 		return models.InhibitionRule{}, err
 	}
@@ -132,29 +95,23 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, err
 	}
 
-	uid := generateInhibitionRuleUID(&rule.InhibitRule)
-	if svc.grafanaInhibitionRuleExists(revision.Config.AlertmanagerConfig.InhibitRules, generateInhibitionRuleUID(&rule.InhibitRule)) {
+	if revision.Config.ManagedInhibitionRules == nil {
+		revision.Config.ManagedInhibitionRules = definitions.ManagedInhibitionRules{}
+	}
+
+	if _, ok := revision.Config.ManagedInhibitionRules[rule.Name]; ok {
 		return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
-	revision.Config.AlertmanagerConfig.InhibitRules = append(revision.Config.AlertmanagerConfig.InhibitRules, rule.InhibitRule)
+	revision.Config.ManagedInhibitionRules[rule.Name] = &rule
 
-	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
-		}
-		return svc.provenanceStore.SetProvenance(ctx, &rule, orgID, rule.Provenance)
-	})
-	if err != nil {
+	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 		return models.InhibitionRule{}, err
 	}
 
-	return newInhibitionRule(&rule.InhibitRule, uid, rule.Provenance), nil
+	return *models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance), nil
 }
 
-// UpdateInhibitionRule updates an existing inhibition rule
-// Inhibition rules are treated as immutable since they have no stable identifier and updates change
-// the content (and thus UID). Therefore, we delete the existing rule and create a new one with the updated content.
 func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
 		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
@@ -165,7 +122,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, err
 	}
 
-	existing, found, err := svc.getInhibitionRuleByUID(ctx, revision, rule.UID, orgID)
+	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, rule.Name, orgID)
 	if err != nil {
 		return models.InhibitionRule{}, err
 	} else if !found {
@@ -180,39 +137,40 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, err
 	}
 
-	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		// Inhibition rules don't have a stable identifier (UID is content-based so update operations changes the
-		// identity). Always treat them as immutable
-		deleteInhibitionRule(revision, rule)
-		revision.Config.AlertmanagerConfig.InhibitRules = append(revision.Config.AlertmanagerConfig.InhibitRules, rule.InhibitRule)
-
-		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
+	var renamed bool
+	if existing.Name != rule.Name {
+		// check if new name already exists
+		if _, ok := revision.Config.ManagedInhibitionRules[rule.Name]; ok {
+			return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 		}
+		renamed = true
+	}
 
-		err = svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
-		if err != nil {
-			return err
-		}
-
-		return svc.provenanceStore.SetProvenance(ctx, &rule, orgID, rule.Provenance)
-	})
+	err = svc.checkOptimisticConcurrency(existing, rule.Provenance, rule.Version, "update")
 	if err != nil {
 		return models.InhibitionRule{}, err
 	}
 
-	uid := generateInhibitionRuleUID(&rule.InhibitRule)
-	return newInhibitionRule(&rule.InhibitRule, uid, rule.Provenance), nil
+	if renamed {
+		delete(revision.Config.ManagedInhibitionRules, existing.UID)
+	}
+	revision.Config.ManagedInhibitionRules[rule.Name] = &rule
+
+	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
+		return models.InhibitionRule{}, err
+	}
+
+	return *models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance), nil
 }
 
 // DeleteInhibitionRule deletes an inhibition rule by UID
-func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
+func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance models.Provenance, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	existing, found, err := svc.getInhibitionRuleByUID(ctx, revision, uid, orgID)
+	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, name, orgID)
 	if err != nil {
 		return err
 	} else if !found {
@@ -227,62 +185,35 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid string, orgID 
 		return err
 	}
 
-	deleteInhibitionRule(revision, existing)
+	// TODO: add optimistic locking by comparing existing version with client-provided version to prevent lost updates
+	err = svc.checkOptimisticConcurrency(existing, provenance, version, "delete")
+	if err != nil {
+		return err
+	}
 
-	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
-		}
-		return svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
-	})
+	delete(revision.Config.ManagedInhibitionRules, existing.UID)
+	return svc.configStore.Save(ctx, revision, orgID)
 }
 
 // Helper functions
 
-func (svc *Service) getInhibitionRuleByUID(ctx context.Context, rev *legacy_storage.ConfigRevision, uid string, orgID int64) (models.InhibitionRule, bool, error) {
+func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_storage.ConfigRevision, name string, orgID int64) (models.InhibitionRule, bool, error) {
 	// Check Grafana-managed rules first
-	grafanaInhibitionRules := rev.Config.AlertmanagerConfig.InhibitRules
-
-	if idx := slices.IndexFunc(grafanaInhibitionRules, inhibitionRuleByUID(uid)); idx != -1 {
-		ir := &grafanaInhibitionRules[idx]
-		uid := generateInhibitionRuleUID(ir)
-
-		prov, err := svc.provenanceStore.GetProvenance(
-			ctx,
-			newInhibitionRule(ir, uid, models.ProvenanceNone),
-			orgID,
-		)
-		if err != nil {
-			return models.InhibitionRule{}, false, err
-		}
-
-		return newInhibitionRule(ir, uid, prov), true, nil
+	managedInhibitionRules := rev.Config.ManagedInhibitionRules
+	if r, ok := managedInhibitionRules[name]; ok {
+		return *r, true, nil
 	}
 
 	// Check imported rules
-	if importedRules := svc.getImportedInhibitRules(rev); len(importedRules) > 0 {
-		if idx := slices.IndexFunc(importedRules, inhibitionRuleByUID(uid)); idx != -1 {
-			ir := &importedRules[idx]
-			uid := generateInhibitionRuleUID(ir)
-
-			return newInhibitionRule(ir, uid, models.ProvenanceConvertedPrometheus), true, nil
-		}
+	importedRules := svc.getImportedInhibitRules(rev)
+	if r, ok := importedRules[name]; ok {
+		return *r, true, nil
 	}
 
 	return models.InhibitionRule{}, false, nil
 }
 
-func (svc *Service) grafanaInhibitionRuleExists(inhibitionRules []config.InhibitRule, uid string) bool {
-	return slices.IndexFunc(inhibitionRules, inhibitionRuleByUID(uid)) != -1
-}
-
-func inhibitionRuleByUID(uid string) func(config.InhibitRule) bool {
-	return func(ir config.InhibitRule) bool {
-		return generateInhibitionRuleUID(&ir) == uid
-	}
-}
-
-func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) []config.InhibitRule {
+func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) definitions.ManagedInhibitionRules {
 	imported, err := rev.Imported()
 	if err != nil {
 		svc.log.Warn("failed to get imported config revision for inhibition rules", "error", err)
@@ -298,72 +229,16 @@ func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) 
 	return inhibitRules
 }
 
-func deleteInhibitionRule(rev *legacy_storage.ConfigRevision, rule models.InhibitionRule) {
-	rev.Config.AlertmanagerConfig.InhibitRules = slices.DeleteFunc(rev.Config.AlertmanagerConfig.InhibitRules, func(ir config.InhibitRule) bool {
-		uid := generateInhibitionRuleUID(&ir)
-		return uid == rule.UID
-	})
-}
-
-// newInhibitionRule converts a config.InhibitRule to a models.InhibitionRule.
-// Both UID and Version are calculated from the rule's content since inhibition rules
-// have no stable name identifier
-func newInhibitionRule(ir *config.InhibitRule, uid string, prov models.Provenance) models.InhibitionRule {
-	origin := models.ResourceOriginGrafana
-	if prov == models.ProvenanceConvertedPrometheus {
-		origin = models.ResourceOriginImported
-	}
-	return models.InhibitionRule{
-		InhibitRule: *ir,
-		UID:         uid,
-		Version:     uid,
-		Provenance:  prov,
-		Origin:      origin,
-	}
-}
-
-func prepareMatchers(matchers []*labels.Matcher) []*labels.Matcher {
-	res := make([]*labels.Matcher, 0, len(matchers))
-	for _, m := range matchers {
-		if m != nil {
-			res = append(res, m)
+func (svc *Service) checkOptimisticConcurrency(existing models.InhibitionRule, provenance models.Provenance, desiredVersion string, action string) error {
+	if desiredVersion == "" {
+		if provenance != models.ProvenanceFile {
+			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
+			svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "inhibition_rule", existing.Name, "operation", action)
 		}
+		return nil
 	}
-	slices.SortFunc(res, func(a, b *labels.Matcher) int {
-		if a.Name != b.Name {
-			return strings.Compare(a.Name, b.Name)
-		}
-		return strings.Compare(a.Value, b.Value)
-	})
-	return res
-}
-
-// generateInhibitionRuleUID generates a stable UID for an inhibition rule based on its content
-func generateInhibitionRuleUID(rule *config.InhibitRule) string {
-	if rule == nil {
-		return ""
+	if currentVersion := existing.Hash(); currentVersion != desiredVersion {
+		return provisioning.ErrVersionConflict.Errorf("provided version %s of inhibition rule %s does not match current version %s", desiredVersion, existing.Name, currentVersion)
 	}
-
-	sum := fnv.New64()
-
-	// Hash source matchers
-	for _, m := range prepareMatchers(rule.SourceMatchers) {
-		_, _ = fmt.Fprintf(sum, "%s:%s:%s:", m.Type.String(), m.Name, m.Value)
-	}
-
-	// Hash target matchers
-	for _, m := range prepareMatchers(rule.TargetMatchers) {
-		_, _ = fmt.Fprintf(sum, "%s:%s:%s:", m.Type.String(), m.Name, m.Value)
-	}
-
-	// Hash equal labels
-	equal := slices.Clone(rule.Equal)
-	slices.Sort(equal)
-	for _, e := range equal {
-		_, _ = sum.Write([]byte(e + ":"))
-	}
-
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, sum.Sum64())
-	return fmt.Sprintf("%x", buf)
+	return nil
 }

@@ -488,7 +488,7 @@ func (ng *AlertNG) init() error {
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	multiplePoliciesEnabled := ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies)
-	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.store, ng.store, ng.Log, multiplePoliciesEnabled)
+	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, multiplePoliciesEnabled)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),

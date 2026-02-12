@@ -153,7 +153,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	return mr, nil
 }
 
-func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) ([]config.InhibitRule, error) {
+func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) (definitions.ManagedInhibitionRules, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -171,5 +171,14 @@ func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) ([
 		return nil, nil
 	}
 
-	return definition.MergeInhibitRules(nil, importedRules, config.Matchers{managedRouteMatcher(e.identifier)}), nil
+	scopedRules := definition.MergeInhibitRules(nil, importedRules, config.Matchers{managedRouteMatcher(e.identifier)})
+
+	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
+	for i, rule := range scopedRules {
+		name := fmt.Sprintf("%s-inhibit-%d", e.identifier, i)
+		ir := models.NewInhibitionRule(name, rule, models.ProvenanceConvertedPrometheus)
+		res[name] = ir
+	}
+
+	return res, nil
 }
