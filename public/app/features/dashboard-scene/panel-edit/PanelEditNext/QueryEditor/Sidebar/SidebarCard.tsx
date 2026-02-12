@@ -76,17 +76,15 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={styles.cardContent}>
-          {children}
-          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              onDuplicate={onDuplicate}
-              onDelete={onDelete}
-              onToggleHide={onToggleHide}
-              isHidden={isHidden}
-              typeLabel={typeText}
-            />
-          </div>
+        <div className={styles.cardContent}>{children}</div>
+        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+          <Actions
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            onToggleHide={onToggleHide}
+            isHidden={isHidden}
+            typeLabel={typeText}
+          />
         </div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
@@ -99,12 +97,14 @@ function getStyles(
   { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
   const hoverActions = css({
+    //background: `linear-gradient(270deg, #181B1F 71.63%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
+    transform: 'translateX(8px)',
     marginLeft: 'auto',
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
+      transition: theme.transitions.create(['opacity', 'transform'], {
+        duration: theme.transitions.duration.complex,
       }),
     },
   });
@@ -154,7 +154,9 @@ function getStyles(
     }),
     card: css({
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       width: '100%',
       background: isSelected ? '#314158' : theme.colors.background.secondary,
       // border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
@@ -177,6 +179,7 @@ function getStyles(
 
       [`&:hover .${hoverActions}`]: {
         opacity: 1,
+        transform: 'translateX(0)',
       },
 
       '&:focus-visible': {
@@ -184,22 +187,23 @@ function getStyles(
         outlineOffset: '2px',
       },
     }),
-    cardHeader: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1),
-      background: theme.colors.background.primary,
-      color: config.color,
-      borderTopRightRadius: theme.shape.radius.default,
-      borderTopLeftRadius: theme.shape.radius.default,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
+    // cardHeader: css({
+    //   display: 'flex',
+    //   flexDirection: 'row',
+    //   alignItems: 'center',
+    //   justifyContent: 'space-between',
+    //   gap: theme.spacing(1),
+    //   padding: theme.spacing(1),
+    //   background: theme.colors.background.primary,
+    //   color: config.color,
+    //   borderTopRightRadius: theme.shape.radius.default,
+    //   borderTopLeftRadius: theme.shape.radius.default,
+    //   borderBottom: `1px solid ${theme.colors.border.weak}`,
+    // }),
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,
+      transform: 'translateX(0)',
     }),
     cardContent: css({
       display: 'flex',
