@@ -78,10 +78,6 @@ type State struct {
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
-
-	// ignorePendingForNoDataAndError makes Error and NoData alerts fire immediately.
-	// TODO: Remove.
-	ignorePendingForNoDataAndError bool
 }
 
 func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, ignorePendingForNoDataAndError bool) *State {
@@ -111,8 +107,6 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		LastEvaluationString: "",
 		LastEvaluationTime:   result.EvaluatedAt,
 		EvaluationDuration:   result.EvaluationDuration,
-
-		ignorePendingForNoDataAndError: ignorePendingForNoDataAndError,
 	}
 }
 
@@ -834,7 +828,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	}
 }
 
-func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn) StateTransition {
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool) StateTransition {
 	a.LastEvaluationTime = result.EvaluatedAt
 	a.EvaluationDuration = result.EvaluationDuration
 	a.SetNextValues(result)
@@ -860,10 +854,10 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		resultAlerting(a, alertRule, result, logger, "")
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
-		resultError(a, alertRule, result, logger, a.ignorePendingForNoDataAndError)
+		resultError(a, alertRule, result, logger, ignorePendingForNoDataAndError)
 	case eval.NoData:
 		logger.Debug("Setting next state", "handler", "resultNoData")
-		resultNoData(a, alertRule, result, logger, a.ignorePendingForNoDataAndError)
+		resultNoData(a, alertRule, result, logger, ignorePendingForNoDataAndError)
 	case eval.Pending,
 		eval.Recovering: // we do not emit results with these states
 		logger.Debug("Ignoring set next state", "state", result.State)
