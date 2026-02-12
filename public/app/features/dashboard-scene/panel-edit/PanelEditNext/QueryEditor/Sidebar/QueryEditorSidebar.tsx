@@ -35,7 +35,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
 
   return (
     <div className={styles.container}>
-      <ScrollContainer>
+      <ScrollContainer overflowX="hidden">
         <Stack direction="row" alignItems="center" gap={1}>
           <IconButton
             name={isMini ? 'maximize-left' : 'compress-alt-left'}
@@ -81,7 +81,9 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(1),
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+      paddingLeft: theme.spacing(1),
       background: theme.colors.background.primary,
     }),
   };
