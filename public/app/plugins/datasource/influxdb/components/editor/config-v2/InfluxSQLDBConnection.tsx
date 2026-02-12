@@ -3,9 +3,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
+import { Input, SecretInput, Field, Space, Box } from '@grafana/ui';
 
-import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
@@ -17,30 +16,27 @@ export const InfluxSQLDBConnection = (props: Props) => {
   const { secureJsonData, secureJsonFields } = options;
 
   return (
-    <>
-      <InlineFieldRow>
-        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
-          <Input
-            id="database"
-            placeholder="mydb"
-            value={options.jsonData.dbName}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
-            onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
-          <SecretInput
-            id="token"
-            isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={trackInfluxDBConfigV2SQLDBDetailsTokenInputField}
-            onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
-            onReset={() => updateDatasourcePluginResetOption(props, 'token')}
-            value={secureJsonData?.token || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-    </>
+    <Box width="50%">
+      <Field label="Database" required noMargin>
+        <Input
+          id="database"
+          placeholder="mydb"
+          value={options.jsonData.dbName}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
+          onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
+        />
+      </Field>
+      <Space v={2} />
+      <Field label="Token" required noMargin>
+        <SecretInput
+          id="token"
+          isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
+          onBlur={trackInfluxDBConfigV2SQLDBDetailsTokenInputField}
+          onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
+          onReset={() => updateDatasourcePluginResetOption(props, 'token')}
+          value={secureJsonData?.token || ''}
+        />
+      </Field>
+    </Box>
   );
 };
