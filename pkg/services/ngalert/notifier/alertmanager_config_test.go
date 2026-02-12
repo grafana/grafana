@@ -148,6 +148,46 @@ receivers:
 		require.ErrorContains(t, err, "multiple extra configurations are not supported")
 		require.ErrorContains(t, err, "first-config")
 	})
+
+	t.Run("fail to create extra configuration with identifier that used in managed routes", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		identifier := "test-config"
+
+		require.NoError(t, mam.SaveAndApplyAlertmanagerConfiguration(ctx, orgID, definitions.PostableUserConfig{
+			ManagedRoutes: map[string]*definitions.Route{
+				identifier: {Receiver: "initial-receiver"},
+			},
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "initial-receiver",
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: amconfig.Receiver{
+							Name: "initial-receiver",
+						},
+					},
+				},
+			},
+		}))
+
+		originalConfig := definitions.ExtraConfiguration{
+			Identifier:    identifier,
+			MergeMatchers: amconfig.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "original"}},
+			AlertmanagerConfig: `route:
+  receiver: original-receiver
+receivers:
+  - name: original-receiver`,
+		}
+
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, originalConfig)
+		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
+	})
 }
 
 func TestMultiOrgAlertmanager_SaveAndApplyAlertmanagerConfiguration(t *testing.T) {
