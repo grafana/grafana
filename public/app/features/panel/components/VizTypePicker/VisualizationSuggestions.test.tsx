@@ -156,8 +156,9 @@ describe('VisualizationSuggestions', () => {
     });
   });
 
-  it('should call onChange for new panels', async () => {
+  it('should call onChange for new panels (unconfigured)', async () => {
     const mockOnChange = jest.fn();
+    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
     const data: PanelData = {
       series: [
         toDataFrame({
@@ -172,7 +173,9 @@ describe('VisualizationSuggestions', () => {
       structureRev: 1,
     };
 
-    render(<VisualizationSuggestions onChange={mockOnChange} data={data} panel={undefined} isNewPanel={true} />);
+    render(
+      <VisualizationSuggestions onChange={mockOnChange} data={data} panel={unconfiguredPanel} isNewPanel={true} />
+    );
 
     await waitFor(() => {
       expect(mockOnChange).toHaveBeenCalled();
