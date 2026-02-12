@@ -796,6 +796,20 @@
     },
     {
       "metadata": {
+        "name": "appPluginAPIServer",
+        "resourceVersion": "1770813648403",
+        "creationTimestamp": "2026-02-11T12:40:48Z"
+      },
+      "spec": {
+        "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-04T10:56:35Z",
