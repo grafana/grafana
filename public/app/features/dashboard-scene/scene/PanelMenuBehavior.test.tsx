@@ -717,18 +717,14 @@ describe('panelMenuBehavior', () => {
 
         expect(metricsDrilldownMenu).toBeDefined();
         expect(metricsDrilldownMenu?.iconClassName).toBe('code-branch');
-        expect(metricsDrilldownMenu?.subMenu).toEqual([
-          expect.objectContaining({
-            text: 'metrics-drilldown',
-            type: 'group',
-            subMenu: expect.arrayContaining([
-              expect.objectContaining({
-                text: 'Open in Metrics Drilld...',
-                href: '/a/grafana-metricsdrilldown-app/trail',
-              }),
-            ]),
-          }),
-        ]);
+        expect(metricsDrilldownMenu?.subMenu).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              text: 'Open in Metrics Drilld...',
+              href: '/a/grafana-metricsdrilldown-app/trail',
+            }),
+          ])
+        );
 
         expect(extensionsMenu).toBeDefined();
         expect(extensionsMenu?.iconClassName).toBe('plug');
@@ -771,18 +767,14 @@ describe('panelMenuBehavior', () => {
 
         expect(metricsDrilldownMenu).toBeDefined();
         expect(extensionsMenu).toBeUndefined();
-        expect(metricsDrilldownMenu?.subMenu).toEqual([
-          expect.objectContaining({
-            text: 'metrics-drilldown',
-            type: 'group',
-            subMenu: expect.arrayContaining([
-              expect.objectContaining({
-                text: 'Open in Metrics Drilld...',
-                href: '/a/grafana-metricsdrilldown-app/trail',
-              }),
-            ]),
-          }),
-        ]);
+        expect(metricsDrilldownMenu?.subMenu).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              text: 'Open in Metrics Drilld...',
+              href: '/a/grafana-metricsdrilldown-app/trail',
+            }),
+          ])
+        );
       });
     });
   });

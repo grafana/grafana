@@ -110,6 +110,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
       category: string;
+      group: { name: string; icon?: IconName };
       openInNewTab: boolean;
     }>
   | undefined;

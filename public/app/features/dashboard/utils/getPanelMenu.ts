@@ -21,17 +21,14 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import {
-  createExtensionSubMenu,
-  extensionLinkToPanelMenuItem,
-  isRootPluginExtension,
-} from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
+
+import { appenExtensionsToPanelMenu } from './appendExtensionsToPanelMenu';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -271,23 +268,15 @@ export function getPanelMenu(
   }
 
   if (extensions.length > 0 && !panel.isEditing) {
-    const rootExtensions = extensions.filter(isRootPluginExtension);
-    const otherExtensions = extensions.filter((e) => !isRootPluginExtension(e));
+    const reservedNames = new Set<string>(menu.map((m) => m.text));
+    reservedNames.add(t('panel.header-menu.more', `More...`));
+    reservedNames.add(t('panel.header-menu.remove', `Remove`));
 
-    if (rootExtensions.length > 0) {
-      for (const extension of rootExtensions) {
-        menu.push(extensionLinkToPanelMenuItem(extension));
-      }
-    }
-
-    if (otherExtensions.length > 0) {
-      menu.push({
-        text: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
-        iconClassName: 'plug',
-        type: 'submenu',
-        subMenu: createExtensionSubMenu(otherExtensions),
-      });
-    }
+    appenExtensionsToPanelMenu({
+      rootMenu: menu,
+      extensions,
+      reservedNames,
+    });
   }
 
   if (subMenu.length) {
