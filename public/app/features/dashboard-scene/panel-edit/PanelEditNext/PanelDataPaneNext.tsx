@@ -347,6 +347,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     } else {
       queryRunner.setState({ queries });
     }
+
     queryRunner.runQueries();
   };
 
