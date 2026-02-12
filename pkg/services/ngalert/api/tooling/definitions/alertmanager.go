@@ -617,8 +617,6 @@ type ReceiversResponse struct {
 	Body []alertingmodels.ReceiverStatus
 }
 
-type Integration = alertingmodels.IntegrationStatus
-
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
 

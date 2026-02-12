@@ -1363,7 +1363,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		{
 			Active:       true,
 			Name:         "empty-receiver",
-			Integrations: []apimodels.Integration{},
+			Integrations: []alertingModels.IntegrationStatus{},
 		},
 	}, rcvs)
 }
