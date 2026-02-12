@@ -329,6 +329,11 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
+  * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesRerouteLegacyCRUDAPIs?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -1462,6 +1467,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Use the new APIs for syncing users to teams
+  * @default false
+  */
+  kubernetesTeamSync?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false

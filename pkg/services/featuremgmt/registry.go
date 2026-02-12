@@ -500,6 +500,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "datasourcesRerouteLegacyCRUDAPIs",
+			Description:     "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2305,6 +2313,14 @@ var (
 		{
 			Name:         "kubernetesTeamsHandlerRedirect",
 			Description:  "Redirects the request to teams related endpoints to the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamSync",
+			Description:  "Use the new APIs for syncing users to teams",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
