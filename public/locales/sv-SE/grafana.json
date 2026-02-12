@@ -10671,6 +10671,16 @@
       "message-same-name-general": "En mapp eller kontrollpanel med samma namn finns redan i rotmappen"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
   },
@@ -11511,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Inga organisationer hittades",
     "select-placeholder": "Välj organisation"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12665,12 +12672,9 @@
       "error-starting-job": "Fel vid start av jobb"
     },
     "sync-repository": {
-      "body-edit-configuration": "Redigera konfigurationen",
-      "button-edit": "Redigera",
       "error-pulling-resources": "Fel vid hämtning av resurser",
       "pull": "Dra",
       "success-pull-started": "Hämtningen startades",
-      "title-pull-not-enabled": "Pull är inte aktiverat",
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
@@ -12922,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Redigera frågenamn"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(Spårnings-ID: {{traceId}})"
     },
     "query-group": {
@@ -13041,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14249,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Inga data hittades i svaret"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

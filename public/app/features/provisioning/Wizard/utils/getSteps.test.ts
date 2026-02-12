@@ -1,40 +1,35 @@
 import { getSteps } from './getSteps';
 
 describe('getSteps', () => {
-  it('should return steps without authType for non-GitHub types', () => {
+  const expectedStepOrder = ['authType', 'connection', 'bootstrap', 'synchronize', 'finish'];
+
+  it('returns consistent step order across providers', () => {
+    expect(getSteps('local').map((s) => s.id)).toEqual(expectedStepOrder);
+    expect(getSteps('git').map((s) => s.id)).toEqual(expectedStepOrder);
+    expect(getSteps('gitlab').map((s) => s.id)).toEqual(expectedStepOrder);
+    expect(getSteps('bitbucket').map((s) => s.id)).toEqual(expectedStepOrder);
+    expect(getSteps('github').map((s) => s.id)).toEqual(expectedStepOrder);
+  });
+
+  it('returns local-specific labels for step 1 and 2 when type is local', () => {
     const steps = getSteps('local');
-    const stepIds = steps.map((s) => s.id);
-
-    expect(stepIds).not.toContain('authType');
-    expect(stepIds).not.toContain('githubApp');
-    expect(stepIds).toEqual(['connection', 'bootstrap', 'synchronize', 'finish']);
-  });
-
-  it('should return steps with authType but no githubApp for GitHub with PAT', () => {
-    const steps = getSteps('github', 'pat');
-    const stepIds = steps.map((s) => s.id);
-
-    expect(stepIds).toContain('authType');
-    expect(stepIds).not.toContain('githubApp');
-    expect(stepIds).toEqual(['authType', 'connection', 'bootstrap', 'synchronize', 'finish']);
-  });
-
-  it('should return steps with both authType and githubApp for GitHub with github-app', () => {
-    const steps = getSteps('github', 'github-app');
-    const stepIds = steps.map((s) => s.id);
-
-    expect(stepIds).toContain('authType');
-    expect(stepIds).not.toContain('githubApp');
-    expect(stepIds).toEqual(['authType', 'connection', 'bootstrap', 'synchronize', 'finish']);
-  });
-
-  it('should have correct step properties', () => {
-    const steps = getSteps('github', 'github-app');
+    const authTypeStep = steps.find((s) => s.id === 'authType');
     const connectionStep = steps.find((s) => s.id === 'connection');
 
-    expect(connectionStep).toBeDefined();
-    expect(connectionStep?.submitOnNext).toBe(true);
-    expect(connectionStep?.name).toBeDefined();
-    expect(connectionStep?.title).toBeDefined();
+    expect(authTypeStep?.name).toBe('File provisioning');
+    expect(authTypeStep?.title).toBe('File provisioning');
+    expect(connectionStep?.name).toBe('Connect');
+    expect(connectionStep?.title).toBe('Connect to external storage');
+  });
+
+  it('returns git-provider labels for step 1 and 2 when type is not local', () => {
+    const steps = getSteps('github');
+    const authTypeStep = steps.find((s) => s.id === 'authType');
+    const connectionStep = steps.find((s) => s.id === 'connection');
+
+    expect(authTypeStep?.name).toBe('Connect');
+    expect(authTypeStep?.title).toBe('Connect');
+    expect(connectionStep?.name).toBe('Configure repository');
+    expect(connectionStep?.title).toBe('Configure repository');
   });
 });

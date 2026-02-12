@@ -10671,6 +10671,16 @@
       "message-same-name-general": "Esiste già una cartella o una dashboard con lo stesso nome nella cartella principale"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
   },
@@ -11511,9 +11521,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Nessuna organizzazione trovata",
     "select-placeholder": "Seleziona organizzazione"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12665,12 +12672,9 @@
       "error-starting-job": "Errore durante l'avvio dell'attività"
     },
     "sync-repository": {
-      "body-edit-configuration": "Modifica configurazione",
-      "button-edit": "Modifica",
       "error-pulling-resources": "Errore durante il pull delle risorse",
       "pull": "Pull",
       "success-pull-started": "Pull avviato",
-      "title-pull-not-enabled": "Il pull non è abilitato",
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
@@ -12922,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Modifica il nome della query"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID traccia: {{traceId}})"
     },
     "query-group": {
@@ -13041,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14249,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Nessun dato trovato in risposta"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
