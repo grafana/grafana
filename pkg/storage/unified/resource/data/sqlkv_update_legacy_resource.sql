@@ -4,6 +4,7 @@ SET
   {{ .Ident "value" }} = (SELECT {{ .Ident "value" }} FROM {{ .Ident "resource_history" }} WHERE {{ .Ident "guid" }} = {{ .Arg .GUID }}),
   {{ .Ident "action" }} = {{ .Arg .Action }},
   {{ .Ident "folder" }} = {{ .Arg .Folder }},
+  {{ .Ident "resource_version" }} = 0,
   {{ .Ident "previous_resource_version" }} = {{ .Arg .PreviousRV }}
 WHERE {{ .Ident "group" }} = {{ .Arg .Group }}
 AND {{ .Ident "resource" }} = {{ .Arg .Resource }}

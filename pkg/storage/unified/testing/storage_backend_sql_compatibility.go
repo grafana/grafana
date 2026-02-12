@@ -811,9 +811,6 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			for j := range concurrentRequests {
 				wg.Go(func() {
 					<-start
-					// Intentional tiny stagger avoids all requests entering the same RV manager batch.
-					time.Sleep(time.Duration(j) * 2 * time.Millisecond)
-
 					title := fmt.Sprintf("create-title-%d-%d-attempt-%d", i+1, j+1, attempt)
 					rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
 						WithNamespace(namespace),
@@ -902,9 +899,6 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 		for j := range concurrentRequests {
 			wg.Go(func() {
 				<-start
-				// Keep updates concurrent but reduce same-batch rollback flakiness.
-				time.Sleep(time.Duration(j) * 2 * time.Millisecond)
-
 				title := fmt.Sprintf("update-title-%d-%d", i+1, j+1)
 				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
 					WithNamespaceAndRV(namespace, baseRV),
