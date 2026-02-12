@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ControlsLabel, dataLayers, SceneDataLayerProvider } from '@grafana/scenes';
 import { InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -64,6 +65,14 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
     }
   };
 
+  const label: string =
+    layer instanceof dataLayers.AnnotationsDataLayer && Boolean(layer.state.query.builtIn)
+      ? t('dashboard-scene.annotation-settings-list.built-in', '{{annoName}} (Built-in)', {
+          annoName: layer.state.name,
+          interpolation: { escapeValue: false },
+        })
+      : layer.state.name;
+
   if (inMenu) {
     return (
       <div
@@ -80,7 +89,7 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
           htmlFor={isSelectable ? undefined : elementId}
           isLoading={showLoading}
           onCancel={() => layer.cancelQuery?.()}
-          label={layer.state.name}
+          label={label}
           description={layer.state.description}
           error={layer.state.data?.errors?.[0].message}
           layout={'vertical'}
@@ -104,7 +113,7 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
         htmlFor={isSelectable ? undefined : elementId}
         isLoading={showLoading}
         onCancel={() => layer.cancelQuery?.()}
-        label={layer.state.name}
+        label={label}
         description={layer.state.description}
         error={layer.state.data?.errors?.[0].message}
         className={cx(isSelectable && styles.labelSelectable)}
