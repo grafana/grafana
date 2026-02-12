@@ -1,4 +1,4 @@
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   getListedPanelPluginIds,
@@ -12,20 +12,22 @@ import { initPluginMetas } from './plugins';
 import { panel } from './test-fixtures/config.panels';
 
 jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
-jest.mock('../../internal/openFeature', () => ({
-  ...jest.requireActual('../../internal/openFeature'),
-  evaluateBooleanFlag: jest.fn(),
-}));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
-const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 describe('when useMTPlugins flag is enabled and panels is not initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setPanelPluginMetas({});
     jest.resetAllMocks();
     initPluginMetasMock.mockResolvedValue({ items: [] });
-    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
@@ -65,10 +67,17 @@ describe('when useMTPlugins flag is enabled and panels is not initialized', () =
 });
 
 describe('when useMTPlugins flag is enabled and panels is initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setPanelPluginMetas({ 'grafana-test-panel': panel });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -126,10 +135,17 @@ describe('when useMTPlugins flag is enabled and panels is initialized', () => {
 });
 
 describe('when useMTPlugins flag is disabled and panels is not initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setPanelPluginMetas({});
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -169,10 +185,17 @@ describe('when useMTPlugins flag is disabled and panels is not initialized', () 
 });
 
 describe('when useMTPlugins flag is disabled and panels is initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setPanelPluginMetas({ 'grafana-test-panel': panel });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -230,10 +253,17 @@ describe('when useMTPlugins flag is disabled and panels is initialized', () => {
 });
 
 describe('immutability', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setPanelPluginMetas({ 'grafana-test-panel': panel });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getPanelPluginMetas should return a deep clone', async () => {
