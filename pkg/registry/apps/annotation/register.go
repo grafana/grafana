@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -92,7 +92,46 @@ func RegisterAppInstaller(
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	return authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Allow all authenticated users through - authorization is handled in the Mutate hook
+		// and legacyStorage methods, which check dashboard-specific permissions
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
+func (a *AppInstaller) AdmissionPlugin() admission.Factory {
+	return func(config io.Reader) (admission.Interface, error) {
+		return &annotationAdmissionController{installer: a}, nil
+	}
+}
+
+// annotationAdmissionController implements admission.Interface for annotations
+type annotationAdmissionController struct {
+	installer *AppInstaller
+}
+
+var _ admission.Interface = (*annotationAdmissionController)(nil)
+
+func (c *annotationAdmissionController) Admit(ctx context.Context, attr admission.Attributes, o admission.ObjectInterfaces) error {
+	// Only handle annotation resources
+	if attr.GetResource().Group != "annotation.grafana.app" || attr.GetResource().Resource != "annotations" {
+		return nil
+	}
+	return c.installer.Mutate(ctx, attr, o)
+}
+
+func (c *annotationAdmissionController) Validate(ctx context.Context, attr admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
+}
+
+func (c *annotationAdmissionController) Handles(operation admission.Operation) bool {
+	return operation == admission.Create || operation == admission.Update || operation == admission.Delete
 }
 
 func (a *AppInstaller) Mutate(ctx context.Context, attr admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -106,14 +145,20 @@ func (a *AppInstaller) Mutate(ctx context.Context, attr admission.Attributes, _ 
 	// Get the current user
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return fmt.Errorf("authentication required: %w", err)
+		return admission.NewForbidden(attr, fmt.Errorf("authentication required: %w", err))
 	}
 
-	// Get the annotation object
-	obj := attr.GetObject()
+	// Get the annotation object - for Delete, use GetOldObject()
+	var obj runtime.Object
+	if verb == admission.Delete {
+		obj = attr.GetOldObject()
+	} else {
+		obj = attr.GetObject()
+	}
+
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
-		return fmt.Errorf("expected annotation, got %T", obj)
+		return admission.NewForbidden(attr, fmt.Errorf("expected annotation, got %T", obj))
 	}
 
 	// Extract dashboard UID
@@ -130,22 +175,21 @@ func (a *AppInstaller) Mutate(ctx context.Context, attr admission.Attributes, _ 
 		Limit:        1,
 	}
 
-	// Check permissions using authService
 	resources, err := a.authService.Authorize(ctx, query)
 	if err != nil {
-		return fmt.Errorf("authorization failed: %w", err)
+		return admission.NewForbidden(attr, fmt.Errorf("authorization failed: %w", err))
 	}
 
 	// Verify user has access
 	if dashboardUID != "" {
 		// Dashboard annotation - check dashboard access
 		if _, canAccess := resources.Dashboards[dashboardUID]; !canAccess {
-			return fmt.Errorf("user does not have permission to %s annotations on dashboard %s", verb, dashboardUID)
+			return admission.NewForbidden(attr, fmt.Errorf("user does not have permission to %s annotations on dashboard %s", verb, dashboardUID))
 		}
 	} else {
 		// Organization annotation - check org access
 		if !resources.CanAccessOrgAnnotations {
-			return fmt.Errorf("user does not have permission to %s organization annotations", verb)
+			return admission.NewForbidden(attr, fmt.Errorf("user does not have permission to %s organization annotations", verb))
 		}
 	}
 
@@ -427,7 +471,53 @@ func (s *legacyStorage) Update(ctx context.Context,
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
+
+	// Fetch the annotation first to check permissions
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Check user permissions
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, errors.NewUnauthorized("authentication required")
+	}
+
+	// Extract dashboard UID
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	// Build authorization query - require EDIT permission for delete
+	query := annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+		Limit:        1,
+	}
+
+	// Check permissions
+	resources, err := s.authService.Authorize(ctx, query)
+	if err != nil {
+		// Return NotFound instead of Forbidden to avoid leaking existence
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	// Verify access to this specific annotation
+	if !s.canAccessAnnotation(annotation, resources) {
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	// Perform the delete
+	err = s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
