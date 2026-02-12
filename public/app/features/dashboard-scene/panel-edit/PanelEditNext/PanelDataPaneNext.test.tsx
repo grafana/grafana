@@ -1,8 +1,20 @@
-import { sceneGraph, SceneQueryRunner, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
+
+const mockGetInstanceSettings = jest.fn();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: mockGetInstanceSettings,
+  }),
+}));
 
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState = {
@@ -237,6 +249,188 @@ describe('PanelDataPaneNext', () => {
       });
 
       expect(mockQueryRunner.runQueries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('transformations', () => {
+    const mockTransformations: DataTransformerConfig[] = [
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+      { id: 'filter', options: {} },
+    ];
+
+    let mockTransformer: SceneDataTransformer;
+
+    beforeEach(() => {
+      mockTransformer = new SceneDataTransformer({
+        transformations: mockTransformations,
+        $data: mockQueryRunner,
+      });
+
+      jest.spyOn(mockTransformer, 'setState');
+      mockPanel.state.$data = mockTransformer;
+    });
+
+    describe('reorderTransformations', () => {
+      it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        const newOrder: DataTransformerConfig[] = [
+          { id: 'reduce', options: {} },
+          { id: 'organize', options: {} },
+        ];
+
+        dataPane.reorderTransformations(newOrder);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({ transformations: newOrder });
+        expect(mockTransformer.reprocessTransformations).toHaveBeenCalled();
+      });
+
+      it('should not throw when $data is not SceneDataTransformer', () => {
+        mockPanel.state.$data = undefined;
+        const newOrder: DataTransformerConfig[] = [{ id: 'reduce', options: {} }];
+
+        expect(() => dataPane.reorderTransformations(newOrder)).not.toThrow();
+      });
+    });
+
+    describe('deleteTransformation', () => {
+      it('should delete a transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+        expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+      });
+
+      it('should not delete a transformation if the index is out of bounds', () => {
+        dataPane.deleteTransformation(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.deleteTransformation(3);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('toggleTransformationDisabled', () => {
+      it('should toggle the disabled state of a transformation', () => {
+        dataPane.toggleTransformationDisabled(1);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {}, disabled: true },
+            { id: 'filter', options: {} },
+          ],
+        });
+      });
+
+      it('should not toggle if the index is out of bounds', () => {
+        dataPane.toggleTransformationDisabled(-1);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+
+        dataPane.toggleTransformationDisabled(5);
+        expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('addQuery', () => {
+    const promDsSettings = {
+      uid: 'prom-1',
+      type: 'prometheus',
+      name: 'Prometheus',
+      meta: { mixed: false },
+    } as unknown as DataSourceInstanceSettings;
+
+    const mixedDsSettings = {
+      uid: '-- Mixed --',
+      type: 'mixed',
+      name: 'Mixed',
+      meta: { mixed: true },
+    } as unknown as DataSourceInstanceSettings;
+
+    const defaultDsSettings = {
+      uid: 'gdev-testdata',
+      type: 'testdata',
+      name: 'TestData',
+      meta: { mixed: false },
+    } as unknown as DataSourceInstanceSettings;
+
+    it('should assign the panel datasource when it is not Mixed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.setState({ dsSettings: promDsSettings });
+
+      const refId = dataPane.addQuery();
+
+      expect(refId).toBe('B');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({
+            refId: 'B',
+            datasource: getDataSourceRef(promDsSettings),
+          }),
+        ]),
+      });
+    });
+
+    it('should assign the default datasource when the panel datasource is Mixed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }] as DataQuery[];
+
+      dataPane.setState({ dsSettings: mixedDsSettings });
+
+      const originalDefault = config.defaultDatasource;
+      config.defaultDatasource = 'gdev-testdata';
+
+      mockGetInstanceSettings.mockImplementation((ref: string) => {
+        if (ref === 'gdev-testdata') {
+          return defaultDsSettings;
+        }
+        return undefined;
+      });
+
+      try {
+        const refId = dataPane.addQuery();
+
+        expect(refId).toBe('B');
+        expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+          queries: expect.arrayContaining([
+            expect.objectContaining({
+              refId: 'B',
+              datasource: getDataSourceRef(defaultDsSettings),
+            }),
+          ]),
+        });
+      } finally {
+        config.defaultDatasource = originalDefault;
+      }
+    });
+
+    it('should preserve a caller-supplied datasource (e.g. expressions)', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.setState({ dsSettings: promDsSettings });
+
+      const expressionDs = { type: '__expr__', uid: '__expr__' };
+      const refId = dataPane.addQuery({ datasource: expressionDs });
+
+      expect(refId).toBe('B');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({
+            refId: 'B',
+            datasource: expressionDs,
+          }),
+        ]),
+      });
     });
   });
 });
