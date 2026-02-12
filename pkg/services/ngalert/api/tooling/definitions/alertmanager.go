@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -776,6 +777,20 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 	return config
 }
 
+type ManagedInhibitionRules map[string]*models.InhibitionRule
+
+func (mir *ManagedInhibitionRules) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain ManagedInhibitionRules
+	if err := unmarshal((*plain)(mir)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mir *ManagedInhibitionRules) UnmarshalJSON(b []byte) error {
+	return yaml.Unmarshal(b, &mir)
+}
+
 // ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
 // GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to
 // definitions.Route explicit.
@@ -796,11 +811,12 @@ func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
 
 // swagger:model
 type PostableUserConfig struct {
-	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes      ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"` // TODO: Move to ConfigRevision?
-	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+	TemplateFiles          map[string]string         `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig     PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs           []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
+	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
+	amSimple               map[string]interface{}    `yaml:"-" json:"-"`
 }
 
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {

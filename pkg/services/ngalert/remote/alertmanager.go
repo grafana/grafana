@@ -361,6 +361,17 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managed)
 	}
 
+	// Add inhibition rules to the configuration using the same pattern as managed routes.
+	managedInhibitionRules := maps.Clone(c.ManagedInhibitionRules)
+	if managedInhibitionRules == nil {
+		managedInhibitionRules = make(apimodels.ManagedInhibitionRules)
+	}
+
+	amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
+		amConfig.InhibitRules,
+		c.ManagedInhibitionRules,
+	)
+
 	var templates []definition.PostableApiTemplate
 	if len(c.ExtraConfigs) > 0 && len(c.ExtraConfigs[0].TemplateFiles) > 0 {
 		templates = definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
