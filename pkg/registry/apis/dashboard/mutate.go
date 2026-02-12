@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -58,6 +60,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+
+		// Strip BOMs from all string fields in the spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
+
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -67,6 +73,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+
+		// Strip BOMs from all string fields in the spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
+
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
@@ -77,6 +87,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 
 	case *dashboardV2alpha1.Dashboard:
+		// Strip BOMs from all string fields in the spec by marshal/unmarshal
+		if specData, err := json.Marshal(v.Spec); err == nil {
+			var cleanSpec map[string]any
+			if err := json.Unmarshal(specData, &cleanSpec); err == nil {
+				cleanSpec = util.StripBOMFromInterface(cleanSpec).(map[string]any)
+				if cleanData, err := json.Marshal(cleanSpec); err == nil {
+					_ = json.Unmarshal(cleanData, &v.Spec)
+				}
+			}
+		}
+
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
 		// until the generator is fixed.
 		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
@@ -88,6 +109,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
+		// Strip BOMs from all string fields in the spec by marshal/unmarshal
+		if specData, err := json.Marshal(v.Spec); err == nil {
+			var cleanSpec map[string]any
+			if err := json.Unmarshal(specData, &cleanSpec); err == nil {
+				cleanSpec = util.StripBOMFromInterface(cleanSpec).(map[string]any)
+				if cleanData, err := json.Marshal(cleanSpec); err == nil {
+					_ = json.Unmarshal(cleanData, &v.Spec)
+				}
+			}
+		}
+
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
 		// until the generator is fixed.
 		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
