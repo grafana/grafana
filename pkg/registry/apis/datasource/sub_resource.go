@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type subResourceREST struct {
@@ -49,8 +51,13 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+		}
 		return nil, err
 	}
+
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 

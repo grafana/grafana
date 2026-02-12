@@ -466,6 +466,9 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
+	// Headers are optional extra headers to send. Auth-related headers set here
+	// can be used to verify they are stripped before the request reaches plugins.
+	Headers map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -570,6 +573,9 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
+	}
+	for k, v := range params.Headers {
+		req.Header.Set(k, v)
 	}
 
 	rsp, err := sharedHTTPClient.Do(req)
