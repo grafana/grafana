@@ -60,6 +60,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { DashboardRules } from '../conditional-rendering/rules/DashboardRules';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
@@ -214,7 +215,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
   /** Dashboard-level rules for dynamic behavior, gated behind dashboardRules feature flag */
-  rules?: DashboardV2Spec['rules'];
+  dashboardRules?: DashboardRules;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {

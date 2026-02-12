@@ -163,7 +163,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF layout
 
     // rules (dashboard-level rules engine, gated behind dashboardRules feature flag)
-    rules: sceneDash.rules,
+    rules: sceneDash.dashboardRules?.serialize(),
     // EOF rules
   };
 

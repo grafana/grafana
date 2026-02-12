@@ -66,6 +66,7 @@ import {
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { DashboardRules } from '../conditional-rendering/rules/DashboardRules';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
@@ -227,7 +228,7 @@ export function transformSaveModelSchemaV2ToScene(
       title: dashboard.title,
       uid: metadata.name,
       version: metadata.generation,
-      rules: dashboard.rules,
+      dashboardRules: dashboard.rules?.length ? DashboardRules.deserialize(dashboard.rules) : undefined,
       body: layoutManager,
       $timeRange: new SceneTimeRange({
         // Use defaults when time is empty to match DashboardModel behavior
