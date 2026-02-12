@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LogsSortOrder } from '@grafana/schema/dist/esm/common/common.gen';
+import { LogsSortOrder } from '@grafana/data';
 
 import { LogTableControls } from './LogTableControls';
 
