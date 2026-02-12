@@ -22,7 +22,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		FolderInfoList{}.OpenAPIModelName():                                              schema_pkg_apis_folder_v1beta1_FolderInfoList(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderJSONCodec": schema_pkg_apis_folder_v1beta1_FolderJSONCodec(ref),
 		FolderList{}.OpenAPIModelName():                                                  schema_pkg_apis_folder_v1beta1_FolderList(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderMetadata":  schema_pkg_apis_folder_v1beta1_FolderMetadata(ref),
 		FolderSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_folder_v1beta1_FolderSpec(ref),
 		ResourceStats{}.OpenAPIModelName():                                               schema_pkg_apis_folder_v1beta1_ResourceStats(ref),
 	}
@@ -352,102 +351,6 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 		},
 		Dependencies: []string{
 			Folder{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_folder_v1beta1_FolderMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "metadata contains embedded CommonMetadata and can be extended with custom string fields without external reference as using the CommonMetadata reference breaks thema codegen.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"updateTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"createdBy": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"creationTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"deletionTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
-					"finalizers": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"resourceVersion": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"generation": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-					"updatedBy": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"updateTimestamp", "createdBy", "uid", "creationTimestamp", "finalizers", "resourceVersion", "generation", "updatedBy", "labels"},
-			},
-		},
 	}
 }
 

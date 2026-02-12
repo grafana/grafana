@@ -10,9 +10,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	dashboardpkg "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	playlistpkg "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	dashboard "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	playlist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
@@ -400,13 +403,11 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
-			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			mockPlaylist := &legacy.MockPlaylistMigrator{}
 			registry := migrations.NewMigrationRegistry()
-			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				mockAccessor,
 				mockClient,
 				registry,
 			)
@@ -458,13 +459,11 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 		Once()
 
 	// Create migrator with mock client
-	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	mockPlaylist := &legacy.MockPlaylistMigrator{}
 	registry := migrations.NewMigrationRegistry()
-	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		mockAccessor,
 		mockClient,
 		registry,
 	)
@@ -648,13 +647,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
-			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			mockPlaylist := &legacy.MockPlaylistMigrator{}
 			registry := migrations.NewMigrationRegistry()
-			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				mockAccessor,
 				mockClient,
 				registry,
 			)
@@ -722,13 +719,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 		Once()
 
 	// Create migrator with mock client
-	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	mockPlaylist := &legacy.MockPlaylistMigrator{}
 	registry := migrations.NewMigrationRegistry()
-	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		mockAccessor,
 		mockClient,
 		registry,
 	)

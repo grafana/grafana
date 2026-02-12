@@ -6,7 +6,7 @@ import {
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
@@ -24,6 +24,34 @@ import { getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { filterDataTransformerConfigs } from './QueryEditor/utils';
+
+/**
+ * Resolve the datasource ref to assign to a new query.
+ */
+function resolveNewQueryDatasource(
+  callerDs: DataSourceRef | undefined,
+  panelDsSettings: DataSourceInstanceSettings | undefined
+): DataSourceRef | undefined {
+  // Caller explicitly chose a datasource (e.g. ExpressionDatasourceRef).
+  if (callerDs) {
+    return callerDs;
+  }
+
+  if (!panelDsSettings) {
+    return undefined;
+  }
+
+  // "Mixed" isn't meaningful on a per-query basis; use the configured default.
+  // If missing a default datasource (unexpected), leave `undefined`
+  // so the query inherits the panel datasource at render time.
+  if (panelDsSettings.meta.mixed) {
+    const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+    return defaultDs ? getDataSourceRef(defaultDs) : undefined;
+  }
+
+  return getDataSourceRef(panelDsSettings);
+}
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -134,7 +162,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     });
   };
 
-  public addQuery = (query?: Partial<DataQuery>) => {
+  public addQuery = (query?: Partial<DataQuery>, afterRefId?: string): string | undefined => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
@@ -143,15 +171,38 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const { datasource, dsSettings } = this.state;
     const currentQueries = queryRunner.state.queries;
 
-    // Build new query with defaults
+    // Build new query with defaults.
     const newQuery: Partial<DataQuery> = {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
       ...query,
-      datasource: dsSettings ? getDataSourceRef(dsSettings) : undefined,
     };
 
+    newQuery.datasource = resolveNewQueryDatasource(newQuery.datasource ?? undefined, dsSettings);
+
     const updatedQueries = addQuery(currentQueries, newQuery);
+
+    // Identify the newly added query by refId rather than position, so this
+    // is resilient to future changes in how addQuery orders the array.
+    const existingRefIds = new Set(currentQueries.map((q) => q.refId));
+    const newItem = updatedQueries.find((q) => !existingRefIds.has(q.refId));
+
+    // If afterRefId is specified, move the new query to just after it
+    if (afterRefId && newItem) {
+      const newItemIndex = updatedQueries.indexOf(newItem);
+      if (newItemIndex !== -1) {
+        updatedQueries.splice(newItemIndex, 1);
+      }
+      const afterIndex = updatedQueries.findIndex((q) => q.refId === afterRefId);
+      if (afterIndex !== -1) {
+        updatedQueries.splice(afterIndex + 1, 0, newItem);
+      } else {
+        updatedQueries.push(newItem); // fallback to append if not found
+      }
+    }
+
     queryRunner.setState({ queries: updatedQueries });
+
+    return newItem?.refId;
   };
 
   public deleteQuery = (refId: string) => {
@@ -159,6 +210,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index, 1);
       return queries;
     });
+    this.runQueries();
   };
 
   public duplicateQuery = (refId: string) => {
@@ -170,6 +222,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index + 1, 0, duplicated);
       return queries;
     });
+    this.runQueries();
   };
 
   public toggleQueryHide = (refId: string) => {
@@ -177,6 +230,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries[index] = { ...query, hide: !query.hide };
       return queries;
     });
+    this.runQueries();
   };
 
   public runQueries = () => {
@@ -184,6 +238,63 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (queryRunner) {
       queryRunner.runQueries();
     }
+  };
+
+  // Transformation Operations
+  private getSceneDataTransformer(): SceneDataTransformer | undefined {
+    const panel = this.state.panelRef.resolve();
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      return panel.state.$data;
+    }
+    return undefined;
+  }
+
+  private getTransformations(index: number): {
+    transformations: DataTransformerConfig[] | undefined;
+    transformer: SceneDataTransformer | undefined;
+  } {
+    const transformer = this.getSceneDataTransformer();
+
+    if (transformer) {
+      const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
+
+      if (index >= 0 && index < transformations.length) {
+        return { transformations, transformer };
+      }
+    }
+
+    return { transformations: undefined, transformer: undefined };
+  }
+
+  public reorderTransformations = (transformations: DataTransformerConfig[]) => {
+    const transformer = this.getSceneDataTransformer();
+    if (transformer) {
+      transformer.setState({ transformations });
+      transformer.reprocessTransformations();
+    }
+  };
+
+  public deleteTransformation = (index: number) => {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
+      return;
+    }
+
+    transformations.splice(index, 1);
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public toggleTransformationDisabled = (index: number) => {
+    const { transformations, transformer } = this.getTransformations(index);
+    if (!transformations || !transformer) {
+      return;
+    }
+
+    const transformation = transformations[index];
+    transformations[index] = { ...transformation, disabled: !transformation.disabled };
+    transformer.setState({ transformations });
+    this.runQueries();
   };
 
   public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {

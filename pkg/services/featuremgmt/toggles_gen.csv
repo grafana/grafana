@@ -22,8 +22,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-04-12,disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-04-03,renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
-2023-05-04,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
+2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2023-04-24,enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
+2026-02-10,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
 2023-07-12,logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
@@ -85,8 +86,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-01-10,alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 2024-01-18,jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 2025-12-29,auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
-2025-03-19,secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-07-31,secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+2026-02-04,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-01-23,alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 2025-01-27,alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 2024-11-27,scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -144,10 +145,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
-2025-11-04,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
+2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
 2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
-2024-12-19,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-11-14,passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
@@ -231,7 +232,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true

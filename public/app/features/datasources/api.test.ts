@@ -59,7 +59,9 @@ describe('Datasources / API', () => {
         basicAuthUser: 'zaphod',
         isDefault: true,
         jsonData: { authType: 'bar' },
-        secureJsonFields: {},
+        secureJsonFields: {
+          basicAuthPassword: true,
+        },
         readOnly: false,
         withCredentials: false,
       };
@@ -88,6 +90,7 @@ describe('Datasources / API', () => {
         metadata: k8sMetadata,
         spec: k8sSpec,
         apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        secure: { basicAuthPassword: { foo: 'bar' } },
       };
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
     });
