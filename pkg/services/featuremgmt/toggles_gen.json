@@ -4207,6 +4207,19 @@
     },
     {
       "metadata": {
+        "name": "sceneCsvExport",
+        "resourceVersion": "1770806976610",
+        "creationTimestamp": "2026-02-11T10:49:36Z"
+      },
+      "spec": {
+        "description": "Enables CSV export using scenes dashboard architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-11-27T07:58:25Z"
