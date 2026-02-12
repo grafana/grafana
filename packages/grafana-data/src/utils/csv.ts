@@ -306,21 +306,23 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < fields.length; j++) {
           if (j > 0) {
-            csv = csv + config.delimiter;
+            csv += config.delimiter;
           }
 
           let v = fields[j].values[i];
-          // For FieldType frame, use value if it exists to prevent exporting [object object]
-          if (fields[j].type === FieldType.frame && fields[j].values[i].value) {
-            v = fields[j].values[i].value;
-          }
+
           if (v !== null) {
-            csv = csv + writers[j](v);
+            // For FieldType frame, use value if it exists to prevent exporting [object object]
+            if (fields[j].type === FieldType.frame && 'value' in v) {
+              v = v.value;
+            }
+
+            csv += writers[j](v);
           }
         }
 
         if (i !== length - 1) {
-          csv = csv + config.newline;
+          csv += config.newline;
         }
       }
     }
