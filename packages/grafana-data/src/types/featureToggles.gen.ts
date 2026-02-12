@@ -329,6 +329,11 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
+  * Use the new multitenant datasource resource API path
+  * @default false
+  */
+  datasourcesResourceResourceApi?: boolean;
+  /**
   * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
