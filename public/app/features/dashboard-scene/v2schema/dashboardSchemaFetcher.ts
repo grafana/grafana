@@ -101,6 +101,12 @@ async function doFetchSchema(): Promise<JSONSchema> {
   // Inject const constraints for kind fields that the OpenAPI generator doesn't emit
   injectKindConstraints(definitions);
 
+  // Fix scalar union types whose OpenAPI schema is a struct but the wire format is a plain value
+  fixScalarUnions(definitions);
+
+  // Fix map[string]interface{} properties where the generator restricts values to objects
+  fixOpaqueMaps(definitions);
+
   return jsonSchema;
 }
 
@@ -129,6 +135,52 @@ function convertOpenAPIToJSONSchema(schema: JSONSchema): JSONSchema {
 function convertRefToDefinitionKey(key: string): string {
   // Use the full key but replace dots with underscores for valid JSON pointer
   return key.replace(/\./g, '_');
+}
+
+// Scalar union types: custom marshalers serialize as plain values,
+// but the generator emits struct-based schemas.
+const SCALAR_UNION_REPLACEMENTS: Record<string, JSONSchema> = {
+  DashboardStringOrArrayOfString: {
+    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+  },
+  DashboardStringOrFloat64: {
+    oneOf: [{ type: 'string' }, { type: 'number' }],
+  },
+};
+
+function fixScalarUnions(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const [suffix, replacement] of Object.entries(SCALAR_UNION_REPLACEMENTS)) {
+      if (key.endsWith(`_${suffix}`)) {
+        delete schema.type;
+        delete schema.properties;
+        delete schema.required;
+        Object.assign(schema, replacement);
+        break;
+      }
+    }
+  }
+}
+
+// map[string]interface{} properties: the generator maps interface{} to { type: object },
+// incorrectly rejecting primitives as map values.
+const OPAQUE_MAP_PROPERTIES: Record<string, string[]> = {
+  DashboardFieldConfig: ['custom'],
+  DashboardVizConfigSpec: ['options'],
+};
+
+function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const [suffix, props] of Object.entries(OPAQUE_MAP_PROPERTIES)) {
+      if (key.endsWith(`_${suffix}`)) {
+        for (const p of props) {
+          if (schema.properties?.[p]) {
+            schema.properties[p] = { type: 'object', additionalProperties: true };
+          }
+        }
+      }
+    }
+  }
 }
 
 // Kind values that are dynamic (e.g. plugin ID), not fixed strings.
