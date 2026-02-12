@@ -48,6 +48,7 @@ import {
   useColWidths,
   useFilteredRows,
   useHeaderHeight,
+  useManagedSort,
   usePaginatedRows,
   useRowHeight,
   useScrollbarWidth,
@@ -182,18 +183,9 @@ export function TableNG(props: TableNGProps) {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, sortBy, sortByBehavior });
+  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy: sortBy });
 
-  useEffect(() => {
-    if (sortByBehavior === 'managed' && setSortColumns && sortBy) {
-      setSortColumns?.(
-        sortBy.map(({ displayName, desc }) => ({
-          columnKey: displayName,
-          direction: desc === true ? 'DESC' : 'ASC',
-        }))
-      );
-    }
-  }, [sortBy, sortByBehavior, setSortColumns]);
+  useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();

@@ -97,8 +97,7 @@ export function useFilteredRows(
 
 export interface SortedRowsOptions {
   hasNestedFrames: boolean;
-  sortBy?: TableSortByFieldState[];
-  sortByBehavior: SortByBehavior;
+  initialSortBy?: TableSortByFieldState[];
 }
 
 export interface SortedRowsResult {
@@ -107,14 +106,33 @@ export interface SortedRowsResult {
   setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
 }
 
+interface ManagedSortProps {
+  sortByBehavior: SortByBehavior;
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+  sortBy?: TableSortByFieldState[];
+}
+
+export function useManagedSort({ sortByBehavior, setSortColumns, sortBy }: ManagedSortProps) {
+  useEffect(() => {
+    if (sortByBehavior === 'managed' && setSortColumns && sortBy) {
+      setSortColumns?.(
+        sortBy.map(({ displayName, desc }) => ({
+          columnKey: displayName,
+          direction: desc === true ? 'DESC' : 'ASC',
+        }))
+      );
+    }
+  }, [setSortColumns, sortBy, sortByBehavior]);
+}
+
 export function useSortedRows(
   rows: TableRow[],
   fields: Field[],
-  { sortBy, hasNestedFrames, sortByBehavior }: SortedRowsOptions
+  { initialSortBy, hasNestedFrames }: SortedRowsOptions
 ): SortedRowsResult {
   const initialSortColumns = useMemo<SortColumn[]>(
     () =>
-      sortBy?.flatMap(({ displayName, desc }) => {
+      initialSortBy?.flatMap(({ displayName, desc }) => {
         if (!fields.some((f) => getDisplayName(f) === displayName)) {
           return [];
         }

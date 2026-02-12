@@ -11,6 +11,7 @@ import {
   useHeaderHeight,
   useRowHeight,
   useReducerEntries,
+  useManagedSort,
 } from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext } from './utils';
@@ -92,6 +93,44 @@ describe('TableNG hooks', () => {
     });
 
     it.todo('should handle nested frames');
+  });
+
+  describe('useManagedSort', () => {
+    it('Should not update if behavior is initial', () => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: [
+            {
+              displayName: 'Alice',
+              desc: true,
+            },
+          ],
+          sortByBehavior: 'initial',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(0);
+    });
+
+    it('Should update if behavior is managed', () => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: [
+            {
+              displayName: 'Alice',
+              desc: true,
+            },
+          ],
+          sortByBehavior: 'managed',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('useSortedRows', () => {
