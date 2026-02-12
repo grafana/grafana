@@ -115,6 +115,11 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
+/**
+ * Controls how the `sortBy` prop is applied.
+ * `initial` will only read from the options on initial render,
+ * while `managed` will update the sort order whenever the sortBy array is changed.
+ */
 export type SortByBehavior = 'initial' | 'managed';
 
 export interface BaseTableProps {
