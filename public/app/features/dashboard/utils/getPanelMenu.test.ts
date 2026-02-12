@@ -489,7 +489,7 @@ describe('getPanelMenu()', () => {
         expect(testingSubmenu?.subMenu).toHaveLength(2);
       });
 
-      it('should create submenu for group.name Testing inside Extensions', () => {
+      it('should create submenu for group.name Testing (below-extensions)', () => {
         const panel = new PanelModel({});
         const dashboard = createDashboardModelFixture({});
         const extensions: PluginExtensionLink[] = [
@@ -505,9 +505,7 @@ describe('getPanelMenu()', () => {
         ];
         const menuItems = getPanelMenu(dashboard, panel, extensions);
 
-        const extensionsSubmenu = menuItems.find((i) => i.text === 'Extensions');
-        expect(extensionsSubmenu).toBeDefined();
-        const testingSubmenu = extensionsSubmenu?.subMenu?.find((i) => i.text === 'Testing');
+        const testingSubmenu = menuItems.find((i) => i.text === 'Testing');
         expect(testingSubmenu).toBeDefined();
         expect(testingSubmenu?.type).toBe('submenu');
         expect(testingSubmenu?.iconClassName).toBe('info');
@@ -532,14 +530,11 @@ describe('getPanelMenu()', () => {
         ];
         const menuItems = getPanelMenu(dashboard, panel, extensions);
 
-        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu ?? [];
-        const hasFakeInspect = extensionsSubMenu.some(
-          (item) => item.text === 'Fake Inspect' || item.subMenu?.some((s) => s.text === 'Fake Inspect')
-        );
-        expect(hasFakeInspect).toBe(true);
+        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+        expect(extensionsSubMenu).toEqual(expect.arrayContaining([expect.objectContaining({ text: 'Fake Inspect' })]));
       });
 
-      it('should order: root items → root submenus → Extensions → More... (below-extensions inside Extensions)', () => {
+      it('should order: root items → root submenus → Extensions → below-Extensions submenus → More...', () => {
         const panel = new PanelModel({});
         const dashboard = createDashboardModelFixture({});
         const extensions: PluginExtensionLink[] = [
@@ -584,16 +579,14 @@ describe('getPanelMenu()', () => {
         const rootIdx = menuItems.findIndex((i) => i.text === 'Root Item');
         const mySubmenuIdx = menuItems.findIndex((i) => i.text === 'MySubmenu');
         const extIdx = menuItems.findIndex((i) => i.text === 'Extensions');
+        const belowIdx = menuItems.findIndex((i) => i.text === 'BelowGroup');
         const moreIdx = menuItems.findIndex((i) => i.text === 'More...');
 
         expect(rootIdx).toBeGreaterThanOrEqual(0);
         expect(mySubmenuIdx).toBeGreaterThan(rootIdx);
         expect(extIdx).toBeGreaterThan(mySubmenuIdx);
-        expect(moreIdx).toBeGreaterThan(extIdx);
-
-        const extensionsSubmenu = menuItems.find((i) => i.text === 'Extensions');
-        const belowGroupInsideExtensions = extensionsSubmenu?.subMenu?.find((i) => i.text === 'BelowGroup');
-        expect(belowGroupInsideExtensions).toBeDefined();
+        expect(belowIdx).toBeGreaterThan(extIdx);
+        expect(moreIdx).toBeGreaterThan(belowIdx);
       });
     });
   });
