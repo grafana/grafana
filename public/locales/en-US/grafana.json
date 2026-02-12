@@ -12994,11 +12994,7 @@
     },
     "header": {
       "expression": "Expression",
-      "transformation": "Transformation",
-      "warning-badges": {
-        "text_one": "{{count}} {{type}}",
-        "text_other": "{{count}} {{type}}"
-      }
+      "transformation": "Transformation"
     },
     "help": {
       "close": "Close help",
