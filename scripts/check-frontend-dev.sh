@@ -14,24 +14,25 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
-# Check if .nvmrc file exists
-if [ ! -f ".nvmrc" ]; then
+# Check if package.json file exists
+if [ ! -f "package.json" ]; then
     printf "%b\n" ""
     printf "%b\n" "${RED}⚠️  ERROR  ⚠️${NC}"
-    printf "%b\n" "${YELLOW}${BOLD}.nvmrc file not found!${NC} Run '${BLUE}git checkout main -- .nvmrc${NC}' to fix."
+    printf "%b\n" "${YELLOW}${BOLD}package.json file not found!${NC} Run '${BLUE}git checkout main -- package.json${NC}' to fix."
     printf "%b\n" ""
     exit 1
 fi
 
-REQUIRED_VERSION=$(sed 's/v//' .nvmrc)
+REQUIRED_VERSION=$(npm pkg get engines.node | tr -d '"')
 CURRENT_VERSION=$(node --version | sed 's/v//')
 
-if [ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]; then
+# Check the semver compatibility of the current Node.js version with the `semver` package CLI
+if ! yarn semver --version "$CURRENT_VERSION" --range "$REQUIRED_VERSION" > /dev/null 2>&1; then
     printf "%b\n" ""
     printf "%b\n" "${RED}⚠️  WARNING  ⚠️${NC}"
     printf "%b\n" "${YELLOW}${BOLD}Node.js version mismatch!${NC}"
     printf "%b\n" ""
-    printf "%b\n" "${BOLD}${CYAN}Recommended:${NC} ${GREEN}$REQUIRED_VERSION${NC} (from .nvmrc)"
+    printf "%b\n" "${BOLD}${CYAN}Recommended:${NC} ${GREEN}$REQUIRED_VERSION${NC} (from package.json#engines.node)"
     printf "%b\n" "${BOLD}${CYAN}Current:${NC}     ${RED}$CURRENT_VERSION${NC}"
     printf "%b\n" ""
     printf "%b\n" "${BOLD}${YELLOW}⚠️ We only test and support developing Grafana with the specific LTS Node.js release.${NC}"
@@ -44,5 +45,3 @@ if [ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]; then
     printf "%b\n" "${BLUE}${BOLD}If you experience issues building Grafana, first switch to the recommended version of Node.js.${NC}"
     printf "%b\n" ""
 fi
-
-
