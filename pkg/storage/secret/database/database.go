@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/codes"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
@@ -52,6 +54,10 @@ func (db *Database) DriverName() string {
 	return db.dbType
 }
 
+// maxTransactionRetries is the maximum number of times a transaction will be retried
+// when a SQLite busy/locked error is encountered.
+const maxTransactionRetries = 5
+
 func (db *Database) Transaction(ctx context.Context, callback func(context.Context) error) (err error) {
 	// If another transaction is already open, we just use that one instead of nesting.
 	sqlxTx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx)
@@ -70,13 +76,30 @@ func (db *Database) Transaction(ctx context.Context, callback func(context.Conte
 		}
 	}()
 
-	sqlxTx, err = db.sqlx.BeginTxx(spanCtx, nil)
+	for retry := 0; ; retry++ {
+		err = db.doTransaction(spanCtx, callback)
+		if err == nil {
+			return nil
+		}
+
+		// Retry on SQLite busy/locked errors, up to the maximum number of retries.
+		if retry < maxTransactionRetries && sqlite.IsBusyOrLocked(err) {
+			time.Sleep(time.Millisecond * 10)
+			continue
+		}
+
+		return err
+	}
+}
+
+func (db *Database) doTransaction(ctx context.Context, callback func(context.Context) error) error {
+	sqlxTx, err := db.sqlx.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	// Save it in the context so the transaction can be reused in case it is nested.
-	txCtx := context.WithValue(spanCtx, contextSessionTxKey{}, sqlxTx)
+	txCtx := context.WithValue(ctx, contextSessionTxKey{}, sqlxTx)
 
 	if err := callback(txCtx); err != nil {
 		if rbErr := sqlxTx.Rollback(); rbErr != nil {

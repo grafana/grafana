@@ -418,6 +418,10 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
+	return mg.inTransactionWithRetry(callback, 0)
+}
+
+func (mg *Migrator) inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
@@ -428,6 +432,13 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	if err := callback(sess); err != nil {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
+		}
+
+		// Retry on SQLite busy/locked errors with a new session.
+		if retry < 5 && sqlite.IsBusyOrLocked(err) {
+			time.Sleep(time.Millisecond * 100)
+			mg.Logger.Info("Database locked on migration, retrying transaction", "error", err, "retry", retry)
+			return mg.inTransactionWithRetry(callback, retry+1)
 		}
 
 		return err
