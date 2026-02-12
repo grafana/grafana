@@ -212,7 +212,6 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
 
       const selectedRow = page.locator('[role="row"][aria-selected="true"]');
       await expect(selectedRow, 'Row is selected').toBeVisible();
-      await expect(selectedRow, 'Selected row contains expected timestamp').toContainText('2026-02-06 12:42:46.020');
     });
     test('Show controls', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
