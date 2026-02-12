@@ -5,6 +5,7 @@ import { USER_DEFINED_TREE_NAME } from '../../consts';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
 import {
+  routingTreeWithErrorScenario,
   simpleRoutingTreesList,
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
@@ -143,5 +144,20 @@ describe('clearable behavior', () => {
     await user.click(clearButton);
 
     expect(onChangeHandler).toHaveBeenCalledWith(null);
+  });
+});
+
+describe('error handling', () => {
+  beforeEach(() => {
+    server.use(...routingTreeWithErrorScenario);
+  });
+
+  it('should display an error alert when the API request fails', async () => {
+    const onChangeHandler = jest.fn();
+
+    render(<RoutingTreeSelector onChange={onChangeHandler} />);
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText(/failed to load notification policies/i)).toBeInTheDocument();
   });
 });

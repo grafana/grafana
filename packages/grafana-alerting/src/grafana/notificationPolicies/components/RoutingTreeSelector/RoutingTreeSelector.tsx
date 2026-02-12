@@ -2,12 +2,11 @@ import { useMemo } from 'react';
 
 import { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Alert, Combobox, ComboboxOption } from '@grafana/ui';
 
+import { CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { USER_DEFINED_TREE_NAME } from '../../consts';
 import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
-
-import { CustomComboBoxProps } from './ComboBox.types';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
@@ -32,74 +31,84 @@ export type RoutingTreeSelectorProps = CustomComboBoxProps<RoutingTree>;
  * ```
  */
 function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
-  const { ...comboboxProps } = props;
+  const {
+    currentData: routingTrees,
+    isLoading,
+    isError,
+  } = useListRoutingTrees({}, { refetchOnFocus: true, refetchOnMountOrArgChange: true });
 
-  const { currentData: routingTrees, isLoading } = useListRoutingTrees(
-    {},
-    { refetchOnFocus: true, refetchOnMountOrArgChange: true }
-  );
-
-  // Create a mapping of options with their corresponding routing trees
-  const routingTreeOptions = useMemo(() => {
+  // Build a lookup map from option value → RoutingTree for resolving onChange
+  const { options, treeLookup } = useMemo(() => {
     if (!routingTrees?.items) {
-      return [];
+      const empty: { options: Array<ComboboxOption<string>>; treeLookup: Map<string, RoutingTree> } = {
+        options: [],
+        treeLookup: new Map(),
+      };
+      return empty;
     }
 
-    return routingTrees.items
+    const lookup = new Map<string, RoutingTree>();
+    const opts: Array<ComboboxOption<string>> = routingTrees.items
       .map((tree) => {
-        const isDefault = tree.metadata.name === USER_DEFINED_TREE_NAME;
+        const name = tree.metadata.name ?? '';
+        const isDefault = name === USER_DEFINED_TREE_NAME;
+
+        lookup.set(name, tree);
 
         return {
-          option: {
-            label: isDefault
-              ? t('alerting.routing-tree-selector.default-policy', 'Default policy')
-              : (tree.metadata.name ?? ''),
-            value: tree.metadata.name ?? '',
-            description: isDefault
-              ? t(
-                  'alerting.routing-tree-selector.default-policy-desc',
-                  'Routes alerts using the default notification policy tree'
-                )
-              : t(
-                  'alerting.routing-tree-selector.custom-policy-desc',
-                  'Route alerts through the {{name}} policy tree',
-                  { name: tree.metadata.name }
-                ),
-          } satisfies ComboboxOption<string>,
-          tree,
-        };
+          label: isDefault ? t('alerting.routing-tree-selector.default-policy', 'Default policy') : name,
+          value: name,
+          description: isDefault
+            ? t(
+                'alerting.routing-tree-selector.default-policy-desc',
+                'Routes alerts using the default notification policy tree'
+              )
+            : t('alerting.routing-tree-selector.custom-policy-desc', 'Route alerts through the {{name}} policy tree', {
+                name,
+              }),
+        } satisfies ComboboxOption<string>;
       })
       .sort((a, b) => {
         // Default policy always first
-        if (a.tree.metadata.name === USER_DEFINED_TREE_NAME) {
+        if (a.value === USER_DEFINED_TREE_NAME) {
           return -1;
         }
-        if (b.tree.metadata.name === USER_DEFINED_TREE_NAME) {
+        if (b.value === USER_DEFINED_TREE_NAME) {
           return 1;
         }
-        return collator.compare(a.option.label, b.option.label);
+        return collator.compare(a.label, b.label);
       });
+
+    return { options: opts, treeLookup: lookup };
   }, [routingTrees?.items]);
 
-  const options = routingTreeOptions.map<ComboboxOption>((item) => item.option);
-
   const handleChange = (selectedOption: ComboboxOption<string> | null) => {
-    if (selectedOption == null && comboboxProps.isClearable) {
-      comboboxProps.onChange(null);
+    if (selectedOption == null && props.isClearable) {
+      props.onChange(null);
       return;
     }
 
     if (selectedOption) {
-      const matchedOption = routingTreeOptions.find(({ option }) => option.value === selectedOption.value);
-      if (!matchedOption) {
+      const tree = treeLookup.get(selectedOption.value);
+      if (!tree) {
+        console.warn(`RoutingTreeSelector: could not find routing tree for value "${selectedOption.value}"`);
         return;
       }
 
-      comboboxProps.onChange(matchedOption.tree);
+      props.onChange(tree);
     }
   };
 
-  return <Combobox {...comboboxProps} loading={isLoading} options={options} onChange={handleChange} />;
+  if (isError) {
+    return (
+      <Alert
+        severity="warning"
+        title={t('alerting.routing-tree-selector.error', 'Failed to load notification policies')}
+      />
+    );
+  }
+
+  return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { RoutingTreeSelector };
