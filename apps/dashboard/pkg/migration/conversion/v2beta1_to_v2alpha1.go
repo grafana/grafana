@@ -129,6 +129,9 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2bet
 		}
 	}
 
+	// Convert rules
+	out.Rules = convertRules_V2beta1_to_V2alpha1(in.Rules)
+
 	return nil
 }
 
@@ -547,6 +550,7 @@ func convertRowsLayoutSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardRowsLayo
 		out.Rows[i] = dashv2alpha1.DashboardRowsLayoutRowKind{
 			Kind: row.Kind,
 			Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+				Name:                 row.Spec.Name,
 				Title:                row.Spec.Title,
 				Collapse:             row.Spec.Collapse,
 				HideHeader:           row.Spec.HideHeader,
@@ -593,6 +597,7 @@ func convertTabsLayoutSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabsLayo
 		out.Tabs[i] = dashv2alpha1.DashboardTabsLayoutTabKind{
 			Kind: tab.Kind,
 			Spec: dashv2alpha1.DashboardTabsLayoutTabSpec{
+				Name:                 tab.Spec.Name,
 				Title:                tab.Spec.Title,
 				ConditionalRendering: convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(tab.Spec.ConditionalRendering),
 				Repeat:               convertTabRepeatOptions_V2beta1_to_V2alpha1(tab.Spec.Repeat),
@@ -1093,6 +1098,101 @@ func convertRowLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKin
 
 func convertTabLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	return convertLayout_V2beta1_to_V2alpha1(in, out, scope)
+}
+
+func convertRules_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleKind) []dashv2alpha1.DashboardDashboardRuleKind {
+	if in == nil {
+		return nil
+	}
+	if len(in) == 0 {
+		return []dashv2alpha1.DashboardDashboardRuleKind{}
+	}
+
+	out := make([]dashv2alpha1.DashboardDashboardRuleKind, len(in))
+	for i, rule := range in {
+		out[i] = dashv2alpha1.DashboardDashboardRuleKind{
+			Kind: rule.Kind,
+			Spec: dashv2alpha1.DashboardDashboardRuleSpec{
+				Name:       rule.Spec.Name,
+				Target:     convertRuleTarget_V2beta1_to_V2alpha1(&rule.Spec.Target),
+				Conditions: convertRuleConditions_V2beta1_to_V2alpha1(&rule.Spec.Conditions),
+				Outcomes:   convertRuleOutcomes_V2beta1_to_V2alpha1(rule.Spec.Outcomes),
+			},
+		}
+	}
+	return out
+}
+
+func convertRuleTarget_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardElementReferenceOrLayoutItemReference) dashv2alpha1.DashboardElementReferenceOrLayoutItemReference {
+	out := dashv2alpha1.DashboardElementReferenceOrLayoutItemReference{}
+	if in.ElementReference != nil {
+		out.ElementReference = &dashv2alpha1.DashboardElementReference{
+			Kind: in.ElementReference.Kind,
+			Name: in.ElementReference.Name,
+		}
+	}
+	if in.LayoutItemReference != nil {
+		out.LayoutItemReference = &dashv2alpha1.DashboardLayoutItemReference{
+			Kind: in.LayoutItemReference.Kind,
+			Name: in.LayoutItemReference.Name,
+		}
+	}
+	return out
+}
+
+func convertRuleConditions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDashboardRuleConditionsSpec) dashv2alpha1.DashboardDashboardRuleConditionsSpec {
+	out := dashv2alpha1.DashboardDashboardRuleConditionsSpec{
+		Match: dashv2alpha1.DashboardDashboardRuleConditionsSpecMatch(in.Match),
+		Items: make([]dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind, len(in.Items)),
+	}
+
+	for i, item := range in.Items {
+		out.Items[i] = dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+
+		if item.ConditionalRenderingVariableKind != nil {
+			out.Items[i].ConditionalRenderingVariableKind = &dashv2alpha1.DashboardConditionalRenderingVariableKind{
+				Kind: item.ConditionalRenderingVariableKind.Kind,
+				Spec: dashv2alpha1.DashboardConditionalRenderingVariableSpec{
+					Variable: item.ConditionalRenderingVariableKind.Spec.Variable,
+					Operator: dashv2alpha1.DashboardConditionalRenderingVariableSpecOperator(item.ConditionalRenderingVariableKind.Spec.Operator),
+					Value:    item.ConditionalRenderingVariableKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingDataKind != nil {
+			out.Items[i].ConditionalRenderingDataKind = &dashv2alpha1.DashboardConditionalRenderingDataKind{
+				Kind: item.ConditionalRenderingDataKind.Kind,
+				Spec: dashv2alpha1.DashboardConditionalRenderingDataSpec{
+					Value: item.ConditionalRenderingDataKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingTimeRangeSizeKind != nil {
+			out.Items[i].ConditionalRenderingTimeRangeSizeKind = &dashv2alpha1.DashboardConditionalRenderingTimeRangeSizeKind{
+				Kind: item.ConditionalRenderingTimeRangeSizeKind.Kind,
+				Spec: dashv2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec{
+					Value: item.ConditionalRenderingTimeRangeSizeKind.Spec.Value,
+				},
+			}
+		}
+	}
+
+	return out
+}
+
+func convertRuleOutcomes_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind) []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind {
+	out := make([]dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind, len(in))
+	for i, outcome := range in {
+		out[i] = dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind{
+			Kind: outcome.Kind,
+			Spec: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpec{
+				Visibility: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpecVisibility(outcome.Spec.Visibility),
+			},
+		}
+	}
+	return out
 }
 
 func convertAnnotationMappings_V2beta1_to_V2alpha1(in map[string]dashv2beta1.DashboardAnnotationEventFieldMapping) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
