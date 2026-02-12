@@ -398,6 +398,10 @@ export interface FeatureToggles {
   * @default false
   */
   sceneCsvExport?: boolean;
+  * Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior
+  * @default false
+  */
+  dashboardRules?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false

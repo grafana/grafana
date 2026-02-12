@@ -694,6 +694,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "dashboardRules",
+			Description:  "Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "drilldownRecommendations",
 			Description: "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:       FeatureStageExperimental,
