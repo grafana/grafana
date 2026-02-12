@@ -1,4 +1,4 @@
-import { LogsSortOrder } from '@grafana/schema/dist/esm/common/common.gen';
+import { LogsSortOrder } from '@grafana/data';
 
 import { Options } from './types';
 
@@ -16,7 +16,7 @@ export const onSortOrderChange = (options: Options, sortOrder: LogsSortOrder, ti
     }
 
     // Deep copy is required or the useEffects on sortBy will not trigger re-render!
-    return { ...options, sortBy: [...options.sortBy] };
+    return { ...options };
   }
 
   return options;
