@@ -5,23 +5,28 @@ import { extractObjectType, type ObjectsWithConditionalRendering } from '../obje
 
 import { type ConditionalRenderingConditions } from './types';
 
-export function getGroup(condition: ConditionalRenderingConditions): ConditionalRenderingGroup {
+export function getGroup(condition: ConditionalRenderingConditions): ConditionalRenderingGroup | undefined {
   if (condition.parent instanceof ConditionalRenderingGroup) {
     return condition.parent;
   }
 
-  return sceneGraph.getAncestor(condition, ConditionalRenderingGroup);
+  try {
+    return sceneGraph.getAncestor(condition, ConditionalRenderingGroup);
+  } catch {
+    // Condition may be owned by a DashboardRule instead of a ConditionalRenderingGroup
+    return undefined;
+  }
 }
 
 export function getObject(condition: ConditionalRenderingConditions): SceneObject | undefined {
   const group = getGroup(condition);
-  const groupTarget = group.getTarget();
 
-  if (groupTarget) {
-    return groupTarget;
+  if (!group) {
+    return condition.parent;
   }
 
-  return getGroup(condition).parent;
+  const groupTarget = group.getTarget();
+  return groupTarget ?? group.parent;
 }
 
 export function getObjectType(condition: ConditionalRenderingConditions): ObjectsWithConditionalRendering {
@@ -29,17 +34,17 @@ export function getObjectType(condition: ConditionalRenderingConditions): Object
 }
 
 export function removeCondition(condition: ConditionalRenderingConditions) {
-  getGroup(condition).removeCondition(condition);
+  getGroup(condition)?.removeCondition(condition);
 }
 
 export function undoRemoveCondition(condition: ConditionalRenderingConditions, index: number) {
-  getGroup(condition).undoRemoveCondition(condition, index);
+  getGroup(condition)?.undoRemoveCondition(condition, index);
 }
 
 export function getConditionIndex(condition: ConditionalRenderingConditions): number {
-  return getGroup(condition).getConditionIndex(condition);
+  return getGroup(condition)?.getConditionIndex(condition) ?? -1;
 }
 
 export function checkGroup(condition: ConditionalRenderingConditions) {
-  getGroup(condition).check();
+  getGroup(condition)?.check();
 }
