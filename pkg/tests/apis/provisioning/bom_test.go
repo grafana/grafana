@@ -77,8 +77,9 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NoError(t, err)
 		require.NotContains(t, string(dashboardJSON), "\ufeff", "stored dashboard should not contain any BOMs")
 
-		// Cleanup
-		helper.DeleteRepo(t, ctx, repo)
+		// Cleanup - delete repository
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 
 	t.Run("dashboard JSON file with embedded BOMs in strings", func(t *testing.T) {
@@ -157,7 +158,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NotContains(t, panel2Title, "\ufeff")
 
 		// Cleanup
-		helper.DeleteRepo(t, ctx, repoName)
+		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 
 	t.Run("repository deletion with BOM dashboards succeeds", func(t *testing.T) {
@@ -217,7 +219,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Now delete the repository - this should succeed without BOM errors
 		// The controller will patch dashboards to remove ownership annotations
-		helper.DeleteRepo(t, ctx, repoName)
+		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		require.NoError(t, err)
 
 		// Verify dashboard still exists but annotations might be removed
 		// (depending on the finalizer implementation)
@@ -290,7 +293,8 @@ spec:
 		require.NotContains(t, title, "\ufeff")
 
 		// Cleanup
-		helper.DeleteRepo(t, ctx, repoName)
+		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }
 
