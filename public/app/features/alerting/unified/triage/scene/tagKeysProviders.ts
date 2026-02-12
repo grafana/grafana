@@ -61,15 +61,15 @@ async function fetchTagValues(sceneObject: SceneObject, key: string): Promise<Me
 }
 
 /**
- * Provider for the GroupBy variable.
- * Shows promoted labels first, then remaining datasource labels alphabetically.
+ * Fetch tag keys from the datasource, exclude promoted and hidden labels,
+ * and return promoted labels first followed by the rest alphabetically.
  */
-export async function getGroupByTagKeysProvider(
-  variable: GroupByVariable,
-  _currentKey: string | null
+async function buildTagKeysResult(
+  sceneObject: SceneObject,
+  promoted: MetricFindValue[]
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
-  const dsKeys = await fetchTagKeys(variable);
-  const promotedValues = new Set(GROUPBY_PROMOTED.map((p) => String(p.value)));
+  const dsKeys = await fetchTagKeys(sceneObject);
+  const promotedValues = new Set(promoted.map((p) => String(p.value)));
 
   const remaining = dsKeys
     .filter((k) => {
@@ -79,29 +79,23 @@ export async function getGroupByTagKeysProvider(
     .sort((a, b) => collator.compare(a.text, b.text))
     .map((k) => ({ ...k, group: ALL_GROUP }));
 
-  return { replace: true, values: [...GROUPBY_PROMOTED, ...remaining] };
+  return { replace: true, values: [...promoted, ...remaining] };
+}
+
+/**
+ * Provider for the GroupBy variable.
+ * Shows promoted labels first, then remaining datasource labels alphabetically.
+ */
+export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey: string | null) {
+  return buildTagKeysResult(variable, GROUPBY_PROMOTED);
 }
 
 /**
  * Provider for the AdHoc Filters variable.
  * Shows promoted labels in "Common" group, remaining labels under "Labels".
  */
-export async function getAdHocTagKeysProvider(
-  variable: AdHocFiltersVariable,
-  _currentKey: string | null
-): Promise<{ replace: boolean; values: MetricFindValue[] }> {
-  const dsKeys = await fetchTagKeys(variable);
-  const promotedValues = new Set(FILTER_PROMOTED.map((p) => String(p.value)));
-
-  const remaining = dsKeys
-    .filter((k) => {
-      const val = String(k.value ?? k.text);
-      return !promotedValues.has(val) && !EXCLUDED.has(val);
-    })
-    .sort((a, b) => collator.compare(a.text, b.text))
-    .map((k) => ({ ...k, group: ALL_GROUP }));
-
-  return { replace: true, values: [...FILTER_PROMOTED, ...remaining] };
+export function getAdHocTagKeysProvider(variable: AdHocFiltersVariable, _currentKey: string | null) {
+  return buildTagKeysResult(variable, FILTER_PROMOTED);
 }
 
 /**
