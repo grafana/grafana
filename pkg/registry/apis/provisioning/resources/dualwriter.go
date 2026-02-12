@@ -632,7 +632,7 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 		return false
 	}
 
-	// Do not write if sync is not enabled
+	// Only dual write if sync is enabled
 	if !r.repo.Config().Spec.Sync.Enabled {
 		return false
 	}
