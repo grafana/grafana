@@ -26,6 +26,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       onDelete={() => deleteQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
       isHidden={!!query.hide}
+      showAddButton={true}
     >
       <DataSourceLogo dataSource={queryDsSettings} />
       <Text weight="light" variant="code" color="secondary">

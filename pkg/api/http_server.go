@@ -28,6 +28,7 @@ import (
 	"github.com/youmark/pkcs8"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -222,6 +223,7 @@ type HTTPServer struct {
 	tlsCerts                        TLSCerts
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsConnectionClient              datasource.ConnectionClient
 }
 
 type TLSCerts struct {
@@ -384,6 +386,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
+		dsConnectionClient: datasource.NewConnectionClient(cfg, clientConfigProvider),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
