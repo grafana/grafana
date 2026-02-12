@@ -1,4 +1,4 @@
-import { defaultDataQueryKind, Spec } from './v2';
+import { defaultDataQueryKind, Spec } from './index';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
