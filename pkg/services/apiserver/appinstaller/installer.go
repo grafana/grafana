@@ -50,8 +50,10 @@ type ClusterScopedStorageAuthorizerProvider interface {
 	GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
 }
 
-// NamespaceScopedStorageAuthorizerProvider allows apps to provide custom authorizers for namespace-scoped resources.
-// Apps can optionally implement this interface to add storage-level authorization.
+// NamespaceScopedStorageAuthorizerProvider allows apps to provide custom authorizers on the storage layer,
+// specifically when they are needing to authorize based on the name of the resource (and need to filter lists accordingly)
+// or if they need the spec of the object.
+// Optional to implement.
 type NamespaceScopedStorageAuthorizerProvider interface {
 	// return nil to skip
 	GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
