@@ -23,6 +23,8 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 
 ### Alert rules
 
+The following endpoints can be used to manage both alert rules and recording rules. To create a recording rule, include a `record` block in your request instead of a `condition` field.
+
 | Method | URI                                                              | Name                                                                    | Summary                                                 |
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
 | DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
@@ -51,6 +53,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "orgId": 1,
   "uid": "",
   "condition": "B",
@@ -200,6 +203,7 @@ Content-Type: application/json
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "annotations": {
     "summary": "test_api_1"
   },
@@ -1918,20 +1922,21 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                                      | Go type               | Required | Default | Description | Example |
-| -------------- | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| `annotations`  | map of string                             | `map[string]string`   |          |         |             |         |
-| `condition`    | string                                    | string                |          |         |             |         |
-| `dashboardUid` | string                                    | string                |          |         |             |         |
-| `data`         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
-| `execErrState` | string                                    | string                |          |         |             |         |
-| `for`          | [Duration](#duration)                     | Duration              |          |         |             |         |
-| `isPaused`     | boolean                                   | `bool`                |          |         |             |         |
-| `labels`       | map of string                             | `map[string]string`   |          |         |             |         |
-| `noDataState`  | string                                    | string                |          |         |             |         |
-| `panelId`      | int64 (formatted integer)                 | int64                 |          |         |             |         |
-| `title`        | string                                    | string                |          |         |             |         |
-| `uid`          | string                                    | string                |          |         |             |         |
+| Name            | Type                                      | Go type               | Required | Default | Description                                                                                         | Example |
+| --------------- | ----------------------------------------- | --------------------- | :------: | ------- | --------------------------------------------------------------------------------------------------- | ------- |
+| `annotations`   | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `condition`     | string                                    | string                |          |         |                                                                                                     |         |
+| `dashboardUid`  | string                                    | string                |          |         |                                                                                                     |         |
+| `data`          | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |                                                                                                     |         |
+| `execErrState`  | string                                    | string                |          |         |                                                                                                     |         |
+| `for`           | [Duration](#duration)                     | Duration              |          |         |                                                                                                     |         |
+| `keepFiringFor` | [Duration](#duration)                     | Duration              |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping. | `2m`    |
+| `isPaused`      | boolean                                   | `bool`                |          |         |                                                                                                     |         |
+| `labels`        | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `noDataState`   | string                                    | string                |          |         |                                                                                                     |         |
+| `panelId`       | int64 (formatted integer)                 | int64                 |          |         |                                                                                                     |         |
+| `title`         | string                                    | string                |          |         |                                                                                                     |         |
+| `uid`           | string                                    | string                |          |         |                                                                                                     |         |
 
 {{% /responsive-table %}}
 
