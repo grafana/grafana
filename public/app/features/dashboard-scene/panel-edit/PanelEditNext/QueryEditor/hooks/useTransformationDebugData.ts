@@ -20,10 +20,10 @@ interface TransformationDebugData {
 
 /**
  * Calculates input and output data for transformation debugging.
- * 
+ *
  * Input: Output of all transformations before the current one (with filter applied)
  * Output: Output after applying the current transformation
- * 
+ *
  * @returns Empty arrays if not active or transformation not found
  */
 export function useTransformationDebugData({
