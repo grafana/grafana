@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -12,6 +13,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { DashboardRulesEditView } from './DashboardRulesEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { JsonModelEditView } from './JsonModelEditView';
 import { PermissionsEditView } from './PermissionsEditView';
@@ -63,6 +65,14 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
       url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
       active: currentEditView === 'links',
     });
+
+    if (config.featureToggles.dashboardRules) {
+      pageNav.children!.push({
+        text: t('dashboard-settings.rules.title', 'Rules'),
+        url: locationUtil.getUrlForPartial(location, { editview: 'rules', editIndex: null }),
+        active: currentEditView === 'rules',
+      });
+    }
   }
 
   if (dashboard.state.uid && dashboard.state.meta.canSave) {
@@ -102,6 +112,8 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new DashboardLinksEditView({});
     case 'versions':
       return new VersionsEditView({});
+    case 'rules':
+      return new DashboardRulesEditView({});
     case 'json-model':
       return new JsonModelEditView({});
     case 'permissions':
