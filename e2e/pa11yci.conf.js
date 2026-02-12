@@ -3,7 +3,7 @@ const config = {
     concurrency: 1,
     runners: ['axe'],
     useIncognitoBrowserContext: false,
-    standard: 'WCAG2AA',
+    standard: 'WCAG2AAA',
     chromeLaunchConfig: {
       executablePath: '/usr/bin/google-chrome',
       args: ['--no-sandbox'],
