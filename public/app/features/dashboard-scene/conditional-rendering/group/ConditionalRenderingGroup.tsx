@@ -20,12 +20,16 @@ import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRend
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from '../conditions/serializers';
 import { type ConditionalRenderingConditions } from '../conditions/types';
+import { conditionRegistry } from '../conditions/conditionRegistry';
+import '../conditions/serializers'; // side-effect: populates conditionRegistry
+import { ConditionalRenderingConditions } from '../conditions/types';
 import { extractObjectType, getTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
 import { type GroupConditionCondition, type GroupConditionConditionType, type GroupConditionVisibility } from './types';
+import { GroupConditionCondition, GroupConditionVisibility } from './types';
 
 export interface ConditionalRenderingGroupState extends SceneObjectState {
   conditions: ConditionalRenderingConditions[];
@@ -112,26 +116,16 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
     }
   }
 
-  public createCondition(conditionType: GroupConditionConditionType): ConditionalRenderingConditions {
-    switch (conditionType) {
-      case 'data':
-        return ConditionalRenderingData.createEmpty();
-
-      case 'timeRangeSize':
-        return ConditionalRenderingTimeRangeSize.createEmpty();
-
-      case 'variable':
-        return ConditionalRenderingVariable.createEmpty(
-          sceneGraph.getVariables(getDashboardSceneFor(this)).state.variables[0].state.name
-        );
-    }
+  public createCondition(conditionId: string): ConditionalRenderingConditions {
+    const item = conditionRegistry.get(conditionId);
+    return item.createEmpty(this);
   }
 
   public addCondition(condition: ConditionalRenderingConditions) {
     const conditions = [...this.state.conditions, condition];
     this.setState({
       conditions,
-      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+      renderHidden: needsRenderHidden(conditions),
     });
 
     if (this.isActive && !condition.isActive) {
@@ -146,7 +140,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
     this.setState({
       conditions,
-      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+      renderHidden: needsRenderHidden(conditions),
     });
     this.check();
   }
@@ -191,18 +185,25 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
   }
 
   public static deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {
-    const conditions = model.spec.items.map((item) =>
-      conditionalRenderingSerializerRegistry.get(item.kind).deserialize(item)
-    );
+    const conditions = model.spec.items.map((item) => conditionRegistry.get(item.kind).deserialize(item));
 
     return new ConditionalRenderingGroup({
       condition: model.spec.condition,
       visibility: model.spec.visibility,
       conditions,
       result: true,
-      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+      renderHidden: needsRenderHidden(conditions),
     });
   }
+}
+
+/** Check if any condition in the list requires the element to stay mounted when hidden. */
+function needsRenderHidden(conditions: ConditionalRenderingConditions[]): boolean {
+  return conditions.some((condition) => {
+    const kind = condition.serialize().kind;
+    const item = conditionRegistry.getIfExists(kind);
+    return item?.requiresRenderHidden ?? false;
+  });
 }
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {

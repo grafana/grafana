@@ -23,6 +23,7 @@ import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { ConditionRegistryItem } from './conditionRegistry';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
@@ -37,10 +38,15 @@ interface ConditionalRenderingVariableState extends SceneObjectState {
 export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRenderingVariableState> {
   public static Component = ConditionalRenderingVariableRenderer;
 
-  public static serializer: ConditionalRenderingConditionsSerializerRegistryItem = {
+  public static registryItem: ConditionRegistryItem = {
     id: 'ConditionalRenderingVariable',
-    name: 'Variable',
-    deserialize: this.deserialize,
+    name: 'Template variable',
+    deserialize: (model) => ConditionalRenderingVariable.deserialize(model as ConditionalRenderingVariableKind),
+    createEmpty: (scene) => {
+      const variableName = sceneGraph.getVariables(getDashboardSceneFor(scene)).state.variables[0]?.state.name ?? '';
+      return new ConditionalRenderingVariable({ variable: variableName, operator: '=', value: '', result: undefined });
+    },
+    isApplicable: () => true,
   };
 
   public constructor(state: ConditionalRenderingVariableState) {

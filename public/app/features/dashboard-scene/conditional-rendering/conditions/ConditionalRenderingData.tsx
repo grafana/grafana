@@ -19,6 +19,7 @@ import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { ConditionRegistryItem } from './conditionRegistry';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 interface ConditionalRenderingDataState extends SceneObjectState {
@@ -29,10 +30,13 @@ interface ConditionalRenderingDataState extends SceneObjectState {
 export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderingDataState> {
   public static Component = ConditionalRenderingDataRenderer;
 
-  public static serializer: ConditionalRenderingConditionsSerializerRegistryItem = {
+  public static registryItem: ConditionRegistryItem = {
     id: 'ConditionalRenderingData',
-    name: 'Data',
-    deserialize: this.deserialize,
+    name: 'Query result',
+    deserialize: (model) => ConditionalRenderingData.deserialize(model as ConditionalRenderingDataKind),
+    createEmpty: () => new ConditionalRenderingData({ value: true, result: undefined }),
+    requiresRenderHidden: true,
+    isApplicable: (objectType) => objectType === 'panel',
   };
 
   private _dataProvider: SceneDataProvider | undefined = undefined;
