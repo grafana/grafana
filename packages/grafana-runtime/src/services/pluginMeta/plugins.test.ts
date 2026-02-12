@@ -1,16 +1,10 @@
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 
 import { initPluginMetas } from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
-
-jest.mock('../../internal/openFeature', () => ({
-  ...jest.requireActual('../../internal/openFeature'),
-  evaluateBooleanFlag: jest.fn(),
-}));
-
-const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 const originalFetch = global.fetch;
 let loggerMock: MonitoringLogger;
@@ -33,8 +27,12 @@ afterEach(() => {
 });
 
 describe('when useMTPlugins toggle is enabled and cache is not initialized', () => {
-  beforeEach(() => {
-    evaluateBooleanFlagMock.mockReturnValue(true);
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
@@ -54,8 +52,12 @@ describe('when useMTPlugins toggle is enabled and cache is not initialized', () 
 });
 
 describe('when useMTPlugins toggle is enabled and errors occur', () => {
-  beforeEach(() => {
-    evaluateBooleanFlagMock.mockReturnValue(true);
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('initPluginMetas should log when fetch fails', async () => {
@@ -114,7 +116,14 @@ describe('when useMTPlugins toggle is enabled and errors occur', () => {
 describe('when useMTPlugins toggle is disabled and cache is not initialized', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
-    evaluateBooleanFlagMock.mockReturnValue(false);
+  });
+
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
@@ -128,7 +137,14 @@ describe('when useMTPlugins toggle is disabled and cache is not initialized', ()
 describe('when useMTPlugins toggle is disabled and cache is initialized', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
-    evaluateBooleanFlagMock.mockReturnValue(false);
+  });
+
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('initPluginMetas should return cache', async () => {
