@@ -4,9 +4,6 @@ export const getInitialRowIndex = (permalinkedLogId: string | undefined, logsFra
   if (!permalinkedLogId || !logsFrame) {
     return undefined;
   }
-  const initialRowIndex = permalinkedLogId
-    ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
-    : undefined;
-
+  const initialRowIndex = logsFrame.idField?.values.findIndex((id) => id === permalinkedLogId);
   return initialRowIndex !== undefined && initialRowIndex > -1 ? initialRowIndex : undefined;
 };
