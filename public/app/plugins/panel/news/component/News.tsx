@@ -84,70 +84,71 @@ const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>
 
 export const News = attachSkeleton(NewsComponent, NewsSkeleton);
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    height: '100%',
-  }),
-  item: css({
-    display: 'flex',
-    padding: theme.spacing(1),
-    position: 'relative',
-    marginBottom: theme.spacing(0.5),
-    marginRight: theme.spacing(1),
-    borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
-    flexDirection: 'column',
-    flexShrink: 0,
-  }),
-  itemWide: css({
-    flexDirection: 'row',
-  }),
-  body: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-  }),
-  socialImage: css({
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: theme.spacing(1),
-    '> img': {
-      width: '100%',
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
-    },
-  }),
-  socialImageWide: css({
-    marginRight: theme.spacing(2),
-    marginBottom: 0,
-    '> img': {
-      width: '250px',
-      borderRadius: theme.shape.radius.default,
-    },
-  }),
-  link: css({
-    color: theme.colors.text.link,
-    display: 'inline-block',
-
-    '&:hover': {
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
-    },
-  }),
-  title: css({
-    ...theme.typography.h3,
-    fontSize: '16px',
-    marginBottom: theme.spacing(0.5),
-  }),
-  content: css({
-    p: {
+const getStyles = (theme: GrafanaTheme2) => {
+  console.log(theme.typography);
+  return {
+    container: css({
+      height: '100%',
+    }),
+    item: css({
+      display: 'flex',
+      padding: theme.spacing(1),
+      position: 'relative',
       marginBottom: theme.spacing(0.5),
-      color: theme.colors.text.primary,
-    },
-  }),
-  date: css({
-    marginBottom: theme.spacing(0.5),
-    fontWeight: 500,
-    borderRadius: `0 0 0 ${theme.shape.radius.default}`,
-    color: theme.colors.text.secondary,
-  }),
-});
+      marginRight: theme.spacing(1),
+      borderBottom: `2px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      flexDirection: 'column',
+      flexShrink: 0,
+    }),
+    itemWide: css({
+      flexDirection: 'row',
+    }),
+    body: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+    }),
+    socialImage: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: theme.spacing(1),
+      '> img': {
+        width: '100%',
+        borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      },
+    }),
+    socialImageWide: css({
+      marginRight: theme.spacing(2),
+      marginBottom: 0,
+      '> img': {
+        width: '250px',
+        borderRadius: theme.shape.radius.default,
+      },
+    }),
+    link: css({
+      color: theme.colors.text.link,
+      display: 'inline-block',
+
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
+    }),
+    title: css({
+      ...theme.typography.h5,
+    }),
+    content: css({
+      p: {
+        marginBottom: theme.spacing(0.5),
+        color: theme.colors.text.primary,
+      },
+    }),
+    date: css({
+      marginBottom: theme.spacing(0.5),
+      fontWeight: 500,
+      borderRadius: `0 0 0 ${theme.shape.radius.default}`,
+      color: theme.colors.text.secondary,
+    }),
+  };
+};
