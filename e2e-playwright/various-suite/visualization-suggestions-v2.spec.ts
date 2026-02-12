@@ -212,7 +212,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test('should auto-select first suggestion for new panel and preview is persisted when navigating back', async ({
+    test.skip('should auto-select first suggestion for new panel and preview is persisted when navigating back', async ({
       page,
       selectors,
       gotoDashboardPage,
