@@ -32,6 +32,7 @@ import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
 import { Options } from './options/types';
 import { defaultOptions, Options as LogsTableOptions } from './panelcfg.gen';
+import { getInitialRowIndex } from './props/getInitialRowIndex';
 import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
 interface LogsTablePanelProps extends PanelProps<Options> {}
@@ -66,9 +67,7 @@ export const LogsTable = ({
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = getLogsPanelState()?.logs?.id ?? undefined;
-  const initialRowIndex = permalinkedLogId
-    ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
-    : undefined;
+  const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
   const sortOrder = options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending;
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
