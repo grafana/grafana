@@ -16,14 +16,24 @@ cd devenv/secrets && go run secrets.go
 The script creates keepers and secure values via Grafana's HTTP API. Resources are
 prefixed with `gdev-` so they can be cleanly removed later.
 
+## Usage
+
+```bash
+go run secrets.go                    # Seed from secrets-config.yaml
+go run secrets.go -generate 50       # Generate 50 keepers + 50 secrets for load testing
+go run secrets.go -clean             # Remove all gdev- prefixed resources
+go run secrets.go -test              # Run built-in self-tests (no server required)
+go run secrets.go -help              # Show all flags
+```
+
 ## What Gets Created
 
 **Keepers:**
 
-| Name                | Type | Config                  |
-| ------------------- | ---- | ----------------------- |
-| gdev-aws-production | AWS  | us-east-1               |
-| gdev-aws-staging    | AWS  | eu-west-1, with KMS key |
+| Name                | Type | Region    |
+| ------------------- | ---- | --------- |
+| gdev-aws-production | AWS  | us-east-1 |
+| gdev-aws-staging    | AWS  | eu-west-1 |
 
 **Secure Values:**
 
@@ -32,17 +42,10 @@ prefixed with `gdev-` so they can be cleanly removed later.
 | gdev-database-password | Production database password        |
 | gdev-api-key           | External monitoring service API key |
 
-## Cleanup
-
-```bash
-cd devenv/secrets && go run secrets.go -clean
-```
-
-Deletes all resources with the `gdev-` prefix.
-
 ## Configuration
 
-Edit `secrets-config.yaml` to add or modify test data:
+Edit `secrets-config.yaml` to add or modify test data. The keeper config structure
+mirrors the backend Go types at `apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go`.
 
 ```yaml
 keepers:
@@ -63,16 +66,8 @@ secureValues:
       env: test
 ```
 
-Note: Every keeper must have at least one provider config (e.g., `aws`).
+Every keeper must have a provider config (e.g., `aws`).
 The "system" keeper type is built-in and cannot be created via the API.
-
-## Self-Tests
-
-Run the built-in self-tests to verify the script works correctly (no server required):
-
-```bash
-cd devenv/secrets && go run secrets.go -test
-```
 
 ## Environment Variables
 
@@ -82,18 +77,6 @@ cd devenv/secrets && go run secrets.go -test
 | `GRAFANA_USER`      | `admin`                 | Grafana username |
 | `GRAFANA_PASSWORD`  | `admin`                 | Grafana password |
 | `GRAFANA_NAMESPACE` | `default`               | K8s namespace    |
-
-## Command Line Flags
-
-| Flag         | Default                 | Description                                  |
-| ------------ | ----------------------- | -------------------------------------------- |
-| `-url`       | `http://localhost:3000` | Grafana URL                                  |
-| `-namespace` | `default`               | Namespace                                    |
-| `-config`    | `secrets-config.yaml`   | Config file path                             |
-| `-user`      | `admin`                 | Grafana username                             |
-| `-password`  | `admin`                 | Grafana password                             |
-| `-clean`     | `false`                 | Delete all gdev-prefixed resources           |
-| `-test`      | `false`                 | Run built-in self-tests (no server required) |
 
 ## Troubleshooting
 

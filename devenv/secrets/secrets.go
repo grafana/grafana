@@ -1,17 +1,8 @@
 //go:build ignore
 // +build ignore
 
-// This script seeds the Secrets API with test keepers and secure values
-// for local development. It reads from secrets-config.yaml and creates
-// resources via Grafana's HTTP API using basic auth.
-//
-// Usage:
-//
-//	go run secrets.go          # Create test data
-//	go run secrets.go -clean   # Delete all gdev- prefixed resources
-//
-// All created resources are prefixed with "gdev-" to avoid conflicts.
-// Run with -clean to remove them.
+// Seeds the Secrets API with test keepers and secure values for local development.
+// See README.md for setup instructions, configuration, and troubleshooting.
 package main
 
 import (
@@ -53,7 +44,7 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// ── Config types (YAML) ─────────────────────────────────────────────────────
+// ── Config types (YAML input) ───────────────────────────────────────────────
 
 type Config struct {
 	Keepers      map[string]KeeperConfig      `yaml:"keepers"`
@@ -65,11 +56,12 @@ type KeeperConfig struct {
 	AWS         *AWSConfig `yaml:"aws,omitempty"`
 }
 
+// AWSConfig mirrors KeeperAWSConfig from the backend API.
+// Source: apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go
 type AWSConfig struct {
 	Region        string `yaml:"region"`
 	AssumeRoleArn string `yaml:"assumeRoleArn"`
 	ExternalID    string `yaml:"externalID"`
-	KmsKeyID      string `yaml:"kmsKeyID,omitempty"`
 }
 
 type SecureValueConfig struct {
@@ -80,6 +72,8 @@ type SecureValueConfig struct {
 }
 
 // ── API resource types (JSON for POST) ──────────────────────────────────────
+// These mirror the K8s resource shapes from the generated OpenAPI spec.
+// Source: apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go
 
 type KeeperResource struct {
 	APIVersion string       `json:"apiVersion"`
@@ -97,7 +91,6 @@ type KeeperSpec struct {
 type AWSSpecConfig struct {
 	Region     string      `json:"region"`
 	AssumeRole *AssumeRole `json:"assumeRole,omitempty"`
-	KmsKeyID   string      `json:"kmsKeyID,omitempty"`
 }
 
 type AssumeRole struct {
@@ -197,55 +190,22 @@ func (c *Client) checkAPI() error {
 	status, _, err := c.doRequest("GET", "/keepers", nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nCould not reach Grafana at %s\n", c.baseURL)
-		printSetupInstructions()
+		fmt.Fprintln(os.Stderr, "See README.md for setup instructions.")
 		return fmt.Errorf("API not available")
 	}
 
 	switch {
 	case status == 401 || status == 403:
-		return fmt.Errorf("authentication failed (HTTP %d)\n\n"+
-			"  Possible fixes:\n"+
-			"  - Check GRAFANA_USER and GRAFANA_PASSWORD (defaults: admin/admin)\n"+
-			"  - Ensure the user has the 'Secrets Manager' role in Administration > Users", status)
+		return fmt.Errorf("authentication failed (HTTP %d) — see README.md troubleshooting", status)
 	case status == 404:
-		return fmt.Errorf("secrets API not found (HTTP 404)\n\n" +
-			"  The Grafana server is running but the Secrets API is not available.\n" +
-			"  Possible fixes:\n" +
-			"  - Ensure the secrets API server is running (see instructions below)\n" +
-			"  - Check that runtime-config includes secret.grafana.app/v1beta1=true")
+		return fmt.Errorf("secrets API not found (HTTP 404) — see README.md troubleshooting")
 	case status != 200:
-		return fmt.Errorf("unexpected response from Secrets API (HTTP %d)\n\n"+
-			"  The server responded but something is wrong. Check the Grafana and API server logs.", status)
+		return fmt.Errorf("unexpected response from Secrets API (HTTP %d) — check Grafana logs", status)
 	}
 
 	fmt.Println("  Secrets API is available.")
 	fmt.Println()
 	return nil
-}
-
-func printSetupInstructions() {
-	fmt.Fprintln(os.Stderr, `
-To set up the Secrets API for local development:
-
-  1. Start the database:
-     make devenv sources="mt-db"
-
-  2. Start the secrets API server (from the grafana repo root, with make enterprise-dev running):
-     CFG_secret_key__v1__secret_key=hunter2 go run -tags "enterprise" ./pkg/cmd/grafana apiserver \
-       --skip-auth=true \
-       --runtime-config secret.grafana.app/v1beta1=true \
-       --secure-port=6443 \
-       --database.servers="default=superuser:password@tcp(localhost:13306)/secret_grafana_app" \
-       --database.max_idle_conn=5 \
-       --database.max_open_conn=5 \
-       --database.conn_max_lifetime=14400 \
-       --grafana.secrets-manager.encryption.provider=secret_key.v1
-
-  3. Start Grafana with the required feature flags:
-     GF_FEATURE_TOGGLES_ENABLE=secretsManagementAppPlatformUI,secretsManagementAppPlatform,secretsKeeperUI make run
-
-  For more advanced setups (auth, port-forwarding, gRPC), see:
-  grafana-enterprise/src/pkg/extensions/apiserver/dev-docs/secrets.md`)
 }
 
 // ── Create resources ────────────────────────────────────────────────────────
@@ -266,9 +226,6 @@ func (c *Client) createKeeper(name string, cfg KeeperConfig) {
 				AssumeRoleArn: cfg.AWS.AssumeRoleArn,
 				ExternalID:    cfg.AWS.ExternalID,
 			}
-		}
-		if cfg.AWS.KmsKeyID != "" {
-			awsSpec.KmsKeyID = cfg.AWS.KmsKeyID
 		}
 		spec.AWS = awsSpec
 	}
@@ -335,7 +292,6 @@ func printResult(kind, name string, status int, respBody []byte) {
 		fmt.Printf("  - %s %s already exists (skipped)\n", kind, name)
 	default:
 		fmt.Fprintf(os.Stderr, "  ✗ Failed to create %s %s (HTTP %d)\n", kind, name, status)
-		// Try to extract a useful error message from the response
 		var errResp struct {
 			Message string `json:"message"`
 		}
@@ -392,7 +348,6 @@ func (c *Client) deleteGdevResources(endpoint, kind string) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-// sortedKeys returns the keys of a map in sorted order for deterministic output.
 func sortedKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -425,15 +380,12 @@ func runSelfTests() {
 	{
 		configYAML := []byte(`
 keepers:
-  system-keeper:
-    description: System keeper
   aws-prod:
     description: AWS prod
     aws:
       region: us-east-1
       assumeRoleArn: arn:aws:iam::123:role/test
       externalID: ext-id
-      kmsKeyID: alias/my-key
 secureValues:
   my-secret:
     description: A secret
@@ -449,18 +401,14 @@ secureValues:
 			fmt.Sprintf("got error: %v", err))
 
 		if err == nil {
-			assert("finds 2 keepers", len(config.Keepers) == 2,
+			assert("finds 1 keeper", len(config.Keepers) == 1,
 				fmt.Sprintf("got %d", len(config.Keepers)))
-
-			system := config.Keepers["system-keeper"]
-			assert("system keeper has no AWS config", system.AWS == nil,
-				"AWS was non-nil")
 
 			aws := config.Keepers["aws-prod"]
 			assert("AWS keeper has region", aws.AWS != nil && aws.AWS.Region == "us-east-1",
 				fmt.Sprintf("got %+v", aws.AWS))
-			assert("AWS keeper has KMS key", aws.AWS != nil && aws.AWS.KmsKeyID == "alias/my-key",
-				fmt.Sprintf("got %q", aws.AWS.KmsKeyID))
+			assert("AWS keeper has assumeRoleArn", aws.AWS != nil && aws.AWS.AssumeRoleArn == "arn:aws:iam::123:role/test",
+				fmt.Sprintf("got %q", aws.AWS.AssumeRoleArn))
 
 			assert("finds 1 secure value", len(config.SecureValues) == 1,
 				fmt.Sprintf("got %d", len(config.SecureValues)))
@@ -477,26 +425,6 @@ secureValues:
 	// ── Resource JSON structure ─────────────────────────────────────────
 	fmt.Println("Keeper JSON structure:")
 	{
-		// System keeper — should not include aws in spec
-		systemResource := KeeperResource{
-			APIVersion: apiVersion,
-			Kind:       "Keeper",
-			Metadata:   ResourceMeta{Name: "gdev-system"},
-			Spec:       KeeperSpec{Description: "System keeper"},
-		}
-		body, _ := json.Marshal(systemResource)
-		var parsed map[string]interface{}
-		json.Unmarshal(body, &parsed)
-
-		_, hasStatus := parsed["status"]
-		assert("system keeper includes status field", hasStatus,
-			"status field missing — API will reject this")
-
-		spec := parsed["spec"].(map[string]interface{})
-		_, hasAWS := spec["aws"]
-		assert("system keeper omits aws from spec", !hasAWS,
-			"aws should not be present for system keepers")
-
 		// AWS keeper — should include aws with assume role
 		awsResource := KeeperResource{
 			APIVersion: apiVersion,
@@ -507,13 +435,18 @@ secureValues:
 				AWS: &AWSSpecConfig{
 					Region:     "us-east-1",
 					AssumeRole: &AssumeRole{AssumeRoleArn: "arn:test", ExternalID: "ext"},
-					KmsKeyID:   "alias/key",
 				},
 			},
 		}
-		body, _ = json.Marshal(awsResource)
+		body, _ := json.Marshal(awsResource)
+		var parsed map[string]interface{}
 		json.Unmarshal(body, &parsed)
-		spec = parsed["spec"].(map[string]interface{})
+
+		_, hasStatus := parsed["status"]
+		assert("keeper includes status field", hasStatus,
+			"status field missing — API will reject this")
+
+		spec := parsed["spec"].(map[string]interface{})
 		aws := spec["aws"].(map[string]interface{})
 		assert("AWS keeper has region", aws["region"] == "us-east-1",
 			fmt.Sprintf("got %v", aws["region"]))
@@ -521,20 +454,19 @@ secureValues:
 		assert("AWS keeper has assumeRoleArn", role["assumeRoleArn"] == "arn:test",
 			fmt.Sprintf("got %v", role["assumeRoleArn"]))
 
-		// AWS keeper without KMS — kmsKeyID should be omitted
-		noKmsResource := KeeperResource{
+		// Keeper without AWS — aws should be omitted
+		systemResource := KeeperResource{
 			APIVersion: apiVersion,
 			Kind:       "Keeper",
-			Metadata:   ResourceMeta{Name: "gdev-no-kms"},
-			Spec:       KeeperSpec{Description: "No KMS", AWS: &AWSSpecConfig{Region: "us-east-1"}},
+			Metadata:   ResourceMeta{Name: "gdev-system"},
+			Spec:       KeeperSpec{Description: "System keeper"},
 		}
-		body, _ = json.Marshal(noKmsResource)
+		body, _ = json.Marshal(systemResource)
 		json.Unmarshal(body, &parsed)
 		spec = parsed["spec"].(map[string]interface{})
-		aws = spec["aws"].(map[string]interface{})
-		_, hasKms := aws["kmsKeyID"]
-		assert("empty kmsKeyID omitted from JSON", !hasKms,
-			"kmsKeyID should be omitted when empty")
+		_, hasAWS := spec["aws"]
+		assert("non-AWS keeper omits aws from spec", !hasAWS,
+			"aws should not be present")
 	}
 	fmt.Println()
 
@@ -561,7 +493,7 @@ secureValues:
 	}
 	fmt.Println()
 
-	// ── Prefix and sorting ──────────────────────────────────────────────
+	// ── Helpers ─────────────────────────────────────────────────────────
 	fmt.Println("Helpers:")
 	{
 		keys := sortedKeys(map[string]int{"zebra": 1, "alpha": 2, "middle": 3})
@@ -578,7 +510,6 @@ secureValues:
 	// ── HTTP interaction (mock server) ──────────────────────────────────
 	fmt.Println("HTTP interactions:")
 	{
-		// Successful API check
 		server := startTestServer(200, `{"items":[]}`)
 		client := NewClient(server.URL, "default", "admin", "admin")
 		err := client.checkAPI()
@@ -586,7 +517,6 @@ secureValues:
 		assert("checkAPI succeeds on 200", err == nil,
 			fmt.Sprintf("got error: %v", err))
 
-		// Auth failure
 		server = startTestServer(403, ``)
 		client = NewClient(server.URL, "default", "admin", "admin")
 		err = client.checkAPI()
@@ -594,7 +524,6 @@ secureValues:
 		assert("checkAPI returns error on 403", err != nil && strings.Contains(err.Error(), "authentication"),
 			fmt.Sprintf("got: %v", err))
 
-		// 404
 		server = startTestServer(404, ``)
 		client = NewClient(server.URL, "default", "admin", "admin")
 		err = client.checkAPI()
@@ -602,7 +531,6 @@ secureValues:
 		assert("checkAPI returns error on 404", err != nil && strings.Contains(err.Error(), "not found"),
 			fmt.Sprintf("got: %v", err))
 
-		// Create with 409 (already exists) — should not error
 		server = startTestServer(409, `{"message":"already exists"}`)
 		client = NewClient(server.URL, "default", "admin", "admin")
 		client.createKeeper("test", KeeperConfig{Description: "Test"})
@@ -656,7 +584,6 @@ var awsRegions = []string{
 	"ap-southeast-1", "ap-southeast-2", "ap-northeast-1",
 }
 
-// Word lists for generating readable resource names (e.g., "crimson-falcon").
 var (
 	adjectives = []string{
 		"azure", "bright", "calm", "crimson", "dark", "eager", "fast",
@@ -733,7 +660,6 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-		// Delete secure values first (they may reference keepers)
 		client.deleteGdevResources("/securevalues", "secure values")
 		client.deleteGdevResources("/keepers", "keepers")
 		fmt.Println("\n✓ Cleanup complete.")
