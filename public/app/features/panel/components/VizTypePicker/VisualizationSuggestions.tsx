@@ -119,9 +119,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return map;
   }, [suggestions]);
 
-  /**
-   * @TODO cleanup isAutoSelected, redo analytics
-   * */
   const applySuggestion = useCallback(
     (
       suggestion: PanelPluginVisualizationSuggestion,
@@ -147,16 +144,13 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
       setSuggestionHash(suggestion.hash);
 
-      onChange(
-        {
-          pluginId: suggestion.pluginId,
-          options: suggestion.options,
-          fieldConfig: suggestion.fieldConfig,
-          withModKey: !shouldCloseVizPicker,
-          fromSuggestions: true,
-        },
-        undefined
-      );
+      onChange({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+        withModKey: !shouldCloseVizPicker,
+        fromSuggestions: true,
+      });
     },
     [onChange, panelState]
   );
