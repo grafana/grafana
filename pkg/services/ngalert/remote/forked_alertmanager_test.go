@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -336,7 +338,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	t.Run("GetReceivers", func(tt *testing.T) {
 		// We should retrieve the receivers from the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		expReceivers := []apimodels.ReceiverStatus{}
+		expReceivers := []alertingModels.ReceiverStatus{}
 		internal.EXPECT().GetReceivers(mock.Anything).Return(expReceivers, nil).Once()
 		receivers, err := forked.GetReceivers(ctx)
 		require.NoError(tt, err)
@@ -344,7 +346,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 
 		// If there's an error in the internal Alertmanager, it should be returned.
 		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().GetReceivers(mock.Anything).Return([]apimodels.ReceiverStatus{}, expErr).Once()
+		internal.EXPECT().GetReceivers(mock.Anything).Return([]alertingModels.ReceiverStatus{}, expErr).Once()
 		_, err = forked.GetReceivers(ctx)
 		require.ErrorIs(tt, expErr, err)
 	})
@@ -698,7 +700,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	t.Run("GetReceivers", func(tt *testing.T) {
 		// We should retrieve the receivers from the remote Alertmanager.
 		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		expReceivers := []apimodels.ReceiverStatus{}
+		expReceivers := []alertingModels.ReceiverStatus{}
 		remote.EXPECT().GetReceivers(mock.Anything).Return(expReceivers, nil).Once()
 		receivers, err := forked.GetReceivers(ctx)
 		require.NoError(tt, err)
@@ -706,7 +708,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 		// If there's an error in the remote Alertmanager, it should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().GetReceivers(mock.Anything).Return([]apimodels.ReceiverStatus{}, expErr).Once()
+		remote.EXPECT().GetReceivers(mock.Anything).Return([]alertingModels.ReceiverStatus{}, expErr).Once()
 		_, err = forked.GetReceivers(ctx)
 		require.ErrorIs(tt, expErr, err)
 	})

@@ -609,7 +609,7 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type ReceiverStatus = alertingmodels.ReceiverStatus
+// ReceiverStatus type alias removed; use alertingmodels.ReceiverStatus directly
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {

@@ -646,7 +646,7 @@ func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus
 	return *apimodels.NewGettableStatus(&cfg), nil
 }
 
-func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.ReceiverStatus, error) {
+func (am *Alertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return am.mimirClient.GetReceivers(ctx)
 }
 
