@@ -16,66 +16,51 @@ function sumCounts(rows: WorkbenchRow[]): InstanceCounts {
 }
 
 /**
- * Pre-computes a map of ruleUID → InstanceCounts by scanning the DataFrame.
- * For each (ruleUID, alertstate) pair, keeps the Value from the row with the latest timestamp.
+ * Pre-computes a map of ruleUID → InstanceCounts by summing Values per (ruleUID, alertstate).
+ *
+ * Expects single-timestamp instant query data where deduplication has already been done
+ * at the PromQL level. When groupBy labels are active the query produces multiple rows
+ * per (ruleUID, alertstate) — one per group value — which are summed together.
  */
 function buildRuleCountsMap(
   frame: DataFrame,
   fieldIndex: Map<string, number>,
   ruleUIDValues: DataFrame['fields'][number]['values']
 ): Map<string, InstanceCounts> {
-  const timeIdx = fieldIndex.get('Time');
   const alertstateIdx = fieldIndex.get('alertstate');
   const valueIdx = fieldIndex.get('Value');
 
-  // If Value field is missing, we can't compute counts
-  if (timeIdx === undefined || alertstateIdx === undefined || valueIdx === undefined) {
+  if (alertstateIdx === undefined || valueIdx === undefined) {
     return new Map();
   }
 
-  const timeValues = frame.fields[timeIdx].values;
   const alertstateValues = frame.fields[alertstateIdx].values;
   const valueValues = frame.fields[valueIdx].values;
 
-  // Track latest (time, value) per (ruleUID, alertstate)
-  const latestByRule = new Map<
-    string,
-    { firingTime: number; firingCount: number; pendingTime: number; pendingCount: number }
-  >();
+  const result = new Map<string, InstanceCounts>();
 
   for (let i = 0; i < frame.length; i++) {
     const ruleUID = ruleUIDValues[i];
     const alertstate = alertstateValues[i];
-    const time = Number(timeValues[i]);
     const value = valueValues[i] ?? 0;
 
     if (!ruleUID || (alertstate !== 'firing' && alertstate !== 'pending')) {
       continue;
     }
 
-    let entry = latestByRule.get(ruleUID);
-    if (!entry) {
-      entry = { firingTime: -Infinity, firingCount: 0, pendingTime: -Infinity, pendingCount: 0 };
-      latestByRule.set(ruleUID, entry);
+    let counts = result.get(ruleUID);
+    if (!counts) {
+      counts = { firing: 0, pending: 0 };
+      result.set(ruleUID, counts);
     }
 
-    if (alertstate === 'firing' && time > entry.firingTime) {
-      entry.firingTime = time;
-      entry.firingCount = value;
-    } else if (alertstate === 'pending' && time > entry.pendingTime) {
-      entry.pendingTime = time;
-      entry.pendingCount = value;
+    if (alertstate === 'firing') {
+      counts.firing += value;
+    } else {
+      counts.pending += value;
     }
   }
 
-  // Convert to InstanceCounts
-  const result = new Map<string, InstanceCounts>();
-  for (const [ruleUID, entry] of latestByRule) {
-    result.set(ruleUID, {
-      firing: entry.firingCount,
-      pending: entry.pendingCount,
-    });
-  }
   return result;
 }
 
@@ -88,9 +73,15 @@ export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = 
   const frame = series[0];
 
   // Build field index map
+  // When multiple queries share a Scenes query runner, the Prometheus plugin
+  // renames "Value" to "Value #<refId>" (e.g. "Value #B"). Normalize it back.
   const fieldIndex = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
-    fieldIndex.set(frame.fields[i].name, i);
+    const name = frame.fields[i].name;
+    fieldIndex.set(name, i);
+    if (name.startsWith('Value #')) {
+      fieldIndex.set('Value', i);
+    }
   }
 
   // Validate required fields exist

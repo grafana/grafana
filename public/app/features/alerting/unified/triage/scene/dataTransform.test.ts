@@ -5,16 +5,16 @@ import { EmptyLabelValue } from '../types';
 import { convertToWorkbenchRows } from './dataTransform';
 
 /**
- * convertToWorkbenchRows transforms time series alert instance data into a hierarchical structure of alert rules.
+ * convertToWorkbenchRows transforms alert instance count data into a hierarchical structure of alert rules.
  *
- * Input: DataFrame[] containing alert instances (firing/pending alerts) over time.
- *        Each alert instance includes metadata linking it to its parent alert rule via grafana_rule_uid.
+ * Input: DataFrame[] from an instant query that counts deduplicated alert instances per rule.
+ *        Each row represents a unique (ruleUID, alertstate, groupByLabel...) combination at a single timestamp.
  *
  * Output: A hierarchical structure where:
- *         - Multiple alert instances from the same rule are aggregated into a single alert rule row
+ *         - Multiple rows from the same rule are aggregated into a single alert rule row
  *         - Alert rules can be grouped by label values (team, severity, etc.)
  *         - Empty label values are placed at the end of each group level
- *         - Each row includes instanceCounts (firing/pending) derived from the latest timestamp
+ *         - Each row includes instanceCounts (firing/pending) summed from all rows for that rule
  */
 describe('convertToWorkbenchRows', () => {
   describe('empty and invalid data handling', () => {
@@ -92,7 +92,7 @@ describe('convertToWorkbenchRows', () => {
           fields: [
             { name: 'Time', type: FieldType.time, values: [1000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder'], config: {} },
             { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
             { name: 'Value', type: FieldType.number, values: [1], config: {} },
           ],
@@ -109,7 +109,7 @@ describe('convertToWorkbenchRows', () => {
           fields: [
             { name: 'Time', type: FieldType.time, values: [1000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder'], config: {} },
             { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
             { name: 'Value', type: FieldType.number, values: [1], config: {} },
           ],
@@ -122,21 +122,21 @@ describe('convertToWorkbenchRows', () => {
   });
 
   describe('no grouping - flat alert rule list', () => {
-    it('should aggregate alert instances into flat list of alert rules when no groupBy is provided', () => {
+    it('should deduplicate alert rule rows and sum instance counts', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
-            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert1'], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1', 'Alert2'], config: {} },
             {
               name: 'grafana_folder',
               type: FieldType.string,
-              values: ['Folder1', 'Folder2', 'Folder1'],
+              values: ['Folder1', 'Folder1', 'Folder2'],
               config: {},
             },
-            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid1'], config: {} },
-            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending', 'firing'], config: {} },
-            { name: 'Value', type: FieldType.number, values: [2, 1, 5], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1', 'uid2'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending', 'pending'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [5, 2, 1], config: {} },
           ],
           length: 3,
         },
@@ -151,7 +151,7 @@ describe('convertToWorkbenchRows', () => {
             folder: 'Folder1',
             ruleUID: 'uid1',
           },
-          instanceCounts: { firing: 5, pending: 0 },
+          instanceCounts: { firing: 5, pending: 2 },
         },
         {
           type: 'alertRule',
@@ -196,36 +196,36 @@ describe('convertToWorkbenchRows', () => {
       ]);
     });
 
-    it('should aggregate multiple alert instances from the same rule into a single alert rule', () => {
+    it('should aggregate multiple rows from the same rule into a single alert rule row', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
             {
               name: 'alertname',
               type: FieldType.string,
-              values: ['Alert1', 'Alert1', 'Alert2', 'Alert1'],
+              values: ['Alert1', 'Alert1', 'Alert2', 'Alert2'],
               config: {},
             },
             {
               name: 'grafana_folder',
               type: FieldType.string,
-              values: ['Folder1', 'Folder1', 'Folder2', 'Folder1'],
+              values: ['Folder1', 'Folder1', 'Folder2', 'Folder2'],
               config: {},
             },
             {
               name: 'grafana_rule_uid',
               type: FieldType.string,
-              values: ['uid1', 'uid1', 'uid2', 'uid1'],
+              values: ['uid1', 'uid1', 'uid2', 'uid2'],
               config: {},
             },
             {
               name: 'alertstate',
               type: FieldType.string,
-              values: ['firing', 'pending', 'firing', 'firing'],
+              values: ['firing', 'pending', 'firing', 'pending'],
               config: {},
             },
-            { name: 'Value', type: FieldType.number, values: [1, 2, 3, 4], config: {} },
+            { name: 'Value', type: FieldType.number, values: [4, 2, 3, 1], config: {} },
           ],
           length: 4,
         },
@@ -249,7 +249,7 @@ describe('convertToWorkbenchRows', () => {
             folder: 'Folder2',
             ruleUID: 'uid2',
           },
-          instanceCounts: { firing: 3, pending: 0 },
+          instanceCounts: { firing: 3, pending: 1 },
         },
       ]);
     });
@@ -261,7 +261,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
               { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder2', 'Folder1'], config: {} },
               { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid3'], config: {} },
@@ -330,7 +330,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -384,7 +384,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
               {
                 name: 'grafana_folder',
@@ -423,7 +423,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2'], config: {} },
               { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder2'], config: {} },
               { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2'], config: {} },
@@ -475,7 +475,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -584,7 +584,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2'], config: {} },
               { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder2'], config: {} },
               { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2'], config: {} },
@@ -644,7 +644,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -705,7 +705,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -784,7 +784,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2'], config: {} },
               { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder2'], config: {} },
               { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2'], config: {} },
@@ -835,7 +835,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2'], config: {} },
               { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder2'], config: {} },
               { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2'], config: {} },
@@ -880,7 +880,7 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['Zebra', 'Alpha', 'Middle'], config: {} },
             {
               name: 'grafana_folder',
@@ -904,7 +904,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Zebra', 'Alpha', 'Middle'], config: {} },
               {
                 name: 'grafana_folder',
@@ -938,7 +938,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
               {
                 name: 'grafana_folder',
@@ -966,7 +966,7 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['banana', 'Cherry', 'Apple'], config: {} },
             {
               name: 'grafana_folder',
@@ -991,7 +991,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000], config: {} },
               { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert3'], config: {} },
               {
                 name: 'grafana_folder',
@@ -1017,38 +1017,18 @@ describe('convertToWorkbenchRows', () => {
   });
 
   describe('instance counts', () => {
-    it('should use latest timestamp value for each (ruleUID, alertstate) pair', () => {
+    it('should sum firing and pending counts for a rule', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 1000, 2000], config: {} },
-            {
-              name: 'alertname',
-              type: FieldType.string,
-              values: ['Alert1', 'Alert1', 'Alert1', 'Alert1', 'Alert1'],
-              config: {},
-            },
-            {
-              name: 'grafana_folder',
-              type: FieldType.string,
-              values: ['Folder1', 'Folder1', 'Folder1', 'Folder1', 'Folder1'],
-              config: {},
-            },
-            {
-              name: 'grafana_rule_uid',
-              type: FieldType.string,
-              values: ['uid1', 'uid1', 'uid1', 'uid1', 'uid1'],
-              config: {},
-            },
-            {
-              name: 'alertstate',
-              type: FieldType.string,
-              values: ['firing', 'firing', 'firing', 'pending', 'pending'],
-              config: {},
-            },
-            { name: 'Value', type: FieldType.number, values: [2, 5, 3, 1, 4], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [3, 1], config: {} },
           ],
-          length: 5,
+          length: 2,
         },
       ]);
 
@@ -1056,7 +1036,110 @@ describe('convertToWorkbenchRows', () => {
         {
           type: 'alertRule',
           metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-          instanceCounts: { firing: 3, pending: 4 },
+          instanceCounts: { firing: 3, pending: 1 },
+        },
+      ]);
+    });
+
+    it('should handle a rule with only firing instances', () => {
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [3], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
+
+      expect(result).toEqual([
+        {
+          type: 'alertRule',
+          metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
+          instanceCounts: { firing: 3, pending: 0 },
+        },
+      ]);
+    });
+
+    it('should sum counts across groupBy combinations at the same timestamp', () => {
+      // When groupBy is active, the Prometheus query produces multiple rows per (ruleUID, alertstate)
+      // at the same timestamp — one per group value. Counts must be summed, not overwritten.
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000, 5000, 5000], config: {} },
+            {
+              name: 'alertname',
+              type: FieldType.string,
+              values: ['Alert1', 'Alert1', 'Alert1', 'Alert1', 'Alert1', 'Alert1'],
+              config: {},
+            },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder1', 'Folder1', 'Folder1', 'Folder1', 'Folder1'],
+              config: {},
+            },
+            {
+              name: 'grafana_rule_uid',
+              type: FieldType.string,
+              values: ['uid1', 'uid1', 'uid1', 'uid1', 'uid1', 'uid1'],
+              config: {},
+            },
+            {
+              name: 'alertstate',
+              type: FieldType.string,
+              values: ['firing', 'firing', 'firing', 'pending', 'pending', 'pending'],
+              config: {},
+            },
+            { name: 'Value', type: FieldType.number, values: [5, 3, 1, 2, 4, 2], config: {} },
+            {
+              name: 'team',
+              type: FieldType.string,
+              values: ['backend', 'frontend', 'infra', 'backend', 'frontend', 'infra'],
+              config: {},
+            },
+          ],
+          length: 6,
+        },
+      ]);
+
+      // firing = 5+3+1 = 9, pending = 2+4+2 = 8
+      expect(result).toEqual([
+        {
+          type: 'alertRule',
+          metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
+          instanceCounts: { firing: 9, pending: 8 },
+        },
+      ]);
+    });
+
+    it('should handle "Value #<refId>" field naming from multi-query Prometheus tables', () => {
+      // When multiple queries share a Scenes query runner, the Prometheus plugin
+      // renames "Value" to "Value #<refId>" (e.g., "Value #B"). The transform must handle this.
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending'], config: {} },
+            { name: 'Value #B', type: FieldType.number, values: [7, 3], config: {} },
+          ],
+          length: 2,
+        },
+      ]);
+
+      expect(result).toEqual([
+        {
+          type: 'alertRule',
+          metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
+          instanceCounts: { firing: 7, pending: 3 },
         },
       ]);
     });
@@ -1065,7 +1148,7 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['Alert1'], config: {} },
             { name: 'grafana_folder', type: FieldType.string, values: ['Folder1'], config: {} },
             { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1'], config: {} },
@@ -1088,19 +1171,14 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 3000, 2000], config: {} },
-            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1', 'Alert1'], config: {} },
-            {
-              name: 'grafana_folder',
-              type: FieldType.string,
-              values: ['Folder1', 'Folder1', 'Folder1'],
-              config: {},
-            },
-            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1', 'uid1'], config: {} },
-            { name: 'alertstate', type: FieldType.string, values: ['pending', 'pending', 'pending'], config: {} },
-            { name: 'Value', type: FieldType.number, values: [2, 6, 4], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['pending'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [6], config: {} },
           ],
-          length: 3,
+          length: 1,
         },
       ]);
 
@@ -1113,31 +1191,29 @@ describe('convertToWorkbenchRows', () => {
       ]);
     });
 
-    it('should pick latest timestamp value, not the maximum value', () => {
+    it('should sum values for same rule and alertstate across groupBy rows', () => {
+      // When groupBy splits a rule's instances across multiple rows, values are summed globally
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 3000, 2000], config: {} },
-            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1', 'Alert1'], config: {} },
-            {
-              name: 'grafana_folder',
-              type: FieldType.string,
-              values: ['Folder1', 'Folder1', 'Folder1'],
-              config: {},
-            },
-            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1', 'uid1'], config: {} },
-            { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing', 'firing'], config: {} },
-            { name: 'Value', type: FieldType.number, values: [10, 3, 8], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'firing'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [3, 2], config: {} },
+            { name: 'team', type: FieldType.string, values: ['backend', 'frontend'], config: {} },
           ],
-          length: 3,
+          length: 2,
         },
       ]);
 
+      // firing = 3+2 = 5 (summed globally across groupBy rows)
       expect(result).toEqual([
         {
           type: 'alertRule',
           metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-          instanceCounts: { firing: 3, pending: 0 },
+          instanceCounts: { firing: 5, pending: 0 },
         },
       ]);
     });
@@ -1146,19 +1222,14 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 500], config: {} },
-            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1', 'Alert1'], config: {} },
-            {
-              name: 'grafana_folder',
-              type: FieldType.string,
-              values: ['Folder1', 'Folder1', 'Folder1'],
-              config: {},
-            },
-            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1', 'uid1'], config: {} },
-            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending', 'firing'], config: {} },
-            { name: 'Value', type: FieldType.number, values: [null, undefined, 7] as unknown as number[], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert1'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['Folder1', 'Folder1'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending'], config: {} },
+            { name: 'Value', type: FieldType.number, values: [null, undefined] as unknown as number[], config: {} },
           ],
-          length: 3,
+          length: 2,
         },
       ]);
 
@@ -1175,7 +1246,7 @@ describe('convertToWorkbenchRows', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 1000, 2000], config: {} },
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000, 5000], config: {} },
             {
               name: 'alertname',
               type: FieldType.string,
@@ -1225,7 +1296,7 @@ describe('convertToWorkbenchRows', () => {
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 1000, 1000, 1000, 1000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -1365,12 +1436,69 @@ describe('convertToWorkbenchRows', () => {
       ]);
     });
 
+    it('should correctly count from single-timestamp instant query data', () => {
+      // Simulates the result of an instant query where all rows share the same timestamp.
+      // This is the expected shape of the deduplicated badge query data.
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
+            {
+              name: 'alertname',
+              type: FieldType.string,
+              values: ['Alert1', 'Alert1', 'Alert2', 'Alert2'],
+              config: {},
+            },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder1', 'Folder2', 'Folder2'],
+              config: {},
+            },
+            {
+              name: 'grafana_rule_uid',
+              type: FieldType.string,
+              values: ['uid1', 'uid1', 'uid2', 'uid2'],
+              config: {},
+            },
+            {
+              name: 'alertstate',
+              type: FieldType.string,
+              values: ['firing', 'pending', 'firing', 'pending'],
+              config: {},
+            },
+            { name: 'Value', type: FieldType.number, values: [10, 3, 7, 2], config: {} },
+            {
+              name: 'team',
+              type: FieldType.string,
+              values: ['backend', 'backend', 'frontend', 'frontend'],
+              config: {},
+            },
+          ],
+          length: 4,
+        },
+      ]);
+
+      expect(result).toEqual([
+        {
+          type: 'alertRule',
+          metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
+          instanceCounts: { firing: 10, pending: 3 },
+        },
+        {
+          type: 'alertRule',
+          metadata: { title: 'Alert2', folder: 'Folder2', ruleUID: 'uid2' },
+          instanceCounts: { firing: 7, pending: 2 },
+        },
+      ]);
+    });
+
     it('should use global rule counts when same rule appears in multiple groups', () => {
       const result = convertToWorkbenchRows(
         [
           {
             fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 1000, 2000], config: {} },
+              { name: 'Time', type: FieldType.time, values: [5000, 5000, 5000, 5000], config: {} },
               {
                 name: 'alertname',
                 type: FieldType.string,
@@ -1409,7 +1537,7 @@ describe('convertToWorkbenchRows', () => {
         ['team']
       );
 
-      // Both groups get the global latest counts for uid1: firing=8 (t=2000), pending=3 (t=2000)
+      // Both groups get the global summed counts for uid1: firing=5+8=13, pending=2+3=5
       expect(result).toEqual([
         {
           type: 'group',
@@ -1418,10 +1546,10 @@ describe('convertToWorkbenchRows', () => {
             {
               type: 'alertRule',
               metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-              instanceCounts: { firing: 8, pending: 3 },
+              instanceCounts: { firing: 13, pending: 5 },
             },
           ],
-          instanceCounts: { firing: 8, pending: 3 },
+          instanceCounts: { firing: 13, pending: 5 },
         },
         {
           type: 'group',
@@ -1430,10 +1558,10 @@ describe('convertToWorkbenchRows', () => {
             {
               type: 'alertRule',
               metadata: { title: 'Alert1', folder: 'Folder1', ruleUID: 'uid1' },
-              instanceCounts: { firing: 8, pending: 3 },
+              instanceCounts: { firing: 13, pending: 5 },
             },
           ],
-          instanceCounts: { firing: 8, pending: 3 },
+          instanceCounts: { firing: 13, pending: 5 },
         },
       ]);
     });

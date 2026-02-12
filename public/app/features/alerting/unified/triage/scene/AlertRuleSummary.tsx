@@ -52,10 +52,16 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
 function AlertRuleSummaryViz({ ruleUID }: { ruleUID: string }) {
   const { queryRunner } = useWorkbenchContext();
 
-  // Transform parent data to filter by this specific rule and partition by alert state
+  // Transform parent data to filter by this specific rule and partition by alert state.
+  // filterByRefId ensures we use only the range query (A) for charts, excluding the
+  // instant badge query (B).
   const transformedData = useDataTransformer({
     data: queryRunner,
     transformations: [
+      {
+        id: 'filterByRefId',
+        options: { include: 'A' },
+      },
       {
         id: 'filterByValue',
         options: {

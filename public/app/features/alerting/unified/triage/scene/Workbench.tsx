@@ -1,5 +1,6 @@
 import { useEffect, useState, useTransition } from 'react';
 
+import { DataFrame } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
@@ -21,9 +22,28 @@ export function WorkbenchRenderer() {
   const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
+  // Build the badge query with PromQL-level deduplication.
+  // Prefers firing over pending: instances that were both pending and firing
+  // during the time range are counted only as firing.
+  const firingFilter = queryFilter ? `alertstate="firing",${queryFilter}` : 'alertstate="firing"';
+  const pendingFilter = queryFilter ? `alertstate="pending",${queryFilter}` : 'alertstate="pending"';
+  const badgeExpr =
+    `count by (${countBy}) (` +
+    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]) or ` +
+    `(last_over_time(${METRIC_NAME}{${pendingFilter}}[$__range]) ` +
+    `unless ignoring(alertstate, grafana_alertstate) ` +
+    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range])))`;
+
   const runner = useQueryRunner({
     queries: [
       getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${queryFilter}})`, {
+        refId: 'A',
+        format: 'table',
+      }),
+      getDataQuery(badgeExpr, {
+        refId: 'B',
+        instant: true,
+        range: false,
         format: 'table',
       }),
     ],
@@ -57,9 +77,13 @@ export function WorkbenchRenderer() {
       }
 
       const { series } = newState.data;
+      // Use the badge frame (instant query B) for tree building and instance counts.
+      // The badge query deduplicates instances at the PromQL level.
+      const badgeFrame = findBadgeFrame(series);
+
       // Use transition for non-blocking update
       startTransition(() => {
-        setRows(convertToWorkbenchRows(series, currentGroupByKeys));
+        setRows(convertToWorkbenchRows(badgeFrame ? [badgeFrame] : series, currentGroupByKeys));
       });
     };
 
@@ -87,4 +111,14 @@ export function WorkbenchRenderer() {
       hasActiveFilters={hasFiltersApplied}
     />
   );
+}
+
+/**
+ * Finds the badge frame (instant query B) from the series.
+ * When multiple queries share a query runner, the Prometheus plugin renames
+ * the Value field to "Value #<refId>". We check both the frame's refId and
+ * the field naming convention.
+ */
+function findBadgeFrame(series: DataFrame[]): DataFrame | undefined {
+  return series.find((frame) => frame.refId === 'B' || frame.fields.some((f) => f.name === 'Value #B'));
 }
