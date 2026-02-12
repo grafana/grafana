@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -97,7 +98,7 @@ type StaticSCIMConfig struct {
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	k8sClient client.K8sHandler,
+	k8sClient client.K8sHandler, iamUserClient *iamv0alpha1.UserClient,
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	staticConfig := &StaticSCIMConfig{
@@ -109,6 +110,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
 		userService:               userService,
+		userServiceNew:            NewK8sUserService(iamUserClient),
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
 		quotaService:              quotaService,
@@ -125,6 +127,7 @@ type UserSync struct {
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
 	userService               user.Service
+	userServiceNew            UserService
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
 	quotaService              quota.Service
@@ -357,16 +360,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
-	}
-
-	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
-		UserID: userID,
-		OrgID:  r.OrgID,
-	})
+	usr, err := s.userServiceNew.GetSignedInUser(ctx, id.Namespace, id.UID, r.OrgID)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
@@ -429,14 +423,8 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
-	}
-
 	isDisabled := false
-	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
+	return s.userServiceNew.Update(ctx, id.Namespace, id.UID, &user.UpdateUserCommand{IsDisabled: &isDisabled})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
@@ -583,7 +571,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 
 		if shouldExecuteUpdate {
-			if err := s.userService.Update(ctx, finalCmdToExecute); err != nil {
+			if err := s.userServiceNew.Update(ctx, id.Namespace, id.UID, finalCmdToExecute); err != nil {
 				ctxLogger.Error("Failed to update user attributes", "error", err, "id", id.ID, "isProvisioned", usr.IsProvisioned,
 					"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
 					"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
@@ -620,7 +608,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
-	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
+	usr, err := s.userServiceNew.Create(ctx, id.Namespace, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
 		Name:         id.Name,
