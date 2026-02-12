@@ -108,7 +108,7 @@ export const DashboardInteractions = {
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
-    source: 'panel' | 'edit_pane'
+    source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
   },

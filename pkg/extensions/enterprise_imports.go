@@ -39,6 +39,7 @@ import (
 	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/testcontainers/testcontainers-go"
+	_ "go.uber.org/multierr"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"

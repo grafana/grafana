@@ -313,6 +313,7 @@
     "@msagl/core": "^1.1.19",
     "@msagl/parser": "^1.1.19",
     "@openfeature/ofrep-web-provider": "^0.3.3",
+    "@openfeature/react-sdk": "^1.2.0",
     "@openfeature/web-sdk": "^1.6.1",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/exporter-collector": "0.25.0",
