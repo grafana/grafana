@@ -10698,6 +10698,7 @@
     }
   },
   "manage-owner-references": {
+    "error-load-team-details": "Could not load team details",
     "folder-owner-error": "Error updating folder owner",
     "folder-owner-removed": "Folder owner removed",
     "folder-owner-updated": "Folder owner updated",
