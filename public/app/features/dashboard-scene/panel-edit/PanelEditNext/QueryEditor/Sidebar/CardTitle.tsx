@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
 
+// Text component doesn't let us use strikethrough so we use a span with the correct style instead
 export const CardTitle = ({ title, isHidden }: { title: string; isHidden: boolean }) => {
   const styles = useStyles2(getStyles, { isHidden });
   return (

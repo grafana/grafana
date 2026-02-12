@@ -172,10 +172,6 @@ function getStyles(
         transform: 'translateX(0)',
         pointerEvents: 'auto',
       },
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.border}`,
-        outlineOffset: '2px',
-      },
     }),
 
     hoverActions,
@@ -185,7 +181,7 @@ function getStyles(
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: `4px 8px`,
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
