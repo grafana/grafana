@@ -22,7 +22,7 @@ import {
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { dispatch, store } from 'app/store/store';
+import { dispatch } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
@@ -89,12 +89,12 @@ export function getPanelMenu(
   const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
     const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
-    store.dispatch(
+    dispatch(
       navigateToExplore(panel, {
         timeRange: getTimeSrv().timeRange(),
         getExploreUrl,
         openInNewWindow,
-      }) as any
+      })
     );
   };
 
@@ -273,6 +273,7 @@ export function getPanelMenu(
     reservedNames.add(t('panel.header-menu.remove', `Remove`));
 
     appenExtensionsToPanelMenu({
+      extensionsSubmenuName: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
       rootMenu: menu,
       extensions,
       reservedNames,

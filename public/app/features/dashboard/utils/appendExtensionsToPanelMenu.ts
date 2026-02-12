@@ -6,7 +6,7 @@ const ROOT_CATEGORY = '${root}';
 const EXTENSIONS_CATEGORY = '${root}/Extensions';
 const SUBMENU_CATEGORY_PREFIX = `${ROOT_CATEGORY}/`;
 
-type AppendToPanelMenuOpts = {
+export type AppendToPanelMenuOpts = {
   rootMenu: PanelMenuItem[];
   extensions: PluginExtensionLink[];
   reservedNames: Set<string>;
@@ -145,7 +145,7 @@ type AppendToOpts = {
 function appendTo(bucket: Record<string, PanelMenuItem>, options: AppendToOpts): Record<string, PanelMenuItem> {
   const { key, createGroup, item } = options;
 
-  if (!Array.isArray(bucket[key])) {
+  if (!bucket[key]) {
     bucket[key] = createGroup();
   }
 
