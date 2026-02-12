@@ -436,7 +436,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL, st.ignorePendingForNoDataAndError)
+		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
 		if curState := st.cache.get(alertRule.OrgID, alertRule.UID, newState.CacheID); curState != nil {
 			patch(newState, curState, result)
 		}

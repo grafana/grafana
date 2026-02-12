@@ -80,7 +80,7 @@ type State struct {
 	EvaluationDuration   time.Duration
 }
 
-func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, ignorePendingForNoDataAndError bool) *State {
+func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	cacheID := lbs.Fingerprint()
@@ -138,8 +138,6 @@ func (a *State) Copy() *State {
 		LastEvaluationString: a.LastEvaluationString,
 		LastEvaluationTime:   a.LastEvaluationTime,
 		EvaluationDuration:   a.EvaluationDuration,
-
-		ignorePendingForNoDataAndError: a.ignorePendingForNoDataAndError,
 	}
 }
 
