@@ -646,6 +646,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
+			Name:         "dashboardRules",
+			Description:  "Enables dashboard-level rules engine with conditions and outcomes for dynamic behavior",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
