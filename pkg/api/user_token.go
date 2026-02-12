@@ -144,6 +144,7 @@ func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
 
 	if res.UnhashedToken != token {
 		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
+		c.Logger = c.Logger.New("rotatedTokenUserId", res.UserId)
 	}
 
 	return nil
