@@ -93,7 +93,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
         <input
           ref={ref}
-          className={cx(styles.input, className)}
+          className={styles.input}
           {...restProps}
           style={{
             paddingLeft: prefix ? prefixRect.width + 12 : undefined,
