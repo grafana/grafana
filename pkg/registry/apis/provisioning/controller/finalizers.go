@@ -12,18 +12,21 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type finalizer struct {
@@ -197,6 +200,15 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
+		// For v0alpha1 dashboards, strip BOMs before patching to avoid validation errors
+		// BOMs can cause "illegal byte order mark" errors during patch operations
+		if item.Group == dashboard.GROUP && item.Resource == dashboard.DASHBOARD_RESOURCE {
+			if err := stripBOMsFromDashboard(ctx, client, item.Name, logger); err != nil {
+				// Log the error but continue with the patch - BOM stripping is best-effort
+				logger.Warn("failed to strip BOMs from dashboard", "name", item.Name, "error", err)
+			}
+		}
+
 		patchAnnotations, err := getPatchedAnnotations(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
@@ -260,6 +272,69 @@ func escapePatchString(s string) string {
 	s = strings.ReplaceAll(s, "~", "~0")
 	s = strings.ReplaceAll(s, "/", "~1")
 	return s
+}
+
+// stripBOMsFromDashboard strips BOM characters from a v0alpha1 dashboard's spec
+// This prevents "illegal byte order mark" validation errors during patch operations
+func stripBOMsFromDashboard(ctx context.Context, client dynamic.ResourceInterface, name string, logger logging.Logger) error {
+	// Get the dashboard
+	obj, err := client.Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("get dashboard: %w", err)
+	}
+
+	// Extract spec
+	spec, found, err := unstructured.NestedMap(obj.Object, "spec")
+	if err != nil {
+		return fmt.Errorf("get spec: %w", err)
+	}
+	if !found {
+		return nil // No spec, nothing to strip
+	}
+
+	// Check if spec contains BOMs
+	if !containsBOM(spec) {
+		return nil // No BOMs, nothing to do
+	}
+
+	logger.Info("stripping BOMs from dashboard spec before patch", "name", name)
+
+	// Strip BOMs from spec
+	cleanSpec := util.StripBOMFromInterface(spec).(map[string]any)
+
+	// Update the spec
+	if err := unstructured.SetNestedMap(obj.Object, cleanSpec, "spec"); err != nil {
+		return fmt.Errorf("set clean spec: %w", err)
+	}
+
+	// Update the dashboard (this will trigger any admission webhooks)
+	_, err = client.Update(ctx, obj, v1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("update dashboard with clean spec: %w", err)
+	}
+
+	return nil
+}
+
+// containsBOM recursively checks if a value contains BOM characters
+func containsBOM(v any) bool {
+	switch val := v.(type) {
+	case string:
+		return strings.Contains(val, "\ufeff")
+	case map[string]any:
+		for _, v := range val {
+			if containsBOM(v) {
+				return true
+			}
+		}
+	case []any:
+		for _, item := range val {
+			if containsBOM(item) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func sortResourceListForDeletion(list *provisioning.ResourceList) {
