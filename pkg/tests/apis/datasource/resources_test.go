@@ -162,7 +162,6 @@ func TestIntegrationDatasourceResourceHeaders(t *testing.T) {
 		require.Contains(t, testdataResponse.Request.URL.RawQuery, "param1=value1", "URL in plugin should contain query parameters")
 		require.Contains(t, testdataResponse.Request.URL.RawQuery, "param2=value2", "URL in plugin should contain query parameters")
 	})
-
 }
 
 func TestIntegrationDatasourceStreamingResource(t *testing.T) {
