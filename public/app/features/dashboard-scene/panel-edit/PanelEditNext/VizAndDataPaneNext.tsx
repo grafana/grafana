@@ -99,7 +99,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     sidebar: css({
       gridArea: 'sidebar',
-      overflow: 'visible',
+      overflow: 'hidden',
       position: 'relative',
       boxSizing: 'border-box',
       paddingBottom: theme.spacing(2),
