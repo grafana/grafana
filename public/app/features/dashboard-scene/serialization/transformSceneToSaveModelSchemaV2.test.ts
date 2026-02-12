@@ -487,7 +487,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       // Get a reference to the DS references mapping
       const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
-      // Test the query without DS originally - should return panlel level datasource
+      // Test the query without DS originally - should return panel level datasource
       const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
       expect(resultA).toEqual({ uid: 'default-ds', type: 'default' });
 
