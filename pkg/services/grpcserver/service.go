@@ -36,13 +36,13 @@ type Provider interface {
 }
 
 type gPRCServerService struct {
-	cfg           setting.GRPCServerSettings
-	logger        log.Logger
-	server        *grpc.Server
-	address       string
-	enabled       bool
-	startedChan   chan struct{}
-	delayShutdown bool
+	cfg              setting.GRPCServerSettings
+	logger           log.Logger
+	server           *grpc.Server
+	address          string
+	enabled          bool
+	startedChan      chan struct{}
+	separateShutdown bool
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
@@ -54,9 +54,9 @@ func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		cfg:    cfg.GRPCServer,
 		logger: log.New("grpc-server"),
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		enabled:       features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
-		startedChan:   make(chan struct{}),
-		delayShutdown: separateShutdown,
+		enabled:          features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
+		startedChan:      make(chan struct{}),
+		separateShutdown: separateShutdown,
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -172,7 +172,8 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	case err := <-serveErrCh:
 		return err
 	case <-ctx.Done():
-		if !s.delayShutdown {
+		// If separateShutdown is true (DSKit), shutdown is called during services.StoppingFn.
+		if !s.separateShutdown {
 			s.shutdown()
 		}
 		return nil

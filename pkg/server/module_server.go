@@ -206,7 +206,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
-		return resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.searchServerRing, s.searchServerRingClientPool, s.grpcService.GetServer())
+		return resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
@@ -235,7 +235,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService.GetServer())
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -243,7 +243,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService.GetServer())
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

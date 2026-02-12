@@ -208,7 +208,7 @@ func TestClientServer(t *testing.T) {
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil, grpcService.GetServer())
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil, grpcService)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -306,7 +306,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil, grpcService.GetServer())
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil, grpcService)
 	require.NoError(t, err)
 
 	var client resource.SearchClient

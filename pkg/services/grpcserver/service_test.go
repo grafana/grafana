@@ -302,7 +302,7 @@ func TestGetAddress(t *testing.T) {
 }
 
 func TestDelayShutdown(t *testing.T) {
-	t.Run("delayShutdown=false shuts down server when context is cancelled", func(t *testing.T) {
+	t.Run("separateShutdown=false shuts down server when context is cancelled", func(t *testing.T) {
 		cfg := &setting.GRPCServerSettings{
 			Network:                 "tcp",
 			Address:                 "127.0.0.1:0",
@@ -310,12 +310,12 @@ func TestDelayShutdown(t *testing.T) {
 		}
 
 		service := &gPRCServerService{
-			cfg:           *cfg,
-			logger:        log.NewNopLogger(),
-			enabled:       true,
-			startedChan:   make(chan struct{}),
-			server:        grpc.NewServer(),
-			delayShutdown: false, // Default behavior - shutdown in Run()
+			cfg:              *cfg,
+			logger:           log.NewNopLogger(),
+			enabled:          true,
+			startedChan:      make(chan struct{}),
+			server:           grpc.NewServer(),
+			separateShutdown: false, // Default behavior - shutdown in Run()
 		}
 
 		grpc_health_v1.RegisterHealthServer(service.server, &testHealthServer{})
@@ -353,10 +353,10 @@ func TestDelayShutdown(t *testing.T) {
 		checkCtx, checkCancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer checkCancel()
 		_, err = healthClient.Check(checkCtx, &grpc_health_v1.HealthCheckRequest{})
-		assert.Error(t, err, "Server should be stopped after Run() returns with delayShutdown=false")
+		assert.Error(t, err, "Server should be stopped after Run() returns with separateShutdown=false")
 	})
 
-	t.Run("delayShutdown=true keeps server running after context is cancelled", func(t *testing.T) {
+	t.Run("separateShutdown=true keeps server running after context is cancelled", func(t *testing.T) {
 		cfg := &setting.GRPCServerSettings{
 			Network:                 "tcp",
 			Address:                 "127.0.0.1:0",
@@ -364,12 +364,12 @@ func TestDelayShutdown(t *testing.T) {
 		}
 
 		service := &gPRCServerService{
-			cfg:           *cfg,
-			logger:        log.NewNopLogger(),
-			enabled:       true,
-			startedChan:   make(chan struct{}),
-			server:        grpc.NewServer(),
-			delayShutdown: true, // DSKit behavior - shutdown delayed
+			cfg:              *cfg,
+			logger:           log.NewNopLogger(),
+			enabled:          true,
+			startedChan:      make(chan struct{}),
+			server:           grpc.NewServer(),
+			separateShutdown: true, // DSKit behavior - shutdown delayed
 		}
 
 		grpc_health_v1.RegisterHealthServer(service.server, &testHealthServer{})
@@ -407,7 +407,7 @@ func TestDelayShutdown(t *testing.T) {
 		checkCtx, checkCancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer checkCancel()
 		_, err = healthClient.Check(checkCtx, &grpc_health_v1.HealthCheckRequest{})
-		assert.NoError(t, err, "Server should still be running after Run() returns with delayShutdown=true")
+		assert.NoError(t, err, "Server should still be running after Run() returns with separateShutdown=true")
 
 		// Now explicitly call shutdown
 		service.shutdown()

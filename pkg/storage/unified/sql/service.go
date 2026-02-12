@@ -17,7 +17,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/authlib/grpcutils"
@@ -89,7 +88,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-	srv *grpc.Server,
+	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
@@ -104,7 +103,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		}
 	}
 
-	if err := s.registerServer(srv); err != nil {
+	if err := s.registerServer(provider); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +124,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
-	srv *grpc.Server,
+	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
@@ -161,7 +160,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
-	if err := s.registerServer(srv); err != nil {
+	if err := s.registerServer(provider); err != nil {
 		return nil, err
 	}
 
@@ -334,7 +333,7 @@ func (s *service) starting(ctx context.Context) error {
 }
 
 // registerServer creates the resource/search server and registers the gRPC services on the provided server.
-func (s *service) registerServer(srv *grpc.Server) error {
+func (s *service) registerServer(provider grpcserver.Provider) error {
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
@@ -372,7 +371,7 @@ func (s *service) registerServer(srv *grpc.Server) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	return s.createAndRegisterServer(srv, serverOptions)
+	return s.createAndRegisterServer(provider, serverOptions)
 }
 
 func (s *service) running(ctx context.Context) error {
@@ -508,21 +507,21 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 	}, nil
 }
 
-func (s *service) createAndRegisterServer(srv *grpc.Server, opts ServerOptions) error {
+func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts ServerOptions) error {
 	if s.searchStandalone {
 		server, err := NewSearchServer(opts)
 		if err != nil {
 			return err
 		}
 		s.serverStopper = server
-		return s.registerSearchServer(srv, server)
+		return s.registerSearchServer(provider, server)
 	}
 	server, err := NewResourceServer(opts)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
-	return s.registerUnifiedResourceServer(srv, server)
+	return s.registerUnifiedResourceServer(provider, server)
 }
 
 // searchServerWithAuth wraps a SearchServer with per-service authentication.
@@ -533,15 +532,16 @@ type searchServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*searchServerWithAuth)(nil)
 
-func (s *service) registerSearchServer(srv *grpc.Server, server resource.SearchServer) error {
+func (s *service) registerSearchServer(provider grpcserver.Provider, server resource.SearchServer) error {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
+	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	return s.registerHealthAndReflection(srv, server)
+	return s.registerHealthAndReflection(provider, server)
 }
 
 // resourceServerWithAuth wraps a ResourceServer with per-service authentication.
@@ -552,12 +552,13 @@ type resourceServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(srv *grpc.Server, server resource.ResourceServer) error {
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) error {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
 	// Register storage services
+	srv := provider.GetServer()
 	resourcepb.RegisterResourceStoreServer(srv, handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
@@ -566,18 +567,18 @@ func (s *service) registerUnifiedResourceServer(srv *grpc.Server, server resourc
 	// Register search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	return s.registerHealthAndReflection(srv, server)
+	return s.registerHealthAndReflection(provider, server)
 }
 
 // registerHealthAndReflection registers the health check and reflection services on the gRPC server.
-func (s *service) registerHealthAndReflection(srv *grpc.Server, healthChecker resourcepb.DiagnosticsServer) error {
+func (s *service) registerHealthAndReflection(provider grpcserver.Provider, healthChecker resourcepb.DiagnosticsServer) error {
 	healthService, err := resource.ProvideHealthService(healthChecker)
 	if err != nil {
 		return err
 	}
-
+	srv := provider.GetServer()
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
-	grpcserver.RegisterReflection(srv)
+	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
 	return nil
 }

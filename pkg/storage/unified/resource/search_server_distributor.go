@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -34,7 +35,7 @@ var (
 	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
 )
 
-func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool, srv *grpc.Server) (UnifiedStorageGrpcService, error) {
+func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
 	s := &distributorServer{
 		log:        log.New("index-server-distributor"),
 		ring:       ring,
@@ -44,13 +45,14 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringCl
 
 	healthService, err := ProvideHealthService(s)
 	if err != nil {
-		return s, err
+		return nil, err
 	}
 
+	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
-	grpcserver.RegisterReflection(srv)
+	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
 		<-ctx.Done()
