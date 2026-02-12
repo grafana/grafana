@@ -5,11 +5,11 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface DataSourceLogoProps {
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  size?: 'sm' | 'md';
+  size?: number;
 }
 
 export function DataSourceLogo(props: DataSourceLogoProps) {
-  const { dataSource, size = 'md' } = props;
+  const { dataSource, size } = props;
   const theme = useTheme2();
   const styles = getStyles(theme, dataSource?.meta.builtIn, size);
 
@@ -31,11 +31,11 @@ export function DataSourceLogoPlaceHolder() {
   return <div className={styles.pickerDSLogo}></div>;
 }
 
-function getStyles(theme: GrafanaTheme2, builtIn = false, size: 'sm' | 'md' = 'md') {
+function getStyles(theme: GrafanaTheme2, builtIn = false, size = 20) {
   return {
     pickerDSLogo: css({
-      height: size === 'sm' ? '14px' : '20px',
-      width: size === 'sm' ? '14px' : '20px',
+      height: size,
+      width: size,
       filter: `invert(${builtIn && theme.isLight ? 1 : 0})`,
     }),
   };
