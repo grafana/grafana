@@ -467,9 +467,11 @@ export function trackViewExperienceToggleClick(
 }
 
 /**
- * Track when view experience preference is successfully persisted
+ * Track when view experience preference is persisted (or fails to persist)
  */
-export function trackViewExperienceToggleConfirmed(payload: ViewExperienceToggleEventPayload & { success: boolean }) {
+export function trackViewExperienceToggleConfirmed(
+  payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
+) {
   reportInteraction('grafana_alerting_view_experience_confirmed', {
     ...payload,
     grafana_version: config.buildInfo.version,

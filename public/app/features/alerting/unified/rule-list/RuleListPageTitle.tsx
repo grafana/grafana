@@ -57,13 +57,14 @@ export function RuleListPageTitle({ title }: { title: string }) {
       setPreviewToggle('alertingListViewV2', true);
       trackViewExperienceToggleConfirmed({
         ...getEventPayload(),
-        success: true,
+        preferenceSaved: true,
       });
       window.location.reload();
     } catch {
+      // preferenceSaved: false when localStorage write fails (e.g., private browsing, storage full)
       trackViewExperienceToggleConfirmed({
         ...getEventPayload(),
-        success: false,
+        preferenceSaved: false,
       });
     }
   };
@@ -79,13 +80,13 @@ export function RuleListPageTitle({ title }: { title: string }) {
       setPreviewToggle('alertingListViewV2', false);
       trackViewExperienceToggleConfirmed({
         ...getEventPayload(),
-        success: true,
+        preferenceSaved: true,
       });
       window.location.reload();
     } catch {
       trackViewExperienceToggleConfirmed({
         ...getEventPayload(),
-        success: false,
+        preferenceSaved: false,
       });
     }
   };

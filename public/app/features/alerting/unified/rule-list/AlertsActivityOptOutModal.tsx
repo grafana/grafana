@@ -53,6 +53,3 @@ export function RevertToOldExperienceModal({
     </Modal>
   );
 }
-
-// Legacy export for backwards compatibility
-export const ViewExperienceSwitchModal = RevertToOldExperienceModal;
