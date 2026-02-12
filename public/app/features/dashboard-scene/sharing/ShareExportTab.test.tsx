@@ -5,7 +5,7 @@ import {
   Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
