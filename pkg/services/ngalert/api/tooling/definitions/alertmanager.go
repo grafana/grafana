@@ -609,7 +609,7 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.ReceiverStatus
+type ReceiverStatus = alertingmodels.ReceiverStatus
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {

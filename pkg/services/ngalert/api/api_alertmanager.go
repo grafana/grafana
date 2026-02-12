@@ -367,7 +367,7 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }
 
-type ReceiverStatus apimodels.Receiver
+type ReceiverStatus apimodels.ReceiverStatus
 
 func (rs ReceiverStatus) GetUID() string {
 	return legacy_storage.NameToUid(rs.Name)

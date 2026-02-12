@@ -76,8 +76,8 @@ func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
 	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil)
 }
 
-func (mc *Mimir) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	response := []apimodels.Receiver{}
+func (mc *Mimir) GetReceivers(ctx context.Context) ([]apimodels.ReceiverStatus, error) {
+	response := []apimodels.ReceiverStatus{}
 
 	// nolint:bodyclose
 	// closed within `do`

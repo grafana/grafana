@@ -39,7 +39,7 @@ type MimirClient interface {
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 
 	// Mimir implements an extended version of the receivers API under a different path.
-	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
+	GetReceivers(ctx context.Context) ([]apimodels.ReceiverStatus, error)
 }
 
 type Mimir struct {

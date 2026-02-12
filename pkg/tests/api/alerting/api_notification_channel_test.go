@@ -927,7 +927,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers []apimodels.Receiver
+		var receivers []apimodels.ReceiverStatus
 		err = json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -976,7 +976,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers []apimodels.Receiver
+	var receivers []apimodels.ReceiverStatus
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
