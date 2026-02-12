@@ -128,6 +128,9 @@ func convertDashboardSpec_V2alpha1_to_V2beta1(ctx context.Context, in *dashv2alp
 		}
 	}
 
+	// Convert rules
+	out.Rules = convertRules_V2alpha1_to_V2beta1(in.Rules)
+
 	return nil
 }
 
@@ -533,6 +536,7 @@ func convertRowsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardRowsLay
 		out.Rows[i] = dashv2beta1.DashboardRowsLayoutRowKind{
 			Kind: row.Kind,
 			Spec: dashv2beta1.DashboardRowsLayoutRowSpec{
+				Name:                 row.Spec.Name,
 				Title:                row.Spec.Title,
 				Collapse:             row.Spec.Collapse,
 				HideHeader:           row.Spec.HideHeader,
@@ -579,6 +583,7 @@ func convertTabsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardTabsLay
 		out.Tabs[i] = dashv2beta1.DashboardTabsLayoutTabKind{
 			Kind: tab.Kind,
 			Spec: dashv2beta1.DashboardTabsLayoutTabSpec{
+				Name:                 tab.Spec.Name,
 				Title:                tab.Spec.Title,
 				ConditionalRendering: convertConditionalRenderingGroupKind_V2alpha1_to_V2beta1(tab.Spec.ConditionalRendering),
 				Repeat:               convertTabRepeatOptions_V2alpha1_to_V2beta1(tab.Spec.Repeat),
@@ -1067,6 +1072,101 @@ func convertAnnotationMappings_V2alpha1_to_V2beta1(in map[string]dashv2alpha1.Da
 			Source: mapping.Source,
 			Value:  mapping.Value,
 			Regex:  mapping.Regex,
+		}
+	}
+	return out
+}
+
+func convertRules_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardDashboardRuleKind) []dashv2beta1.DashboardDashboardRuleKind {
+	if in == nil {
+		return nil
+	}
+	if len(in) == 0 {
+		return []dashv2beta1.DashboardDashboardRuleKind{}
+	}
+
+	out := make([]dashv2beta1.DashboardDashboardRuleKind, len(in))
+	for i, rule := range in {
+		out[i] = dashv2beta1.DashboardDashboardRuleKind{
+			Kind: rule.Kind,
+			Spec: dashv2beta1.DashboardDashboardRuleSpec{
+				Name:       rule.Spec.Name,
+				Target:     convertRuleTarget_V2alpha1_to_V2beta1(&rule.Spec.Target),
+				Conditions: convertRuleConditions_V2alpha1_to_V2beta1(&rule.Spec.Conditions),
+				Outcomes:   convertRuleOutcomes_V2alpha1_to_V2beta1(rule.Spec.Outcomes),
+			},
+		}
+	}
+	return out
+}
+
+func convertRuleTarget_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardElementReferenceOrLayoutItemReference) dashv2beta1.DashboardElementReferenceOrLayoutItemReference {
+	out := dashv2beta1.DashboardElementReferenceOrLayoutItemReference{}
+	if in.ElementReference != nil {
+		out.ElementReference = &dashv2beta1.DashboardElementReference{
+			Kind: in.ElementReference.Kind,
+			Name: in.ElementReference.Name,
+		}
+	}
+	if in.LayoutItemReference != nil {
+		out.LayoutItemReference = &dashv2beta1.DashboardLayoutItemReference{
+			Kind: in.LayoutItemReference.Kind,
+			Name: in.LayoutItemReference.Name,
+		}
+	}
+	return out
+}
+
+func convertRuleConditions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDashboardRuleConditionsSpec) dashv2beta1.DashboardDashboardRuleConditionsSpec {
+	out := dashv2beta1.DashboardDashboardRuleConditionsSpec{
+		Match: dashv2beta1.DashboardDashboardRuleConditionsSpecMatch(in.Match),
+		Items: make([]dashv2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind, len(in.Items)),
+	}
+
+	for i, item := range in.Items {
+		out.Items[i] = dashv2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+
+		if item.ConditionalRenderingVariableKind != nil {
+			out.Items[i].ConditionalRenderingVariableKind = &dashv2beta1.DashboardConditionalRenderingVariableKind{
+				Kind: item.ConditionalRenderingVariableKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingVariableSpec{
+					Variable: item.ConditionalRenderingVariableKind.Spec.Variable,
+					Operator: dashv2beta1.DashboardConditionalRenderingVariableSpecOperator(item.ConditionalRenderingVariableKind.Spec.Operator),
+					Value:    item.ConditionalRenderingVariableKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingDataKind != nil {
+			out.Items[i].ConditionalRenderingDataKind = &dashv2beta1.DashboardConditionalRenderingDataKind{
+				Kind: item.ConditionalRenderingDataKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingDataSpec{
+					Value: item.ConditionalRenderingDataKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingTimeRangeSizeKind != nil {
+			out.Items[i].ConditionalRenderingTimeRangeSizeKind = &dashv2beta1.DashboardConditionalRenderingTimeRangeSizeKind{
+				Kind: item.ConditionalRenderingTimeRangeSizeKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingTimeRangeSizeSpec{
+					Value: item.ConditionalRenderingTimeRangeSizeKind.Spec.Value,
+				},
+			}
+		}
+	}
+
+	return out
+}
+
+func convertRuleOutcomes_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind) []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind {
+	out := make([]dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind, len(in))
+	for i, outcome := range in {
+		out[i] = dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind{
+			Kind: outcome.Kind,
+			Spec: dashv2beta1.DashboardDashboardRuleOutcomeVisibilitySpec{
+				Visibility: dashv2beta1.DashboardDashboardRuleOutcomeVisibilitySpecVisibility(outcome.Spec.Visibility),
+			},
 		}
 	}
 	return out
