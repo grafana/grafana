@@ -13,13 +13,13 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Extend Git Sync
+title: Instantaneous pulling and dashboard previews
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/
 aliases:
 ---
 
-# Extend Git Sync for real-time notification and image rendering
+# Set up instantaneous pulling and dashboard previews in Pull Requests
 
 {{< admonition type="caution" >}}
 
@@ -29,7 +29,7 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-After [set-up](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/), you can optionally extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
+After [setup](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/), you can optionally extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
 
 | Capability                                       | Benefit                                                           | Requires                               |
 | ------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------- |
