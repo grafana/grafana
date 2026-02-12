@@ -244,7 +244,7 @@ func TestIntegrationDatasourceResourcesMethods(t *testing.T) {
 			raw := apis.DoRequest[testdataResponse](helper, apis.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: method,
-				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-methods/resource/test/json",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-resource/resource/test/json",
 				Body:   body,
 			}, &testdataResponse{})
 
