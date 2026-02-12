@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -117,7 +116,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 
 	startTime := time.Now()
 
-	migrateOpts := legacy.MigrateOptions{
+	migrateOpts := MigrateOptions{
 		Namespace:   info.Value,
 		Resources:   r.resources,
 		WithHistory: true, // Migrate with full history

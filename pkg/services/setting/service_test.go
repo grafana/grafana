@@ -302,6 +302,82 @@ func TestRemoteSettingService_List(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("settings-client %s (my-custom-service)", apiVersion), capturedUserAgent)
 	})
 
+	t.Run("should use OTEL_SERVICE_NAME env var when ServiceName is not set", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "otel-test-service")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (otel-test-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should prefer Config.ServiceName over OTEL_SERVICE_NAME env var", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "otel-test-service")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			ServiceName:   "explicit-service",
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (explicit-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should fall back to default when neither ServiceName nor env var is set", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (grafana)", apiVersion), capturedUserAgent)
+	})
+
 	t.Run("should propagate trace context in requests", func(t *testing.T) {
 		// Set up OpenTelemetry with W3C trace context propagator
 		tp := sdktrace.NewTracerProvider()

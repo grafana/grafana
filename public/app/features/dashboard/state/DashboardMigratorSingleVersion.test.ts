@@ -100,6 +100,7 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
       // Check if the backend output file exists
       const backendMigrationResult = JSON.parse(readFileSync(backendOutputPath, 'utf8'));
+      delete backendMigrationResult.id; // Remove id to match frontend behavior
 
       expect(backendMigrationResult.schemaVersion).toEqual(targetVersion);
 

@@ -48,7 +48,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	repositoriesWriter := accesscontrol.RoleRegistration{

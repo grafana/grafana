@@ -111,10 +111,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagReportingRetries
-	// Enables rendering retries for the reporting feature
-	FlagReportingRetries = "reportingRetries"
-
 	// FlagReportingCsvEncodingOptions
 	// Enables CSV encoding options in the reporting feature
 	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
@@ -203,6 +199,10 @@ const (
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
 
+	// FlagDatasourcesRerouteLegacyCRUDAPIs
+	// Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesRerouteLegacyCRUDAPIs = "datasourcesRerouteLegacyCRUDAPIs"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -258,10 +258,6 @@ const (
 	// FlagAuditLoggingAppPlatform
 	// Enable audit logging with Kubernetes under app platform
 	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
-
-	// FlagSecretsManagementAppPlatform
-	// Enable the secrets management API and services under app platform
-	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagSecretsManagementAppPlatformUI
 	// Enable the secrets management app platform UI
@@ -531,6 +527,10 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
+	// FlagTeamHttpHeadersFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -758,6 +758,10 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
+	// FlagExcludeRedundantManagedPermissions
+	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
+	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
+
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
@@ -802,7 +806,15 @@ const (
 	// Redirects the request to teams related endpoints to the app platform API
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
+	// FlagKubernetesTeamSync
+	// Use the new APIs for syncing users to teams
+	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAlertingIgnorePendingForNoDataAndError
+	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 )
