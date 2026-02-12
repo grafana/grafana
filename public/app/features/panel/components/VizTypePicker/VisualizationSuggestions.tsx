@@ -165,7 +165,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       return;
     }
 
-    // Only auto-apply the first suggestion for new or unconfigured panels.
+    // Only auto-apply the first suggestion for unconfigured panels.
     // For existing panels, do not auto-select when navigating back to the suggestions tab.
     if (!isUnconfiguredPanel) {
       return;
