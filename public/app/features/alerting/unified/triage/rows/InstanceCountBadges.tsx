@@ -51,7 +51,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   grid: css({
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 2fr',
+    gap: theme.spacing(1),
     alignItems: 'center',
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
   }),
   slot: css({
     display: 'flex',
