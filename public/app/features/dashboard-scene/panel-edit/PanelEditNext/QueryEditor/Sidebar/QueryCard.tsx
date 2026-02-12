@@ -37,7 +37,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       isHidden={!!query.hide}
       showAddButton={true}
     >
-      {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size="sm" />}
+      {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
       {editorType === QueryEditorType.Expression && (
         <Icon
           name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon}
