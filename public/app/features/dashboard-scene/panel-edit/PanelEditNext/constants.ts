@@ -9,7 +9,6 @@ export enum QueryEditorType {
   Expression = 'expression',
   Transformation = 'transformation',
 }
-
 export enum SidebarSize {
   Mini = 'mini',
   Full = 'full',
@@ -23,6 +22,7 @@ export const QUERY_EDITOR_COLORS = {
   card: {
     activeBg: '#314158',
     hoverBg: '#1D293D',
+    headerBg: '#20262F',
   },
 };
 

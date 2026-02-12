@@ -181,7 +181,7 @@ function getStyles(
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      padding: theme.spacing(0.5, 1),
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
