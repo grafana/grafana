@@ -39,13 +39,6 @@ export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedS
  * The banner is only shown if:
  * 1. This feature toggle is enabled (alertingAlertsActivityBanner)
  * 2. The Alerts Activity feature itself is enabled (alertingTriage)
- *
- * Note: alertingAlertsActivityBanner is not yet in the generated FeatureToggles type.
- * Once the backend toggle is registered and featureToggles.gen.ts is regenerated,
- * this type assertion can be removed.
  */
-export const shouldShowAlertsActivityBanner = () => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const featureToggles = config.featureToggles as Record<string, boolean | undefined>;
-  return (featureToggles.alertingAlertsActivityBanner && featureToggles.alertingTriage) ?? false;
-};
+export const shouldShowAlertsActivityBanner = () =>
+  (config.featureToggles.alertingAlertsActivityBanner && config.featureToggles.alertingTriage) ?? false;
