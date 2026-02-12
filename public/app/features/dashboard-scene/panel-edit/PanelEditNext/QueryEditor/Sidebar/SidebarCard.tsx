@@ -91,12 +91,12 @@ function getStyles(
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingRight: theme.spacing(1),
-    // this will never actually show up other than when the card is hovered so we only need the hoverBg
-    background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 72%, rgba(32, 38, 47, 0.00) 100%)`,
+    // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
+    paddingLeft: theme.spacing(1),
+    background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 90%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
-    width: '87px',
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
@@ -144,6 +144,7 @@ function getStyles(
         },
       }),
     }),
+
     card: css({
       position: 'relative',
       minHeight: '30px',
@@ -162,24 +163,22 @@ function getStyles(
           duration: theme.transitions.duration.short,
         }),
       },
-
       '&:hover': {
         background: QUERY_EDITOR_COLORS.card.hoverBg,
       },
-
       [`&:hover .${hoverActions}`]: {
-        background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 90%, rgba(32, 38, 47, 0.00) 100%)`,
         opacity: 1,
         transform: 'translateX(0)',
         pointerEvents: 'auto',
       },
-
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
       },
     }),
+
     hoverActions,
+
     cardContent: css({
       display: 'flex',
       flexDirection: 'row',
@@ -189,7 +188,6 @@ function getStyles(
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
-
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['opacity'], {
           duration: theme.transitions.duration.short,
