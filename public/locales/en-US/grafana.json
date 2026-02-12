@@ -1919,10 +1919,6 @@
         "export": {
           "aria-label": "Export rules folder",
           "label": "Export rules folder"
-        },
-        "view": {
-          "aria-label": "View folder",
-          "label": "View folder"
         }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
@@ -2748,9 +2744,11 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
+      "edit-group": "Edit",
       "empty-data-source": "No rules found",
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
+      "export-group": "Export rules group",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -4069,6 +4067,7 @@
       "view-dashboard": "View dashboard",
       "view-folder": "View folder"
     },
+    "shared-with-me": "Shared with me",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
@@ -10699,6 +10698,7 @@
     }
   },
   "manage-owner-references": {
+    "error-load-team-details": "Could not load team details",
     "folder-owner-error": "Error updating folder owner",
     "folder-owner-removed": "Folder owner removed",
     "folder-owner-updated": "Folder owner updated",
