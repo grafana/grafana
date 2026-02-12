@@ -257,48 +257,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
         "refId": "A"
       }
     },
-    {
-      "refId": "B",
-      "queryType": "",
-      "relativeTimeRange": {
-        "from": 0,
-        "to": 0
-      },
-      "datasourceUid": "__expr__",
-      "model": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [],
-              "type": "gt"
-            },
-            "operator": {
-              "type": "and"
-            },
-            "query": {
-              "params": [
-                "B"
-              ]
-            },
-            "reducer": {
-              "params": [],
-              "type": "last"
-            },
-            "type": "query"
-          }
-        ],
-        "datasource": {
-          "type": "__expr__",
-          "uid": "__expr__"
-        },
-        "expression": "A",
-        "intervalMs": 1000,
-        "maxDataPoints": 43200,
-        "reducer": "last",
-        "refId": "B",
-        "type": "reduce"
-      }
-    }
   ],
   "noDataState": "",
   "execErrState": "",
@@ -308,7 +266,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "notification_settings": null,
   "record": {
     "metric": "grafana_recording_rule_test_2",
-    "from": "B",
+    "from": "A",
     "target_datasource_uid": "grafanacloud-prom"
   }
 }
