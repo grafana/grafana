@@ -23,7 +23,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       isHidden={!!transformation.transformConfig.disabled}
       showAddButton={false}
     >
-      <Text weight="light" variant="code" color="secondary">
+      <Text weight="light" variant="code" color="primary">
         {transformationName}
       </Text>
     </SidebarCard>

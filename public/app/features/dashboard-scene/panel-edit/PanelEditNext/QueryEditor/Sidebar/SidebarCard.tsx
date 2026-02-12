@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
-import { QueryEditorTypeConfig } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorTypeConfig } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
 
@@ -149,12 +149,13 @@ function getStyles(
       }),
     }),
     card: css({
+      minHeight: '26px',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? '#314158' : theme.colors.background.secondary,
+      background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
       // border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderLeft: `1px solid ${config.color}`,
       // borderRadius: theme.shape.radius.default,
@@ -169,7 +170,7 @@ function getStyles(
       },
 
       '&:hover': {
-        background: '#1D293D',
+        background: QUERY_EDITOR_COLORS.card.hoverBg,
         // borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 

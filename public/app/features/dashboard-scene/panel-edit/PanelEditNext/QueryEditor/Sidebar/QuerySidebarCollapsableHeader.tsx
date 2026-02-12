@@ -11,7 +11,7 @@ export const QuerySidebarCollapsableHeader = ({ label, children }: { label: stri
   return (
     <CollapsableSection
       label={
-        <Text color="secondary" variant="body">
+        <Text color="maxContrast" variant="h6" weight="light">
           {label}
         </Text>
       }

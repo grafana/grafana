@@ -20,6 +20,10 @@ export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
+  card: {
+    activeBg: '#314158',
+    hoverBg: '#1D293D',
+  },
 };
 
 export interface QueryEditorTypeConfig {
