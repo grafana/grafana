@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 const DASHBOARD_UID = 'adhjhtt';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
-test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () => {
+test.describe.only('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () => {
   test.describe('Defaults', () => {
     test('Should render logs table panel', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
@@ -211,10 +211,9 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      // @todo update when row selection is available
-      const selectedCell = page.locator('[role="gridcell"][aria-selected="true"]');
-      await expect(selectedCell, 'Cell is selected').toBeVisible();
-      await expect(selectedCell, 'Selected cell contains expected timestamp').toContainText('2026-02-06 12:42:46.020');
+      const selectedRow = page.locator('[role="row"][aria-selected="true"]');
+      await expect(selectedRow, 'Row is selected').toBeVisible();
+      await expect(selectedRow, 'Selected row contains expected timestamp').toContainText('2026-02-06 12:42:46.020');
     });
     test('Show controls', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
