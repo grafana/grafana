@@ -673,7 +673,8 @@
       "message": {
         "required": "Required."
       },
-      "validate-name": "Name is required"
+      "validate-name": "Name is required",
+      "validate-name-duplicate": "A notification policy with this name already exists"
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
@@ -934,10 +935,10 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
-      "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
-      "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by_one": "Used by {{count}} notification policy",
+      "used-by_other": "Used by {{count}} notification policies",
+      "used-by-rules_one": "Used by {{count}} alert rule",
+      "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -1918,10 +1919,6 @@
         "export": {
           "aria-label": "Export rules folder",
           "label": "Export rules folder"
-        },
-        "view": {
-          "aria-label": "View folder",
-          "label": "View folder"
         }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
@@ -2747,9 +2744,11 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
+      "edit-group": "Edit",
       "empty-data-source": "No rules found",
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
+      "export-group": "Export rules group",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -4014,6 +4013,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "team-folders": "Team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -4067,6 +4067,7 @@
       "view-dashboard": "View dashboard",
       "view-folder": "View folder"
     },
+    "shared-with-me": "Shared with me",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
@@ -5316,7 +5317,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
@@ -5855,6 +5855,7 @@
       "title": "Variables"
     },
     "versions": {
+      "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
     }
   },
@@ -8251,7 +8252,6 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
   },
   "folders": {
@@ -10698,6 +10698,7 @@
     }
   },
   "manage-owner-references": {
+    "error-load-team-details": "Could not load team details",
     "folder-owner-error": "Error updating folder owner",
     "folder-owner-removed": "Folder owner removed",
     "folder-owner-updated": "Folder owner updated",
@@ -12159,7 +12160,6 @@
       "token-user-description": "The username that will be used to access the repository with the app password",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
-      "url-pattern": "Must be a valid Bitbucket repository URL",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -12417,7 +12417,6 @@
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "token-user-required": "Username is required",
       "url-description": "The Git repository URL",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
@@ -12430,7 +12429,6 @@
       "token-label": "Personal Access Token",
       "token-required": "GitHub token is required",
       "url-description": "The GitHub repository URL",
-      "url-pattern": "Must be a valid GitHub repository URL",
       "url-required": "Repository URL is required"
     },
     "gitlab": {
@@ -12449,7 +12447,6 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
-      "url-pattern": "Must be a valid GitLab repository URL",
       "url-required": "Repository URL is required"
     },
     "history-view": {
@@ -12472,10 +12469,8 @@
     "http-utils": {
       "access-denied": "Access denied. Please check your token permissions.",
       "authentication-failed": "Authentication failed. Please check your access token.",
-      "http-error": "HTTP {{status}}: {{statusText}}",
       "request-failed": "Request failed",
-      "resource-not-found": "Resource not found. Please check the URL or repository.",
-      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
+      "resource-not-found": "Resource not found. Please check the URL or repository."
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -12502,6 +12497,8 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-by-repository-tooltip": "Managed by: Repository",
+    "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
@@ -12673,7 +12670,8 @@
         "aria-label": "Progress Bar"
       },
       "token-user-label": "Username",
-      "url-label": "Repository URL"
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
     },
     "sidebar-item": {
       "label-completed-step": "Completed step",
@@ -12995,11 +12993,7 @@
     },
     "header": {
       "expression": "Expression",
-      "transformation": "Transformation",
-      "warning-badges": {
-        "text_one": "{{count}} {{type}}",
-        "text_other": "{{count}} {{type}}"
-      }
+      "transformation": "Transformation"
     },
     "help": {
       "close": "Close help",
@@ -13011,6 +13005,11 @@
       "transformation": "Transformation"
     },
     "sidebar": {
+      "add-below": "Add below {{id}}",
+      "add-expression": "Add expression",
+      "add-query": "Add query",
+      "add-saved-query": "Add saved query",
+      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",

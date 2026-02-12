@@ -53,7 +53,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       break;
     case 'git':
-      spec.git = baseConfig;
+      spec.git = { ...baseConfig, tokenUser: data.tokenUser };
       break;
     case 'local':
       spec.local = {
@@ -69,7 +69,8 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
-  const tokenUser = spec.bitbucket?.tokenUser;
+  // tokenUser is only available for bitbucket and pure git
+  const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
 
   return structuredClone({
     ...spec,
@@ -89,17 +90,12 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
-      const name = repository.url ?? 'github';
-      return name.replace('https://github.com/', '');
     case 'gitlab':
-      const gitlabName = repository.url ?? 'gitlab';
-      return gitlabName.replace('https://gitlab.com/', '');
     case 'bitbucket':
-      const bitbucketName = repository.url ?? 'bitbucket';
-      return bitbucketName.replace('https://bitbucket.org/', '');
-    case 'git':
-      const gitName = repository.url ?? 'git';
-      return gitName.replace(/^https?:\/\/[^\/]+\//, '');
+    case 'git': {
+      const repoUrl = repository.url ?? repository.type;
+      return repoUrl.replace(/^https?:\/\/[^\/]+\//, '');
+    }
     case 'local':
       return repository.path ?? 'local';
     default:

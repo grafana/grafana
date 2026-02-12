@@ -1080,6 +1080,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				app := github.App{
 					ID:   &id,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
 			}),

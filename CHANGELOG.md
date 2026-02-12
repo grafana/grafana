@@ -1,3 +1,41 @@
+<!-- 12.3.2+security-01 START -->
+
+# 12.3.2+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41117
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.3.2+security-01 END -->
+<!-- 12.2.4+security-01 START -->
+
+# 12.2.4+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41117
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.2.4+security-01 END -->
+<!-- 12.1.6+security-01 START -->
+
+# 12.1.6+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.1.6+security-01 END -->
+<!-- 11.6.10+security-01 START -->
+
+# 11.6.10+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2026-21722
+
+<!-- 11.6.10+security-01 END -->
 <!-- 12.3.2 START -->
 
 # 12.3.2 (2026-01-27)
