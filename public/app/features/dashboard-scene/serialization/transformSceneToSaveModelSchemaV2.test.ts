@@ -27,14 +27,14 @@ import {
   DashboardCursorSync as DashboardCursorSyncV1,
   VariableHide as VariableHideV1,
   VariableSort as VariableSortV1,
-} from '@grafana/schema/dist/esm/index.gen';
+} from '@grafana/schema';
 import {
   GridLayoutSpec,
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
   defaultDataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
@@ -158,7 +158,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
       $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
-      id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -1058,7 +1057,6 @@ describe('getVizPanelQueries', () => {
 
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
   return {
-    id: 1,
     title: 'Test Dashboard',
     description: 'Test Description',
     preload: true,

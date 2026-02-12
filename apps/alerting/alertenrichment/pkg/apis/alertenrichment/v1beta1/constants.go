@@ -7,6 +7,8 @@ const (
 	APIGroup = "alertenrichment.grafana.app"
 	// APIVersion is the API version used by all kinds in this package
 	APIVersion = "v1beta1"
+
+	OpenAPIPrefix = "com.github.grafana.grafana.apps.alerting.alertenrichment.pkg.apis.alertenrichment.v1beta1."
 )
 
 var (

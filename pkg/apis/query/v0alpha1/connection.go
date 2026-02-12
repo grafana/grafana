@@ -28,6 +28,10 @@ type DataSourceConnectionQuery struct {
 	Plugin string `json:"plugin,omitempty"`
 }
 
+func (DataSourceConnectionQuery) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnectionQuery"
+}
+
 // Connection to a datasource instance
 type DataSourceConnection struct {
 	// The configured display name
@@ -45,6 +49,10 @@ type DataSourceConnection struct {
 	// TODO: labels? things the UI would need to show in a list
 }
 
+func (DataSourceConnection) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnection"
+}
+
 // List of all datasource instances across all datasource apiservers
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnectionList struct {
@@ -52,6 +60,10 @@ type DataSourceConnectionList struct {
 	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceConnection `json:"items"`
+}
+
+func (DataSourceConnectionList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceConnectionList"
 }
 
 type DataSourceApiServerRegistry interface {
@@ -86,6 +98,10 @@ type DataSourceApiServer struct {
 	AliasIDs []string `json:"aliasIDs,omitempty"`
 }
 
+func (DataSourceApiServer) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceApiServer"
+}
+
 // List of datasource plugins
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServerList struct {
@@ -93,4 +109,8 @@ type DataSourceApiServerList struct {
 	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceApiServer `json:"items"`
+}
+
+func (DataSourceApiServerList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceApiServerList"
 }

@@ -13,3 +13,6 @@ type GetSearchUsersRequestParams struct {
 func NewGetSearchUsersRequestParams() *GetSearchUsersRequestParams {
 	return &GetSearchUsersRequestParams{}
 }
+func (GetSearchUsersRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersRequestParams"
+}

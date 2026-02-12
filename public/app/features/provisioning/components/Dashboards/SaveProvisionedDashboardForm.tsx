@@ -371,7 +371,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

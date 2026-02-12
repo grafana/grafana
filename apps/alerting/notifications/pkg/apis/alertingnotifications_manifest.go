@@ -554,9 +554,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTest{},
+	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestResponse{},
 
-	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemas{},
+	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

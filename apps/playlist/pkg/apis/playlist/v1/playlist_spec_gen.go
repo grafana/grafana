@@ -52,3 +52,10 @@ const (
 	PlaylistPlaylistItemTypeDashboardByUid PlaylistPlaylistItemType = "dashboard_by_uid"
 	PlaylistPlaylistItemTypeDashboardById  PlaylistPlaylistItemType = "dashboard_by_id"
 )
+
+func (PlaylistPlaylistItem) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem"
+}
+func (PlaylistSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistSpec"
+}

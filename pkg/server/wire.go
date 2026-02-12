@@ -43,7 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -56,6 +57,9 @@ import (
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -242,8 +246,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
-	legacy.ProvideMigratorDashboardAccessor,
-	legacy.ProvidePlaylistMigrator,
+	dashboardlegacy.ProvideMigrator,
+	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	playlistmigrator.ProvidePlaylistMigrator,
+	shorturlmigrator.ProvideShortURLMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -577,16 +583,18 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 }
 
 /*
-provideMigrationRegistry builds the MigrationRegistry directly from the
-underlying dependencies. When adding a new resource migration, add the
-dependency parameter here and register it with the registry.
+provideMigrationRegistry builds the MigrationRegistry from individual
+resource migrators. When adding a new resource migration, register
+it with the registry here.
 */
 func provideMigrationRegistry(
-	accessor legacy.MigrationDashboardAccessor,
-	playlistMigrator legacy.PlaylistMigrator,
+	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
+	playlistMigrator playlistmigrator.PlaylistMigrator,
+	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
-	r.Register(dashboardmigration.FoldersDashboardsMigration(accessor))
+	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	return r
 }
