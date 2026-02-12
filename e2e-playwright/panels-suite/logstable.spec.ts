@@ -180,7 +180,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await expect(option, 'Inspect button panel option is no longer checked').not.toBeChecked({ timeout: 400 });
       await expect(inspectLogLineButton, 'Inspect button is no longer in the logs table viz').toHaveCount(0);
     });
-    test.only('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
+    test('Copy log line button', async ({ page, gotoDashboardPage, selectors, context }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '2' }),
