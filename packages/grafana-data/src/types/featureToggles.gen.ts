@@ -1471,5 +1471,5 @@ export interface FeatureToggles {
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
   */
-  alertingSkipPendingForNoDataAndError?: boolean;
+  alertingIgnorePendingForNoDataAndError?: boolean;
 }

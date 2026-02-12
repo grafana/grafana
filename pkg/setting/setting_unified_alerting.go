@@ -152,7 +152,7 @@ type UnifiedAlertingSettings struct {
 
 	BacktestingMaxEvaluations int
 
-	SkipPendingForNoDataAndError bool
+	IgnorePendingForNoDataAndError bool
 }
 
 type RecordingRuleSettings struct {

@@ -79,12 +79,12 @@ type State struct {
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
 
-	// skippendingForNoDataAndError makes Error and NoData alerts fire immediately.
+	// ignorePendingForNoDataAndError makes Error and NoData alerts fire immediately.
 	// TODO: Remove.
-	skippendingForNoDataAndError bool
+	ignorePendingForNoDataAndError bool
 }
 
-func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, skippendingForNoDataAndError bool) *State {
+func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, ignorePendingForNoDataAndError bool) *State {
 	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	cacheID := lbs.Fingerprint()
@@ -112,7 +112,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		LastEvaluationTime:   result.EvaluatedAt,
 		EvaluationDuration:   result.EvaluationDuration,
 
-		skippendingForNoDataAndError: skippendingForNoDataAndError,
+		ignorePendingForNoDataAndError: ignorePendingForNoDataAndError,
 	}
 }
 
@@ -145,7 +145,7 @@ func (a *State) Copy() *State {
 		LastEvaluationTime:   a.LastEvaluationTime,
 		EvaluationDuration:   a.EvaluationDuration,
 
-		skippendingForNoDataAndError: a.skippendingForNoDataAndError,
+		ignorePendingForNoDataAndError: a.ignorePendingForNoDataAndError,
 	}
 }
 
@@ -467,7 +467,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	}
 }
 
-func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, skippendingForNoDataAndError bool) {
+func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePendingForNoDataAndError bool) {
 	handlerStr := "resultError"
 
 	switch rule.ExecErrState {
@@ -502,7 +502,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		default:
 			// First occurrence of Error.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 || skippendingForNoDataAndError {
+			if state.State != eval.Recovering && rule.For > 0 || ignorePendingForNoDataAndError {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonError, result.EvaluatedAt, nextEndsAt)
@@ -532,7 +532,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, skippendingForNoDataAndError bool) {
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePendingForNoDataAndError bool) {
 	handlerStr := "resultNoData"
 
 	switch rule.NoDataState {
@@ -568,7 +568,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		default:
 			// First occurrence of NoData.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 || skippendingForNoDataAndError {
+			if state.State != eval.Recovering && rule.For > 0 || ignorePendingForNoDataAndError {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonNoData, result.EvaluatedAt, nextEndsAt)
@@ -860,10 +860,10 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		resultAlerting(a, alertRule, result, logger, "")
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
-		resultError(a, alertRule, result, logger, a.skippendingForNoDataAndError)
+		resultError(a, alertRule, result, logger, a.ignorePendingForNoDataAndError)
 	case eval.NoData:
 		logger.Debug("Setting next state", "handler", "resultNoData")
-		resultNoData(a, alertRule, result, logger, a.skippendingForNoDataAndError)
+		resultNoData(a, alertRule, result, logger, a.ignorePendingForNoDataAndError)
 	case eval.Pending,
 		eval.Recovering: // we do not emit results with these states
 		logger.Debug("Ignoring set next state", "state", result.State)

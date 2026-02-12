@@ -806,7 +806,7 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagAlertingSkipPendingForNoDataAndError
+	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
-	FlagAlertingSkipPendingForNoDataAndError = "alertingSkipPendingForNoDataAndError"
+	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 )

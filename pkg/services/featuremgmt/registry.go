@@ -2319,7 +2319,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingSkipPendingForNoDataAndError",
+			Name:         "alertingIgnorePendingForNoDataAndError",
 			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
