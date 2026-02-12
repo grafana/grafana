@@ -1477,4 +1477,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Use the new APIs for user sync
+  * @default false
+  */
+  kubernetesUserSync?: boolean;
 }
