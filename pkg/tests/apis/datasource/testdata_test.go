@@ -192,18 +192,16 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		//   }
 		// `, string(body))
 
-		// Test connecting to non-JSON marshaled data
-		raw := apis.DoRequest[any](helper, apis.RequestParams{
-			User:   helper.Org1.Admin,
-			Method: "GET",
-			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
-		}, nil)
-		// endpoint is disabled currently because it has not been
-		// sufficiently tested.
-		// for more info see pkg/registry/apis/datasource/sub_resource.go
-		require.Equal(t, int32(501), raw.Status.Code)
-		// require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
-	})
+
+				// Test connecting to non-JSON marshaled data
+				raw := apis.DoRequest[any](helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
+				}, nil)
+				require.Equal(t, http.StatusOK, raw.Response.StatusCode)
+				require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+			})
 
 	t.Run("delete", func(t *testing.T) {
 		err := client.Delete(ctx, "test", metav1.DeleteOptions{})
