@@ -30,15 +30,14 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 Before you begin to set up Git Sync, ensure you have the following:
 
 - A Grafana instance (Cloud, OSS, or Enterprise)
-- If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
 - Administration rights in your Grafana organization
-- A Git provider
-- A GitHub repository to store your dashboards in
-- Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
+- A [Git provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers)
+- If you're [using webhooks or image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend), a public instance with external access
+  - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
 Get acquainted with the following topics:
 
-- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources)
+- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
 - [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
 
 For further details on how Git Sync operates refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts).
@@ -61,7 +60,7 @@ To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature t
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
-### GitHub
+## Authentication
 
 ### Create a GitHub access token
 

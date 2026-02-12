@@ -55,7 +55,7 @@ To set up Git Sync from the Grafana UI, follow these steps:
 
 ## Select your provider
 
-[LIST HERE]
+Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers) for more details.
 
 ### Connect with GitHub: Choose the connection type
 
@@ -102,7 +102,7 @@ If you want to connect using a new GitHub App:
 
 Select **Configure repository** to set up your provisioning folder.
 
-### Connect with Git
+### Connect with TBC
 
 TBC
 
