@@ -76,10 +76,13 @@ func FullSync(
 
 	// Check quota before applying changes
 	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
+		span.SetAttributes(attribute.Bool("pre_check_quota", false))
 		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
-		progress.SetFinalMessage(ctx, "repository is over quota and sync would add resources, resulting in resources exceeding the quota limit. sync cannot proceed")
-		return tracing.Error(span, err)
+		progress.SetFinalMessage(ctx, "sync skipped: repository is already over quota and incoming changes do not free enough resources")
+
+		return nil
 	}
+	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
 	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
 }
@@ -360,7 +363,7 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 }
 
 // checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
-// It calculates the net change in resource count from the changes and validates it against the quota limit.
+// Returns a QuotaExceededError if the sync should be blocked, nil otherwise.
 func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, changes []ResourceFileChange, tracer tracing.Tracer) error {
 	if !quotas.IsQuotaExceeded(repo.Config().Status.Conditions) {
 		return nil
@@ -371,7 +374,12 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 
 	// Calculate the net change in resource count (positive for additions, negative for deletions)
 	var netChange int64
+	allDeletions := true
 	for _, change := range changes {
+		if change.Action != repository.FileActionDeleted {
+			allDeletions = false
+		}
+
 		switch change.Action {
 		case repository.FileActionCreated:
 			netChange++
@@ -384,29 +392,17 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 		}
 	}
 
-	shouldSync, err := quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange)
-	if err != nil {
-		return fmt.Errorf("checking quota: %w", err)
-	}
-
-	if shouldSync {
+	// If only deletions, allow the sync since it can only reduce resource usage.
+	if allDeletions {
 		return nil
 	}
 
-	// not allowed to sync — record telemetry and return error
-	finalCount := quotaUsage.TotalResources + netChange
-
-	_, checkSpan := tracer.Start(ctx, "provisioning.sync.check_quota")
-	defer checkSpan.End()
-
-	checkSpan.SetAttributes(
-		attribute.Int64("current_count", quotaUsage.TotalResources),
-		attribute.Int64("net_change", netChange),
-		attribute.Int64("final_count", finalCount),
-		attribute.Int64("quota_limit", cfg.Status.Quota.MaxResourcesPerRepository),
-	)
-
-	return &quotas.QuotaExceededError{
-		Err: fmt.Errorf("repository is over quota (current: %d resources) and sync would add %d resources, resulting in %d resources exceeding the quota limit of %d. sync cannot proceed", quotaUsage.TotalResources, netChange, finalCount, cfg.Status.Quota.MaxResourcesPerRepository),
+	if !quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange) {
+		return quotas.NewQuotaExceededError(fmt.Errorf(
+			"usage %d/%d, incoming changes do not free enough resources",
+			quotaUsage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository,
+		))
 	}
+
+	return nil
 }

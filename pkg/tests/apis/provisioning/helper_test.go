@@ -672,24 +672,20 @@ func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 	}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should have reason %s", expectedReason)
 }
 
-// WaitForRepoDashboardCount waits until the number of dashboards managed by the given repo matches the expected count.
-func (h *provisioningTestHelper) WaitForRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
+// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
+func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(collect, err, "failed to list dashboards") {
-			return
-		}
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list dashboards")
 
-		count := 0
-		for _, d := range dashboards.Items {
-			managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-			if managerID == repoName {
-				count++
-			}
+	var count int
+	for _, d := range dashboards.Items {
+		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+		if managerID == repoName {
+			count++
 		}
-		assert.Equal(collect, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault, "should have %d dashboards managed by repo %s", expectedCount, repoName)
+	}
+	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.

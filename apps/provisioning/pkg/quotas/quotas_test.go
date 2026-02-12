@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -292,7 +291,6 @@ func TestWouldStayWithinQuota(t *testing.T) {
 		usage     Usage
 		netChange int64
 		expected  bool
-		expectErr bool
 	}{
 		{
 			name:      "unlimited quota always allows",
@@ -358,20 +356,6 @@ func TestWouldStayWithinQuota(t *testing.T) {
 			expected:  false,
 		},
 		{
-			name:      "overflow with large positive change returns error",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
-			usage:     Usage{TotalResources: math.MaxInt64},
-			netChange: 1,
-			expectErr: true,
-		},
-		{
-			name:      "no overflow with negative change on large usage",
-			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: math.MaxInt64},
-			usage:     Usage{TotalResources: math.MaxInt64},
-			netChange: -1,
-			expected:  true,
-		},
-		{
 			name:      "zero usage with zero change",
 			quota:     provisioning.QuotaStatus{MaxResourcesPerRepository: 100},
 			usage:     Usage{TotalResources: 0},
@@ -382,12 +366,7 @@ func TestWouldStayWithinQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := WouldStayWithinQuota(tt.quota, tt.usage, tt.netChange)
-			if tt.expectErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			result := WouldStayWithinQuota(tt.quota, tt.usage, tt.netChange)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

@@ -3,7 +3,6 @@ package quotas
 import (
 	"context"
 	"fmt"
-	"math"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -83,15 +82,11 @@ func IsQuotaExceeded(conditions []metav1.Condition) bool {
 	return false
 }
 
-func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) (bool, error) {
-	if usage.TotalResources > math.MaxInt64-max(netChange, 0) {
-		return false, fmt.Errorf("total resources would exceed max int64")
-	}
-
+func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
 	if quota.MaxResourcesPerRepository == 0 {
-		return true, nil
+		return true
 	}
-	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository, nil
+	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository
 }
 
 // calculateTotalResources sums up all resource counts from the stats.
@@ -135,6 +130,10 @@ func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string)
 
 // Ensure FixedQuotaGetter implements QuotaGetter interface.
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+func NewQuotaExceededError(err error) *QuotaExceededError {
+	return &QuotaExceededError{Err: err}
+}
 
 type QuotaExceededError struct {
 	Err error

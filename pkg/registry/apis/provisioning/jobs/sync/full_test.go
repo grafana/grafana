@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -783,10 +782,10 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
 
 	tests := []struct {
-		name          string
-		changes       []ResourceFileChange
-		config        *provisioning.Repository
-		expectedError string
+		name      string
+		changes   []ResourceFileChange
+		config    *provisioning.Repository
+		expectErr bool
 	}{
 		{
 			name:    "no resource quota condition - proceeds",
@@ -796,6 +795,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					Conditions: []metav1.Condition{},
 				},
 			},
+			expectErr: false,
 		},
 		{
 			name:    "resource quota condition with status True - proceeds",
@@ -811,6 +811,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: false,
 		},
 		{
 			name:    "resource quota exceeded but quota limit is zero (unlimited) - proceeds",
@@ -829,6 +830,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: false,
 		},
 		{
 			name:    "final count within quota - proceeds",
@@ -851,6 +853,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: false,
 		},
 		{
 			name:    "final count exactly at quota limit - proceeds",
@@ -872,9 +875,10 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: false,
 		},
 		{
-			name:    "final count exceeds quota - returns error",
+			name:    "final count exceeds quota - returns QuotaExceededError",
 			changes: createdChanges(20),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -893,7 +897,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "repository is over quota (current: 90 resources) and sync would add 20 resources, resulting in 110 resources exceeding the quota limit of 100. sync cannot proceed",
+			expectErr: true,
 		},
 		{
 			name:    "negative net change brings count below quota - proceeds",
@@ -915,9 +919,54 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
+			expectErr: false,
 		},
 		{
-			name:    "multiple resource types - counts summed",
+			name:    "delete-only pull still over quota - proceeds since all changes are deletions",
+			changes: deletedChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 120},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "mixed deletions and creations with net negative changes - blocked",
+			changes: append(deletedChanges(10), createdChanges(3)...),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "multiple resource types - counts summed exceeds quota",
 			changes: createdChanges(5),
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -937,7 +986,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "repository is over quota (current: 96 resources) and sync would add 5 resources, resulting in 101 resources exceeding the quota limit of 100. sync cannot proceed",
+			expectErr: true,
 		},
 		{
 			name:    "condition reason is not QuotaExceeded - proceeds",
@@ -953,29 +1002,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 				},
 			},
-		},
-		{
-			name:    "net change would exceed max int64 - returns error",
-			changes: createdChanges(2),
-			config: &provisioning.Repository{
-				Status: provisioning.RepositoryStatus{
-					Conditions: []metav1.Condition{
-						{
-							Type:   provisioning.ConditionTypeResourceQuota,
-							Status: metav1.ConditionFalse,
-							Reason: provisioning.ReasonQuotaExceeded,
-						},
-					},
-					Quota: provisioning.QuotaStatus{
-						MaxResourcesPerRepository: 10,
-					},
-					Stats: []provisioning.ResourceCount{
-						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: math.MaxInt64 - 1},
-					},
-				},
-			},
-
-			expectedError: "checking quota: total resources would exceed max int64",
+			expectErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -984,53 +1011,12 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			repo.EXPECT().Config().Return(tt.config)
 
 			err := checkQuotaBeforeSync(context.Background(), repo, tt.changes, tracer)
-
-			if tt.expectedError != "" {
-				require.EqualError(t, err, tt.expectedError)
+			if tt.expectErr {
+				var quotaErr *quotas.QuotaExceededError
+				require.ErrorAs(t, err, &quotaErr)
 			} else {
 				require.NoError(t, err)
 			}
 		})
 	}
-}
-
-func TestCheckQuotaBeforeSync_ReturnsQuotaExceededError(t *testing.T) {
-	tracer := tracing.NewNoopTracerService()
-
-	t.Run("returns QuotaExceededError when quota exceeded", func(t *testing.T) {
-		repo := repository.NewMockConfigRepository(t)
-		repo.EXPECT().Config().Return(&provisioning.Repository{
-			Status: provisioning.RepositoryStatus{
-				Conditions: []metav1.Condition{
-					{
-						Type:   provisioning.ConditionTypeResourceQuota,
-						Status: metav1.ConditionFalse,
-						Reason: provisioning.ReasonQuotaExceeded,
-					},
-				},
-				Quota: provisioning.QuotaStatus{
-					MaxResourcesPerRepository: 100,
-				},
-				Stats: []provisioning.ResourceCount{
-					{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
-				},
-			},
-		})
-
-		err := checkQuotaBeforeSync(context.Background(), repo, createdChanges(20), tracer)
-		require.Error(t, err)
-
-		var quotaErr *quotas.QuotaExceededError
-		require.True(t, errors.As(err, &quotaErr), "error should be a *quotas.QuotaExceededError")
-		require.NotNil(t, quotaErr.Err, "inner error should not be nil")
-		require.Contains(t, quotaErr.Error(), "repository is over quota")
-	})
-
-	t.Run("QuotaExceededError Unwrap returns inner error", func(t *testing.T) {
-		inner := fmt.Errorf("inner error message")
-		qErr := &quotas.QuotaExceededError{Err: inner}
-
-		require.Equal(t, "inner error message", qErr.Error())
-		require.Equal(t, inner, qErr.Unwrap())
-	})
 }

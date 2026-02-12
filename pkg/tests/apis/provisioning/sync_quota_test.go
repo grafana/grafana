@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -49,7 +50,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify the deletion succeeded by checking that only 1 dashboard remains
-		helper.WaitForRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
@@ -71,7 +72,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.CreateRepo(t, testRepo)
 
 		// Verify 1 dashboard was created
-		helper.WaitForRepoDashboardCount(t, repo, 1)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Verify quota condition is WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -85,7 +86,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 2 dashboards exist
-		helper.WaitForRepoDashboardCount(t, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Verify quota condition is still WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -121,7 +122,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
 
 		// Verify 2 dashboards were created by the initial sync (first sync always succeeds)
-		helper.WaitForRepoDashboardCount(t, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
 		dashboard3Content := helper.LoadFile("testdata/timeline-demo.json")
@@ -134,15 +135,18 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 
-		// Verify job has error state
-		state := mustNestedString(job.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateWarning), state, "Sync job should fail due to quota when adding resources over limit")
+		// Verify job has warning state
+		jobObj := &provisioning.Job{}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
 
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "Sync job should fail due to quota when adding resources over limit")
+		require.NotEmpty(t, jobObj.Status.Message, "Sync job should have a message when failing due to quota")
+		require.Contains(t, jobObj.Status.Message, "sync skipped: repository is already over quota and incoming changes do not free enough resources", "Sync job should fail due to quota when adding resources over limit")
 		// Verify only 2 dashboards exist (3rd was not created)
-		helper.WaitForRepoDashboardCount(t, repo, 2)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 	})
-
-	t.Run("out of limit repo blocks sync when net change still exceeds quota", func(t *testing.T) {
+	t.Run("out of limit repo allows delete-only sync even when still over quota", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resource
 		})
@@ -167,23 +171,19 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Verify 3 dashboards were created by the initial sync
-		helper.WaitForRepoDashboardCount(t, repo, 3)
+		helper.RequireRepoDashboardCount(t, repo, 3)
 
-		// Delete one dashboard file - net change is -1, but 4-1=3 still > limit of 2
+		// Delete one dashboard file - deletion-only syncs are always allowed even when over quota
 		err := os.Remove(filepath.Join(repoPath, "dashboard3.json"))
 		require.NoError(t, err, "should be able to delete dashboard3.json")
 
-		// Trigger full sync - should fail
-		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
-		})
+		// Trigger full sync - should succeed because it's a delete-only sync
+		helper.SyncAndWait(t, repo, nil)
 
-		// Verify job has error state
-		state := mustNestedString(job.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateWarning), state, "Sync job should fail because net change still exceeds quota")
+		// Verify the deletion succeeded - only 2 dashboards should remain
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
-		// Verify all 3 dashboards still exist (entire sync was blocked, including the deletion)
-		helper.WaitForRepoDashboardCount(t, repo, 3)
+		// Repository is still over quota (2 dashboards + 1 folder = 3 > limit of 2)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 	})
 }
