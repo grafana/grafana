@@ -11,9 +11,9 @@ import { StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 
+import { UsersExternalButton } from './UsersExternalButton';
 import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
-import { getExternalUserMngLinkUrl } from './utils';
 
 export interface OwnProps {
   showInvites: boolean;
@@ -24,8 +24,6 @@ function mapStateToProps(state: StoreState) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
     pendingInvitesCount: selectTotal(state.invites),
-    externalUserMngLinkName: state.users.externalUserMngLinkName,
-    externalUserMngLinkUrl: state.users.externalUserMngLinkUrl,
   };
 }
 
@@ -38,8 +36,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const UsersActionBarUnconnected = ({
-  externalUserMngLinkName,
-  externalUserMngLinkUrl,
   searchQuery,
   pendingInvitesCount,
   changeSearchQuery,
@@ -85,16 +81,7 @@ export const UsersActionBarUnconnected = ({
           <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
         </LinkButton>
       )}
-      {externalUserMngLinkUrl && (
-        <LinkButton
-          onClick={onExternalUserMngClick}
-          href={getExternalUserMngLinkUrl('manage-users')}
-          target="_blank"
-          rel="noopener"
-        >
-          {externalUserMngLinkName}
-        </LinkButton>
-      )}
+      <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />
     </div>
   );
 };
