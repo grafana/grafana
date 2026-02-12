@@ -2,13 +2,13 @@ import { LogsSortOrder } from '@grafana/data';
 
 import { Options } from './types';
 
-export const onSortOrderChange = (options: Options, sortOrder: LogsSortOrder, timeFieldName: string) => {
-  if (options.sortOrder !== sortOrder) {
+export const onSortOrderChange = (pendingOptions: Options, currentSortOrder: LogsSortOrder, timeFieldName: string) => {
+  if (pendingOptions.sortOrder !== currentSortOrder) {
     const newSortBy = {
-      desc: options.sortOrder === LogsSortOrder.Descending,
+      desc: pendingOptions.sortOrder === LogsSortOrder.Descending,
       displayName: timeFieldName,
     };
-    let sortBy = options.sortBy ? [...options.sortBy] : undefined;
+    let sortBy = pendingOptions.sortBy ? [...pendingOptions.sortBy] : undefined;
     const existingSortByIdx = sortBy?.findIndex((option) => option.displayName === timeFieldName);
     if (sortBy && existingSortByIdx !== undefined && existingSortByIdx !== -1) {
       sortBy[existingSortByIdx] = newSortBy;
@@ -16,8 +16,8 @@ export const onSortOrderChange = (options: Options, sortOrder: LogsSortOrder, ti
       sortBy = [{ ...newSortBy }, ...(sortBy ?? [])];
     }
 
-    return { ...options, sortBy };
+    return { ...pendingOptions, sortBy };
   }
 
-  return options;
+  return pendingOptions;
 };
