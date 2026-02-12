@@ -213,6 +213,8 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /** Dashboard-level rules for dynamic behavior, gated behind dashboardRules feature flag */
+  rules?: DashboardV2Spec['rules'];
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {

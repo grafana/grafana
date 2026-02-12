@@ -41,6 +41,7 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
   const rowKind: RowsLayoutRowKind = {
     kind: 'RowsLayoutRow',
     spec: {
+      name: row.state.name,
       title: row.state.title,
       collapse: row.state.collapse ?? false,
       layout: layout,
@@ -91,6 +92,7 @@ export function deserializeRow(
   const layout = row.spec.layout;
 
   return new RowItem({
+    name: row.spec.name,
     title: row.spec.title,
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,

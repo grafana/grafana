@@ -48,6 +48,8 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
+  /** Stable unique identifier for this row, used by LayoutItemReference in dashboard rules */
+  name?: string;
   title?: string;
   collapse?: boolean;
   hideHeader?: boolean;

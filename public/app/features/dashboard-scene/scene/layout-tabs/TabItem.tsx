@@ -50,6 +50,8 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
+  /** Stable unique identifier for this tab, used by LayoutItemReference in dashboard rules */
+  name?: string;
   title?: string;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
