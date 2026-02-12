@@ -30,6 +30,8 @@ cp -r plugin-documentation-templates/* your-plugin-repo/docs/
 
 5. **Add plugin-specific sections** as needed
 
+6. **Use the [Documentation Checklist](#documentation-checklist)** to verify completeness before publishing
+
 ## Template Files
 
 ### Core Documentation
@@ -353,9 +355,108 @@ Include practical examples throughout documentation:
 - Show expected output
 - Include troubleshooting tips
 
+## Documentation Checklist
+
+Use this checklist to verify you've completed all customizations before publishing:
+
+### Content Customization
+
+- [ ] All `[Plugin Name]` placeholders replaced with your plugin's display name
+- [ ] All `[your-plugin-id]` placeholders replaced with your plugin ID from `plugin.json`
+- [ ] All `[your-username]` placeholders replaced with your GitHub username or organization
+- [ ] All `[your-plugin-repo]` placeholders replaced with your repository name
+- [ ] All example URLs updated with real endpoints
+- [ ] All example queries updated with actual query syntax
+- [ ] All placeholder configuration values replaced with realistic examples
+- [ ] Version numbers updated (X.X.X → actual minimum version)
+- [ ] Prerequisites section customized for your plugin
+- [ ] Features list reflects your plugin's actual features
+
+### File Management
+
+- [ ] Template suffixes removed from filenames (`README-template.md` → `README.md`)
+- [ ] Plugin type-specific sections reviewed and irrelevant ones removed
+- [ ] Additional documentation files created as needed for your plugin type
+- [ ] File structure matches your plugin's complexity and features
+- [ ] All files use consistent terminology throughout
+
+### Visual Content
+
+- [ ] Screenshots added for configuration screens
+- [ ] Screenshots added for query editor or panel options
+- [ ] Example visualizations or dashboards included
+- [ ] All images have descriptive alt text (without "Image of..." prefixes)
+- [ ] Image file sizes optimized (< 500KB)
+- [ ] Images use consistent theme (light or dark)
+- [ ] Image filenames are descriptive
+
+### Code Examples
+
+- [ ] All code examples tested and verified to work
+- [ ] Placeholder formats consistent: `<PLACEHOLDER_NAME>` in uppercase
+- [ ] Code block language specifiers added (`sh`, `yaml`, `json`, etc.)
+- [ ] Explanations provided for all placeholders
+- [ ] Realistic, copy-pastable examples included
+- [ ] Expected outputs shown where relevant
+
+### Links and References
+
+- [ ] All internal links tested and working
+- [ ] All external links tested and working
+- [ ] GitHub repository links point to correct repository
+- [ ] Links use descriptive text (not "click here" or "this page")
+- [ ] Cross-references between documents are accurate
+- [ ] "Refer to" used instead of "see" or "check out"
+
+### Style and Formatting
+
+- [ ] Sentence case used for all headings
+- [ ] UI elements formatted in bold: **Button Name**
+- [ ] File paths and code in backticks: `file.txt`, `/path/to/file`
+- [ ] Contractions used: it's, don't, you're
+- [ ] Active voice used throughout
+- [ ] Second person perspective ("you") used consistently
+- [ ] Present simple tense used
+
+### Technical Accuracy
+
+- [ ] Installation instructions tested on target platforms
+- [ ] Configuration steps verified
+- [ ] Authentication methods tested
+- [ ] Query examples return expected results
+- [ ] Troubleshooting solutions verified
+- [ ] Version compatibility information accurate
+- [ ] API references accurate (if applicable)
+
+### Completeness
+
+- [ ] README.md includes overview and quick start
+- [ ] INSTALLATION.md covers all installation methods
+- [ ] CONFIGURATION.md covers all configuration options
+- [ ] TROUBLESHOOTING.md addresses common issues
+- [ ] CHANGELOG.md includes version history
+- [ ] Prerequisites clearly stated
+- [ ] Next steps provided at end of guides
+- [ ] Support information included (forum, issues, docs)
+
+### Hugo Shortcodes (if using Grafana docs site)
+
+- [ ] Admonitions use correct Hugo shortcode format
+- [ ] Admonitions used sparingly for exceptional information
+- [ ] Admonition types appropriate (note, caution, warning)
+
+### Final Review
+
+- [ ] Complete quick start guide followed by a new user
+- [ ] Spelling and grammar checked
+- [ ] Technical terms used consistently
+- [ ] Tone is helpful and professional
+- [ ] Documentation addresses your target audience
+- [ ] Feedback incorporated from initial reviewers
+
 ## Documentation Testing
 
-Before publishing your documentation:
+Before publishing your documentation, ensure you've completed the [Documentation Checklist](#documentation-checklist). Then proceed with these testing steps:
 
 1. **Technical review**:
    - Test all instructions yourself
