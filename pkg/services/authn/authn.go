@@ -87,7 +87,9 @@ type (
 )
 
 type Authenticator interface {
-	// Authenticate authenticates a request
+	// Authenticate authenticates a request.
+	// For ErrTokenNeedsRotation errors, a partial identity may be returned alongside the error
+	// for logging purposes. This partial identity does not imply that authentication succeeded.
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 

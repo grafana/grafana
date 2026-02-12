@@ -60,7 +60,12 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		// Return partial identity alongside the error for logging purposes
+		return &authn.Identity{
+			ID:           strconv.FormatInt(token.UserId, 10),
+			Type:         claims.TypeUser,
+			SessionToken: token,
+		}, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
 	}
 
 	ident := &authn.Identity{

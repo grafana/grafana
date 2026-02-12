@@ -3,8 +3,10 @@ package contexthandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -129,10 +131,21 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
 
+	var userIdString string
 	id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 	if err != nil {
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
+
+		if errors.Is(reqContext.LookupTokenErr, authn.ErrTokenNeedsRotation) && id != nil {
+			// Hack: If the token needs to be rotated, we will still get a partial identity
+			// that we can use to get the userID for logging purposes
+			if internalID, parseErr := id.GetInternalID(); parseErr == nil {
+				userIdString = int64ToStringOrEmpty(internalID)
+			}
+			// Clear identity if the token needs to be rotated, to avoid mistakenly using it later
+			id = nil
+		}
 	} else {
 		reqContext.SignedInUser = id.SignedInUser()
 		reqContext.UserToken = id.SessionToken
@@ -140,15 +153,18 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.AllowAnonymous = reqContext.IsAnonymous
 		reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		ctx = identity.WithRequester(ctx, id)
+		userIdString = int64ToStringOrEmpty(reqContext.UserID)
 	}
+
+	orgIdString := int64ToStringOrEmpty(reqContext.OrgID)
 
 	h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
-	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", userIdString, "orgId", orgIdString, "uname", reqContext.Login)
 	span.AddEvent("user", trace.WithAttributes(
 		attribute.String("uname", reqContext.Login),
-		attribute.Int64("orgId", reqContext.OrgID),
-		attribute.Int64("userId", reqContext.UserID),
+		attribute.String("orgId", orgIdString),
+		attribute.String("userId", userIdString),
 	))
 
 	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
@@ -157,7 +173,7 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	// Set open feature evaluation context with namespace
 	ns := "default"
-	if id != nil {
+	if reqContext.LookupTokenErr == nil && id != nil {
 		ns = id.Namespace
 	}
 	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
@@ -256,4 +272,11 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 		return list
 	}
 	return nil
+}
+
+func int64ToStringOrEmpty(n int64) string {
+	if n == 0 {
+		return ""
+	}
+	return strconv.FormatInt(n, 10)
 }

@@ -122,7 +122,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 				// Note: special case for token rotation
 				// We don't want to fallthrough in this case
 				if errors.Is(err, authn.ErrTokenNeedsRotation) {
-					return nil, err
+					return identity, err
 				}
 
 				authErr = errors.Join(authErr, err)
@@ -154,6 +154,9 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		span.SetStatus(codes.Error, "authenticate failed on client")
 		span.RecordError(err)
 		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
+		if errors.Is(err, authn.ErrTokenNeedsRotation) {
+			return identity, err
+		}
 		return nil, err
 	}
 
