@@ -11,10 +11,11 @@ import {
   PanelData,
   PanelProps,
 } from '@grafana/data';
-import type { Options as TableOptions } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
+import type { Options as TableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -30,7 +31,6 @@ import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { Options } from './options/types';
-import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import { defaultOptions, Options as LogsTableOptions } from './panelcfg.gen';
 import {
   BuildLinkToLogLine,
@@ -70,12 +70,10 @@ export const LogsTable = ({
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
-  const permalinkedLogId = options.permalinkedLogId ?? getLogsTablePanelState()?.logs?.id ?? undefined;
-  const permalinkRowIndex = permalinkedLogId
+  const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
+  const initialRowIndex = permalinkedLogId
     ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
     : undefined;
-  // Don't pass -1
-  const initialRowIndex = permalinkRowIndex && permalinkRowIndex > -1 ? permalinkRowIndex : undefined;
 
   const sortOrder = options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending;
 
@@ -157,11 +155,14 @@ export const LogsTable = ({
     return data;
   }, [organizedFrame, data, frameIndex]);
 
+  const noSeries = data.series.length === 0;
+  const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
+
+  // Logs frame be null for non logs frames
+  const noLogsFrame = !logsFrame;
+
   // Show no data state if query returns nothing
-  if (
-    (data.series.length === 0 || data.series[frameIndex].fields[0]?.values.length === 0) &&
-    data.state === LoadingState.Done
-  ) {
+  if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 

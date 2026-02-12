@@ -2190,21 +2190,22 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		// Only process template variables - other string values are not supported in V2 format
 		queryDatasourceUID = dsStr
 	}
+	// Apply panel ref when panel has a concrete UID (non-empty, not mixed) and query has no ref or differs (same rule as frontend).
+	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
+	applyPanelRef := panelHasUID &&
+		(queryDatasourceUID == "" && queryDatasourceType == "" ||
+			(queryDatasourceUID != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
 
-	// Use panel datasource if target datasource is missing or empty
-	if queryDatasourceUID == "" && queryDatasourceType == "" && panelDatasource != nil {
-		// Only use panel datasource if it's not a mixed datasource
-		// Mixed datasources should not be propagated to individual queries
-		if panelDatasource.Uid != nil && *panelDatasource.Uid != "-- Mixed --" {
-			if panelDatasource.Type != nil {
-				queryDatasourceType = *panelDatasource.Type
-			}
-			queryDatasourceUID = *panelDatasource.Uid
-		} else if panelDatasource.Type != nil && *panelDatasource.Type == "datasource" {
-			// Handle case where panel datasource has type "datasource" but no UID
+	if applyPanelRef {
+		if panelDatasource.Type != nil {
 			queryDatasourceType = *panelDatasource.Type
-			queryDatasourceUID = resolveGrafanaDatasourceUID(*panelDatasource.Type, "")
 		}
+		queryDatasourceUID = *panelDatasource.Uid
+	} else if panelDatasource != nil && panelDatasource.Type != nil && *panelDatasource.Type == "datasource" &&
+		(queryDatasourceUID == "" && queryDatasourceType == "") {
+		// Handle case where panel datasource has type "datasource" but no UID
+		queryDatasourceType = *panelDatasource.Type
+		queryDatasourceUID = resolveGrafanaDatasourceUID(*panelDatasource.Type, "")
 	}
 
 	// Build query spec by excluding known fields
