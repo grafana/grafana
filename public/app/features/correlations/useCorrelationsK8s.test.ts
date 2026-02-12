@@ -21,7 +21,7 @@ describe('useCorrelationsK8s', () => {
   });
 
   describe('toEnrichedCorrelationDataK8s', () => {
-    it('returns undefined if the datasource is not found', () => {
+    it('returns undefined if the source datasource is not found', () => {
       const correlation = toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',

@@ -1,3 +1,4 @@
+import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
   DataFrame,
   DataFrameType,
@@ -8,11 +9,13 @@ import {
 } from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState } from 'app/types/explore';
 
 import { EditFormDTO } from './Forms/types';
 import { Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
+import * as utils from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -30,7 +33,7 @@ describe('correlations utils', () => {
   it('attaches correlations defined in the configuration', () => {
     config.featureToggles.lokiLogsDataplane = false;
     const { testDataFrames, correlations, refIdMap, prometheus, elastic } = setup();
-    attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
+    utils.attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
 
     // Loki line
     expect(testDataFrames[0].fields[0].config.links).toHaveLength(1);
@@ -108,8 +111,8 @@ describe('correlations utils', () => {
 
   it('does not create duplicates when attaching links to the same data frame', () => {
     const { testDataFrames, correlations, refIdMap } = setup();
-    attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
-    attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
+    utils.attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
+    utils.attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
 
     // Loki traceId (linked to Prometheus and Elastic)
     expect(testDataFrames[0].fields[1].config.links).toHaveLength(2);
@@ -133,7 +136,7 @@ describe('correlations utils', () => {
       ],
       meta: { type: DataFrameType.LogLines },
     });
-    const dataFrameOut = attachCorrelationsToDataFrames([testDataFrame], [correlations[3]], refIdMap);
+    const dataFrameOut = utils.attachCorrelationsToDataFrames([testDataFrame], [correlations[3]], refIdMap);
     expect(dataFrameOut[0].fields[1].config.links).toHaveLength(1);
     config.featureToggles.lokiLogsDataplane = originalDataplaneState;
   });
@@ -223,6 +226,72 @@ describe('correlations utils', () => {
     } as unknown as ExploreItemState;
     const label = await generateDefaultLabel(sourcePane, targetPane);
     expect(label).toBe('getTest to testB');
+  });
+  describe('getCorrelationsFromStorage', () => {
+    const originalFeatureToggles = config.featureToggles;
+
+    const listCorrelationK8sMock = jest.spyOn(correlationsAPIv0alpha1.endpoints.listCorrelation, 'initiate');
+    const getCorrelationsLegacyMock = jest
+      .spyOn(utils, 'getCorrelationsBySourceUIDs')
+      .mockResolvedValue({ correlations: [], page: 0, limit: 100, totalCount: 0 });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('gets correlations data from app platform if flag is on', async () => {
+      const unsubscribe = jest.fn();
+      const subscription = { unsubscribe };
+      const dispatch = jest.fn(() => subscription);
+      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+
+      await utils.getCorrelationsFromStorage(dispatch, [], 'test');
+      expect(listCorrelationK8sMock).toHaveBeenCalled();
+      expect(getCorrelationsLegacyMock).not.toHaveBeenCalled();
+    });
+
+    it('gets correlations data from legacy if flag is off', async () => {
+      const unsubscribe = jest.fn();
+      const subscription = { unsubscribe };
+      const dispatch = jest.fn(() => subscription);
+      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: false };
+
+      await utils.getCorrelationsFromStorage(dispatch, [], 'test');
+      expect(listCorrelationK8sMock).not.toHaveBeenCalled();
+      expect(getCorrelationsLegacyMock).toHaveBeenCalled();
+    });
+
+    it('for K8s, gets datasource list from queries if instance datasource is mixed', async () => {
+      const unsubscribe = jest.fn();
+      const subscription = { unsubscribe };
+      const dispatch = jest.fn(() => subscription);
+      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      await utils.getCorrelationsFromStorage(
+        dispatch,
+        [{ refId: 'test', datasource: { uid: 'testUid', type: 'testType' } }],
+        MIXED_DATASOURCE_NAME
+      );
+      expect(listCorrelationK8sMock).toHaveBeenCalledWith({
+        labelSelector: 'correlations.grafana.app/sourceDS-ref in (testType.testUid)',
+      });
+      expect(getCorrelationsLegacyMock).not.toHaveBeenCalled();
+    });
+    it('for K8s, gets datasource list from instance if not mixed', async () => {
+      const unsubscribe = jest.fn();
+      const subscription = { unsubscribe };
+      const dispatch = jest.fn(() => subscription);
+      config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
+      await utils.getCorrelationsFromStorage(
+        dispatch,
+        [{ refId: 'test', datasource: { uid: 'testUIdNoShow', type: 'testTypeNoShow' } }],
+        'testUid'
+      );
+      expect(listCorrelationK8sMock).toHaveBeenCalledWith({
+        labelSelector: 'correlations.grafana.app/sourceDS-ref in (testTypeFromLookup.testUidFromLookup)',
+      });
+      expect(getCorrelationsLegacyMock).not.toHaveBeenCalled();
+    });
   });
 });
 
