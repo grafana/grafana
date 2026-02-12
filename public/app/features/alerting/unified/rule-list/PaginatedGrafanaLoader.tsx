@@ -229,6 +229,10 @@ function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps)
   const canEdit = editRuleSupported && editRuleAllowed;
   const canExport = exportRulesSupported && exportRulesAllowed;
 
+  if (!canEdit && !canExport) {
+    return null;
+  }
+
   const editLink = groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, folderUid, groupName);
 
   return (
