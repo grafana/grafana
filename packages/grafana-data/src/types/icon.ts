@@ -298,7 +298,7 @@ export const availableIconsIndex = {
   'tachometer-empty': true,
   'cmab-logo': true,
   'dashed-circle': true,
-  'radio-button': true,
+  'dot-circle': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
