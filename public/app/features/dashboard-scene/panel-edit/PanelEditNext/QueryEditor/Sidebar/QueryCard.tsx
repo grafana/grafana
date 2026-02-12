@@ -36,7 +36,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           size="sm"
         />
       )}
-      <Text weight="light" variant="code" color="primary">
+      <Text weight="light" variant="code" color="primary" truncate>
         {query.refId}
       </Text>
     </SidebarCard>

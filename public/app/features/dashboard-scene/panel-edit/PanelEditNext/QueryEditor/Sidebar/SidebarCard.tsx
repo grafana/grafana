@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
 import { QUERY_EDITOR_COLORS, QueryEditorTypeConfig } from '../../constants';
@@ -66,7 +66,7 @@ export const SidebarCard = ({
   return (
     <div className={styles.wrapper}>
       <div
-        className={cx(styles.card, { [styles.hidden]: isHidden })}
+        className={styles.card}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -76,16 +76,27 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={styles.cardContent}>{children}</div>
-        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-          <Actions
-            onDuplicate={onDuplicate}
-            onDelete={onDelete}
-            onToggleHide={onToggleHide}
-            isHidden={isHidden}
-            typeLabel={typeText}
+        <div className={cx(styles.cardContent, { [styles.hidden]: isHidden })}>{children}</div>
+        {isHidden ? (
+          <Button
+            size="sm"
+            fill="text"
+            icon="eye-slash"
+            variant="secondary"
+            aria-label={t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeText })}
+            onClick={onToggleHide}
           />
-        </div>
+        ) : (
+          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+            <Actions
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+              onToggleHide={onToggleHide}
+              isHidden={isHidden}
+              typeLabel={typeText}
+            />
+          </div>
+        )}
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
@@ -97,10 +108,17 @@ function getStyles(
   { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
   const hoverActions = css({
-    //background: `linear-gradient(270deg, #181B1F 71.63%, rgba(32, 38, 47, 0.00) 100%)`,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    paddingRight: theme.spacing(1),
+    background: `linear-gradient(270deg, ${isSelected ? QUERY_EDITOR_COLORS.card.activeBg : theme.colors.background.secondary} 50%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
-    marginLeft: 'auto',
+    pointerEvents: 'none',
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
@@ -149,7 +167,8 @@ function getStyles(
       }),
     }),
     card: css({
-      minHeight: '26px',
+      position: 'relative',
+      minHeight: '30px',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
@@ -175,8 +194,10 @@ function getStyles(
       },
 
       [`&:hover .${hoverActions}`]: {
+        background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 90%, rgba(32, 38, 47, 0.00) 100%)`,
         opacity: 1,
         transform: 'translateX(0)',
+        pointerEvents: 'auto',
       },
 
       '&:focus-visible': {
@@ -201,6 +222,7 @@ function getStyles(
     hoverActionsVisible: css({
       opacity: 1,
       transform: 'translateX(0)',
+      pointerEvents: 'auto',
     }),
     cardContent: css({
       display: 'flex',
@@ -208,9 +230,18 @@ function getStyles(
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: `4px 8px`,
+      overflow: 'hidden',
+      minWidth: 0,
+      flex: 1,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['opacity'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
     }),
     hidden: css({
-      opacity: 0.6,
+      opacity: 0.7,
     }),
   };
 }
