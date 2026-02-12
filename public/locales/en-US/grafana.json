@@ -673,7 +673,8 @@
       "message": {
         "required": "Required."
       },
-      "validate-name": "Name is required"
+      "validate-name": "Name is required",
+      "validate-name-duplicate": "A notification policy with this name already exists"
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
@@ -4015,6 +4016,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "team-folders": "Team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -12416,7 +12418,6 @@
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "token-user-required": "Username is required",
       "url-description": "The Git repository URL",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
@@ -12993,11 +12994,7 @@
     },
     "header": {
       "expression": "Expression",
-      "transformation": "Transformation",
-      "warning-badges": {
-        "text_one": "{{count}} {{type}}",
-        "text_other": "{{count}} {{type}}"
-      }
+      "transformation": "Transformation"
     },
     "help": {
       "close": "Close help",
@@ -13009,6 +13006,11 @@
       "transformation": "Transformation"
     },
     "sidebar": {
+      "add-below": "Add below {{id}}",
+      "add-expression": "Add expression",
+      "add-query": "Add query",
+      "add-saved-query": "Add saved query",
+      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",

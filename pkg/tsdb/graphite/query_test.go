@@ -175,7 +175,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
@@ -204,7 +204,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -269,7 +269,7 @@ func TestConvertResponses(t *testing.T) {
 		refId := "A"
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -303,7 +303,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -730,8 +730,8 @@ Error: Target not found
 				assert.NoError(t, err)
 				require.NotNil(t, result)
 
-				for refID, resp := range result.Responses {
-					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-RefID-%s.golden", testName, refID), &resp, false)
+				for _, resp := range result.Responses {
+					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s.golden", testName), &resp, false)
 				}
 			}
 		})

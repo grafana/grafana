@@ -1,4 +1,4 @@
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { Preferences as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
 import { e2e } from '..';
 import { fromBaseUrl } from '../support/url';
