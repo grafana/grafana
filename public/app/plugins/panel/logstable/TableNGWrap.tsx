@@ -10,7 +10,7 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import type { Options as TableOptions } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
+import type { Options as TableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -153,11 +153,6 @@ const getStyles = (
       paddingRight: controlsWidth,
       height,
       width: tableWidth,
-      // @todo better row selection UI
-      '[aria-selected=true]': {
-        backgroundColor: theme.colors.background.secondary,
-        outline: `solid 1px ${theme.colors.warning.border}`,
-      },
     }),
   };
 };
