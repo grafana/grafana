@@ -202,8 +202,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await expect(copyLogLineButton.nth(0), 'Show log line button is visible in the table viz').toBeVisible();
 
       await copyLogLineButton.nth(9).click();
-      const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
-      const clipboardContent = await handle.jsonValue();
+      const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
       await page.goto(clipboardContent);
 
       await expect(
