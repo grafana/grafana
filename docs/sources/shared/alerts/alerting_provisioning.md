@@ -434,6 +434,7 @@ Content-Type: application/json
 ```
 
 **Available Permissions sets:**
+
 - `View` - Read-only access to the receiver.
   - Grants `alert.notifications.receivers:read`.
 - `Edit` - Ability to update and test the receiver.
@@ -448,7 +449,6 @@ Content-Type: application/json
     - `receivers.permissions:write`
     - `alert.notifications.receivers.protected:write`
 - Empty string (`""`) - Removes the permission.
-
 
 ### Notification policies
 
