@@ -12,21 +12,18 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type finalizer struct {
@@ -200,16 +197,7 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		// For v0alpha1 dashboards, we need to strip BOMs and remove annotations in one operation
-		// to avoid "illegal byte order mark" validation errors
-		if item.Group == dashboard.GROUP && item.Resource == dashboard.DASHBOARD_RESOURCE {
-			if err := releaseResourceWithBOMStripping(ctx, client, item, logger); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		// For non-dashboard resources, use the standard patch approach
+		// Use standard PATCH for all resources - mutation hook strips BOMs for dashboards
 		patchAnnotations, err := getPatchedAnnotations(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
@@ -273,83 +261,6 @@ func escapePatchString(s string) string {
 	s = strings.ReplaceAll(s, "~", "~0")
 	s = strings.ReplaceAll(s, "/", "~1")
 	return s
-}
-
-// releaseResourceWithBOMStripping releases a dashboard by stripping BOMs and removing annotations
-// This handles v0alpha1 dashboards that may have BOM characters in their spec, which would
-// cause "illegal byte order mark" validation errors during patch operations
-func releaseResourceWithBOMStripping(
-	ctx context.Context,
-	client dynamic.ResourceInterface,
-	item *provisioning.ResourceListItem,
-	logger logging.Logger,
-) error {
-	// Get the full dashboard object
-	obj, err := client.Get(ctx, item.Name, v1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("get dashboard: %w", err)
-	}
-
-	// Extract spec
-	spec, found, err := unstructured.NestedMap(obj.Object, "spec")
-	if err != nil {
-		return fmt.Errorf("get spec: %w", err)
-	}
-	if !found {
-		return fmt.Errorf("dashboard missing spec")
-	}
-
-	// Strip BOMs from spec if present
-	if containsBOM(spec) {
-		logger.Info("stripping BOMs from dashboard spec", "name", item.Name)
-		cleanSpec := util.StripBOMFromInterface(spec).(map[string]any)
-		if err := unstructured.SetNestedMap(obj.Object, cleanSpec, "spec"); err != nil {
-			return fmt.Errorf("set clean spec: %w", err)
-		}
-	}
-
-	// Remove ownership annotations
-	annotations := obj.GetAnnotations()
-	if annotations != nil {
-		delete(annotations, utils.AnnoKeyManagerKind)
-		delete(annotations, utils.AnnoKeyManagerIdentity)
-		if item.Path != "" {
-			delete(annotations, utils.AnnoKeySourcePath)
-		}
-		if item.Hash != "" {
-			delete(annotations, utils.AnnoKeySourceChecksum)
-		}
-		obj.SetAnnotations(annotations)
-	}
-
-	// Update the dashboard with both changes (clean spec + removed annotations)
-	_, err = client.Update(ctx, obj, v1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("update dashboard to release ownership: %w", err)
-	}
-
-	return nil
-}
-
-// containsBOM recursively checks if a value contains BOM characters
-func containsBOM(v any) bool {
-	switch val := v.(type) {
-	case string:
-		return strings.Contains(val, "\ufeff")
-	case map[string]any:
-		for _, v := range val {
-			if containsBOM(v) {
-				return true
-			}
-		}
-	case []any:
-		for _, item := range val {
-			if containsBOM(item) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func sortResourceListForDeletion(list *provisioning.ResourceList) {
