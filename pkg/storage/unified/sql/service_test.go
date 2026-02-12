@@ -6,15 +6,19 @@ import (
 	"sync/atomic"
 	"testing"
 
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -53,18 +57,23 @@ func requireAuthPassed(t *testing.T, err error, msgAndArgs ...interface{}) {
 	assert.Equal(t, codes.Unimplemented, status.Code(err), msgAndArgs...)
 }
 
-// newDenyAllGRPCServer creates a gRPC server with a global "deny all" auth
-// interceptor. Services must be registered on the returned server before
+// newDenyAllProvider creates a grpcserver.Provider with a global "deny all"
+// authenticator. Services must be registered on the returned server before
 // calling startAndConnect.
-func newDenyAllGRPCServer(t *testing.T) *grpc.Server {
+func newDenyAllProvider(t *testing.T) grpcserver.Provider {
 	t.Helper()
-	denyAll := func(context.Context) (context.Context, error) {
+	denyAll := interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
 		return nil, status.Error(codes.Unauthenticated, "denied by global auth")
-	}
-	return grpc.NewServer(
-		grpc.ChainUnaryInterceptor(grpcAuth.UnaryServerInterceptor(denyAll)),
-		grpc.ChainStreamInterceptor(grpcAuth.StreamServerInterceptor(denyAll)),
+	})
+	provider, err := grpcserver.ProvideService(
+		setting.NewCfg(),
+		featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer),
+		denyAll,
+		noop.NewTracerProvider().Tracer(""),
+		prometheus.NewRegistry(),
 	)
+	require.NoError(t, err)
+	return provider
 }
 
 // startAndConnect starts the gRPC server and returns a client connection.
@@ -92,12 +101,12 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 	})
 
 	s := &service{authenticator: testAuth}
-	srv := newDenyAllGRPCServer(t)
+	provider := newDenyAllProvider(t)
 
-	err := s.registerSearchServer(srv, &mockSearchServer{})
+	err := s.registerSearchServer(provider, &mockSearchServer{})
 	require.NoError(t, err)
 
-	conn := startAndConnect(t, srv)
+	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()
 
 	t.Run("ResourceIndex/Search", func(t *testing.T) {
@@ -145,12 +154,12 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	})
 
 	s := &service{authenticator: testAuth}
-	srv := newDenyAllGRPCServer(t)
+	provider := newDenyAllProvider(t)
 
-	err := s.registerUnifiedResourceServer(srv, &mockResourceServer{})
+	err := s.registerUnifiedResourceServer(provider, &mockResourceServer{})
 	require.NoError(t, err)
 
-	conn := startAndConnect(t, srv)
+	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()
 
 	t.Run("ResourceStore/Read", func(t *testing.T) {
