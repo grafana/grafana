@@ -85,7 +85,6 @@ export function MetricCombobox({
             'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
             'Select metric'
           )}
-          className={styles.combobox}
           width="auto"
           minWidth={25}
           options={loadOptions}
