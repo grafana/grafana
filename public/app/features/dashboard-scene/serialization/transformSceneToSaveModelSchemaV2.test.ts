@@ -487,9 +487,9 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       // Get a reference to the DS references mapping
       const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
 
-      // Test the query without DS originally - should return undefined
+      // Test the query without DS originally - should return panlel level datasource
       const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
-      expect(resultA).toBeUndefined();
+      expect(resultA).toEqual({ uid: 'default-ds', type: 'default' });
 
       // Test the query with DS that differs from panel - same as PanelQueryRunner: use panel ref
       const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
@@ -736,7 +736,7 @@ describe('getElementDatasource', () => {
 
     // Call the function with the panel and query without DS
     const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
-    expect(resultWithoutDS).toBeUndefined();
+    expect(resultWithoutDS).toEqual({ uid: 'default-ds', type: 'default' });
 
     // Query with only type differs from panel → use panel ref
     const resultWithOnlyType = getElementDatasource(
@@ -990,8 +990,8 @@ describe('getVizPanelQueries', () => {
     const result = getVizPanelQueries(vizPanel, dsReferencesMapping);
     expect(result.length).toBe(2);
     expect(result[0].spec.query.kind).toBe('DataQuery');
-    expect(result[0].spec.query.datasource).toBeUndefined(); // ignore datasource if it wasn't provided
-    expect(result[0].spec.query.group).toBe(defaultDataQueryKind().group); // this is a default query that contains only refId and therefore group should be the default group
+    expect(result[0].spec.query.datasource).toEqual({ name: 'default-ds' }); // picks up panel level when no datasource is provided
+    expect(result[0].spec.query.group).toBe('default'); // this is a default query that contains only refId and therefore group should be the default group
     expect(result[0].spec.query.version).toBe('v0');
 
     expect(result[1].spec.query.kind).toBe('DataQuery');
