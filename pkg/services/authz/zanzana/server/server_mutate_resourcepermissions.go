@@ -139,7 +139,7 @@ func toZanzanaSubject(kind string, name string) (string, error) {
 	case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
 		return zanzana.NewTupleEntry(zanzana.TypeServiceAccount, name, ""), nil
 	case iamv0.ResourcePermissionSpecPermissionKindTeam:
-		return zanzana.NewTupleEntry(zanzana.TypeTeam, name, ""), nil
+		return zanzana.NewTupleEntry(zanzana.TypeTeam, name, zanzana.RelationTeamMember), nil
 	case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 		basicRole := zanzana.TranslateBasicRole(name)
 		if basicRole == "" {
