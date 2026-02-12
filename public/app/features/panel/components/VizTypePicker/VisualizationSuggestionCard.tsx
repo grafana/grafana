@@ -58,6 +58,10 @@ export function VisualizationSuggestionCard({
       suggestion.cardOptions.previewModifier(preview);
     }
 
+    // Clone so PanelRenderer can mutate (fixThresholds etc); plugin suggestions may be frozen
+    const options = preview.options ? cloneDeep(preview.options) : undefined;
+    const fieldConfig = preview.fieldConfig ? cloneDeep(preview.fieldConfig) : undefined;
+
     content = (
       <button {...commonButtonProps}>
         {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
@@ -72,8 +76,8 @@ export function VisualizationSuggestionCard({
             pluginId={suggestion.pluginId}
             width={renderWidth}
             height={renderHeight}
-            options={preview.options}
-            fieldConfig={preview.fieldConfig}
+            options={options}
+            fieldConfig={fieldConfig}
           />
         </div>
       </button>
