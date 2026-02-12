@@ -9,18 +9,52 @@ import (
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
+	badger "github.com/dgraph-io/badger/v4"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 var node, _ = snowflake.NewNode(1)
 
+func setupTestBadgerDB(t *testing.T) *badger.DB {
+	// Create a temporary directory for the test database
+	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
+	db, err := badger.Open(opts)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return db
+}
+
+func setupBadgerKV(t *testing.T) KV {
+	db := setupTestBadgerDB(t)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return NewBadgerKV(db)
+}
+
+func setupSqlKV(t *testing.T) kv.KV {
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	require.NoError(t, err)
+	return kv
+}
+
 func setupTestDataStore(t *testing.T) *dataStore {
-	kv := setupTestKV(t)
-	return newDataStore(kv)
+	return newDataStore(setupBadgerKV(t))
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -29,14 +63,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	dbConn, err := eDB.Init(context.Background())
-	require.NoError(t, err)
-	kv, err := NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	require.NoError(t, err)
-	return newDataStore(kv)
+	return newDataStore(setupSqlKV(t))
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -602,7 +629,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          DataAction("unknown"),
+				Action:          kv.DataAction("unknown"),
 			},
 			expectError: true,
 			errorMsg:    "action 'unknown' is invalid",
@@ -611,7 +638,7 @@ func TestDataKey_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.key.Validate()
+			err := validateDataKey(tt.key)
 			if tt.expectError {
 				require.Error(t, err)
 				if tt.errorMsg != "" {
@@ -2127,7 +2154,7 @@ func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, 
 
 		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource4
 		names := make(map[string]int64)
-		actions := make(map[string]DataAction)
+		actions := make(map[string]kv.DataAction)
 		for _, result := range resultKeys {
 			names[result.Name] = result.ResourceVersion
 			actions[result.Name] = result.Action
@@ -2780,7 +2807,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 					for version := 1; version <= 3; version++ {
 						rv := node.Generate().Int64()
 
-						var action DataAction
+						var action kv.DataAction
 						switch version {
 						case 1:
 							action = DataActionCreated

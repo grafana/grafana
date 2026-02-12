@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -29,7 +30,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)
 	require.NoError(t, err)
-	kv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 
 	kvOpts := resource.KVBackendOptions{

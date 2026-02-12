@@ -284,13 +284,13 @@ export const defaultExtensions = (): Extensions => ({
 export interface Spec {
 	pluginJson: JSONData;
 	class: "core" | "external";
-	module?: {
+	module: {
 		path: string;
 		hash?: string;
-		loadingStrategy?: "fetch" | "script";
+		loadingStrategy: "fetch" | "script";
 	};
-	baseURL?: string;
-	signature?: {
+	baseURL: string;
+	signature: {
 		status: "internal" | "valid" | "invalid" | "modified" | "unsigned";
 		type?: "grafana" | "commercial" | "community" | "private" | "private-glob";
 		org?: string;
@@ -303,5 +303,13 @@ export interface Spec {
 export const defaultSpec = (): Spec => ({
 	pluginJson: defaultJSONData(),
 	class: "core",
+	module: {
+	path: "",
+	loadingStrategy: "fetch",
+},
+	baseURL: "",
+	signature: {
+	status: "internal",
+},
 });
 

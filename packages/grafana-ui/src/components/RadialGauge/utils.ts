@@ -1,4 +1,4 @@
-import { FieldDisplay, getDisplayProcessor } from '@grafana/data';
+import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialGaugeDimensions } from './types';
 
@@ -211,9 +211,7 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
   };
 }
 
-export function drawRadialArcPath(startAngle: number, endAngle: number, dimensions: RadialGaugeDimensions): string {
-  const { radius, centerX, centerY } = dimensions;
-
+export function drawRadialArcPath(startAngle: number, endAngle: number, radius: number): string {
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
     endAngle = 359.99;
@@ -224,12 +222,14 @@ export function drawRadialArcPath(startAngle: number, endAngle: number, dimensio
 
   const largeArc = endAngle > 180 ? 1 : 0;
 
-  let x1 = centerX + radius * Math.cos(startRadians);
-  let y1 = centerY + radius * Math.sin(startRadians);
-  let x2 = centerX + radius * Math.cos(endRadians);
-  let y2 = centerY + radius * Math.sin(endRadians);
+  const MAX_DECIMALS = 2;
 
-  return ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
+  const x1 = parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
+
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {
@@ -253,3 +253,27 @@ export function getOptimalSegmentCount(
 
   return Math.min(maxSegments, segmentCount);
 }
+
+export function getThresholdPercentageValue(
+  threshold: Threshold,
+  thresholdsMode: ThresholdsMode,
+  fieldDisplay: FieldDisplay
+): number {
+  if (thresholdsMode === ThresholdsMode.Percentage) {
+    return threshold.value / 100;
+  }
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (threshold.value - min) / (max - min);
+}
+
+export const IS_SAFARI = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  return true;
+})();

@@ -77,3 +77,15 @@ func NewRecordingRuleSpec() *RecordingRuleSpec {
 		Trigger: *NewRecordingRuleIntervalTrigger(),
 	}
 }
+func (RecordingRuleIntervalTrigger) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleIntervalTrigger"
+}
+func (RecordingRuleExpression) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpression"
+}
+func (RecordingRuleRelativeTimeRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange"
+}
+func (RecordingRuleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleSpec"
+}

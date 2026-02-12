@@ -154,7 +154,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
+						Type:   metav1.CauseTypeFieldValueNotFound,
 						Field:  field.NewPath("spec", "github", "appID").String(),
 						Detail: "app not found",
 					},
@@ -215,6 +215,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					Detail: fmt.Sprintf("appID mismatch: expected %s, got %d", c.obj.Spec.GitHub.AppID, app.ID),
 				},
 			},
+		}, nil
+	}
+
+	// Validate permissions from the app
+	permissionErrors := validateAppPermissions(app.Permissions)
+	if len(permissionErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  permissionErrors,
 		}, nil
 	}
 
@@ -323,6 +337,15 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
 	if err != nil {
+		switch {
+		case errors.Is(err, ErrUnprocessableEntity):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrRepositoryAccess)
+		case errors.Is(err, ErrNotFound):
+			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrNotFound)
+		case errors.Is(err, ErrAuthentication):
+			return nil, connection.ErrAuthentication
+		}
+
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
@@ -405,6 +428,64 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 
 	// For the token to be valid, the issuer must be equal to the object appID
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
+}
+
+// validateAppPermissions checks if the given app has required permissions
+func validateAppPermissions(permissions AppPermissions) []provisioning.ErrorDetails {
+	var errors []provisioning.ErrorDetails
+
+	requiredPerms := map[string]struct {
+		current  AppPermission
+		required AppPermission
+	}{
+		"contents": {
+			current:  permissions.Contents,
+			required: AppPermissionWrite,
+		},
+		"metadata": {
+			current:  permissions.Metadata,
+			required: AppPermissionRead,
+		},
+		"pull_requests": {
+			current:  permissions.PullRequests,
+			required: AppPermissionWrite,
+		},
+		"webhooks": {
+			current:  permissions.Webhooks,
+			required: AppPermissionWrite,
+		},
+	}
+
+	for name, perm := range requiredPerms {
+		if perm.current < perm.required {
+			detail := fmt.Sprintf(
+				"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
+				name,
+				toAppPermissionString(perm.required),
+				toAppPermissionString(perm.current),
+			)
+			errors = append(errors, provisioning.ErrorDetails{
+				Type:   metav1.CauseTypeForbidden,
+				Field:  field.NewPath("spec", "github", "appID").String(),
+				Detail: detail,
+			})
+		}
+	}
+
+	return errors
+}
+
+func toAppPermissionString(permissions AppPermission) string {
+	switch permissions {
+	case AppPermissionNone:
+		return ""
+	case AppPermissionRead:
+		return "read"
+	case AppPermissionWrite:
+		return "write"
+	}
+
+	return ""
 }
 
 var (

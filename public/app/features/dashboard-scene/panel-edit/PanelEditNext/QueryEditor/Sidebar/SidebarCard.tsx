@@ -1,83 +1,166 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
-import { useDatasource } from 'app/features/datasources/hooks';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { Actions } from '../../Actions';
+import { QueryEditorTypeConfig } from '../../constants';
 
-const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
-  const typeText =
-    editorType === 'expression'
-      ? t('query-editor-next.sidebar.expression', 'Expression')
-      : t('query-editor-next.sidebar.query', 'Query');
-
-  return (
-    <div className={styles.cardHeader}>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
-        <Text weight="light" variant="body">
-          {typeText}
-        </Text>
-      </Stack>
-      <Icon name="circle-mono" className={styles.dsStatusIcon} />
-    </div>
-  );
-};
-
-const getEditorType = (query: DataQuery): QueryEditorType =>
-  isExpressionQuery(query) ? QueryEditorType.Expression : QueryEditorType.Query;
+import { AddCardButton } from './AddCardButton';
 
 interface SidebarCardProps {
-  query: DataQuery;
+  config: QueryEditorTypeConfig;
+  isSelected: boolean;
+  id: string;
+  children: React.ReactNode;
+  onClick: () => void;
+  onDuplicate?: () => void;
+  onDelete: () => void;
+  onToggleHide: () => void;
+  isHidden: boolean;
+  showAddButton: boolean;
 }
 
-export const SidebarCard = ({ query }: SidebarCardProps) => {
-  const editorType = getEditorType(query);
-  const queryDsSettings = useDatasource(query.datasource);
-  const { data } = useQueryRunnerContext();
-  const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
+export const SidebarCard = ({
+  config,
+  isSelected,
+  id,
+  children,
+  onClick,
+  onDuplicate,
+  onDelete,
+  onToggleHide,
+  isHidden,
+  showAddButton = true,
+}: SidebarCardProps) => {
+  const hasAddButton = showAddButton;
+  const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
+  const typeText = config.getLabel();
+  const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
-  const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
-  const isSelected = selectedCard?.refId === query.refId;
-  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
+  const handleFocus = useCallback(() => {
+    setHasFocusWithin(true);
+  }, []);
 
-  const handleClick = () => {
-    // We don't allow deselecting cards so don't do anything if already selected
-    if (!isSelected) {
-      setSelectedCard(query);
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+      setHasFocusWithin(false);
+    }
+  }, []);
+
+  // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
+  // so we manually handle Enter and Space key activation.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) {
+      return;
+    }
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
     }
   };
 
   return (
-    <button
-      className={styles.card}
-      onClick={handleClick}
-      type="button"
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select query {{refId}}', { refId: query.refId })}
-      aria-pressed={isSelected}
-    >
-      <Header editorType={editorType} styles={styles} />
-      <div className={styles.cardContent}>
-        <DataSourceLogo dataSource={queryDsSettings} />
-        <Text weight="light" variant="body" color="secondary">
-          {query.refId}
-        </Text>
+    <div className={styles.wrapper}>
+      <div
+        className={cx(styles.card, { [styles.hidden]: isHidden })}
+        onClick={onClick}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        role="button"
+        tabIndex={0}
+        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+        aria-pressed={isSelected}
+      >
+        <div className={styles.cardHeader}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Icon name={config.icon} />
+            <Text weight="light" variant="body">
+              {typeText}
+            </Text>
+          </Stack>
+          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+            <Actions
+              isHidden={isHidden}
+              onDelete={onDelete}
+              onDuplicate={onDuplicate}
+              onToggleHide={onToggleHide}
+              typeLabel={typeText}
+            />
+          </div>
+        </div>
+        <div className={styles.cardContent}>{children}</div>
       </div>
-    </button>
+      {hasAddButton && <AddCardButton afterRefId={id} />}
+    </div>
   );
 };
 
-function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
+function getStyles(
+  theme: GrafanaTheme2,
+  { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
+) {
+  const hoverActions = css({
+    opacity: 0,
+    marginLeft: 'auto',
+
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  });
+
   return {
+    wrapper: css({
+      position: 'relative',
+      marginInline: theme.spacing(2),
+
+      // The hover-zone pseudo-elements and add-button visibility rules are
+      // only needed when the card has an AddCardButton.
+      ...(hasAddButton && {
+        // Two slim pseudo-element strips extend the hover zone to the left and
+        // below the card, covering the path to the "+" button without overlapping
+        // the card's clickable area.
+
+        // Left strip: narrow gutter running along the card's left edge and below.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: theme.spacing(1.5),
+          height: `calc(100% + ${theme.spacing(1.5)})`,
+        },
+
+        // Bottom strip: runs along the card's bottom edge extending to the left.
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '100%',
+          left: `calc(-1 * ${theme.spacing(1.5)})`,
+          width: `calc(100% + ${theme.spacing(1.5)})`,
+          height: theme.spacing(1.5),
+        },
+
+        '&:hover': {
+          zIndex: 1,
+        },
+
+        '&:hover [data-add-button], & [data-menu-open]': {
+          opacity: 1,
+          pointerEvents: 'auto',
+        },
+      }),
+    }),
     card: css({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
       background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
       border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
@@ -98,6 +181,10 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
         borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 
+      [`&:hover .${hoverActions}`]: {
+        opacity: 1,
+      },
+
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
@@ -111,10 +198,14 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       gap: theme.spacing(1),
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
-      color: QUERY_EDITOR_TYPE_CONFIG[editorType].color,
+      color: config.color,
       borderTopRightRadius: theme.shape.radius.default,
       borderTopLeftRadius: theme.shape.radius.default,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    hoverActions,
+    hoverActionsVisible: css({
+      opacity: 1,
     }),
     cardContent: css({
       display: 'flex',
@@ -123,11 +214,8 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       gap: theme.spacing(1),
       padding: theme.spacing(1),
     }),
-    dsStatusIcon: css({
-      color: hasError ? theme.colors.error.text : theme.colors.success.text,
-      width: '6px',
-      height: '6px',
-      marginRight: theme.spacing(0.5),
+    hidden: css({
+      opacity: 0.6,
     }),
   };
 }

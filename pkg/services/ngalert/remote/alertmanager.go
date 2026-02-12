@@ -35,10 +35,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -90,6 +92,8 @@ type Alertmanager struct {
 	externalURL   string
 
 	runtimeConfig remoteClient.RuntimeConfig
+
+	features featuremgmt.FeatureToggles
 }
 
 type AlertmanagerConfig struct {
@@ -135,7 +139,16 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(
+	ctx context.Context,
+	cfg AlertmanagerConfig,
+	store stateStore,
+	crypto Crypto,
+	autogenFn AutogenFn,
+	metrics *metrics.RemoteAlertmanager,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -211,6 +224,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
 		runtimeConfig: cfg.RuntimeConfig,
+
+		features: features,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -327,6 +342,24 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	if err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
 	}
+	amConfig := mergeResult.Config
+
+	// Add managed routes and extra route as managed route to the configuration.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		managed := maps.Clone(c.ManagedRoutes)
+		if managed == nil {
+			managed = make(map[string]*apimodels.Route)
+		}
+		if mergeResult.ExtraRoute != nil {
+			if _, ok := managed[mergeResult.Identifier]; ok {
+				am.log.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
+			} else {
+				managed[mergeResult.Identifier] = mergeResult.ExtraRoute
+			}
+		}
+		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managed)
+	}
 
 	var templates []definition.PostableApiTemplate
 	if len(c.ExtraConfigs) > 0 && len(c.ExtraConfigs[0].TemplateFiles) > 0 {
@@ -336,7 +369,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	payload := remoteClient.UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: remoteClient.GrafanaAlertmanagerConfig{
 			TemplateFiles:      c.TemplateFiles,
-			AlertmanagerConfig: mergeResult.Config,
+			AlertmanagerConfig: amConfig,
 			Templates:          templates,
 		},
 		CreatedAt:     createdAtEpoch,

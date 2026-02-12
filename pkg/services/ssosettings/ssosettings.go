@@ -31,7 +31,7 @@ type Service interface {
 	// Delete deletes the SSO settings for a given provider (soft delete)
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
-	Patch(ctx context.Context, provider string, data map[string]any) error
+	Patch(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error
 	// RegisterReloadable registers a reloadable for a given provider
 	RegisterReloadable(provider string, reloadable Reloadable)
 	// Reload reloads the settings for a given provider

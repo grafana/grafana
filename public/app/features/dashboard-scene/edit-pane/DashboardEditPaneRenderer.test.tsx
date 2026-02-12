@@ -18,6 +18,10 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
+jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
+  useMediaQueryMinWidth: () => true,
+}));
+
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
     dashboardOutlineClicked: jest.fn(),
@@ -45,7 +49,13 @@ export function buildTestScene() {
 }
 
 describe('DashboardEditPaneRenderer', () => {
-  config.featureToggles.dashboardNewLayouts = true;
+  beforeEach(() => {
+    config.featureToggles.dashboardNewLayouts = true;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('Should render sidebar', async () => {
     const scene = buildTestScene();

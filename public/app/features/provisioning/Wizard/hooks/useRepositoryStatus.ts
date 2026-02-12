@@ -1,52 +1,40 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useState } from 'react';
 
-import { useGetRepositoryStatusQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-export type UseRepositoryStatusOptions = {
-  pollIntervalMs?: number;
-  stopPollingWhenReady?: boolean;
-};
+import { isResourceReconciled } from '../../utils/repositoryStatus';
 
-export function useRepositoryStatus(repoName?: string, options?: UseRepositoryStatusOptions) {
-  const pollIntervalMs = options?.pollIntervalMs ?? 5000;
-  const stopPollingWhenReady = options?.stopPollingWhenReady ?? true;
+export function useRepositoryStatus(repoName?: string) {
+  const query = useListRepositoryQuery(
+    repoName
+      ? {
+          fieldSelector: `metadata.name=${repoName}`,
+          watch: true,
+        }
+      : skipToken
+  );
 
-  const [shouldEnablePolling, setShouldEnablePolling] = useState(Boolean(repoName));
+  const repository = query.data?.items?.[0];
+  const { healthy: rawIsHealthy, message: healthMessage } = repository?.status?.health || {};
 
-  const query = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
-    pollingInterval: repoName && shouldEnablePolling ? pollIntervalMs : 0,
-    skipPollingIfUnfocused: true,
-  });
+  const isReconciled = isResourceReconciled(repository);
+  const isReady = Boolean(repoName) && query.isSuccess;
 
-  const { healthy: isHealthy, message: healthMessage, checked } = query?.data?.status?.health || {};
-
-  const healthStatusNotReady = isHealthy === false && query?.data?.status?.observedGeneration === 0;
-  const isReady = Boolean(repoName) && query.isSuccess && !healthStatusNotReady;
-
-  useEffect(() => {
-    if (!repoName) {
-      setShouldEnablePolling(false);
-      return;
-    }
-    if (query.isError) {
-      setShouldEnablePolling(false);
-      return;
-    }
-    if (stopPollingWhenReady && isReady) {
-      setShouldEnablePolling(false);
-      return;
-    }
-    setShouldEnablePolling(true);
-  }, [repoName, stopPollingWhenReady, isReady, query.isError]);
+  // Only trust health status after reconciliation completes - K8s may report unreliable values during reconciliation
+  const isHealthy = isReady && rawIsHealthy === true && isReconciled;
+  const isUnhealthy = isReady && rawIsHealthy === false && isReconciled;
+  // True when health status is not yet determined (waiting for reconciliation)
+  const healthStatusNotReady = isReady && !isHealthy && !isUnhealthy;
 
   return {
     isReady,
-    isHealthy: isReady ? isHealthy : undefined,
+    isHealthy, // true only when healthy AND reconciled
+    isUnhealthy, // true only when unhealthy AND reconciled
+    isReconciled,
     healthMessage,
-    checked,
-    healthStatusNotReady,
-    isLoading: query.isLoading || query.isFetching,
+    healthStatusNotReady, // true when waiting for reconciliation
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
     hasError: query.isError,
     refetch: query.refetch,
   };

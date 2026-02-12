@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 )
 
 type githubClient struct {
@@ -23,6 +23,19 @@ const (
 	maxWebhooks = 100  // Maximum number of webhooks allowed per repository
 	maxPRFiles  = 1000 // Maximum number of files allowed in a pull request
 )
+
+func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
+	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
+	if err != nil {
+		return Repository{}, fmt.Errorf("failed to get repository: %w", err)
+	}
+
+	return Repository{
+		ID:            repo.GetID(),
+		Name:          repo.GetName(),
+		DefaultBranch: repo.GetDefaultBranch(),
+	}, nil
+}
 
 // Commits returns a list of commits for a given repository and branch.
 func (r *githubClient) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {

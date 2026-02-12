@@ -1,13 +1,7 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import React, { type JSX } from 'react';
 
-import {
-  PluginContextProvider,
-  PluginExtensionPoints,
-  PluginLoadingStrategy,
-  PluginMeta,
-  PluginType,
-} from '@grafana/data';
+import { AppPluginConfig, PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
@@ -19,6 +13,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
 import { isGrafanaDevMode } from './utils';
@@ -62,9 +57,10 @@ describe('usePluginComponents()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const pluginId = 'myorg-extensions-app';
+  const pluginId = basicApp.id;
   const extensionPointId = `${pluginId}/extension-point/v1`;
   const originalBuildInfoEnv = config.buildInfo.env;
+  let apps: AppPluginConfig[];
 
   beforeEach(() => {
     config.buildInfo.env = originalBuildInfoEnv;
@@ -72,11 +68,12 @@ describe('usePluginComponents()', () => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
 
     resetLogMock(log);
+    apps = [basicApp];
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry(apps),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
+      addedLinksRegistry: new AddedLinksRegistry(apps),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
 
     pluginMeta = {
@@ -112,32 +109,6 @@ describe('usePluginComponents()', () => {
         extensions: {
           exposedComponents: [],
         },
-      },
-    };
-
-    config.apps[pluginId] = {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
       },
     };
 
@@ -235,14 +206,14 @@ describe('usePluginComponents()', () => {
       pluginId,
       title: '1',
       description: '1',
-      id: '-1921123020',
+      id: '1982424218',
       type: 'component',
     });
     expect(result.current.components[1].meta).toEqual({
       pluginId,
       title: '2',
       description: '2',
-      id: '-1921123019',
+      id: '1982424219',
       type: 'component',
     });
   });
@@ -303,7 +274,7 @@ describe('usePluginComponents()', () => {
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
     expect(log.error).toHaveBeenCalledWith(
-      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app and version unknown`,
+      `Attempted to mutate object property "foo4" from extension with id grafana-basic-app and version unknown`,
       {
         stack: expect.any(String),
       }
@@ -367,7 +338,7 @@ describe('usePluginComponents()', () => {
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
     expect(log.warning).toHaveBeenCalledWith(
-      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app and version unknown`,
+      `Attempted to mutate object property "foo4" from extension with id grafana-basic-app and version unknown`,
       {
         stack: expect.any(String),
       }
@@ -506,8 +477,9 @@ describe('usePluginComponents()', () => {
       component: () => <div>Component</div>,
     };
 
-    // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+    registries.addedComponentsRegistry = new AddedComponentsRegistry([
+      { ...apps[0], extensions: { ...apps[0].extensions, addedComponents: [componentConfig] } },
+    ]);
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider

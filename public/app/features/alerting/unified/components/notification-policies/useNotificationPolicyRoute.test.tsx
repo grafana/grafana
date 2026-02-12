@@ -30,6 +30,7 @@ test('k8sSubRouteToRoute', () => {
   };
 
   const expected: Route = {
+    name: 'test-name',
     continue: false,
     group_by: ['label1'],
     group_interval: '5m',
@@ -41,6 +42,7 @@ test('k8sSubRouteToRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
+        name: 'test-name',
         receiver: 'receiver2',
         matchers: undefined,
         object_matchers: [['label2', MatcherOperator.notEqual, 'value2']],
@@ -49,7 +51,7 @@ test('k8sSubRouteToRoute', () => {
     ],
   };
 
-  expect(k8sSubRouteToRoute(input)).toStrictEqual(expected);
+  expect(k8sSubRouteToRoute(input, 'test-name')).toStrictEqual(expected);
 });
 
 test('routeToK8sSubRoute', () => {

@@ -772,7 +772,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 
 	tests := map[string]struct {
 		queryString           string

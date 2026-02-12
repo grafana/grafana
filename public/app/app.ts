@@ -83,7 +83,6 @@ import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
-import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
@@ -95,11 +94,12 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -190,8 +190,6 @@ export class GrafanaApp {
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 
-      initAuthConfig();
-
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
 
@@ -259,14 +257,10 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const [appPluginsToAwait, appPluginsToPreload] = await Promise.all([
-          getAppPluginsToAwait(),
-          getAppPluginsToPreload(),
-        ]);
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+        preloadPlugins(await getAppPluginsToPreload());
       }
+
+      getPluginExtensionRegistries();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
@@ -316,11 +310,7 @@ export class GrafanaApp {
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);
-      root.render(
-        createElement(AppWrapper, {
-          app: this,
-        })
-      );
+      root.render(createElement(AppWrapper, { context: this.context }));
 
       await postInitTasks();
     } catch (error) {

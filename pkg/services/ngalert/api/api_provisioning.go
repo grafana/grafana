@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,6 +31,7 @@ const disableProvenanceHeaderName = "X-Disable-Provenance"
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
+	routeService        routeService
 	contactPointService ContactPointService
 	templates           TemplateService
 	muteTimings         MuteTimingService
@@ -58,6 +60,10 @@ type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
+}
+
+type routeService interface {
+	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -96,19 +102,33 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
-	if err != nil {
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return ErrResp(http.StatusNotFound, err, "")
+	routeName := c.Query("routeName")
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) || routeName == "" {
+		// Default to the old behavior of exporting the single user-defined policy tree without a "name" field.
+		policy, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+				return ErrResp(http.StatusNotFound, err, "")
+			}
+			return ErrResp(http.StatusInternalServerError, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		e, err := AlertingFileExportFromRoute(c.GetOrgID(), policy)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+		}
+		return exportResponse(c, e)
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), policies)
+	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
+	}
+
+	e, err := AlertingFileExportFromRoute(c.GetOrgID(), legacy_storage.ManagedRouteToRoute(&managedRoute))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
-
 	return exportResponse(c, e)
 }
 

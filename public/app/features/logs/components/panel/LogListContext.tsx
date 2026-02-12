@@ -23,11 +23,11 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
@@ -37,7 +37,8 @@ import { LogListOptions, LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
+export interface LogListContextData
+  extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'unwrappedColumns'> {
   controlsExpanded: boolean;
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
@@ -59,10 +60,12 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setTimestampResolution: (format: LogLineTimestampResolution) => void;
+  setUnwrappedColumns: (unwrappedColumns: boolean) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
+  unwrappedColumns: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -89,6 +92,7 @@ export const LogListContext = createContext<LogListContextData>({
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
+  setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
@@ -97,6 +101,7 @@ export const LogListContext = createContext<LogListContextData>({
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
+  unwrappedColumns: false,
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -173,6 +178,7 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: LogLineTimestampResolution;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -218,6 +224,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
+  unwrappedColumns: unwrappedColumnsProp = false,
   wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -236,6 +243,7 @@ export const LogListContextProvider = ({
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
+  const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
 
   useEffect(() => {
     if (noInteractions) {
@@ -335,6 +343,11 @@ export const LogListContextProvider = ({
       setPrettifyJSONState(prettifyJSONProp);
     }
   }, [prettifyJSONProp]);
+
+  // Sync unwrappedColumns
+  useEffect(() => {
+    setUnwrappedColumnsState(unwrappedColumnsProp);
+  }, [unwrappedColumnsProp]);
 
   // Sync wrapLogMessage
   useEffect(() => {
@@ -466,6 +479,16 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const setUnwrappedColumns = useCallback(
+    (unwrappedColumns: boolean) => {
+      setUnwrappedColumnsState(unwrappedColumns);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.unwrappedColumns`, unwrappedColumns);
+      }
+    },
+    [logOptionsStorageKey]
+  );
+
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
       setWrapLogMessageState(wrapLogMessage);
@@ -515,6 +538,32 @@ export const LogListContextProvider = ({
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
+  const onClickShowFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickShowField) {
+        return;
+      }
+      onClickShowField(key);
+      reportInteraction('logs_log_list_context_show_field', {
+        key,
+      });
+    },
+    [onClickShowField]
+  );
+
+  const onClickHideFieldWrapper = useCallback(
+    (key: string) => {
+      if (!onClickHideField) {
+        return;
+      }
+      onClickHideField(key);
+      reportInteraction('logs_log_list_context_hide_field', {
+        key,
+      });
+    },
+    [onClickHideField]
+  );
+
   return (
     <LogListContext.Provider
       value={{
@@ -539,8 +588,8 @@ export const LogListContextProvider = ({
         onClickFilterOutLabel,
         onClickFilterString,
         onClickFilterOutString,
-        onClickShowField,
-        onClickHideField,
+        onClickShowField: onClickShowField ? onClickShowFieldWrapper : undefined,
+        onClickHideField: onClickHideField ? onClickHideFieldWrapper : undefined,
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
@@ -564,12 +613,14 @@ export const LogListContextProvider = ({
         setSortOrder,
         setSyntaxHighlighting,
         setTimestampResolution,
+        setUnwrappedColumns,
         setWrapLogMessage,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         timestampResolution: logListState.timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
         isAssistantAvailable,
         openAssistantByLog,

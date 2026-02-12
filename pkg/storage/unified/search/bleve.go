@@ -350,7 +350,8 @@ type buildInfo struct {
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index, and rebuild is not true.
+// Existing index in the file system is reused, if it exists, and if size indicates that we should use file-based index,
+// and lastImportTime check passes (if the index was built before lastImportTime, it will be rebuilt).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV
 //
 //nolint:gocyclo
@@ -363,6 +364,7 @@ func (b *bleveBackend) BuildIndex(
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
 	rebuild bool,
+	lastImportTime time.Time,
 ) (resource.ResourceIndex, error) {
 	_, span := tracer.Start(ctx, "search.bleveBackend.BuildIndex")
 	defer span.End()
@@ -422,14 +424,33 @@ func (b *bleveBackend) BuildIndex(
 	if size >= b.opts.FileThreshold {
 		newIndexType = indexStorageFile
 
-		// We only check for the existing file-based index if we don't already have an open index for this key.
+		// We only check for the existing file-based index if we don't already have an open index for this key,
+		// and if rebuild flag is not set.
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
-		// If we do have an unexpired cached index already, we always build a new index from scratch.
+		// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
 			var findErr error
 			index, fileIndexName, indexRV, findErr = b.findPreviousFileBasedIndex(resourceDir)
 			if findErr != nil {
 				return nil, findErr
+			}
+
+			// Check if we need to rebuild based on lastImportTime
+			if index != nil && !lastImportTime.IsZero() {
+				bi, err := getBuildInfo(index)
+				if err != nil {
+					logWithDetails.Warn("failed to get build info from existing index", "error", err)
+					// Continue with existing index despite error
+				} else if bi.BuildTime > 0 {
+					indexBuildTime := time.Unix(bi.BuildTime, 0)
+					if indexBuildTime.Before(lastImportTime) {
+						logWithDetails.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+						// Close the index and rebuild from scratch
+						_ = index.Close()
+						index = nil
+						fileIndexName = ""
+					}
+				}
 			}
 		}
 
@@ -1624,7 +1645,7 @@ var exactTermFields = []string{
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := slices.Contains(exactTermFields, req.Key)
+	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {

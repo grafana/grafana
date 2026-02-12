@@ -37,7 +37,7 @@ func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
 	}
 }
 
-// ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
+// Validate does structural validation (via Factory.Validate) and configuration checks on the repository object.
 // It does not run a health check or compare against existing repositories.
 func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList

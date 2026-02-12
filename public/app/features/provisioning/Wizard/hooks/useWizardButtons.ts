@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { Step } from '../Stepper';
-import { WizardStep } from '../types';
+import { GitHubAppMode, GitHubAuthType, WizardStep } from '../types';
 
 export interface UseWizardButtonsParams {
   activeStep: WizardStep;
@@ -19,6 +19,8 @@ export interface UseWizardButtonsParams {
   isCreatingSkipJob: boolean;
   showCancelConfirmation: boolean;
   shouldUseCancelBehavior: boolean;
+  githubAppMode?: GitHubAppMode;
+  githubAuthType?: GitHubAuthType;
 }
 
 export interface UseWizardButtonsReturn {
@@ -42,6 +44,8 @@ export function useWizardButtons({
   isCreatingSkipJob,
   showCancelConfirmation,
   shouldUseCancelBehavior,
+  githubAppMode,
+  githubAuthType,
 }: UseWizardButtonsParams): UseWizardButtonsReturn {
   const nextButtonText = useMemo(() => {
     const stepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -75,16 +79,22 @@ export function useWizardButtons({
   }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
 
   const isNextDisabled = useMemo(() => {
-    // AuthType step is always enabled (user just needs to select an option)
     if (activeStep === 'authType') {
-      return false;
+      // Only disable next if github app is in create connection mode
+      return githubAuthType === 'github-app' && githubAppMode === 'new';
     }
-    if (activeStep !== 'connection' && hasStepError) {
+    // Don't block on hasStepError for connection steps - users can fix their input and retry
+    if (!['connection'].includes(activeStep) && hasStepError) {
       return true;
     }
     // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
       return !(isStepSuccess || hasStepWarning);
+    }
+    // Finish step should not be blocked by isCreatingSkipJob since we only
+    // reach finish after the skip job was successfully created
+    if (activeStep === 'finish') {
+      return isSubmitting || isCancelling;
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   }, [
@@ -96,8 +106,9 @@ export function useWizardButtons({
     isCancelling,
     isStepRunning,
     isCreatingSkipJob,
+    githubAuthType,
+    githubAppMode,
   ]);
-
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
 
   return {

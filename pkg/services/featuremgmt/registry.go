@@ -18,13 +18,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "disableEnvelopeEncryption",
-			Description: "Disable envelope encryption (emergency only)",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -91,13 +84,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "showDashboardValidationWarnings",
-			Description: "Show warnings when dashboards do not validate against the schema",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -151,7 +137,7 @@ var (
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Expression:   "false",
 		},
@@ -220,6 +206,14 @@ var (
 			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "faroSessionReplay",
+			Description:  "Enable Faro session replay for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaSessionReplaySquad,
 			Expression:   "false",
 		},
 		{
@@ -318,15 +312,6 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
-		},
-		{
-			Name:            "reportingRetries",
-			Description:     "Enables rendering retries for the reporting feature",
-			Stage:           FeatureStagePublicPreview,
-			FrontendOnly:    false,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:         "reportingCsvEncodingOptions",
@@ -475,6 +460,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourceDisableIdApi",
+			Description:     "Does not register datasource apis that use the numeric id",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // affects the routes at startup
+			Expression:      "false",
+		},
+		{
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
@@ -509,7 +502,7 @@ var (
 		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
@@ -566,22 +559,6 @@ var (
 			RequiresDevMode: false,
 			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
-		},
-		{
-			Name:         "dashboardSceneForViewers",
-			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
-			Name:         "dashboardSceneSolo",
-			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardScene",
@@ -724,18 +701,19 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "secretsManagementAppPlatform",
-			Description: "Enable the secrets management API and services under app platform",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "secretsManagementAppPlatformUI",
 			Description: "Enable the secrets management app platform UI",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "secretsKeeperUI",
+			Description:  "Enable the Secrets Keeper management UI for configuring external secret storage",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",
@@ -1010,14 +988,6 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-		},
-		{
-			Name:            "ssoSettingsLDAP",
-			Description:     "Use the new SSO Settings API to configure LDAP",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           identityAccessTeam,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
 		},
 		{
 			Name:         "zanzana",
@@ -1395,6 +1365,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamHttpHeadersFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
@@ -1551,6 +1529,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "alertingMigrationWizardUI",
+			Description:  "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
@@ -1679,7 +1665,23 @@ var (
 		},
 		{
 			Name:         "kubernetesAuthZHandlerRedirect",
-			Description:  "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
+			Description:  "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+			Stage:        FeatureStageDeprecated,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZResourcePermissionsRedirect",
+			Description:  "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZRolesRedirect",
+			Description:  "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1761,14 +1763,14 @@ var (
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendSearchNavOrganise,
+			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 		},
 		{
 			Name:         "recentlyViewedDashboards",
 			Description:  "Enables recently viewed dashboards section in the browsing dashboard page",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			FrontendOnly: true,
 			Expression:   "false",
 		},
@@ -1776,7 +1778,7 @@ var (
 			Name:         "experimentRecentlyViewedDashboards",
 			Description:  "A/A test for recently viewed dashboards feature",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			FrontendOnly: true,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -1881,7 +1883,7 @@ var (
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			FrontendOnly: true,
 			Expression:   "false",
@@ -1964,7 +1966,7 @@ var (
 			Description:  "Enables team folders functionality",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			Expression:   "false",
 		},
 		{
@@ -2056,6 +2058,22 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "panelStyleActions",
+			Description:  "Enable style actions (copy/paste) in the panel editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "vizPresets",
+			Description:  "Enable visualization presets",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
 			Stage:        FeatureStageExperimental,
@@ -2110,6 +2128,15 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "excludeRedundantManagedPermissions",
+			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
 		},
 		{
 			Name:         "pluginInsights",
@@ -2270,6 +2297,14 @@ var (
 		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamsHandlerRedirect",
+			Description:  "Redirects the request to teams related endpoints to the app platform API",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

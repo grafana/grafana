@@ -186,6 +186,10 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 		return nil, ErrTooManyRequests
 	}
 
+	if resp.StatusCode == http.StatusRequestTimeout {
+		return nil, ErrServerTimeout
+	}
+
 	return resp, nil
 }
 

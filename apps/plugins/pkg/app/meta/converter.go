@@ -2,11 +2,16 @@ package meta
 
 import (
 	"encoding/json"
-	"time"
+	"fmt"
+	"net/url"
+	"path"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -167,6 +172,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	if jsonData.Tracing {
 		meta.Tracing = &jsonData.Tracing
 	}
+	if jsonData.Suggestions {
+		meta.Suggestions = &jsonData.Suggestions
+	}
 
 	// Map category
 	if jsonData.Category != "" {
@@ -217,6 +225,11 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	// Map executable
 	if jsonData.Executable != "" {
 		meta.Executable = &jsonData.Executable
+	}
+
+	// Map buildMode
+	if jsonData.BuildMode != "" {
+		meta.BuildMode = &jsonData.BuildMode
 	}
 
 	// Map QueryOptions
@@ -557,7 +570,7 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 	metaSpec.Class = c
 
 	if plugin.Module != "" {
-		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
 		}
 		if moduleHash != "" {
@@ -571,17 +584,17 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 			case plugins.LoadingStrategyScript:
 				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
 			}
-			module.LoadingStrategy = &ls
+			module.LoadingStrategy = ls
 		}
 		metaSpec.Module = module
 	}
 
 	if plugin.BaseURL != "" {
-		metaSpec.BaseURL = &plugin.BaseURL
+		metaSpec.BaseURL = plugin.BaseURL
 	}
 
 	if plugin.Signature != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 			Status: convertSignatureStatus(plugin.Signature),
 		}
 
@@ -661,23 +674,23 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 
 	// Set module information
 	if plugin.Module != "" {
-		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
 		}
 
 		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
-		module.LoadingStrategy = &loadingStrategy
+		module.LoadingStrategy = loadingStrategy
 
 		metaSpec.Module = module
 	}
 
 	// Set BaseURL
 	if plugin.BaseURL != "" {
-		metaSpec.BaseURL = &plugin.BaseURL
+		metaSpec.BaseURL = plugin.BaseURL
 	}
 
 	// Set signature information
-	signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+	signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 		Status: convertSignatureStatus(plugin.Signature),
 	}
 
@@ -710,38 +723,17 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 // grafanaComPluginVersionMeta represents the response from grafana.com API
 // GET /api/plugins/{pluginId}/versions/{version}
 type grafanaComPluginVersionMeta struct {
-	PluginID        string                       `json:"pluginSlug"`
-	Version         string                       `json:"version"`
-	URL             string                       `json:"url"`
-	Commit          string                       `json:"commit"`
-	Description     string                       `json:"description"`
-	Keywords        []string                     `json:"keywords"`
-	CreatedAt       time.Time                    `json:"createdAt"`
-	UpdatedAt       time.Time                    `json:"updatedAt"`
-	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
-	Readme          string                       `json:"readme"`
-	Downloads       int                          `json:"downloads"`
-	Verified        bool                         `json:"verified"`
-	Status          string                       `json:"status"`
-	StatusContext   string                       `json:"statusContext"`
-	DownloadSlug    string                       `json:"downloadSlug"`
-	SignatureType   string                       `json:"signatureType"`
-	SignedByOrg     string                       `json:"signedByOrg"`
-	SignedByOrgName string                       `json:"signedByOrgName"`
-	Packages        struct {
-		Any struct {
-			Md5         string `json:"md5"`
-			Sha256      string `json:"sha256"`
-			PackageName string `json:"packageName"`
-			DownloadURL string `json:"downloadUrl"`
-		} `json:"any"`
-	} `json:"packages"`
-	Links []struct {
-		Rel  string `json:"rel"`
-		Href string `json:"href"`
-	} `json:"links"`
-	Scopes   []string                       `json:"scopes"`
-	Children []grafanaComChildPluginVersion `json:"children,omitempty"`
+	PluginSlug          string                         `json:"pluginSlug"`
+	Version             string                         `json:"version"`
+	JSON                pluginsv0alpha1.MetaJSONData   `json:"json"`
+	SignatureType       string                         `json:"signatureType"`
+	SignedByOrg         string                         `json:"signedByOrg"`
+	SignedByOrgName     string                         `json:"signedByOrgName"`
+	Manifest            grafanaComPluginManifest       `json:"manifest"`
+	AngularDetected     bool                           `json:"angularDetected"`
+	CDNURL              string                         `json:"cdnUrl"`
+	CreatePluginVersion string                         `json:"createPluginVersion"`
+	Children            []grafanaComChildPluginVersion `json:"children,omitempty"`
 }
 
 // grafanaComChildPluginVersion represents a child plugin in the parent's version response.
@@ -752,31 +744,54 @@ type grafanaComChildPluginVersion struct {
 	Path            string                       `json:"path"`
 	Slug            string                       `json:"slug"`
 	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
-	CreatedAt       time.Time                    `json:"createdAt"`
-	UpdatedAt       *time.Time                   `json:"updatedAt"`
+}
+
+type grafanaComPluginManifest struct {
+	Plugin          string                `json:"plugin"`
+	Version         string                `json:"version"`
+	KeyID           string                `json:"keyId"`
+	Time            int64                 `json:"time"`
+	Files           map[string]string     `json:"files"`
+	ManifestVersion string                `json:"manifestVersion"`
+	SignatureType   plugins.SignatureType `json:"signatureType"`
+	SignedByOrg     string                `json:"signedByOrg"`
+	SignedByOrgName string                `json:"signedByOrgName"`
+	RootURLs        []string              `json:"rootUrls"`
 }
 
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
-// It inherits signature information from the parent plugin.
-func grafanaComChildPluginVersionToMetaSpec(child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
-	// Create a synthetic parent meta with child's JSON but parent's signature info
-	childMeta := grafanaComPluginVersionMeta{
-		JSON:          child.JSON,
-		SignatureType: parent.SignatureType,
-		SignedByOrg:   parent.SignedByOrg,
+// It inherits most information from the parent plugin.
+func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) (pluginsv0alpha1.MetaSpec, error) {
+	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
+	if err != nil {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build CDN URL for child plugin %s: %w", child.Slug, err)
 	}
-	return grafanaComPluginVersionMetaToMetaSpec(childMeta)
+
+	// Create a synthetic meta with both parent and child info
+	childMeta := grafanaComPluginVersionMeta{
+		PluginSlug:          child.Slug,
+		Version:             parent.Version,
+		JSON:                child.JSON,
+		SignatureType:       parent.SignatureType,
+		SignedByOrg:         parent.SignedByOrg,
+		SignedByOrgName:     parent.SignedByOrgName,
+		Manifest:            parent.Manifest,
+		AngularDetected:     parent.AngularDetected,
+		CDNURL:              cdnURL,
+		CreatePluginVersion: parent.CreatePluginVersion,
+	}
+	return grafanaComPluginVersionMetaToMetaSpec(logger, childMeta, child.Path)
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
-func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
 	}
 
 	if gcomMeta.SignatureType != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
 		}
 
@@ -805,5 +820,71 @@ func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta)
 		metaSpec.Signature = signature
 	}
 
-	return metaSpec
+	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
+	if err != nil {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build module.js URL for plugin %s: %w", gcomMeta.PluginSlug, err)
+	}
+
+	modulePath := "module.js"
+	if pluginRelBasePath != "" {
+		modulePath = path.Join(pluginRelBasePath, modulePath)
+	}
+	moduleHash, ok := gcomMeta.Manifest.Files[modulePath]
+	if !ok {
+		logger.Warn("Module hash not found in manifest", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "path", modulePath)
+	}
+
+	loadingStrategy := calculateLoadingStrategyFromGcomMeta(gcomMeta.CreatePluginVersion)
+	module := pluginsv0alpha1.MetaV0alpha1SpecModule{
+		Path:            moduleURL,
+		LoadingStrategy: loadingStrategy,
+	}
+	if ok {
+		module.Hash = &moduleHash
+	}
+	metaSpec.Module = module
+	metaSpec.BaseURL = gcomMeta.CDNURL
+
+	children := make([]string, 0, len(gcomMeta.Children))
+	for _, c := range gcomMeta.Children {
+		children = append(children, c.Slug)
+	}
+	metaSpec.Children = children
+
+	translations, err := translationsFromManifest(gcomMeta.CDNURL, gcomMeta.Manifest.Files, pluginRelBasePath, gcomMeta.JSON)
+	if err != nil {
+		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+	}
+	metaSpec.Translations = translations
+
+	return metaSpec, nil
+}
+
+func translationsFromManifest(cdnURL string, manifestFiles map[string]string, pluginRelBasePath string, jsonData pluginsv0alpha1.MetaJSONData) (map[string]string, error) {
+	translations := make(map[string]string)
+
+	if len(jsonData.Languages) == 0 {
+		return translations, nil
+	}
+
+	for _, language := range jsonData.Languages {
+		translationPath := path.Join(pluginRelBasePath, "locales", language, jsonData.Id+".json")
+		if _, exists := manifestFiles[translationPath]; exists {
+			translationURL, err := url.JoinPath(cdnURL, translationPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to build translation URL for language %s: %w", language, err)
+			}
+			translations[language] = translationURL
+		}
+	}
+
+	return translations, nil
+}
+
+func calculateLoadingStrategyFromGcomMeta(createPluginVersion string) pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy {
+	if pluginassets.ScriptLoadingCompatible(createPluginVersion) {
+		return pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+	}
+
+	return pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
 }

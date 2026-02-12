@@ -41,3 +41,12 @@ type LogsDrilldownDefaultColumnsSpec struct {
 func NewLogsDrilldownDefaultColumnsSpec() *LogsDrilldownDefaultColumnsSpec {
 	return &LogsDrilldownDefaultColumnsSpec{}
 }
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord"
+}
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel"
+}
+func (LogsDrilldownDefaultColumnsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsSpec"
+}

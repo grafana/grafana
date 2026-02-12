@@ -60,6 +60,13 @@ var Config = func() *definitions.PostableUserConfig {
 				{Receiver: prometheus.Receiver{Name: "nested-receiver"}},
 			},
 		},
+		ManagedRoutes: map[string]*definition.Route{
+			"empty":            Empty(),
+			"override-inherit": OverrideInherit(),
+			"matcher-variety":  MatcherVariety(),
+			"special-cases":    SpecialCases(),
+			"deeply-nested":    DeeplyNested(),
+		},
 	}
 }
 

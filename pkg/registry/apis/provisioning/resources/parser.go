@@ -187,7 +187,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if obj.GetName() == "" {
 		if obj.GetGenerateName() == "" {
-			return nil, ErrMissingName
+			return nil, NewResourceValidationError(ErrMissingName)
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
@@ -290,6 +290,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
+		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -404,6 +406,11 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
+
+	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+	if f.Existing != nil {
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
 	updateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))

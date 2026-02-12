@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import { CoreApp, DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { ParcaDataSource } from '../datasource';
@@ -23,9 +24,14 @@ describe('QueryEditor', () => {
   });
 
   it('should render without error', async () => {
+    setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
     setup();
 
-    expect(await screen.findByText(/process_cpu - cpu/)).toBeDefined();
+    // wait for CodeEditor
+    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText(/process_cpu - cpu/)).toBeDefined();
+    });
   });
 
   it('should render options', async () => {

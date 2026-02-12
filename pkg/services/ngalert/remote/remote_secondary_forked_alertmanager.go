@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -75,13 +76,14 @@ func NewRemoteSecondaryFactory(
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	withRemoteState bool,
+	features featuremgmt.FeatureToggles,
 ) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t, features)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)

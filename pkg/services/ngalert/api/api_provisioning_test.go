@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -2072,16 +2073,31 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies, but are using the `user-defined` for now.
+	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	sut := createProvisioningSrvSutFromEnv(t, &env)
+	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
-	for policyName, route := range policy_exports.AllRoutes() {
+	sut := createProvisioningSrvSutFromEnv(t, &env)
+	rev := legacy_storage.ConfigRevision{
+		Config: policy_exports.Config(),
+	}
+	sut.policies = newFakeNotificationPolicyService(rev)
+	sut.routeService = routes.NewFakeService(rev)
+
+	policies := []string{legacy_storage.UserDefinedRoutingTreeName}
+	for policy := range policy_exports.Config().ManagedRoutes {
+		policies = append(policies, policy)
+	}
+
+	for _, policyName := range policies {
 		t.Run(fmt.Sprintf("policy=%s", policyName), func(t *testing.T) {
-			sut.policies = newFakeNotificationPolicyService(route)
 			for _, exportType := range []string{"json", "yaml", "hcl"} {
 				t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
 					rc := createTestRequestCtx()
+
+					if policyName != "all" { // All export requires an empty route name query param.
+						rc.Req.Form.Add("routeName", policyName)
+					}
 
 					switch exportType {
 					case "yaml":
@@ -2264,12 +2280,27 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
-	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets))
+
+	rev := legacy_storage.ConfigRevision{
+		Config: &definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "some-receiver",
+					},
+				},
+			},
+		},
+	}
+
+	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
+	rs := routes.NewFakeService(rev)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
 		env.prov,
 		env.store,
+		rs,
 		env.secrets,
 		env.xact,
 		env.log,
@@ -2278,13 +2309,12 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 	)
 	return ProvisioningSrv{
-		log: env.log,
-		policies: newFakeNotificationPolicyService(&definitions.Route{
-			Receiver: "some-receiver",
-		}),
+		log:                 env.log,
+		policies:            newFakeNotificationPolicyService(rev),
+		routeService:        rs,
 		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
@@ -2316,18 +2346,10 @@ type fakeNotificationPolicyService struct {
 	prov   models.Provenance
 }
 
-func newFakeNotificationPolicyService(route *definitions.Route) *fakeNotificationPolicyService {
+func newFakeNotificationPolicyService(rev legacy_storage.ConfigRevision) *fakeNotificationPolicyService {
 	return &fakeNotificationPolicyService{
-		config: legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
-				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-					Config: definitions.Config{
-						Route: route,
-					},
-				},
-			},
-		},
-		prov: models.ProvenanceNone,
+		config: rev,
+		prov:   models.ProvenanceNone,
 	}
 }
 
@@ -2363,7 +2385,9 @@ func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, org
 	return definitions.Route{}, nil
 }
 
-type fakeFailingNotificationPolicyService struct{}
+type fakeFailingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	return definitions.Route{}, "", fmt.Errorf("something went wrong")
@@ -2377,7 +2401,9 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-type fakeRejectingNotificationPolicyService struct{}
+type fakeRejectingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 

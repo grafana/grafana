@@ -97,17 +97,17 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 }
 
 // DashboardSaved should broadcast to the appropriate stream
-func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
+func (h *DashboardHandler) publish(ns string, event dashboardEvent) error {
 	msg, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	return h.Publisher(orgID, "grafana/dashboard/uid/"+event.UID, msg)
+	return h.Publisher(ns, "grafana/dashboard/uid/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, uid string, rv string) error {
-	return h.publish(orgID, dashboardEvent{
+func (h *DashboardHandler) DashboardSaved(ns string, uid string, rv string) error {
+	return h.publish(ns, dashboardEvent{
 		UID:             uid,
 		Action:          ActionSaved,
 		ResourceVersion: rv,
@@ -115,8 +115,8 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, uid string, rv string) er
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(orgID int64, uid string) error {
-	return h.publish(orgID, dashboardEvent{
+func (h *DashboardHandler) DashboardDeleted(ns string, uid string) error {
+	return h.publish(ns, dashboardEvent{
 		UID:    uid,
 		Action: ActionDeleted,
 	})

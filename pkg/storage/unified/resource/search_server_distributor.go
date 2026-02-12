@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"math/rand"
+	"slices"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -149,10 +150,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	}
 	rCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), r.Namespace)
 
+	expectedInstances := ds.ring.InstancesCount()
 	var wg sync.WaitGroup
-	var totalRebuildCount atomic.Int64
-	detailsCh := make(chan string, len(rs.Instances))
-	errorCh := make(chan error, len(rs.Instances))
+	responseCh := make(chan *resourcepb.RebuildIndexesResponse, expectedInstances)
+	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
 		wg.Add(1)
@@ -176,35 +177,63 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				return
 			}
 
+			// Add instance ID to details if present
 			if rsp.Details != "" {
-				detailsCh <- fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
+				rsp.Details = fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
 			}
 
-			totalRebuildCount.Add(rsp.RebuildCount)
+			responseCh <- rsp
 		}()
 	}
 
 	wg.Wait()
 	close(errorCh)
-	close(detailsCh)
+	close(responseCh)
 
+	// Collect errors
 	errs := make([]error, 0, len(errorCh))
 	for err := range errorCh {
-		ds.log.Error("rebuild indexes call failed with %w", err)
+		ds.log.Error("rebuild indexes call failed", "error", err)
 		errs = append(errs, err)
 	}
 
+	// Aggregate responses
+	var totalRebuildCount int64
 	var details string
-	for d := range detailsCh {
-		if len(details) > 0 {
-			details += ", "
+	minBuildTimes := make(map[string]*resourcepb.RebuildIndexesResponse_IndexBuildTime)
+	contactedInstances := len(responseCh)
+
+	for rsp := range responseCh {
+		totalRebuildCount += rsp.RebuildCount
+
+		if rsp.Details != "" {
+			if len(details) > 0 {
+				details += ", "
+			}
+			details += rsp.Details
 		}
-		details += d
+
+		// Compute MIN(build time) for each resource type
+		for _, bt := range rsp.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			existing, found := minBuildTimes[key]
+			if !found || bt.BuildTimeUnix < existing.BuildTimeUnix {
+				minBuildTimes[key] = bt
+			}
+		}
 	}
 
+	// Convert map to slice
+	buildTimes := slices.Collect(maps.Values(minBuildTimes))
+
+	// Determine if all instances were contacted
+	contactedAllInstances := contactedInstances == expectedInstances && expectedInstances > 0
+
 	response := &resourcepb.RebuildIndexesResponse{
-		RebuildCount: totalRebuildCount.Load(),
-		Details:      details,
+		RebuildCount:          totalRebuildCount,
+		Details:               details,
+		BuildTimes:            buildTimes,
+		ContactedAllInstances: contactedAllInstances,
 	}
 	if len(errs) > 0 {
 		response.Error = AsErrorResult(errors.Join(errs...))

@@ -175,14 +175,14 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -204,7 +204,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -217,7 +217,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "alias(target)")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -240,7 +240,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -269,7 +269,7 @@ func TestConvertResponses(t *testing.T) {
 		refId := "A"
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -281,7 +281,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -303,7 +303,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -316,7 +316,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, true, "alias(target)")
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -730,8 +730,8 @@ Error: Target not found
 				assert.NoError(t, err)
 				require.NotNil(t, result)
 
-				for refID, resp := range result.Responses {
-					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-RefID-%s.golden", testName, refID), &resp, false)
+				for _, resp := range result.Responses {
+					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s.golden", testName), &resp, false)
 				}
 			}
 		})
@@ -833,7 +833,7 @@ func TestAliasMatching(t *testing.T) {
 			]`, tc.target, tc.tagsName)
 
 			httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-			dataFrames, err := service.toDataFrames(httpResponse, "A", tc.fromAlert, tc.target)
+			dataFrames, err := service.toDataFrames(httpResponse, "A")
 
 			require.NoError(t, err)
 			require.Len(t, dataFrames, 1)

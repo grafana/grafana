@@ -55,6 +55,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.panelEditAction = editAction;
   }
 
+  public clone(withState: Partial<DashboardEditPaneState>): this {
+    // Clone without any undo/redo history
+    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+  }
+
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
 
