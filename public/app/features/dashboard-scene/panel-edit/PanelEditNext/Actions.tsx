@@ -51,21 +51,21 @@ export function Actions({
           },
         },
         {
-          id: 'delete',
-          icon: 'trash-alt',
-          label: labels.remove,
-          onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            onDelete();
-          },
-        },
-        {
           id: 'toggle-hide',
           icon: isHidden ? 'eye-slash' : 'eye',
           label: isHidden ? labels.show : labels.hide,
           onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation();
             onToggleHide();
+          },
+        },
+        {
+          id: 'delete',
+          icon: 'trash-alt',
+          label: labels.remove,
+          onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            onDelete();
           },
         },
       ].filter((btn): btn is ActionButtonConfig => Boolean(btn)),

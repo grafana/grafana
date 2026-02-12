@@ -42,6 +42,13 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
+interface TransformationToggles {
+  showHelp: boolean;
+  toggleHelp: () => void;
+  showDebug: boolean;
+  toggleDebug: () => void;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
@@ -55,6 +62,7 @@ export interface QueryEditorUIState {
   selectedQueryDsLoading: boolean;
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
+  transformToggles: TransformationToggles;
   cardType: QueryEditorType;
 }
 

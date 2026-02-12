@@ -4,12 +4,13 @@ import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
-import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-import { ActionsMenu } from './ActionsMenu';
 import { PluginActions } from './PluginActions';
+import { QueryActionsMenu } from './QueryActionsMenu';
 import { SaveButton } from './SaveButton';
+import { TransformationActionButtons } from './TransformationActionButtons';
 import { WarningBadges } from './WarningBadges';
 
 interface HeaderActionsProps {
@@ -59,7 +60,7 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
         onToggleHide={onToggleHide}
         typeLabel={typeLabel}
       />
-      <ActionsMenu app={CoreApp.PanelEditor} />
+      {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );
 }
