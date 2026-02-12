@@ -1846,6 +1846,7 @@ type fakeClient struct {
 	multiSearchError    error
 	builder             *es.MultiSearchRequestBuilder
 	multisearchRequests []*es.MultiSearchRequest
+	executedEsqlQuery   string
 }
 
 func newFakeClient() *fakeClient {
@@ -1877,6 +1878,7 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 }
 
 func (c *fakeClient) ExecuteEsql(query string) (*es.EsqlResponse, error) {
+	c.executedEsqlQuery = query
 	// Return empty response for tests that don't use ES|QL
 	return &es.EsqlResponse{}, nil
 }
@@ -1912,8 +1914,38 @@ func executeElasticsearchDataQueryWithContext(c es.Client, body string, from, to
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New())
+	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New(), "")
 	return query.execute()
+}
+
+func TestExecuteElasticsearchDataQuery_ReplacesEsqlIndexPlaceholder(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+
+	c := newFakeClient()
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
+	dataRequest := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+					"editorType": "code",
+					"queryLanguage": "esql",
+					"esqlQuery": "FROM $index | LIMIT 10"
+				}`),
+				TimeRange: timeRange,
+				RefID:     "A",
+			},
+		},
+	}
+
+	query := newElasticsearchDataQuery(context.Background(), c, &dataRequest, log.New(), "logs-*")
+	_, err := query.execute()
+	require.NoError(t, err)
+
+	require.Equal(t, "FROM logs-* | LIMIT 10", c.executedEsqlQuery)
 }
 
 func TestRawDSLQuery(t *testing.T) {

@@ -6,14 +6,16 @@ import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, B
 
 interface Props {
   value?: string;
+  language?: string;
   onChange: (value: string) => void;
   onRunQuery: () => void;
+  onFocusPopulate?: (currentValue: string) => string | undefined;
 }
 
 // This offset was chosen by testing to match Prometheus behavior
 const EDITOR_HEIGHT_OFFSET = 2;
 
-export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
+export function RawQueryEditor({ value, language = 'json', onChange, onRunQuery, onFocusPopulate }: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +27,17 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       // Add keyboard shortcut for running query (Ctrl/Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
         onRunQuery();
+      });
+
+      editor.onDidFocusEditorText(() => {
+        const currentValue = editor.getValue();
+        const populatedValue = onFocusPopulate?.(currentValue);
+        if (!populatedValue || currentValue.trim() !== '') {
+          return;
+        }
+
+        // Populate editor text without dispatching query changes on focus.
+        editor.setValue(populatedValue);
       });
 
       // Make the editor resize itself so that the content fits (grows taller when necessary)
@@ -43,7 +56,7 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
     },
-    [onRunQuery]
+    [onRunQuery, onFocusPopulate]
   );
 
   const handleFormat = useCallback(() => {
@@ -88,7 +101,7 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       <div ref={containerRef} className={styles.editorContainer}>
         <CodeEditor
           value={value ?? ''}
-          language="json"
+          language={language}
           width="100%"
           onBlur={handleQueryChange}
           monacoOptions={monacoOptions}

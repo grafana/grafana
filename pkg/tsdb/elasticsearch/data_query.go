@@ -24,19 +24,21 @@ type elasticsearchDataQuery struct {
 	dataQueries                  []backend.DataQuery
 	logger                       log.Logger
 	ctx                          context.Context
+	datasourceIndex              string
 	keepLabelsInResponse         bool
 	aggregationParserDSLRawQuery AggregationParser
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger, datasourceIndex string) *elasticsearchDataQuery {
 	_, fromAlert := req.Headers[headerFromAlert]
 	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
 
 	return &elasticsearchDataQuery{
-		client:      client,
-		dataQueries: req.Queries,
-		logger:      logger,
-		ctx:         ctx,
+		client:          client,
+		dataQueries:     req.Queries,
+		logger:          logger,
+		ctx:             ctx,
+		datasourceIndex: datasourceIndex,
 		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
 		// Historically, these labels have been used in alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
@@ -106,9 +108,10 @@ func (e *elasticsearchDataQuery) executeEsqlQuery(q *Query) (*backend.DataRespon
 		return nil, backend.DownstreamError(fmt.Errorf("ES|QL query is empty"))
 	}
 
-	e.logger.Debug("Executing ES|QL query", "query", q.EsqlQuery, "refID", q.RefID)
+	query := e.resolveEsqlIndexPlaceholder(q.EsqlQuery)
+	e.logger.Debug("Executing ES|QL query", "query", query, "refID", q.RefID)
 
-	esqlRes, err := e.client.ExecuteEsql(q.EsqlQuery)
+	esqlRes, err := e.client.ExecuteEsql(query)
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +131,14 @@ func (e *elasticsearchDataQuery) executeEsqlQuery(q *Query) (*backend.DataRespon
 		// with the same frontend flows as regular/raw DSL metrics queries.
 		return processEsqlMetricsResponse(esqlRes, q)
 	}
+}
+
+func (e *elasticsearchDataQuery) resolveEsqlIndexPlaceholder(query string) string {
+	if e.datasourceIndex == "" {
+		return query
+	}
+
+	return strings.ReplaceAll(query, "$index", e.datasourceIndex)
 }
 
 func (e *elasticsearchDataQuery) executeRegularQueries(queries []*Query, start time.Time) (*backend.QueryDataResponse, error) {

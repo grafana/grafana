@@ -7,6 +7,7 @@ import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { QueryLanguage } from '../../types';
 
+import { useDatasource } from './ElasticsearchQueryContext';
 import { QueryLanguageSelector } from './QueryLanguageSelector';
 import { RawQueryEditor } from './RawQueryEditor';
 import { changeEsqlQuery, changeQueryLanguage, changeRawDSLQuery } from './state';
@@ -24,9 +25,11 @@ interface Props {
 
 export const CodeEditorSection = ({ value, onRunQuery }: Props) => {
   const dispatch = useDispatch();
+  const datasource = useDatasource();
   const styles = useStyles2(getStyles);
 
   const currentQueryLanguage: QueryLanguage = value.queryLanguage === 'esql' ? 'esql' : 'raw_dsl';
+  const editorLanguage = currentQueryLanguage === 'esql' ? 'sql' : 'json';
 
   return (
     <>
@@ -42,9 +45,20 @@ export const CodeEditorSection = ({ value, onRunQuery }: Props) => {
 
       <RawQueryEditor
         value={currentQueryLanguage === 'raw_dsl' ? value.rawDSLQuery : value.esqlQuery}
+        language={editorLanguage}
         onChange={(query) =>
           dispatch(currentQueryLanguage === 'raw_dsl' ? changeRawDSLQuery(query) : changeEsqlQuery(query))
         }
+        onFocusPopulate={(currentValue) => {
+          const index = datasource.index?.trim();
+          // Only prefill ES|QL queries when a datasource index is configured and the editor is empty.
+          if (currentQueryLanguage !== 'esql' || !index || currentValue.trim()) {
+            return undefined;
+          }
+
+          // Return boilerplate text for editor-local population on focus; this avoids dispatching and triggering a query run.
+          return 'FROM $index ';
+        }}
         onRunQuery={onRunQuery}
       />
     </>
