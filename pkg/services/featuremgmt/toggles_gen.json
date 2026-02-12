@@ -1033,6 +1033,20 @@
     },
     {
       "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1770911411076",
+        "creationTimestamp": "2026-02-12T15:50:11Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-01-10T13:19:01Z",

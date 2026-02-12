@@ -1472,4 +1472,9 @@ export interface FeatureToggles {
   * @default false
   */
   influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }

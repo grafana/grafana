@@ -809,4 +809,8 @@ const (
 	// FlagInfluxDBConfigValidation
 	// Enables validation on the InfluxDB data source configuration page
 	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 )
