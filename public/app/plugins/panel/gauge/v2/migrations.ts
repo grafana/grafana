@@ -1,5 +1,5 @@
 import { PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
+import { FieldColorModeId } from '@grafana/schema';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { Options } from '../panelcfg.gen';

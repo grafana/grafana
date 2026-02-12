@@ -69,6 +69,8 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withOverridesService,
 		withSearch,
 		withSearchClient,
+		withQuotaConfig,
+		withStorageMetrics,
 	)
 	if err != nil {
 		return nil, err
@@ -266,6 +268,19 @@ func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 
 func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.OverridesService = opts.OverridesService
+	return nil
+}
+
+func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QuotasConfig = resource.QuotasConfig{
+		EnforceQuotas:  opts.Cfg.EnforceQuotas,
+		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
+	}
+	return nil
+}
+
+func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.StorageMetrics = opts.StorageMetrics
 	return nil
 }
 

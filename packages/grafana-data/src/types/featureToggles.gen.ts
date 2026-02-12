@@ -144,6 +144,11 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
+  * Enable Faro session replay for Grafana
+  * @default false
+  */
+  faroSessionReplay?: boolean;
+  /**
   * A table visualisation for logs in Explore
   * @default true
   */
@@ -203,11 +208,6 @@ export interface FeatureToggles {
   * @default false
   */
   aiGeneratedDashboardChanges?: boolean;
-  /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
   /**
   * Enables CSV encoding options in the reporting feature
   * @default false
@@ -454,15 +454,15 @@ export interface FeatureToggles {
   */
   auditLoggingAppPlatform?: boolean;
   /**
-  * Enable the secrets management API and services under app platform
-  * @default false
-  */
-  secretsManagementAppPlatform?: boolean;
-  /**
   * Enable the secrets management app platform UI
   * @default false
   */
   secretsManagementAppPlatformUI?: boolean;
+  /**
+  * Enable the Secrets Keeper management UI for configuring external secret storage
+  * @default false
+  */
+  secretsKeeperUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   * @default false
@@ -875,6 +875,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -1057,10 +1062,21 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
+  * @deprecated
   * @default false
   */
   kubernetesAuthZHandlerRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZResourcePermissionsRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1297,6 +1313,11 @@ export interface FeatureToggles {
   */
   panelStyleActions?: boolean;
   /**
+  * Enable visualization presets
+  * @default false
+  */
+  vizPresets?: boolean;
+  /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false
   */
@@ -1331,6 +1352,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Exclude redundant individual dashboard/folder permissions from managed roles at query time
+  * @default false
+  */
+  excludeRedundantManagedPermissions?: boolean;
   /**
   * Show insights for plugins in the plugin details page
   * @default false

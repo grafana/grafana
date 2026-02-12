@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -141,6 +140,11 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					Namespace:  "test-namespace",
 					Generation: 1,
 				},
+				Status: provisioning.RepositoryStatus{
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
+					},
+				},
 			}
 			readerWriter.MockRepository.On("Config").Return(repoConfig)
 
@@ -201,7 +205,6 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 			)
-			worker.SetQuotaLimits(quotas.QuotaLimits{MaxResources: tt.maxResourcesPerRepository})
 
 			// Create test job
 			job := provisioning.Job{

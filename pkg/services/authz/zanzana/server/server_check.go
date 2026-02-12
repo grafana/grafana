@@ -21,7 +21,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Check", r.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Check").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.check(ctx, r)

@@ -127,7 +127,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// secrets management page
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) && hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
 			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
@@ -488,19 +488,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Deprecated: used to convert internal IDs to UIDs
 			dashboardRoute.Get("/ids/:ids", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), hs.GetDashboardUIDs)
-
-			// Deprecated: use /uid/:uid API instead.
-			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIDScope := dashboards.ScopeDashboardsProvider.GetResourceScope(ac.Parameter(":dashboardId"))
-				dashIdRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.GetDashboardVersion))
-				dashIdRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashIDScope)), routing.Wrap(hs.RestoreDashboardVersion))
-
-				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashIDScope)), routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashIDScope)), routing.Wrap(hs.UpdateDashboardPermissions))
-				})
-			})
 		})
 
 		// Dashboard snapshots

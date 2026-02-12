@@ -692,9 +692,9 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, createdRules, 1)
-		require.Len(t, createdRules[0].NotificationSettings, 1)
-		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
-		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
+		require.NotNil(t, createdRules[0].NotificationSettings)
+		require.Equal(t, receiver, createdRules[0].NotificationSettings.ContactPointRouting.Receiver)
+		require.Equal(t, groupBy, createdRules[0].NotificationSettings.ContactPointRouting.GroupBy)
 	})
 
 	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
@@ -2237,9 +2237,9 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 		expectedMatchers amconfig.Matchers
 	}{
 		{
-			name:          "empty header should return error",
+			name:          "empty header should not return error",
 			headerValue:   "",
-			expectedError: true,
+			expectedError: false,
 		},
 		{
 			name:          "single matcher should parse correctly",
@@ -2335,6 +2335,11 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			headerValue:   "   ",
 			expectedValue: defaultConfigIdentifier,
 		},
+		{
+			name:          "invalid identifier should return error",
+			headerValue:   "invalid identifier",
+			expectedError: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2342,8 +2347,13 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			rc := createRequestCtx()
 			rc.Req.Header.Set(configIdentifierHeader, tc.headerValue)
 
-			identifier := parseConfigIdentifierHeader(rc)
-			require.Equal(t, tc.expectedValue, identifier)
+			identifier, err := parseConfigIdentifierHeader(rc)
+			if tc.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedValue, identifier)
+			}
 		})
 	}
 }

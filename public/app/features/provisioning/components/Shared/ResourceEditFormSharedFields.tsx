@@ -68,37 +68,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     return (
       <>
-        {/* Path */}
-        {!hidePath && (
-          <Field
-            noMargin
-            label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
-            description={t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
-              pathText
-            )}
-          >
-            <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
-          </Field>
-        )}
-
-        {/* Comment */}
-        <Field
-          noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
-        >
-          <TextArea
-            id="provisioned-resource-form-comment"
-            {...register('comment')}
-            disabled={readOnly}
-            placeholder={t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
-              'Add a note to describe your changes (optional)'
-            )}
-            rows={5}
-          />
-        </Field>
-
         {/* Workflow */}
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
@@ -167,6 +136,37 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             </Field>
           </>
         )}
+
+        {/* Path */}
+        {!hidePath && (
+          <Field
+            noMargin
+            label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
+            description={t(
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
+              pathText
+            )}
+          >
+            <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
+          </Field>
+        )}
+
+        {/* Comment */}
+        <Field
+          noMargin
+          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+        >
+          <TextArea
+            id="provisioned-resource-form-comment"
+            {...register('comment')}
+            disabled={readOnly}
+            placeholder={t(
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
+              'Add a note to describe your changes (optional)'
+            )}
+            rows={5}
+          />
+        </Field>
       </>
     );
   }

@@ -7,10 +7,14 @@ package v0alpha1
 // RepositoryURLsApplyConfiguration represents a declarative configuration of the RepositoryURLs type for use
 // with apply.
 type RepositoryURLsApplyConfiguration struct {
-	RepositoryURL     *string `json:"repositoryURL,omitempty"`
-	SourceURL         *string `json:"sourceURL,omitempty"`
+	// A URL pointing to the repository this lives in
+	RepositoryURL *string `json:"repositoryURL,omitempty"`
+	// A URL pointing to the file or ref in the repository
+	SourceURL *string `json:"sourceURL,omitempty"`
+	// A URL that will create a new pull request for this branch
 	NewPullRequestURL *string `json:"newPullRequestURL,omitempty"`
-	CompareURL        *string `json:"compareURL,omitempty"`
+	// Compare this version to the target branch
+	CompareURL *string `json:"compareURL,omitempty"`
 }
 
 // RepositoryURLsApplyConfiguration constructs a declarative configuration of the RepositoryURLs type for use with

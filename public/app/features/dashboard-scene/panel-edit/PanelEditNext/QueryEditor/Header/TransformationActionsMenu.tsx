@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu } from '@grafana/ui';
 
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 /**
@@ -20,14 +21,16 @@ export function TransformationActionsMenu() {
     return null;
   }
 
+  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].getLabel();
+
   return (
     <Dropdown
       overlay={
         <Menu>
-          <Menu.Item label={t('query-editor.action.coming-soon', 'Transformation actions coming soon')} disabled />
+          <Menu.Item label={t('query-editor-next.action.coming-soon', 'Transformation actions coming soon')} disabled />
           <Menu.Divider />
           <Menu.Item
-            label={t('query-editor.action.remove-transformation', 'Remove transformation')}
+            label={t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel })}
             icon="trash-alt"
             onClick={() => {}} // noop for now
             destructive
@@ -41,8 +44,8 @@ export function TransformationActionsMenu() {
         fill="text"
         icon="ellipsis-v"
         variant="secondary"
-        aria-label={t('query-editor.action.more-actions', 'More actions')}
-        tooltip={t('query-editor.action.more-actions', 'More actions')}
+        aria-label={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
+        tooltip={t('query-editor-next.action.more-actions', 'More {{type}} actions', { type: typeLabel })}
       />
     </Dropdown>
   );

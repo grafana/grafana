@@ -50,6 +50,8 @@ type ZanzanaServerSettings struct {
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+	// Page size for Read queries in reconciler. Default is 100.
+	ReadPageSize int32
 }
 
 type OpenFgaServerSettings struct {
@@ -186,6 +188,10 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+const (
+	defaultReadPageSize = 100
+)
+
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
 	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
@@ -227,6 +233,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
+	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))

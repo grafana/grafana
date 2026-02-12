@@ -18,7 +18,7 @@ import {
   SceneGridLayoutDragStartEvent,
   SceneObject,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
@@ -691,6 +691,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
     }),
     containerEditing: css({
+      '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+
       // In editing the add actions should live at the bottom of the grid so we have to
       // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {

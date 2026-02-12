@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,9 +38,10 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	if specificConfig.EnableChildReconciler {
+		logger := logging.DefaultLogger.With("app", "plugins.app")
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-		registrar := install.NewInstallRegistrar(clientGenerator)
-		pluginKind.Reconciler = install.NewChildPluginReconciler(specificConfig.MetaProviderManager, registrar)
+		registrar := install.NewInstallRegistrar(logger, clientGenerator)
+		pluginKind.Reconciler = install.NewChildPluginReconciler(logger, specificConfig.MetaProviderManager, registrar)
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -76,7 +78,8 @@ type PluginAppConfig struct {
 	EnableChildReconciler bool
 }
 
-func ProvideAppInstaller(
+func NewPluginsAppInstaller(
+	logger logging.Logger,
 	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
 	enableChildReconciler bool,
@@ -100,6 +103,7 @@ func ProvideAppInstaller(
 		AppInstaller: defaultInstaller,
 		authorizer:   authorizer,
 		metaManager:  metaProviderManager,
+		logger:       logger,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
@@ -109,6 +113,7 @@ type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	metaManager *meta.ProviderManager
 	authorizer  authorizer.Authorizer
+	logger      logging.Logger
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -149,7 +154,7 @@ func (p *PluginAppInstaller) InstallAPIs(
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,

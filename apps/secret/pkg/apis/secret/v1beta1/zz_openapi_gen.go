@@ -8,23 +8,18 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper":                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey":             schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole":            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSConfig":                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAzureConfig":              schema_pkg_apis_secret_v1beta1_KeeperAzureConfig(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue":          schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperGCPConfig":                schema_pkg_apis_secret_v1beta1_KeeperGCPConfig(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperHashiCorpConfig":          schema_pkg_apis_secret_v1beta1_KeeperHashiCorpConfig(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperList":                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperSpec":                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperStatus":                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperstatusOperatorState":      schema_pkg_apis_secret_v1beta1_KeeperstatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValue":                    schema_pkg_apis_secret_v1beta1_SecureValue(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueList":                schema_pkg_apis_secret_v1beta1_SecureValueList(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueSpec":                schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueStatus":              schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref),
-		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValuestatusOperatorState": schema_pkg_apis_secret_v1beta1_SecureValuestatusOperatorState(ref),
+		Keeper{}.OpenAPIModelName():                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
+		KeeperAWSAssumeRole{}.OpenAPIModelName():            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
+		KeeperAWSConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
+		KeeperList{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
+		KeeperSpec{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
+		KeeperStatus{}.OpenAPIModelName():                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
+		KeeperstatusOperatorState{}.OpenAPIModelName():      schema_pkg_apis_secret_v1beta1_KeeperstatusOperatorState(ref),
+		SecureValue{}.OpenAPIModelName():                    schema_pkg_apis_secret_v1beta1_SecureValue(ref),
+		SecureValueList{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueList(ref),
+		SecureValueSpec{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref),
+		SecureValueStatus{}.OpenAPIModelName():              schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref),
+		SecureValuestatusOperatorState{}.OpenAPIModelName(): schema_pkg_apis_secret_v1beta1_SecureValuestatusOperatorState(ref),
 	}
 }
 
@@ -51,20 +46,20 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Keeper",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperSpec"),
+							Ref:         ref(KeeperSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperStatus"),
+							Ref:     ref(KeeperStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -72,34 +67,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"accessKeyID": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"),
-						},
-					},
-					"secretAccessKey": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"),
-						},
-					},
-				},
-				Required: []string{"accessKeyID", "secretAccessKey"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"},
+			KeeperSpec{}.OpenAPIModelName(), KeeperStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -143,20 +111,9 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
-					"accessKey": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey"),
-						},
-					},
 					"assumeRole": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole"),
-						},
-					},
-					"kmsKeyID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref(KeeperAWSAssumeRole{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -164,140 +121,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole"},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperAzureConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"keyVaultName": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"tenantID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"clientID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"clientSecret": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"),
-						},
-					},
-				},
-				Required: []string{"keyVaultName", "tenantID", "clientID", "clientSecret"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"secureValueName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The name of the secure value that holds the actual value.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"valueFromEnv": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The value is taken from the environment variable.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"valueFromConfig": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The value is taken from the Grafana config file.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperGCPConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"projectID": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"credentialsFile": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"projectID", "credentialsFile"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_secret_v1beta1_KeeperHashiCorpConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"address": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"),
-						},
-					},
-				},
-				Required: []string{"address", "token"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"},
+			KeeperAWSAssumeRole{}.OpenAPIModelName()},
 	}
 }
 
@@ -324,7 +148,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -334,7 +158,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper"),
+										Ref:     ref(Keeper{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -345,7 +169,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Keeper{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -373,40 +197,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperSpec(ref common.ReferenceCallback) com
 						},
 						SchemaProps: spec.SchemaProps{
 							Description: "AWS Keeper Configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSConfig"),
-						},
-					},
-					"azure": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Azure Keeper Configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAzureConfig"),
-						},
-					},
-					"gcp": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "GCP Keeper Configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperGCPConfig"),
-						},
-					},
-					"hashiCorpVault": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "HashiCorp Vault Keeper Configuration.",
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperHashiCorpConfig"),
+							Ref:         ref(KeeperAWSConfig{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -414,7 +205,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperSpec(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSConfig", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAzureConfig", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperGCPConfig", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperHashiCorpConfig"},
+			KeeperAWSConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -433,7 +224,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperstatusOperatorState"),
+										Ref:     ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -458,7 +249,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperstatusOperatorState"},
+			KeeperstatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
@@ -536,20 +327,20 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the SecureValue",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueSpec"),
+							Ref:         ref(SecureValueSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueStatus"),
+							Ref:     ref(SecureValueStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -557,7 +348,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueSpec", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValueStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			SecureValueSpec{}.OpenAPIModelName(), SecureValueStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -584,7 +375,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -594,7 +385,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValue"),
+										Ref:     ref(SecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -605,7 +396,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			SecureValue{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -703,7 +494,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValuestatusOperatorState"),
+										Ref:     ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -737,7 +528,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.SecureValuestatusOperatorState"},
+			SecureValuestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 

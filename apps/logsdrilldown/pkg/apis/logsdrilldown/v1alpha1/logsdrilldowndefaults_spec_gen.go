@@ -16,3 +16,6 @@ func NewLogsDrilldownDefaultsSpec() *LogsDrilldownDefaultsSpec {
 		DefaultFields: []string{},
 	}
 }
+func (LogsDrilldownDefaultsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultsSpec"
+}

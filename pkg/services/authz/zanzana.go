@@ -174,7 +174,7 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 	}
 
 	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name:                            "authz_zanzana_client_request_duration_seconds",
+		Name:                            "authz_zanzana_grpc_client_request_duration_seconds",
 		Help:                            "Time spent executing requests to zanzana server.",
 		NativeHistogramBucketFactor:     1.1,
 		NativeHistogramMaxBucketNumber:  160,

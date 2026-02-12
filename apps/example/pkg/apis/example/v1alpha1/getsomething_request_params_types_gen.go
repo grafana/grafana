@@ -10,3 +10,6 @@ type GetSomethingRequestParams struct {
 func NewGetSomethingRequestParams() *GetSomethingRequestParams {
 	return &GetSomethingRequestParams{}
 }
+func (GetSomethingRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomethingRequestParams"
+}

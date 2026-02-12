@@ -5,3 +5,13 @@ export type Transformation = {
   transformId: string;
   transformConfig: DataTransformerConfig;
 };
+
+export enum QueryOptionField {
+  maxDataPoints = 'maxDataPoints',
+  minInterval = 'minInterval',
+  interval = 'interval',
+  relativeTime = 'relativeTime',
+  timeShift = 'timeShift',
+  cacheTimeout = 'cacheTimeout',
+  queryCachingTTL = 'queryCachingTTL',
+}

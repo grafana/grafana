@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -17,17 +16,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// MigrateOptions contains configuration for a resource migration operation.
+type MigrateOptions struct {
+	Namespace   string
+	Resources   []schema.GroupResource
+	WithHistory bool // only applies to dashboards
+	Progress    func(count int, msg string)
+}
+
 // Read from legacy and write into unified storage
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
-	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
+	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	legacy.MigrationDashboardAccessor
 	streamProvider streamProvider
 	client         resource.SearchClient
 	log            log.Logger
@@ -36,10 +42,10 @@ type unifiedMigration struct {
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts legacy.MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
 		key := buildResourceKey(res, opts.Namespace, registry)
@@ -54,31 +60,18 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
 	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
 
-// bulkStoreClientStreamProvider creates streams using resourcepb.BulkStoreClient
-type bulkStoreClientStreamProvider struct {
-	client resourcepb.BulkStoreClient
-}
-
-func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts, registry)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	return b.client.BulkProcess(ctx)
-}
-
-// This can migrate Folders, Dashboards and LibraryPanels
+// This can migrate Folders, Dashboards, LibraryPanels and Playlists
 func ProvideUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
-		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
@@ -86,37 +79,21 @@ func ProvideUnifiedMigrator(
 	)
 }
 
-func ProvideUnifiedMigratorParquet(
-	dashboardAccess legacy.MigrationDashboardAccessor,
-	client resourcepb.BulkStoreClient,
-	registry *MigrationRegistry,
-) UnifiedMigrator {
-	return newUnifiedMigrator(
-		dashboardAccess,
-		&bulkStoreClientStreamProvider{client: client},
-		nil,
-		log.New("storage.unified.migrator.parquet"),
-		registry,
-	)
-}
-
 func newUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
 	streamProvider streamProvider,
 	client resource.SearchClient,
 	log log.Logger,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		MigrationDashboardAccessor: dashboardAccess,
-		streamProvider:             streamProvider,
-		client:                     client,
-		log:                        log,
-		registry:                   registry,
+		streamProvider: streamProvider,
+		client:         client,
+		log:            log,
+		registry:       registry,
 	}
 }
 
-func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
+func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -127,10 +104,6 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 
 	if len(opts.Resources) < 1 {
 		return nil, fmt.Errorf("missing resource selector")
-	}
-
-	if opts.OnlyCount {
-		return m.CountResources(ctx, opts)
 	}
 
 	stream, err := m.streamProvider.createStream(ctx, opts, m.registry)
@@ -204,12 +177,6 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		if key != nil {
 			keys = append(keys, key)
 		}
-	}
-
-	if m.client == nil {
-		// skip if no client is available (e.g., parquet migrator)
-		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return nil
 	}
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
