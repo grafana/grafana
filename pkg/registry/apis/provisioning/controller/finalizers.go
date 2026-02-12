@@ -200,15 +200,16 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		// For v0alpha1 dashboards, strip BOMs before patching to avoid validation errors
-		// BOMs can cause "illegal byte order mark" errors during patch operations
+		// For v0alpha1 dashboards, we need to strip BOMs and remove annotations in one operation
+		// to avoid "illegal byte order mark" validation errors
 		if item.Group == dashboard.GROUP && item.Resource == dashboard.DASHBOARD_RESOURCE {
-			if err := stripBOMsFromDashboard(ctx, client, item.Name, logger); err != nil {
-				// Log the error but continue with the patch - BOM stripping is best-effort
-				logger.Warn("failed to strip BOMs from dashboard", "name", item.Name, "error", err)
+			if err := releaseResourceWithBOMStripping(ctx, client, item, logger); err != nil {
+				return err
 			}
+			return nil
 		}
 
+		// For non-dashboard resources, use the standard patch approach
 		patchAnnotations, err := getPatchedAnnotations(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
@@ -274,11 +275,17 @@ func escapePatchString(s string) string {
 	return s
 }
 
-// stripBOMsFromDashboard strips BOM characters from a v0alpha1 dashboard's spec
-// This prevents "illegal byte order mark" validation errors during patch operations
-func stripBOMsFromDashboard(ctx context.Context, client dynamic.ResourceInterface, name string, logger logging.Logger) error {
-	// Get the dashboard
-	obj, err := client.Get(ctx, name, v1.GetOptions{})
+// releaseResourceWithBOMStripping releases a dashboard by stripping BOMs and removing annotations
+// This handles v0alpha1 dashboards that may have BOM characters in their spec, which would
+// cause "illegal byte order mark" validation errors during patch operations
+func releaseResourceWithBOMStripping(
+	ctx context.Context,
+	client dynamic.ResourceInterface,
+	item *provisioning.ResourceListItem,
+	logger logging.Logger,
+) error {
+	// Get the full dashboard object
+	obj, err := client.Get(ctx, item.Name, v1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get dashboard: %w", err)
 	}
@@ -289,28 +296,36 @@ func stripBOMsFromDashboard(ctx context.Context, client dynamic.ResourceInterfac
 		return fmt.Errorf("get spec: %w", err)
 	}
 	if !found {
-		return nil // No spec, nothing to strip
+		return fmt.Errorf("dashboard missing spec")
 	}
 
-	// Check if spec contains BOMs
-	if !containsBOM(spec) {
-		return nil // No BOMs, nothing to do
+	// Strip BOMs from spec if present
+	if containsBOM(spec) {
+		logger.Info("stripping BOMs from dashboard spec", "name", item.Name)
+		cleanSpec := util.StripBOMFromInterface(spec).(map[string]any)
+		if err := unstructured.SetNestedMap(obj.Object, cleanSpec, "spec"); err != nil {
+			return fmt.Errorf("set clean spec: %w", err)
+		}
 	}
 
-	logger.Info("stripping BOMs from dashboard spec before patch", "name", name)
-
-	// Strip BOMs from spec
-	cleanSpec := util.StripBOMFromInterface(spec).(map[string]any)
-
-	// Update the spec
-	if err := unstructured.SetNestedMap(obj.Object, cleanSpec, "spec"); err != nil {
-		return fmt.Errorf("set clean spec: %w", err)
+	// Remove ownership annotations
+	annotations := obj.GetAnnotations()
+	if annotations != nil {
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		if item.Path != "" {
+			delete(annotations, utils.AnnoKeySourcePath)
+		}
+		if item.Hash != "" {
+			delete(annotations, utils.AnnoKeySourceChecksum)
+		}
+		obj.SetAnnotations(annotations)
 	}
 
-	// Update the dashboard (this will trigger any admission webhooks)
+	// Update the dashboard with both changes (clean spec + removed annotations)
 	_, err = client.Update(ctx, obj, v1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("update dashboard with clean spec: %w", err)
+		return fmt.Errorf("update dashboard to release ownership: %w", err)
 	}
 
 	return nil
