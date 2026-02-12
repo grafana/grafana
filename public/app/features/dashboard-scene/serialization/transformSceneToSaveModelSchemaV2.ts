@@ -18,6 +18,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   Spec as DashboardV2Spec,
@@ -899,12 +900,15 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
       }
     }
 
-    const panel = context?.state?.datasource;
-    if (panel) {
-      const notExpr = !datasource || (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+    const panelDS = context?.state?.datasource;
+    if (panelDS?.uid) {
+      const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
+      const notExpr =
+        !datasource ||
+        (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
 
-      if (!datasource || (panel?.uid && panel?.uid !== datasource.uid && panel?.uid !== '-- Mixed --' && notExpr)) {
-        datasource = panel;
+      if (!datasource || (panelDS?.uid !== datasource.uid && notMixed && notExpr)) {
+        datasource = panelDS;
       }
     }
   }
