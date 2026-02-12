@@ -31,6 +31,14 @@ type Config struct {
 	Workers        int
 	Interval       time.Duration
 	WriteBatchSize int // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize      int // Size of the buffered work queue for namespaces (default 1000)
+}
+
+func (c Config) queueSize() int {
+	if c.QueueSize <= 0 {
+		return 1000
+	}
+	return c.QueueSize
 }
 
 // GVRs that need to be reconciled from Unistore to Zanzana.
@@ -57,7 +65,7 @@ func NewReconciler(
 		cfg:           cfg,
 		logger:        logger,
 		tracer:        tracer,
-		workQueue:     make(chan string, 100), // Buffered channel to queue namespaces
+		workQueue:     make(chan string, cfg.queueSize()),
 	}
 }
 

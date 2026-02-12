@@ -57,6 +57,8 @@ type ZanzanaReconcilerSettings struct {
 	Interval time.Duration
 	// Batch size for writing tuples to Zanzana.
 	WriteBatchSize int
+	// Size of the buffered work queue for namespaces.
+	QueueSize int
 }
 
 type ZanzanaServerSettings struct {
@@ -342,5 +344,6 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
+	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
 	cfg.ZanzanaReconciler = zr
 }
