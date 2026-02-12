@@ -82,6 +82,7 @@ function getStyles(
   theme: GrafanaTheme2,
   { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
+  const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -92,8 +93,8 @@ function getStyles(
     alignItems: 'center',
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
-    paddingLeft: theme.spacing(1),
-    background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 90%, rgba(32, 38, 47, 0.00) 100%)`,
+    paddingLeft: theme.spacing(2),
+    background: `linear-gradient(270deg, ${backgroundColor} 90%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -154,7 +155,7 @@ function getStyles(
       justifyContent: 'space-between',
       width: '100%',
       background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
-      borderLeft: `${isSelected ? 2 : 1}px solid ${config.color}`,
+      borderLeft: `${isSelected ? 3 : 1}px solid ${config.color}`,
       cursor: 'pointer',
       padding: 0,
 
@@ -164,7 +165,7 @@ function getStyles(
         }),
       },
       '&:hover': {
-        background: QUERY_EDITOR_COLORS.card.hoverBg,
+        background: backgroundColor,
       },
       [`&:hover .${hoverActions}`]: {
         opacity: 1,

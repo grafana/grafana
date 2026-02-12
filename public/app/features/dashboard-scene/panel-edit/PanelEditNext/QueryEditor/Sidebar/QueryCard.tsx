@@ -1,7 +1,5 @@
-import { css } from '@emotion/css';
-
 import { DataQuery } from '@grafana/schema';
-import { Icon, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
@@ -9,6 +7,7 @@ import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
+import { CardTitle } from './CardTitle';
 import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
@@ -17,14 +16,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const isSelected = selectedQuery?.refId === query.refId;
-
-  const strikethroughStyle = css({
-    textDecoration: !!query.hide ? 'line-through' : 'none',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  });
-
+  const isHidden = !!query.hide;
   return (
     <SidebarCard
       config={QUERY_EDITOR_TYPE_CONFIG[editorType]}
@@ -34,7 +26,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       onDuplicate={() => duplicateQuery(query.refId)}
       onDelete={() => deleteQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
-      isHidden={!!query.hide}
+      isHidden={isHidden}
       showAddButton={true}
     >
       {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
@@ -45,11 +37,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           size="sm"
         />
       )}
-      <span className={strikethroughStyle}>
-        <Text weight="light" variant="code" color="primary" truncate>
-          {query.refId}
-        </Text>
-      </span>
+      <CardTitle title={query.refId} isHidden={isHidden} />
     </SidebarCard>
   );
 };
