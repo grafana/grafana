@@ -103,9 +103,13 @@ Use this option when the data source requires session cookies for authentication
 
 Configure TLS/SSL settings if your data source uses HTTPS with custom certificates:
 
-- **Skip TLS verify**: Skip TLS certificate verification (not recommended for production)
+#### Skip TLS verify**: Skip TLS certificate verification
 - **With CA cert**: Provide a custom CA certificate
 - **With client cert**: Provide a client certificate for mutual TLS
+
+{{< admonition type="caution" >}}
+Skipping TLS verification isn't recommended for production environments.
+{{< /admonition >}}
 
 #### Custom HTTP headers
 
@@ -169,7 +173,7 @@ You can configure [Plugin Name] using environment variables:
 
 **Example**:
 
-```bash
+```sh
 export GF_DATASOURCES_DEFAULT_NAME="My Data Source"
 ```
 
@@ -225,7 +229,7 @@ timeout = 60
 
 Override configuration using environment variables:
 
-```bash
+```sh
 GF_PLUGIN_MYCOMPANY_PLUGIN_API_ENDPOINT=https://api.example.com
 GF_PLUGIN_MYCOMPANY_PLUGIN_TIMEOUT=60
 ```
@@ -239,7 +243,10 @@ When configuring [Plugin Name], follow these security best practices:
 - Enable TLS certificate verification in production
 - Rotate API keys regularly
 - Use the principle of least privilege for service accounts
-- Avoid storing credentials in provisioning files (use secure JSON data instead)
+
+{{< admonition type="warning" >}}
+Don't store credentials in provisioning files. Use Grafana's secure JSON data storage instead.
+{{< /admonition >}}
 
 ## Configuration examples
 

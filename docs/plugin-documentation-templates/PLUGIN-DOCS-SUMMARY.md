@@ -130,7 +130,7 @@ The files have been committed and pushed to the branch `cursor/branch-location-i
 
 To access these files:
 
-```bash
+```sh
 # Fetch the latest changes
 git fetch origin
 

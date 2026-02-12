@@ -220,24 +220,27 @@ Follow these guidelines when customizing templates:
 ### Formatting
 
 - Use sentence case for headings
-- Bold UI elements: **Save**, **Administration**
-- Use backticks for code: `code`, `files.txt`, `/path/to/file`
-- Format placeholders as `<PLACEHOLDER_NAME>`
+- Bold UI elements as they appear: **Save**, **Administration**
+- Use backticks for code, file names, paths, and placeholders: `code`, `files.txt`, `/path/to/file`
+- Format placeholders as `<PLACEHOLDER_NAME>` in uppercase with angle brackets
+- Use single backticks for inline code and triple backticks for code blocks
+- Specify the language after opening triple backticks: ```sh, ```yaml, ```json
 
 ### Code Examples
 
 - Always introduce code with a description
-- End introduction with a colon if code follows
-- Use descriptive placeholder names in UPPERCASE
-- Explain placeholders after code blocks
-- Show realistic examples that users can copy
+- End the introduction with a colon if code follows immediately  
+- Use descriptive placeholder names in UPPERCASE with angle brackets: `<PLACEHOLDER_NAME>`
+- Explain placeholders after code blocks with specific examples
+- Show realistic examples that users can copy and modify
+- Use `sh` for shell commands, specify language for code blocks
 
 **Example**:
 
 ````markdown
 To configure the API endpoint, set the following environment variable:
 
-```bash
+```sh
 export API_ENDPOINT="<API_ENDPOINT>"
 ```
 ````
@@ -249,11 +252,51 @@ Replace `<API_ENDPOINT>` with your actual API endpoint URL, for example `https:/
 ### Links
 
 - Use inline Markdown links: `[Link text](url)`
-- Use descriptive link text, not "click here"
-- Use "refer to" instead of "see" or "check out"
+- Use descriptive link text that includes the section or document name, not "click here" or "this page"
+- Use "refer to" instead of "see", "check out", or "consult"
+- Link to sections using descriptive phrases: "For setup details, refer to the [Installation](#installation) section"
 
-**Good**: Refer to the [Configuration guide](configuration.md) for details.
+**Good**: Refer to the [Configuration guide](configuration.md) for connection details.
+**Better**: For connection details, refer to the [Configuration guide](configuration.md).
 **Bad**: For more info, see [this page](configuration.md).
+
+### Admonitions
+
+Use admonitions (notes, cautions, warnings) sparingly for exceptional information only. Grafana documentation uses Hugo shortcodes for admonitions:
+
+**Note** - For helpful additional information:
+
+```markdown
+{{< admonition type="note" >}}
+This feature is available in Grafana 9.0 and later.
+{{< /admonition >}}
+```
+
+**Caution** - For important warnings about potential issues:
+
+```markdown
+{{< admonition type="caution" >}}
+Enabling this option may impact query performance.
+{{< /admonition >}}
+```
+
+**Warning** - For critical warnings about breaking changes or data loss:
+
+```markdown
+{{< admonition type="warning" >}}
+This operation can't be undone. Back up your data before proceeding.
+{{< /admonition >}}
+```
+
+Use admonitions only when:
+- Information is exceptional and not part of the normal flow
+- Users need to be aware of important implications
+- There's a risk of data loss or system issues
+
+Don't use admonitions for:
+- General information that belongs in regular text
+- Repeating information already stated
+- Every configuration option or feature
 
 ## Screenshots and Images
 
@@ -273,15 +316,25 @@ Include screenshots to help users:
    - Use descriptive filenames
 
 3. **Alt text**:
-   - Always include descriptive alt text
-   - Don't use "Image of..." or "Picture of..."
-   - Describe what the image shows
+   - Always include descriptive alt text that conveys the essential information
+   - Write alt text without "Image of...", "Picture of...", or "Screenshot of..." prefixes
+   - Describe what the image shows and its purpose
 
 **Example**:
 
 ```markdown
 ![Data source configuration page with connection settings filled](images/configuration.png)
-````
+```
+
+**Good alt text examples**:
+- `Query editor showing basic syntax example`
+- `Dashboard with time series panels displaying CPU metrics`
+- `Authentication settings page with API key field highlighted`
+
+**Bad alt text examples**:
+- `Image of query editor`
+- `Screenshot of dashboard`
+- `Picture showing authentication settings``
 
 ## Examples and Use Cases
 

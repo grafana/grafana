@@ -121,7 +121,7 @@ To install the plugin from the Grafana UI:
 
 To install the plugin using the Grafana CLI:
 
-```bash
+```sh
 grafana-cli plugins install [plugin-id]
 ```
 ````
@@ -199,9 +199,9 @@ Configure optional settings:
 After configuration:
 
 1. Click **Save & test**.
-2. Confirm you see a success message.
+2. Confirm the success message appears.
 
-If the connection fails, refer to the [Troubleshooting guide](../troubleshooting/common-issues.md).
+If the connection fails, refer to the [Troubleshooting guide](../troubleshooting/common-issues.md) for common issues and solutions.
 
 ## Next steps
 
@@ -614,14 +614,14 @@ When writing plugin documentation, follow these best practices:
 
 ### Images
 
-- Include descriptive alt text
-- Don't use "Image of..." or "Picture of..." prefixes
+- Include descriptive alt text that conveys essential information
+- Write alt text without "Image of...", "Picture of...", or "Screenshot of..." prefixes
 
 ### Links
 
 - Use inline Markdown links: `[Link text](url)`
 - Use descriptive phrases for section links
-- Use "refer to" instead of "see" or "check out"
+- Use "refer to" instead of "see", "check out", or "consult"
 
 ### Formatting
 

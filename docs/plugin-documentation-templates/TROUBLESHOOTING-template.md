@@ -18,13 +18,13 @@ To view Grafana logs:
 
 **On Linux with systemd:**
 
-```bash
+```sh
 sudo journalctl -u grafana-server -f
 ```
 
 **On Linux with log files:**
 
-```bash
+```sh
 tail -f /var/log/grafana/grafana.log
 ```
 
@@ -55,13 +55,13 @@ Try the following solutions:
 
 1. Verify the URL is correct and accessible:
 
-```bash
+```sh
 curl [your-data-source-url]
 ```
 
 2. Check that the Grafana server can reach the data source:
 
-```bash
+```sh
 curl -I [your-data-source-url]
 ```
 
@@ -71,7 +71,7 @@ curl -I [your-data-source-url]
 
 5. Review the Grafana logs for detailed error messages:
 
-```bash
+```sh
 tail -f /var/log/grafana/grafana.log | grep [plugin-id]
 ```
 
@@ -130,7 +130,7 @@ tail -f /var/log/grafana/grafana.log | grep [plugin-id]
 
 3. Verify the certificate is valid and not expired:
 
-```bash
+```sh
 openssl s_client -connect [host]:[port] -showcerts
 ```
 
@@ -293,32 +293,36 @@ openssl s_client -connect [host]:[port] -showcerts
 
 1. Verify the plugin is installed in the correct directory:
 
-```bash
+```sh
 ls -la /var/lib/grafana/plugins/[plugin-directory]
 ```
 
 2. Check that the `plugin.json` file exists:
 
-```bash
+```sh
 cat /var/lib/grafana/plugins/[plugin-directory]/plugin.json
 ```
 
 3. Restart Grafana:
 
-```bash
+```sh
 sudo systemctl restart grafana-server
 ```
 
-4. For unsigned plugins, add to the allow list in `grafana.ini`:
+4. For unsigned plugins in development environments, add to the allow list in `grafana.ini`:
 
 ```ini
 [plugins]
 allow_loading_unsigned_plugins = [your-plugin-id]
 ```
 
+{{< admonition type="note" >}}
+Signed plugins are required for production environments.
+{{< /admonition >}}
+
 5. Check the Grafana logs for plugin loading errors:
 
-```bash
+```sh
 grep "plugin" /var/log/grafana/grafana.log
 ```
 
@@ -468,7 +472,7 @@ Cmd+Shift+R (macOS)
 
 If you can't resolve your issue using this guide:
 
-1. **Search the documentation**: Review the [full documentation](README.md) for additional information.
+1. **Search the documentation**: Refer to the [full documentation](README.md) for additional information.
 
 2. **Check the FAQ**: Refer to the [FAQ](faq.md) for answers to common questions.
 

@@ -37,7 +37,7 @@ To install [Plugin Name] using the Grafana CLI:
 
 1. Run the following command:
 
-```bash
+```sh
 grafana-cli plugins install [your-plugin-id]
 ```
 
@@ -45,19 +45,19 @@ grafana-cli plugins install [your-plugin-id]
 
 **On Linux with systemd:**
 
-```bash
+```sh
 sudo systemctl restart grafana-server
 ```
 
 **On Linux with init.d:**
 
-```bash
+```sh
 sudo service grafana-server restart
 ```
 
 **On macOS:**
 
-```bash
+```sh
 brew services restart grafana
 ```
 
@@ -91,7 +91,7 @@ To install [Plugin Name] from source:
 
 1. Clone the repository:
 
-```bash
+```sh
 cd /var/lib/grafana/plugins
 git clone https://github.com/[your-username]/[your-plugin-repo]
 cd [your-plugin-repo]
@@ -99,7 +99,7 @@ cd [your-plugin-repo]
 
 2. Install dependencies:
 
-```bash
+```sh
 npm install
 # or
 yarn install
@@ -107,7 +107,7 @@ yarn install
 
 3. Build the plugin:
 
-```bash
+```sh
 npm run build
 # or
 yarn build
@@ -156,7 +156,11 @@ tail -f /var/log/grafana/grafana.log
 
 ### Unsigned plugin warning
 
-If you see an unsigned plugin warning:
+If the plugin displays an unsigned plugin warning:
+
+{{< admonition type="note" >}}
+For development environments only, you can add the plugin to the allow list.
+{{< /admonition >}}
 
 1. For development, add the plugin to the allow list in `grafana.ini`:
 
@@ -165,7 +169,7 @@ If you see an unsigned plugin warning:
 allow_loading_unsigned_plugins = [your-plugin-id]
 ```
 
-2. For production, refer to [Plugin signature verification](https://grafana.com/docs/grafana/latest/administration/plugin-management/plugin-signature-verification/).
+2. For production environments, refer to the Grafana documentation on [Plugin signature verification](https://grafana.com/docs/grafana/latest/administration/plugin-management/plugin-signature-verification/).
 
 ### Permission denied errors
 

@@ -35,13 +35,13 @@ To install the plugin from the Grafana UI:
 
 To install the plugin using the Grafana CLI:
 
-```bash
+```sh
 grafana-cli plugins install [your-plugin-id]
 ```
 
 Restart Grafana after installation:
 
-```bash
+```sh
 sudo systemctl restart grafana-server
 ```
 
@@ -49,7 +49,7 @@ sudo systemctl restart grafana-server
 
 To install the latest development version:
 
-```bash
+```sh
 cd /var/lib/grafana/plugins
 git clone https://github.com/[your-username]/[your-plugin-repo]
 cd [your-plugin-repo]

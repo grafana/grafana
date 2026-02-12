@@ -217,11 +217,11 @@ Refer to [Troubleshooting guide](troubleshooting.md) for detailed solutions.
 
 Now that you've created your first visualization, explore more features:
 
-- [Query syntax reference](query-syntax.md) - Learn advanced query syntax
-- [Configuration guide](configuration.md) - Explore all configuration options
-- [Common use cases](common-use-cases.md) - See practical examples
-- [Best practices](best-practices.md) - Learn best practices for dashboards and queries
-- [Troubleshooting guide](troubleshooting.md) - Resolve common issues
+- Learn advanced query syntax in the [Query syntax reference](query-syntax.md)
+- Explore all configuration options in the [Configuration guide](configuration.md)
+- Refer to [Common use cases](common-use-cases.md) for practical examples
+- Learn best practices for dashboards and queries in [Best practices](best-practices.md)
+- Resolve common issues with the [Troubleshooting guide](troubleshooting.md)
 
 ## Get help
 
