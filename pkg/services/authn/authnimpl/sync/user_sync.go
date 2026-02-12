@@ -728,10 +728,12 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Type = claims.TypeUser
 	id.Login = usr.Login
 	id.Email = usr.Email
-	id.OrgID = usr.OrgID
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+	if id.OrgID == 0 {
+		id.OrgID = usr.OrgID
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
