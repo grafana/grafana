@@ -43,6 +43,8 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 		if err != nil {
 			return nil, nil, "", err
 		}
+		// Strip BOMs from all string values in the parsed JSON
+		value = util.StripBOMFromInterface(value).(map[string]any)
 	} else {
 		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
@@ -108,6 +110,8 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	// The decoder should put it directly into an unstructured object
 	val, ok := obj.(*unstructured.Unstructured)
 	if ok {
+		// Strip BOMs from all string values in the parsed object
+		val.Object = util.StripBOMFromInterface(val.Object).(map[string]any)
 		return val, gvk, err
 	}
 
@@ -115,5 +119,7 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	if err != nil {
 		return nil, gvk, err
 	}
+	// Strip BOMs from all string values in the converted object
+	unstructuredMap = util.StripBOMFromInterface(unstructuredMap).(map[string]any)
 	return &unstructured.Unstructured{Object: unstructuredMap}, gvk, err
 }
