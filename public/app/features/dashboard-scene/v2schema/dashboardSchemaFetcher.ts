@@ -107,6 +107,9 @@ async function doFetchSchema(): Promise<JSONSchema> {
   // Fix map[string]interface{} properties where the generator restricts values to objects
   fixOpaqueMaps(definitions);
 
+  // Convert discriminated union types from struct-based properties to if/then schemas
+  fixDiscriminatedUnions(definitions);
+
   return jsonSchema;
 }
 
@@ -209,6 +212,94 @@ function injectKindConstraints(definitions: Record<string, JSONSchema>): void {
       kindProp.const = 'ElementReference';
     }
   }
+}
+
+// Unions that use a field other than `kind` as discriminator.
+// kind-discriminated unions are auto-detected via "KindOr" in the definition key.
+const TYPE_DISCRIMINATED_UNIONS: Record<
+  string,
+  { discriminator: string; variants: Array<{ value: string; refSuffix: string }> }
+> = {
+  DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap: {
+    discriminator: 'type',
+    variants: [
+      { value: 'value', refSuffix: 'DashboardValueMap' },
+      { value: 'range', refSuffix: 'DashboardRangeMap' },
+      { value: 'regex', refSuffix: 'DashboardRegexMap' },
+      { value: 'special', refSuffix: 'DashboardSpecialValueMap' },
+    ],
+  },
+};
+
+/**
+ * Converts discriminated union definitions from struct-based properties to
+ * `allOf` schemas with `if/then` conditions. Handles two patterns:
+ * - kind-discriminated: auto-detected via "KindOr" in the definition key
+ * - type-discriminated: configured in TYPE_DISCRIMINATED_UNIONS
+ */
+function fixDiscriminatedUnions(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    // Auto-detect kind-discriminated unions
+    if (key.includes('KindOr') && schema.properties) {
+      const variants = collectKindVariants(schema.properties);
+      if (variants.length > 0) {
+        applyDiscriminatedUnion(schema, 'kind', variants, ['kind', 'spec']);
+        continue;
+      }
+    }
+
+    // Manually configured type-discriminated unions
+    for (const [suffix, config] of Object.entries(TYPE_DISCRIMINATED_UNIONS)) {
+      if (!key.endsWith(`_${suffix}`)) {
+        continue;
+      }
+      const prefix = key.replace(suffix, '');
+      const variants = config.variants
+        .filter((v) => definitions[`${prefix}${v.refSuffix}`])
+        .map((v) => ({ value: v.value, ref: `#/definitions/${prefix}${v.refSuffix}` }));
+      if (variants.length > 0) {
+        applyDiscriminatedUnion(schema, config.discriminator, variants);
+      }
+      break;
+    }
+  }
+}
+
+/** Extracts variant refs and kind values from a kind-discriminated union's properties. */
+function collectKindVariants(properties: Record<string, JSONSchema>): Array<{ value: string; ref: string }> {
+  const variants: Array<{ value: string; ref: string }> = [];
+  for (const propSchema of Object.values(properties)) {
+    if (!propSchema.$ref) {
+      return []; // All properties must be $ref for this to be a union
+    }
+    const match = propSchema.$ref.replace('#/definitions/', '').match(/_Dashboard(\w+)Kind$/);
+    if (match) {
+      variants.push({ value: match[1], ref: propSchema.$ref });
+    }
+  }
+  return variants;
+}
+
+/** Replaces a schema in-place with an allOf + if/then discriminated union. */
+function applyDiscriminatedUnion(
+  schema: JSONSchema,
+  discriminator: string,
+  variants: Array<{ value: string; ref: string }>,
+  requiredFields?: string[]
+): void {
+  delete schema.type;
+  delete schema.properties;
+  delete schema.required;
+
+  schema.type = 'object';
+  schema.required = requiredFields ?? [discriminator];
+  schema.properties = {
+    [discriminator]: { type: 'string', enum: variants.map((v) => v.value) },
+  };
+  schema.allOf = variants.map((v) => ({
+    if: { properties: { [discriminator]: { const: v.value } } },
+    then: { $ref: v.ref },
+  }));
 }
 
 function isRecord(obj: unknown): obj is Record<string, unknown> {
