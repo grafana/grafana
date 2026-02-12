@@ -290,3 +290,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-04,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-09,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-27,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
+2026-02-11,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
