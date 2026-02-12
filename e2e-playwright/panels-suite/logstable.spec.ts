@@ -202,6 +202,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       await expect(copyLogLineButton.nth(0), 'Show log line button is visible in the table viz').toBeVisible();
       await copyLogLineButton.nth(9).click();
 
+      // Copy to clipboard doesn't work in CI since it is run in an unsecure context that isn't on localhost, hardcoding the panel state for now instead of removing the test.
       await page.goto(
         '/d/adhjhtt/logstable-kitchen-sink?orgId=1&panelState=%7B"logs":%7B"id":"1770403366020954082_3665f3ae"%7D%7D&editPanel=2'
       );
