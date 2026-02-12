@@ -153,12 +153,9 @@ function getStyles(
       justifyContent: 'space-between',
       width: '100%',
       background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
-      // border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderLeft: `${isSelected ? 2 : 1}px solid ${config.color}`,
-      // borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
       padding: 0,
-      // boxShadow: isSelected ? `0 0 9px 0 rgba(58, 139, 255, 0.3)` : 'none',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color'], {
@@ -168,7 +165,6 @@ function getStyles(
 
       '&:hover': {
         background: QUERY_EDITOR_COLORS.card.hoverBg,
-        // borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 
       [`&:hover .${hoverActions}`]: {
