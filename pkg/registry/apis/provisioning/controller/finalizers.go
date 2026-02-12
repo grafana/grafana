@@ -197,7 +197,6 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		// Use standard PATCH for all resources - mutation hook strips BOMs for dashboards
 		patchAnnotations, err := getPatchedAnnotations(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)

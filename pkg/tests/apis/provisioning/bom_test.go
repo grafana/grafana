@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -26,6 +26,14 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 	const repo = "bom-test-repo"
 
 	t.Run("dashboard JSON file with UTF-8 BOM prefix", func(t *testing.T) {
+		// Create repository first
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   helper.ProvisioningPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
 		// Create a dashboard JSON file with UTF-8 BOM prefix (EF BB BF)
 		dashboardWithBOM := []byte{0xEF, 0xBB, 0xBF} // UTF-8 BOM
 		dashboardWithBOM = append(dashboardWithBOM, []byte(`{
@@ -41,16 +49,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		require.NoError(t, err)
 		t.Cleanup(func() { os.Remove(testFile) })
 
-		// Create repository that provisions this file
-		helper.CreateRepo(t, TestRepo{
-			Name:   repo,
-			Path:   helper.ProvisioningPath,
-			Target: "instance",
-			Copies: map[string]string{
-				"bom-prefix-dashboard.json": "bom-prefix-dashboard.json",
-			},
-			SkipResourceAssertions: true,
-		})
+		// Trigger sync to provision the dashboard
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -83,6 +83,9 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 	})
 
 	t.Run("dashboard JSON file with embedded BOMs in strings", func(t *testing.T) {
+		// Create repository first (reuse from previous test)
+		// Note: Repository already exists from previous test
+
 		// Create dashboard with BOMs embedded in string values
 		dashboardJSON := `{
 			"uid": "bom-embedded-test",
@@ -110,14 +113,14 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Create repository
 		repoName := "bom-embedded-repo"
 		helper.CreateRepo(t, TestRepo{
-			Name:   repoName,
-			Path:   helper.ProvisioningPath,
-			Target: "instance",
-			Copies: map[string]string{
-				"bom-embedded-dashboard.json": "bom-embedded-dashboard.json",
-			},
+			Name:                   repoName,
+			Path:                   helper.ProvisioningPath,
+			Target:                 "folder",
 			SkipResourceAssertions: true,
 		})
+
+		// Trigger sync to provision the dashboard
+		helper.SyncAndWait(t, repoName, nil)
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -165,9 +168,10 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 	t.Run("repository deletion with BOM dashboards succeeds", func(t *testing.T) {
 		// This test simulates the original error scenario:
 		// 1. Dashboard with BOMs is provisioned
-		// 2. Repository is deleted
-		// 3. Controller patches dashboard to remove ownership annotations
-		// 4. Patch should succeed (BOM stripped by admission mutation)
+		// 2. Repository gets release-orphan-resources finalizer
+		// 3. Repository is deleted
+		// 4. Finalizer patches dashboard to remove ownership annotations (should succeed without BOM errors)
+		// 5. Dashboard remains but annotations are removed
 
 		dashboardJSON := `{
 			"uid": "bom-deletion-test",
@@ -180,22 +184,23 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 			"tags": []
 		}`
 
+		// Create repository first
+		repoName := "bom-deletion-repo"
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repoName,
+			Path:                   helper.ProvisioningPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		// Now create the dashboard file with BOMs
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-deletion-dashboard.json")
 		err := os.WriteFile(testFile, []byte(dashboardJSON), 0644)
 		require.NoError(t, err)
 		t.Cleanup(func() { os.Remove(testFile) })
 
-		// Create repository
-		repoName := "bom-deletion-repo"
-		helper.CreateRepo(t, TestRepo{
-			Name:   repoName,
-			Path:   helper.ProvisioningPath,
-			Target: "instance",
-			Copies: map[string]string{
-				"bom-deletion-dashboard.json": "bom-deletion-dashboard.json",
-			},
-			SkipResourceAssertions: true,
-		})
+		// Trigger sync to provision the dashboard
+		helper.SyncAndWait(t, repoName, nil)
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -216,30 +221,47 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Verify dashboard has ownership annotations from provisioning
 		annotations := dashboard.GetAnnotations()
 		require.NotEmpty(t, annotations, "dashboard should have annotations from provisioning")
+		require.Contains(t, annotations, "grafana.app/managedBy", "dashboard should have managedBy annotation")
+		require.Contains(t, annotations, "grafana.app/managerId", "dashboard should have managerId annotation")
 
-		// Now delete the repository - this should succeed without BOM errors
-		// The controller will patch dashboards to remove ownership annotations
+		// Patch repository to add release-orphan-resources finalizer
+		// This causes dashboards to be released (annotations removed) rather than deleted
+		patchData := []byte(`[
+			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+		]`)
+		_, err = helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patchData, metav1.PatchOptions{})
+		require.NoError(t, err, "should successfully patch finalizers")
+
+		// Delete the repository - finalizer will patch dashboard to remove annotations
+		// The key test: PATCH should succeed even though dashboard has BOMs in spec
 		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
-		// Verify dashboard still exists but annotations might be removed
-		// (depending on the finalizer implementation)
+		// Wait for repository to be deleted (finalizer has completed)
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-deletion-test", metav1.GetOptions{})
-			// Dashboard might be deleted or might exist without provisioning annotations
-			// Either case is valid - we just verify no error occurred
-			if err != nil {
-				// Dashboard was deleted - that's fine
+			_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+			if err == nil {
+				collect.Errorf("repository should be deleted")
 				return
 			}
-			// Dashboard still exists - verify no BOMs in spec
-			if dashboard != nil {
-				spec := dashboard.Object["spec"].(map[string]any)
-				if title, ok := spec["title"].(string); ok {
-					assert.NotContains(collect, title, "\ufeff", "dashboard should not have BOMs after repo deletion")
-				}
-			}
-		}, waitTimeoutDefault, waitIntervalDefault, "repository deletion should complete without BOM errors")
+			// Repository not found - good!
+		}, waitTimeoutDefault, waitIntervalDefault, "repository should be deleted")
+
+		// Verify dashboard STILL EXISTS (released, not deleted)
+		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "bom-deletion-test", metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should still exist after repository deletion")
+
+		// Verify ownership annotations were REMOVED by the finalizer
+		annotations = dashboard.GetAnnotations()
+		require.NotContains(t, annotations, "grafana.app/managedBy", "managedBy annotation should be removed")
+		require.NotContains(t, annotations, "grafana.app/managerId", "managerId annotation should be removed")
+		require.NotContains(t, annotations, "grafana.app/sourcePath", "sourcePath annotation should be removed")
+		require.NotContains(t, annotations, "grafana.app/sourceChecksum", "sourceChecksum annotation should be removed")
+
+		// Verify dashboard spec still has no BOMs
+		spec = dashboard.Object["spec"].(map[string]any)
+		title = spec["title"].(string)
+		require.NotContains(t, title, "\ufeff", "dashboard should not have BOMs after release")
 	})
 
 	t.Run("YAML file with BOM", func(t *testing.T) {
@@ -258,22 +280,22 @@ spec:
   tags: []
 `)...)
 
+		// Create repository first
+		repoName := "bom-yaml-repo"
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repoName,
+			Path:                   helper.ProvisioningPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-yaml-dashboard.yaml")
 		err := os.WriteFile(testFile, yamlWithBOM, 0644)
 		require.NoError(t, err)
 		t.Cleanup(func() { os.Remove(testFile) })
 
-		// Create repository
-		repoName := "bom-yaml-repo"
-		helper.CreateRepo(t, TestRepo{
-			Name:   repoName,
-			Path:   helper.ProvisioningPath,
-			Target: "instance",
-			Copies: map[string]string{
-				"bom-yaml-dashboard.yaml": "bom-yaml-dashboard.yaml",
-			},
-			SkipResourceAssertions: true,
-		})
+		// Trigger sync to provision the dashboard
+		helper.SyncAndWait(t, repoName, nil)
 
 		// Wait for dashboard to be provisioned
 		var dashboard *unstructured.Unstructured
@@ -296,25 +318,4 @@ spec:
 		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
-}
-
-// Helper function to check if a string or nested structure contains BOMs
-func containsBOM(v any) bool {
-	switch val := v.(type) {
-	case string:
-		return strings.Contains(val, "\ufeff")
-	case map[string]any:
-		for _, v := range val {
-			if containsBOM(v) {
-				return true
-			}
-		}
-	case []any:
-		for _, item := range val {
-			if containsBOM(item) {
-				return true
-			}
-		}
-	}
-	return false
 }
