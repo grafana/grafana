@@ -58,7 +58,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
 
-Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`), decoupled from the database accessor.
+Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
 
 ## How migrations work
 
@@ -162,8 +162,7 @@ func (a *myAccess) MigrateMyResources(
 
 #### 2. Define a migrator interface
 
-Define a small interface in a `migrator/` subpackage within your team's package.
-This keeps the interface decoupled from the database accessor and lets Wire provide it:
+Define a small interface in a `migrator/` subpackage within your team's package:
 
 ```go
 // pkg/registry/apps/myresource/migrator/migrator.go
@@ -265,6 +264,7 @@ dualWriterMode = 0
 - [ ] `wire_gen.go` regenerated (`make gen-go`)
 - [ ] Validators added (at minimum, `CountValidation`)
 - [ ] Configuration added to `conf/defaults.ini`
+- [ ] Integration test case added to `testcases/` package
 
 ### Adding a new validator
 
