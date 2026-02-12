@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -72,7 +73,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 			return hs.handleK8sError(err)
 		}
 
-		converter := datasourceV0.NewConverter(hs.namespacer, conn.APIGroup, conn.Plugin, []string{})
+		converter := dsconverter.NewConverter(hs.namespacer, conn.APIGroup, conn.Plugin, []string{})
 		legacyDS, err := converter.AsLegacyDatasource(k8sDS)
 		if err != nil {
 			return hs.handleK8sError(err)

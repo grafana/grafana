@@ -57,7 +57,7 @@ func ProvideDefaultPluginConfigs(
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
-		converter:       datasourceV0.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
+		converter:       NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
 	}
 }
 
@@ -65,7 +65,7 @@ type cachingDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *datasourceV0.Converter
+	converter       *Converter
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
@@ -74,7 +74,7 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
-		converter:       datasourceV0.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+		converter:       NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
 	}
 }
 
@@ -83,7 +83,7 @@ type scopedDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
-	converter       *datasourceV0.Converter
+	converter       *Converter
 }
 
 var (
