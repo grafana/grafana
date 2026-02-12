@@ -3,11 +3,9 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import {
-  getStackType,
-  getUserPlan,
+  ViewExperienceToggleEventPayload,
   trackViewExperienceToggleClick,
   trackViewExperienceToggleConfirmed,
 } from '../Analytics';
@@ -23,17 +21,10 @@ export function RuleListPageTitle({ title }: { title: string }) {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const stackType = getStackType();
-  const plan = getUserPlan();
-
-  const getEventPayload = () => ({
-    source: 'title_control' as const,
-    current_view: listViewV2Enabled ? ('new' as const) : ('old' as const),
-    target_view: listViewV2Enabled ? ('old' as const) : ('new' as const),
-    user_id: contextSrv.user.id,
-    org_id: contextSrv.user.orgId,
-    stack_type: stackType,
-    plan,
+  const getEventPayload = (): ViewExperienceToggleEventPayload => ({
+    source: 'titleControl',
+    currentView: listViewV2Enabled ? 'new' : 'old',
+    targetView: listViewV2Enabled ? 'old' : 'new',
   });
 
   const handleToggleClick = () => {

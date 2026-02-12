@@ -444,14 +444,12 @@ export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
 // View Experience Toggle Telemetry (persistent control near page title)
 // ============================================================================
 
+// Payload for view experience toggle telemetry.
+
 export interface ViewExperienceToggleEventPayload {
-  source: 'title_control';
-  current_view: 'new' | 'old';
-  target_view: 'new' | 'old';
-  user_id?: number;
-  org_id?: number;
-  stack_type?: StackType;
-  plan?: UserPlan;
+  source: 'titleControl';
+  currentView: 'new' | 'old';
+  targetView: 'new' | 'old';
 }
 
 /**
@@ -460,10 +458,7 @@ export interface ViewExperienceToggleEventPayload {
 export function trackViewExperienceToggleClick(
   payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
 ) {
-  reportInteraction('grafana_alerting_view_experience_toggle', {
-    ...payload,
-    grafana_version: config.buildInfo.version,
-  });
+  reportInteraction('grafana_alerting_view_experience_toggle', payload);
 }
 
 /**
@@ -472,8 +467,5 @@ export function trackViewExperienceToggleClick(
 export function trackViewExperienceToggleConfirmed(
   payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
 ) {
-  reportInteraction('grafana_alerting_view_experience_confirmed', {
-    ...payload,
-    grafana_version: config.buildInfo.version,
-  });
+  reportInteraction('grafana_alerting_view_experience_confirmed', payload);
 }
