@@ -119,6 +119,15 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		if isNamespaced {
 			gs.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 			gs.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+
+			// check if the app provides a custom storage authorizer for namespace-scoped resources
+			if provider, ok := s.installer.(NamespaceScopedStorageAuthorizerProvider); ok {
+				authz := provider.GetNamespaceScopedStorageAuthorizer(gr)
+				if authz != nil {
+					return storewrapper.New(gs, authz)
+				}
+			}
+
 			return gs
 		}
 
