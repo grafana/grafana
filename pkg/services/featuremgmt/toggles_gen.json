@@ -1735,13 +1735,16 @@
     {
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
-        "resourceVersion": "1768214542023",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -1956,13 +1959,16 @@
     {
       "metadata": {
         "name": "foldersAppPlatformAPI",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4013,16 +4019,16 @@
     {
       "metadata": {
         "name": "recentlyViewedDashboards",
-        "resourceVersion": "1765227168175",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-12-10T16:28:19Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-12-08 20:52:48.175129 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables recently viewed dashboards section in the browsing dashboard page",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -4148,13 +4154,16 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-05-23T14:35:54Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2025-05-23T14:35:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
     },
@@ -4277,6 +4286,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "secretsKeeperUI",
+        "resourceVersion": "1770225479158",
+        "creationTimestamp": "2026-02-04T17:17:59Z"
+      },
+      "spec": {
+        "description": "Enable the Secrets Keeper management UI for configuring external secret storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4446,17 +4469,17 @@
     {
       "metadata": {
         "name": "starsFromAPIServer",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
         }
       },
       "spec": {
         "description": "populate star status from apiserver",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4527,14 +4550,17 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1764664939750",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
     },
