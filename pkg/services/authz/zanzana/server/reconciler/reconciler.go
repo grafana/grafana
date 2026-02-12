@@ -8,6 +8,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -33,12 +35,12 @@ type Config struct {
 
 // GVRs that need to be reconciled from Unistore to Zanzana.
 var reconcileGVRs = []schema.GroupVersionResource{
-	{Group: "folder.grafana.app", Version: "v1beta1", Resource: "folders"},
-	{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "roles"},
-	{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "rolebindings"},
-	{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "resourcepermissions"},
-	{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "teambindings"},
-	{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "users"},
+	folderv1.FolderResourceInfo.GroupVersionResource(),
+	iamv0.RoleInfo.GroupVersionResource(),
+	iamv0.RoleBindingInfo.GroupVersionResource(),
+	iamv0.ResourcePermissionInfo.GroupVersionResource(),
+	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
+	iamv0.UserResourceInfo.GroupVersionResource(),
 }
 
 // NewReconciler creates a new reconciler instance.
