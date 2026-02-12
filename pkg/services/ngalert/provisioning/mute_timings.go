@@ -299,7 +299,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	}
 
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
-		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
@@ -310,7 +310,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	deleteTimeInterval(revision, existingInterval)
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		keys, err := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		if err != nil {
 			return err
 		}

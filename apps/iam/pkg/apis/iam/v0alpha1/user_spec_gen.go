@@ -18,3 +18,6 @@ type UserSpec struct {
 func NewUserSpec() *UserSpec {
 	return &UserSpec{}
 }
+func (UserSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserSpec"
+}

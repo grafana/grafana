@@ -610,7 +610,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
     });
 
-    test('Details are rendered if details mode is inline', () => {
+    test('Details are rendered if details mode is inline', async () => {
       render(
         <LogDetailsContext.Provider
           value={{
@@ -623,7 +623,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogDetailsContext.Provider>
       );
-      expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText('Search field names and values')).toBeInTheDocument();
     });
   });
 });

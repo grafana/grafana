@@ -42,3 +42,10 @@ const (
 	KeeperStatusOperatorStateStateInProgress KeeperStatusOperatorStateState = "in_progress"
 	KeeperStatusOperatorStateStateFailed     KeeperStatusOperatorStateState = "failed"
 )
+
+func (KeeperstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperstatusOperatorState"
+}
+func (KeeperStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperStatus"
+}

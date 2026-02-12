@@ -12,3 +12,6 @@ type ExampleSpec struct {
 func NewExampleSpec() *ExampleSpec {
 	return &ExampleSpec{}
 }
+func (ExampleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleSpec"
+}

@@ -42,3 +42,10 @@ const (
 	MetaStatusOperatorStateStateInProgress MetaStatusOperatorStateState = "in_progress"
 	MetaStatusOperatorStateStateFailed     MetaStatusOperatorStateState = "failed"
 )
+
+func (MetastatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetastatusOperatorState"
+}
+func (MetaStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatus"
+}

@@ -10769,6 +10769,16 @@
       "message-same-name-general": "В корневой папке уже существует папка или дашборд с таким именем"
     }
   },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Параметры не найдены"
   },
@@ -11615,9 +11625,6 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "Организации не найдены",
     "select-placeholder": "Выбрать организацию"
-  },
-  "owner-reference": {
-    "team-members": ""
   },
   "page": {
     "editable-title": {
@@ -12781,12 +12788,9 @@
       "error-starting-job": "Ошибка при запуске задания"
     },
     "sync-repository": {
-      "body-edit-configuration": "Редактировать конфигурацию",
-      "button-edit": "Редактировать",
       "error-pulling-resources": "Ошибка при извлечении ресурсов",
       "pull": "Включение изменений",
       "success-pull-started": "Включение изменений начато",
-      "title-pull-not-enabled": "Включение изменений не включено",
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
@@ -13040,6 +13044,9 @@
       "query-name-div-title-edit-query-name": "Редактирование названия запроса"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(Идентификатор трассировки: {{traceId}})"
     },
     "query-group": {
@@ -13161,6 +13168,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14377,6 +14389,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Данные в ответе не найдены"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {
