@@ -10,7 +10,7 @@ import {
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -49,7 +49,7 @@ export class GrafanaJavascriptAgentBackend
       instrumentations.push(new TracingInstrumentation());
     }
 
-    if (evaluateBooleanFlag('faroSessionReplay', false)) {
+    if (getFeatureFlagClient().getBooleanValue('faroSessionReplay', false)) {
       instrumentations.push(
         new ReplayInstrumentation({
           maskAllInputs: true,
