@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -61,7 +62,10 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
+	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
+	// changes or updates, so we have to get it from context.
+	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
+	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {

@@ -269,7 +269,11 @@ type (
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
 )
 
-type MergeResult definition.MergeResult
+type MergeResult struct {
+	definition.MergeResult
+	Identifier string
+	ExtraRoute *Route
+}
 
 func (m MergeResult) LogContext() []any {
 	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
@@ -730,10 +734,6 @@ func (c ExtraConfiguration) Validate() error {
 		return errors.New("identifier is required")
 	}
 
-	if len(c.MergeMatchers) == 0 {
-		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
-	}
-
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
 			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
@@ -803,7 +803,9 @@ type PostableUserConfig struct {
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
 	if len(c.ExtraConfigs) == 0 {
 		return MergeResult{
-			Config: c.AlertmanagerConfig,
+			MergeResult: definition.MergeResult{
+				Config: c.AlertmanagerConfig,
+			},
 		}, nil
 	}
 	// support only one config for now
@@ -828,7 +830,15 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 	}
-	return MergeResult(m), nil
+
+	route := mcfg.Route
+	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
+
+	return MergeResult{
+		MergeResult: m,
+		Identifier:  mimirCfg.Identifier,
+		ExtraRoute:  route,
+	}, nil
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.

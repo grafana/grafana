@@ -1461,19 +1461,14 @@
     },
     {
       "metadata": {
-        "name": "datasourceRemoveDeprecatedIdApi",
-        "resourceVersion": "1769095435732",
-        "creationTimestamp": "2026-01-22T15:23:04Z",
-        "deletionTimestamp": "2026-01-22T15:24:49Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
-        }
+        "name": "datasourcesRerouteLegacyCRUDAPIs",
+        "resourceVersion": "1768836802577",
+        "creationTimestamp": "2026-01-19T15:33:22Z"
       },
       "spec": {
-        "description": "Does not registers datasource apis that use the numeric id",
+        "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -4268,9 +4263,24 @@
     },
     {
       "metadata": {
+        "name": "secretsKeeperUI",
+        "resourceVersion": "1770225479158",
+        "creationTimestamp": "2026-02-04T17:17:59Z"
+      },
+      "spec": {
+        "description": "Enable the Secrets Keeper management UI for configuring external secret storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsManagementAppPlatform",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-19T09:25:14Z",
+        "deletionTimestamp": "2026-02-11T10:16:17Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }

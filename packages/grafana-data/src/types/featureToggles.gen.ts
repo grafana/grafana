@@ -329,6 +329,11 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
+  * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesRerouteLegacyCRUDAPIs?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -454,15 +459,15 @@ export interface FeatureToggles {
   */
   auditLoggingAppPlatform?: boolean;
   /**
-  * Enable the secrets management API and services under app platform
-  * @default false
-  */
-  secretsManagementAppPlatform?: boolean;
-  /**
   * Enable the secrets management app platform UI
   * @default false
   */
   secretsManagementAppPlatformUI?: boolean;
+  /**
+  * Enable the Secrets Keeper management UI for configuring external secret storage
+  * @default false
+  */
+  secretsKeeperUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   * @default false

@@ -6,10 +6,10 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 
 import { useRepositoryStatus } from '../Wizard/hooks/useRepositoryStatus';
 import { RepoType } from '../Wizard/types';
-import { getErrorMessage } from '../utils/httpUtils';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 export interface UseGetRepositoryRefsProps {
