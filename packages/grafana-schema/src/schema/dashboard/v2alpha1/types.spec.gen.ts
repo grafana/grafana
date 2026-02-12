@@ -770,6 +770,9 @@ export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
 });
 
 export interface RowsLayoutRowSpec {
+	// Stable unique identifier for this row, used by LayoutItemReference to target
+	// this row in dashboard rules. Auto-generated on creation (e.g. "row-a1b2c3").
+	name?: string;
 	title?: string;
 	collapse?: boolean;
 	hideHeader?: boolean;
@@ -960,6 +963,9 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 });
 
 export interface TabsLayoutTabSpec {
+	// Stable unique identifier for this tab, used by LayoutItemReference to target
+	// this tab in dashboard rules. Auto-generated on creation (e.g. "tab-x7y8z9").
+	name?: string;
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
@@ -1525,6 +1531,79 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 	skipUrlSync: false,
 });
 
+// A rule defines a set of conditions and outcomes that apply to a target element
+// or layout item. Rules enable dynamic dashboard behavior such as conditional
+// visibility, visualization switching, and query overrides.
+export interface DashboardRuleKind {
+	kind: "DashboardRule";
+	spec: DashboardRuleSpec;
+}
+
+export const defaultDashboardRuleKind = (): DashboardRuleKind => ({
+	kind: "DashboardRule",
+	spec: defaultDashboardRuleSpec(),
+});
+
+export interface DashboardRuleSpec {
+	// Optional human-readable name for this rule.
+	name?: string;
+	// The element or layout item this rule targets.
+	target: ElementReference | LayoutItemReference;
+	// Conditions that must be met for the outcomes to apply.
+	conditions: DashboardRuleConditionsSpec;
+	// Outcomes to apply when conditions are met. Automatically reversed when
+	// conditions stop being met.
+	// union grows with new outcome types
+	outcomes: DashboardRuleOutcomeVisibilityKind[];
+}
+
+export const defaultDashboardRuleSpec = (): DashboardRuleSpec => ({
+	target: defaultElementReference(),
+	conditions: defaultDashboardRuleConditionsSpec(),
+	outcomes: [],
+});
+
+// Refers to a layout item (row, tab) by its stable name field.
+export interface LayoutItemReference {
+	kind: "LayoutItemReference";
+	name: string;
+}
+
+export const defaultLayoutItemReference = (): LayoutItemReference => ({
+	kind: "LayoutItemReference",
+	name: "",
+});
+
+export interface DashboardRuleConditionsSpec {
+	// How to combine the conditions: "and" requires all to match, "or" requires any.
+	match: "and" | "or";
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+}
+
+export const defaultDashboardRuleConditionsSpec = (): DashboardRuleConditionsSpec => ({
+	match: "and",
+	items: [],
+});
+
+// Visibility outcome: show or hide the target element/layout item.
+export interface DashboardRuleOutcomeVisibilityKind {
+	kind: "DashboardRuleOutcomeVisibility";
+	spec: DashboardRuleOutcomeVisibilitySpec;
+}
+
+export const defaultDashboardRuleOutcomeVisibilityKind = (): DashboardRuleOutcomeVisibilityKind => ({
+	kind: "DashboardRuleOutcomeVisibility",
+	spec: defaultDashboardRuleOutcomeVisibilitySpec(),
+});
+
+export interface DashboardRuleOutcomeVisibilitySpec {
+	visibility: "show" | "hide";
+}
+
+export const defaultDashboardRuleOutcomeVisibilitySpec = (): DashboardRuleOutcomeVisibilitySpec => ({
+	visibility: "show",
+});
+
 export interface Spec {
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
@@ -1556,6 +1635,11 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
+	// Dashboard-level rules for dynamic behavior (conditional rendering, etc.).
+	// Rules are evaluated in array order. When multiple rules target the same
+	// element with conflicting outcomes, the last matching rule wins.
+	// Gated behind the dashboardRules feature flag.
+	rules?: DashboardRuleKind[];
 }
 
 export const defaultSpec = (): Spec => ({
