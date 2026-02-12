@@ -22,6 +22,7 @@ import { useDispatch } from 'app/types/store';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';
+import { getCanInviteUsersToOrg } from '../users/utils';
 
 const tooltipMessage = (
   <>
@@ -62,6 +63,7 @@ const defaultValues: FormModel = {
 
 export const UserInviteForm = () => {
   const dispatch = useDispatch();
+  const disabled = !getCanInviteUsersToOrg();
 
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
@@ -78,11 +80,12 @@ export const UserInviteForm = () => {
                 invalid={!!errors.loginOrEmail}
                 error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
                 label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
+                disabled={disabled}
               >
                 {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
-              <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>
+              <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')} disabled={disabled}>
                 <Input
                   {...register('name')}
                   placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
@@ -104,6 +107,7 @@ export const UserInviteForm = () => {
                     </Stack>
                   </Label>
                 }
+                disabled={disabled}
               >
                 <Controller
                   render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
@@ -111,12 +115,12 @@ export const UserInviteForm = () => {
                   name="role"
                 />
               </Field>
-              <Field label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}>
+              <Field label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')} disabled={disabled}>
                 <Switch id="send-email-switch" {...register('sendEmail')} />
               </Field>
             </FieldSet>
             <Stack>
-              <Button type="submit">
+              <Button type="submit" disabled={disabled}>
                 <Trans i18nKey="org.user-invite-form.submit">Submit</Trans>
               </Button>
               <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')} variant="secondary">
