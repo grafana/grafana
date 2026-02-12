@@ -1,4 +1,4 @@
-package dashboards
+package datasource
 
 import (
 	"context"
