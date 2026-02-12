@@ -39,6 +39,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
     <Box width="50%">
       <Space v={3} />
       <Button
+        data-testid="influxdb-v2-config-toggle-button"
         icon={advancedDbConnectionSettingsIsOpen ? 'angle-down' : 'angle-right'}
         size="sm"
         variant="secondary"
