@@ -4,6 +4,7 @@ test.use({
   featureToggles: {
     newVizSuggestions: true,
     externalVizSuggestions: true,
+    dashboardNewLayouts: true,
   },
   viewport: {
     width: 800,
@@ -212,7 +213,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test.skip('should auto-select first suggestion for new panel and preview is persisted when navigating back', async ({
+    test('should auto-select first suggestion for new panel and preview is persisted when navigating back', async ({
       page,
       selectors,
       gotoDashboardPage,
@@ -221,13 +222,11 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({});
 
       // Press the empty-state Create new panel button
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.AddDashboard.itemButton('Create new panel button'))
-        .click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+      await page.getByText('Configure').first().click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
 
-      // Verify we see suggestions on load (after closing the data source picker)
-      await page.getByRole('button', { name: 'Close', exact: true }).click({ force: true });
+      // Verify we see suggestions on load
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Line chart')),
         'line chart suggestion to be rendered'
