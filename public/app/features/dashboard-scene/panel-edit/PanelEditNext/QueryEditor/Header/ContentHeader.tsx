@@ -132,7 +132,7 @@ export function ContentHeader({
           </>
         )}
       </div>
-      <HeaderActions queries={queries} containerRef={containerRef} />
+      <HeaderActions containerRef={containerRef} />
     </div>
   );
 }

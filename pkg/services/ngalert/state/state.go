@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -789,14 +788,10 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 		extraLabels[models.FolderTitleLabel] = folderTitle
 	}
 
-	if len(rule.NotificationSettings) > 0 {
-		// Notification settings are defined as a slice to workaround xorm behavior.
-		// Any items past the first should not exist so we ignore them.
-		if len(rule.NotificationSettings) > 1 {
-			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
-			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
+	if rule.NotificationSettings != nil {
+		for k, v := range rule.NotificationSettings.ToLabels(features) {
+			extraLabels[k] = v
 		}
-		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels(features))
 	}
 	return extraLabels
 }
