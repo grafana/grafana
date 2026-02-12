@@ -1,29 +1,21 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { GrafanaTheme2, createRelativeUrl } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import {
   getStackType,
-  getUserPlan,
   trackAlertsActivityBannerClickTry,
   trackAlertsActivityBannerDismiss,
   trackAlertsActivityBannerImpression,
 } from '../Analytics';
 import { ALERTING_PATHS } from '../utils/navigation';
+import { createRelativeUrl } from '../utils/url';
 
 import { useAlertsActivityBannerPrefs } from './hooks/useAlertsActivityBannerPrefs';
-
-const BANNER_ID = 'alerts-activity-v1';
-
-export interface AlertsActivityBannerProps {
-  /** Unique identifier for this banner instance (for A/B testing) */
-  variantId?: string | null;
-}
 
 /**
  * Banner promoting Alerts Activity (triage view) to users on the Rule List page.
@@ -34,41 +26,27 @@ export interface AlertsActivityBannerProps {
  * Features:
  * - Dismissible for 30 days
  * - DMA stack detection with limited functionality note
- * - Full telemetry tracking for impressions, clicks, dismissals
+ * - Telemetry tracking for impressions, clicks, dismissals
  */
-export function AlertsActivityBanner({ variantId = null }: AlertsActivityBannerProps) {
+export function AlertsActivityBanner() {
   const styles = useStyles2(getStyles);
   const { isDismissed, dismissBanner } = useAlertsActivityBannerPrefs();
   const impressionTracked = useRef(false);
 
-  // Determine stack type for telemetry and UI
+  // Determine stack type for UI (DMA has limited functionality)
   const stackType = getStackType();
   const isDMAStack = stackType === 'DMA';
-  const plan = getUserPlan();
 
   // Check if Alerts Activity feature is available
   const isAlertsActivityEnabled = config.featureToggles.alertingTriage ?? false;
 
-  const getEventPayload = useCallback(
-    () => ({
-      banner_id: BANNER_ID,
-      page: 'rule_list',
-      user_id: contextSrv.user.id,
-      org_id: contextSrv.user.orgId,
-      stack_type: stackType,
-      plan,
-      variant_id: variantId,
-    }),
-    [stackType, plan, variantId]
-  );
-
   // Track impression once per mount
   useEffect(() => {
     if (!impressionTracked.current && !isDismissed && isAlertsActivityEnabled) {
-      trackAlertsActivityBannerImpression(getEventPayload());
+      trackAlertsActivityBannerImpression();
       impressionTracked.current = true;
     }
-  }, [isDismissed, isAlertsActivityEnabled, getEventPayload]);
+  }, [isDismissed, isAlertsActivityEnabled]);
 
   // Don't render if:
   // - Alerts Activity is not enabled
@@ -78,19 +56,13 @@ export function AlertsActivityBanner({ variantId = null }: AlertsActivityBannerP
   }
 
   const handleOpenAlertsActivity = () => {
-    trackAlertsActivityBannerClickTry({
-      ...getEventPayload(),
-      referrer: window.location.pathname,
-    });
+    trackAlertsActivityBannerClickTry();
     // Navigation handled by LinkButton href
   };
 
   const handleDismiss = () => {
     const dismissedUntil = dismissBanner();
-    trackAlertsActivityBannerDismiss({
-      ...getEventPayload(),
-      dismissed_until: dismissedUntil,
-    });
+    trackAlertsActivityBannerDismiss(dismissedUntil);
   };
 
   return (

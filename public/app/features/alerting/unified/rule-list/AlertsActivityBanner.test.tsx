@@ -12,7 +12,6 @@ jest.mock('../Analytics', () => ({
   trackAlertsActivityBannerClickTry: jest.fn(),
   trackAlertsActivityBannerDismiss: jest.fn(),
   getStackType: jest.fn(() => 'GMA'),
-  getUserPlan: jest.fn(() => 'Free'),
 }));
 
 const ui = {
@@ -66,23 +65,7 @@ describe('AlertsActivityBanner', () => {
       render(<AlertsActivityBanner />);
 
       expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledTimes(1);
-      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledWith(
-        expect.objectContaining({
-          banner_id: 'alerts-activity-v1',
-          page: 'rule_list',
-        })
-      );
-    });
-
-    it('should include plan and stack_type in telemetry', () => {
-      render(<AlertsActivityBanner />);
-
-      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledWith(
-        expect.objectContaining({
-          stack_type: 'GMA',
-          plan: 'Free',
-        })
-      );
+      expect(Analytics.trackAlertsActivityBannerImpression).toHaveBeenCalledWith();
     });
 
     it('should track impression only once across re-renders', () => {
@@ -109,12 +92,7 @@ describe('AlertsActivityBanner', () => {
       button.addEventListener('click', (e) => e.preventDefault(), { once: true });
       await user.click(button);
 
-      expect(Analytics.trackAlertsActivityBannerClickTry).toHaveBeenCalledWith(
-        expect.objectContaining({
-          banner_id: 'alerts-activity-v1',
-          page: 'rule_list',
-        })
-      );
+      expect(Analytics.trackAlertsActivityBannerClickTry).toHaveBeenCalledWith();
     });
 
     describe('dismiss functionality', () => {
@@ -125,12 +103,8 @@ describe('AlertsActivityBanner', () => {
         const closeButton = screen.getByRole('button', { name: /close/i });
         await user.click(closeButton);
 
-        expect(Analytics.trackAlertsActivityBannerDismiss).toHaveBeenCalledWith(
-          expect.objectContaining({
-            banner_id: 'alerts-activity-v1',
-            dismissed_until: expect.any(String),
-          })
-        );
+        // Dismiss tracking receives the dismissed_until date
+        expect(Analytics.trackAlertsActivityBannerDismiss).toHaveBeenCalledWith(expect.any(String));
 
         // Check localStorage was set
         const dismissedUntil = localStorage.getItem(STORAGE_KEY_DISMISSED_UNTIL);

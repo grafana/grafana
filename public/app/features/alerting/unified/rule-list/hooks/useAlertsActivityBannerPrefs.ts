@@ -18,8 +18,6 @@ export interface AlertsActivityBannerPrefs {
  *
  * Note: The view experience toggle (new/old view) is handled separately by the
  * preview toggle mechanism in RuleListPageTitle, not by this banner.
- *
- * TODO: Migrate to server-side API when /api/alerting/ui-preferences is available
  */
 export function useAlertsActivityBannerPrefs(): AlertsActivityBannerPrefs {
   const [dismissedUntilRaw, setDismissedUntil] = useLocalStorage<string | null>(STORAGE_KEY_DISMISSED_UNTIL, null);

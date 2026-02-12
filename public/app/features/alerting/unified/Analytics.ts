@@ -415,45 +415,28 @@ export function getUserPlan(): UserPlan {
   return 'Free';
 }
 
-export interface AlertsActivityBannerEventPayload {
-  banner_id: string;
-  page: string;
-  user_id?: number;
-  org_id?: number;
-  stack_type?: StackType;
-  plan?: UserPlan;
-  variant_id?: string | null;
-}
-
 /**
- * Track banner impression - fired once per session when banner is first shown
+ * Track banner impression - fired once per session when banner is first shown.
+ * Note: user_id, org_id, grafana_version, and other common properties are automatically
+ * tracked by the analytics infrastructure.
  */
-export function trackAlertsActivityBannerImpression(payload: AlertsActivityBannerEventPayload) {
-  reportInteraction('grafana_alerting_banner_impression', {
-    ...payload,
-    grafana_version: config.buildInfo.version,
-  });
+export function trackAlertsActivityBannerImpression() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
 }
 
 /**
  * Track when user clicks "Open Alerts Activity" CTA
  */
-export function trackAlertsActivityBannerClickTry(payload: AlertsActivityBannerEventPayload & { referrer?: string }) {
-  reportInteraction('grafana_alerting_banner_click_try', {
-    ...payload,
-    grafana_version: config.buildInfo.version,
-  });
+export function trackAlertsActivityBannerClickTry() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_click');
 }
 
 /**
  * Track when user dismisses the banner
  */
-export function trackAlertsActivityBannerDismiss(
-  payload: AlertsActivityBannerEventPayload & { dismissed_until: string }
-) {
-  reportInteraction('grafana_alerting_banner_dismiss', {
-    ...payload,
-    grafana_version: config.buildInfo.version,
+export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
+  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
+    dismissed_until: dismissedUntil,
   });
 }
 
