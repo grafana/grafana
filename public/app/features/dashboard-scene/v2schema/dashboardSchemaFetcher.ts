@@ -24,17 +24,10 @@ interface JSONSchema {
   [key: string]: unknown;
 }
 
-/**
- * Builds the OpenAPI endpoint URL for a given API group and version.
- */
 function getOpenAPIEndpoint(group: string, version: string): string {
   return `/openapi/v3/apis/${group}/${version}`;
 }
 
-/**
- * Builds the schema key for DashboardSpec based on the API version.
- * The key format follows the OpenAPI schema naming convention used by Grafana's API server.
- */
 function getDashboardSpecSchemaKey(version: string): string {
   return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.DashboardSpec`;
 }
@@ -46,13 +39,10 @@ export async function fetchDashboardSchema(): Promise<JSONSchema> {
   if (cachedSchema) {
     return cachedSchema;
   }
-
   if (fetchPromise) {
     return fetchPromise;
   }
-
   fetchPromise = doFetchSchema();
-
   try {
     cachedSchema = await fetchPromise;
     return cachedSchema;
@@ -74,70 +64,85 @@ async function doFetchSchema(): Promise<JSONSchema> {
 
   const schemas = openApiSchema.components.schemas;
   const specSchema = schemas[schemaKey];
-
   if (!specSchema) {
     throw new Error(`Dashboard spec schema not found: ${schemaKey}`);
   }
 
-  // Build a JSON Schema with definitions for all referenced schemas
-  // Monaco's JSON validation supports $ref with definitions
   const definitions: Record<string, JSONSchema> = {};
-
-  // Add all component schemas as definitions, converting the key format
   for (const [key, schema] of Object.entries(schemas)) {
-    const definitionKey = convertRefToDefinitionKey(key);
-    definitions[definitionKey] = convertOpenAPIToJSONSchema(schema);
+    definitions[convertRefToDefinitionKey(key)] = flattenSingleRefAllOf(schema);
   }
 
   const jsonSchema: JSONSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    ...convertOpenAPIToJSONSchema(specSchema),
+    ...flattenSingleRefAllOf(specSchema),
     definitions,
   };
 
-  // Convert all $ref paths from OpenAPI format to JSON Schema definitions format
   replaceRefs(jsonSchema);
-
-  // Inject const constraints for kind fields that the OpenAPI generator doesn't emit
-  injectKindConstraints(definitions);
-
-  // Fix scalar union types whose OpenAPI schema is a struct but the wire format is a plain value
-  fixScalarUnions(definitions);
-
-  // Fix map[string]interface{} properties where the generator restricts values to objects
-  fixOpaqueMaps(definitions);
-
-  // Convert discriminated union types from struct-based properties to if/then schemas
-  fixDiscriminatedUnions(definitions);
+  fixOpenAPIMismatches(definitions);
 
   return jsonSchema;
 }
 
-/**
- * Converts an OpenAPI schema to JSON Schema format.
- * Mainly handles the `allOf` wrapper pattern used in OpenAPI for $ref.
- */
-function convertOpenAPIToJSONSchema(schema: JSONSchema): JSONSchema {
+// --- OpenAPI to JSON Schema helpers ---
+
+/** OpenAPI often wraps $ref in a single-element allOf; flatten it. */
+function flattenSingleRefAllOf(schema: JSONSchema): JSONSchema {
   const result: JSONSchema = { ...schema };
-
-  // OpenAPI often wraps $ref in allOf with default values, flatten it
-  if (result.allOf && result.allOf.length === 1 && result.allOf[0].$ref) {
-    const ref = result.allOf[0].$ref;
+  if (result.allOf?.length === 1 && result.allOf[0].$ref) {
+    result.$ref = result.allOf[0].$ref;
     delete result.allOf;
-    result.$ref = ref;
   }
-
   return result;
 }
 
-/**
- * Converts OpenAPI schema key to a valid JSON Schema definition key.
- * e.g., "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSpec"
- * becomes "DashboardSpec" or a sanitized version
- */
 function convertRefToDefinitionKey(key: string): string {
-  // Use the full key but replace dots with underscores for valid JSON pointer
   return key.replace(/\./g, '_');
+}
+
+// --- Post-processing: fix OpenAPI generator mismatches ---
+//
+// The k8s OpenAPI generator doesn't account for Go's custom JSON marshalers,
+// so several schema patterns need correction:
+// - kind fields are emitted as plain strings instead of const values
+// - scalar union types are emitted as structs instead of oneOf
+// - map[string]interface{} values are constrained to objects instead of any
+// - discriminated unions are emitted as struct properties instead of if/then
+
+function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
+  fixKindConstraints(definitions);
+  fixScalarUnions(definitions);
+  fixOpaqueMaps(definitions);
+  fixDiscriminatedUnions(definitions);
+}
+
+// Kind values that are dynamic (e.g. plugin ID), not fixed strings.
+const DYNAMIC_KIND_DEFINITIONS = new Set(['TransformationKind']);
+
+/**
+ * Injects `const` on `kind` properties. The Go generator emits `type: string`,
+ * but `Dashboard<Name>Kind` types always have a fixed kind value derived from the type name.
+ */
+function fixKindConstraints(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    const kindProp = schema.properties?.kind;
+    if (!kindProp || kindProp.type !== 'string') {
+      continue;
+    }
+
+    const match = key.match(/_Dashboard(\w+Kind)$/);
+    if (match) {
+      if (!DYNAMIC_KIND_DEFINITIONS.has(match[1])) {
+        kindProp.const = match[1].replace(/Kind$/, '');
+      }
+      continue;
+    }
+
+    if (key.endsWith('_DashboardElementReference')) {
+      kindProp.const = 'ElementReference';
+    }
+  }
 }
 
 // Scalar union types: custom marshalers serialize as plain values,
@@ -182,34 +187,6 @@ function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
           }
         }
       }
-    }
-  }
-}
-
-// Kind values that are dynamic (e.g. plugin ID), not fixed strings.
-const DYNAMIC_KIND_DEFINITIONS = new Set(['TransformationKind']);
-
-/**
- * Injects `const` on `kind` properties. The Go generator emits `type: string`,
- * but `Dashboard<Name>Kind` types always have a fixed kind value derived from the type name.
- */
-function injectKindConstraints(definitions: Record<string, JSONSchema>): void {
-  for (const [key, schema] of Object.entries(definitions)) {
-    const kindProp = schema.properties?.kind;
-    if (!kindProp || kindProp.type !== 'string') {
-      continue;
-    }
-
-    const match = key.match(/_Dashboard(\w+Kind)$/);
-    if (match) {
-      if (!DYNAMIC_KIND_DEFINITIONS.has(match[1])) {
-        kindProp.const = match[1].replace(/Kind$/, '');
-      }
-      continue;
-    }
-
-    if (key.endsWith('_DashboardElementReference')) {
-      kindProp.const = 'ElementReference';
     }
   }
 }
@@ -302,36 +279,28 @@ function applyDiscriminatedUnion(
   }));
 }
 
+// --- $ref path rewriting ---
+
 function isRecord(obj: unknown): obj is Record<string, unknown> {
   return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
 }
 
-/**
- * Recursively replaces OpenAPI $ref paths with JSON Schema definition paths.
- * e.g., "#/components/schemas/com.github..." becomes "#/definitions/com_github..."
- */
 function replaceRefs(obj: unknown): void {
   if (!obj || typeof obj !== 'object') {
     return;
   }
-
   if (Array.isArray(obj)) {
     for (const item of obj) {
       replaceRefs(item);
     }
     return;
   }
-
   if (!isRecord(obj)) {
     return;
   }
-
   if (typeof obj.$ref === 'string' && obj.$ref.startsWith('#/components/schemas/')) {
-    const schemaKey = obj.$ref.replace('#/components/schemas/', '');
-    const definitionKey = convertRefToDefinitionKey(schemaKey);
-    obj.$ref = `#/definitions/${definitionKey}`;
+    obj.$ref = `#/definitions/${convertRefToDefinitionKey(obj.$ref.replace('#/components/schemas/', ''))}`;
   }
-
   for (const value of Object.values(obj)) {
     replaceRefs(value);
   }
