@@ -467,7 +467,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	}
 }
 
-func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePendingForNoDataAndError bool) {
+func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
 	handlerStr := "resultError"
 
 	switch rule.ExecErrState {
@@ -502,7 +502,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		default:
 			// First occurrence of Error.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 || ignorePendingForNoDataAndError {
+			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonError, result.EvaluatedAt, nextEndsAt)
@@ -532,7 +532,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePendingForNoDataAndError bool) {
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
 	handlerStr := "resultNoData"
 
 	switch rule.NoDataState {
@@ -568,7 +568,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		default:
 			// First occurrence of NoData.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 || ignorePendingForNoDataAndError {
+			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonNoData, result.EvaluatedAt, nextEndsAt)
