@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -38,22 +37,6 @@ export const SidebarCard = ({
   const hasAddButton = showAddButton;
   const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
   const typeText = config.getLabel();
-  const [hasFocusWithin, setHasFocusWithin] = useState(false);
-
-  const handleFocus = useCallback(() => {
-    setHasFocusWithin(true);
-  }, []);
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
-      setHasFocusWithin(false);
-    }
-  }, []);
-
-  // Reset focus state when hidden state changes
-  useEffect(() => {
-    setHasFocusWithin(false);
-  }, [isHidden]);
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
@@ -74,15 +57,13 @@ export const SidebarCard = ({
         className={styles.card}
         onClick={onClick}
         onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         role="button"
         tabIndex={0}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: isHidden })}>{children}</div>
-        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+        <div className={styles.hoverActions}>
           <Actions
             onDuplicate={onDuplicate}
             onDelete={onDelete}
@@ -203,11 +184,6 @@ function getStyles(
       },
     }),
     hoverActions,
-    hoverActionsVisible: css({
-      opacity: 1,
-      transform: 'translateX(0)',
-      pointerEvents: 'auto',
-    }),
     cardContent: css({
       display: 'flex',
       flexDirection: 'row',
