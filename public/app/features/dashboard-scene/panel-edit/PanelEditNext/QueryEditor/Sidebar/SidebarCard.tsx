@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
 import { QUERY_EDITOR_COLORS, QueryEditorTypeConfig } from '../../constants';
@@ -50,6 +50,11 @@ export const SidebarCard = ({
     }
   }, []);
 
+  // Reset focus state when hidden state changes
+  useEffect(() => {
+    setHasFocusWithin(false);
+  }, [isHidden]);
+
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -77,26 +82,15 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: isHidden })}>{children}</div>
-        {isHidden ? (
-          <Button
-            size="sm"
-            fill="text"
-            icon="eye-slash"
-            variant="secondary"
-            aria-label={t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeText })}
-            onClick={onToggleHide}
+        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+          <Actions
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            onToggleHide={onToggleHide}
+            isHidden={isHidden}
+            typeLabel={typeText}
           />
-        ) : (
-          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              onDuplicate={onDuplicate}
-              onDelete={onDelete}
-              onToggleHide={onToggleHide}
-              isHidden={isHidden}
-              typeLabel={typeText}
-            />
-          </div>
-        )}
+        </div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
@@ -113,12 +107,15 @@ function getStyles(
     top: 0,
     bottom: 0,
     display: 'flex',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingRight: theme.spacing(1),
-    background: `linear-gradient(270deg, ${isSelected ? QUERY_EDITOR_COLORS.card.activeBg : theme.colors.background.secondary} 50%, rgba(32, 38, 47, 0.00) 100%)`,
+    // this will never actually show up other than when the card is hovered so we only need the hoverBg
+    background: `linear-gradient(270deg, ${QUERY_EDITOR_COLORS.card.hoverBg} 72%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
+    width: '87px',
 
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
@@ -176,7 +173,7 @@ function getStyles(
       width: '100%',
       background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
       // border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
-      borderLeft: `1px solid ${config.color}`,
+      borderLeft: `${isSelected ? 2 : 1}px solid ${config.color}`,
       // borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
       padding: 0,
@@ -205,19 +202,6 @@ function getStyles(
         outlineOffset: '2px',
       },
     }),
-    // cardHeader: css({
-    //   display: 'flex',
-    //   flexDirection: 'row',
-    //   alignItems: 'center',
-    //   justifyContent: 'space-between',
-    //   gap: theme.spacing(1),
-    //   padding: theme.spacing(1),
-    //   background: theme.colors.background.primary,
-    //   color: config.color,
-    //   borderTopRightRadius: theme.shape.radius.default,
-    //   borderTopLeftRadius: theme.shape.radius.default,
-    //   borderBottom: `1px solid ${theme.colors.border.weak}`,
-    // }),
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,

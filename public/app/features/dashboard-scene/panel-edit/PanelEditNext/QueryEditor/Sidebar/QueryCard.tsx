@@ -1,3 +1,5 @@
+import { css } from '@emotion/css';
+
 import { DataQuery } from '@grafana/schema';
 import { Icon, Text } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
@@ -15,6 +17,13 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const isSelected = selectedQuery?.refId === query.refId;
+
+  const strikethroughStyle = css({
+    textDecoration: !!query.hide ? 'line-through' : 'none',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  });
 
   return (
     <SidebarCard
@@ -36,9 +45,11 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           size="sm"
         />
       )}
-      <Text weight="light" variant="code" color="primary" truncate>
-        {query.refId}
-      </Text>
+      <span className={strikethroughStyle}>
+        <Text weight="light" variant="code" color="primary" truncate>
+          {query.refId}
+        </Text>
+      </span>
     </SidebarCard>
   );
 };
