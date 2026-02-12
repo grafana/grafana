@@ -22,23 +22,11 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {}
 
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
-  const { prURL: prURLParam } = usePullRequestParam();
+  const { prURL: existingPRUrl } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
   const { repository } = useGetResourceRepositoryView({ name: slug });
 
-  // Vars
-  const targetRef = file.data?.ref;
-  const repoBaseUrl = file.data?.urls?.repositoryURL || repository?.url;
-  const isExistingPR = !!prURLParam?.length; // if the PR URL is not empty, it means the dashboard is loaded from a pull request
-  const prOrCompareUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL; // Check if pull request URLs are available from the repository file data
-  const prURL = isExistingPR ? prURLParam : prOrCompareUrl; // if PR URL is provided, use it, otherwise use BE response url
-
-  const branchInfo: PreviewBranchInfo = {
-    targetBranch: targetRef,
-    configuredBranch: repository?.branch,
-    repoBaseUrl,
-  };
-
+  // early return if there is an error
   if (file.data?.errors) {
     return (
       <Alert
@@ -53,7 +41,20 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     );
   }
 
-  return <PreviewBannerViewPR prURL={prURL} isNewPr={!isExistingPR} branchInfo={branchInfo} />;
+  // Vars
+  const targetRef = file.data?.ref;
+  const repoBaseUrl = file.data?.urls?.repositoryURL || repository?.url;
+  const prOrCompareUrl = file.data?.urls?.newPullRequestURL || file.data?.urls?.compareURL; // Check if pull request URLs are available from the repository file data
+  const prURL = existingPRUrl || prOrCompareUrl; // if PR URL is provided, use it, otherwise use BE response url
+  const hasExistingPr = Boolean(existingPRUrl); // when existing PR URL is provided, it means the dashboard is loaded from a pull request
+
+  const branchInfo: PreviewBranchInfo = {
+    targetBranch: targetRef,
+    configuredBranch: repository?.branch,
+    repoBaseUrl,
+  };
+
+  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} />;
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
