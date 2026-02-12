@@ -31,7 +31,7 @@ aliases:
 
 Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available **based on the different tiers** but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 
-**Git Sync is under development.** [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+**Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -48,17 +48,30 @@ The following Git Sync per-tier limits apply:
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
 | Amount of synced resources per repository | 20               | Grafana limit     | No limit        | No limit               |
 
-## Compatible services and providers
+## Compatible providers
 
-Git Sync is available for GitHub, native Git, GitLab, and Bitbucket.
+Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
 
-TBC
+| **Provider** | **Available in** | **Authentication** | 
+| ------------------ | ---------------- | ----------------- | 
+| Pure Git        | Cloud, OSS, Enterprise             | Personal Access Token          | 
+| GitHub        | Cloud, OSS, Enterprise              | Personal Access Token or GitHub App          | 
+| GitLab        | Cloud, Enterprise              | Personal Access Token          | 
+| Bitbucket      | Cloud, Enterprise            | Personal Access Token         | 
 
-### Authentication
+### The Pure Git repository type
 
-You can authenticate in GitHub using a Personal Access Token token or GitHub App. Refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for more details.
+The Pure Git repository type uses the standard Git over HTTP protocol, with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync. 
 
-TBC
+However, Pure Git doesn't include any features that require provider APIs, such as webhook-driven instant sync, automated PR comments, or deep links to source files. 
+
+### Enhanced integrations: GitHub, GitLab, Bitbucket 
+
+If your Git provider is GitHub, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
+
+The GitHub enhanced integration is the most feature-complete experience today. It enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes. It is available in Grafana OSS, Enterprise, and Cloud.
+
+GitLab and Bitbucket integrations have limited fucntionality for the moment, and are only available in Grafana Enterprise and Grafana Cloud. Expect continued improvements around pull request workflows, linking, and sync behavior in upcoming releases.
 
 ## Known issues
 
