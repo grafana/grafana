@@ -96,17 +96,12 @@ describe('TableNG hooks', () => {
   });
 
   describe('useManagedSort', () => {
-    it('Should not update if behavior is initial', () => {
+    it('Should not update if sortBy is undefined', () => {
       const setSortColumns = jest.fn();
       renderHook(() =>
         useManagedSort({
-          sortBy: [
-            {
-              displayName: 'Alice',
-              desc: true,
-            },
-          ],
-          sortByBehavior: 'initial',
+          sortBy: undefined,
+          sortByBehavior: 'managed',
           setSortColumns,
         })
       );
@@ -114,14 +109,14 @@ describe('TableNG hooks', () => {
       expect(setSortColumns).toHaveBeenCalledTimes(0);
     });
 
-    it('Should update if behavior is managed', () => {
+    it.each([true, false])('Should not update if behavior is managed', (desc) => {
       const setSortColumns = jest.fn();
       renderHook(() =>
         useManagedSort({
           sortBy: [
             {
               displayName: 'Alice',
-              desc: true,
+              desc,
             },
           ],
           sortByBehavior: 'managed',
@@ -130,6 +125,30 @@ describe('TableNG hooks', () => {
       );
 
       expect(setSortColumns).toHaveBeenCalledTimes(1);
+      expect(setSortColumns).toHaveBeenCalledWith([
+        {
+          columnKey: 'Alice',
+          direction: desc ? 'DESC' : 'ASC',
+        },
+      ]);
+    });
+
+    it.each([true, false])('Should not update if behavior is initial', (desc) => {
+      const setSortColumns = jest.fn();
+      renderHook(() =>
+        useManagedSort({
+          sortBy: [
+            {
+              displayName: 'Alice',
+              desc,
+            },
+          ],
+          sortByBehavior: 'initial',
+          setSortColumns,
+        })
+      );
+
+      expect(setSortColumns).toHaveBeenCalledTimes(0);
     });
   });
 
