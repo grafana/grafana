@@ -149,10 +149,10 @@ export const LogsTable = ({
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
 
   // Logs frame be null for non logs frames
-  const noLogsFram = !logsFrame;
+  const noLogsFrame = !logsFrame;
 
   // Show no data state if query returns nothing
-  if ((noSeries || noValues || noLogsFram) && data.state === LoadingState.Done) {
+  if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
