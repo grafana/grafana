@@ -20,16 +20,24 @@ export function getAlertActivityNavId(): string {
 
 /**
  * Check if user has permission to view alerts
+ * Checks both internal and external permissions to match backend behavior
  */
 function canViewAlerts(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
+  );
 }
 
 /**
  * Check if user has permission to view active notifications (alert groups)
+ * Checks both internal and external permissions to match backend behavior
  */
 function canViewActiveNotifications(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingInstancesExternalRead)
+  );
 }
 
 /**
