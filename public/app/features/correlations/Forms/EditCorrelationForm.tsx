@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import { useUpdateCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { config } from '@grafana/runtime';
+import { useUpdateCorrelationMutation } from 'app/api/clients/correlations/v0alpha1';
 
 import { Wizard } from '../components/Wizard/Wizard';
 import { Correlation } from '../types';

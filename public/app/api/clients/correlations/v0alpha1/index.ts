@@ -38,3 +38,6 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
     },
   },
 });
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export * from '@grafana/api-clients/rtkq/correlations/v0alpha1';
