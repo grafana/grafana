@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -335,7 +336,17 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     queries[targetIndex] = updatedQuery;
 
-    queryRunner.setState({ queries });
+    // Set panel datasource to mixed since the query has an explicit datasource
+    // This ensures per-query datasources are respected during execution
+    if (queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+      queryRunner.setState({
+        queries,
+        datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
+      });
+    } else {
+      queryRunner.setState({ queries });
+    }
+
     queryRunner.runQueries();
   };
 

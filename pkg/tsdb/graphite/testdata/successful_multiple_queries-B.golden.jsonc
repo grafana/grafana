@@ -8,15 +8,14 @@
 //      ]
 //  }
 //  Name: 
-//  Dimensions: 2 Fields by 3 Rows
+//  Dimensions: 2 Fields by 2 Rows
 //  +-------------------------------+------------------+
 //  | Name: time                    | Name: value      |
 //  | Labels:                       | Labels:          |
 //  | Type: []time.Time             | Type: []*float64 |
 //  +-------------------------------+------------------+
-//  | 2021-01-01 00:00:00 +0000 UTC | 100              |
-//  | 2021-01-01 00:01:00 +0000 UTC | 150              |
-//  | 2021-01-01 00:02:00 +0000 UTC | 120              |
+//  | 2021-01-01 00:00:00 +0000 UTC | 50               |
+//  | 2021-01-01 00:01:00 +0000 UTC | 75               |
 //  +-------------------------------+------------------+
 //  
 //  
@@ -26,6 +25,7 @@
   "frames": [
     {
       "schema": {
+        "refId": "B",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -50,7 +50,7 @@
             },
             "labels": {},
             "config": {
-              "displayNameFromDS": "stats.counters.web.hits"
+              "displayNameFromDS": "stats.counters.api.calls"
             }
           }
         ]
@@ -59,13 +59,11 @@
         "values": [
           [
             1609459200000,
-            1609459260000,
-            1609459320000
+            1609459260000
           ],
           [
-            100,
-            150,
-            120
+            50,
+            75
           ]
         ]
       }

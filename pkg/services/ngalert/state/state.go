@@ -459,7 +459,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	}
 }
 
-func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
 	handlerStr := "resultError"
 
 	switch rule.ExecErrState {
@@ -494,7 +494,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		default:
 			// First occurrence of Error.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 {
+			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonError, result.EvaluatedAt, nextEndsAt)
@@ -524,7 +524,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
 	handlerStr := "resultNoData"
 
 	switch rule.NoDataState {
@@ -560,7 +560,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		default:
 			// First occurrence of NoData.
 			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-			if state.State != eval.Recovering && rule.For > 0 {
+			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetPending(models.StateReasonNoData, result.EvaluatedAt, nextEndsAt)
@@ -826,7 +826,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	}
 }
 
-func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn) StateTransition {
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool) StateTransition {
 	a.LastEvaluationTime = result.EvaluatedAt
 	a.EvaluationDuration = result.EvaluationDuration
 	a.SetNextValues(result)
@@ -852,10 +852,10 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		resultAlerting(a, alertRule, result, logger, "")
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
-		resultError(a, alertRule, result, logger)
+		resultError(a, alertRule, result, logger, ignorePendingForNoDataAndError)
 	case eval.NoData:
 		logger.Debug("Setting next state", "handler", "resultNoData")
-		resultNoData(a, alertRule, result, logger)
+		resultNoData(a, alertRule, result, logger, ignorePendingForNoDataAndError)
 	case eval.Pending,
 		eval.Recovering: // we do not emit results with these states
 		logger.Debug("Ignoring set next state", "state", result.State)

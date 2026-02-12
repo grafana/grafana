@@ -10564,9 +10564,11 @@
       "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
-        "disabled": "Columns are not supported with line wrapping enabled",
-        "disabled-label": "Columns not suported",
-        "enable": "Enable columns"
+        "disabled-label": "Columns not supported",
+        "disabled-text": "Columns enabled",
+        "enable": "Enable columns",
+        "enabled-text": "Columns disabled",
+        "not-supported": "Columns are not supported with line wrapping enabled"
       },
       "wrap-lines": "Wrap lines"
     },
