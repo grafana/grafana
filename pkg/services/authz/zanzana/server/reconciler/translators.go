@@ -147,7 +147,7 @@ func TranslateUserToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 	}
 
 	tuple := &openfgav1.TupleKey{
-		User:     common.NewTupleEntry(common.TypeUser, user.Spec.Role, ""),
+		User:     common.NewTupleEntry(common.TypeUser, user.Name, ""),
 		Relation: common.RelationAssignee,
 		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}
