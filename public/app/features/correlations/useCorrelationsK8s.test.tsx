@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react';
-import { Provider } from 'react-redux';
 
-import { generatedAPI } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { useListCorrelationQuery } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataSourceRef } from '@grafana/schema/dist/esm/index';
-import { configureStore } from 'app/store/configureStore';
 
 import { toEnrichedCorrelationDataK8s, useCorrelationsK8s } from './useCorrelationsK8s';
 
@@ -20,10 +18,12 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-/*jest.mock('@grafana/api-clients/rtkq/correlations/v0alpha1', () => ({
+jest.mock('@grafana/api-clients/rtkq/correlations/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/correlations/v0alpha1'),
-  useListCorrelationQuery: wat,
-})); */
+  useListCorrelationQuery: jest.fn(),
+}));
+
+const useListCorrelationMock = useListCorrelationQuery as jest.Mock;
 
 describe('useCorrelationsK8s', () => {
   beforeEach(() => {
@@ -117,21 +117,9 @@ describe('useCorrelationsK8s', () => {
     });
   });
 
-  it('should pass the right limit based on page size', () => {
-    const listCorr = jest.spyOn(generatedAPI, 'useListCorrelationQuery');
-    const store = configureStore();
-
-    const wrapper = ({ children }) => <Provider store={store}>{children}</Provider>;
-
-    const hookResult = renderHook(
-      () => {
-        useCorrelationsK8s(10, 5);
-      },
-      { wrapper }
-    );
-
-    // useCorrelationsK8s(10, 5);
-    // expect(listCorr).toHaveBeenCalled();
-    expect(hookResult).toBeUndefined();
+  it('should pass the right limit based on page size', async () => {
+    useListCorrelationMock.mockReturnValue({ data: [] });
+    renderHook(() => useCorrelationsK8s(10, 5));
+    expect(useListCorrelationMock).toHaveBeenCalledWith({ limit: 50 });
   });
 });
