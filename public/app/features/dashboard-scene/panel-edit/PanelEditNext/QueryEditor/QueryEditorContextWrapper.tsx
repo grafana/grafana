@@ -174,6 +174,7 @@ export function QueryEditorContextWrapper({
         }
       },
       updateTransformation: dataPane.updateTransformation,
+      reorderTransformations: dataPane.reorderTransformations,
     }),
     [dataPane, findTransformationIndex]
   );
