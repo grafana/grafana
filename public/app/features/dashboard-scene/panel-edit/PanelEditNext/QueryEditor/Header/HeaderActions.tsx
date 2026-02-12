@@ -4,7 +4,7 @@ import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { PluginActions } from './PluginActions';
@@ -22,6 +22,8 @@ interface HeaderActionsProps {
  *
  * @remarks
  * Manages actions (hide, delete) for the currently selected query or transformation.
+ * Delete confirmation behavior is configured per type in QUERY_EDITOR_TYPE_CONFIG and
+ * handled by the Actions component.
  * Child components like WarningBadges, SaveButton, and ActionsMenu determine their
  * own visibility by reading from QueryEditorUIContext.
  */
@@ -45,21 +47,21 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     }
   }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
 
-  const isHidden = selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false;
-  const typeLabel = QUERY_EDITOR_TYPE_CONFIG[cardType].getLabel();
+  const itemName =
+    selectedQuery?.refId ?? selectedTransformation?.registryItem?.name ?? selectedTransformation?.transformId ?? '';
+
+  const item = {
+    name: itemName,
+    type: cardType,
+    isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
+  };
 
   return (
     <Stack gap={1} alignItems="center">
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
-      <Actions
-        contentHeader={true}
-        isHidden={isHidden}
-        onDelete={onDelete}
-        onToggleHide={onToggleHide}
-        typeLabel={typeLabel}
-      />
+      <Actions contentHeader={true} item={item} onDelete={onDelete} onToggleHide={onToggleHide} />
       {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );

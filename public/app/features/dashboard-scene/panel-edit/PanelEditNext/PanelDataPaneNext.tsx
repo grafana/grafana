@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -303,6 +304,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
+    console.log('[changeDataSource] Changing datasource for query', queryRefId, 'to', dsRef);
+    console.log('[changeDataSource] Current panel datasource:', queryRunner.state.datasource);
+
     const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
     if (!newDataSource) {
       throw new Error(`Failed to get datasource ${dsRef.uid ?? dsRef.type}`);
@@ -315,6 +319,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const targetQuery = queries[targetIndex];
+    console.log('[changeDataSource] Old query datasource:', targetQuery.datasource);
+    
     const previousDataSource = targetQuery.datasource
       ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
       : undefined;
@@ -333,9 +339,22 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       updatedQuery = { ...targetQuery, datasource: dsRef };
     }
 
+    console.log('[changeDataSource] New query datasource:', updatedQuery.datasource);
     queries[targetIndex] = updatedQuery;
 
-    queryRunner.setState({ queries });
+    // Set panel datasource to mixed since the query has an explicit datasource
+    // This ensures per-query datasources are respected during execution
+    if (queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+      console.log('[changeDataSource] Setting panel datasource to mixed to respect per-query datasources');
+      queryRunner.setState({
+        queries,
+        datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
+      });
+    } else {
+      queryRunner.setState({ queries });
+    }
+    
+    console.log('[changeDataSource] About to run queries...');
     queryRunner.runQueries();
   };
 

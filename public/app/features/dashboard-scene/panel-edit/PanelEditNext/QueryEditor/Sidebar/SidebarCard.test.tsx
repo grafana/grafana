@@ -40,6 +40,11 @@ function renderSidebarCard({
   showAddButton = true,
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
+  const item = {
+    name: id,
+    type: QueryEditorType.Query,
+    isHidden: false,
+  };
 
   const result = renderWithQueryEditorProvider(
     <SidebarCard
@@ -49,9 +54,9 @@ function renderSidebarCard({
       onClick={onClick}
       onDelete={jest.fn()}
       onToggleHide={jest.fn()}
-      isHidden={false}
       onDuplicate={jest.fn()}
       showAddButton={showAddButton}
+      item={item}
     >
       <span>Card content</span>
     </SidebarCard>,

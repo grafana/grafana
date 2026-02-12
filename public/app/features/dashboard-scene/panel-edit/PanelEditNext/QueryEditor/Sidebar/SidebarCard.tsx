@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { Actions } from '../../Actions';
+import { ActionItem, Actions } from '../../Actions';
 import { QueryEditorTypeConfig } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
@@ -19,8 +19,8 @@ interface SidebarCardProps {
   onDuplicate?: () => void;
   onDelete: () => void;
   onToggleHide: () => void;
-  isHidden: boolean;
   showAddButton: boolean;
+  item: ActionItem;
 }
 
 export const SidebarCard = ({
@@ -32,8 +32,8 @@ export const SidebarCard = ({
   onDuplicate,
   onDelete,
   onToggleHide,
-  isHidden,
   showAddButton = true,
+  item,
 }: SidebarCardProps) => {
   const hasAddButton = showAddButton;
   const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
@@ -66,7 +66,7 @@ export const SidebarCard = ({
   return (
     <div className={styles.wrapper}>
       <div
-        className={cx(styles.card, { [styles.hidden]: isHidden })}
+        className={cx(styles.card, { [styles.hidden]: item.isHidden })}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -84,13 +84,7 @@ export const SidebarCard = ({
             </Text>
           </Stack>
           <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              isHidden={isHidden}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onToggleHide={onToggleHide}
-              typeLabel={typeText}
-            />
+            <Actions item={item} onDelete={onDelete} onDuplicate={onDuplicate} onToggleHide={onToggleHide} />
           </div>
         </div>
         <div className={styles.cardContent}>{children}</div>

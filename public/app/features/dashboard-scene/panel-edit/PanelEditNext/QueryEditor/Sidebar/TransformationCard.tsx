@@ -12,15 +12,21 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
   const isSelected = selectedTransformation?.transformId === transformation.transformId;
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
+  const item = {
+    name: transformationName,
+    type: QueryEditorType.Transformation,
+    isHidden: !!transformation.transformConfig.disabled,
+  };
+
   return (
     <SidebarCard
       config={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation]}
       isSelected={isSelected}
       id={transformation.transformId}
+      item={item}
       onClick={() => setSelectedTransformation(transformation)}
       onDelete={() => deleteTransformation(transformation.transformId)}
       onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
-      isHidden={!!transformation.transformConfig.disabled}
       showAddButton={false}
     >
       <Text weight="light" variant="code" color="secondary">
