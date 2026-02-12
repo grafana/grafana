@@ -47,7 +47,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-prefix-dashboard.json")
 		err := os.WriteFile(testFile, dashboardWithBOM, 0644)
 		require.NoError(t, err)
-		t.Cleanup(func() { os.Remove(testFile) })
+		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
 		helper.SyncAndWait(t, repo, nil)
@@ -108,7 +108,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-embedded-dashboard.json")
 		err := os.WriteFile(testFile, []byte(dashboardJSON), 0644)
 		require.NoError(t, err)
-		t.Cleanup(func() { os.Remove(testFile) })
+		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Create repository
 		repoName := "bom-embedded-repo"
@@ -197,7 +197,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-deletion-dashboard.json")
 		err := os.WriteFile(testFile, []byte(dashboardJSON), 0644)
 		require.NoError(t, err)
-		t.Cleanup(func() { os.Remove(testFile) })
+		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
 		helper.SyncAndWait(t, repoName, nil)
@@ -292,7 +292,7 @@ spec:
 		testFile := filepath.Join(helper.ProvisioningPath, "bom-yaml-dashboard.yaml")
 		err := os.WriteFile(testFile, yamlWithBOM, 0644)
 		require.NoError(t, err)
-		t.Cleanup(func() { os.Remove(testFile) })
+		t.Cleanup(func() { _ = os.Remove(testFile) })
 
 		// Trigger sync to provision the dashboard
 		helper.SyncAndWait(t, repoName, nil)
