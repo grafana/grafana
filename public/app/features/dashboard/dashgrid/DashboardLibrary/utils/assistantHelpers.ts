@@ -1,6 +1,6 @@
 import { PluginDashboard } from 'app/types/plugins';
 
-import { TemplateDashboardSourceEntryPoint } from '../interactions';
+import { SourceEntryPoint, TemplateDashboardSourceEntryPoint } from '../interactions';
 import { GnetDashboard } from '../types';
 
 import { isGnetDashboard } from './dashboardLibraryHelpers';
@@ -17,7 +17,7 @@ export interface TemplateContextData {
   panelTypes?: string[];
   author?: string;
   instructions?: string;
-  templateUrl?: string;
+  sourceEntryPoint?: SourceEntryPoint;
 }
 
 /**
@@ -82,7 +82,7 @@ export function buildTemplateContextData(
     panelTypes: isGnet ? dashboard.panelTypeSlugs : undefined,
     author: isGnet ? dashboard.orgName || dashboard.userName : undefined,
     instructions: `Use the following template details to create the dashboard: ${buildInstructions()}.`,
-    templateUrl: getTemplateDashboardUrl(dashboard, TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON),
+    sourceEntryPoint: TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON,
   };
 }
 
