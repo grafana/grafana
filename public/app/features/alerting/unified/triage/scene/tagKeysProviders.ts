@@ -1,7 +1,7 @@
-import { MetricFindValue } from '@grafana/data';
+import { MetricFindValue, TimeRange } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
+import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, sceneGraph } from '@grafana/scenes';
 
 import { DATASOURCE_UID, METRIC_NAME } from '../constants';
 
@@ -29,14 +29,13 @@ const metricQuery: PromQuery = { refId: 'keys', expr: METRIC_NAME };
  * Fetch tag keys from the configured Prometheus datasource,
  * scoped to the GRAFANA_ALERTS metric.
  */
-async function fetchTagKeys(sceneObject: SceneObject): Promise<MetricFindValue[]> {
+async function fetchTagKeys(timeRange: TimeRange): Promise<MetricFindValue[]> {
   const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
 
   if (!ds.getTagKeys) {
     return [];
   }
 
-  const timeRange = sceneGraph.getTimeRange(sceneObject).state.value;
   const result = await ds.getTagKeys({ filters: [], timeRange, queries: [metricQuery] });
 
   // getTagKeys can return MetricFindValue[] or GetTagResponse
@@ -47,14 +46,13 @@ async function fetchTagKeys(sceneObject: SceneObject): Promise<MetricFindValue[]
  * Fetch tag values for a given key from the configured Prometheus datasource,
  * scoped to the GRAFANA_ALERTS metric.
  */
-async function fetchTagValues(sceneObject: SceneObject, key: string): Promise<MetricFindValue[]> {
+async function fetchTagValues(timeRange: TimeRange, key: string): Promise<MetricFindValue[]> {
   const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
 
   if (!ds.getTagValues) {
     return [];
   }
 
-  const timeRange = sceneGraph.getTimeRange(sceneObject).state.value;
   const result = await ds.getTagValues({ key, filters: [], timeRange, queries: [metricQuery] });
 
   return Array.isArray(result) ? result : (result.data ?? []);
@@ -65,10 +63,10 @@ async function fetchTagValues(sceneObject: SceneObject, key: string): Promise<Me
  * and return promoted labels first followed by the rest alphabetically.
  */
 async function buildTagKeysResult(
-  sceneObject: SceneObject,
+  timeRange: TimeRange,
   promoted: MetricFindValue[]
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
-  const dsKeys = await fetchTagKeys(sceneObject);
+  const dsKeys = await fetchTagKeys(timeRange);
   const promotedValues = new Set(promoted.map((p) => String(p.value)));
 
   const remaining = dsKeys
@@ -87,7 +85,8 @@ async function buildTagKeysResult(
  * Shows promoted labels first, then remaining datasource labels alphabetically.
  */
 export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey: string | null) {
-  return buildTagKeysResult(variable, GROUPBY_PROMOTED);
+  const timeRange = sceneGraph.getTimeRange(variable).state.value;
+  return buildTagKeysResult(timeRange, GROUPBY_PROMOTED);
 }
 
 /**
@@ -95,7 +94,8 @@ export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey
  * Shows promoted labels in "Common" group, remaining labels under "Labels".
  */
 export function getAdHocTagKeysProvider(variable: AdHocFiltersVariable, _currentKey: string | null) {
-  return buildTagKeysResult(variable, FILTER_PROMOTED);
+  const timeRange = sceneGraph.getTimeRange(variable).state.value;
+  return buildTagKeysResult(timeRange, FILTER_PROMOTED);
 }
 
 /**
@@ -106,6 +106,7 @@ export async function getAdHocTagValuesProvider(
   variable: AdHocFiltersVariable,
   filter: AdHocFilterWithLabels
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
-  const values = await fetchTagValues(variable, filter.key);
+  const timeRange = sceneGraph.getTimeRange(variable).state.value;
+  const values = await fetchTagValues(timeRange, filter.key);
   return { replace: true, values };
 }
