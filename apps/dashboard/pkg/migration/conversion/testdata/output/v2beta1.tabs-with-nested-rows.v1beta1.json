@@ -48,7 +48,7 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 5,
         "panels": [],
         "title": "Tab without rows",
         "type": "row"
@@ -155,7 +155,7 @@
           "x": 0,
           "y": 9
         },
-        "id": -1,
+        "id": 6,
         "panels": [],
         "title": "Tab With Rows",
         "type": "row"
@@ -168,7 +168,7 @@
           "x": 0,
           "y": 10
         },
-        "id": -1,
+        "id": 7,
         "panels": [
           {
             "datasource": {
@@ -276,7 +276,7 @@
           "x": 0,
           "y": 11
         },
-        "id": -1,
+        "id": 8,
         "panels": [
           {
             "datasource": {
@@ -478,7 +478,7 @@
           "x": 0,
           "y": 12
         },
-        "id": -1,
+        "id": 9,
         "title": "Empty row",
         "type": "row"
       }

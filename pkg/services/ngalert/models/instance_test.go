@@ -3,8 +3,11 @@ package models
 import (
 	"errors"
 	"fmt"
+	"math"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,6 +107,158 @@ func TestValidateAlertInstance(t *testing.T) {
 			})
 
 			require.Equal(t, tc.err, ValidateAlertInstance(*instance))
+		})
+	}
+}
+
+func TestJsonifyValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]float64
+		expected map[string]any
+	}{
+		{
+			name:     "nil map",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty map",
+			input:    map[string]float64{},
+			expected: map[string]any{},
+		},
+		{
+			name:     "regular float values",
+			input:    map[string]float64{"A": 1.5, "B": -2.0, "C": 0},
+			expected: map[string]any{"A": 1.5, "B": -2.0, "C": 0.0},
+		},
+		{
+			name:     "NaN value",
+			input:    map[string]float64{"A": math.NaN()},
+			expected: map[string]any{"A": "NaN"},
+		},
+		{
+			name:     "positive infinity",
+			input:    map[string]float64{"A": math.Inf(1)},
+			expected: map[string]any{"A": "+Inf"},
+		},
+		{
+			name:     "negative infinity",
+			input:    map[string]float64{"A": math.Inf(-1)},
+			expected: map[string]any{"A": "-Inf"},
+		},
+		{
+			name:     "mixed values",
+			input:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+			expected: map[string]any{"A": "NaN", "B": "+Inf", "C": "-Inf", "D": 10.5},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := jsonifyValues(tt.input)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestUnjsonifyValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]any
+		expected    map[string]float64
+		expectedErr string
+	}{
+		{
+			name:     "nil map",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty map",
+			input:    map[string]any{},
+			expected: map[string]float64{},
+		},
+		{
+			name:     "regular float values",
+			input:    map[string]any{"A": 1.5, "B": -2.0, "C": 0.0},
+			expected: map[string]float64{"A": 1.5, "B": -2.0, "C": 0.0},
+		},
+		{
+			name:     "NaN string",
+			input:    map[string]any{"A": "NaN"},
+			expected: map[string]float64{"A": math.NaN()},
+		},
+		{
+			name:     "positive infinity string",
+			input:    map[string]any{"A": "+Inf"},
+			expected: map[string]float64{"A": math.Inf(1)},
+		},
+		{
+			name:     "negative infinity string",
+			input:    map[string]any{"A": "-Inf"},
+			expected: map[string]float64{"A": math.Inf(-1)},
+		},
+		{
+			name:     "mixed values",
+			input:    map[string]any{"A": "NaN", "B": "+Inf", "C": "-Inf", "D": 10.5},
+			expected: map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+		},
+		{
+			name:        "invalid string value",
+			input:       map[string]any{"A": "invalid"},
+			expectedErr: `invalid string value for key "A": "invalid"`,
+		},
+		{
+			name:        "invalid type (int)",
+			input:       map[string]any{"A": 42},
+			expectedErr: `invalid value type for key "A": int`,
+		},
+		{
+			name:        "invalid type (bool)",
+			input:       map[string]any{"A": true},
+			expectedErr: `invalid value type for key "A": bool`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := unjsonifyValues(tt.input)
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			require.True(t, cmp.Equal(tt.expected, result, cmpopts.EquateNaNs()), "mismatch: %s", cmp.Diff(tt.expected, result, cmpopts.EquateNaNs()))
+		})
+	}
+}
+
+func TestJsonifyUnjsonifyRoundTrip(t *testing.T) {
+	tests := []struct {
+		name  string
+		input map[string]float64
+	}{
+		{
+			name:  "regular values",
+			input: map[string]float64{"A": 1.5, "B": -2.0, "C": 0},
+		},
+		{
+			name:  "special values",
+			input: map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1)},
+		},
+		{
+			name:  "mixed values",
+			input: map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5, "E": 0},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jsonified := jsonifyValues(tt.input)
+			result, err := unjsonifyValues(jsonified)
+			require.NoError(t, err)
+			require.True(t, cmp.Equal(tt.input, result, cmpopts.EquateNaNs()), "round-trip mismatch: %s", cmp.Diff(tt.input, result, cmpopts.EquateNaNs()))
 		})
 	}
 }

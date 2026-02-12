@@ -20,11 +20,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -148,16 +143,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationList"
@@ -215,11 +200,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
@@ -233,11 +213,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
@@ -257,11 +232,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
@@ -273,11 +243,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
@@ -431,11 +396,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -485,11 +445,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
@@ -551,11 +506,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
@@ -573,11 +523,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
@@ -589,11 +534,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
@@ -675,11 +615,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -691,11 +626,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -793,11 +723,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
@@ -809,11 +734,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
                 }
@@ -1028,10 +948,7 @@
       },
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec": {
         "type": "object",
-        "additionalProperties": {
-          "type": "object",
-          "additionalProperties": {}
-        }
+        "additionalProperties": {}
       },
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTransformationSpec": {
         "type": "object",
@@ -1476,8 +1393,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

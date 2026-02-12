@@ -69,6 +69,12 @@
         "placeholder-select-format": "Wybierz format",
         "run-query": "Uruchom zapytanie"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Naciśnij CTRL/CMD + Return, aby uruchomić zapytanie",
         "tooltip-collapse": "Zwiń edytor",

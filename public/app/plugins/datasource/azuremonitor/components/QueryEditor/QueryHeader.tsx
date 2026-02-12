@@ -84,12 +84,9 @@ export const QueryHeader = ({
     }
 
     const goingToBuilder = newMode === LogsEditorMode.Builder;
-    const goingToRaw = newMode === LogsEditorMode.Raw;
-
     const hasRawKql = !!query.azureLogAnalytics?.query;
-    const hasBuilderQuery = !!query.azureLogAnalytics?.builderQuery;
 
-    if ((goingToBuilder && hasRawKql) || (goingToRaw && hasBuilderQuery)) {
+    if (goingToBuilder && hasRawKql) {
       setPendingModeChange(newMode);
       setShowModeSwitchWarning(true);
     } else {
@@ -103,7 +100,7 @@ export const QueryHeader = ({
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
         mode,
-        query: '',
+        query: mode === LogsEditorMode.Builder ? undefined : query.azureLogAnalytics?.query,
         builderQuery: mode === LogsEditorMode.Raw ? undefined : query.azureLogAnalytics?.builderQuery,
         dashboardTime: mode === LogsEditorMode.Builder ? true : undefined,
       },
@@ -123,10 +120,7 @@ export const QueryHeader = ({
                   'components.query-header.body-switching-to-builder',
                   'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
                 )
-              : t(
-                  'components.query-header.body-switching-to-kql',
-                  'Switching to KQL will discard your current builder settings. Are you sure?'
-                )
+              : null
           }
           confirmText={t('components.query-header.confirmText-switch-to', 'Switch to {{newMode}}', {
             newMode: pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL',

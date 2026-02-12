@@ -2,6 +2,7 @@ import { HttpResponse } from 'msw';
 
 import {
   ContactPointFactory,
+  ContactPointMetadataAnnotationsFactory,
   EmailIntegrationFactory,
   ListReceiverApiResponseFactory,
   SlackIntegrationFactory,
@@ -33,3 +34,48 @@ export const simpleContactPointsList = ListReceiverApiResponseFactory.build({
 export const simpleContactPointsListScenario = [listReceiverHandler(simpleContactPointsList)];
 
 export const withErrorScenario = [listReceiverHandler(() => new HttpResponse(null, { status: 500 }))];
+
+// Contact points with different canUse values for testing filter functionality
+export const contactPointsListWithUnusableItems = ListReceiverApiResponseFactory.build({
+  items: [
+    // Regular contact point (canUse: true)
+    ContactPointFactory.build({
+      spec: {
+        title: 'regular-contact-point',
+        integrations: [EmailIntegrationFactory.build()],
+      },
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/provenance': '',
+        }),
+      },
+    }),
+    // Imported contact point (canUse: false)
+    ContactPointFactory.build({
+      spec: {
+        title: 'imported-contact-point',
+        integrations: [SlackIntegrationFactory.build()],
+      },
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/provenance': 'converted_prometheus',
+          'grafana.com/canUse': 'false',
+        }),
+      },
+    }),
+    // API provisioned contact point (canUse: true)
+    ContactPointFactory.build({
+      spec: {
+        title: 'api-provisioned-contact-point',
+        integrations: [EmailIntegrationFactory.build()],
+      },
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/provenance': 'api',
+        }),
+      },
+    }),
+  ],
+});
+
+export const contactPointsListWithUnusableItemsScenario = [listReceiverHandler(contactPointsListWithUnusableItems)];

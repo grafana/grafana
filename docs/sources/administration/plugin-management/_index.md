@@ -129,3 +129,5 @@ When enabled, plugins run in a separate JavaScript context, which provides sever
 - [Browse available plugins](/grafana/plugins)
 - [Develop your own plugins](/developers/plugin-tools)
 - [Reach out to the plugin development Community](https://community.grafana.com/c/plugin-development/30)
+
+To administer, update, or delete your plugins, or to submit a new plugin, sign in to the [Plugins Admin page](https://grafana.com/orgs/grafana/plugins). Note that you need to be an administrator for the Grafana Cloud organization being used to publish the plugin.

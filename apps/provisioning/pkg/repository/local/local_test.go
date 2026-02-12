@@ -16,7 +16,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -135,9 +134,8 @@ func TestLocal(t *testing.T) {
 			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
 
 			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
-			for _, err := range r.Validate() {
-				assert.Fail(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
-			}
+			// Validation is now handled by the validator function, not the repository instance
+			// The path resolution test is separate from validation
 		})
 	}
 
@@ -162,13 +160,8 @@ func TestLocal(t *testing.T) {
 
 			require.Empty(t, r.path, "no path should be resolved")
 
-			errs := r.Validate()
-			require.NotEmpty(t, errs, "expected validation errors")
-			for _, err := range errs {
-				if !assert.Equal(t, "spec.local.path", err.Field) {
-					assert.FailNow(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
-				}
-			}
+			// Validation is now handled by the validator function, not the repository instance
+			// The path resolution test is separate from validation
 		})
 	}
 }
@@ -258,118 +251,6 @@ func TestLocalRepository_Test(t *testing.T) {
 			require.NoError(t, err, "Test method should not return an error")
 			assert.Equal(t, tc.expectedResult, results.Success, "Success flag should match expected")
 			assert.Equal(t, tc.expectedCode, results.Code, "Status code should match expected")
-		})
-	}
-}
-
-func TestLocalRepository_Validate(t *testing.T) {
-	testCases := []struct {
-		name          string
-		config        *provisioning.LocalRepositoryConfig
-		permittedPath string
-		expectedErrs  []field.Error
-	}{
-		{
-			name:          "valid configuration",
-			config:        &provisioning.LocalRepositoryConfig{Path: "valid/path"},
-			permittedPath: "valid",
-			expectedErrs:  nil,
-		},
-		{
-			name:          "missing local config",
-			config:        nil,
-			permittedPath: "valid",
-			expectedErrs: []field.Error{
-				{
-					Type:  field.ErrorTypeRequired,
-					Field: "spec.local",
-				},
-			},
-		},
-		{
-			name:          "empty path",
-			config:        &provisioning.LocalRepositoryConfig{Path: ""},
-			permittedPath: "valid",
-			expectedErrs: []field.Error{
-				{
-					Type:     field.ErrorTypeRequired,
-					Field:    "spec.local.path",
-					Detail:   "must enter a path to local file",
-					BadValue: "",
-				},
-			},
-		},
-		{
-			name:          "path not in permitted prefixes",
-			config:        &provisioning.LocalRepositoryConfig{Path: "invalid/path"},
-			permittedPath: "valid",
-			expectedErrs: []field.Error{
-				{
-					Type:     field.ErrorTypeInvalid,
-					Field:    "spec.local.path",
-					BadValue: "invalid/path",
-					Detail:   "the path given ('invalid/path') is invalid for a local repository (the path matches no permitted prefix)",
-				},
-			},
-		},
-		{
-			name:          "unsafe path with directory traversal",
-			config:        &provisioning.LocalRepositoryConfig{Path: "../../../etc/passwd"},
-			permittedPath: "valid",
-			expectedErrs: []field.Error{
-				{
-					Type:     field.ErrorTypeInvalid,
-					Field:    "spec.local.path",
-					BadValue: "../../../etc/passwd",
-					Detail:   "path contains traversal attempt (./ or ../)",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Create a temporary directory for testing
-			tempDir := t.TempDir()
-			permittedPath := filepath.Join(tempDir, tc.permittedPath)
-
-			// Create the permitted directory
-			if tc.permittedPath != "" {
-				err := os.MkdirAll(permittedPath, 0750)
-				require.NoError(t, err, "Failed to create permitted directory")
-			}
-
-			// Create a resolver that permits the specific path
-			resolver := &LocalFolderResolver{
-				PermittedPrefixes: []string{permittedPath},
-				HomePath:          tempDir,
-			}
-
-			// Create repository config
-			repoConfig := &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Local: tc.config,
-				},
-			}
-
-			// Create the repository
-			repo := NewRepository(repoConfig, resolver)
-
-			// Call the Validate method
-			errors := repo.Validate()
-
-			// Verify results
-			if tc.expectedErrs == nil {
-				assert.Empty(t, errors, "Expected no validation errors")
-			} else {
-				assert.Len(t, errors, len(tc.expectedErrs), "Number of validation errors should match expected")
-				for i, expectedErr := range tc.expectedErrs {
-					assert.Equal(t, expectedErr.Type, errors[i].Type, "Error type should match")
-					assert.Equal(t, expectedErr.Field, errors[i].Field, "Error field should match")
-					assert.Equal(t, expectedErr.Detail, errors[i].Detail, "Error detail should match")
-					assert.Equal(t, expectedErr.BadValue, errors[i].BadValue, "Error bad value should match")
-				}
-			}
 		})
 	}
 }

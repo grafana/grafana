@@ -91,9 +91,12 @@ export const isContentTypeJson = (headers: Headers) => {
   const contentType = headers.get('content-type');
   if (
     contentType &&
-    ['application/json', 'application/merge-patch+json', 'application/strategic-merge-patch+json'].includes(
-      contentType.toLowerCase()
-    )
+    [
+      'application/json',
+      'application/json-patch+json',
+      'application/merge-patch+json',
+      'application/strategic-merge-patch+json',
+    ].includes(contentType.toLowerCase())
   ) {
     return true;
   }

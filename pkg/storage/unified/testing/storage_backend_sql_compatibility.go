@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -27,20 +29,24 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
-	kv, err := resource.NewSQLKV(eDB)
+	dbConn, err := eDB.Init(ctx)
 	require.NoError(t, err)
-	db, err := eDB.Init(ctx)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 
 	kvOpts := resource.KVBackendOptions{
 		KvStore: kv,
 	}
 
+	if dbConn.DriverName() == "sqlite3" {
+		kvOpts.UseChannelNotifier = true
+	}
+
 	if withRvManager {
-		dialect := sqltemplate.DialectForDriver(db.DriverName())
+		dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect: dialect,
-			DB:      db,
+			DB:      dbConn,
 		})
 		require.NoError(t, err)
 
@@ -49,7 +55,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
-	return backend, db
+	return backend, dbConn
 }
 
 func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {
@@ -71,6 +77,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
 		{"cross backend consistency", runTestCrossBackendConsistency},
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
+		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 	}
 
 	for _, tc := range cases {
@@ -81,9 +88,27 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
+
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
+
+	// Search operations compatibility test (handled separately due to additional SearchServerFactory parameter)
+	t.Run("search operations compatibility", func(t *testing.T) {
+		if opts.SkipTests["search operations compatibility"] {
+			t.Skip()
+		}
+
+		kvbackend, db := newKvBackend(t.Context())
+		sqlbackend, _ := newSqlBackend(t.Context())
+
+		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
+	})
+}
+
+func newIntegrationTestContext(t *testing.T) context.Context {
+	t.Helper()
+	return testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
@@ -194,7 +219,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	var keyPathRV int64
 	if isSqlBackend {
 		// Convert microsecond RV to snowflake for key_path construction
-		keyPathRV = rvmanager.SnowflakeFromRv(resourceVersion)
+		keyPathRV = rvmanager.SnowflakeFromRV(resourceVersion)
 	} else {
 		// KV backend already provides snowflake RV
 		keyPathRV = resourceVersion
@@ -428,9 +453,6 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceHistoryRecord
 	for rows.Next() {
@@ -454,33 +476,34 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 	for resourceIdx, res := range resources {
 		// Check create record (action=1, generation=1)
 		createRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, createRecord, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
+		verifyResourceHistoryRecord(t, createRecord, namespace, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources {
 		// Check update record (action=2, generation=2)
 		updateRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, updateRecord, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
+		verifyResourceHistoryRecord(t, updateRecord, namespace, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources[:2] {
 		// Check delete record (action=3, generation=0) - only first 2 resources were deleted
 		deleteRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, deleteRecord, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
+		verifyResourceHistoryRecord(t, deleteRecord, namespace, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
 		recordIndex++
 	}
 }
 
 // verifyResourceHistoryRecord validates a single resource_history record
-func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
+func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, namespace string, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
 	// Validate GUID (should be non-empty)
 	require.NotEmpty(t, record.GUID, "GUID should not be empty")
 
 	// Validate group/resource/namespace/name
 	require.Equal(t, "playlist.grafana.app", record.Group)
 	require.Equal(t, "playlists", record.Resource)
+	require.Equal(t, namespace, record.Namespace)
 	require.Equal(t, expectedRes.name, record.Name)
 
 	// Validate value contains expected JSON - server modifies/formats the JSON differently for different operations
@@ -507,8 +530,12 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	// For KV backend operations, expectedPrevRV is now in snowflake format (returned by KV backend)
 	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(expectedPrevRV, record.PreviousResourceVersion),
-			"Previous resource version should match (KV backend snowflake format)")
+		if expectedPrevRV == 0 {
+			require.Zero(t, record.PreviousResourceVersion)
+		} else {
+			require.Equal(t, expectedPrevRV, rvmanager.SnowflakeFromRV(record.PreviousResourceVersion),
+				"Previous resource version should match (KV backend snowflake format)")
+		}
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
 	}
@@ -540,9 +567,6 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceRecord
 	for rows.Next() {
@@ -606,9 +630,6 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceVersionRecord
 	for rows.Next() {
@@ -643,7 +664,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	isKvBackend := strings.Contains(namespace, "-kv")
 	recordResourceVersion := record.ResourceVersion
 	if isKvBackend {
-		recordResourceVersion = rvmanager.SnowflakeFromRv(record.ResourceVersion)
+		recordResourceVersion = rvmanager.SnowflakeFromRV(record.ResourceVersion)
 	}
 
 	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
@@ -652,7 +673,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 
 // runTestCrossBackendConsistency tests basic consistency between SQL and KV backends (lightweight)
 func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := newIntegrationTestContext(t)
 
 	// Create storage servers from both backends
 	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -691,7 +712,7 @@ func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resou
 		t.Skip("Skipping concurrent operations stress test on SQLite")
 	}
 
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := newIntegrationTestContext(t)
 
 	// Create storage servers from both backends
 	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -727,6 +748,435 @@ func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resou
 	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
 		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
 	})
+}
+
+func runTestOptimisticLockingDatabaseIntegrity(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	// Skip on SQLite due to concurrency limitations
+	if db.DriverName() == "sqlite3" {
+		t.Skip("Skipping optimistic locking database integrity test on SQLite")
+	}
+
+	// Keep this short: namespace has a 63-char limit and test prefixes are random.
+	baseNamespace := nsPrefix + "-oldb"
+
+	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
+		runOptimisticLockingDatabaseIntegrityForBackend(t, sqlBackend, baseNamespace+"-sql", db, ctx)
+	})
+
+	t.Run("KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
+		runOptimisticLockingDatabaseIntegrityForBackend(t, kvBackend, baseNamespace+"-kv", db, ctx)
+	})
+}
+
+type optimisticResourceState struct {
+	name      string
+	currentRV int64
+	exists    bool
+}
+
+type writeRaceResult struct {
+	rv      int64
+	err     error
+	payload string
+}
+
+func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resource.StorageBackend, namespace string, db sqldb.DB, ctx context.Context) {
+	const (
+		resourceCount      = 5
+		concurrentRequests = 5
+		group              = "dashboard.grafana.app"
+		resourceName       = "dashboards"
+	)
+
+	states := make([]optimisticResourceState, 0, resourceCount)
+
+	// Create 5 resources. For each resource name, send 5 concurrent create requests with different titles.
+	for i := range resourceCount {
+		name := fmt.Sprintf("db-int-dashboard-%d", i+1)
+		sentTitles := make(map[string]struct{}, concurrentRequests*3)
+
+		var (
+			createdSuccessfully bool
+			currentRV           int64
+		)
+
+		// Retry the concurrent create race a few times to avoid flaky all-failed batches.
+		for attempt := 1; attempt <= 3 && !createdSuccessfully; attempt++ {
+			start := make(chan struct{})
+			results := make(chan writeRaceResult, concurrentRequests)
+			var wg sync.WaitGroup
+
+			for j := range concurrentRequests {
+				wg.Go(func() {
+					<-start
+					title := fmt.Sprintf("create-title-%d-%d-attempt-%d", i+1, j+1, attempt)
+					rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+						WithNamespace(namespace),
+						WithGroup(group),
+						WithResource(resourceName),
+						WithFolder(""),
+						WithValue(title))
+					results <- writeRaceResult{rv: rv, err: err, payload: title}
+				})
+			}
+			close(start)
+			wg.Wait()
+			close(results)
+
+			successes := 0
+			for res := range results {
+				sentTitles[res.payload] = struct{}{}
+				if res.err == nil {
+					successes++
+				}
+			}
+			require.LessOrEqual(t, successes, 1, "at most one create should succeed for %s", name)
+
+			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+			require.LessOrEqual(t, len(history), 1, "expected at most one resource_history record after concurrent create for %s", name)
+
+			resourceRow, resourceExists := queryResourceRow(t, db, namespace, group, resourceName, name)
+			if len(history) == 0 {
+				require.False(t, resourceExists, "resource row should not exist when history is empty after create race for %s", name)
+				continue
+			}
+			require.True(t, resourceExists, "resource row should exist when one history row exists for %s", name)
+
+			require.Equal(t, 1, history[0].Action, "create action should be persisted for %s", name)
+			_, titleWasSent := sentTitles[extractSpecValue(t, history[0].Value)]
+			require.True(t, titleWasSent, "stored create payload must be one of the attempted create payloads for %s", name)
+
+			requireResourceMatchesHistory(t, *resourceRow, history[0], name)
+
+			existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, name)
+			require.True(t, existsInBackend, "resource should exist in backend after successful create for %s", name)
+			currentRV = rv
+			createdSuccessfully = true
+		}
+
+		if !createdSuccessfully {
+			// KV + RV manager may batch same-key concurrent creates and roll back all of them.
+			// Seed one deterministic create so the remaining integrity scenarios can proceed.
+			title := fmt.Sprintf("create-title-%d-bootstrap", i+1)
+			rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+				WithNamespace(namespace),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(title))
+			require.NoError(t, err, "bootstrap create must succeed for %s", name)
+
+			history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+			require.Len(t, history, 1, "expected a single resource_history record after bootstrap create for %s", name)
+			resourceRow, ok := queryResourceRow(t, db, namespace, group, resourceName, name)
+			require.True(t, ok, "resource row should exist after bootstrap create for %s", name)
+			require.Equal(t, title, extractSpecValue(t, history[0].Value), "bootstrap create payload mismatch for %s", name)
+			requireResourceMatchesHistory(t, *resourceRow, history[0], name)
+
+			currentRV = rv
+			createdSuccessfully = true
+		}
+
+		states = append(states, optimisticResourceState{
+			name:      name,
+			currentRV: currentRV,
+			exists:    true,
+		})
+	}
+
+	// For each resource, send 5 concurrent updates with the same previous RV and different titles.
+	for i := range states {
+		state := &states[i]
+		require.True(t, state.exists, "resource must exist before update race: %s", state.name)
+
+		start := make(chan struct{})
+		results := make(chan writeRaceResult, concurrentRequests)
+		var wg sync.WaitGroup
+		baseRV := state.currentRV
+
+		for j := range concurrentRequests {
+			wg.Go(func() {
+				<-start
+				title := fmt.Sprintf("update-title-%d-%d", i+1, j+1)
+				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
+					WithNamespaceAndRV(namespace, baseRV),
+					WithGroup(group),
+					WithResource(resourceName),
+					WithFolder(""),
+					WithValue(title))
+				results <- writeRaceResult{rv: rv, err: err, payload: title}
+			})
+		}
+		close(start)
+		wg.Wait()
+		close(results)
+
+		successes := 0
+		for res := range results {
+			if res.err == nil {
+				successes++
+				state.currentRV = res.rv
+			}
+		}
+		require.LessOrEqual(t, successes, 1, "at most one update should succeed for %s", state.name)
+
+		assertLatestHistoryAndResourceAreSynced(t, db, namespace, group, resourceName, state.name)
+		existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, state.name)
+		state.exists = existsInBackend
+		if existsInBackend {
+			state.currentRV = rv
+		}
+	}
+
+	// Update + delete race. Update request is intentionally fired first, delete shortly after.
+	for i := range states {
+		state := &states[i]
+		require.True(t, state.exists, "resource must exist before update+delete race: %s", state.name)
+
+		baseRV := state.currentRV
+		start := make(chan struct{})
+		results := make(chan struct {
+			op string
+			writeRaceResult
+		}, 2)
+		var wg sync.WaitGroup
+
+		wg.Go(func() {
+			<-start
+			title := fmt.Sprintf("race-update-title-%d", i+1)
+			rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_MODIFIED,
+				WithNamespaceAndRV(namespace, baseRV),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(title))
+			results <- struct {
+				op string
+				writeRaceResult
+			}{op: "update", writeRaceResult: writeRaceResult{rv: rv, err: err, payload: title}}
+		})
+
+		wg.Go(func() {
+			<-start
+			// Keep requests concurrent while making update reach storage first.
+			time.Sleep(5 * time.Millisecond)
+			rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_DELETED,
+				WithNamespaceAndRV(namespace, baseRV),
+				WithGroup(group),
+				WithResource(resourceName),
+				WithFolder(""),
+				WithValue(fmt.Sprintf("race-delete-%d", i+1)))
+			results <- struct {
+				op string
+				writeRaceResult
+			}{op: "delete", writeRaceResult: writeRaceResult{rv: rv, err: err}}
+		})
+
+		close(start)
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			if res.err != nil {
+				continue
+			}
+			if res.op == "update" {
+				state.currentRV = res.rv
+				state.exists = true
+			} else {
+				state.currentRV = res.rv
+				state.exists = false
+			}
+		}
+
+		assertLatestHistoryAndResourceAreSynced(t, db, namespace, group, resourceName, state.name)
+		existsInBackend, rv := readBackendResourceState(t, backend, namespace, group, resourceName, state.name)
+		state.exists = existsInBackend
+		if existsInBackend {
+			state.currentRV = rv
+		}
+	}
+
+	// Send 5 concurrent deletes for each resource and verify one delete history entry in total per resource.
+	for i := range states {
+		state := &states[i]
+		start := make(chan struct{})
+		results := make(chan writeRaceResult, concurrentRequests)
+		var wg sync.WaitGroup
+		baseRV := state.currentRV
+
+		for j := range concurrentRequests {
+			wg.Go(func() {
+				<-start
+				// Keep requests concurrent but avoid same-batch rollback behavior.
+				time.Sleep(time.Duration(j) * 2 * time.Millisecond)
+				rv, err := WriteEvent(ctx, backend, state.name, resourcepb.WatchEvent_DELETED,
+					WithNamespaceAndRV(namespace, baseRV),
+					WithGroup(group),
+					WithResource(resourceName),
+					WithFolder(""),
+					WithValue(fmt.Sprintf("delete-title-%d-%d", i+1, j+1)))
+				results <- writeRaceResult{rv: rv, err: err}
+			})
+		}
+		close(start)
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			if res.err == nil {
+				state.currentRV = res.rv
+				state.exists = false
+			}
+		}
+
+		history := queryResourceHistoryRows(t, db, namespace, group, resourceName, state.name)
+		deleteCount := 0
+		for _, h := range history {
+			if h.Action == 3 {
+				deleteCount++
+			}
+		}
+		require.Equal(t, 1, deleteCount, "expected exactly one delete history record for %s", state.name)
+
+		_, ok := queryResourceRow(t, db, namespace, group, resourceName, state.name)
+		require.False(t, ok, "resource should not exist after delete race for %s", state.name)
+	}
+}
+
+func queryResourceHistoryRows(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) []ResourceHistoryRecord {
+	t.Helper()
+	ctx := t.Context()
+	query := buildCrossDatabaseQuery(db.DriverName(), `
+		SELECT guid, "group", resource, namespace, name, value, action, folder,
+		       previous_resource_version, generation, resource_version
+		FROM resource_history
+		WHERE namespace = ? AND "group" = ? AND resource = ? AND name = ?
+		ORDER BY resource_version ASC
+	`)
+
+	rows, err := db.QueryContext(ctx, query, namespace, group, resourceName, name)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var out []ResourceHistoryRecord
+	for rows.Next() {
+		var record ResourceHistoryRecord
+		err := rows.Scan(
+			&record.GUID, &record.Group, &record.Resource, &record.Namespace, &record.Name,
+			&record.Value, &record.Action, &record.Folder, &record.PreviousResourceVersion,
+			&record.Generation, &record.ResourceVersion,
+		)
+		require.NoError(t, err)
+		out = append(out, record)
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+func queryResourceRow(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) (*ResourceRecord, bool) {
+	t.Helper()
+	ctx := t.Context()
+	query := buildCrossDatabaseQuery(db.DriverName(), `
+		SELECT guid, "group", resource, namespace, name, value, action, folder,
+		       previous_resource_version, resource_version
+		FROM resource
+		WHERE namespace = ? AND "group" = ? AND resource = ? AND name = ?
+	`)
+
+	rows, err := db.QueryContext(ctx, query, namespace, group, resourceName, name)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var out []ResourceRecord
+	for rows.Next() {
+		var record ResourceRecord
+		err := rows.Scan(
+			&record.GUID, &record.Group, &record.Resource, &record.Namespace, &record.Name,
+			&record.Value, &record.Action, &record.Folder, &record.PreviousResourceVersion,
+			&record.ResourceVersion,
+		)
+		require.NoError(t, err)
+		out = append(out, record)
+	}
+	require.NoError(t, rows.Err())
+
+	require.LessOrEqual(t, len(out), 1, "resource table must have at most one row for a unique key")
+	if len(out) == 0 {
+		return nil, false
+	}
+	return &out[0], true
+}
+
+func extractSpecValue(t *testing.T, rawJSON string) string {
+	t.Helper()
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(rawJSON), &payload))
+
+	spec, ok := payload["spec"].(map[string]any)
+	require.True(t, ok, "resource value should include spec object")
+
+	value, ok := spec["value"].(string)
+	require.True(t, ok, "resource value should include spec.value string")
+	return value
+}
+
+func requireResourceMatchesHistory(t *testing.T, resourceRow ResourceRecord, historyRow ResourceHistoryRecord, name string) {
+	t.Helper()
+	require.Equal(t, historyRow.GUID, resourceRow.GUID, "guid mismatch for %s", name)
+	require.Equal(t, historyRow.Group, resourceRow.Group, "group mismatch for %s", name)
+	require.Equal(t, historyRow.Resource, resourceRow.Resource, "resource mismatch for %s", name)
+	require.Equal(t, historyRow.Namespace, resourceRow.Namespace, "namespace mismatch for %s", name)
+	require.Equal(t, historyRow.Name, resourceRow.Name, "name mismatch for %s", name)
+	require.Equal(t, historyRow.Action, resourceRow.Action, "action mismatch for %s", name)
+	require.Equal(t, historyRow.Folder, resourceRow.Folder, "folder mismatch for %s", name)
+	require.Equal(t, historyRow.ResourceVersion, resourceRow.ResourceVersion, "resource_version mismatch for %s", name)
+	require.JSONEq(t, historyRow.Value, resourceRow.Value, "value mismatch for %s", name)
+}
+
+func assertLatestHistoryAndResourceAreSynced(t *testing.T, db sqldb.DB, namespace, group, resourceName, name string) {
+	t.Helper()
+	history := queryResourceHistoryRows(t, db, namespace, group, resourceName, name)
+	require.NotEmpty(t, history, "resource_history must contain rows for %s", name)
+	latest := history[len(history)-1]
+
+	resourceRow, exists := queryResourceRow(t, db, namespace, group, resourceName, name)
+	if latest.Action == 3 {
+		require.False(t, exists, "resource row must not exist when latest history action is delete for %s", name)
+		return
+	}
+
+	require.True(t, exists, "resource row must exist for non-deleted latest history row %s", name)
+	requireResourceMatchesHistory(t, *resourceRow, latest, name)
+}
+
+func readBackendResourceState(t *testing.T, backend resource.StorageBackend, namespace, group, resourceName, name string) (bool, int64) {
+	t.Helper()
+
+	resp := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     group,
+			Resource:  resourceName,
+			Name:      name,
+		},
+	})
+
+	if resp.Error != nil {
+		if resp.Error.Code == int32(http.StatusNotFound) {
+			return false, 0
+		}
+		require.Failf(t, "unexpected backend read error", "name=%s code=%d message=%s", name, resp.Error.Code, resp.Error.Message)
+		return false, 0
+	}
+
+	return true, resp.ResourceVersion
 }
 
 // runWriteToOneReadFromBoth writes resources to one backend then reads from both to verify consistency
@@ -840,24 +1290,20 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	}
 
 	// SQL backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
 			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// KV backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
 			errors <- fmt.Errorf("KV backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// Start both goroutines simultaneously
 	close(startBarrier)
@@ -1272,4 +1718,332 @@ func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.Greater(t, deleted.ResourceVersion, int64(0))
 
 	return deleted
+}
+
+// createStorageServer creates a ResourceServer without search enabled (storage-api only)
+func createStorageServer(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+	return server
+}
+
+// verifySearchServerStats verifies GetStats returns expected count from search server
+func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer, namespace string, expectedCount int64) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	stats, err := searchServer.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: namespace,
+	})
+	require.NoError(t, err)
+	require.Nil(t, stats.Error, "GetStats returned error: %v", stats.Error)
+
+	// GetStats returns aggregate stats per group/resource
+	// Since we only create playlists, we expect 1 stat entry
+	require.Len(t, stats.Stats, 1, "Expected 1 stat entry for playlist.grafana.app/playlists")
+	require.Equal(t, expectedCount, stats.Stats[0].Count, "Resource count mismatch")
+
+	t.Logf("GetStats OK: %d resources in namespace %s", expectedCount, namespace)
+}
+
+// verifySearchServerResults verifies Search returns expected results from search server
+func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServer, namespace string, query string, expectedHits int, expectedNames []string) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+			},
+		},
+		Query: query,
+		Limit: 100, // high enough to get all results
+	}
+
+	searchResp, err := searchServer.Search(ctx, searchReq)
+	require.NoError(t, err)
+	require.Nil(t, searchResp.Error, "Search returned error: %v", searchResp.Error)
+
+	// Verify total hits
+	require.Equal(t, int64(expectedHits), searchResp.TotalHits, "Search hits mismatch")
+
+	// Verify result names match expected (order-agnostic)
+	require.NotNil(t, searchResp.Results, "Search results should not be nil")
+	actualNames := make([]string, 0, len(searchResp.Results.Rows))
+	for _, row := range searchResp.Results.Rows {
+		actualNames = append(actualNames, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, actualNames, "Search result names mismatch")
+
+	// Log for debugging
+	queryDesc := query
+	if queryDesc == "" {
+		queryDesc = "(all)"
+	}
+	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
+}
+
+// SearchServerFactory is a function that creates a ResourceServer with search enabled
+type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer
+
+// runTestSearchOperationsCompatibility tests search-api with different backend combinations
+// Simulates production rollout: Phase 1 (search=sql, storage=mixed) -> Phase 2 (search=kv, storage=kv)
+// The searchServerFactory parameter allows the caller to provide a function that creates search-enabled servers,
+// avoiding import cycles with the search package.
+func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB, searchServerFactory SearchServerFactory) {
+	// Skip on SQLite due to concurrency limitations
+	if db.DriverName() == "sqlite3" {
+		t.Skip("Skipping search operations compatibility test on SQLite")
+	}
+
+	// Search server factory is required for search compatibility tests
+	require.NotNil(t, searchServerFactory, "SearchServerFactory must be provided in TestOptions for search compatibility tests")
+
+	// Test 1: Phase 1 Rollout - Search server uses SQL backend, Storage servers use both
+	// This simulates the transitional state where storage-api migrates to sqlkv
+	// while search-api continues using sqlbackend
+	t.Run("Search with SQL backend, Storage mixed", func(t *testing.T) {
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:    nsPrefix + "-search-sql",
+			searchServer: searchServerFactory(t, sqlBackend),
+			alphaStorage: createStorageServer(t, sqlBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "sql",
+			betaPrefix:   "kv",
+		})
+	})
+
+	// Test 2: Phase 2 Final State - All servers use KV backend
+	// This simulates the final state after complete migration to sqlkv
+	t.Run("Search with KV backend, Storage KV", func(t *testing.T) {
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:    nsPrefix + "-search-kv",
+			searchServer: searchServerFactory(t, kvBackend),
+			alphaStorage: createStorageServer(t, kvBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "kv1",
+			betaPrefix:   "kv2",
+		})
+	})
+}
+
+// numberToWord converts numbers 1-8 to words for test data variety
+func numberToWord(n int) string {
+	words := []string{"Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"}
+	if n >= 0 && n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprintf("%d", n)
+}
+
+// searchCompatibilityTestConfig defines configuration for a search compatibility test scenario
+type searchCompatibilityTestConfig struct {
+	namespace    string                  // namespace for test isolation
+	searchServer resource.ResourceServer // search server (with search enabled)
+	alphaStorage resource.ResourceServer // storage server for Alpha resources
+	betaStorage  resource.ResourceServer // storage server for Beta resources
+	alphaPrefix  string                  // prefix for Alpha resource names (e.g., "sql", "kv1")
+	betaPrefix   string                  // prefix for Beta resource names (e.g., "kv", "kv2")
+}
+
+// runSearchCompatibilityScenario runs a complete search compatibility test scenario
+// with create, update, and delete phases
+func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestConfig) {
+	t.Helper()
+	ctx := newIntegrationTestContext(t)
+
+	searchServer := cfg.searchServer
+
+	// Track resource versions for update/delete phases
+	resourceVersions := make(map[string]int64)
+
+	// Helper to generate resource name
+	alphaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-alpha-%d", cfg.alphaPrefix, i)
+	}
+	betaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-beta-%d", cfg.betaPrefix, i)
+	}
+
+	// Phase A: Alpha storage creates resources with "Alpha" prefix
+	t.Run("Phase A: Create Alpha resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		expectedNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 4)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 4, expectedNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, expectedNames)
+	})
+
+	// Phase B: Beta storage creates resources with "Beta" prefix
+	t.Run("Phase B: Create Beta resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		allNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			betaName(1), betaName(2), betaName(3), betaName(4),
+		}
+		alphaNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		betaNames := []string{betaName(1), betaName(2), betaName(3), betaName(4)}
+
+		verifySearchServerStats(t, searchServer, cfg.namespace, 8)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 8, allNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 4, betaNames)
+	})
+
+	// Phase C: Alpha storage creates more Alpha resources
+	t.Run("Phase C: Create more Alpha resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 11)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+	})
+
+	// Phase D: Beta storage creates more Beta resources
+	t.Run("Phase D: Create more Beta resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase E: Update resources and verify search reflects changes
+	t.Run("Phase E: Update resources and verify search", func(t *testing.T) {
+		// Update first Alpha resource with new title containing "Updated"
+		name := alphaName(1)
+		updated := updatePlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-alpha-1", cfg.alphaPrefix),
+			Generation: 2,
+			Title:      "Updated Alpha Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Update first Beta resource with new title containing "Updated"
+		name = betaName(1)
+		updated = updatePlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-beta-1", cfg.betaPrefix),
+			Generation: 2,
+			Title:      "Updated Beta Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Verify total count remains 14
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+
+		// Verify search for "Updated" returns 2 results
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+
+		// Verify Alpha and Beta counts remain correct
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase F: Delete resources and verify search reflects removal
+	t.Run("Phase F: Delete resources and verify search", func(t *testing.T) {
+		// Delete last Alpha resource
+		name := alphaName(7)
+		deletePlaylistResource(t, cfg.alphaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Delete last Beta resource
+		name = betaName(7)
+		deletePlaylistResource(t, cfg.betaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Verify total count is now 12 (14 - 2 deleted)
+		verifySearchServerStats(t, searchServer, cfg.namespace, 12)
+
+		// Verify Alpha count is now 6 (7 - 1 deleted)
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 6, alphaNames)
+
+		// Verify Beta count is now 6 (7 - 1 deleted)
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 6, betaNames)
+
+		// Verify "Updated" search still returns 2 results (updated resources weren't deleted)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+	})
 }

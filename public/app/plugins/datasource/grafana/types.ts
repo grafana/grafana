@@ -18,8 +18,6 @@ export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
   List = 'list',
   Read = 'read',
-  Search = 'search',
-  SearchNext = 'searchNext',
 }
 
 export interface GrafanaQuery extends DataQuery {

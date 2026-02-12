@@ -1,4 +1,4 @@
-import store from 'app/core/store';
+import { store } from '@grafana/data';
 import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types/explore';
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';

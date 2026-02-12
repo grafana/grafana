@@ -187,6 +187,7 @@ export const MenuItem = React.memo(
             )}
             {hasSubMenu && (
               <SubMenu
+                parentItemRef={localRef}
                 items={childItems}
                 isOpen={isSubMenuOpen}
                 close={closeSubMenu}

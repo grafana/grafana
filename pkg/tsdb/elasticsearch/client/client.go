@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Used in logging to mark a stage
@@ -35,6 +34,7 @@ type DatasourceInfo struct {
 	Interval                   string
 	MaxConcurrentShardRequests int64
 	IncludeFrozen              bool
+	ClusterInfo                ClusterInfo
 }
 
 type ConfiguredFields struct {
@@ -159,7 +159,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		resSpan.End()
 	}()
 
-	improvedParsingEnabled := isFeatureEnabled(c.ctx, featuremgmt.FlagElasticsearchImprovedParsing)
+	improvedParsingEnabled := isFeatureEnabled(c.ctx, "elasticsearchImprovedParsing")
 	msr, err := c.parser.parseMultiSearchResponse(res.Body, improvedParsingEnabled)
 	if err != nil {
 		return nil, err
@@ -197,7 +197,11 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
-	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", c.ds.MaxConcurrentShardRequests))
+	// if the build flavor is not serverless, we can use the max concurrent shard requests
+	// this is because serverless clusters do not support max concurrent shard requests
+	if !c.ds.ClusterInfo.IsServerless() && c.ds.MaxConcurrentShardRequests > 0 {
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", c.ds.MaxConcurrentShardRequests))
+	}
 
 	if c.ds.IncludeFrozen {
 		qs = append(qs, "ignore_throttled=false")

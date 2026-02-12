@@ -8,7 +8,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -27,8 +26,6 @@ var (
 
 // RequestMetrics is a middleware handler that instruments the request.
 func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promRegister prometheus.Registerer) web.Middleware {
-	log := log.New("middleware.request-metrics")
-
 	httpRequestsInFlight := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: "grafana",
@@ -58,27 +55,24 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
-		// the recommended default value from the prom_client
-		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-		// Giving this variable a value means the client will expose a native
-		// histogram.
-		reqDurationOptions.NativeHistogramBucketFactor = 1.1
-		reqSizeOptions.NativeHistogramBucketFactor = 1.1
-		// The default value in OTel. It probably good enough for us as well.
-		reqDurationOptions.NativeHistogramMaxBucketNumber = 160
-		reqSizeOptions.NativeHistogramMaxBucketNumber = 160
-		reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
-		reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
+	// the recommended default value from the prom_client
+	// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
+	// Giving this variable a value means the client will expose a native
+	// histogram.
+	reqDurationOptions.NativeHistogramBucketFactor = 1.1
+	reqSizeOptions.NativeHistogramBucketFactor = 1.1
+	// The default value in OTel. It probably good enough for us as well.
+	reqDurationOptions.NativeHistogramMaxBucketNumber = 160
+	reqSizeOptions.NativeHistogramMaxBucketNumber = 160
+	reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
+	reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
-			// setting Buckets to nil with native options set means the classic
-			// histogram will no longer be exposed - this can be a good way to
-			// reduce cardinality in the exposed metrics
-			reqDurationOptions.Buckets = nil
-			reqSizeOptions.Buckets = nil
-		}
+	if !cfg.ClassicHTTPHistogramEnabled {
+		// setting Buckets to nil with native options set means the classic
+		// histogram will no longer be exposed - this can be a good way to
+		// reduce cardinality in the exposed metrics
+		reqDurationOptions.Buckets = nil
+		reqSizeOptions.Buckets = nil
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(
@@ -112,12 +106,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
 				if status == http.StatusNotFound {
 					handler = "notfound"
-				} else {
-					// log requests where we could not identify handler so we can register them.
-					//nolint:staticcheck // not yet migrated to OpenFeature
-					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
-						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
-					}
 				}
 			}
 

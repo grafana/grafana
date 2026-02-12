@@ -74,8 +74,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   };
 
   const pingInfluxForProductDetection = async (urlValue: string) => {
-    const dsId = options.id;
-    if (!dsId) {
+    const dsUID = options.uid;
+    if (!dsUID) {
       return;
     }
 
@@ -83,7 +83,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       const res = await firstValueFrom(
         getBackendSrv().fetch({
           method: 'GET',
-          url: `/api/datasources/proxy/${dsId}/ping`,
+          url: `/api/datasources/proxy/uid/${dsUID}/ping`,
           headers: { Accept: 'application/json' },
           responseType: 'text',
           showErrorAlert: false,
@@ -168,7 +168,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps.
+          available settings and authentication methods in the next steps. If you need futher guidance, visit the{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/datasources/influxdb/"
+            icon="external-link-alt"
+            external
+          >
+            Grafana docs
+          </TextLink>
         </Text>
         <Box direction="column" marginTop={3}>
           <Field label="URL" noMargin required>

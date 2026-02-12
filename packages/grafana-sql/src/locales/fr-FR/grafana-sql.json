@@ -69,6 +69,12 @@
         "placeholder-select-format": "Sélectionner le format",
         "run-query": "Exécuter la requête"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Appuyer sur CTRL/CMD+Retour pour exécuter la requête",
         "tooltip-collapse": "Réduire l’éditeur",

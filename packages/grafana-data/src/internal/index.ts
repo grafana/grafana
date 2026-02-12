@@ -93,7 +93,6 @@ export { DataTransformerID } from '../transformations/transformers/ids';
 
 export { mergeTransformer } from '../transformations/transformers/merge';
 export { getThemeById } from '../themes/registry';
-export * as experimentalThemeDefinitions from '../themes/themeDefinitions';
 export { GrafanaEdition } from '../types/config';
 export { SIPrefix } from '../valueFormats/symbolFormatters';
 
@@ -106,3 +105,4 @@ export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
+export { NewThemeOptionsSchema } from '../themes/createTheme';

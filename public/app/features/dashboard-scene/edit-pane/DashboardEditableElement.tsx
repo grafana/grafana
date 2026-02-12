@@ -61,7 +61,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public getOutlineChildren(isEditing: boolean): SceneObject[] {
     const { $variables, body } = this.dashboard.state;
-    return isEditing ? [$variables!, ...body.getOutlineChildren()] : body.getOutlineChildren();
+    if (!isEditing || !$variables) {
+      return body.getOutlineChildren();
+    }
+    return [$variables, ...body.getOutlineChildren()];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);

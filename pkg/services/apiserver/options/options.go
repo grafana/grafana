@@ -117,6 +117,15 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		}
 		serverConfig.SecureServing = nil
 	}
+
+	// serverConfig.RequestTimeout is a k8s setting for all http requests, defaulting to 1 minute
+	// This setting is not removable so we force a long timeout to match existing behavior
+	// (ex: most (all?) sql datasources before apiservers were introduced did not have a global timeout and could run indefinitely)
+	// Normally for apiservers, this is set with a command line flag, --request-timeout, however in st-mode, we set a default in ExtraOptions
+	// and make it potentially configurable as needed by users in custom.ini
+	if o.ExtraOptions.RequestTimeout > 0 {
+		serverConfig.RequestTimeout = o.ExtraOptions.RequestTimeout
+	}
 	return nil
 }
 

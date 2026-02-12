@@ -1,10 +1,13 @@
+import { z } from 'zod';
+
 import {
+  GridLayoutItemKind,
   PanelKind,
   QueryGroupKind,
   VizConfigKind,
   PanelQueryKind,
   TransformationKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -134,4 +137,24 @@ export function validatePanelKindV2(value: unknown): asserts value is PanelKind 
   if (!isPanelKindV2(value)) {
     throw new Error('Provided JSON is not a valid v2 Panel spec');
   }
+}
+
+const ElementReferenceSchema = z.object({
+  kind: z.literal('ElementReference'),
+  name: z.string(),
+});
+
+const GridLayoutItemKindSchema = z.object({
+  kind: z.literal('GridLayoutItem'),
+  spec: z.object({
+    x: z.number(),
+    y: z.number(),
+    width: z.number(),
+    height: z.number(),
+    element: ElementReferenceSchema,
+  }),
+}) satisfies z.ZodType<GridLayoutItemKind>;
+
+export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
+  return GridLayoutItemKindSchema.safeParse(value).success;
 }

@@ -1,19 +1,23 @@
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 import { enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;

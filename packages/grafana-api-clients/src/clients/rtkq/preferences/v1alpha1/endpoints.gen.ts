@@ -336,11 +336,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: object;
-  functional?: object;
-  performance?: object;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls: string[];
 };
@@ -349,8 +344,6 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** Cookie preferences */
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */

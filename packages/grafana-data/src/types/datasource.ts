@@ -22,12 +22,21 @@ import { RawTimeRange, TimeRange } from './time';
 import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
+export interface DataSourceConfigValidationAPI {
+  registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  validate: () => Promise<boolean>;
+  isValid: () => boolean;
+  getErrors: () => Record<string, string>;
+  setError: (field: string, message: string) => void;
+  clearError: (field: string) => void;
+}
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
   SecureJSONData = {},
 > {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
+  validation?: DataSourceConfigValidationAPI;
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
@@ -215,9 +224,11 @@ abstract class DataSourceApi<
   readonly name: string;
 
   /**
-   *  Set in constructor
+   * Internal ID, this will be removed in G13
+   *
+   * @deprecated
    */
-  readonly id: number;
+  readonly id?: number;
 
   /**
    *  Set in constructor
@@ -732,7 +743,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number;
+  /**
+   * @deprecated will be removed in G13
+   */
+  id?: number;
   uid: string;
   type: string;
   name: string;
@@ -763,15 +777,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-}
-
-/**
- * @deprecated -- use {@link DataSourceInstanceSettings} instead
- */
-export interface DataSourceSelectItem {
-  name: string;
-  value: string | null;
-  meta: DataSourcePluginMeta;
 }
 
 /**

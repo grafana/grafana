@@ -2,11 +2,8 @@ import { uniqueId } from 'lodash';
 import { ComponentProps, useState } from 'react';
 
 import { InlineField, Input, TextArea } from '@grafana/ui';
-import {
-  MetricAggregationWithSettings,
-  MetricAggregationWithInlineScript,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
+import { MetricAggregationWithInlineScript, MetricAggregationWithSettings } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { getScriptValue } from '../../../../utils';
 import { SettingKeyOf } from '../../../types';
@@ -33,9 +30,11 @@ export function SettingField<T extends MetricAggregationWithSettings, K extends 
   const [id] = useState(uniqueId(`es-field-id-`));
   const settings = metric.settings;
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   let defaultValue = settings?.[settingName as keyof typeof settings] || '';
 
   if (settingName === 'script') {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     defaultValue = getScriptValue(metric as MetricAggregationWithInlineScript);
   }
 

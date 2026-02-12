@@ -69,6 +69,12 @@
         "placeholder-select-format": "형식 선택",
         "run-query": "쿼리 실행"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "쿼리를 실행하려면 CTRL/CMD+리턴 키를 누르세요.",
         "tooltip-collapse": "편집기 접기",

@@ -6,24 +6,40 @@ import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
-import {
-  defaultLabelValues,
-  getLabelValuesHandler,
-  getMockOpsLabels,
-} from '../../../mocks/server/handlers/plugins/grafana-labels-app';
+import { getMockOpsLabels } from '../../../mocks/server/handlers/plugins/grafana-labels-app';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import { LabelsWithSuggestions } from './LabelsField';
 
+// Mock getBoundingClientRect for @tanstack/react-virtual to calculate visible items
+// The global ResizeObserver mock in jest-setup.ts handles subsequent measurements
+Element.prototype.getBoundingClientRect = jest.fn(() => ({
+  width: 200,
+  height: 400,
+  top: 0,
+  left: 0,
+  bottom: 400,
+  right: 200,
+  x: 0,
+  y: 0,
+  toJSON: () => ({}),
+}));
+
 // Existing labels in the form (simulating editing an existing alert rule with ops labels)
 const existingOpsLabels = getMockOpsLabels();
 
-const SubFormProviderWrapper = ({
+// Wrapper that provides portal container for Combobox dropdowns
+const TestWrapper = ({
   children,
   labels,
 }: React.PropsWithChildren<{ labels: Array<{ key: string; value: string }> }>) => {
   const methods = useForm({ defaultValues: { labelsInSubform: labels } });
-  return <FormProvider {...methods}>{children}</FormProvider>;
+  return (
+    <>
+      <FormProvider {...methods}>{children}</FormProvider>
+      <div id="grafana-portal-container" />
+    </>
+  );
 };
 
 const grafanaRule = getGrafanaRule(undefined, {
@@ -64,9 +80,9 @@ describe('LabelsField with ops labels', () => {
 
   async function renderLabelsWithOpsLabels(labels = existingOpsLabels) {
     const view = render(
-      <SubFormProviderWrapper labels={labels}>
+      <TestWrapper labels={labels}>
         <LabelsWithSuggestions dataSourceName="grafana" />
-      </SubFormProviderWrapper>
+      </TestWrapper>
     );
 
     // Wait for the dropdowns to be rendered
@@ -221,41 +237,84 @@ describe('LabelsField with ops labels', () => {
     expect(combobox).toHaveAttribute('aria-expanded', 'true');
   });
 
-  // Test that opening the value dropdown requests values for the CORRECT label key
-  // This verifies the async loader is called with the right key
-  it('should request correct label values when opening value dropdown', async () => {
-    const requestedKeys: string[] = [];
-
-    // Add a spy handler that tracks which keys are requested
-    server.use(getLabelValuesHandler(defaultLabelValues, (key) => requestedKeys.push(key)));
-
+  // Test that opening the value dropdown shows values for the CORRECT label key
+  // This verifies the async loader is called with the right key and renders the correct options
+  it('should show correct label values when opening value dropdown', async () => {
     const { user } = await renderLabelsWithOpsLabels();
 
     // Open the first label's value dropdown (sentMail)
+    // Expected values: "true", "false"
     const firstValueDropdown = within(screen.getByTestId('labelsInSubform-value-0'));
     await user.click(firstValueDropdown.getByRole('combobox'));
 
-    // Wait for the API call to be made
-    await waitFor(() => {
-      expect(requestedKeys).toContain('sentMail');
-    });
+    // Wait for sentMail values to appear
+    const trueOption = await screen.findByRole('option', { name: /true/i });
+    expect(trueOption).toBeInTheDocument();
 
-    // Close dropdown
-    await user.keyboard('{Escape}');
+    // Verify we have exactly 2 options for sentMail (true, false)
+    const firstDropdownOptions = screen.getAllByRole('option');
+    expect(firstDropdownOptions).toHaveLength(2);
+    expect(firstDropdownOptions[0]).toHaveTextContent('true');
+    expect(firstDropdownOptions[1]).toHaveTextContent('false');
 
-    // Clear the tracked keys
-    requestedKeys.length = 0;
+    // Close dropdown by clicking outside (simulate real user behavior)
+    await user.click(document.body);
 
     // Open the second label's value dropdown (stage)
+    // Expected values: "production", "staging", "development"
     const secondValueDropdown = within(screen.getByTestId('labelsInSubform-value-1'));
     await user.click(secondValueDropdown.getByRole('combobox'));
 
-    // Wait for the API call - should request 'stage', NOT 'sentMail'
-    await waitFor(() => {
-      expect(requestedKeys).toContain('stage');
-    });
+    // Wait for stage values to appear
+    const productionOption = await screen.findByRole('option', { name: /production/i });
+    expect(productionOption).toBeInTheDocument();
 
-    // Verify we didn't request the wrong key (the bug from escalation #19378)
-    expect(requestedKeys).not.toContain('sentMail');
+    // Verify we have exactly 3 options for stage (production, staging, development)
+    // This ensures we're NOT showing sentMail values
+    const secondDropdownOptions = screen.getAllByRole('option');
+    expect(secondDropdownOptions).toHaveLength(3);
+    expect(secondDropdownOptions[0]).toHaveTextContent('production');
+    expect(secondDropdownOptions[1]).toHaveTextContent('staging');
+    expect(secondDropdownOptions[2]).toHaveTextContent('development');
+  });
+
+  // Test that typing in the value dropdown filters options (search functionality)
+  it('should filter value options when typing in the combobox', async () => {
+    const { user } = await renderLabelsWithOpsLabels();
+
+    // Add a new label with "stage" key which has multiple values: production, staging, development
+    const addMoreButton = await screen.findByText('Add more');
+    await user.click(addMoreButton);
+
+    // First, set the key to "stage"
+    const keyDropdown = within(screen.getByTestId('labelsInSubform-key-2'));
+    await user.type(keyDropdown.getByRole('combobox'), 'stage{enter}');
+
+    // Wait for the key to be set
+    const keyInput = screen.getByTestId('labelsInSubform-key-2').querySelector('input');
+    await waitFor(() => expect(keyInput).toHaveValue('stage'));
+
+    const valueDropdown = within(screen.getByTestId('labelsInSubform-value-2'));
+    const combobox = valueDropdown.getByRole('combobox');
+
+    // Type "stag" which should filter to only "staging" (not "production" or "development")
+    await user.type(combobox, 'stag');
+
+    // Wait for the staging option to appear (allows for debounce + async load)
+    const stagingOption = await screen.findByRole('option', { name: /staging/i });
+    expect(stagingOption).toBeInTheDocument();
+
+    // Verify we have exactly 2 options:
+    // 1. "stag" - Use custom value (created because user typed custom text)
+    // 2. "staging" - The filtered match from available values
+    const allOptions = screen.getAllByRole('option');
+    expect(allOptions).toHaveLength(2);
+    expect(allOptions[0]).toHaveTextContent('stag');
+    expect(allOptions[0]).toHaveTextContent('Use custom value');
+    expect(allOptions[1]).toHaveTextContent('staging');
+
+    // Verify that "production" and "development" are NOT shown (they don't match "stag")
+    expect(screen.queryByRole('option', { name: /^production$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^development$/i })).not.toBeInTheDocument();
   });
 });

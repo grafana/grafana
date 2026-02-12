@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';

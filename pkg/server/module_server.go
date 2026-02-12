@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 
@@ -76,6 +78,12 @@ func newModuleServer(opts Options,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
+	searchClient, err := unified.NewStorageApiSearchClient(cfg, features)
+	if err != nil {
+		shutdownFn()
+		return nil, fmt.Errorf("failed to create storage api search client: %w", err)
+	}
+
 	s := &ModuleServer{
 		opts:             opts,
 		apiOpts:          apiOpts,
@@ -97,6 +105,7 @@ func newModuleServer(opts Options,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
+		searchClient:     searchClient,
 	}
 
 	return s, nil
@@ -119,6 +128,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
 	license          licensing.Licensing
@@ -198,11 +208,23 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
+		if s.cfg.EnableSearch {
+			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
+			docBuilders, err := InitializeDocumentBuilders(s.cfg)
+			if err != nil {
+				return nil, err
+			}
+			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+		}
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, nil, s.storageMetrics, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
+	})
+
+	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

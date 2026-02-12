@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure logs kick start your query button",
       "body-switching-to-builder": "Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?",
-      "body-switching-to-kql": "Switching to KQL will discard your current builder settings. Are you sure?",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
       "confirmText-switch-to": "Switch to {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Time Column",
       "label-time-range": "Time-range",
       "tooltip-time-column": "<0>Specifies the time column used for filtering. Defaults to the first tables <1>timeSpan</1> column, the first <3>datetime</3> column found or <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Specifies the time-range used to query. The <1>Query</1> option will only use time-ranges specified in the query. <3>Dashboard</3> will only use the Grafana time-range. In Logs Builder mode, only Dashboard time will be used.</0>"
+      "tooltip-time-range": "<0>Specifies the time-range used to query. The <1>Query</1> option will only use time-ranges specified in the query. <3>Dashboard</3> will only use the Grafana time-range.</0>"
     },
     "top-field": {
       "label-top": "Top"

@@ -84,6 +84,10 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
   static type = 'conditional-rendering-changed';
 }
 
+export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'repeats-updated';
+}
+
 export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;

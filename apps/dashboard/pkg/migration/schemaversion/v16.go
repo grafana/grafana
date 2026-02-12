@@ -46,7 +46,8 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 	widthFactor := gridColumnCount / 12.0
 
 	// Find max panel ID (lines 1014-1021 in TS)
-	maxPanelID := getMaxPanelID(rows)
+	// Also check top-level panels which may have been assigned IDs by ensurePanelsHaveUniqueIds
+	maxPanelID := getMaxPanelID(dashboard, rows)
 	nextRowID := maxPanelID + 1
 
 	// Match frontend: dashboard.panels already exists with top-level panels
@@ -269,10 +270,25 @@ func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int) map[string]i
 	return r.getPanelPosition(panelHeight, panelWidth)
 }
 
-func getMaxPanelID(rows []interface{}) int {
+func getMaxPanelID(dashboard map[string]interface{}, rows []interface{}) int {
 	maxID := 0
 	hasValidID := false
 
+	// Check top-level panels first (these may have been assigned IDs by ensurePanelsHaveUniqueIds)
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				if id := GetIntValue(panel, "id", 0); id > 0 {
+					hasValidID = true
+					if id > maxID {
+						maxID = id
+					}
+				}
+			}
+		}
+	}
+
+	// Also check panels inside rows
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
 			if panels, ok := row["panels"].([]interface{}); ok {

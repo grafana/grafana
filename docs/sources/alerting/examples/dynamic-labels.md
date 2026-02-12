@@ -283,7 +283,11 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 
    {{< figure src="/media/docs/alerting/example-dynamic-labels-alert-history-page.png" max-width="750px" caption="You can find multiple transitions over time as the label value fluctuates." >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view" >}}
+   {{< admonition type="tip" >}}
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-labels)**.
+
+   Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
+   {{< /admonition >}}
 
 ## Considerations
 

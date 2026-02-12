@@ -78,7 +78,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       delete imageQueryParams.viewPanel;
       imageQueryParams.panelId = panel.getPathId();
       // force solo route to use scenes
-      imageQueryParams['__feature.dashboardSceneSolo'] = true;
+      imageQueryParams['__feature.dashboardScene'] = true;
     }
 
     // hide Grafana logo in the rendered image

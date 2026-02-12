@@ -11,7 +11,7 @@ import checkboxWhitePng from 'img/checkbox_white.png';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
 
-export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
+export interface Props extends Omit<React.HTMLProps<HTMLUListElement>, 'onToggle'>, Themeable2 {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];

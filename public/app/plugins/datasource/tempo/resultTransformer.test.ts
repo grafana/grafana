@@ -18,7 +18,6 @@ import {
 import { TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
-  id: 0,
   uid: '0',
   type: 'tracing',
   name: 'tempo',

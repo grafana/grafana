@@ -65,6 +65,9 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		if !s.cfg.AWSAssumeRoleEnabled {
 			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
+		if s.cfg.AWSPerDatasourceHTTPProxyEnabled {
+			m[awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName] = "true"
+		}
 		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
 		}
@@ -197,6 +200,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if externalService != nil {
 		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
+
+	m[backend.LiveClientQueueMaxSize] = strconv.Itoa(s.cfg.LiveClientQueueMaxSize)
 
 	return m
 }

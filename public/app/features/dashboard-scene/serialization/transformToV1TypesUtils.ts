@@ -15,7 +15,7 @@ import {
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {

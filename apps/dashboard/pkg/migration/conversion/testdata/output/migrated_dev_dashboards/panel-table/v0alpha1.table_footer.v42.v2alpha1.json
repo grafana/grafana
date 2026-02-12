@@ -167,7 +167,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -361,7 +362,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -596,7 +598,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -787,7 +790,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -974,7 +978,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1181,7 +1186,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1384,7 +1390,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1573,7 +1580,8 @@
                     },
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {

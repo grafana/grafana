@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
+import { DOCS_URL_GROUP_ALERT_NOTIFICATIONS } from 'app/features/alerting/unified/utils/docs';
 
 import { NeedHelpInfo } from '../../NeedHelpInfo';
 
@@ -71,9 +72,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
                   'Muting, grouping, and timings'
                 )}
                 linkText={'Read about notification grouping'}
-                externalLink={
-                  'https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/group-alert-notifications/'
-                }
+                externalLink={DOCS_URL_GROUP_ALERT_NOTIFICATIONS}
                 contentText={
                   <>
                     <p>

@@ -19,3 +19,6 @@ export const defaultQuery: TestDataDataQuery = {
   scenarioId: TestDataQueryType.RandomWalk,
   refId: '',
 };
+
+// @todo export from logs model
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';

@@ -89,7 +89,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced active time interval does not exist", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced receiver does not exist", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "unknown",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
@@ -143,7 +143,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				},
 			}
 			_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-			require.ErrorIs(t, err, ErrRouteInvalidFormat)
+			require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 		})
 	})
 
@@ -229,7 +229,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		}
 
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteConflictingMatchers)
+		require.ErrorIs(t, err, models.ErrRouteConflictingMatchers)
 	})
 
 	t.Run("should ignore extra config validation if it is invalid", func(t *testing.T) {

@@ -76,6 +76,7 @@ type MockClient struct {
 	LastSearchRequest *resourcepb.ResourceSearchRequest
 
 	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 }
@@ -93,6 +94,10 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 
 	if response == nil {
 		response = &resourcepb.ResourceSearchResponse{}
+	}
+
+	if m.MockError != nil {
+		return nil, m.MockError
 	}
 
 	return response, nil

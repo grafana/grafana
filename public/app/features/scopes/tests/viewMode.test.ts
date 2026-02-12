@@ -1,4 +1,6 @@
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesService } from '../ScopesService';
@@ -10,17 +12,19 @@ import {
   expectScopesSelectorClosed,
   expectScopesSelectorDisabled,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('View mode', () => {
   let dashboardScene: DashboardScene;

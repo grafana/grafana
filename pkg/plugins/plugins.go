@@ -48,8 +48,9 @@ type Plugin struct {
 	Error         *Error
 
 	// SystemJS fields
-	Module  string
-	BaseURL string
+	Module          string
+	BaseURL         string
+	LoadingStrategy LoadingStrategy
 
 	Angular AngularMeta
 
@@ -70,6 +71,7 @@ var (
 	_ = backend.CollectMetricsHandler(&Plugin{})
 	_ = backend.CheckHealthHandler(&Plugin{})
 	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.QueryChunkedDataHandler(&Plugin{})
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
@@ -336,6 +338,14 @@ func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 	return pluginClient.QueryData(ctx, req)
 }
 
+func (p *Plugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.QueryChunkedData(ctx, req, w)
+}
+
 func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -462,6 +472,7 @@ func (p *Plugin) executablePath(f string) string {
 
 type PluginClient interface {
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler

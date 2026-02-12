@@ -277,7 +277,6 @@ export function makeDatasourceSetup({
   };
   return {
     settings: {
-      id,
       uid,
       type,
       name,
