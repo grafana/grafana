@@ -244,16 +244,22 @@ describe('ElasticDatasource', () => {
 
     describe('reportInteraction', () => {
       it('should report metric query', async () => {
-        const query = { ...createElasticQuery(), app: CoreApp.Explore };
+        const query = {
+          ...createElasticQuery(),
+          targets: [{ ...createElasticQuery().targets[0], queryType: 'lucene' }],
+          app: CoreApp.Explore,
+        };
         await expect(ds.query(query)).toEmitValuesWith((received) => {
           expect(received[0].state).toBe(LoadingState.Done);
           expect(reportInteraction).toHaveBeenCalledWith(
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'metric',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -270,6 +276,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'logs', id: '1' }],
               query: 'foo="bar"',
+              queryType: 'lucene',
             } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
@@ -280,9 +287,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'logs',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -299,6 +308,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
+              queryType: 'lucene',
             } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
@@ -309,9 +319,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'raw_data',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,

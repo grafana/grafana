@@ -7,7 +7,7 @@ import (
 // isQueryWithError validates the query and returns an error if invalid
 func isQueryWithError(query *Query) error {
 	// Skip validation for raw DSL queries because no easy way to see it is valid without just running it
-	if query.EditorType != nil && *query.EditorType == "code" {
+	if query.QueryType != nil && *query.QueryType == "dsl" {
 		return nil
 	}
 	if len(query.BucketAggs) == 0 {
