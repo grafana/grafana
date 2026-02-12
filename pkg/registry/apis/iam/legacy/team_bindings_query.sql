@@ -14,7 +14,7 @@ WHERE
     AND u.uid = {{ .Arg .Query.UserUID }}
   {{ end }}
   {{- if .Query.Pagination.Continue }}
-    AND tm.id >= {{ .Arg .Query.Pagination.Continue }}
+    AND tm.id > {{ .Arg .Query.Pagination.Continue }}
   {{- end }}
   {{- if ne .Query.External nil }}
     AND tm.external = {{ .Arg .ExternalValue }}
