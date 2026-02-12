@@ -223,16 +223,17 @@ const TeamList = () => {
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <LinkButton
-                  href={`org/teams/edit/${original.uid}`}
-                  aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
-                    teamName: original.name,
-                  })}
-                  icon="pen"
-                  size="sm"
-                  variant="secondary"
-                  tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
-                />
+                <a href={`org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
+                  <IconButton
+                    name="pen"
+                    size="md"
+                    variant="secondary"
+                    aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
+                      teamName: original.name,
+                    })}
+                    tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
+                  />
+                </a>
               )}
               <IconButton
                 onClick={showDeleteModal}
