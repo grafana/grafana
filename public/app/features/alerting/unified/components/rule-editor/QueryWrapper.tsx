@@ -25,6 +25,7 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormValues } from '../../types/rule-form';
+import { DOCS_URL_DATA_SOURCE_ALERTING } from '../../utils/docs';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
@@ -130,15 +131,7 @@ export const QueryWrapper = ({
             </Trans>
           }
         >
-          <Icon
-            name="info-circle"
-            onClick={() =>
-              window.open(
-                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
-                '_blank'
-              )
-            }
-          />
+          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
         </Tooltip>
       </div>
     );

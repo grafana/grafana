@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -27,24 +28,24 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
-	kv, err := resource.NewSQLKV(eDB)
+	dbConn, err := eDB.Init(ctx)
 	require.NoError(t, err)
-	db, err := eDB.Init(ctx)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 
 	kvOpts := resource.KVBackendOptions{
 		KvStore: kv,
 	}
 
-	if db.DriverName() == "sqlite3" {
+	if dbConn.DriverName() == "sqlite3" {
 		kvOpts.UseChannelNotifier = true
 	}
 
 	if withRvManager {
-		dialect := sqltemplate.DialectForDriver(db.DriverName())
+		dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect: dialect,
-			DB:      db,
+			DB:      dbConn,
 		})
 		require.NoError(t, err)
 
@@ -53,7 +54,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
-	return backend, db
+	return backend, dbConn
 }
 
 func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {

@@ -17,6 +17,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
+
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
@@ -32,8 +34,20 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
-  public static createFor(panel: VizPanel) {
+  /**
+   * Create a data pane for the given panel.
+   * @param panel The VizPanel to create the data pane for
+   * @param useQueryEditorNext Signals whether to use the query editor v2 experience or the original (v1) experience.
+   */
+  public static createFor(panel: VizPanel, useQueryEditorNext: boolean | undefined) {
     const panelRef = panel.getRef();
+
+    // Query experience v2
+    if (useQueryEditorNext) {
+      return new PanelDataPaneNext({ panelRef });
+    }
+
+    // Original experience
     const tabs: PanelDataPaneTab[] = [
       new PanelDataQueriesTab({ panelRef }),
       new PanelDataTransformationsTab({ panelRef }),

@@ -176,6 +176,10 @@ export enum AccessControlAction {
 
   // Migration Assistant
   MigrationAssistantMigrate = 'migrationassistant:migrate',
+
+  // Saved Queries
+  QueriesRead = 'queries:read',
+  QueriesWrite = 'queries:write',
 }
 
 export interface Role extends RoleDto {

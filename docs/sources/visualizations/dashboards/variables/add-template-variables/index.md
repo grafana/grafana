@@ -199,15 +199,16 @@ Use a _custom_ variable for a value that does not change, such as a number or a 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Custom options** section of the page, in the **Values separated by comma** field, enter the values for this variable in a comma-separated list.
-
-   You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+1. Under the **Custom options** section of the page, select one of the following:
+   - **CSV** - Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](#configure-multi-property-variables).
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
    - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
    - **Include All option** - Enables an option to include all variables.
 
-1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -330,6 +331,23 @@ To create an ad hoc filter, follow these steps:
 1. Click **Back to dashboard** and **Exit edit**.
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
+
+{{< admonition type="tip" >}}
+You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
+
+To preserve the context of the current dashboard:
+
+- **Time range:** You must explicitly include the current time range in the link.
+- **Variables:** You must enable **Include all variables** to preserve existing selections.
+- **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
+
+Ad hoc filters on the current dashboard are automatically preserved.
+
+Learn more in:
+
+- [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
+- [Create dashboard URL variables – Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
+  {{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
 
@@ -496,6 +514,52 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source.
+
+## Configure multi-property variables
+
+If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as `dev` vs `development`&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
+
+To do so, configure a JSON array in which each object can have any number of properties.
+Then, you can reference any of the properties in as you use those variables.
+
+This applies to the following variable types:
+
+- Custom
+- Query
+  - Infinity
+  - PostgreSQL
+
+<!-- add links to data source docs -->
+
+### Multi-property custom variables
+
+To create a custom variable with multiple properties, define a JSON array, like this:
+
+```json
+[
+  { "value": "1", "text": "Development", "aws": "dev", "azure": "development", "google": "googledev" },
+  { "value": "2", "text": "Staging", "aws": "stag", "azure": "staging", "google": "googlestag" },
+  { "value": "3", "text": "Production", "aws": "prod", "azure": "production", "google": "googleprod" }
+]
+```
+
+This is how those values are displayed in a preview:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-preview-vals-v12.4.png" max-width="600px" alt="Custom variable configuration and preview of values" >}}
+
+Then you can use `${varName.someProperty}` syntax to reference any property in your dashboard panels or metrics:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width=750px" alt="Multi-property variable used in a text panel" >}}
+
+You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-nested-v12.4.png" max-width="650px" alt="Nested variable configuration" >}}
+
+### Multi-property query variables
+
+Because query configuration is different for each data source, there's no one way to set up a JSON array to create a multi-property query variable.
+For information on configuring a multi-property query variable, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
+For configuration information on all other data source plugins, refer to the [Plugins documentation](https://grafana.com/docs/plugins/).
 
 ## Global variables
 

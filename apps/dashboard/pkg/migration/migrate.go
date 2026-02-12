@@ -158,8 +158,8 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	}
 
 	// 3. Ensure panel IDs are unique for ALL panels (including nested ones)
-	// This matches the frontend ensurePanelsHaveUniqueIds() behavior
-	ensurePanelsHaveUniqueIds(dash)
+	// This matches the frontend EnsurePanelsHaveUniqueIds() behavior
+	EnsurePanelsHaveUniqueIds(dash)
 
 	// TODO: Probably we can check if we can migrate at the beginning of the function
 	// 4. Ensure schema version is set and if not default to 0

@@ -5,7 +5,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { generateCopiedName } from '../utils/duplicate';
 import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
-import { getRuleName, isPluginProvidedRule, rulerRuleType } from '../utils/rules';
+import { getRuleName, rulerRuleType } from '../utils/rules';
 
 export function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (rulerRuleType.grafana.rule(rule)) {
@@ -36,10 +36,8 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     }
   }
 
-  if (rulerRuleType.any.rule(ruleClone.rule) && isPluginProvidedRule(ruleClone.rule)) {
-    // Remove the origin label when cloning plugin-provided rules
-    delete ruleClone.rule.labels?.[GRAFANA_ORIGIN_LABEL];
-  }
+  // Remove the origin label when cloning plugin-provided rules
+  delete ruleClone.rule.labels?.[GRAFANA_ORIGIN_LABEL];
 
   return ruleClone;
 }

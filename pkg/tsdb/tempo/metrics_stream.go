@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
-	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -63,7 +64,10 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
 	qrr.End = uint64(backendQuery.TimeRange.To.UnixNano())
 
-	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
+	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
+	// changes or updates, so we have to get it from context.
+	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
+	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
 		instantQuery := &tempopb.QueryInstantRequest{

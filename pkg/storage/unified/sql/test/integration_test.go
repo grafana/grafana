@@ -6,22 +6,26 @@ import (
 	"testing"
 	"time"
 
-	index "github.com/blevesearch/bleve_index_api"
+	"github.com/fullstorydev/grpchan"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -168,28 +172,21 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	ctx := context.Background()
 
-	scoringModels := []string{index.TFIDFScoring, index.BM25Scoring}
+	// Create a new bleve backend
+	searchBackend, err := search.NewBleveBackend(search.BleveOptions{
+		FileThreshold: 0,
+		Root:          t.TempDir(),
+	}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, searchBackend)
+	t.Cleanup(searchBackend.Stop)
 
-	for _, model := range scoringModels {
-		t.Run(model, func(t *testing.T) {
-			// Create a new bleve backend
-			search, err := search.NewBleveBackend(search.BleveOptions{
-				FileThreshold: 0,
-				Root:          t.TempDir(),
-				ScoringModel:  model,
-			}, nil)
-			require.NoError(t, err)
-			require.NotNil(t, search)
-			t.Cleanup(search.Stop)
+	// Create a new resource backend
+	storage, _ := newTestBackend(t, false, 0)
+	require.NotNil(t, storage)
 
-			// Create a new resource backend
-			storage, _ := newTestBackend(t, false, 0)
-			require.NotNil(t, storage)
-
-			// Run the shared storage and search tests
-			unitest.RunTestSearchAndStorage(t, ctx, storage, search)
-		})
-	}
+	// Run the shared storage and search tests
+	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
 }
 
 func TestClientServer(t *testing.T) {
@@ -206,7 +203,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -274,5 +271,137 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 		Group:     "group",
 		Resource:  "resource",
 		Name:      name,
+	}
+}
+
+func TestIntegrationSearchClientServer(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	dbstore := db.InitTestDB(t)
+
+	cfg := setting.NewCfg()
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
+	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+
+	features := featuremgmt.WithFeatures()
+
+	// Initialize document builders for search
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"playlist.grafana.app": "playlists",
+		},
+	}
+
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
+	require.NoError(t, err)
+
+	var client resource.SearchClient
+	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
+	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:    types.TypeUser,
+		UserID:  1,
+		UserUID: "user-uid-1",
+		OrgID:   1,
+		OrgRole: identity.RoleAdmin,
+		Login:   "testuser",
+		Name:    "Test User",
+	})
+
+	t.Run("Start service", func(t *testing.T) {
+		err = services.StartAndAwaitRunning(ctx, svc)
+		require.NoError(t, err)
+		require.NotEmpty(t, svc.GetAddress())
+	})
+
+	t.Run("Create client", func(t *testing.T) {
+		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
+		require.NoError(t, err)
+		client = newTestSearchClient(conn)
+	})
+
+	t.Run("Check service is healthy", func(t *testing.T) {
+		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("Search returns empty results for empty index", func(t *testing.T) {
+		resp, err := client.Search(clientCtx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "namespace",
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("GetStats returns stats", func(t *testing.T) {
+		resp, err := client.GetStats(clientCtx, &resourcepb.ResourceStatsRequest{
+			Namespace: "namespace",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("RebuildIndexes triggers rebuild", func(t *testing.T) {
+		resp, err := client.RebuildIndexes(clientCtx, &resourcepb.RebuildIndexesRequest{
+			Namespace: "namespace",
+			Keys: []*resourcepb.ResourceKey{
+				{
+					Namespace: "namespace",
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("CountManagedObjects returns counts", func(t *testing.T) {
+		resp, err := client.CountManagedObjects(clientCtx, &resourcepb.CountManagedObjectsRequest{
+			Namespace: "namespace",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("ListManagedObjects returns list", func(t *testing.T) {
+		resp, err := client.ListManagedObjects(clientCtx, &resourcepb.ListManagedObjectsRequest{
+			Namespace: "namespace",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("Stop the service", func(t *testing.T) {
+		err = services.StopAndAwaitTerminated(ctx, svc)
+		require.NoError(t, err)
+	})
+}
+
+var _ resource.SearchClient = (*testSearchClient)(nil)
+
+// testSearchClient implements resource.SearchClient without auth for testing purposes
+type testSearchClient struct {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient
+}
+
+func newTestSearchClient(conn grpc.ClientConnInterface) *testSearchClient {
+	cci := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return &testSearchClient{
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cci),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cci),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cci),
 	}
 }

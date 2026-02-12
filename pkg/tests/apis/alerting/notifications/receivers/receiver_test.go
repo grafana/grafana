@@ -28,7 +28,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -144,8 +143,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	adminClient, err := v0alpha1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	writeACMetadata := []string{"canWrite", "canDelete"}
-	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected"}
+	writeACMetadata := []string{"canWrite", "canDelete", "canTest"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected", "canTest"}
 
 	mustID := func(user apis.User) int64 {
 		id, err := user.Identity.GetInternalID()
@@ -416,6 +415,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canDelete          bool
 		canReadSecrets     bool
 		canAdmin           bool
+		canTest            bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -436,6 +436,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 		createWildcardPermission(
 			accesscontrol.ActionAlertingReceiversRead,
 			accesscontrol.ActionAlertingReceiversUpdate,
+		),
+	})
+	updaterAndTester := helper.CreateUser("updaterAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversTest,
 		),
 	})
 	deleter := helper.CreateUser("deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
@@ -494,6 +501,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:      org1.Editor,
@@ -501,6 +509,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 			canCreate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:    org1.Viewer,
@@ -526,6 +535,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 		},
 		{
+			user:      updaterAndTester,
+			canRead:   true,
+			canUpdate: true,
+			canTest:   true,
+		},
+		{
 			user:      deleter,
 			canRead:   true,
 			canDelete: true,
@@ -540,6 +555,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canCreate: true,
 			canUpdate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:               adminLikeUser,
@@ -550,6 +566,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:               adminLikeUserLongName,
@@ -560,6 +577,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 	}
 
@@ -619,6 +637,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canTest {
+					expectedWithMetadata.SetAccessControl("canTest")
 				}
 				if tc.canUpdateProtected {
 					expectedWithMetadata.SetAccessControl("canModifyProtected")
@@ -853,12 +874,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
-	require.NoError(t, err)
-	routeAdminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-	_, err = routeAdminClient.Update(ctx, v1Route, resource.UpdateOptions{})
-	require.NoError(t, err)
+	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 1, 2)
@@ -876,10 +892,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
-	v1route, err := routingtree.ConvertToK8sResource(1, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
-	require.NoError(t, err)
-	_, err = routeAdminClient.Update(ctx, v1route, resource.UpdateOptions{})
-	require.NoError(t, err)
+	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
 
 	// Remove the remaining rules.
 	ruleGroup.Rules = nil
@@ -1341,6 +1354,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetAccessControl("canModifyProtected")
+		receiver.SetAccessControl("canTest")
 		receiver.SetInUse(0, nil)
 		receiver.SetCanUse(true)
 
@@ -1555,14 +1569,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 		}
 	}
 
-	nsMapper := func(_ int64) string { return "default" }
-
-	routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
-	require.NoError(t, err)
-	_, err = routeClient.Update(ctx, v1route, resource.UpdateOptions{})
-	require.NoError(t, err)
+	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
 }
 
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v0alpha1.ReceiverIntegration {

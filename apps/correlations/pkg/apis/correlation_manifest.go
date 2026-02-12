@@ -39,7 +39,16 @@ var appManifestData = app.ManifestData{
 					Plural:     "Correlations",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaCorrelationv0alpha1,
+					Admission: &app.AdmissionCapabilities{
+
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaCorrelationv0alpha1,
 					SelectableFields: []string{
 						"spec.datasource.name",
 					},

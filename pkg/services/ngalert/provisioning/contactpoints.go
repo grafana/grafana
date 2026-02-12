@@ -27,7 +27,7 @@ import (
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type ContactPointService struct {
@@ -44,6 +44,7 @@ type ContactPointService struct {
 type receiverService interface {
 	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
+	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
 }
 
 func NewContactPointService(
@@ -374,13 +375,13 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 			}
 		}
 	}
-	if fullRemoval && name != "" && revision.ReceiverNameUsedByRoutes(name) {
+	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if fullRemoval && name != "" {
-			used, err := ecp.notificationSettingsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+			used, err := ecp.notificationSettingsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, ReceiverName: name})
 			if err != nil {
 				return fmt.Errorf("failed to query alert rules for reference to the contact point '%s': %w", name, err)
 			}

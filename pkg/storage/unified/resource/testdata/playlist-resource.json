@@ -13,7 +13,16 @@
             "grafana.app/repoPath": "path/in/system.json",
             "grafana.app/repoHash": "xyz",
             "grafana.app/updatedTimestamp": "2024-07-01T10:11:12Z"
-        }
+        },
+        "ownerReferences": [{
+            "apiVersion": "iam.grafana.app/v1alpha1",
+            "kind": "Team",
+            "name": "engineering"
+        }, {
+            "apiVersion": "iam.grafana.app/v1alpha1",
+            "kind": "User",
+            "name": "test"
+        }]
     },
     "spec": {
         "title": "Test Playlist from Unified Storage",

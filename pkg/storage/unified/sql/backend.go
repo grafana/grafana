@@ -23,11 +23,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/sqlite"
-
 	"github.com/grafana/grafana-app-sdk/logging"
-
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -35,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
@@ -74,6 +72,8 @@ type BackendOptions struct {
 	storageMetrics    *resource.StorageMetrics
 	GarbageCollection GarbageCollectionConfig
 
+	DisableStorageServices bool
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -95,6 +95,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	return &backend{
 		isHA:                    opts.IsHA,
+		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -112,7 +113,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 
 type backend struct {
 	//general
-	isHA bool
+	isHA                   bool
+	disableStorageServices bool
 
 	// server lifecycle
 	done     <-chan struct{}
@@ -131,6 +133,8 @@ type backend struct {
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
 
+	// -- Storage Services
+
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
@@ -145,9 +149,11 @@ type backend struct {
 
 	historyPruner resource.Pruner
 
+	garbageCollection GarbageCollectionConfig
+
+	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Time
-	garbageCollection          GarbageCollectionConfig
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -175,6 +181,10 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
+	if b.disableStorageServices {
+		return nil
+	}
+
 	// Initialize ResourceVersionManager
 	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 		Dialect: b.dialect,
@@ -186,7 +196,18 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.rvManager = rvManager
 
 	// Initialize notifier after dialect is set up
-	notifier, err := newNotifier(b)
+	notifier, err := newNotifier(&notifierConfig{
+		isHA:            b.isHA,
+		pollingInterval: b.pollingInterval,
+		watchBufferSize: b.watchBufferSize,
+		log:             b.log,
+		bulkLock:        b.bulkLock,
+		listLatestRVs:   b.listLatestRVs,
+		storageMetrics:  b.storageMetrics,
+		done:            b.done,
+		db:              b.db,
+		dialect:         b.dialect,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
@@ -451,6 +472,9 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
+	if b.disableStorageServices {
+		return 0, fmt.Errorf("storage backend is not enabled")
+	}
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
@@ -882,7 +906,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 		iter.offset = continueToken.StartOffset
 
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
-			return 0, apierrors.NewBadRequest("request resource version does not math token")
+			return 0, apierrors.NewBadRequest("request resource version does not match token")
 		}
 	}
 	if iter.listRV < 1 {
@@ -1042,6 +1066,9 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	if b.disableStorageServices {
+		return nil, fmt.Errorf("watcher is not enabled")
+	}
 	return b.notifier.notify(ctx)
 }
 
@@ -1187,8 +1214,4 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
-}
-
-func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

@@ -1,7 +1,3 @@
-import config from 'app/core/config';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { Settings, SettingsSection } from 'app/types/settings';
 
 import { AuthProviderInfo, GetStatusHook, AuthProviderStatus } from './types';
@@ -47,35 +43,5 @@ export async function getAuthProviderStatus(providerId: string): Promise<AuthPro
     const getStatusHook = authProvidersConfigHooks[providerId];
     return getStatusHook();
   }
-  return { configured: false, enabled: false };
-}
-
-export function initAuthConfig() {
-  // skip the LDAP provider if it is enabled by SSO settings
-  if (config.featureToggles.ssoSettingsLDAP) {
-    return;
-  }
-
-  const ldapAuthProvider: AuthProviderInfo = {
-    id: 'ldap',
-    type: 'LDAP',
-    protocol: 'LDAP',
-    displayName: 'LDAP',
-    configPath: 'ldap',
-  };
-  registerAuthProvider(ldapAuthProvider, getConfigHookLDAP);
-}
-
-async function getConfigHookLDAP(): Promise<AuthProviderStatus> {
-  if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
-    const result = await getBackendSrv().get('/api/admin/settings');
-    const ldapSettings = result!['auth.ldap'] || {};
-    return {
-      configured: ldapSettings['enabled'] === 'true',
-      enabled: ldapSettings['enabled'] === 'true',
-      hide: ldapSettings['enabled'] !== 'true',
-    };
-  }
-
   return { configured: false, enabled: false };
 }

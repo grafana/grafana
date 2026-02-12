@@ -11,7 +11,7 @@ import {
   QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -95,7 +95,6 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   dashboard.cleanUpRepeats();
 
   const saveModel = dashboard.getSaveModelCloneOld();
-  saveModel.id = null;
 
   // undo repeat cleanup
   dashboard.processRepeats();

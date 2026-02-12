@@ -70,7 +70,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
+		return nil, err
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
@@ -126,6 +126,12 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		}
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
 	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
@@ -155,6 +161,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 
 	if err := r.authorizeCreateFolder(ctx, opts.Path); err != nil {
 		return nil, err
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
 	// Now actually create the folder
@@ -542,8 +554,14 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		}
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
 	// For branch operations, just delete from the repository without updating Grafana DB
-	err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
+	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 	}

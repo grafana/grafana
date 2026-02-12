@@ -181,6 +181,13 @@ var appManifestData = app.ManifestData{
 																		"entries": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntry"),
+																						}},
+																				},
 																			},
 																		},
 																	},
@@ -235,6 +242,13 @@ var appManifestData = app.ManifestData{
 					"createNotificationqueryMatchers": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryMatcher"),
+									}},
+							},
 						},
 					},
 					"createNotificationqueryNotificationEntry": {
@@ -245,6 +259,13 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"array"},
 										Description: "Alerts are the alerts grouped into the notification.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntryAlert"),
+												}},
+										},
 									},
 								},
 								"duration": {
@@ -432,8 +453,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistory{},
-	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationquery{},
+	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistoryResponse{},
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

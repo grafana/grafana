@@ -18,7 +18,7 @@ import {
   defaultPanelSpec,
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';

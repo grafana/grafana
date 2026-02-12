@@ -1074,6 +1074,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	return sendRequestJSON[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
+// GetPrometheusRulesWithStatus fetches rules from the Prometheus-compatible rules API.
+func (a apiClient) GetPrometheusRulesWithStatus(t *testing.T) (apimodels.RuleResponse, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/prometheus/grafana/api/v1/rules", a.url), nil)
+	require.NoError(t, err)
+	return sendRequestJSON[apimodels.RuleResponse](t, req, http.StatusOK)
+}
+
+// GetPrometheusRules fetches rules from the Prometheus-compatible rules API, asserting success.
+func (a apiClient) GetPrometheusRules(t *testing.T) apimodels.RuleResponse {
+	t.Helper()
+	resp, status, body := a.GetPrometheusRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return resp
+}
+
 func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
@@ -1528,4 +1544,18 @@ func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, 
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) TestReceiver(t *testing.T, params apimodels.TestReceiversConfigBodyParams) ([]byte, int, error) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(params)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/receivers/test", a.url), &buf)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	return sendRequestRaw(t, req)
 }

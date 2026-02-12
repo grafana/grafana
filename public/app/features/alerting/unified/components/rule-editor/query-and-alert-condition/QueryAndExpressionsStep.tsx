@@ -423,7 +423,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
   // Only show the data source managed option if there are data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
-  const canSelectDataSourceManaged = onlyOneDSInQueries(queries) && hasAlertEnabledDataSources;
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
   if (!type) {
     return null;
   }

@@ -27,7 +27,7 @@ export const FieldValidationMessage = ({
 
   return (
     <div role="alert" className={cssName}>
-      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
+      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
       {children}
     </div>
   );

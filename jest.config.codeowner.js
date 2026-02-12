@@ -50,7 +50,11 @@ const sourceFiles = teamFiles.filter((file) => {
     !file.includes('.d.ts') &&
     !file.endsWith('/types.ts') &&
     // and anything in graveyard
-    !path.matchesGlob(file, '**/graveyard/**/*')
+    !path.matchesGlob(file, '**/graveyard/**/*') &&
+    // and scripts directory
+    !file.startsWith('scripts/') &&
+    // and jest config files
+    !path.matchesGlob(file, '**/jest.config*.js')
   );
 });
 

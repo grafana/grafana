@@ -63,12 +63,13 @@ type Props = {
   scrollElementClass?: string;
   traceProp: Trace;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement | null>;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   spanFilters?: TraceSearchProps;
   timeRange: TimeRange;
+  hideHeaderDetails?: boolean;
 };
 
 export function TraceView(props: Props) {
@@ -81,6 +82,7 @@ export function TraceView(props: Props) {
     focusedSpanId: focusedSpanIdFromProps,
     createFocusSpanLink: createFocusSpanLinkFromProps,
     spanFilters,
+    hideHeaderDetails = false,
   } = props;
 
   const {
@@ -202,6 +204,7 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
+            hideHeaderDetails={hideHeaderDetails}
           />
 
           <TraceTimelineViewer

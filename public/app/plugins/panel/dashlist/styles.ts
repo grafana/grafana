@@ -33,6 +33,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',
+      paddingTop: theme.spacing(1.25),
+      paddingBottom: theme.spacing(1.25),
 
       '&:has(a:hover)': {
         backgroundImage: gradient,
@@ -40,10 +42,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     dashlistCard: css({
-      display: 'grid',
-      gridTemplateRows: '1fr 1fr',
-      gap: theme.spacing(2),
+      display: 'flex',
       flexDirection: 'column',
+      justifyContent: 'space-between',
+      gap: theme.spacing(0.75),
       height: '100%',
       width: '100%',
 
@@ -61,6 +63,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(0.25),
     }),
     dashlistCardLink: css({
+      paddingTop: theme.spacing(0.5),
       whiteSpace: 'normal',
       overflowWrap: 'break-word',
       wordBreak: 'break-word',
@@ -68,11 +71,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
       WebkitBoxOrient: 'vertical',
       WebkitLineClamp: 2,
       overflow: 'hidden',
+      [theme.breakpoints.down('lg')]: {
+        WebkitLineClamp: 1,
+      },
     }),
     dashlistCardFolder: css({
       display: '-webkit-box',
       WebkitBoxOrient: 'vertical',
-      WebkitLineClamp: 2,
+      WebkitLineClamp: 1,
       overflow: 'hidden',
       whiteSpace: 'normal',
     }),

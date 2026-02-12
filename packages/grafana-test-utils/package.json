@@ -55,7 +55,7 @@
   "dependencies": {
     "chance": "^1.1.13",
     "jest-matcher-utils": "29.7.0",
-    "lodash": "4.17.23",
+    "lodash": "^4.17.23",
     "msw": "2.10.4",
     "rxjs": "7.8.2"
   },

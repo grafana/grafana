@@ -58,8 +58,23 @@ func (h *Handler) Mutate(ctx context.Context, a admission.Attributes, o admissio
 
 // Validate dispatches validation to the appropriate handler based on resource type
 func (h *Handler) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// Skip Connect operations
+	if a.GetOperation() == admission.Connect {
+		return nil
+	}
+
+	// For delete operations, obj may be nil but we still need to validate
+	// Resource-specific validators handle delete operations internally
+	if a.GetOperation() == admission.Delete {
+		resource := a.GetResource().Resource
+		if v, ok := h.validators[resource]; ok {
+			return v.Validate(ctx, a, o)
+		}
+		return nil
+	}
+
 	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
+	if obj == nil {
 		return nil // This is normal for sub-resource
 	}
 

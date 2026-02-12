@@ -6,7 +6,6 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
-import { Folder } from 'app/api/clients/folder/v1beta1';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
@@ -24,8 +23,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
-  folder?: Folder;
+  canPushToConfiguredBranch: boolean;
 }
 
 interface DeleteProvisionedFolderFormProps {
@@ -33,7 +31,7 @@ interface DeleteProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
+function FormContent({ initialValues, parentFolder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
   const { createBulkJob, isLoading } = useBulkActionJob();
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
@@ -181,8 +179,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
 
@@ -205,7 +202,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
+  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     title: parentFolder?.title,
   });
@@ -229,8 +226,7 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
-      folder={folder}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
     />
   );
 }

@@ -169,6 +169,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
+		MaxRepositories:          b.quotaLimits.MaxRepositories,
 	}
 
 	for i, val := range all {
