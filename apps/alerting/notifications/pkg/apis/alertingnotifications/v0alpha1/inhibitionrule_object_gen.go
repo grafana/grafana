@@ -228,6 +228,10 @@ func (o *InhibitionRule) DeepCopyInto(dst *InhibitionRule) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (InhibitionRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRule"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &InhibitionRule{}
 
@@ -279,6 +283,10 @@ func (o *InhibitionRuleList) DeepCopy() *InhibitionRuleList {
 
 func (o *InhibitionRuleList) DeepCopyInto(dst *InhibitionRuleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (InhibitionRuleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleList"
 }
 
 // Interface compliance compile-time check
