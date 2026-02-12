@@ -6,6 +6,7 @@ import { useMeasure } from 'react-use';
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   LinkButton,
@@ -35,7 +36,6 @@ import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
 import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { config } from '@grafana/runtime';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
@@ -497,8 +497,11 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.Notifications);
         },
-        // notification history is only available for Grafana managed alert rules and requires feature toggle
-        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
+        // notification history is only available for Grafana managed alert rules and requires feature toggles
+        hideFromTabs:
+          !isGrafanaAlertRule ||
+          !config.featureToggles.alertingNotificationHistoryRuleViewer ||
+          !config.featureToggles.kubernetesAlertingHistorian,
       },
       {
         text: t('alerting.use-page-nav.page-nav.text.details', 'Details'),

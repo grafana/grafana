@@ -2143,6 +2143,46 @@
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
       "title-no-alertmanager-found": "No Alertmanager found"
     },
+    "notification-history": {
+      "annotations": "Annotations:",
+      "column": {
+        "contact-point": "Contact point",
+        "group-labels": "Group Labels",
+        "state": "State",
+        "time": "Time"
+      },
+      "description": "Description:",
+      "empty": "No notifications have been sent for this alert rule in the last {{days}} days",
+      "empty-filtered": "No notifications match the current filters for the last {{days}} days",
+      "error": {
+        "default": "Unable to fetch notification history",
+        "title": "Error fetching notifications"
+      },
+      "filter": {
+        "label": "Filter notifications",
+        "outcome": "Outcome",
+        "placeholder": "Search labels...",
+        "status": "Status",
+        "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
+      },
+      "firing-alerts_one": "Firing Alerts ({{count}})",
+      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "labels": "Labels:",
+      "loading": "Loading notifications...",
+      "notification-error": "Notification Error",
+      "outcome": {
+        "failed": "Failed",
+        "success": "Success"
+      },
+      "resolved-alerts_one": "Resolved Alerts ({{count}})",
+      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "started": "Started:",
+      "status": {
+        "firing": "Firing",
+        "resolved": "Resolved"
+      },
+      "summary": "Summary:"
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",

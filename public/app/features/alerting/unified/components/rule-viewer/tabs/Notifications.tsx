@@ -1,21 +1,40 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  useCreateNotificationqueryMutation,
   CreateNotificationqueryNotificationEntry,
+  CreateNotificationqueryNotificationEntryAlert,
+  CreateNotificationqueryNotificationOutcome,
   CreateNotificationqueryNotificationStatus,
-  CreateNotificationqueryNotificationOutcome
+  useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, dateTime } from '@grafana/data';
-import { Alert, Badge, Icon, Input, Label, LoadingPlaceholder, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import {
+  Alert,
+  Badge,
+  Icon,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  RadioButtonGroup,
+  Stack,
+  Text,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
 import { StateTag } from '../../StateTag';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+
+const DEFAULT_LOOKBACK_DAYS = 30;
+const DEFAULT_PAGE_SIZE = 100;
+const DEBOUNCE_MS = 300;
 
 // Helper function to convert Matcher to API format
 function matcherToAPIFormat(matcher: Matcher): { type: string; label: string; value: string } {
@@ -55,36 +74,42 @@ const Notifications = ({ rule }: NotificationsProps) => {
   const ruleUID = rule.grafana_alert.uid;
 
   const [labelFilter, setLabelFilter] = useState('');
+  const [debouncedLabelFilter, setDebouncedLabelFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter | undefined>();
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter | undefined>();
+
+  // Debounce label filter to avoid excessive API calls on each keystroke
+  useDebounce(
+    () => {
+      setDebouncedLabelFilter(labelFilter);
+    },
+    DEBOUNCE_MS,
+    [labelFilter]
+  );
 
   const [createNotificationQuery, { data, isLoading, isError, error }] = useCreateNotificationqueryMutation();
 
   // Fetch notifications when filters change
   useEffect(() => {
-    // Convert to ISO string timestamps
-    const fromDate = dateTime().subtract(30, 'days').toISOString();
+    const fromDate = dateTime().subtract(DEFAULT_LOOKBACK_DAYS, 'days').toISOString();
     const toDate = dateTime().toISOString();
 
     // Convert label filter to API matchers
-    let groupLabels: Array<{ type: string; label: string; value: string }> = [];
-    if (labelFilter && labelFilter.trim()) {
-      const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-      groupLabels = matchers.map(matcherToAPIFormat);
-    }
+    const matchers = parsePromQLStyleMatcherLooseSafe(debouncedLabelFilter);
+    const groupLabels = matchers.map(matcherToAPIFormat);
 
     createNotificationQuery({
       createNotificationqueryRequestBody: {
         ruleUID,
         from: fromDate,
         to: toDate,
-        limit: 100,
+        limit: DEFAULT_PAGE_SIZE,
         status: statusFilter,
         outcome: outcomeFilter,
         groupLabels,
       },
     });
-  }, [createNotificationQuery, ruleUID, statusFilter, outcomeFilter, labelFilter]);
+  }, [createNotificationQuery, ruleUID, statusFilter, outcomeFilter, debouncedLabelFilter]);
 
   // Extract entries from API response (data is properly typed from the generated client)
   const entriesArray: NotificationEntry[] = useMemo(() => {
@@ -106,18 +131,21 @@ const Notifications = ({ rule }: NotificationsProps) => {
     () => [
       {
         id: 'time',
-        label: 'Time',
+        label: t('alerting.notification-history.column.time', 'Time'),
         renderCell: function TimeCell({ data }) {
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings -- date format and dash are not translatable
           return <span>{data.timestamp ? dateTime(data.timestamp).format('YYYY-MM-DD HH:mm:ss') : '-'}</span>;
         },
         size: '180px',
       },
       {
         id: 'state',
-        label: 'State',
+        label: t('alerting.notification-history.column.state', 'State'),
         renderCell: function StateCell({ data }) {
           const isFiring = data.status === 'firing';
-          const statusText = isFiring ? 'Firing' : 'Resolved';
+          const statusText = isFiring
+            ? t('alerting.notification-history.status.firing', 'Firing')
+            : t('alerting.notification-history.status.resolved', 'Resolved');
           const state = isFiring ? 'bad' : 'good';
           return <StateTag state={state}>{statusText}</StateTag>;
         },
@@ -125,7 +153,7 @@ const Notifications = ({ rule }: NotificationsProps) => {
       },
       {
         id: 'groupLabels',
-        label: 'Group Labels',
+        label: t('alerting.notification-history.column.group-labels', 'Group Labels'),
         renderCell: function GroupLabelsCell({ data }) {
           const onLabelClick = ([value, label]: [string | undefined, string | undefined]) => {
             if (label && value) {
@@ -134,16 +162,11 @@ const Notifications = ({ rule }: NotificationsProps) => {
           };
 
           // Filter out alertname as it's redundant (already shown as the rule name)
-          const filteredGroupLabels = data.groupLabels
-            ? Object.keys(data.groupLabels).reduce((acc, key) => {
-                if (key !== 'alertname') {
-                  acc[key] = data.groupLabels[key];
-                }
-                return acc;
-              }, {} as Record<string, string>)
-            : {};
+          const filteredGroupLabels = Object.fromEntries(
+            Object.entries(data.groupLabels).filter(([key]) => key !== 'alertname')
+          );
 
-          if (!filteredGroupLabels || Object.keys(filteredGroupLabels).length === 0) {
+          if (Object.keys(filteredGroupLabels).length === 0) {
             return <span>-</span>;
           }
           return (
@@ -158,9 +181,13 @@ const Notifications = ({ rule }: NotificationsProps) => {
         label: '',
         renderCell: function StatusCell({ data }) {
           return (
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div className={styles.statusCell}>
               {data.outcome === 'error' && (
-                <Badge color="orange" icon="exclamation-triangle" text="Failed" />
+                <Badge
+                  color="orange"
+                  icon="exclamation-triangle"
+                  text={t('alerting.notification-history.outcome.failed', 'Failed')}
+                />
               )}
             </div>
           );
@@ -169,42 +196,61 @@ const Notifications = ({ rule }: NotificationsProps) => {
       },
       {
         id: 'receiver',
-        label: 'Contact point',
+        label: t('alerting.notification-history.column.contact-point', 'Contact point'),
         renderCell: function ReceiverCell({ data }) {
           return <span>{data.receiver || '-'}</span>;
         },
         size: '200px',
       },
     ],
-    [setLabelFilter]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- styles is stable from useStyles2
+    [styles]
   );
 
   // Render content based on loading/error state
   let content;
 
   if (isLoading) {
-    content = <LoadingPlaceholder text="Loading notifications..." />;
+    content = <LoadingPlaceholder text={t('alerting.notification-history.loading', 'Loading notifications...')} />;
   } else if (isError) {
-    let errorMessage = 'Unable to fetch notification history';
+    let errorMessage = t('alerting.notification-history.error.default', 'Unable to fetch notification history');
 
     if (error) {
       if (typeof error === 'object' && error !== null && 'data' in error) {
-        errorMessage = JSON.stringify((error as any).data);
+        const { data: errorData } = error;
+        if (typeof errorData === 'object' && errorData !== null && 'message' in errorData) {
+          errorMessage = String(errorData.message);
+        } else {
+          errorMessage = JSON.stringify(errorData);
+        }
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
     }
 
     content = (
-      <Alert title="Error fetching notifications" severity="error">
+      <Alert title={t('alerting.notification-history.error.title', 'Error fetching notifications')} severity="error">
         {errorMessage}
       </Alert>
     );
   } else if (entriesArray.length === 0) {
+    const hasActiveFilters = debouncedLabelFilter || statusFilter || outcomeFilter;
     content = (
       <div className={styles.emptyState}>
         <Stack direction="column" gap={1} alignItems="center">
-          <Text color="secondary">No notifications have been sent for this alert rule in the last 30 days</Text>
+          <Text color="secondary">
+            {hasActiveFilters
+              ? t(
+                  'alerting.notification-history.empty-filtered',
+                  'No notifications match the current filters for the last {{days}} days',
+                  { days: DEFAULT_LOOKBACK_DAYS }
+                )
+              : t(
+                  'alerting.notification-history.empty',
+                  'No notifications have been sent for this alert rule in the last {{days}} days',
+                  { days: DEFAULT_LOOKBACK_DAYS }
+                )}
+          </Text>
         </Stack>
       </div>
     );
@@ -212,107 +258,111 @@ const Notifications = ({ rule }: NotificationsProps) => {
     content = (
       <div className={styles.tableWrapper}>
         <DynamicTable
-        cols={columns}
-        isExpandable={true}
-        items={items}
-        renderExpandedContent={({ data }) => {
-          // Split alerts into firing and resolved
-          const firingAlerts = data.alerts?.filter((alert: any) => alert.status === 'firing') || [];
-          const resolvedAlerts = data.alerts?.filter((alert: any) => alert.status === 'resolved') || [];
+          cols={columns}
+          isExpandable={true}
+          items={items}
+          renderExpandedContent={({ data }) => {
+            // Split alerts into firing and resolved
+            const firingAlerts =
+              data.alerts?.filter(
+                (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing'
+              ) ?? [];
+            const resolvedAlerts =
+              data.alerts?.filter(
+                (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved'
+              ) ?? [];
 
-          const renderAlert = (alert: any, index: number) => {
-                  // Filter out labels that are already in groupLabels
-                  // Also filter out grafana_folder as it's redundant and always the same for a single alert
-                  const uniqueLabels = alert.labels
-                    ? Object.keys(alert.labels).reduce((acc, key) => {
-                        if (key !== 'grafana_folder' && (!data.groupLabels || !(key in data.groupLabels))) {
-                          acc[key] = alert.labels[key];
-                        }
-                        return acc;
-                      }, {} as Record<string, string>)
-                    : {};
-                  const hasUniqueLabels = Object.keys(uniqueLabels).length > 0;
+            const renderAlert = (alert: CreateNotificationqueryNotificationEntryAlert, index: number) => {
+              // Filter out labels that are already in groupLabels
+              // Also filter out grafana_folder as it's redundant and always the same for a single alert
+              const uniqueLabels = Object.fromEntries(
+                Object.entries(alert.labels).filter(([key]) => key !== 'grafana_folder' && !(key in data.groupLabels))
+              );
+              const hasUniqueLabels = Object.keys(uniqueLabels).length > 0;
 
-                  // Extract summary and description annotations separately if they exist
-                  const summary = alert.annotations?.summary;
-                  const description = alert.annotations?.description;
-                  const otherAnnotations = alert.annotations
-                    ? Object.keys(alert.annotations).reduce((acc, key) => {
-                        if (key !== 'summary' && key !== 'description') {
-                          acc[key] = alert.annotations[key];
-                        }
-                        return acc;
-                      }, {} as Record<string, string>)
-                    : {};
-                  const hasOtherAnnotations = Object.keys(otherAnnotations).length > 0;
+              // Extract summary and description annotations separately
+              const { summary, description, ...otherAnnotations } = alert.annotations;
+              const hasOtherAnnotations = Object.keys(otherAnnotations).length > 0;
 
-                  return (
-                    <div key={index} className={styles.alertDetail}>
-                      <Stack direction="column" gap={1}>
-                        {hasUniqueLabels && (
-                          <Stack direction="row" gap={1} alignItems="center">
-                            <Text variant="bodySmall" color="secondary">
-                              <strong>Labels:</strong>
-                            </Text>
-                            <AlertLabels labels={uniqueLabels} size="sm" />
-                          </Stack>
-                        )}
-                        {hasOtherAnnotations && (
-                          <Stack direction="row" gap={1} alignItems="center">
-                            <Text variant="bodySmall" color="secondary">
-                              <strong>Annotations:</strong>
-                            </Text>
-                            <AlertLabels labels={otherAnnotations} size="sm" />
-                          </Stack>
-                        )}
-                        {summary && (
-                          <Text variant="bodySmall" color="secondary">
-                            <strong>Summary:</strong> {summary}
-                          </Text>
-                        )}
-                        {description && (
-                          <Text variant="bodySmall" color="secondary">
-                            <strong>Description:</strong> {description}
-                          </Text>
-                        )}
-                        {alert.startsAt && (
-                          <Text variant="bodySmall" color="secondary">
-                            Started: {dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}
-                          </Text>
-                        )}
+              return (
+                <div key={index} className={styles.alertDetail}>
+                  <Stack direction="column" gap={1}>
+                    {hasUniqueLabels && (
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <Text variant="bodySmall" color="secondary">
+                          <strong>{t('alerting.notification-history.labels', 'Labels:')}</strong>
+                        </Text>
+                        <AlertLabels labels={uniqueLabels} size="sm" />
                       </Stack>
-                    </div>
-                  );
-          };
+                    )}
+                    {hasOtherAnnotations && (
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <Text variant="bodySmall" color="secondary">
+                          <strong>{t('alerting.notification-history.annotations', 'Annotations:')}</strong>
+                        </Text>
+                        <AlertLabels labels={otherAnnotations} size="sm" />
+                      </Stack>
+                    )}
+                    {summary && (
+                      <Text variant="bodySmall" color="secondary">
+                        <strong>{t('alerting.notification-history.summary', 'Summary:')}</strong> {summary}
+                      </Text>
+                    )}
+                    {description && (
+                      <Text variant="bodySmall" color="secondary">
+                        <strong>{t('alerting.notification-history.description', 'Description:')}</strong> {description}
+                      </Text>
+                    )}
+                    {alert.startsAt && (
+                      <Text variant="bodySmall" color="secondary">
+                        {t('alerting.notification-history.started', 'Started:')}{' '}
+                        {dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}
+                      </Text>
+                    )}
+                  </Stack>
+                </div>
+              );
+            };
 
-          return (
-            <div className={styles.expandedContent}>
-              <Stack direction="column" gap={2}>
-                {/* Error message if present */}
-                {data.error && (
-                  <Alert title="Notification Error" severity="warning">
-                    {data.error}
-                  </Alert>
-                )}
-                {/* Firing alerts section */}
-                {firingAlerts.length > 0 && (
-                  <Stack direction="column" gap={2}>
-                    <Text variant="h6">Firing Alerts ({firingAlerts.length})</Text>
-                    {firingAlerts.map(renderAlert)}
-                  </Stack>
-                )}
-                {/* Resolved alerts section */}
-                {resolvedAlerts.length > 0 && (
-                  <Stack direction="column" gap={2}>
-                    <Text variant="h6">Resolved Alerts ({resolvedAlerts.length})</Text>
-                    {resolvedAlerts.map(renderAlert)}
-                  </Stack>
-                )}
-              </Stack>
-            </div>
-          );
-        }}
-      />
+            return (
+              <div className={styles.expandedContent}>
+                <Stack direction="column" gap={2}>
+                  {/* Error message if present */}
+                  {data.error && (
+                    <Alert
+                      title={t('alerting.notification-history.notification-error', 'Notification Error')}
+                      severity="warning"
+                    >
+                      {data.error}
+                    </Alert>
+                  )}
+                  {/* Firing alerts section */}
+                  {firingAlerts.length > 0 && (
+                    <Stack direction="column" gap={2}>
+                      <Text variant="h6">
+                        {t('alerting.notification-history.firing-alerts', 'Firing Alerts ({{count}})', {
+                          count: firingAlerts.length,
+                        })}
+                      </Text>
+                      {firingAlerts.map(renderAlert)}
+                    </Stack>
+                  )}
+                  {/* Resolved alerts section */}
+                  {resolvedAlerts.length > 0 && (
+                    <Stack direction="column" gap={2}>
+                      <Text variant="h6">
+                        {t('alerting.notification-history.resolved-alerts', 'Resolved Alerts ({{count}})', {
+                          count: resolvedAlerts.length,
+                        })}
+                      </Text>
+                      {resolvedAlerts.map(renderAlert)}
+                    </Stack>
+                  )}
+                </Stack>
+              </div>
+            );
+          }}
+        />
       </div>
     );
   }
@@ -324,11 +374,14 @@ const Notifications = ({ rule }: NotificationsProps) => {
           <div className={styles.filterGroup}>
             <Label>
               <Stack gap={0.5} alignItems="center">
-                <span>Filter notifications</span>
+                <span>{t('alerting.notification-history.filter.label', 'Filter notifications')}</span>
                 <Tooltip
                   content={
                     <div>
-                      Use label matcher expression or click on an group label to filter instances, for example:
+                      {t(
+                        'alerting.notification-history.filter.tooltip',
+                        'Use label matcher expression or click on a group label to filter instances, for example:'
+                      )}
                       <div>
                         <code>{'{foo=bar}'}</code>
                       </div>
@@ -340,7 +393,7 @@ const Notifications = ({ rule }: NotificationsProps) => {
               </Stack>
             </Label>
             <Input
-              placeholder="Search labels..."
+              placeholder={t('alerting.notification-history.filter.placeholder', 'Search labels...')}
               value={labelFilter}
               onChange={(e) => setLabelFilter(e.currentTarget.value)}
               width={30}
@@ -348,11 +401,17 @@ const Notifications = ({ rule }: NotificationsProps) => {
             />
           </div>
           <div className={styles.filterGroup}>
-            <Label>Status</Label>
+            <Label>{t('alerting.notification-history.filter.status', 'Status')}</Label>
             <RadioButtonGroup
               options={[
-                { label: 'Firing', value: 'firing' },
-                { label: 'Resolved', value: 'resolved' },
+                {
+                  label: t('alerting.notification-history.status.firing', 'Firing'),
+                  value: 'firing' as const,
+                },
+                {
+                  label: t('alerting.notification-history.status.resolved', 'Resolved'),
+                  value: 'resolved' as const,
+                },
               ]}
               value={statusFilter}
               onChange={setStatusFilter}
@@ -364,11 +423,17 @@ const Notifications = ({ rule }: NotificationsProps) => {
             />
           </div>
           <div className={styles.filterGroup}>
-            <Label>Outcome</Label>
+            <Label>{t('alerting.notification-history.filter.outcome', 'Outcome')}</Label>
             <RadioButtonGroup
               options={[
-                { label: 'Success', value: 'success' },
-                { label: 'Failed', value: 'error' },
+                {
+                  label: t('alerting.notification-history.outcome.success', 'Success'),
+                  value: 'success' as const,
+                },
+                {
+                  label: t('alerting.notification-history.outcome.failed', 'Failed'),
+                  value: 'error' as const,
+                },
               ]}
               value={outcomeFilter}
               onChange={setOutcomeFilter}
@@ -416,6 +481,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& *': {
       fontSize: `${theme.typography.bodySmall.fontSize} !important`,
     },
+  }),
+  statusCell: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
   }),
   expandedContent: css({
     padding: theme.spacing(2),
