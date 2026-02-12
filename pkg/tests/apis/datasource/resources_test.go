@@ -276,14 +276,9 @@ func TestIntegrationDatasourceResourcesScenarios(t *testing.T) {
 		scenarios := *raw.Result
 		require.NotEmpty(t, scenarios, "should return at least one scenario")
 
-		// Each scenario should have id and name
 		for _, scenario := range scenarios {
 			require.NotEmpty(t, scenario["id"], "scenario should have id")
 			require.NotEmpty(t, scenario["name"], "scenario should have name")
 		}
-
-		// Log scenarios for debugging
-		scenariosJSON, _ := json.MarshalIndent(scenarios[:min(3, len(scenarios))], "", "  ")
-		t.Logf("Sample scenarios: %s", string(scenariosJSON))
 	})
 }
