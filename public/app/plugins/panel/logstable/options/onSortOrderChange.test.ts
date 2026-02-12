@@ -26,13 +26,15 @@ describe('onSortOrderChange', () => {
   });
 
   it('should create new sortBy array', () => {
-    const options = { sortBy: [{ desc: false, displayName: timeFieldName }] } as unknown as Options;
-    expect(onSortOrderChange(options, LogsSortOrder.Descending, timeFieldName)).toEqual({
+    const options = {
       sortBy: [{ desc: false, displayName: timeFieldName }],
-    });
+      sortOrder: LogsSortOrder.Ascending,
+    } as unknown as Options;
+    const result = onSortOrderChange(options, LogsSortOrder.Descending, timeFieldName);
 
-    expect(onSortOrderChange(options, LogsSortOrder.Descending, timeFieldName)).not.toBe({
-      sortBy: [{ desc: false, displayName: timeFieldName }],
-    });
+    // Assert that sort is still ascending
+    expect(result.sortBy).toEqual(options.sortBy);
+    // Assert that return is new reference: if the array is the same reference, the useEffect will not re-render unless the length of the array has changed!
+    expect(result.sortBy).not.toBe(options.sortBy);
   });
 });
