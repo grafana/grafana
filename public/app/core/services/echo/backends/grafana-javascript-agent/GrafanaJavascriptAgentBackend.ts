@@ -10,7 +10,7 @@ import {
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -31,8 +31,7 @@ export const TRACKING_URLS = [
 ];
 
 export class GrafanaJavascriptAgentBackend
-  implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
-{
+  implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions> {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
@@ -98,7 +97,7 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && evaluateBooleanFlag('faroSessionReplay', false)) {
+    if (faro && getFeatureFlagClient().getBooleanValue('faroSessionReplay', false)) {
       this.initReplayAfterDomRendered(faro);
     }
   }
@@ -147,11 +146,11 @@ export class GrafanaJavascriptAgentBackend
   }
 
   // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API
-  addEvent = (e: EchoEvent) => {};
+  addEvent = (e: EchoEvent) => { };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
   // ingested into Loki. Due to Loki limitations logs cannot be backdated,
   // so not using buffering for this backend to make sure that events are logged as close
   // to their context as possible
-  flush = () => {};
+  flush = () => { };
 }
