@@ -83,6 +83,14 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		}
 	}
 
+	if f.Rows() == 0 {
+		// the dataframe spec requires in this case for the dataframe
+		// to have no fields
+		// (https://grafana.github.io/dataplane/contract/#no-data-and-empty)
+		// this is also more compatible with alerting
+		f.Fields = []*data.Field{}
+	}
+
 	return f, nil
 }
 
