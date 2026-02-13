@@ -93,6 +93,7 @@ export function TableNGWrap({
 
   const downloadLogs = useCallback(
     (format: DownloadFormat) => {
+      // converting to logsModel is a lot of unnecessary compute, but since this is only called on user action it should work as a short-term solution
       const { meta, rows } = dataFrameToLogsModel(data.series);
       download(format, rows, meta, options.displayedFields);
     },
