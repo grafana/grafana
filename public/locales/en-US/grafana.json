@@ -12977,9 +12977,6 @@
       "title": "Query Options"
     },
     "edit-query-name": "Edit query name",
-    "expression-type-picker": {
-      "title": "Choose expression type"
-    },
     "footer": {
       "edit-option": "Edit {{label}}",
       "label": {
@@ -12996,7 +12993,8 @@
     },
     "header": {
       "expression": "Expression",
-      "pending-expression": "Please, select type of expression below",
+      "pending-expression": "Select an Expression",
+      "pending-expression-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {

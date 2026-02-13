@@ -17,7 +17,7 @@ import { QueryEditorType } from '../constants';
 import { QueryOptionField, Transformation } from './types';
 
 export interface PendingExpression {
-  afterRefId: string;
+  insertAfter: string;
 }
 
 export interface DatasourceState {

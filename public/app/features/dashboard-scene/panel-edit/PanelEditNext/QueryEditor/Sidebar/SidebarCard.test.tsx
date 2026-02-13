@@ -235,13 +235,13 @@ describe('SidebarCard', () => {
   });
 
   describe('add expression', () => {
-    it('clicking "Add expression" calls setPendingExpression with afterRefId', async () => {
+    it('clicking "Add expression" calls setPendingExpression with insertAfter', async () => {
       const { user, setPendingExpression } = renderSidebarCard({ id: 'A' });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
 
-      expect(setPendingExpression).toHaveBeenCalledWith({ afterRefId: 'A' });
+      expect(setPendingExpression).toHaveBeenCalledWith({ insertAfter: 'A' });
     });
   });
 });

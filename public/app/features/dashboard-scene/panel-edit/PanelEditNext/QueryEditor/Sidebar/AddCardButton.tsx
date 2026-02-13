@@ -72,7 +72,7 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
-            setPendingExpression({ afterRefId });
+            setPendingExpression({ insertAfter: afterRefId });
           }}
         />
       </Menu>

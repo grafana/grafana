@@ -15,6 +15,7 @@ import { Transformation } from '../types';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
+import { PendingExpressionHeader } from './PendingExpressionHeader';
 
 function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
@@ -41,6 +42,7 @@ export interface ContentHeaderProps {
   selectedTransformation: Transformation | null;
   queries: DataQuery[];
   cardType: QueryEditorType;
+  pendingExpression?: boolean;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
@@ -74,6 +76,7 @@ export function ContentHeader({
   selectedTransformation,
   queries,
   cardType,
+  pendingExpression,
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
@@ -83,7 +86,11 @@ export function ContentHeader({
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
 
-  const styles = useStyles2(getStyles, { cardType });
+  const styles = useStyles2(getContentHeaderStyles, { cardType });
+
+  if (pendingExpression) {
+    return <PendingExpressionHeader />;
+  }
 
   if (!selectedQuery && !selectedTransformation) {
     return null;
@@ -154,35 +161,17 @@ export function ContentHeaderSceneWrapper({
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  if (pendingExpression) {
-    return <PendingExpressionHeader />;
-  }
-
   return (
     <ContentHeader
       selectedQuery={selectedQuery}
       selectedTransformation={selectedTransformation}
       queries={queries}
       cardType={cardType}
+      pendingExpression={!!pendingExpression}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}
     />
-  );
-}
-
-function PendingExpressionHeader() {
-  const styles = useStyles2(getStyles, { cardType: QueryEditorType.Expression });
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon} size="sm" />
-        <Text weight="light" variant="body" color="secondary">
-          <Trans i18nKey="query-editor-next.header.pending-expression">Please, select type of expression below</Trans>
-        </Text>
-      </div>
-    </div>
   );
 }
 
@@ -191,7 +180,7 @@ interface DatasourceSectionProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
+export const getContentHeaderStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
   return {
     container: css({
       borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,

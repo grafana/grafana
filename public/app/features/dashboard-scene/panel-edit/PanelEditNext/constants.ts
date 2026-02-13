@@ -1,18 +1,18 @@
 import { IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
+import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
+import reduceDarkImage from 'app/features/expressions/images/dark/reduce.svg';
+import resampleDarkImage from 'app/features/expressions/images/dark/resample.svg';
+import sqlDarkImage from 'app/features/expressions/images/dark/sqlExpression.svg';
+import thresholdDarkImage from 'app/features/expressions/images/dark/threshold.svg';
+import classicConditionLightImage from 'app/features/expressions/images/light/classicCondition.svg';
+import mathLightImage from 'app/features/expressions/images/light/math.svg';
+import reduceLightImage from 'app/features/expressions/images/light/reduce.svg';
+import resampleLightImage from 'app/features/expressions/images/light/resample.svg';
+import sqlLightImage from 'app/features/expressions/images/light/sqlExpression.svg';
+import thresholdLightImage from 'app/features/expressions/images/light/threshold.svg';
 import { ExpressionQueryType } from 'app/features/expressions/types';
-import classicConditionDarkImage from 'app/features/transformers/images/dark/classicCondition.svg';
-import mathDarkImage from 'app/features/transformers/images/dark/math.svg';
-import reduceDarkImage from 'app/features/transformers/images/dark/reduce.svg';
-import resampleDarkImage from 'app/features/transformers/images/dark/resample.svg';
-import sqlDarkImage from 'app/features/transformers/images/dark/sqlExpression.svg';
-import thresholdDarkImage from 'app/features/transformers/images/dark/threshold.svg';
-import classicConditionLightImage from 'app/features/transformers/images/light/classicCondition.svg';
-import mathLightImage from 'app/features/transformers/images/light/math.svg';
-import reduceLightImage from 'app/features/transformers/images/light/reduce.svg';
-import resampleLightImage from 'app/features/transformers/images/light/resample.svg';
-import sqlLightImage from 'app/features/transformers/images/light/sqlExpression.svg';
-import thresholdLightImage from 'app/features/transformers/images/light/threshold.svg';
 
 import { QueryOptionField } from './QueryEditor/types';
 
