@@ -277,6 +277,24 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			expectedErr: "cannot have both remove and release orphan resources finalizers",
 		},
 		{
+			name: "should error if unknown finalizer is set",
+			repo: func() *unstructured.Unstructured {
+				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "repo-with-unknown-finalizer",
+					"SyncEnabled": true,
+				})
+
+				// Setting an unknown finalizer
+				localTmp.SetFinalizers([]string{
+					repository.CleanFinalizer,
+					"unknown.finalizer.example.com",
+				})
+
+				return localTmp
+			}(),
+			expectedErr: "unknown finalizer: unknown.finalizer.example.com",
+		},
+		{
 			name: "should succeed with repository with no token but referencing Connection",
 			repo: &unstructured.Unstructured{Object: map[string]any{
 				"apiVersion": "provisioning.grafana.app/v0alpha1",
@@ -456,6 +474,52 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 		createdRepo := unstructuredToRepository(t, created)
 		require.Equal(t, int64(10), createdRepo.Spec.Sync.IntervalSeconds, "interval should be updated with default value")
+	})
+
+	t.Run("should automatically add finalizers during creation", func(t *testing.T) {
+		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+			"Name":        "repo-auto-finalizers",
+			"SyncEnabled": false,
+		})
+
+		// Verify the template doesn't have finalizers set (or set them explicitly to nil)
+		r.SetFinalizers(nil)
+
+		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+
+		// Verify finalizers were automatically added by the mutator
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be automatically added")
+		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+	})
+
+	t.Run("should re-add finalizers when removed during update", func(t *testing.T) {
+		// Create a repository with finalizers
+		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+			"Name":        "repo-update-finalizers",
+			"SyncEnabled": false,
+		})
+
+		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+
+		// Verify finalizers were added
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be present after creation")
+
+		// Update the repository and try to remove finalizers
+		created.SetFinalizers([]string{}) // Explicitly set to empty array
+
+		updated, err := helper.Repositories.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err, "repository update should succeed")
+
+		// Verify finalizers were re-added by the mutator
+		updatedRepo := unstructuredToRepository(t, updated)
+		require.NotEmpty(t, updatedRepo.Finalizers, "finalizers should be re-added after update")
+		require.Contains(t, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 	})
 }
 
