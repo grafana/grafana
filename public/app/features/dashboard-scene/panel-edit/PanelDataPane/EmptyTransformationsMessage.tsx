@@ -10,8 +10,8 @@ import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
 import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
-import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
-import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
+import sqlDarkImage from '../../../expressions/images/dark/sqlExpression.svg';
+import sqlLightImage from '../../../expressions/images/light/sqlExpression.svg';
 
 import { hasBackendDatasource } from './utils';
 
