@@ -122,32 +122,39 @@ function getStyles(
   return {
     wrapper: css({
       position: 'relative',
-      marginInlineStart: theme.spacing(2),
-      // The hover-zone pseudo-elements extend the hover area to cover the
-      // centered add button between cards, making it easier to discover and access.
+      marginInline: theme.spacing(2),
+
+      // The hover-zone pseudo-elements and add-button visibility rules are
+      // only needed when the card has an AddCardButton.
       ...(hasAddButton && {
-        // Left strip: narrow gutter running along the card's left edge and extending
-        // through the gap to the next card, covering the path to the centered "+" button.
+        // Two slim pseudo-element strips extend the hover zone to the left and
+        // below the card, covering the path to the "+" button without overlapping
+        // the card's clickable area.
+
+        // Left strip: narrow gutter running along the card's left edge and below.
         '&::before': {
           content: '""',
           position: 'absolute',
           top: 0,
-          left: `calc(-1 * ${theme.spacing(1.5)})`,
-          width: theme.spacing(1.5),
-          height: `calc(100% + ${theme.spacing(0.5)})`,
+          left: `calc(-1 * ${theme.spacing(3.5)})`,
+          width: theme.spacing(3.5),
+          height: `calc(100% + ${theme.spacing(1.5)})`,
         },
-        // Area around button: covers the gap between cards horizontally to the button.
+
+        // Bottom strip: runs along the card's bottom edge extending to the left.
         '&::after': {
           content: '""',
           position: 'absolute',
           top: '100%',
-          left: `calc(-1 * ${theme.spacing(1.5)})`,
-          width: `calc(100% + ${theme.spacing(1.5)})`,
-          height: theme.spacing(0.5),
+          left: `calc(-1 * ${theme.spacing(3.5)})`,
+          width: `calc(100% + ${theme.spacing(3.5)})`,
+          height: theme.spacing(1.5),
         },
+
         '&:hover': {
           zIndex: 1,
         },
+
         '&:hover [data-add-button], & [data-menu-open]': {
           opacity: 1,
           pointerEvents: 'auto',
