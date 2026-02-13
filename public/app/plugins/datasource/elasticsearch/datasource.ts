@@ -49,6 +49,7 @@ import {
   config,
 } from '@grafana/runtime';
 
+import { ElasticsearchVariableSupport } from './ElasticsearchVariableSupport';
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
@@ -165,6 +166,7 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
+    this.variables = new ElasticsearchVariableSupport(this);
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
