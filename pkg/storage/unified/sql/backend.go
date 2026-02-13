@@ -70,6 +70,10 @@ type Backend interface {
 	resourcepb.DiagnosticsServer
 }
 
+// NewStorageBackend creates the unified storage backend based on storage_type.
+// It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
+// Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
+// For all other storage types a SQL backend will be created.
 func NewStorageBackend(
 	cfg *setting.Cfg,
 	db infraDB.DB,
@@ -84,6 +88,7 @@ func NewStorageBackend(
 		return newFileBackend(cfg)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
+	default: // fall back to SQL backend
 	}
 	// create default unified backend
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
