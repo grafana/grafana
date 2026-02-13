@@ -49,7 +49,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           </Text>
         </Stack>
       </div>
-      <ScrollContainer overflowX="hidden">
+      <ScrollContainer>
         <div className={styles.content}>
           <QuerySidebarCollapsableHeader
             label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
