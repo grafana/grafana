@@ -28,6 +28,7 @@ interface RenderSidebarCardProps {
   onClick?: jest.Mock;
   addQuery?: jest.Mock;
   setSelectedQuery?: jest.Mock;
+  setPendingExpression?: jest.Mock;
   config?: typeof queryConfig;
   showAddButton?: boolean;
 }
@@ -38,6 +39,7 @@ function renderSidebarCard({
   onClick = jest.fn(),
   addQuery = jest.fn().mockReturnValue('B'),
   setSelectedQuery = jest.fn(),
+  setPendingExpression = jest.fn(),
   config = queryConfig,
   showAddButton = true,
 }: RenderSidebarCardProps = {}) {
@@ -69,6 +71,9 @@ function renderSidebarCard({
         cardType: QueryEditorType.Query,
         selectedAlert: null,
         setSelectedAlert: jest.fn(),
+        pendingExpression: null,
+        setPendingExpression,
+        finalizePendingExpression: jest.fn(),
       }}
       actions={actions}
     >
@@ -88,7 +93,7 @@ function renderSidebarCard({
     </QueryEditorProvider>
   );
 
-  return { user, addQuery, setSelectedQuery, onClick };
+  return { user, addQuery, setSelectedQuery, setPendingExpression, onClick };
 }
 
 describe('SidebarCard', () => {
@@ -126,6 +131,9 @@ describe('SidebarCard', () => {
           cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -170,6 +178,9 @@ describe('SidebarCard', () => {
           cardType: QueryEditorType.Transformation,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -232,71 +243,14 @@ describe('SidebarCard', () => {
     });
   });
 
-  describe('expression type submenu', () => {
-    it('clicking "Add expression" shows the expression type submenu', async () => {
-      const { user } = renderSidebarCard();
+  describe('add expression', () => {
+    it('clicking "Add expression" calls setPendingExpression with insertAfter', async () => {
+      const { user, setPendingExpression } = renderSidebarCard({ id: 'A' });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
 
-      // Expression types should now be visible
-      expect(screen.getByRole('menuitem', { name: /^Math$/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /^Reduce$/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /^Resample$/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /^Threshold$/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /classic condition/i })).toBeInTheDocument();
-
-      // Back button should be present
-      expect(screen.getByRole('menuitem', { name: /^Back$/i })).toBeInTheDocument();
-    });
-
-    it('clicking "Back" returns to the main menu', async () => {
-      const { user } = renderSidebarCard();
-
-      await user.click(screen.getByRole('button', { name: /add below A/i }));
-      await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
-
-      // Should be in expression submenu
-      expect(screen.getByRole('menuitem', { name: /^Math$/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('menuitem', { name: /^Back$/i }));
-
-      // Should be back in the main menu
-      expect(screen.getByRole('menuitem', { name: /add query/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /add expression/i })).toBeInTheDocument();
-    });
-
-    it('selecting an expression type calls addQuery with expression datasource and type', async () => {
-      const { user, addQuery } = renderSidebarCard({ id: 'A' });
-
-      await user.click(screen.getByRole('button', { name: /add below A/i }));
-      await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
-      await user.click(screen.getByRole('menuitem', { name: /^Math$/i }));
-
-      expect(addQuery).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'math',
-          datasource: expect.objectContaining({ type: '__expr__', uid: '__expr__' }),
-        }),
-        'A'
-      );
-    });
-
-    it('selecting "Reduce" calls addQuery with reduce type and default reducer', async () => {
-      const { user, addQuery } = renderSidebarCard({ id: 'A' });
-
-      await user.click(screen.getByRole('button', { name: /add below A/i }));
-      await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
-      await user.click(screen.getByRole('menuitem', { name: /^Reduce$/i }));
-
-      expect(addQuery).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'reduce',
-          datasource: expect.objectContaining({ type: '__expr__', uid: '__expr__' }),
-          reducer: 'mean',
-        }),
-        'A'
-      );
+      expect(setPendingExpression).toHaveBeenCalledWith({ insertAfter: 'A' });
     });
   });
 });

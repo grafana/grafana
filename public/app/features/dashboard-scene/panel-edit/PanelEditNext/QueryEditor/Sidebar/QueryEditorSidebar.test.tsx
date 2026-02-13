@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType, SidebarSize } from '../../constants';
+import { SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockUIStateBase } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
@@ -32,16 +32,11 @@ describe('QueryEditorSidebar', () => {
         alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
         }}
@@ -62,16 +57,11 @@ describe('QueryEditorSidebar', () => {
         alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: null,
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
         }}
@@ -100,16 +90,11 @@ describe('QueryEditorSidebar', () => {
         alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
         }}
@@ -149,16 +134,11 @@ describe('QueryEditorSidebar', () => {
         alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
         }}
@@ -193,16 +173,11 @@ describe('QueryEditorSidebar', () => {
         alertingState={{ alertRules: [], loading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
         }}

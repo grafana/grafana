@@ -59,6 +59,9 @@ describe('QueryEditorDetailsSidebar', () => {
           cardType: QueryEditorType.Query,
           selectedAlert: null,
           setSelectedAlert: jest.fn(),
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
