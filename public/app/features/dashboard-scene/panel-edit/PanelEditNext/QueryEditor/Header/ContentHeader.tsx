@@ -87,7 +87,7 @@ export function ContentHeader({
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
 
-  const styles = useStyles2(getContentHeaderStyles, { cardType });
+  const styles = useStyles2(getStyles, { cardType });
 
   if (pendingExpression) {
     return (
@@ -195,7 +195,7 @@ interface DatasourceSectionProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-export const getContentHeaderStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
+const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
   return {
     container: css({
       borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,
