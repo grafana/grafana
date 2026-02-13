@@ -48,6 +48,7 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -229,6 +230,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
+    // Register Dashboard Mutation API for Grafana Assistant and other tools
+    this._registerMutationAPI();
+
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
@@ -257,11 +261,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
+      // Clear mutation API
+      this._mutationClient?.unregister();
+      this._mutationClient = undefined;
       clearKeyBindings();
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
+  }
+
+  private _mutationClient?: DashboardMutationClient;
+
+  /**
+   * Register the Dashboard Mutation API for use by Grafana Assistant and other tools.
+   * This provides a stable interface for programmatic dashboard modifications.
+   *
+   * Wrapped in try/catch to prevent a mutation API bug from breaking dashboard loading.
+   */
+  private _registerMutationAPI() {
+    try {
+      this._mutationClient = new DashboardMutationClient(this);
+      this._mutationClient.register();
+    } catch (error) {
+      console.error('Failed to register Dashboard Mutation API:', error);
+    }
   }
 
   private _initializePanelSearch() {
