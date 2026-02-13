@@ -103,19 +103,18 @@ function getStyles(
     top: 0,
     bottom: 0,
     display: 'flex',
-    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
-    paddingLeft: theme.spacing(2),
-    background: `linear-gradient(270deg, ${backgroundColor} 90%, rgba(32, 38, 47, 0.00) 100%)`,
+    paddingLeft: theme.spacing(3),
+    background: `linear-gradient(270deg, ${backgroundColor} 80%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
-
+    // This transition handles the opacity and transform of the hover actions when the card is hovered.
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
-        duration: theme.transitions.duration.complex,
+        duration: theme.transitions.duration.standard,
       }),
     },
   });
@@ -136,7 +135,6 @@ function getStyles(
           left: `calc(-1 * ${theme.spacing(1.5)})`,
           width: theme.spacing(1.5),
           height: `calc(100% + ${theme.spacing(0.5)})`,
-          // background: 'red',
         },
         // Area around button: covers the gap between cards horizontally to the button.
         '&::after': {
@@ -146,7 +144,6 @@ function getStyles(
           left: `calc(-1 * ${theme.spacing(1.5)})`,
           width: `calc(100% + ${theme.spacing(1.5)})`,
           height: theme.spacing(0.5),
-          //background: 'red',
         },
         '&:hover': {
           zIndex: 1,
@@ -169,11 +166,11 @@ function getStyles(
       background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
       borderLeft: `${isSelected ? 3 : 1}px solid ${config.color}`,
       cursor: 'pointer',
-      padding: 0,
 
+      // This transitions the background color of the card when it is hovered.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color'], {
-          duration: theme.transitions.duration.short,
+          duration: theme.transitions.duration.standard,
         }),
       },
       '&:hover': {
@@ -202,9 +199,10 @@ function getStyles(
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
+      // This transitions the opacity of the card text when the card is hidden.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
+          duration: theme.transitions.duration.standard,
         }),
       },
     }),
