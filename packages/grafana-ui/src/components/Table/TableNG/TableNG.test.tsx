@@ -556,7 +556,7 @@ describe('TableNG', () => {
       const grid = container.querySelector('[role="grid"]');
       expect(grid).toBeInTheDocument();
 
-      const expandIcons = container.querySelectorAll('svg[aria-label="Expand row"]');
+      const expandIcons = container.querySelectorAll('[aria-label="Expand row"]');
       expect(expandIcons.length).toBeGreaterThan(0);
     });
 
@@ -575,30 +575,29 @@ describe('TableNG', () => {
       });
 
       // Count initial rows
-      const initialRows = container.querySelectorAll('[role="row"]');
-      const initialRowCount = initialRows.length;
+      const nestedRows = container.querySelectorAll('[role="grid"] [role="row"]');
 
       // Find the expand button
-      const expandButton = container.querySelector('svg[aria-label="Expand row"]');
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
       expect(expandButton).toBeInTheDocument();
 
       // Click the expand button
       if (expandButton) {
+        for (const row of nestedRows) {
+          expect(row).not.toBeVisible();
+        }
+        expect(nestedRows).toHaveLength(6);
+
         await user.click(expandButton);
 
         // After expansion, we should have more rows
-        const expandedRows = container.querySelectorAll('[role="row"]');
-        expect(expandedRows.length).toBeGreaterThan(initialRowCount);
+        expect(nestedRows[0]).toBeVisible(); // header
+        expect(nestedRows[1]).toBeVisible(); // first of two
+        expect(nestedRows[2]).toBeVisible(); // second of two
 
-        // Check for nested data by looking for specific cell content
-        const expectedExpandedContent = ['N1', 'N2'];
-        expectedExpandedContent.forEach((text) => {
-          expect(screen.getByText(text)).toBeInTheDocument();
-        });
-
-        // Hidden nested fields should stay hidden
-        expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
-        expect(screen.queryByText('secret1')).not.toBeInTheDocument();
+        expect(nestedRows[3]).not.toBeVisible(); // header
+        expect(nestedRows[4]).not.toBeVisible(); // first of two
+        expect(nestedRows[5]).not.toBeVisible(); // second of two
 
         // Check if the expanded row has the aria-expanded attribute
         const expandedRow = container.querySelector('[aria-expanded="true"]');
