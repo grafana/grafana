@@ -89,13 +89,14 @@ describe('GroupByVariableEditor', () => {
     expect(variable.state.defaultOptions).toEqual(undefined);
   });
 
-  it('should render the default value section', async () => {
-    const { renderer } = await setup();
+  it('should render provided default values as inputs', async () => {
+    const { renderer } = await setup(undefined, { value: ['job', 'instance'], text: ['job', 'instance'] });
 
     await waitFor(() => {
-      expect(
-        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
-      ).toBeInTheDocument();
+      const inputs = renderer.getAllByLabelText('Default value');
+      expect(inputs).toHaveLength(2);
+      expect(inputs[0]).toHaveValue('job');
+      expect(inputs[1]).toHaveValue('instance');
     });
   });
 
@@ -139,7 +140,7 @@ describe('GroupByVariableEditor', () => {
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[]) {
+async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value: string[]; text: string[] }) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',
@@ -147,6 +148,7 @@ async function setup(defaultOptions?: MetricFindValue[]) {
     label: 'Group By',
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
     defaultOptions,
+    defaultValue,
   });
   return {
     renderer: await act(() => render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />)),
