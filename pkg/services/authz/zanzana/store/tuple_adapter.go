@@ -2,9 +2,8 @@ package store
 
 import (
 	"context"
-	"crypto/sha256"
+	"fmt"
 	"io"
-	"strconv"
 	"sync"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -14,29 +13,30 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	tuplepb "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// ulidAlphabet is Crockford base32 without I, L, O, U (OpenFGA store ID regex).
-const ulidAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 // Ensure TupleStorageAdapter implements OpenFGADatastore.
 var _ storage.OpenFGADatastore = (*TupleStorageAdapter)(nil)
 
+// ModelID is the deterministic authorization model ID (26-character ULID of all zeros).
+const ModelID = "00000000000000000000000000"
+
 // TupleStorageAdapter implements storage.OpenFGADatastore by delegating tuple
-// operations to a gRPC TupleStorageService and keeping stores, models, and
-// assertions in memory (Grafana-managed control plane).
+// operations to a gRPC TupleStorageService. The authorization model is derived
+// from the compiled schema modules at construction time.
 type TupleStorageAdapter struct {
 	tupleClient tuplepb.TupleStorageServiceClient
 	conn        *grpc.ClientConn
 
+	// Authorization model computed from schema modules.
+	model *openfgav1.AuthorizationModel
+
 	// Control plane (Grafana-managed, in-memory)
-	stores     map[string]*openfgav1.Store
-	models     map[string][]*openfgav1.AuthorizationModel
 	assertions map[string]map[string][]*openfgav1.Assertion
 	mu         sync.RWMutex
 
@@ -77,11 +77,17 @@ func newTupleStorageAdapterWithClient(
 		// Optional: read from config if we add fields later
 		_ = cfg
 	}
+
+	model, err := schema.TransformModulesToModel(schema.SchemaModules)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build authorization model from schema: %w", err)
+	}
+	model.Id = ModelID
+
 	a := &TupleStorageAdapter{
 		tupleClient:                   client,
 		conn:                          conn,
-		stores:                        make(map[string]*openfgav1.Store),
-		models:                        make(map[string][]*openfgav1.AuthorizationModel),
+		model:                         model,
 		assertions:                    make(map[string]map[string][]*openfgav1.Assertion),
 		maxTuplesPerWrite:             maxTuples,
 		maxTypesPerAuthorizationModel: maxTypes,
@@ -308,181 +314,42 @@ func (a *TupleStorageAdapter) ReadChanges(ctx context.Context, store string, fil
 	return out, resp.ContinuationToken, nil
 }
 
-// CreateStore implements StoresBackend (in-memory).
-// If store.Id is empty, a 26-character ULID is generated so OpenFGA API validation passes.
-func (a *TupleStorageAdapter) CreateStore(ctx context.Context, store *openfgav1.Store) (*openfgav1.Store, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if store.GetName() == "" {
-		return nil, ErrStoreIDOrNameRequired
-	}
-	// Always derive ID from name so the same name yields the same store ID everywhere.
-	id := storeIDFromName(store.GetName())
-	if _, exists := a.stores[id]; exists {
-		return nil, storage.ErrCollision
-	}
-	cp := proto.Clone(store).(*openfgav1.Store)
-	cp.Id = id
-	a.stores[id] = cp
-	return proto.Clone(cp).(*openfgav1.Store), nil
+// CreateStore is not implemented — stores are managed by the server layer.
+func (a *TupleStorageAdapter) CreateStore(_ context.Context, _ *openfgav1.Store) (*openfgav1.Store, error) {
+	return nil, ErrNotImplemented
 }
 
-// storeIDFromName returns a deterministic 26-character store ID from a name,
-// matching OpenFGA store ID pattern so the same name always yields the same ID.
-func storeIDFromName(name string) string {
-	const n = 26
-	h := sha256.Sum256([]byte(name))
-	out := make([]byte, n)
-	for i := 0; i < n; i++ {
-		out[i] = ulidAlphabet[int(h[i%len(h)])%len(ulidAlphabet)]
-	}
-	return string(out)
+// GetStore is not implemented — stores are managed by the server layer.
+func (a *TupleStorageAdapter) GetStore(_ context.Context, _ string) (*openfgav1.Store, error) {
+	return nil, ErrNotImplemented
 }
 
-// GetStore implements StoresBackend (in-memory).
-func (a *TupleStorageAdapter) GetStore(ctx context.Context, id string) (*openfgav1.Store, error) {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	s, ok := a.stores[id]
-	if !ok || s.GetDeletedAt() != nil {
+// DeleteStore is not implemented — stores are managed by the server layer.
+func (a *TupleStorageAdapter) DeleteStore(_ context.Context, _ string) error {
+	return ErrNotImplemented
+}
+
+// ListStores is not implemented — stores are managed by the server layer.
+func (a *TupleStorageAdapter) ListStores(_ context.Context, _ storage.ListStoresOptions) ([]*openfgav1.Store, string, error) {
+	return nil, "", ErrNotImplemented
+}
+
+// ReadAuthorizationModel returns the pre-computed authorization model if the id matches.
+func (a *TupleStorageAdapter) ReadAuthorizationModel(_ context.Context, _ string, id string) (*openfgav1.AuthorizationModel, error) {
+	if id != a.model.GetId() {
 		return nil, storage.ErrNotFound
 	}
-	return proto.Clone(s).(*openfgav1.Store), nil
+	return proto.Clone(a.model).(*openfgav1.AuthorizationModel), nil
 }
 
-// DeleteStore implements StoresBackend (in-memory).
-func (a *TupleStorageAdapter) DeleteStore(ctx context.Context, id string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s, ok := a.stores[id]
-	if !ok {
-		return storage.ErrNotFound
-	}
-	// Soft delete
-	cp := proto.Clone(s).(*openfgav1.Store)
-	cp.DeletedAt = timestamppb.Now()
-	a.stores[id] = cp
-	return nil
+// ReadAuthorizationModels is not implemented — the model is managed internally.
+func (a *TupleStorageAdapter) ReadAuthorizationModels(_ context.Context, _ string, _ storage.ReadAuthorizationModelsOptions) ([]*openfgav1.AuthorizationModel, string, error) {
+	return nil, "", ErrNotImplemented
 }
 
-// ListStores implements StoresBackend (in-memory).
-func (a *TupleStorageAdapter) ListStores(ctx context.Context, options storage.ListStoresOptions) ([]*openfgav1.Store, string, error) {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	var list []*openfgav1.Store
-	for _, s := range a.stores {
-		if s.GetDeletedAt() != nil {
-			continue
-		}
-		if len(options.IDs) > 0 {
-			found := false
-			for _, id := range options.IDs {
-				if id == s.GetId() {
-					found = true
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-		if options.Name != "" && s.GetName() != options.Name {
-			continue
-		}
-		list = append(list, proto.Clone(s).(*openfgav1.Store))
-	}
-	// Pagination: simple offset-based using options.Pagination.From
-	from := 0
-	if options.Pagination.From != "" {
-		if n, err := strconv.Atoi(options.Pagination.From); err == nil && n >= 0 {
-			from = n
-		}
-	}
-	pageSize := options.Pagination.PageSize
-	if pageSize <= 0 {
-		pageSize = storage.DefaultPageSize
-	}
-	if from >= len(list) {
-		return []*openfgav1.Store{}, "", nil
-	}
-	end := from + pageSize
-	if end > len(list) {
-		end = len(list)
-	}
-	// Return clones to avoid copylocks
-	page := make([]*openfgav1.Store, 0, end-from)
-	for i := from; i < end; i++ {
-		page = append(page, proto.Clone(list[i]).(*openfgav1.Store))
-	}
-	nextToken := ""
-	if end < len(list) {
-		nextToken = strconv.Itoa(end)
-	}
-	return page, nextToken, nil
-}
-
-// ReadAuthorizationModel implements AuthorizationModelReadBackend (in-memory).
-func (a *TupleStorageAdapter) ReadAuthorizationModel(ctx context.Context, store, id string) (*openfgav1.AuthorizationModel, error) {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	models, ok := a.models[store]
-	if !ok {
-		return nil, storage.ErrNotFound
-	}
-	for _, m := range models {
-		if m.GetId() == id {
-			return proto.Clone(m).(*openfgav1.AuthorizationModel), nil
-		}
-	}
-	return nil, storage.ErrNotFound
-}
-
-// ReadAuthorizationModels implements AuthorizationModelReadBackend (in-memory).
-func (a *TupleStorageAdapter) ReadAuthorizationModels(ctx context.Context, store string, options storage.ReadAuthorizationModelsOptions) ([]*openfgav1.AuthorizationModel, string, error) {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	models, ok := a.models[store]
-	if !ok {
-		return []*openfgav1.AuthorizationModel{}, "", nil
-	}
-	from := 0
-	if options.Pagination.From != "" {
-		if n, err := strconv.Atoi(options.Pagination.From); err == nil && n >= 0 {
-			from = n
-		}
-	}
-	pageSize := options.Pagination.PageSize
-	if pageSize <= 0 {
-		pageSize = storage.DefaultPageSize
-	}
-	if from >= len(models) {
-		return []*openfgav1.AuthorizationModel{}, "", nil
-	}
-	end := from + pageSize
-	if end > len(models) {
-		end = len(models)
-	}
-	page := make([]*openfgav1.AuthorizationModel, 0, end-from)
-	for i := from; i < end; i++ {
-		page = append(page, proto.Clone(models[i]).(*openfgav1.AuthorizationModel))
-	}
-	nextToken := ""
-	if end < len(models) {
-		nextToken = strconv.Itoa(end)
-	}
-	return page, nextToken, nil
-}
-
-// FindLatestAuthorizationModel implements AuthorizationModelReadBackend (in-memory).
-func (a *TupleStorageAdapter) FindLatestAuthorizationModel(ctx context.Context, store string) (*openfgav1.AuthorizationModel, error) {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	models, ok := a.models[store]
-	if !ok || len(models) == 0 {
-		return nil, storage.ErrNotFound
-	}
-	// Assume stored in descending order of ID (newest first)
-	return proto.Clone(models[0]).(*openfgav1.AuthorizationModel), nil
+// FindLatestAuthorizationModel returns the pre-computed authorization model derived from schema modules.
+func (a *TupleStorageAdapter) FindLatestAuthorizationModel(_ context.Context, _ string) (*openfgav1.AuthorizationModel, error) {
+	return proto.Clone(a.model).(*openfgav1.AuthorizationModel), nil
 }
 
 // MaxTypesPerAuthorizationModel implements TypeDefinitionWriteBackend.
@@ -490,31 +357,9 @@ func (a *TupleStorageAdapter) MaxTypesPerAuthorizationModel() int {
 	return a.maxTypesPerAuthorizationModel
 }
 
-// WriteAuthorizationModel implements TypeDefinitionWriteBackend (in-memory).
-func (a *TupleStorageAdapter) WriteAuthorizationModel(ctx context.Context, store string, model *openfgav1.AuthorizationModel) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.models[store] == nil {
-		a.models[store] = make([]*openfgav1.AuthorizationModel, 0)
-	}
-	// Replace or append by id
-	id := model.GetId()
-	list := a.models[store]
-	newList := make([]*openfgav1.AuthorizationModel, 0, len(list)+1)
-	found := false
-	for _, m := range list {
-		if m.GetId() == id {
-			newList = append(newList, proto.Clone(model).(*openfgav1.AuthorizationModel))
-			found = true
-		} else {
-			newList = append(newList, proto.Clone(m).(*openfgav1.AuthorizationModel))
-		}
-	}
-	if !found {
-		newList = append(newList, proto.Clone(model).(*openfgav1.AuthorizationModel))
-	}
-	a.models[store] = newList
-	return nil
+// WriteAuthorizationModel is not implemented — the model is managed internally.
+func (a *TupleStorageAdapter) WriteAuthorizationModel(_ context.Context, _ string, _ *openfgav1.AuthorizationModel) error {
+	return ErrNotImplemented
 }
 
 // WriteAssertions implements AssertionsBackend (in-memory).

@@ -5,10 +5,6 @@ import (
 	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/language/pkg/go/transformer"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
 func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo, error) {
@@ -24,7 +20,7 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 		return nil, err
 	}
 
-	modelID, err := s.loadModel(ctx, store.GetId(), schema.SchemaModules)
+	modelID, err := s.loadModel(ctx, store.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -39,74 +35,17 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 	return &info, nil
 }
 
-func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
-	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
-	}
-
-	for _, s := range res.GetStores() {
-		if s.GetName() == namespace {
-			return s, nil
-		}
-	}
-
-	_, err = s.openFGAClient.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
-	if err != nil {
-		return nil, err
-	}
-
-	// List again so we use the store as returned by the backend (e.g. correct ULID).
-	// This is a bit of a hack
-	res, err = s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list stores after create: %w", err)
-	}
-	for _, st := range res.GetStores() {
-		if st.GetName() == namespace {
-			return st, nil
-		}
-	}
-	return nil, fmt.Errorf("store %q not found after create", namespace)
+func (s *Server) getOrCreateStore(_ context.Context, namespace string) (*openfgav1.Store, error) {
+	return &openfgav1.Store{
+		Name: namespace,
+		Id:   "00000000000000000000000000",
+	}, nil
 }
 
-func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
-	var continuationToken string
-
-	model, err := schema.TransformModulesToModel(modules)
-	if err != nil {
-		return "", err
-	}
-
-	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-	// So with a pageSize of 1 we will get the latest model.
-	res, err := s.openFGAClient.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-		StoreId:           storeID,
-		PageSize:          &wrapperspb.Int32Value{Value: 1},
-		ContinuationToken: continuationToken,
-	})
-
+func (s *Server) loadModel(ctx context.Context, storeID string) (string, error) {
+	model, err := s.store.FindLatestAuthorizationModel(ctx, storeID)
 	if err != nil {
 		return "", fmt.Errorf("failed to load authorization model: %w", err)
 	}
-
-	for _, m := range res.GetAuthorizationModels() {
-		// If provided dsl is equal to a stored dsl we use that as the authorization id
-		if schema.EqualModels(m, model) {
-			return m.GetId(), nil
-		}
-	}
-
-	writeRes, err := s.openFGAClient.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         storeID,
-		TypeDefinitions: model.GetTypeDefinitions(),
-		SchemaVersion:   model.GetSchemaVersion(),
-		Conditions:      model.GetConditions(),
-	})
-
-	if err != nil {
-		return "", fmt.Errorf("failed to load authorization model: %w", err)
-	}
-
-	return writeRes.GetAuthorizationModelId(), nil
+	return model.GetId(), nil
 }
