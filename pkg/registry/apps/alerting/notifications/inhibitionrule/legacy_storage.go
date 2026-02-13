@@ -26,7 +26,7 @@ type InhibitionRuleService interface {
 	GetInhibitionRules(ctx context.Context, orgID int64) ([]ngmodels.InhibitionRule, error)
 	GetInhibitionRule(ctx context.Context, name string, orgID int64) (ngmodels.InhibitionRule, error)
 	CreateInhibitionRule(ctx context.Context, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
-	UpdateInhibitionRule(ctx context.Context, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
+	UpdateInhibitionRule(ctx context.Context, name string, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
 	DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
@@ -155,7 +155,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateInhibitionRule(ctx, rule, info.OrgID)
+	updated, err := s.service.UpdateInhibitionRule(ctx, p.Name, rule, info.OrgID)
 	if err != nil {
 		return nil, false, err
 	}

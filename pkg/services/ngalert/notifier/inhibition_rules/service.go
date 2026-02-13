@@ -37,7 +37,6 @@ func NewService(
 }
 
 // GetInhibitionRules returns all inhibition rules for the specified org.
-// For app-platform API, this includes both Grafana-managed and imported rules.
 func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]models.InhibitionRule, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -72,7 +71,7 @@ func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID in
 		return models.InhibitionRule{}, err
 	}
 
-	result, found, err := svc.getInhibitionRuleByName(ctx, revision, name, orgID)
+	result, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
 		return models.InhibitionRule{}, err
 	}
@@ -112,7 +111,7 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.Inhibi
 	return *models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance), nil
 }
 
-func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
 		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -122,7 +121,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, err
 	}
 
-	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, rule.Name, orgID)
+	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
 		return models.InhibitionRule{}, err
 	} else if !found {
@@ -152,7 +151,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule models.Inhibi
 	}
 
 	if renamed {
-		delete(revision.Config.ManagedInhibitionRules, existing.UID)
+		delete(revision.Config.ManagedInhibitionRules, existing.Name)
 	}
 	revision.Config.ManagedInhibitionRules[rule.Name] = &rule
 
@@ -170,7 +169,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 		return err
 	}
 
-	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, name, orgID)
+	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
 		return err
 	} else if !found {
@@ -197,7 +196,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 
 // Helper functions
 
-func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_storage.ConfigRevision, name string, orgID int64) (models.InhibitionRule, bool, error) {
+func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) (models.InhibitionRule, bool, error) {
 	// Check Grafana-managed rules first
 	managedInhibitionRules := rev.Config.ManagedInhibitionRules
 	if r, ok := managedInhibitionRules[name]; ok {
