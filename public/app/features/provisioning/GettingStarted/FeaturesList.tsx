@@ -10,10 +10,15 @@ import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
+  isConnectionLimitExceeded?: boolean;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+export const FeaturesList = ({
+  hasRequiredFeatures,
+  isConnectionLimitExceeded,
+  onSetupFeatures,
+}: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -46,10 +51,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
       <Text>
         <Trans i18nKey="provisioning.features-list.learn-more-documentation">
           Want to learn more? See our{' '}
-          <TextLink
-            external
-            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
-          >
+          <TextLink external href={'https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/'}>
             documentation
           </TextLink>
           .
@@ -65,7 +67,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         </Box>
       ) : (
         <Stack direction="row" alignItems="center" gap={2}>
-          <RepositoryTypeCards />
+          <RepositoryTypeCards disabled={isConnectionLimitExceeded} />
         </Stack>
       )}
     </Stack>

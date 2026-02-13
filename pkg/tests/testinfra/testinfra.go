@@ -565,6 +565,25 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.HARedisAddr != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_address", opts.HARedisAddr)
+		require.NoError(t, err)
+	}
+	if opts.HARedisPeerName != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_peer_name", opts.HARedisPeerName)
+		require.NoError(t, err)
+	}
+	if opts.HASingleNodeEvaluation {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_single_node_evaluation", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.GrafanaComAPIURL != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -673,9 +692,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	}
 
 	if opts.ZanzanaReconciliationInterval != 0 {
-		rbacSect, err := cfg.NewSection("rbac")
+		reconcilerSect, err := getOrCreateSection("zanzana.reconciler")
 		require.NoError(t, err)
-		_, err = rbacSect.NewKey("zanzana_reconciliation_interval", opts.ZanzanaReconciliationInterval.String())
+		_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
 		require.NoError(t, err)
 	}
 
@@ -709,6 +728,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -788,6 +809,11 @@ type GrafanaOpts struct {
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
+
+	// Alerting High Availability configuration
+	HARedisAddr            string
+	HARedisPeerName        string
+	HASingleNodeEvaluation bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

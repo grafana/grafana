@@ -78,8 +78,9 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled           bool `json:"enabled"`
-	CleanCacheEnabled bool `json:"cleanCacheEnabled"`
+	Enabled           bool  `json:"enabled"`
+	CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
+	DefaultTTLMs      int64 `json:"defaultTTLMs"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {
@@ -182,6 +183,7 @@ type FrontendSettingsDTO struct {
 	JwtUrlLogin          bool                             `json:"jwtUrlLogin"`
 	LiveEnabled          bool                             `json:"liveEnabled"`
 	LiveMessageSizeLimit int                              `json:"liveMessageSizeLimit"`
+	LiveNamespaced       bool                             `json:"liveNamespaced"`
 	AutoAssignOrg        bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
@@ -260,6 +262,7 @@ type FrontendSettingsDTO struct {
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders             []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled                bool                           `json:"awsAssumeRoleEnabled"`
+	AwsPerDatasourceHTTPProxyEnabled    bool                           `json:"awsPerDatasourceHTTPProxyEnabled"`
 	SupportBundlesEnabled               bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                     bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled           bool                           `json:"secureSocksDSProxyEnabled"`

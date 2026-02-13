@@ -32,6 +32,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "Folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.title",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

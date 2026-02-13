@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PyroscopeDataSource } from '../datasource';
 import { mockFetchPyroscopeDatasourceSettings } from '../mocks';
@@ -17,7 +18,11 @@ describe('QueryEditor', () => {
   it('should render without error', async () => {
     setup();
 
-    expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
+    // wait for CodeEditor
+    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('process_cpu-cpu')).toBeDefined();
+    });
   });
 
   it('should render without error if empty profileTypes', async () => {

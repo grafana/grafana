@@ -9,7 +9,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
+import { UsagesToNetwork, VariableUsageTree } from '../inspect/types';
 import { KeyedVariableIdentifier } from '../state/types';
 
 import { VariableEditorListRow } from './VariableEditorListRow';

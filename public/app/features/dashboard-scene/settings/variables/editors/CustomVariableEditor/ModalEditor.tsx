@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariableModel } from '@grafana/data';
@@ -10,7 +10,7 @@ import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
-import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { useGetAllVariableOptions, VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { validateJsonQuery } from './CustomVariableEditor';
 import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
@@ -29,10 +29,11 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
+    options,
+    staticOptions,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal,
     onValuesFormatChange,
     onQueryChange,
@@ -41,7 +42,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -69,7 +70,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview options={options} hasMultiProps={valuesFormat === 'json'} />
+          <VariableValuesPreview options={options} staticOptions={staticOptions} />
         </div>
       </Stack>
       <Modal.ButtonRow>
@@ -101,23 +102,14 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const [query, setQuery] = useState(() => variable.state.query);
   const [prevQuery, setPrevQuery] = useState('');
   const [queryValidationError, setQueryValidationError] = useState<Error>();
-
-  const options = useMemo(() => {
-    if (valuesFormat === 'csv') {
-      return variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-        value,
-        label: value === label ? '' : label,
-      }));
-    } else {
-      return variable.transformJsonToOptions(query);
-    }
-  }, [query, valuesFormat, variable]);
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
 
   return {
+    options,
+    staticOptions,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal: onClose,
     onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
       setQuery(prevQuery);
@@ -144,9 +136,9 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
           if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query, value: undefined });
+            variable.setState({ valuesFormat: 'csv', query });
           } else {
-            variable.setState({ valuesFormat, query, value: undefined });
+            variable.setState({ valuesFormat, query });
           }
 
           if (valuesFormat === 'json') {
@@ -159,12 +151,10 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
           variable.setState({
             valuesFormat: initialValuesFormatRef.current,
             query: initialQueryRef.current,
-            value: undefined,
           });
 
           if (initialValuesFormatRef.current === 'json') {
-            variable.setState({ allowCustomValue: false });
-            variable.setState({ allValue: undefined });
+            variable.setState({ allowCustomValue: false, allValue: undefined });
           }
 
           await lastValueFrom(variable.validateAndUpdate!());

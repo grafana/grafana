@@ -310,7 +310,8 @@ func NewMapperRegistry() MapperRegistry {
 
 // findGroupKey returns the registry key for group, using exact match first,
 // then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
-// group matches if it has that suffix and is longer than the suffix (non-empty prefix).
+// group matches if it has that suffix, is longer than the suffix (non-empty prefix), and the prefix
+// contains no dot (so "loki.datasource.grafana.app" matches but "foo.loki.datasource.grafana.app" does not).
 // Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
 func (m mapper) findGroupKey(group string) (string, bool) {
 	if strings.HasPrefix(group, "*") {
@@ -324,11 +325,16 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
 			continue
 		}
-		// does the requested group have the same suffix as the wildcard key?
-		suffix := key[1:]
-		if len(group) > len(suffix) && strings.HasSuffix(group, suffix) {
-			return key, true
+		suffix := key[1:]                              // remove the leading "*"
+		prefix, ok := strings.CutSuffix(group, suffix) // loki.datasource.grafana.app -> loki
+		if !ok || prefix == "" {
+			continue
 		}
+		// prefix must be a single segment (no nested dots)
+		if strings.Contains(prefix, ".") {
+			continue
+		}
+		return key, true
 	}
 	return "", false
 }

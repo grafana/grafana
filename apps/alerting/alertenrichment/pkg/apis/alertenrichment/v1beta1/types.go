@@ -16,12 +16,20 @@ type AlertEnrichment struct {
 	Spec AlertEnrichmentSpec `json:"spec,omitempty"`
 }
 
+func (AlertEnrichment) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AlertEnrichment"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type AlertEnrichmentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []AlertEnrichment `json:"items,omitempty"`
+}
+
+func (AlertEnrichmentList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AlertEnrichmentList"
 }
 
 // AlertEnrichmentSpec specifies an alert enrichment pipeline.
@@ -53,6 +61,10 @@ type AlertEnrichmentSpec struct {
 	Steps []Step `json:"steps" yaml:"steps" jsonschema:"description=Ordered list of enricher steps"`
 }
 
+func (AlertEnrichmentSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AlertEnrichmentSpec"
+}
+
 // Type of comparison performed by the matcher. This mimics Alertmanager matchers.
 // +enum
 type StepType string
@@ -77,6 +89,10 @@ type Step struct {
 	Conditional *Conditional `json:"conditional,omitempty" yaml:"conditional,omitempty" jsonschema:"description=Conditional enricher configuration that branches based on the condition"`
 }
 
+func (Step) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Step"
+}
+
 type Conditional struct {
 	// If is the condition to evaluate.
 	If Condition `json:"if" yaml:"if" jsonschema:"description=Condition to evaluate before running the enrichment steps"`
@@ -86,6 +102,10 @@ type Conditional struct {
 
 	// Else is the enrichment steps to perform otherwise.
 	Else []Step `json:"else,omitempty" yaml:"else,omitempty" jsonschema:"description=Steps executed when the condition is false"`
+}
+
+func (Conditional) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Conditional"
 }
 
 type Condition struct {
@@ -100,11 +120,19 @@ type Condition struct {
 	DataSourceQuery *RawDataSourceQuery `json:"dataSourceQuery,omitempty" yaml:"dataSourceQuery,omitempty" jsonschema:"description=Data source query to run to evaluate the condition"`
 }
 
+func (Condition) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Condition"
+}
+
 // Matcher is used to match label (or annotation) values.
 type Matcher struct {
 	Type  MatchType `json:"type" yaml:"type" jsonschema:"description=Comparison operator ('=', '!=', '=~', '!~')"`
 	Name  string    `json:"name" yaml:"name" jsonschema:"description=Label/annotation key"`
 	Value string    `json:"value" yaml:"value" jsonschema:"description=Value or regex pattern to match"`
+}
+
+func (Matcher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Matcher"
 }
 
 // Type of comparison performed by the matcher. This mimics Alertmanager matchers.
@@ -149,12 +177,20 @@ type EnricherConfig struct {
 	Assistant  *AssistantEnricher  `json:"assistant,omitempty" yaml:"assistant,omitempty" jsonschema:"description=Assistant enricher settings"`
 }
 
+func (EnricherConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "EnricherConfig"
+}
+
 // AssignEnricher configures an enricher which assigns annotations.
 type AssignEnricher struct {
 	// Annotations to change and values to set them to.
 	// +listType=map
 	// +listMapKey=name
 	Annotations []Assignment `json:"annotations" yaml:"annotations" jsonschema:"description=Annotations to set on the alert"`
+}
+
+func (AssignEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AssignEnricher"
 }
 
 type Assignment struct {
@@ -165,10 +201,18 @@ type Assignment struct {
 	Value string `json:"value" yaml:"value" jsonschema:"description=Template value to apply, for example '{{ $labels.instance }} is down'"`
 }
 
+func (Assignment) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Assignment"
+}
+
 // ExternalEnricher configures an enricher which calls an external service.
 type ExternalEnricher struct {
 	// URL of the external HTTP service to call out to.
 	URL string `json:"url" yaml:"url" jsonschema:"description=HTTP endpoint to call for enrichment"`
+}
+
+func (ExternalEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ExternalEnricher"
 }
 
 // Type of data source query
@@ -189,6 +233,10 @@ type DataSourceEnricher struct {
 	Logs *LogsDataSourceQuery `json:"logs,omitempty" yaml:"logs,omitempty" jsonschema:"description=Logs query definition"`
 }
 
+func (DataSourceEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DataSourceEnricher"
+}
+
 // RawDataSourceQuery allows defining the entire query request
 type RawDataSourceQuery struct {
 	// The data source request to perform.
@@ -196,6 +244,10 @@ type RawDataSourceQuery struct {
 
 	// The RefID of the response to use. Not required if only a single query is given.
 	RefID string `json:"refId,omitempty" yaml:"refId,omitempty" jsonschema:"description=RefID of the response to use, needed if multiple queries are given"`
+}
+
+func (RawDataSourceQuery) OpenAPIModelName() string {
+	return OpenAPIPrefix + "RawDataSourceQuery"
 }
 
 // LogsDataSourceQuery is a simplified method of describing a logs query,
@@ -214,9 +266,17 @@ type LogsDataSourceQuery struct {
 	MaxLines int `json:"maxLines,omitempty" yaml:"maxLines,omitempty" jsonschema:"description=Maximum number of log lines to include, defaults to 3"`
 }
 
+func (LogsDataSourceQuery) OpenAPIModelName() string {
+	return OpenAPIPrefix + "LogsDataSourceQuery"
+}
+
 // SiftEnricher configures an enricher which calls into Sift.
 type SiftEnricher struct {
 	// In the future, there may be configuration options.
+}
+
+func (SiftEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SiftEnricher"
 }
 
 // AssertsEnricher configures an enricher which calls into Asserts.
@@ -224,9 +284,17 @@ type AssertsEnricher struct {
 	// In the future, there may be configuration options.
 }
 
+func (AssertsEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AssertsEnricher"
+}
+
 // ExplainEnricher uses LLM to generate explanations for alerts.
 type ExplainEnricher struct {
 	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to set the explanation in, by default '__enriched_ai_explanation'"`
+}
+
+func (ExplainEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ExplainEnricher"
 }
 
 // LoopEnricher configures an enricher which calls into Loop.
@@ -234,7 +302,15 @@ type LoopEnricher struct {
 	// In the future, there may be configuration options.
 }
 
+func (LoopEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "LoopEnricher"
+}
+
 // AssistantEnricher configures an enricher which calls into Assistant.
 type AssistantEnricher struct {
 	// In the future, there may be configuration options.
+}
+
+func (AssistantEnricher) OpenAPIModelName() string {
+	return OpenAPIPrefix + "AssistantEnricher"
 }

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build/wire
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/google/go-cmp v0.7.0

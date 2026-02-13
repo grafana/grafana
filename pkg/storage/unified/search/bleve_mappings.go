@@ -79,7 +79,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
 		Type:               "text",
 		Analyzer:           keyword.Name,
-		Store:              false,
+		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,

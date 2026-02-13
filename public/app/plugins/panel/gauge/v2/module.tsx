@@ -18,8 +18,6 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
 
     addStandardDataReduceOptions(builder);
 
-    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
-
     builder.addRadio({
       path: 'shape',
       name: t('gauge.config.shape', 'Style'),
@@ -80,7 +78,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
 
     builder.addSliderInput({
       path: 'barWidthFactor',
-      name: t('gauge.config.bar-width', 'Bar width'),
+      name: t('gauge.config.bar-width', 'Bar width factor'),
       category,
       defaultValue: defaultOptions.barWidthFactor,
       settings: {
@@ -152,7 +150,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
       settings: {
         options: [
           { value: 'auto', label: t('gauge.config.text-mode-auto', 'Auto') },
-          { value: 'value_and_name', label: t('gauge.config.text-mode-value-and-name', 'Value and Name') },
+          { value: 'value_and_name', label: t('gauge.config.text-mode-value-and-name', 'Value and name') },
           { value: 'value', label: t('gauge.config.text-mode-value', 'Value') },
           { value: 'name', label: t('gauge.config.text-mode-name', 'Name') },
           { value: 'none', label: t('gauge.config.text-mode-none', 'None') },
@@ -203,6 +201,8 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
       settings: {},
       defaultValue: defaultGaugePanelEffects,
     });
+
+    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
   })
   .setSuggestionsSupplier(gaugeSuggestionsSupplier)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)

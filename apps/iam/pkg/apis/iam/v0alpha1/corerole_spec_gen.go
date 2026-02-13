@@ -20,7 +20,6 @@ type CoreRoleSpec struct {
 	// Display name of the role
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Version     int64  `json:"version"`
 	Group       string `json:"group"`
 	// TODO:
 	// delegatable?: bool
@@ -34,4 +33,10 @@ func NewCoreRoleSpec() *CoreRoleSpec {
 	return &CoreRoleSpec{
 		Permissions: []CoreRolespecPermission{},
 	}
+}
+func (CoreRolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecPermission"
+}
+func (CoreRoleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleSpec"
 }

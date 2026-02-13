@@ -66,8 +66,16 @@ var (
 
 	ErrMultipleRoutesNotSupported = errutil.NotImplemented("alerting.notifications.routes.multipleNotSupported", errutil.WithPublicMessage(fmt.Sprintf("Multiple routes are not supported, see feature toggle %q", featuremgmt.FlagAlertingMultiplePolicies)))
 
-	ErrVersionConflict = errutil.Conflict("alerting.notifications.routes.conflict")
-	ErrRouteExists     = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
+	ErrRouteVersionConflict = errutil.Conflict("alerting.notifications.routes.conflict").MustTemplate(
+		"Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
+		errutil.WithPublic("Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
+	)
+	ErrRouteExists = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
+
+	ErrRouteOrigin = errutil.BadRequest("alerting.notifications.routes.originInvalid").MustTemplate(
+		"Route '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Route '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 )
 
 func ErrAlertRuleConflict(ruleUID string, orgID int64, err error) error {
@@ -116,4 +124,19 @@ func MakeErrRouteConflictingMatchers(matchers string) error {
 			"Matchers": matchers,
 		},
 	})
+}
+
+func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Version":        desiredVersion,
+			"CurrentVersion": currentVersion,
+			"Name":           name,
+		},
+	}
+	return ErrRouteVersionConflict.Build(data)
+}
+
+func MakeErrRouteOrigin(routeName, action string) error {
+	return ErrRouteOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": routeName}})
 }

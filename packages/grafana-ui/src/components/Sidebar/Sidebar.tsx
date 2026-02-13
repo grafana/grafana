@@ -29,6 +29,7 @@ export function SidebarComp({ children, contextValue }: Props) {
     [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
+    [styles.containerHidden]: !!contextValue.isHidden,
   });
 
   const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
@@ -46,7 +47,14 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div ref={ref} className={className} style={style} id="sidebar-container">
+      <div
+        ref={ref}
+        className={className}
+        style={style}
+        id="sidebar-container"
+        data-testid={selectors.components.Sidebar.container}
+        aria-hidden={contextValue.isHidden}
+      >
         {!tabsMode && <SidebarResizer />}
         {children}
       </div>
@@ -123,6 +131,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       top: 0,
       right: 0,
+      width: 'calc-size(auto, size)',
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('width', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+    containerHidden: css({
+      width: 0,
+      border: 0,
+      overflow: 'hidden',
     }),
     containerTabsMode: css({
       position: 'relative',
@@ -142,7 +162,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       padding: theme.spacing(1, 0),
       flexGrow: 0,
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
       overflow: 'hidden',
       width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
     }),
@@ -152,7 +172,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: '1px',
       background: theme.colors.border.weak,
-      width: '100%',
+      width: '70%',
     }),
     flexGrow: css({
       flexGrow: 1,

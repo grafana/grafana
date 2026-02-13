@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupFolders() []*openfgav1.TupleKey {
@@ -34,7 +35,10 @@ func setupQueryFolders(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testQueryFolders(t *testing.T, srv *Server) {
+func TestIntegrationServerQueryFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupQueryFolders(t, srv)
 
 	t.Run("should query folder parents successfully", func(t *testing.T) {

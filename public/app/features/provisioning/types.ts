@@ -103,3 +103,10 @@ export interface FlatTreeItem {
   item: TreeItem;
   level: number;
 }
+
+// External repository from the provider (e.g., GitHub)
+export interface ExternalRepository {
+  name?: string;
+  owner?: string;
+  url?: string;
+}

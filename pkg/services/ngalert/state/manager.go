@@ -57,6 +57,8 @@ type Manager struct {
 	rulesPerRuleGroupLimit int64
 
 	persister StatePersister
+
+	ignorePendingForNoDataAndError bool
 }
 
 type ManagerCfg struct {
@@ -85,6 +87,8 @@ type ManagerCfg struct {
 
 	Tracer tracing.Tracer
 	Log    log.Logger
+
+	IgnorePendingForNoDataAndError bool // TODO: Remove
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -109,6 +113,8 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
 		persister:              statePersister,
 		tracer:                 cfg.Tracer,
+
+		ignorePendingForNoDataAndError: cfg.IgnorePendingForNoDataAndError,
 	}
 
 	return m
@@ -338,10 +344,10 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, states, fn)
+	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("state_transitions", int64(len(states))),
-		attribute.Int64("stale_states", staleCount),
+		attribute.Int("state_transitions", len(states)),
+		attribute.Int("stale_states", staleCount),
 	))
 
 	allChanges := StateTransitions(append(states, missingSeriesStates...))
@@ -435,7 +441,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			patch(newState, curState, result)
 		}
 		start := st.clock.Now()
-		s := newState.transition(alertRule, result, nil, logger, takeImageFn)
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -454,7 +460,7 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	for _, currentState := range currentStates {
 		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -485,33 +491,28 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// processMissingSeriesStates receives the updated state transitions
-// that we got from the alert rule, and checks the cache for any states
-// that are not in the current evaluation. The missing states are
-// for series that are no longer present in the current evaluation.
-// For each missing state, we check if it is stale, and if so, we resolve it.
-// At the end we return the missing states so that later they can be sent
-// to the alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int64) {
+// processMissingSeriesStates finds cached states missing from the current evaluation,
+// resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
+func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
-	var staleStatesCount int64 = 0
+	var staleStatesCount int
 
 	toDelete := func(s *State) bool {
-		// We need only states that are not present in the current evaluation, so
-		// skip the state if it was just evaluated.
+		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
 			return false
 		}
 		// After this point, we know that the state is not in the current evaluation.
-		// Now we need check if it's stale, and if so, we need to resolve it.
+		// Check if it's stale, and if so, resolve it.
 		oldState := s.State
 		oldReason := s.StateReason
 
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
-		// Error state should be resolved after 1 missing evaluation instead of waiting
-		// for the configured missing series evaluations. This ensures resolved notifications are sent
-		// immediately when the alert transitions from these states.
-		if s.State == eval.Error || s.State == eval.NoData {
+		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
+		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
+		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
+		if s.State == eval.Error || s.State == eval.NoData ||
+			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
 			missingEvalsToResolve = 1
 		}
 		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
@@ -524,7 +525,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			s.LastEvaluationTime = evaluatedAt
 			s.EndsAt = evaluatedAt
 
-			// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
 				image := takeImageFn("stale state")
@@ -535,8 +536,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 
 			staleStatesCount++
 		} else if s.State == eval.Alerting {
-			// We need to update EndsAt for the state so that it will not be resolved by the
-			// Alertmanager automatically.
+			// Update 'EndsAt' so the Alertmanager won't auto-resolve this alert.
 			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 

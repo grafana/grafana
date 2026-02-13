@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
-import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
@@ -25,8 +23,7 @@ import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
-import CreateNewButton from './components/CreateNewButton';
-import { FolderActionsButton } from './components/FolderActionsButton';
+import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
@@ -43,8 +40,10 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderUID });
-  const isRecentlyViewedEnabled = !folderUID && evaluateBooleanFlag('recentlyViewedDashboards', false);
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
+  const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
+  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
+  const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -83,13 +82,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
 
     hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = evaluateBooleanFlag('experimentRecentlyViewedDashboards', false);
+    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
 
     reportInteraction('dashboards_browse_list_viewed', {
       experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
       has_recently_viewed_component: isExperimentTreatment,
     });
-  }, [isRecentlyViewedEnabled]);
+  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
@@ -114,14 +113,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
-  const {
-    canEditFolders,
-    canDeleteFolders,
-    canDeleteDashboards,
-    canEditDashboards,
-    canCreateDashboards,
-    canCreateFolders,
-  } = getFolderPermissions(folder);
+  const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
   const permissions = {
@@ -150,12 +142,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   };
 
-  const handleButtonClickToRecentlyDeleted = () => {
-    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
-      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
-    });
-  };
-
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
@@ -170,29 +156,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       pageNav={navModel}
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={
-        <>
-          {config.featureToggles.restoreDashboards && (
-            <LinkButton
-              variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-              onClick={handleButtonClickToRecentlyDeleted}
-            >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-            </LinkButton>
-          )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
-          {(canCreateDashboards || canCreateFolders) && (
-            <CreateNewButton
-              parentFolder={folderDTO}
-              canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolders}
-              repoType={repoType}
-              isReadOnlyRepo={isReadOnlyRepo}
-            />
-          )}
-        </>
-      }
+      actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />

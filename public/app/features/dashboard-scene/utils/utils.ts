@@ -502,11 +502,3 @@ export function isDashboardSceneEnabled(): boolean {
 export function isPublicDashboardsSceneEnabled(): boolean {
   return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
 }
-
-export function isDashboardSceneForViewersEnabled(): boolean {
-  return !!(config.featureToggles.dashboardSceneForViewers || config.featureToggles.dashboardNewLayouts);
-}
-
-export function isDashboardSceneSoloEnabled(): boolean {
-  return !!(config.featureToggles.dashboardSceneSolo || config.featureToggles.dashboardNewLayouts);
-}

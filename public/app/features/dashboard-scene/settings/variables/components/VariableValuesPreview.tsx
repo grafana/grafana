@@ -5,66 +5,29 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { SceneVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-export interface Props {
+interface VariableValuesPreviewProps {
   options: VariableValueOption[];
-  hasMultiProps?: boolean;
+  staticOptions: VariableValueOption[];
 }
 
-export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
-  const styles = useStyles2(getStyles);
-  const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasMultiProps;
-
-  return (
-    <div className={styles.previewContainer} style={{ gap: '8px' }}>
-      <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
-          Preview of values ({'{{count}}'})
-        </Trans>
-        {hasOptions && displayMultiPropsPreview && <VariableValuesWithPropsPreview options={options} />}
-        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
-      </Text>
-    </div>
-  );
+export const useGetAllVariableOptions = (
+  variable: SceneVariable
+): { options: VariableValueOption[]; staticOptions: VariableValueOption[] } => {
+  const state = variable.useState();
+  return {
+    options:
+      'getOptionsForSelect' in variable && typeof variable.getOptionsForSelect === 'function'
+        ? variable.getOptionsForSelect(false)
+        : 'options' in state
+          ? (state.options ?? [])
+          : [],
+    staticOptions: 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [],
+  };
 };
-
-function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
-  const styles = useStyles2(getStyles);
-
-  const { data, columns } = useMemo(() => {
-    const data = options.map(({ label, value, properties }) => ({
-      label: String(label),
-      value: String(value),
-      ...flattenProperties(properties),
-    }));
-
-    return {
-      data,
-      columns: Object.keys(data[0] ?? {}).map((id) => ({
-        id,
-        // see https://github.com/TanStack/table/issues/1671
-        header: unsanitizeKey(id),
-        sortType: 'alphanumeric' as const,
-      })),
-    };
-  }, [options]);
-
-  return (
-    <InteractiveTable
-      className={styles.table}
-      columns={columns}
-      data={data}
-      getRowId={(r) => String(r.value)}
-      pageSize={8}
-    />
-  );
-}
-
-const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
-const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
 function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
   if (properties === undefined) {
@@ -76,18 +39,90 @@ function flattenProperties(properties?: VariableValueOptionProperties, path = ''
   for (const [key, value] of Object.entries(properties)) {
     const newPath = path ? `${path}.${key}` : key;
 
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       Object.assign(result, flattenProperties(value, newPath));
     } else {
-      // see https://github.com/TanStack/table/issues/1671
-      result[sanitizeKey(newPath)] = value;
+      result[sanitizeKey(newPath)] = value; // see https://github.com/TanStack/table/issues/1671
     }
   }
 
   return result;
 }
 
-function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+// Use the first non-static option which is not the "All" option to derive properties
+export const useGetPropertiesFromOptions = (
+  options: VariableValueOption[],
+  staticOptions: VariableValueOption[] = []
+) =>
+  useMemo(() => {
+    const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
+    const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
+    const flattened = flattenProperties(queryOption?.properties);
+    const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
+    return ['text', 'value', ...keys];
+  }, [options, staticOptions]);
+
+export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {
+  const styles = useStyles2(getStyles);
+  const properties = useGetPropertiesFromOptions(options, staticOptions);
+  const hasOptions = options.length > 0;
+  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
+
+  return (
+    <div className={styles.previewContainer} style={{ gap: '8px' }}>
+      <Text variant="bodySmall" weight="medium">
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+          Preview of values ({'{{count}}'})
+        </Trans>
+        {hasOptions && displayMultiPropsPreview && (
+          <VariableValuesWithPropsPreview options={options} properties={properties} />
+        )}
+        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
+      </Text>
+    </div>
+  );
+};
+
+function VariableValuesWithPropsPreview({
+  options,
+  properties,
+}: {
+  options: VariableValueOption[];
+  properties: string[];
+}) {
+  const styles = useStyles2(getStyles);
+
+  const { data, columns } = useMemo(() => {
+    const data = options.map(({ label, value, properties }) => ({
+      text: label,
+      value,
+      ...flattenProperties(properties),
+    }));
+
+    return {
+      data,
+      columns: properties.map((id) => ({
+        id,
+        header: unsanitizeKey(id), // see https://github.com/TanStack/table/issues/1671
+        sortType: 'alphanumeric' as const,
+      })),
+    };
+  }, [options, properties]);
+
+  return (
+    <InteractiveTable
+      className={styles.table}
+      columns={columns}
+      data={data}
+      getRowId={(r) => String(r.value)}
+      pageSize={8}
+    />
+  );
+}
+const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
+const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
+
+export function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
