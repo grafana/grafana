@@ -52,7 +52,7 @@ export function requiresEdit(scene: MutableDashboardScene): PermissionCheckResul
 /**
  * No permission requirements -- read-only operations.
  */
-export function readOnly(): PermissionCheckResult {
+export function readOnly(_scene: MutableDashboardScene): PermissionCheckResult {
   return { allowed: true };
 }
 

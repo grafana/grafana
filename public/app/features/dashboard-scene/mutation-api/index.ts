@@ -9,17 +9,15 @@
  * [plugins.restricted_apis_allowlist] to access it.
  */
 
-// eslint-disable-next-line no-barrel-files/no-barrel-files
+/* eslint-disable no-barrel-files/no-barrel-files */
+
 export type { MutationRequest, MutationResult, MutationChange, MutationClient, ListVariablesData } from './types';
 
-// eslint-disable-next-line no-barrel-files/no-barrel-files
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
 
-// eslint-disable-next-line no-barrel-files/no-barrel-files
 export type { MutationCommand } from './commands/types';
 
 /**
  * @internal Not part of the public API surface.
  */
-// eslint-disable-next-line no-barrel-files/no-barrel-files
 export { MutationExecutor } from './MutationExecutor';

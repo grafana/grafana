@@ -6,31 +6,18 @@
 
 import { z } from 'zod';
 
-import { sceneGraph, SceneVariableSet } from '@grafana/scenes';
+import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+import { replaceVariableSet } from './variableUtils';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
 export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
-
-/**
- * Replace the dashboard's variable set with a new set containing the given variables.
- * This ensures consistent lifecycle behavior across add/remove/update operations.
- */
-export function replaceVariableSet(
-  scene: Parameters<typeof sceneGraph.getVariables>[0],
-  variables: ReturnType<typeof sceneGraph.getVariables>['state']['variables']
-): SceneVariableSet {
-  const newVarSet = new SceneVariableSet({ variables });
-  scene.setState({ $variables: newVarSet });
-  newVarSet.activate();
-  return newVarSet;
-}
 
 export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   name: 'ADD_VARIABLE',
@@ -46,10 +33,6 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     try {
       const { variable: variableKind, position } = payload;
       const name = variableKind.spec.name;
-
-      if (!name) {
-        throw new Error('Variable name is required');
-      }
 
       const existingVariables = scene.state.$variables;
       if (existingVariables) {

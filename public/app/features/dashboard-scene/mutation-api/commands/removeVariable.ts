@@ -6,9 +6,9 @@
 
 import { z } from 'zod';
 
-import { replaceVariableSet } from './addVariable';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+import { replaceVariableSet } from './variableUtils';
 
 export const removeVariablePayloadSchema = payloads.removeVariable;
 

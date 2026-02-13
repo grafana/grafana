@@ -65,7 +65,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
         (apiAllowList[api].includes(pluginId) ||
           apiAllowList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
       ) {
-        // We use Object.assign below because direct assignmentfails when the type has multiple optional properties
+        // We use Object.assign below because direct assignment fails when the type has multiple optional properties
         // of different types (TS can't correlate the key-value pair through a dynamic index).
         Object.assign(allowedApis, { [api]: apis[api] });
         continue;
@@ -81,7 +81,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
           apiBlockList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
         )
       ) {
-        // We use Object.assign below because direct assignmentfails when the type has multiple optional properties
+        // We use Object.assign below because direct assignment fails when the type has multiple optional properties
         // of different types (TS can't correlate the key-value pair through a dynamic index).
         Object.assign(allowedApis, { [api]: apis[api] });
       }

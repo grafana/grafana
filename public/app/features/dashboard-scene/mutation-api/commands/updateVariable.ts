@@ -11,9 +11,9 @@ import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2'
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
-import { replaceVariableSet } from './addVariable';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+import { replaceVariableSet } from './variableUtils';
 
 export const updateVariablePayloadSchema = payloads.updateVariable;
 
@@ -32,10 +32,6 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind } = payload;
-
-      if (!name) {
-        throw new Error('Variable name is required');
-      }
 
       const varSet = sceneGraph.getVariables(scene);
       const currentVariables = [...varSet.state.variables];

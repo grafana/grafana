@@ -51,13 +51,22 @@ export class MutationExecutor {
     }
 
     const context: MutationContext = { scene: this.scene };
-    const result = await registration.handler(validationResult.data, context);
 
-    if (result.success) {
-      this.scene.forceRender();
+    try {
+      const result = await registration.handler(validationResult.data, context);
+
+      if (result.success) {
+        this.scene.forceRender();
+      }
+
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        changes: [],
+      };
     }
-
-    return result;
   }
 
   private registerCommand(cmd: MutationCommand): void {
