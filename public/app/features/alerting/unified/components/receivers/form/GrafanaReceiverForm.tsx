@@ -16,7 +16,7 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
@@ -47,8 +47,6 @@ interface Props {
   editMode?: boolean;
 }
 
-const { useGrafanaNotifiersQuery } = alertmanagerApi;
-
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -66,7 +64,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     hasOnCallError,
   } = useOnCallIntegration();
 
-  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
+  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useIntegrationTypeSchemas();
   const [testChannelData, setTestChannelData] = useState<{
     channelValues: GrafanaChannelValues;
     existingIntegration?: GrafanaManagedReceiverConfig;

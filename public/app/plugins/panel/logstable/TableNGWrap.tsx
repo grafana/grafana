@@ -12,12 +12,12 @@ import {
 import { getAppEvents } from '@grafana/runtime';
 import type { Options as TableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 
-import { SETTING_KEY_ROOT } from '../../../features/explore/Logs/utils/logs';
 import { TablePanel } from '../table/TablePanel';
 
 import { Options } from './options/types';
@@ -28,7 +28,6 @@ interface Props extends PanelProps<Options> {
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
   fieldSelectorWidth: number;
-  sortOrder: LogsSortOrder;
 }
 
 export function TableNGWrap({
@@ -52,7 +51,6 @@ export function TableNGWrap({
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
-  sortOrder,
 }: Props) {
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
   const controlsExpandedFromStore = store.getBool(
@@ -74,12 +72,12 @@ export function TableNGWrap({
 
   const handleSortOrderChange = useCallback(
     (sortOrder: LogsSortOrder) => {
-      onOptionsChange({ ...options, sortOrder });
       getAppEvents().publish(
         new LogSortOrderChangeEvent({
           order: sortOrder,
         })
       );
+      onOptionsChange({ ...options, sortOrder });
     },
     [onOptionsChange, options]
   );
@@ -99,14 +97,14 @@ export function TableNGWrap({
             logOptionsStorageKey={SETTING_KEY_ROOT}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
-            sortOrder={sortOrder}
+            sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
-            timestampResolution={'ms'}
           />
         </div>
       )}
 
       <TablePanel
+        sortByBehavior={'managed'}
         initialRowIndex={initialRowIndex}
         data={data}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
@@ -114,7 +112,7 @@ export function TableNGWrap({
         id={id}
         timeRange={timeRange}
         timeZone={timeZone}
-        options={options}
+        options={{ ...options }}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}
