@@ -123,7 +123,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         name: t('logs.name-enable-field-selector', 'Enable field selector'),
         category,
         description: t(
-          'logs.description-enable-infinite-scrolling',
+          'logs.description-enable-field-selector',
           'Experimental. Show a component to manage the displayed fields from the logs.'
         ),
         defaultValue: false,
