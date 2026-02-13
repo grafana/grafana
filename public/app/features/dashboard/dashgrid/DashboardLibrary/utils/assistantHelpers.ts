@@ -4,7 +4,6 @@ import { SourceEntryPoint, TemplateDashboardSourceEntryPoint } from '../interact
 import { GnetDashboard } from '../types';
 
 import { isGnetDashboard } from './dashboardLibraryHelpers';
-import { getTemplateDashboardUrl } from './templateDashboardHelpers';
 
 /**
  * Template context data structure for the Grafana Assistant.
