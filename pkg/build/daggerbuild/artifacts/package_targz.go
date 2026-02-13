@@ -287,17 +287,12 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
-	// Always include data/plugins-bundled directory (may be empty)
-	// This ensures consistent tarball structure for Docker builds
 	if t.CatalogPlugins != nil {
 		catalogDir, err := opts.Store.Directory(ctx, t.CatalogPlugins)
 		if err != nil {
 			return nil, err
 		}
 		directories = append(directories, targz.NewMappedDir("data/plugins-bundled", catalogDir))
-	} else {
-		// Include an empty data/plugins-bundled directory for consistency
-		directories = append(directories, targz.NewMappedDir("data/plugins-bundled", opts.Client.Directory()))
 	}
 
 	root := fmt.Sprintf("grafana-%s", version)

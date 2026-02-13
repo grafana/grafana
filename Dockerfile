@@ -154,6 +154,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
+RUN mkdir -p data/plugins-bundled
+
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
