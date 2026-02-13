@@ -8,7 +8,7 @@ export default defineConfig({
     defaultNS: 'grafana-alerting',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
-    // eslint-disable-next-line no-restricted-syntax
-    sort: (a, b) => a.key.localeCompare(b.key, 'en-US'),
+    // eslint-disable-next-line no-nested-ternary
+    sort: (a, b) => (a.key > b.key ? 1 : a.key < b.key ? -1 : 0),
   },
 });

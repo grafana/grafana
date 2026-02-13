@@ -130,7 +130,7 @@ func (q *scopedDatasourceProvider) DeleteDataSource(ctx context.Context, uid str
 	if err != nil {
 		return err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 	if err != nil {
 		return nil, err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return nil, err
 	}

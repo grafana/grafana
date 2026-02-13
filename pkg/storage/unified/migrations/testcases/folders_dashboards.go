@@ -34,6 +34,10 @@ func (tc *foldersAndDashboardsTestCase) Name() string {
 	return "folders-dashboards"
 }
 
+func (tc *foldersAndDashboardsTestCase) FeatureToggles() []string {
+	return nil
+}
+
 func (tc *foldersAndDashboardsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{
