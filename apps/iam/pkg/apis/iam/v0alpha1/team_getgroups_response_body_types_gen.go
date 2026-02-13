@@ -13,6 +13,11 @@ func NewGetGroupsExternalGroupMapping() *GetGroupsExternalGroupMapping {
 	return &GetGroupsExternalGroupMapping{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GetGroupsExternalGroupMapping.
+func (GetGroupsExternalGroupMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsExternalGroupMapping"
+}
+
 // +k8s:openapi-gen=true
 type GetGroupsBody struct {
 	Items []GetGroupsExternalGroupMapping `json:"items"`
@@ -24,9 +29,8 @@ func NewGetGroupsBody() *GetGroupsBody {
 		Items: []GetGroupsExternalGroupMapping{},
 	}
 }
-func (GetGroupsExternalGroupMapping) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsExternalGroupMapping"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetGroupsBody.
 func (GetGroupsBody) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetGroupsBody"
 }
