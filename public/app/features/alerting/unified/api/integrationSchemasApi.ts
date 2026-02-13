@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import {
   GetIntegrationtypeschemasField,
   GetIntegrationtypeschemasIntegrationTypeSchema,
@@ -102,18 +100,15 @@ export function useIntegrationTypeSchemas(options?: { skip?: boolean }): UseInte
 
   const newApiResult = useGetIntegrationtypeschemasQuery(undefined, {
     skip: skip || !useNewApi,
+    selectFromResult: (result) => ({
+      ...result,
+      data: result.data?.items.map((item) => transformSchemaToNotifierDTO(item.spec)),
+    }),
   });
+
   const legacyResult = useGrafanaNotifiersQuery(undefined, {
     skip: skip || !!useNewApi,
   });
 
-  return useMemo((): UseIntegrationTypeSchemasResult => {
-    if (useNewApi) {
-      return {
-        ...newApiResult,
-        data: newApiResult.data?.items.map((item) => transformSchemaToNotifierDTO(item.spec)),
-      };
-    }
-    return legacyResult;
-  }, [useNewApi, newApiResult, legacyResult]);
+  return useNewApi ? newApiResult : legacyResult;
 }

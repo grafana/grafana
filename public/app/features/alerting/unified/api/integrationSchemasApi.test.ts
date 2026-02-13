@@ -1,6 +1,4 @@
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
-
-import { config } from '@grafana/runtime';
+import { getWrapper, renderHook, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from '../mockApi';
 
@@ -11,14 +9,8 @@ setupMswServer();
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
 describe('useIntegrationTypeSchemas', () => {
-  afterEach(() => {
-    config.featureToggles.alertingSyncNotifiersApiMigration = false;
-  });
-
   describe('with alertingSyncNotifiersApiMigration flag disabled', () => {
-    beforeEach(() => {
-      config.featureToggles.alertingSyncNotifiersApiMigration = false;
-    });
+    testWithFeatureToggles({ disable: ['alertingSyncNotifiersApiMigration'] });
 
     it('should return data from legacy API', async () => {
       const { result } = renderHook(() => useIntegrationTypeSchemas(), { wrapper: wrapper() });
@@ -35,9 +27,7 @@ describe('useIntegrationTypeSchemas', () => {
   });
 
   describe('with alertingSyncNotifiersApiMigration flag enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.alertingSyncNotifiersApiMigration = true;
-    });
+    testWithFeatureToggles({ enable: ['alertingSyncNotifiersApiMigration'] });
 
     it('should return data from new k8s API', async () => {
       const { result } = renderHook(() => useIntegrationTypeSchemas(), { wrapper: wrapper() });
