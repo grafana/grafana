@@ -365,7 +365,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUser(ctx, userID, r.OrgID)
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserID: userID, OrgID: r.OrgID, UserUID: id.UID})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
@@ -406,7 +406,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	goCtx := context.WithoutCancel(ctx)
 	// nolint:dogsled
 	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
-		err := s.userService.UpdateLastSeenAt(goCtx, userID, id.GetOrgID())
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, UserUID: id.UID, OrgID: id.GetOrgID()})
 		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
@@ -492,7 +492,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
-		UserID: usr.ID,
+		UserID:  usr.ID,
+		UserUID: usr.UID,
 	}
 
 	needsUpdate := false
@@ -559,7 +560,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID}
+		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID, UserUID: usr.UID}
 		shouldExecuteUpdate := false
 
 		if !usr.IsProvisioned {
@@ -652,7 +653,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 		}
 
 		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			usr, errGetByID := s.userService.GetByUserAuth(ctx, authInfo)
+			usr, errGetByID := s.userService.GetByUserAuth(ctx, authInfo, identity.OrgID)
 			if errGetByID == nil {
 				return usr, authInfo, nil
 			}
@@ -671,7 +672,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	// Check user table to grab existing user
-	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
+	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams, identity.OrgID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -690,7 +691,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	return usr, userAuth, nil
 }
 
-func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams, orgID int64) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.sync.lookupByOneOf")
 	defer span.End()
 
@@ -699,7 +700,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by email address
 	if params.Email != nil && *params.Email != "" {
-		usr, err = s.userService.GetByEmail(ctx, *params.Email)
+		usr, err = s.userService.GetByEmail(ctx, *params.Email, orgID)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
@@ -707,7 +708,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by login
 	if usr == nil && params.Login != nil && *params.Login != "" {
-		usr, err = s.userService.GetByLogin(ctx, *params.Login)
+		usr, err = s.userService.GetByLogin(ctx, *params.Login, orgID)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
