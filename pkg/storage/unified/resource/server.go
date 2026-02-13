@@ -1218,19 +1218,6 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 
 	key := req.Options.Key
 
-	// Determine if user is admin upfront so we can combine with
-	// "user deleted the object" check per item.
-	adminResp, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbSetPermissions,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}, "")
-	if err != nil {
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	isTrashAdmin := adminResp.Allowed
-
 	rsp := &resourcepb.ListResponse{}
 	var (
 		pageBytes int
@@ -1238,14 +1225,32 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 	)
 	maxPageBytes := s.maxPageSizeBytes
 
+	// Cache admin check results per folder to avoid redundant Check calls
+	// for items in the same folder.
+	folderAdminCache := make(map[string]bool)
+
 	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
 			}
 
-			if !s.isTrashItemAuthorizedByValue(ctx, iter.Value(), isTrashAdmin) {
+			// Parse item metadata — needed for both provisioned and authorization checks.
+			obj, err := parseTrashItem(iter.Value())
+			if err != nil {
 				continue
+			}
+
+			// Provisioned objects should never be retrievable from trash.
+			if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+				continue
+			}
+
+			// Check if user is admin in this folder (cached) or the user who deleted the item.
+			if !s.checkFolderAdmin(ctx, user, iter.Folder(), key, folderAdminCache) {
+				if obj.GetUpdatedBy() != user.GetUID() {
+					continue
+				}
 			}
 
 			item := &resourcepb.ResourceWrapper{
@@ -1294,32 +1299,30 @@ func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, er
 	return rsp, nil
 }
 
-// isTrashItemAuthorizedByValue checks if the user has access to the trash item using the raw value.
-// hasAdminPermission indicates whether the user has admin permission (from a Check call).
-func (s *server) isTrashItemAuthorizedByValue(ctx context.Context, value []byte, hasAdminPermission bool) bool {
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return false
+// checkFolderAdmin checks whether the user has admin permission (VerbSetPermissions) in the given
+// folder. Results are cached per folder to avoid redundant Check calls.
+func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, folder string, key *resourcepb.ResourceKey, cache map[string]bool) bool {
+	if isAdmin, ok := cache[folder]; ok {
+		return isAdmin
 	}
+	resp, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbSetPermissions,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	}, folder)
+	isAdmin := err == nil && resp.Allowed
+	cache[folder] = isAdmin
+	return isAdmin
+}
 
+// parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
+func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	partial := &metav1.PartialObjectMetadata{}
-	err := json.Unmarshal(value, partial)
-	if err != nil {
-		return false
+	if err := json.Unmarshal(value, partial); err != nil {
+		return nil, err
 	}
-
-	obj, err := utils.MetaAccessor(partial)
-	if err != nil {
-		return false
-	}
-
-	// provisioned objects should not be retrievable in the trash
-	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-		return false
-	}
-
-	// Trash is only accessible to admins or the user who deleted the object
-	return obj.GetUpdatedBy() == user.GetUID() || hasAdminPermission
+	return utils.MetaAccessor(partial)
 }
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
