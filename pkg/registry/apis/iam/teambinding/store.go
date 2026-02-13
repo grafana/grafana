@@ -2,6 +2,7 @@ package teambinding
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -75,7 +76,7 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 }
 
 func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Update")
+	ctx, span := l.tracer.Start(ctx, "teambinding.update")
 	defer span.End()
 
 	if !l.enableAuthnMutation {
@@ -130,7 +131,7 @@ func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo re
 }
 
 func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Delete")
+	ctx, span := l.tracer.Start(ctx, "teambinding.delete")
 	defer span.End()
 
 	if !l.enableAuthnMutation {
@@ -168,7 +169,7 @@ func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidat
 }
 
 func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Create")
+	ctx, span := l.tracer.Start(ctx, "teambinding.create")
 	defer span.End()
 
 	if !l.enableAuthnMutation {
@@ -194,6 +195,16 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		if err := createValidation(ctx, teamMemberObj); err != nil {
 			return nil, err
 		}
+	}
+
+	binding, err := l.Get(ctx, teamMemberObj.Name, nil)
+	var statusErr *apierrors.StatusError
+	if errors.As(err, &statusErr) && !apierrors.IsNotFound(err) {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	if binding != nil {
+		return nil, apierrors.NewAlreadyExists(bindingResource.GroupResource(), teamMemberObj.Name)
 	}
 
 	// Fetch the user by ID
@@ -241,7 +252,7 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 
 // Get implements rest.Getter.
 func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Get")
+	ctx, span := l.tracer.Start(ctx, "teambinding.get")
 	defer span.End()
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -268,7 +279,7 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 
 // List implements rest.Lister.
 func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.List")
+	ctx, span := l.tracer.Start(ctx, "teambinding.list")
 	defer span.End()
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)

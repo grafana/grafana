@@ -57,6 +57,8 @@ type Manager struct {
 	rulesPerRuleGroupLimit int64
 
 	persister StatePersister
+
+	ignorePendingForNoDataAndError bool
 }
 
 type ManagerCfg struct {
@@ -85,6 +87,8 @@ type ManagerCfg struct {
 
 	Tracer tracing.Tracer
 	Log    log.Logger
+
+	IgnorePendingForNoDataAndError bool // TODO: Remove
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -109,6 +113,8 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
 		persister:              statePersister,
 		tracer:                 cfg.Tracer,
+
+		ignorePendingForNoDataAndError: cfg.IgnorePendingForNoDataAndError,
 	}
 
 	return m
@@ -435,7 +441,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			patch(newState, curState, result)
 		}
 		start := st.clock.Now()
-		s := newState.transition(alertRule, result, nil, logger, takeImageFn)
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -454,7 +460,7 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	for _, currentState := range currentStates {
 		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -502,10 +508,11 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		oldReason := s.StateReason
 
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
-		// 'Error' and 'NoData' states should be resolved after 1 missing evaluation instead of waiting
-		// for the configured missing series evaluations. This ensures resolved notifications are sent
-		// immediately when the alert transitions from these states.
-		if s.State == eval.Error || s.State == eval.NoData {
+		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
+		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
+		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
+		if s.State == eval.Error || s.State == eval.NoData ||
+			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
 			missingEvalsToResolve = 1
 		}
 		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)

@@ -34,7 +34,6 @@ export interface Props {
   data?: PanelData;
   showBackButton?: boolean;
   panel: VizPanel;
-  editPreview: VizPanel;
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
   isNewPanel?: boolean;
@@ -57,7 +56,6 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
 
 export function PanelVizTypePicker({
   panel,
-  editPreview,
   data,
   onChange,
   onClose,
@@ -177,7 +175,6 @@ export function PanelVizTypePicker({
               <VisualizationSuggestions
                 onChange={onChange}
                 panel={panelModel}
-                editPreview={editPreview}
                 data={data}
                 searchQuery={searchQuery}
                 isNewPanel={isNewPanel}
