@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"testing"
 
@@ -14,9 +15,11 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -231,4 +234,270 @@ func TestUpdateSilence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
+	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
+
+	createSilenceStore := func(existingCount int) *ngfakes.FakeSilenceStore {
+		silences := make(map[string]*models.Silence, existingCount)
+		for i := 0; i < existingCount; i++ {
+			silence := models.SilenceGen()()
+			silences[*silence.ID] = &silence
+		}
+		return &ngfakes.FakeSilenceStore{Silences: silences}
+	}
+
+	t.Run("CreateSilence fails when silence count limit exceeded", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(5)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    5,
+						MaxSilenceSizeBytes: 0, // unlimited
+					},
+				},
+			},
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.ErrorIs(t, err, ErrSilenceLimitExceeded)
+	})
+
+	t.Run("CreateSilence fails when silence size limit exceeded", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(0)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    0, // unlimited
+						MaxSilenceSizeBytes: 10,
+					},
+				},
+			},
+		}
+
+		// Generate a silence with many matchers to increase its size
+		newSilence := models.SilenceGen(
+			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
+			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
+		)()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.ErrorIs(t, err, ErrSilenceSizeExceeded)
+	})
+
+	t.Run("CreateSilence succeeds when under limits", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(5)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    10,
+						MaxSilenceSizeBytes: 10000,
+					},
+				},
+			},
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateSilence succeeds when limits are nil", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(100)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: nil,
+			},
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateSilence succeeds when limits are zero (unlimited)", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(100)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    0,
+						MaxSilenceSizeBytes: 0,
+					},
+				},
+			},
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateSilence succeeds when limits provider returns error (fail open)", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(100)
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				err: errors.New("failed to fetch limits"),
+			},
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateSilence succeeds when limitsProvider is nil", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeCreateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silenceStore := createSilenceStore(100)
+		svc := SilenceService{
+			authz:          &authz,
+			store:          silenceStore,
+			log:            log.NewNopLogger(),
+			limitsProvider: nil,
+		}
+
+		newSilence := models.SilenceGen()()
+		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+
+		require.NoError(t, err)
+	})
+}
+
+func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
+	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
+
+	t.Run("UpdateSilence fails when silence size limit exceeded", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		existingSilence := models.SilenceGen()()
+		silenceStore := &ngfakes.FakeSilenceStore{
+			Silences: map[string]*models.Silence{
+				*existingSilence.ID: &existingSilence,
+			},
+		}
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    100, // Should not matter for updates
+						MaxSilenceSizeBytes: 10,
+					},
+				},
+			},
+		}
+
+		// Update with a large silence that exceeds size limit
+		updatedSilence := models.CopySilenceWith(existingSilence,
+			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
+			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
+		)
+		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
+
+		require.ErrorIs(t, err, ErrSilenceSizeExceeded)
+	})
+
+	t.Run("UpdateSilence does not check count limit", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		// Create a store with many silences (at or over the limit)
+		silences := make(map[string]*models.Silence, 100)
+		existingSilence := models.SilenceGen()()
+		silences[*existingSilence.ID] = &existingSilence
+		for i := 0; i < 99; i++ {
+			silence := models.SilenceGen()()
+			silences[*silence.ID] = &silence
+		}
+		silenceStore := &ngfakes.FakeSilenceStore{Silences: silences}
+		svc := SilenceService{
+			authz: &authz,
+			store: silenceStore,
+			log:   log.NewNopLogger(),
+			limitsProvider: &mockLimitsProvider{
+				limits: &client.TenantLimits{
+					Silences: &client.SilenceLimits{
+						MaxSilencesCount:    5, // Way under current count
+						MaxSilenceSizeBytes: 10000,
+					},
+				},
+			},
+		}
+
+		// Update should succeed because count limit doesn't apply to updates
+		updatedSilence := models.CopySilenceWith(existingSilence, models.SilenceMuts.Expired())
+		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
+
+		require.NoError(t, err)
+	})
+}
+
+// mockLimitsProvider is a test implementation of LimitsProvider
+type mockLimitsProvider struct {
+	limits *client.TenantLimits
+	err    error
+}
+
+func (m *mockLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits, error) {
+	return m.limits, m.err
 }

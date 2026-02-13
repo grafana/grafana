@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -1474,5 +1475,224 @@ func createTemplateServiceSut() (*TemplateService, *legacy_storage.AlertmanagerC
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		validator:       validation.ValidateProvenanceRelaxed,
+		limitsProvider:  &NoopLimitsProvider{},
 	}, store, provStore
+}
+
+func TestTemplateService_LimitsValidation(t *testing.T) {
+	orgID := int64(1)
+	amConfigToken := util.GenerateShortUID()
+
+	tmpl := definitions.NotificationTemplate{
+		Name:       "new-template",
+		Template:   "{{ define \"test\"}} test {{ end }}",
+		Provenance: definitions.Provenance(models.ProvenanceAPI),
+		Kind:       definition.GrafanaTemplateKind,
+	}
+
+	revision := func(existingCount int) *legacy_storage.ConfigRevision {
+		templates := make(map[string]string, existingCount)
+		for i := 0; i < existingCount; i++ {
+			templates[fmt.Sprintf("existing-%d", i)] = "content"
+		}
+		return &legacy_storage.ConfigRevision{
+			Config: &definitions.PostableUserConfig{
+				TemplateFiles: templates,
+			},
+			ConcurrencyToken: amConfigToken,
+		}
+	}
+
+	t.Run("CreateTemplate fails when template count limit exceeded", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    5,
+					MaxTemplateSizeBytes: 0, // unlimited
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(5), nil // Already at the limit
+		}
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+
+		require.ErrorIs(t, err, ErrTemplateLimitExceeded)
+	})
+
+	t.Run("CreateTemplate fails when template size limit exceeded", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    0, // unlimited
+					MaxTemplateSizeBytes: 10,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(0), nil
+		}
+
+		largeTmpl := tmpl
+		largeTmpl.Template = "{{ define \"test\"}} this is a very long template content {{ end }}"
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, largeTmpl)
+
+		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
+	})
+
+	t.Run("CreateTemplate succeeds when under limits", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    10,
+					MaxTemplateSizeBytes: 1000,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(5), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits are nil", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: nil,
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits are zero (unlimited)", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    0, // unlimited
+					MaxTemplateSizeBytes: 0, // unlimited
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits provider returns error (fail open)", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			err: errors.New("failed to fetch limits"),
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("UpdateTemplate fails when template size limit exceeded", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		existingTemplateName := "existing-template"
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    100, // Should not matter for updates
+					MaxTemplateSizeBytes: 10,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{
+				Config: &definitions.PostableUserConfig{
+					TemplateFiles: map[string]string{
+						existingTemplateName: "short",
+					},
+				},
+				ConcurrencyToken: amConfigToken,
+			}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+
+		largeTmpl := definitions.NotificationTemplate{
+			Name:     existingTemplateName,
+			Template: "{{ define \"test\"}} this is a very long template content that exceeds the limit {{ end }}",
+		}
+
+		_, err := sut.UpdateTemplate(context.Background(), orgID, largeTmpl)
+
+		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
+	})
+
+	t.Run("UpdateTemplate does not check count limit", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		existingTemplateName := "existing-template"
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    1, // Way under current count
+					MaxTemplateSizeBytes: 10000,
+				},
+			},
+		}
+		// Create a revision with many templates (over the count limit)
+		templates := make(map[string]string, 100)
+		templates[existingTemplateName] = "short"
+		for i := 0; i < 99; i++ {
+			templates[fmt.Sprintf("template-%d", i)] = "content"
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{
+				Config: &definitions.PostableUserConfig{
+					TemplateFiles: templates,
+				},
+				ConcurrencyToken: amConfigToken,
+			}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		updateTmpl := definitions.NotificationTemplate{
+			Name:     existingTemplateName,
+			Template: "{{ define \"test\"}} updated content {{ end }}",
+		}
+
+		// Update should succeed because count limit doesn't apply to updates
+		_, err := sut.UpdateTemplate(context.Background(), orgID, updateTmpl)
+
+		require.NoError(t, err)
+	})
+}
+
+// mockLimitsProvider is a test implementation of LimitsProvider
+type mockLimitsProvider struct {
+	limits *client.TenantLimits
+	err    error
+}
+
+func (m *mockLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits, error) {
+	return m.limits, m.err
 }
