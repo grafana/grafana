@@ -4880,7 +4880,6 @@
       "paste-panel": "패널 붙여넣기",
       "paste-row": "행 붙여넣기",
       "paste-tab": "탭 붙여넣기",
-      "un-group-panels": "그룹 해제",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9478,6 +9477,10 @@
     "secret-form-field": {
       "reset": "재설정"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "옵션 로딩 실패",
       "loading": "옵션 로딩 중..",
@@ -10485,6 +10488,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "줄 바꿈 제거",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -10511,6 +10520,7 @@
     "name-show-controls": "컨트롤 표시",
     "name-time": "타임스탬프 표시",
     "name-unique-labels": "고유 레이블",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "줄 바꿈",
     "order-options": {
       "label-newest-first": "최신순",
@@ -10611,6 +10621,16 @@
       "message-same-name-current-folder": "현재 폴더에 동일한 이름의 대시보드 또는 폴더가 이미 존재합니다.",
       "message-same-name-general": "루트 폴더에 동일한 이름의 폴더 또는 대시보드가 이미 존재합니다."
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -11450,9 +11470,6 @@
     "noOptionsMessage-no-organizations-found": "조직을 찾을 수 없습니다",
     "select-placeholder": "조직 선택"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "제목 편집"
@@ -12080,7 +12097,6 @@
       "placeholder-my-repository-connection": "내 리포지토리 연결",
       "retry-action": "",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_other": "대시보드 {{count}}개",
@@ -12598,12 +12614,9 @@
       "error-starting-job": "작업 시작 중 오류 발생"
     },
     "sync-repository": {
-      "body-edit-configuration": "구성 편집",
-      "button-edit": "편집",
       "error-pulling-resources": "리소스를 가져오는 중 오류 발생",
       "pull": "가져오기",
       "success-pull-started": "풀 시작됨",
-      "title-pull-not-enabled": "가져오기가 활성화되지 않았습니다",
       "tooltip-unhealthy-repository": "상태가 좋지 않은 리포지토리를 가져올 수 없습니다"
     },
     "synchronize-step": {
@@ -12612,7 +12625,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "및 클릭",
@@ -12649,8 +12663,6 @@
       "button-cancelling": "",
       "button-next": "완료",
       "button-start": "동기화 시작",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12855,6 +12867,9 @@
       "query-name-div-title-edit-query-name": "쿼리 이름 편집"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(트레이스 ID: {{traceId}})"
     },
     "query-group": {
@@ -12973,6 +12988,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14177,6 +14197,9 @@
     "traces-panel": {
       "no-data-found-in-response": "응답에서 데이터를 찾을 수 없습니다."
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

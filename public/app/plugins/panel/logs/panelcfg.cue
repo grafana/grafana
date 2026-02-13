@@ -34,6 +34,7 @@ composableKinds: PanelCfg: {
 					showControls?:            bool
 					controlsStorageKey?:      string
 					wrapLogMessage:           bool
+					unwrappedColumns?:        bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
 					syntaxHighlighting?:      bool

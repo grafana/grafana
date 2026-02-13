@@ -142,7 +142,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/register|POST": v0alpha1.CreateRegister{},
+	"v0alpha1||<namespace>/register|POST": v0alpha1.CreateRegisterResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

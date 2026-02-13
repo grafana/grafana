@@ -4904,7 +4904,6 @@
       "paste-panel": "Coller le panneau",
       "paste-row": "Coller la ligne",
       "paste-tab": "Coller l’onglet",
-      "un-group-panels": "Dissocier",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Réinitialiser"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Échec du chargement des options",
       "loading": "Chargement des options...",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Dérouler les lignes",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Afficher les contrôles",
     "name-time": "Afficher les horodatages",
     "name-unique-labels": "Étiquettes uniques",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Retour à la ligne automatique",
     "order-options": {
       "label-newest-first": "Le plus récent en premier",
@@ -10660,6 +10670,16 @@
       "message-same-name-current-folder": "Un tableau de bord ou un dossier portant le même nom existe déjà dans le dossier actuel",
       "message-same-name-general": "Un dossier ou un tableau de bord portant le même nom existe déjà dans le dossier racine"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
@@ -11502,9 +11522,6 @@
     "noOptionsMessage-no-organizations-found": "Aucune organisation trouvée",
     "select-placeholder": "Sélectionner l’organisation"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Modifier le titre"
@@ -12132,7 +12149,6 @@
       "placeholder-my-repository-connection": "Ma connexion au référentiel",
       "retry-action": "",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} tableau de bord",
@@ -12656,12 +12672,9 @@
       "error-starting-job": "Erreur lors du démarrage de la tâche"
     },
     "sync-repository": {
-      "body-edit-configuration": "Modifier la configuration",
-      "button-edit": "Modifier",
       "error-pulling-resources": "Erreur lors de la fusion des ressources",
       "pull": "Fusion",
       "success-pull-started": "Fusion commencée",
-      "title-pull-not-enabled": "La fusion n’est pas activée",
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
@@ -12670,7 +12683,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
@@ -12707,8 +12721,6 @@
       "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12914,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Modifier le nom de la requête"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID de trace : {{traceId}})"
     },
     "query-group": {
@@ -13033,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14241,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

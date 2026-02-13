@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/google/go-github/v82/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 )
 
 func TestGithubClient_GetApp(t *testing.T) {
@@ -35,6 +36,12 @@ func TestGithubClient_GetApp(t *testing.T) {
 							Owner: &github.User{
 								Login: github.Ptr("grafana"),
 							},
+							Permissions: &github.InstallationPermissions{
+								Contents:        github.Ptr("write"),
+								Metadata:        github.Ptr("read"),
+								PullRequests:    github.Ptr("write"),
+								RepositoryHooks: github.Ptr("write"),
+							},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(app))
@@ -46,6 +53,12 @@ func TestGithubClient_GetApp(t *testing.T) {
 				ID:    12345,
 				Slug:  "my-test-app",
 				Owner: "grafana",
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionWrite,
+					Metadata:     conngh.AppPermissionRead,
+					PullRequests: conngh.AppPermissionWrite,
+					Webhooks:     conngh.AppPermissionWrite,
+				},
 			},
 			wantErr: nil,
 		},
@@ -199,6 +212,86 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 						installation := &github.Installation{
 							ID:          github.Ptr(int64(67890)),
 							SuspendedAt: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "get installation with all permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: &github.InstallationPermissions{
+								Contents:        github.Ptr("write"),
+								Metadata:        github.Ptr("read"),
+								PullRequests:    github.Ptr("write"),
+								RepositoryHooks: github.Ptr("write"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "get installation with nil permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "get installation with partial permissions",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+							Permissions: &github.InstallationPermissions{
+								Contents: github.Ptr("read"),
+								Metadata: nil,
+							},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(installation))
