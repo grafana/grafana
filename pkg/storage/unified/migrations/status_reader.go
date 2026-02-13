@@ -35,6 +35,14 @@ func ProvideMigrationStatusReader(
 		registry: registry,
 	}
 
+	// Ensure the migration log table exists before attempting to query or backfill it.
+	// This is necessary because wire ordering does not guarantee that the migration service
+	// (which also creates this table) has run before this provider executes.
+	if err := ensureMigrationLogTable(context.Background(), sqlStore, cfg); err != nil {
+		logger.Warn("Failed to ensure migration log table exists", "error", err)
+		return reader
+	}
+
 	if err := reader.backfillFromConfig(context.Background()); err != nil {
 		logger.Warn("Failed to backfill migration status from config", "error", err)
 	}
@@ -51,9 +59,10 @@ func (r *migrationStatusReader) IsMigrated(ctx context.Context, gr schema.GroupR
 	if ok {
 		exists, err := migrationExists(ctx, r.sqlStore, def.MigrationID)
 		if err != nil {
-			return false, err
-		}
-		if exists {
+			// If the migration log query fails (e.g., table not created yet),
+			// log and fall through to the config fallback rather than failing hard.
+			logger.Warn("Failed to check migration log, falling back to config", "resource", gr.String(), "error", err)
+		} else if exists {
 			return true, nil
 		}
 	}
