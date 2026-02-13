@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "자동 최대 유휴",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "활성화되면 <i>최대 유휴 연결 수</i>를 <i>최대 활성 연결 수</i>와 동일한 값으로 자동 설정합니다. 최대 활성 연결 수를 설정하지 않으면, 기본값({{defaultMaxIdle}})으로 설정됩니다.",
+        "content-max-idle": "유휴 연결 풀에서 허용되는 최대 연결 수입니다. <i>최대 활성 연결 수</i>가 0보다 크고 <i>최대 유휴 연결 수</i>보다 작은 경우, <i>최대 유휴 연결 수</i>는 <i>최대 활성 연결 수</i> 제한에 맞게 줄어듭니다. 0으로 설정된 경우, 유휴 연결이 유지되지 않습니다.",
         "content-max-lifetime": "연결을 재사용할 수 있는 최대 시간(초)입니다. 0으로 설정하면, 연결이 영구적으로 재사용됩니다.",
-        "content-max-open": "",
+        "content-max-open": "데이터베이스에 대한 최대 활성 연결 수입니다. <i>최대 유휴 연결 수</i>가 0보다 크고 <i>최대 활성 연결 수</i>가 <i>최대 유휴 연결 수</i>보다 작은 경우, <i>최대 유휴 연결 수</i>는 <i>최대 활성 연결 수</i> 한도에 맞게 줄어듭니다. 0으로 설정하면, 활성 연결 수에 제한이 없습니다.",
         "max-idle": "유휴 최대 한도",
         "max-lifetime": "최대 수명 기간",
         "max-open": "열 한도",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "쿼리가 유효하지 않습니다. 자세한 내용은 아래에서 확인하세요. <br />하지만 해당 쿼리는 계속 실행될 수 있습니다.",
         "editor-modes": {
           "label-builder": "빌더",
           "label-code": "코드"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "텍스트 필드",
+          "valueField": "값 필드"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "형식 쿼리"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0>이 쿼리를 실행하면 <strong>{{bytes}}</strong>가 처리됩니다.",
         "validating-query": "쿼리 유효성 검사 중..."
       },
       "raw-editor": {

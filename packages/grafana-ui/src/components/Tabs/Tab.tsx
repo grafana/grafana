@@ -29,6 +29,8 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   tooltip?: string;
   /** When true, the tab will be disabled and not clickable */
   disabled?: boolean;
+  /** When provided, used instead of label for the data-testid. Useful for locale-stable e2e selectors. */
+  'data-testid'?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       truncate,
       tooltip,
       disabled,
+      'data-testid': testId,
       ...otherProps
     },
     ref
@@ -74,7 +77,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const commonProps = {
       className: linkClass,
-      'data-testid': selectors.components.Tab.title(label),
+      'data-testid': testId ?? selectors.components.Tab.title(label),
       ...otherProps,
       onClick: disabled ? undefined : onChangeTab,
       role: 'tab',
