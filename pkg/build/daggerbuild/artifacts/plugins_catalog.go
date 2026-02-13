@@ -82,22 +82,18 @@ func (c *CatalogPlugins) VerifyFile(ctx context.Context, client *dagger.Client, 
 
 // VerifyDirectory verifies the downloaded plugins directory.
 func (c *CatalogPlugins) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	entries, err := dir.Entries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list plugin directory entries: %w", err)
+	}
+	entrySet := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		entrySet[entry] = struct{}{}
+	}
+
 	// Verify that each expected plugin directory exists
 	for _, plugin := range c.ResolvedPlugins {
-		entries, err := dir.Entries(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to list plugin directory entries: %w", err)
-		}
-
-		found := false
-		for _, entry := range entries {
-			if entry == plugin.ID {
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if _, ok := entrySet[plugin.ID]; !ok {
 			return fmt.Errorf("plugin %s not found in downloaded plugins", plugin.ID)
 		}
 	}

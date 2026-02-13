@@ -17,7 +17,28 @@ const (
 	GrafanaComAPIURL = "https://grafana.com/api/plugins"
 	// AlpineImage is the Alpine image used for downloading plugins (includes curl and unzip)
 	AlpineImage = "alpine/curl"
+	// ExtractPluginScriptPath is the script path used for deterministic plugin extraction.
+	ExtractPluginScriptPath = "/usr/local/bin/extract-plugin"
 )
+
+const extractPluginScript = `#!/bin/sh
+set -eu
+
+extract_dir="$1"
+plugin_dir="$2"
+
+mkdir -p "$plugin_dir"
+
+dir_count="$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+file_count="$(find "$extract_dir" -mindepth 1 -maxdepth 1 ! -type d | wc -l | tr -d ' ')"
+
+if [ "$dir_count" -eq 1 ] && [ "$file_count" -eq 0 ]; then
+	root_dir="$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+	cp -a "$root_dir"/. "$plugin_dir"/
+else
+	cp -a "$extract_dir"/. "$plugin_dir"/
+fi
+`
 
 // DownloadOpts contains options for downloading plugins.
 type DownloadOpts struct {
@@ -105,10 +126,14 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts, resolvedPlugins 
 
 	container := client.Container().
 		From(AlpineImage).
+		WithNewFile(ExtractPluginScriptPath, extractPluginScript, dagger.ContainerWithNewFileOpts{
+			Permissions: 0o755,
+		}).
 		WithWorkdir("/plugins")
 
-	for _, plugin := range resolvedPlugins {
-		zipFile := fmt.Sprintf("/tmp/%s-%s.zip", plugin.ID, plugin.Version)
+	for idx, plugin := range resolvedPlugins {
+		zipFile := fmt.Sprintf("/tmp/plugin-%d.zip", idx)
+		extractDir := fmt.Sprintf("/tmp/extract-%d", idx)
 		pluginDir := fmt.Sprintf("/plugins/%s", plugin.ID)
 
 		// Build curl command with proper headers (matching pkg/plugins/repo/client.go)
@@ -127,6 +152,10 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts, resolvedPlugins 
 
 		curlCmd = append(curlCmd, "-o", zipFile, plugin.URL)
 
+		container = container.
+			WithExec([]string{"rm", "-rf", pluginDir, extractDir}).
+			WithExec([]string{"mkdir", "-p", pluginDir, extractDir})
+
 		// Download the plugin zip
 		container = container.WithExec(curlCmd)
 
@@ -141,17 +170,11 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts, resolvedPlugins 
 
 		// Create plugin directory and extract
 		// This mirrors the extraction logic in pkg/plugins/storage/fs.go
-		// but adapted for shell execution in a container
+		// but adapted for execution in a container.
 		container = container.
-			WithExec([]string{"mkdir", "-p", pluginDir}).
-			WithExec([]string{"unzip", "-q", "-o", zipFile, "-d", "/tmp/extract"}).
-			// Handle nested directory structure (common in plugin zips)
-			// The plugin archive typically has a root directory like "plugin-name-version/"
-			WithExec([]string{
-				"/bin/sh", "-c",
-				fmt.Sprintf(`cd /tmp/extract && dir=$(ls -d */ | head -1) && if [ -n "$dir" ]; then mv "$dir"* %s/ 2>/dev/null || mv * %s/; else mv * %s/; fi`, pluginDir, pluginDir, pluginDir),
-			}).
-			WithExec([]string{"rm", "-rf", "/tmp/extract", zipFile})
+			WithExec([]string{"unzip", "-q", "-o", zipFile, "-d", extractDir}).
+			WithExec([]string{ExtractPluginScriptPath, extractDir, pluginDir}).
+			WithExec([]string{"rm", "-rf", extractDir, zipFile})
 	}
 
 	return container.Directory("/plugins")

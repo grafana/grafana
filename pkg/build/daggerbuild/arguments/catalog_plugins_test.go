@@ -1,9 +1,15 @@
 package arguments
 
 import (
+	"context"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
 )
 
 func TestParseCatalogPluginsList(t *testing.T) {
@@ -220,4 +226,139 @@ func TestParseCatalogPluginsFile_FileNotFound(t *testing.T) {
 	if err == nil {
 		t.Error("ParseCatalogPluginsFile() should return error for non-existent file")
 	}
+}
+
+func TestMergeCatalogPluginSpecs(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   []CatalogPluginSpec
+		want    []CatalogPluginSpec
+		wantErr bool
+	}{
+		{
+			name: "dedupe identical entries",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+			want: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+		},
+		{
+			name: "merge checksum enrichment",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+				{ID: "grafana-clock-panel", Version: "1.3.1", Checksum: "sha256:abc123"},
+			},
+			want: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1", Checksum: "sha256:abc123"},
+			},
+		},
+		{
+			name: "conflicting versions fail",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+				{ID: "grafana-clock-panel", Version: "1.4.0"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "conflicting checksums fail",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1", Checksum: "sha256:abc123"},
+				{ID: "grafana-clock-panel", Version: "1.3.1", Checksum: "sha256:def456"},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := MergeCatalogPluginSpecs(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("MergeCatalogPluginSpecs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("MergeCatalogPluginSpecs() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetCatalogPlugins_WithWrappedState(t *testing.T) {
+	state := &pipeline.State{
+		CLIContext: &fakeCLIContext{
+			stringSliceValues: map[string][]string{
+				"bundle-catalog-plugins": {"grafana-clock-panel:1.3.1,grafana-clock-panel:1.3.1"},
+			},
+		},
+	}
+
+	wrapped := pipeline.StateWithLogger(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		state,
+	)
+
+	got, err := GetCatalogPlugins(context.Background(), wrapped)
+	if err != nil {
+		t.Fatalf("GetCatalogPlugins() error = %v", err)
+	}
+
+	want := []CatalogPluginSpec{
+		{ID: "grafana-clock-panel", Version: "1.3.1"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)
+	}
+}
+
+type fakeCLIContext struct {
+	boolValues        map[string]bool
+	stringValues      map[string]string
+	stringSliceValues map[string][]string
+	int64Values       map[string]int64
+}
+
+func (f *fakeCLIContext) Bool(name string) bool {
+	if f.boolValues == nil {
+		return false
+	}
+	return f.boolValues[name]
+}
+
+func (f *fakeCLIContext) String(name string) string {
+	if f.stringValues == nil {
+		return ""
+	}
+	return f.stringValues[name]
+}
+
+func (f *fakeCLIContext) Set(name, value string) error {
+	if f.stringValues == nil {
+		f.stringValues = map[string]string{}
+	}
+	f.stringValues[name] = value
+	return nil
+}
+
+func (f *fakeCLIContext) StringSlice(name string) []string {
+	if f.stringSliceValues == nil {
+		return nil
+	}
+	return f.stringSliceValues[name]
+}
+
+func (f *fakeCLIContext) Path(name string) string {
+	return f.String(name)
+}
+
+func (f *fakeCLIContext) Int64(name string) int64 {
+	if f.int64Values == nil {
+		return 0
+	}
+	return f.int64Values[name]
 }

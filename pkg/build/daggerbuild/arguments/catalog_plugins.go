@@ -72,7 +72,12 @@ func catalogPluginsValueFunc(ctx context.Context, opts *pipeline.ArgumentOpts) (
 		plugins = append(plugins, parsed...)
 	}
 
-	return plugins, nil
+	merged, err := MergeCatalogPluginSpecs(plugins)
+	if err != nil {
+		return nil, err
+	}
+
+	return merged, nil
 }
 
 // ParseCatalogPluginsList parses a comma-separated list of plugins.
@@ -143,9 +148,9 @@ func HasCatalogPlugins(ctx context.Context, opts *pipeline.ArgumentOpts) bool {
 
 // GetCatalogPlugins retrieves the catalog plugins from the argument state.
 func GetCatalogPlugins(ctx context.Context, state pipeline.StateHandler) ([]CatalogPluginSpec, error) {
-	v, ok := state.(*pipeline.State)
+	v, ok := pipeline.UnwrapState(state)
 	if !ok {
-		return nil, fmt.Errorf("state is not a *pipeline.State")
+		return nil, fmt.Errorf("state is not backed by *pipeline.State (got %T)", state)
 	}
 
 	if val, ok := v.Data.Load(CatalogPlugins.Name); ok {
@@ -167,3 +172,43 @@ func GetCatalogPlugins(ctx context.Context, state pipeline.StateHandler) ([]Cata
 	v.Data.Store(CatalogPlugins.Name, plugins)
 	return plugins, nil
 }
+
+// MergeCatalogPluginSpecs deduplicates plugin specs by id and rejects conflicts.
+// If the same plugin appears multiple times with identical version/checksum, it is collapsed into one entry.
+func MergeCatalogPluginSpecs(plugins []CatalogPluginSpec) ([]CatalogPluginSpec, error) {
+	if len(plugins) == 0 {
+		return nil, nil
+	}
+
+	seen := make(map[string]int, len(plugins))
+	merged := make([]CatalogPluginSpec, 0, len(plugins))
+
+	for _, plugin := range plugins {
+		idx, ok := seen[plugin.ID]
+		if !ok {
+			seen[plugin.ID] = len(merged)
+			merged = append(merged, plugin)
+			continue
+		}
+
+		existing := merged[idx]
+		if existing.Version != plugin.Version {
+			return nil, fmt.Errorf("conflicting versions for plugin %q: %q vs %q", plugin.ID, existing.Version, plugin.Version)
+		}
+
+		switch {
+		case existing.Checksum == plugin.Checksum:
+			// Identical duplicate, no-op.
+		case existing.Checksum == "":
+			existing.Checksum = plugin.Checksum
+			merged[idx] = existing
+		case plugin.Checksum == "":
+			// Keep existing checksum.
+		default:
+			return nil, fmt.Errorf("conflicting checksums for plugin %q", plugin.ID)
+		}
+	}
+
+	return merged, nil
+}
+
