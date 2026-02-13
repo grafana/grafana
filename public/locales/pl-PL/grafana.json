@@ -5950,7 +5950,8 @@
     "transformation-editor": {
       "input-data": "Dane wejściowe",
       "output-data": "Dane wyjściowe",
-      "title-debug-transformation": "Debugowanie transformacji"
+      "title-debug-transformation": "Debugowanie transformacji",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Zastosuj transformację do"

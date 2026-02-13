@@ -5900,7 +5900,8 @@
     "transformation-editor": {
       "input-data": "Inmatning av uppgifter",
       "output-data": "Datautmatning",
-      "title-debug-transformation": "Felsök transformering"
+      "title-debug-transformation": "Felsök transformering",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Tillämpa transformering på"

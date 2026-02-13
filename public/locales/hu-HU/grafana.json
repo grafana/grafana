@@ -5900,7 +5900,8 @@
     "transformation-editor": {
       "input-data": "Bemeneti adatok",
       "output-data": "Kimeneti adatok",
-      "title-debug-transformation": "Transzformáció hibakeresése"
+      "title-debug-transformation": "Transzformáció hibakeresése",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Transzformáció alkalmazása erre:"

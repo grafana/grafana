@@ -5900,7 +5900,8 @@
     "transformation-editor": {
       "input-data": "Data invoer",
       "output-data": "Uitvoergegevens",
-      "title-debug-transformation": "Debugtransformatie"
+      "title-debug-transformation": "Debugtransformatie",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Transformatie toepassen op"

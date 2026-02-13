@@ -5875,7 +5875,8 @@
     "transformation-editor": {
       "input-data": "입력 데이터",
       "output-data": "출력 데이터",
-      "title-debug-transformation": "변환 디버그"
+      "title-debug-transformation": "변환 디버그",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "변환 적용 대상"

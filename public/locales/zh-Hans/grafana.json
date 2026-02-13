@@ -5875,7 +5875,8 @@
     "transformation-editor": {
       "input-data": "输入数据",
       "output-data": "输出数据",
-      "title-debug-transformation": "调试转换"
+      "title-debug-transformation": "调试转换",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "将转换应用于"

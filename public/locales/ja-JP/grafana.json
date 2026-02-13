@@ -5875,7 +5875,8 @@
     "transformation-editor": {
       "input-data": "入力データ",
       "output-data": "出力データ",
-      "title-debug-transformation": "変換をデバッグ"
+      "title-debug-transformation": "変換をデバッグ",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "変換の適用先"

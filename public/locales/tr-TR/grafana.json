@@ -5900,7 +5900,8 @@
     "transformation-editor": {
       "input-data": "Girdi verisi",
       "output-data": "Çıktı verileri",
-      "title-debug-transformation": "Dönüşümde hata ayıklama"
+      "title-debug-transformation": "Dönüşümde hata ayıklama",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Dönüşümü şuraya uygula"

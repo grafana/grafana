@@ -5875,7 +5875,8 @@
     "transformation-editor": {
       "input-data": "輸入資料",
       "output-data": "輸出資料",
-      "title-debug-transformation": "偵錯轉換"
+      "title-debug-transformation": "偵錯轉換",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "套用轉換至"

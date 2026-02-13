@@ -5900,7 +5900,8 @@
     "transformation-editor": {
       "input-data": "Datos de entrada",
       "output-data": "Datos de salida",
-      "title-debug-transformation": "Depurar transformación"
+      "title-debug-transformation": "Depurar transformación",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Aplicar transformación a"
