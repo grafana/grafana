@@ -35,10 +35,12 @@ export function validatePayload(
   commandType: string,
   payload: unknown
 ): { success: true; data: unknown } | { success: false; error: string } {
-  const schema = findCommand(commandType)?.payloadSchema ?? null;
-  if (!schema) {
-    return { success: true, data: payload };
+  const cmd = findCommand(commandType);
+  if (!cmd) {
+    return { success: false, error: `Unknown command type: ${commandType}` };
   }
+
+  const schema = cmd.payloadSchema;
 
   const result = schema.safeParse(payload);
   if (result.success) {

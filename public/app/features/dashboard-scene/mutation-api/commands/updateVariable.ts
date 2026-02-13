@@ -48,7 +48,6 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       currentVariables[existingIndex] = newSceneVariable;
 
       replaceVariableSet(scene, currentVariables);
-      newSceneVariable.activate();
 
       return {
         success: true,

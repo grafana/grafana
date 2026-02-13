@@ -55,7 +55,6 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
       }
 
       replaceVariableSet(scene, currentVariables);
-      sceneVariable.activate();
 
       return {
         success: true,
