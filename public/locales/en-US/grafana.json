@@ -11327,8 +11327,8 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add to Bookmarks",
-      "remove-bookmark": "Remove from Bookmarks"
+      "add-bookmark": "Add {{itemName}} to Bookmarks",
+      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
