@@ -4963,6 +4963,21 @@
     },
     {
       "metadata": {
+        "name": "useNewAPIsForDatasourceCRUD",
+        "resourceVersion": "1770975026132",
+        "creationTimestamp": "2026-02-13T09:30:26Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useScopeSingleNodeEndpoint",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T14:32:41Z"
