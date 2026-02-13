@@ -134,6 +134,8 @@ export function QueryEditorContextWrapper({
         // Clear query and alert selection when selecting a transformation
         setSelectedQueryRefId(null);
         setSelectedAlertId(null);
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       setSelectedAlert: (alert: AlertRule | null) => {
         setSelectedAlertId(alert?.alertId ?? null);
