@@ -118,6 +118,7 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
+  private presetsSupplier?: () => Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -449,6 +450,26 @@ export class PanelPlugin<
         });
       },
     };
+  }
+
+  /**
+   * @alpha
+   */
+  setPresetsSupplier(supplier: () => Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void): this {
+    this.presetsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   */
+  getPresets(): Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    return this.presetsSupplier?.()?.map((preset) => {
+      if (!preset.name) {
+        return { ...preset, name: this.meta.name };
+      }
+      return preset;
+    });
   }
 
   hasPluginId(pluginId: string) {
