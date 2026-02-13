@@ -3,8 +3,10 @@ package contexthandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -129,10 +131,16 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
 
+	var userId int64
 	id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 	if err != nil {
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
+
+		var tokenRotationErr authn.ErrTokenNeedsRotation
+		if errors.As(err, &tokenRotationErr) {
+			userId = tokenRotationErr.UserID
+		}
 	} else {
 		reqContext.SignedInUser = id.SignedInUser()
 		reqContext.UserToken = id.SessionToken
@@ -140,15 +148,19 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.AllowAnonymous = reqContext.IsAnonymous
 		reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		ctx = identity.WithRequester(ctx, id)
+		userId = reqContext.UserID
 	}
 
 	h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
-	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
+	userIdString := int64ToStringOrEmpty(userId)
+	orgIdString := int64ToStringOrEmpty(reqContext.OrgID)
+
+	reqContext.Logger = reqContext.Logger.New("userId", userIdString, "orgId", orgIdString, "uname", reqContext.Login)
 	span.AddEvent("user", trace.WithAttributes(
 		attribute.String("uname", reqContext.Login),
-		attribute.Int64("orgId", reqContext.OrgID),
-		attribute.Int64("userId", reqContext.UserID),
+		attribute.String("orgId", orgIdString),
+		attribute.String("userId", userIdString),
 	))
 
 	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
@@ -256,4 +268,11 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 		return list
 	}
 	return nil
+}
+
+func int64ToStringOrEmpty(n int64) string {
+	if n == 0 {
+		return ""
+	}
+	return strconv.FormatInt(n, 10)
 }

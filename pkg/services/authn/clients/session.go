@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 	"time"
@@ -60,7 +61,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		return nil, fmt.Errorf("[session.token.rotate] %w", authn.ErrTokenNeedsRotation{UserID: token.UserId})
 	}
 
 	ident := &authn.Identity{
