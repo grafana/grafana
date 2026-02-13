@@ -1,6 +1,7 @@
 package zipkin
 
 import (
+	"encoding/json"
 	"net"
 	"testing"
 	"time"
@@ -80,4 +81,47 @@ func TestTransformResponse(t *testing.T) {
 		frames := transformResponse(spans, "test")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frames, false)
 	})
+}
+
+func TestTransformAnnotationsToTraceLogs_JSONKeysAreLowercase(t *testing.T) {
+	annotations := []model.Annotation{
+		{Timestamp: time.Unix(0, 2*int64(time.Microsecond)), Value: "annotation text"},
+	}
+
+	got := transformAnnotationsToTraceLogs(annotations)
+
+	b, err := json.Marshal(got)
+	if err != nil {
+		t.Fatalf("marshal logs: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(b, &decoded); err != nil {
+		t.Fatalf("unmarshal logs: %v", err)
+	}
+	if len(decoded) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(decoded))
+	}
+
+	if _, ok := decoded[0]["timestamp"]; !ok {
+		t.Fatalf("expected key `timestamp` to exist, got keys: %v", keysOf(decoded[0]))
+	}
+	if _, ok := decoded[0]["fields"]; !ok {
+		t.Fatalf("expected key `fields` to exist, got keys: %v", keysOf(decoded[0]))
+	}
+
+	if _, ok := decoded[0]["Timestamp"]; ok {
+		t.Fatalf("did not expect key `Timestamp` to exist")
+	}
+	if _, ok := decoded[0]["Fields"]; ok {
+		t.Fatalf("did not expect key `Fields` to exist")
+	}
+}
+
+func keysOf(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }
