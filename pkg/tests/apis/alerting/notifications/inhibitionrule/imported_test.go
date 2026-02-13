@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,25 +37,6 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 
 	ctx := context.Background()
 
-	identifier := "test-imported-inhibition-rules"
-	mergeMatchers := "_imported=true"
-
-	// Create a managed route first
-	routingTreeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	spec := v0alpha1.NewRoutingTreeSpec()
-	spec.Defaults.Receiver = "empty" // Use the default empty receiver
-	routingTree := &v0alpha1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      identifier,
-			Namespace: apis.DefaultNamespace,
-		},
-		Spec: *spec,
-	}
-	_, err = routingTreeClient.Create(ctx, routingTree, resource.CreateOptions{})
-	require.NoError(t, err, "failed to create managed route")
-
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
@@ -65,6 +45,9 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
 	require.NoError(t, err)
+
+	identifier := "test-imported-inhibition-rules"
+	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",

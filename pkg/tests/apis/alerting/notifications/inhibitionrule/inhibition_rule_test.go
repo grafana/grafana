@@ -39,6 +39,7 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 	newRule := &v0alpha1.InhibitionRule{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
+			Name:      "test-rule",
 		},
 		Spec: v0alpha1.InhibitionRuleSpec{
 			SourceMatchers: []v0alpha1.InhibitionRuleMatcher{
@@ -59,9 +60,9 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is missing", func(t *testing.T) {
 		rule := newRule.DeepCopy()
-		rule.Name = "my-rule"
+		rule.Name = ""
 		_, err := client.Create(ctx, rule, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 	})
@@ -85,6 +86,7 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 		var err error
 		existingRule, err = client.Create(ctx, newRule, resource.CreateOptions{})
 		require.Nil(t, err)
+		require.NotNil(t, existingRule)
 		require.Equal(t, newRule.Spec, existingRule.Spec)
 	})
 
@@ -98,14 +100,14 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 	})
 
 	existingIdentifier := existingRule.GetStaticMetadata().Identifier()
-	t.Run("get should retrieve rule by identifier", func(t *testing.T) {
+	t.Run("get should retrieve rule by name", func(t *testing.T) {
 		got, err := client.Get(ctx, existingIdentifier)
 		require.NoError(t, err)
 		require.Equal(t, existingRule.Spec, got.Spec)
 	})
 
 	var updatedRuleIdentifier resource.Identifier
-	t.Run("update should change UID when content changes (immutable pattern)", func(t *testing.T) {
+	t.Run("update should keep stable UID and change version", func(t *testing.T) {
 		updated := existingRule.DeepCopy()
 		updated.Spec.SourceMatchers = append(updated.Spec.SourceMatchers, v0alpha1.InhibitionRuleMatcher{
 			Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
@@ -118,19 +120,16 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 
 		updatedRuleIdentifier = actual.GetStaticMetadata().Identifier()
 
-		// Immutable pattern: UID changes when content changes
-		require.NotEqual(t, existingRule.Name, actual.Name, "Update should change the resource name (UID) but it didn't")
-		require.NotEqual(t, existingRule.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+		// Stable UID pattern: Name stays the same, only version changes
+		require.Equal(t, existingRule.Name, actual.Name, "Update should keep the same name (stable UID)")
+		require.NotEqual(t, existingRule.ResourceVersion, actual.ResourceVersion, "Update should change the resource version")
 		require.NotEqual(t, len(existingRule.Spec.SourceMatchers), len(actual.Spec.SourceMatchers), "SourceMatchers count should have changed")
 
-		// Old resource should be gone
-		_, err = client.Get(ctx, existingIdentifier)
-		require.True(t, errors.IsNotFound(err), "Old resource should not exist after update")
-
-		// New resource should exist
-		updatedRule, err := client.Get(ctx, updatedRuleIdentifier)
+		// Should be able to get the updated resource by same identifier
+		updatedRule, err := client.Get(ctx, existingIdentifier)
 		require.NoError(t, err)
 		require.Equal(t, actual.Spec, updatedRule.Spec)
+		require.Equal(t, actual.ResourceVersion, updatedRule.ResourceVersion)
 	})
 
 	t.Run("delete should remove rule", func(t *testing.T) {
