@@ -91,6 +91,7 @@ Each rule operates independently as its own filter, separate from other rules wi
 LBAC rules guidelines:
 
 - Use only resource scope attributes, for example, `{ resource.env="prod" }`.
+- Only string values are supported.
 - Use double quotes for string values, for example, `{ resource.env="prod" }`.
 - Use regular expressions with the `=~` operator, for example, `{ resource.team =~ "team-a|team-b" }`.
 - LBAC doesn't support `nil`; you can't match spans where an attribute doesn't exist.
