@@ -65,7 +65,7 @@ export function doLokiChannelStream(
       return getGrafanaLiveSrv()
         .getStream({
           scope: LiveChannelScope.DataSource,
-          namespace: ds.uid,
+          stream: ds.uid,
           path: `tail/${key}`,
           data: {
             ...query,

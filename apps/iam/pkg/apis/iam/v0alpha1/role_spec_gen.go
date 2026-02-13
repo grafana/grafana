@@ -20,7 +20,6 @@ type RoleSpec struct {
 	// Display name of the role
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Version     int64  `json:"version"`
 	Group       string `json:"group"`
 	// TODO:
 	// delegatable?: bool
@@ -34,4 +33,10 @@ func NewRoleSpec() *RoleSpec {
 	return &RoleSpec{
 		Permissions: []RolespecPermission{},
 	}
+}
+func (RolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission"
+}
+func (RoleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleSpec"
 }

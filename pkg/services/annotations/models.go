@@ -22,8 +22,9 @@ type ItemQuery struct {
 	MatchAny     bool     `json:"matchAny"`
 	SignedInUser identity.Requester
 
-	Limit int64 `json:"limit"`
-	Page  int64
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"` // used for annotation row pagination (e.g. new API continue token); 0 = first page
+	Page   int64 // org-wide list only: paginates dashboards in Authorize (SearchDashboards), not annotation rows
 }
 
 // TagsQuery is the query for a tags search.

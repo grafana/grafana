@@ -79,7 +79,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
+        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
           queries: nonDashboardQueries,
           from: currentTimeRange.from.toISOString(),

@@ -7,6 +7,7 @@ import {
   getLegacyVersionLabel,
   getOptionsForVersion,
   hasLegacyIntegrations,
+  isDeprecated,
   isLegacyVersion,
 } from './notifier-versions';
 
@@ -116,64 +117,112 @@ describe('notifier-versions utilities', () => {
   describe('isLegacyVersion', () => {
     it('should return false if no version is specified', () => {
       const notifier = createNotifier({
-        versions: [createVersion({ version: 'v0mimir1', canCreate: false })],
+        currentVersion: 'v1',
+        versions: [createVersion({ version: 'v0mimir1' })],
       });
       expect(isLegacyVersion(notifier, undefined)).toBe(false);
       expect(isLegacyVersion(notifier, '')).toBe(false);
     });
 
-    it('should return false if notifier has no versions array', () => {
-      const notifier = createNotifier({ versions: undefined });
+    it('should return false if notifier has no currentVersion', () => {
+      const notifier = createNotifier({ currentVersion: undefined });
       expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(false);
     });
 
-    it('should return false if notifier has empty versions array', () => {
-      const notifier = createNotifier({ versions: [] });
-      expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(false);
-    });
-
-    it('should return false if version is not found in versions array', () => {
+    it('should return false if version matches currentVersion', () => {
       const notifier = createNotifier({
-        versions: [createVersion({ version: 'v1', canCreate: true })],
-      });
-      expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(false);
-    });
-
-    it('should return false if version has canCreate: true', () => {
-      const notifier = createNotifier({
-        versions: [createVersion({ version: 'v1', canCreate: true })],
+        currentVersion: 'v1',
+        versions: [createVersion({ version: 'v1' })],
       });
       expect(isLegacyVersion(notifier, 'v1')).toBe(false);
     });
 
-    it('should return false if version has canCreate: undefined', () => {
+    it('should return true if version is different from currentVersion', () => {
       const notifier = createNotifier({
-        versions: [createVersion({ version: 'v1', canCreate: undefined })],
-      });
-      expect(isLegacyVersion(notifier, 'v1')).toBe(false);
-    });
-
-    it('should return true if version has canCreate: false', () => {
-      const notifier = createNotifier({
-        versions: [
-          createVersion({ version: 'v0mimir1', canCreate: false }),
-          createVersion({ version: 'v1', canCreate: true }),
-        ],
+        currentVersion: 'v1',
+        versions: [createVersion({ version: 'v0mimir1' }), createVersion({ version: 'v1' })],
       });
       expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(true);
     });
 
-    it('should correctly identify legacy versions in a mixed notifier', () => {
+    it('should correctly identify legacy versions regardless of canCreate', () => {
+      // Even if v1 has canCreate: false, it's NOT legacy if it's the currentVersion
       const notifier = createNotifier({
+        currentVersion: 'v1',
         versions: [
           createVersion({ version: 'v0mimir1', canCreate: false }),
           createVersion({ version: 'v0mimir2', canCreate: false }),
-          createVersion({ version: 'v1', canCreate: true }),
+          createVersion({ version: 'v1', canCreate: false }), // canCreate doesn't matter
         ],
       });
       expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(true);
       expect(isLegacyVersion(notifier, 'v0mimir2')).toBe(true);
-      expect(isLegacyVersion(notifier, 'v1')).toBe(false);
+      expect(isLegacyVersion(notifier, 'v1')).toBe(false); // Not legacy because it's currentVersion
+    });
+  });
+
+  describe('isDeprecated', () => {
+    it('should return false if notifier has no deprecated field', () => {
+      const notifier = createNotifier({});
+      expect(isDeprecated(notifier)).toBe(false);
+    });
+
+    it('should return true if notifier has deprecated: true at top level', () => {
+      const notifier = createNotifier({ deprecated: true });
+      expect(isDeprecated(notifier)).toBe(true);
+    });
+
+    it('should return false if notifier has deprecated: false at top level', () => {
+      const notifier = createNotifier({ deprecated: false });
+      expect(isDeprecated(notifier)).toBe(false);
+    });
+
+    it('should return true if specific version has deprecated: true', () => {
+      const notifier = createNotifier({
+        versions: [
+          createVersion({ version: 'v0', deprecated: true }),
+          createVersion({ version: 'v1', deprecated: false }),
+        ],
+      });
+      expect(isDeprecated(notifier, 'v0')).toBe(true);
+      expect(isDeprecated(notifier, 'v1')).toBe(false);
+    });
+
+    it('should return true if notifier is deprecated regardless of version', () => {
+      const notifier = createNotifier({
+        deprecated: true,
+        versions: [createVersion({ version: 'v1', deprecated: false })],
+      });
+      // Top-level deprecated takes precedence
+      expect(isDeprecated(notifier, 'v1')).toBe(true);
+    });
+
+    it('should return false if version is not found in versions array', () => {
+      const notifier = createNotifier({
+        versions: [createVersion({ version: 'v1' })],
+      });
+      expect(isDeprecated(notifier, 'v2')).toBe(false);
+    });
+
+    it('should check currentVersion when no version is specified', () => {
+      const notifier = createNotifier({
+        currentVersion: 'v1',
+        versions: [createVersion({ version: 'v1', deprecated: true })],
+      });
+      // No version specified, should check currentVersion (v1) which is deprecated
+      expect(isDeprecated(notifier)).toBe(true);
+    });
+
+    it('should return false when currentVersion is not deprecated and no version specified', () => {
+      const notifier = createNotifier({
+        currentVersion: 'v1',
+        versions: [
+          createVersion({ version: 'v0', deprecated: true }),
+          createVersion({ version: 'v1', deprecated: false }),
+        ],
+      });
+      // No version specified, should check currentVersion (v1) which is not deprecated
+      expect(isDeprecated(notifier)).toBe(false);
     });
   });
 
@@ -309,6 +358,7 @@ describe('notifier-versions utilities', () => {
     const notifiersWithVersions: NotifierDTO[] = [
       createNotifier({
         type: 'slack',
+        currentVersion: 'v1',
         versions: [
           createVersion({ version: 'v0mimir1', canCreate: false }),
           createVersion({ version: 'v1', canCreate: true }),
@@ -316,6 +366,7 @@ describe('notifier-versions utilities', () => {
       }),
       createNotifier({
         type: 'webhook',
+        currentVersion: 'v1',
         versions: [
           createVersion({ version: 'v0mimir1', canCreate: false }),
           createVersion({ version: 'v0mimir2', canCreate: false }),
@@ -345,7 +396,7 @@ describe('notifier-versions utilities', () => {
       expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
-    it('should return false if all integrations have v1 version (canCreate: true)', () => {
+    it('should return false if all integrations have current version', () => {
       const contactPoint = createContactPoint({
         grafana_managed_receiver_configs: [
           { type: 'slack', settings: {}, version: 'v1' },
@@ -365,7 +416,7 @@ describe('notifier-versions utilities', () => {
       expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
-    it('should return true if any integration has a legacy version (canCreate: false)', () => {
+    it('should return true if any integration has a legacy version (not current version)', () => {
       const contactPoint = createContactPoint({
         grafana_managed_receiver_configs: [
           { type: 'slack', settings: {}, version: 'v0mimir1' },

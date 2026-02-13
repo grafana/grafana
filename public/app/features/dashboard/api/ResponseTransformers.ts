@@ -44,8 +44,8 @@ import {
   defaultDashboardLink,
   defaultFieldConfigSource,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,

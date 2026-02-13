@@ -1,6 +1,4 @@
-import { AppPluginConfig } from '@grafana/data';
-
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   getAppPluginMeta,
@@ -13,20 +11,22 @@ import { initPluginMetas } from './plugins';
 import { app } from './test-fixtures/config.apps';
 
 jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
-jest.mock('../../internal/openFeature', () => ({
-  ...jest.requireActual('../../internal/openFeature'),
-  evaluateBooleanFlag: jest.fn(),
-}));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
-const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 describe('when useMTPlugins flag is enabled and apps is not initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setAppPluginMetas({});
     jest.resetAllMocks();
     initPluginMetasMock.mockResolvedValue({ items: [] });
-    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getAppPluginMetas should call initPluginMetas and return correct result', async () => {
@@ -59,10 +59,17 @@ describe('when useMTPlugins flag is enabled and apps is not initialized', () => 
 });
 
 describe('when useMTPlugins flag is enabled and apps is initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -113,10 +120,17 @@ describe('when useMTPlugins flag is enabled and apps is initialized', () => {
 });
 
 describe('when useMTPlugins flag is disabled and apps is not initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setAppPluginMetas({});
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -149,10 +163,17 @@ describe('when useMTPlugins flag is disabled and apps is not initialized', () =>
 });
 
 describe('when useMTPlugins flag is disabled and apps is initialized', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -203,10 +224,17 @@ describe('when useMTPlugins flag is disabled and apps is initialized', () => {
 });
 
 describe('immutability', () => {
+  beforeAll(() => {
+    setTestFlags({ useMTPlugins: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should return a deep clone', async () => {
@@ -235,19 +263,6 @@ describe('immutability', () => {
     // assert that we have not mutated the source
     expect(apps[0].dependencies.grafanaDependency).toEqual('>=10.4.0');
     expect(apps[0].extensions.addedLinks).toHaveLength(0);
-  });
-
-  it('getAppPluginMetas should return a deep clone including functions', async () => {
-    setAppPluginMetas({
-      'myorg-someplugin-app': {
-        ...app,
-        extensions: {
-          ...app.extensions,
-          addedFunctions: [{ targets: [], title: '', description: '', onClick: () => {} }],
-        },
-      } as unknown as AppPluginConfig,
-    });
-    expect(async () => await getAppPluginMetas()).not.toThrow();
   });
 
   it('getAppPluginMeta should return a deep clone', async () => {

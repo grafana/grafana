@@ -51,11 +51,13 @@ type AlertsRouter struct {
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
 	featureManager    featuremgmt.FeatureToggles
+	broadcastAlerts   bool
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -75,6 +77,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		datasourceService: datasourceService,
 		secretService:     secretService,
 		featureManager:    featureManager,
+		broadcastAlerts:   broadcastAlerts,
 	}
 	return d
 }
@@ -367,6 +370,9 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 			localNotifierExist = true
 			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
+			}
+			if d.broadcastAlerts {
+				d.multiOrgNotifier.BroadcastAlerts(key.OrgID, alerts)
 			}
 		} else {
 			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {

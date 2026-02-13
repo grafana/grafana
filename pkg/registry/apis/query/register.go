@@ -3,7 +3,9 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"runtime"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,7 +53,8 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            DataSourceConnectionProvider
+	connections            query.DataSourceConnectionProvider
+	reportStatus           func(context.Context, int)
 }
 
 func NewQueryAPIBuilder(
@@ -62,8 +65,9 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	connections DataSourceConnectionProvider,
+	connections query.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
+	reportStatus func(context.Context, int),
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -97,6 +101,7 @@ func NewQueryAPIBuilder(
 			Tracer:   tracer,
 		},
 		legacyDatasourceLookup: legacyDatasourceLookup,
+		reportStatus:           reportStatus,
 	}, nil
 }
 
@@ -133,7 +138,18 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
-	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
+	statusMetric := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Subsystem: "ds_querier",
+		Name:      "requests_total",
+	}, []string{"status_code"})
+	registerer.MustRegister(statusMetric)
+
+	reportStatus := func(ctx context.Context, statusCode int) {
+		statusMetric.With(prometheus.Labels{
+			"status_code": strconv.Itoa(statusCode),
+		}).Inc()
+	}
 
 	builder, err := NewQueryAPIBuilder(
 		features,
@@ -143,8 +159,9 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		dataSourcesService, // query.DataSourceConnectionProvider
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		reportStatus,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -158,13 +175,12 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
-		&query.DataSourceConnection{},
 		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
 		&query.QueryTypeDefinitionList{},
-		&query.SQLSchemas{},
+		&query.QueryResponseSQLSchemas{},
 	)
 }
 
@@ -183,15 +199,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	storage := map[string]rest.Storage{}
 
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		// Eventually this would be backed either by search or reconciler pattern
-		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
-			connections: b.connections,
-		}
-	}
-
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -204,8 +211,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
-
-	storage["sqlschemas"] = newSQLSchemasREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -302,6 +307,21 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	})
 	if err != nil {
 		return oas, nil
+	}
+
+	// Use the same request body for query as sql schemas
+	query, ok := oas.Paths.Paths[root+"namespaces/{namespace}/query"]
+	if !ok || query.Post == nil || query.Post.RequestBody == nil {
+		return nil, fmt.Errorf("could not find query path")
+	}
+	if len(query.Parameters) != 2 && query.Parameters[0].Name != "name" {
+		return nil, fmt.Errorf("expected name parameter in query service")
+	}
+	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+
+	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
+	if ok && sqlschemas.Post != nil {
+		sqlschemas.Post.RequestBody = query.Post.RequestBody
 	}
 
 	return oas, nil

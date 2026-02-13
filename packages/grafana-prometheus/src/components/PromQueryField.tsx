@@ -147,7 +147,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
         </div>
       </div>
       {labelBrowserVisible && (
-        <div className="gf-form">
+        <div>
           <MetricsBrowserProvider
             timeRange={range ?? getDefaultTimeRange()}
             languageProvider={languageProvider}

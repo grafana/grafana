@@ -20,6 +20,7 @@ import {
   canCreateNotifier,
   getLegacyVersionLabel,
   getOptionsForVersion,
+  isDeprecated,
   isLegacyVersion,
 } from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
@@ -178,7 +179,9 @@ export function ChannelSubForm<R extends ChannelValues>({
   const typeOptions = useMemo((): SelectableValue[] => {
     // Filter out notifiers that can't be created (e.g., v0-only integrations like WeChat)
     // These are legacy integrations that only exist in Mimir and can't be created in Grafana
-    const creatableNotifiers = notifiers.filter(({ dto }) => canCreateNotifier(dto));
+    // BUT: Always include the current type if editing an existing integration
+    const currentType = initialValues?.type || defaultValues.type;
+    const creatableNotifiers = notifiers.filter(({ dto }) => canCreateNotifier(dto) || dto.type === currentType);
 
     return sortBy(creatableNotifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
       ({ dto: { name, type }, meta }) => {
@@ -198,7 +201,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         };
       }
     );
-  }, [notifiers]);
+  }, [notifiers, initialValues?.type, defaultValues.type]);
 
   const handleTest = async () => {
     await trigger();
@@ -216,10 +219,14 @@ export function ChannelSubForm<R extends ChannelValues>({
   const isParseModeNone = parse_mode === 'None' || !parse_mode;
   const showTelegramWarning = isTelegram && !isParseModeNone;
 
-  // Check if current integration is a legacy version (canCreate: false)
-  // Legacy integrations are read-only and cannot be edited
   // Read version from existing integration data (stored in receiver config)
   const integrationVersion = initialValues?.version || defaultValues.version;
+
+  // Check if integration is deprecated (will be removed in a future release)
+  const notifierIsDeprecated = notifier ? isDeprecated(notifier.dto, integrationVersion) : false;
+
+  // Check if current integration is a legacy version (old version format, e.g., v0mimir1)
+  // Legacy integrations use an older schema imported from Mimir
   const isLegacy = notifier ? isLegacyVersion(notifier.dto, integrationVersion) : false;
 
   // Get the correct options based on the integration's version
@@ -258,6 +265,17 @@ export function ChannelSubForm<R extends ChannelValues>({
                   />
                 )}
               />
+              {notifierIsDeprecated && (
+                <Badge
+                  text={t('alerting.channel-sub-form.badge-deprecated', 'Deprecated')}
+                  color="orange"
+                  icon="exclamation-triangle"
+                  tooltip={t(
+                    'alerting.channel-sub-form.tooltip-deprecated',
+                    'This integration is deprecated and will be removed in a future release.'
+                  )}
+                />
+              )}
               {isLegacy && integrationVersion && (
                 <Badge
                   text={getLegacyVersionLabel(integrationVersion)}
@@ -281,9 +299,12 @@ export function ChannelSubForm<R extends ChannelValues>({
           )}
           {isEditable && (
             <>
-              <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
-              </Button>
+              {/* Only show duplicate button if the notifier type can be created */}
+              {notifier && canCreateNotifier(notifier.dto) && (
+                <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                  <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
+                </Button>
+              )}
               {onDelete && (
                 <Button
                   data-testid={`${pathPrefix}delete-button`}

@@ -408,7 +408,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		}
 
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -446,11 +446,25 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-		})
+		navLink := &navtree.NavLink{
+			Text:     "Alert rules",
+			SubTitle: "Rules that determine whether an alert will fire",
+			Url:      s.cfg.AppSubURL + "/alerting/list",
+			Icon:     "list-ul",
+		}
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		// Since we're changing the navigation structure we have to assign different nav IDs
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			navLink.Id = "alert-rules" // New navigation: Alert rules (tabs managed on frontend)
+		} else {
+			navLink.Id = "alert-list" // Legacy navigation
+		}
+
+		alertChildNavs = append(alertChildNavs, navLink)
 	}
 
+	// Permissions for notification configuration items
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
@@ -464,22 +478,42 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
-	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
-			Icon: "comment-alt-share",
-		})
-	}
-
-	if hasAccess(ac.EvalAny(
+	notificationPoliciesPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
 		ac.EvalPermission(ac.ActionAlertingRoutesRead),
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
-	)) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+	}
+
+	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))
+	hasNotificationPoliciesAccess := hasAccess(ac.EvalAny(notificationPoliciesPerms...))
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		// V2 Navigation: Group notification config items under a single parent (tabs managed on frontend)
+		if hasContactPointsAccess || hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Notification configuration",
+				SubTitle: "Manage contact points, notification policies, templates, and time intervals",
+				Id:       "notification-config",
+				Url:      s.cfg.AppSubURL + "/alerting/notifications",
+				Icon:     "comment-alt-share",
+			})
+		}
+	} else {
+		// Legacy Navigation: Show contact points and notification policies as separate items
+		if hasContactPointsAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			})
+		}
+
+		if hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		}
 	}
 
 	if hasAccess(ac.EvalAny(
@@ -508,12 +542,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text:     "Recently deleted",
-			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-			Id:       "alerts/recently-deleted",
-			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
-		})
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "alerts/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+			})
+		}
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {

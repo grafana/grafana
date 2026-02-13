@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { MessageChannel } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { matchers } from '@grafana/test-utils/matchers';
@@ -82,5 +83,24 @@ global.ResizeObserver = class ResizeObserver {
 
   unobserve() {
     this.#isObserving = false;
+  }
+};
+
+// originally using just global.MessageChannel = MessageChannel
+// however this results in open handles in jest tests
+// see https://github.com/facebook/react/issues/26608#issuecomment-1734172596
+global.MessageChannel = class {
+  constructor() {
+    const channel = new MessageChannel();
+    this.port1 = new Proxy(channel.port1, {
+      set(port1, prop, value) {
+        const result = Reflect.set(port1, prop, value);
+        if (prop === 'onmessage') {
+          port1.unref();
+        }
+        return result;
+      },
+    });
+    this.port2 = channel.port2;
   }
 };

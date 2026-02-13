@@ -1,7 +1,7 @@
 import { isString } from 'lodash';
 
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
-import { ValueTypes, MetricFindQueryTypes } from './dataquery.gen';
+import { MetricFindQueryTypes, ValueTypes } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
 import {
   extractServicesFromMetricDescriptors,
@@ -174,6 +174,6 @@ export default class CloudMonitoringMetricFindQuery {
   }
 
   toFindQueryResult(x: any) {
-    return isString(x) ? { text: x, expandable: true } : { ...x, expandable: true };
+    return isString(x) ? { text: x, expandable: true } : { ...x, text: x.label || x.value, expandable: true };
   }
 }

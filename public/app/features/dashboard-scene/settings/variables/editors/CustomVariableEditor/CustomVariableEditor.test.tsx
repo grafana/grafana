@@ -1,15 +1,10 @@
 import { render, fireEvent } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableEditor } from './CustomVariableEditor';
-
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  actual.config.featureToggles = { multiPropsVariables: true };
-  return actual;
-});
 
 function setup(options: Partial<ConstructorParameters<typeof CustomVariable>[0]> = {}) {
   return {
@@ -70,7 +65,10 @@ function renderEditor(ui: React.ReactNode) {
   };
 }
 
-describe('CustomVariableEditor', () => {
+describe('CustomVariableEditor with multiPropsVariables toggle enabled', () => {
+  beforeAll(() => {
+    config.featureToggles.multiPropsVariables = true;
+  });
   describe('CSV values format', () => {
     it('should render CustomVariableForm with the correct initial values', () => {
       const { variable, onRunQuery } = setup({
@@ -230,6 +228,88 @@ describe('CustomVariableEditor', () => {
 
       expect(elements.allowCustomValueCheckbox()).toBeInTheDocument();
       expect(elements.customAllValueInput()).toBeInTheDocument();
+    });
+  });
+});
+
+describe('CustomVariableEditor with feature toggle disabled', () => {
+  beforeAll(() => {
+    config.featureToggles.multiPropsVariables = false;
+  });
+  it('should render CustomVariableForm with the correct initial values', () => {
+    const { variable, onRunQuery } = setup({
+      query: 'test, test2',
+      value: 'test',
+      isMulti: true,
+      includeAll: true,
+      allowCustomValue: true,
+      allValue: 'all',
+    });
+
+    const { elements } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+    expect(elements.queryInput().value).toBe('test, test2');
+    expect(elements.multiValueCheckbox().checked).toBe(true);
+    expect(elements.allowCustomValueCheckbox().checked).toBe(true);
+    expect(elements.includeAllCheckbox().checked).toBe(true);
+    expect(elements.customAllValueInput().value).toBe('all');
+  });
+
+  it('should update the variable state when some input values change ("Multi-value", "Allow custom values" & "Include All option")', () => {
+    const { variable, onRunQuery } = setup({
+      query: 'test, test2',
+      value: 'test',
+      isMulti: false,
+      allowCustomValue: false,
+      includeAll: false,
+    });
+
+    const { elements } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+    expect(elements.multiValueCheckbox().checked).toBe(false);
+    expect(elements.allowCustomValueCheckbox().checked).toBe(false);
+    expect(elements.includeAllCheckbox().checked).toBe(false);
+    // include-all-custom input appears after include-all checkbox is checked only
+    expect(elements.customAllValueInput()).not.toBeInTheDocument();
+
+    fireEvent.click(elements.multiValueCheckbox());
+    fireEvent.click(elements.allowCustomValueCheckbox());
+    fireEvent.click(elements.includeAllCheckbox());
+
+    expect(variable.state.isMulti).toBe(true);
+    expect(variable.state.allowCustomValue).toBe(true);
+    expect(variable.state.includeAll).toBe(true);
+    expect(elements.customAllValueInput()).toBeInTheDocument();
+  });
+
+  describe('when the values textarea loses focus after its value has changed', () => {
+    it('should update the query in the variable state and call the onRunQuery callback', async () => {
+      const { variable, onRunQuery } = setup({ query: 'test, test2', value: 'test' });
+
+      const { actions } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+      actions.updateValuesInput('test3, test4');
+
+      expect(variable.state.query).toBe('test3, test4');
+      expect(onRunQuery).toHaveBeenCalled();
+    });
+  });
+
+  describe('when the "Custom all value" input loses focus after its value has changed', () => {
+    it('should update the variable state', () => {
+      const { variable, onRunQuery } = setup({
+        query: 'test, test2',
+        value: 'test',
+        isMulti: true,
+        includeAll: true,
+      });
+
+      const { elements } = renderEditor(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+      fireEvent.change(elements.customAllValueInput(), { target: { value: 'new custom all' } });
+      fireEvent.blur(elements.customAllValueInput());
+
+      expect(variable.state.allValue).toBe('new custom all');
     });
   });
 });

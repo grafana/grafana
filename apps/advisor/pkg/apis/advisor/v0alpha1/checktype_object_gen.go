@@ -25,6 +25,13 @@ type CheckType struct {
 	Status CheckTypeStatus `json:"status" yaml:"status"`
 }
 
+func NewCheckType() *CheckType {
+	return &CheckType{
+		Spec:   *NewCheckTypeSpec(),
+		Status: *NewCheckTypeStatus(),
+	}
+}
+
 func (o *CheckType) GetSpec() any {
 	return o.Spec
 }
@@ -236,6 +243,10 @@ func (o *CheckType) DeepCopyInto(dst *CheckType) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (CheckType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &CheckType{}
 
@@ -287,6 +298,10 @@ func (o *CheckTypeList) DeepCopy() *CheckTypeList {
 
 func (o *CheckTypeList) DeepCopyInto(dst *CheckTypeList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (CheckTypeList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeList"
 }
 
 // Interface compliance compile-time check

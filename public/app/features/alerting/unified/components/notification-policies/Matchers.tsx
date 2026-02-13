@@ -22,31 +22,28 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
   const hasMoreMatchers = rest.length > 0;
 
   return (
-    <span data-testid="label-matchers">
-      <Stack direction="row" gap={1} alignItems="center" wrap={'wrap'}>
-        {firstFew.map((matcher) => (
-          <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
-        ))}
-        {/* TODO hover state to show all matchers we're not showing */}
-        {hasMoreMatchers && (
-          <PopupCard
-            arrow
-            placement="top"
-            content={
-              <>
-                {rest.map((matcher) => (
-                  <MatcherBadge key={uniqueId()} matcher={matcher} />
-                ))}
-              </>
-            }
-          >
-            <span>
-              <div className={styles.metadata}>{`and ${rest.length} more`}</div>
-            </span>
-          </PopupCard>
-        )}
-      </Stack>
-    </span>
+    <Stack direction="row" gap={1} alignItems="center" wrap="wrap" data-testid="label-matchers">
+      {firstFew.map((matcher) => (
+        <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
+      ))}
+      {hasMoreMatchers && (
+        <PopupCard
+          arrow
+          placement="top"
+          content={
+            <Stack direction="column" gap={1} alignItems="start" justifyContent="start">
+              {rest.map((matcher) => (
+                <MatcherBadge key={uniqueId()} matcher={matcher} />
+              ))}
+            </Stack>
+          }
+        >
+          <span>
+            <div className={styles.metadata}>{`and ${rest.length} more`}</div>
+          </span>
+        </PopupCard>
+      )}
+    </Stack>
   );
 };
 
@@ -58,13 +55,7 @@ interface MatcherBadgeProps {
 export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
   const styles = useStyles2(getStyles);
 
-  return (
-    <div className={styles.matcher(matcher[0]).wrapper}>
-      <Stack direction="row" gap={0} alignItems="baseline">
-        {matcherFormatter[formatter](matcher)}
-      </Stack>
-    </div>
-  );
+  return <div className={styles.matcher(matcher[0]).wrapper}>{matcherFormatter[formatter](matcher)}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -84,6 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
         // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_
         // when rendering the matcher, and is only noticeable when editing
         whiteSpace: 'pre',
+
+        textOverflow: 'ellipsis',
+        overflow: 'hidden',
       }),
     };
   },

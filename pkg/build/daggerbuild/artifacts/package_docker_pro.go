@@ -142,6 +142,10 @@ func (d *ProDocker) VerifyDirectory(ctx context.Context, client *dagger.Client, 
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *ProDocker) String() string {
+	return "pro-docker"
+}
+
 func NewProDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	options, err := pipeline.ParseFlags(artifact, DockerFlags)
 	if err != nil {

@@ -139,6 +139,22 @@ describe('ScopesSelectorService', () => {
       expect(service.state.selectedScopes).toEqual([]);
     });
 
+    it('should not crash when selecting a scope while a previously selected scope node is not in the nodes cache', async () => {
+      // Simulate a state where a scope is applied with a scopeNodeId whose node isn't in the cache.
+      // This can happen e.g. when a scope was applied from a URL and the node hasn't been fetched yet.
+      apiClient.fetchScopeNode.mockResolvedValueOnce(undefined);
+      await service.changeScopes(['unknown-scope'], undefined, 'unknown-scope-node');
+
+      // Verify the precondition: scopeNodeId is set but its node is not in the cache
+      expect(service.state.selectedScopes[0].scopeNodeId).toBe('unknown-scope-node');
+      expect(service.state.nodes['unknown-scope-node']).toBeUndefined();
+
+      // Selecting another scope should not throw
+      // "Cannot read properties of undefined (reading 'spec')"
+      await expect(service.selectScope('test-scope-node')).resolves.not.toThrow();
+      expect(service.state.selectedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
+    });
+
     it('should set recent scopes', async () => {
       await service.selectScope('test-scope-node');
     });

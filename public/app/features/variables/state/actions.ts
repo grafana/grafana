@@ -38,10 +38,12 @@ import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
 import { cleanEditorState } from '../editor/reducer';
+import { ensureStringValues } from '../ensureStringValues';
 import { hasCurrent, hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti } from '../guard';
 import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
+import { toStateKey } from '../toStateKey';
 import {
   initialVariableModelState,
   TransactionStatus,
@@ -51,14 +53,12 @@ import {
   VariablesTimeRangeProcessDone,
 } from '../types';
 import {
-  ensureStringValues,
   ExtendedUrlQueryMap,
   getCurrentText,
   getCurrentValue,
   getVariableRefresh,
   hasOngoingTransaction,
   toKeyedVariableIdentifier,
-  toStateKey,
   toVariablePayload,
 } from '../utils';
 

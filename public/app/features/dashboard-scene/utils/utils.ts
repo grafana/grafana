@@ -494,3 +494,11 @@ export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
 }
+
+export function isDashboardSceneEnabled(): boolean {
+  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
+}
+
+export function isPublicDashboardsSceneEnabled(): boolean {
+  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
+}
