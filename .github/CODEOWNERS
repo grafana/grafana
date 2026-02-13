@@ -234,6 +234,7 @@
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
+/devenv/secrets/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
