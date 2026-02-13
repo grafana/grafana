@@ -89,6 +89,30 @@ describe('GroupByVariableEditor', () => {
     expect(variable.state.defaultOptions).toEqual(undefined);
   });
 
+  it('should render the default value section', async () => {
+    const { renderer } = await setup();
+
+    await waitFor(() => {
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('should update variable defaultValue when adding a default value', async () => {
+    const { renderer, variable, user } = await setup();
+
+    await waitFor(() => {
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+      ).toBeInTheDocument();
+    });
+
+    await user.click(renderer.getByRole('button', { name: 'Add default value' }));
+
+    expect(variable.state.defaultValue).toEqual({ value: [''], text: [''] });
+  });
+
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
     const variable = new GroupByVariable({
       name: 'test',
