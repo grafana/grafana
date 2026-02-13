@@ -13,6 +13,15 @@ import {
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
+
+/**
+ * Return the best human-readable label for a field, preferring the
+ * datasource-provided display name, then the calculated display name,
+ * and falling back to the raw field name.
+ */
+export function getFieldKeyLabel(field: Field): string {
+  return field.config.displayNameFromDS ?? field.state?.displayName ?? field.name;
+}
 import { decoupleHideFromState } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
