@@ -273,34 +273,14 @@ describe('getFieldKeyLabel', () => {
     const field: Field = {
       ...baseField,
       config: { displayNameFromDS: 'Orders Raw Customers First Name' },
-      state: { displayName: 'Some Calculated Name' },
     };
     expect(getFieldKeyLabel(field)).toBe('Orders Raw Customers First Name');
   });
 
-  it('should fall back to state.displayName when displayNameFromDS is not set', () => {
+  it('should fall back to field name when displayNameFromDS is not set', () => {
     const field: Field = {
       ...baseField,
       config: {},
-      state: { displayName: 'Some Calculated Name' },
-    };
-    expect(getFieldKeyLabel(field)).toBe('Some Calculated Name');
-  });
-
-  it('should fall back to field name when neither displayNameFromDS nor state.displayName is set', () => {
-    const field: Field = {
-      ...baseField,
-      config: {},
-      state: undefined,
-    };
-    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
-  });
-
-  it('should fall back to field name when state exists but displayName is undefined', () => {
-    const field: Field = {
-      ...baseField,
-      config: {},
-      state: {},
     };
     expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
   });
