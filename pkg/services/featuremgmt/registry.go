@@ -137,7 +137,7 @@ var (
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Expression:   "false",
 		},
@@ -484,6 +484,15 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "useNewAPIsForDatasourceCRUD",
+			Description:     "Use the new datasource API groups for datasource CRUD requests",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+			Expression:      "false",
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -498,6 +507,14 @@ var (
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 			FrontendOnly: true, // and can change at startup
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesRerouteLegacyCRUDAPIs",
+			Description:     "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
@@ -949,6 +966,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingSyncNotifiersApiMigration",
+			Description:  "Use the new k8s API for fetching integration type schemas",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 			Expression:   "false",
 		},
 		{
@@ -1763,14 +1788,14 @@ var (
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendSearchNavOrganise,
+			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 		},
 		{
 			Name:         "recentlyViewedDashboards",
 			Description:  "Enables recently viewed dashboards section in the browsing dashboard page",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			FrontendOnly: true,
 			Expression:   "false",
 		},
@@ -1778,7 +1803,7 @@ var (
 			Name:         "experimentRecentlyViewedDashboards",
 			Description:  "A/A test for recently viewed dashboards feature",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			FrontendOnly: true,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -1883,7 +1908,7 @@ var (
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			FrontendOnly: true,
 			Expression:   "false",
@@ -1966,7 +1991,7 @@ var (
 			Description:  "Enables team folders functionality",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaFrontendSearchNavOrganise,
+			Owner:        grafanaFrontendNavigation,
 			Expression:   "false",
 		},
 		{
@@ -2311,6 +2336,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamSync",
+			Description:  "Use the new APIs for syncing users to teams",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,
@@ -2318,7 +2351,30 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
-	}
+		{
+			Name:         "alertingIgnorePendingForNoDataAndError",
+			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryRuleViewer",
+			Description:  "Enables the notification history tab in the rule viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryGlobal",
+			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		}}
 )
 
 //go:embed toggles_gen.json

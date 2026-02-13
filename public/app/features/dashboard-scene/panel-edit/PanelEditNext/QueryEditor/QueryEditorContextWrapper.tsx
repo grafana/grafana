@@ -10,6 +10,7 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { usePendingExpression } from './hooks/usePendingExpression';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
@@ -96,6 +97,18 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
+  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
+    setSelectedQueryRefId(queryRefId);
+    setSelectedTransformationId(transformationId);
+    setShowingDatasourceHelp(false);
+  }, []);
+
+  const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
+    usePendingExpression({
+      addQuery: dataPane.addQuery,
+      onCardSelectionChange,
+    });
+
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -106,11 +119,15 @@ export function QueryEditorContextWrapper({
         setSelectedTransformationId(null);
         // Reset datasource help when switching queries
         setShowingDatasourceHelp(false);
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       queryOptions: {
         options: queryOptions,
@@ -123,7 +140,10 @@ export function QueryEditorContextWrapper({
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
-      cardType: getEditorType(selectedQuery || selectedTransformation),
+      cardType: getEditorType(selectedQuery || selectedTransformation, pendingExpression),
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
     }),
     [
       selectedQuery,
@@ -136,6 +156,10 @@ export function QueryEditorContextWrapper({
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
+      clearPendingExpression,
     ]
   );
 
@@ -174,6 +198,7 @@ export function QueryEditorContextWrapper({
         }
       },
       updateTransformation: dataPane.updateTransformation,
+      reorderTransformations: dataPane.reorderTransformations,
     }),
     [dataPane, findTransformationIndex]
   );

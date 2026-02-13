@@ -5,7 +5,7 @@ import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
   RowsLayoutRowKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 /**
  * Recursively gets all JSON files from a directory.

@@ -9,12 +9,16 @@ import {
 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
 import { QueryOptionField, Transformation } from './types';
+
+export interface PendingExpression {
+  insertAfter: string;
+}
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -56,12 +60,15 @@ export interface QueryEditorUIState {
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
   cardType: QueryEditorType;
+  pendingExpression: PendingExpression | null;
+  setPendingExpression: (pending: PendingExpression | null) => void;
+  finalizePendingExpression: (type: ExpressionQueryType) => void;
 }
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
-  addQuery: (query?: Partial<DataQuery>) => void;
+  addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
   deleteQuery: (refId: string) => void;
   duplicateQuery: (refId: string) => void;
   toggleQueryHide: (refId: string) => void;
@@ -71,6 +78,7 @@ export interface QueryEditorActions {
   deleteTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
+  reorderTransformations: (transformations: DataTransformerConfig[]) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

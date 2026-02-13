@@ -497,9 +497,7 @@ export type ShortUrlOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -510,9 +508,7 @@ export type ShortUrlOperatorState = {
 export type ShortUrlStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** The last time the short URL was used, 0 is the initial value */
   lastSeenAt: number;

@@ -1,14 +1,16 @@
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType } from '../../constants';
+import { QueryEditorType, QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, mockQueryOptionsState, setup } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryCard } from './QueryCard';
+import { SidebarCard } from './SidebarCard';
 import { TransformationCard } from './TransformationCard';
 
 jest.mock('@grafana/runtime', () => ({
@@ -17,6 +19,79 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ds1SettingsMock,
   }),
 }));
+
+const queryConfig = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Query];
+
+interface RenderSidebarCardProps {
+  id?: string;
+  isSelected?: boolean;
+  onClick?: jest.Mock;
+  addQuery?: jest.Mock;
+  setSelectedQuery?: jest.Mock;
+  setPendingExpression?: jest.Mock;
+  config?: typeof queryConfig;
+  showAddButton?: boolean;
+}
+
+function renderSidebarCard({
+  id = 'A',
+  isSelected = false,
+  onClick = jest.fn(),
+  addQuery = jest.fn().mockReturnValue('B'),
+  setSelectedQuery = jest.fn(),
+  setPendingExpression = jest.fn(),
+  config = queryConfig,
+  showAddButton = true,
+}: RenderSidebarCardProps = {}) {
+  // The add button starts with pointer-events: none (visible only on hover).
+  // JSDOM can't simulate CSS :hover, so we skip the pointer-events check.
+  const user = userEvent.setup({ pointerEventsCheck: 0 });
+  const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
+  const actions = { ...mockActions, addQuery };
+
+  render(
+    <QueryEditorProvider
+      dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
+      qrState={{ queries, data: undefined, isLoading: false }}
+      panelState={{
+        panel: new VizPanel({ key: 'panel-1' }),
+        transformations: [],
+      }}
+      uiState={{
+        selectedQuery: queries[0],
+        selectedTransformation: null,
+        setSelectedQuery,
+        setSelectedTransformation: jest.fn(),
+        queryOptions: mockQueryOptionsState,
+        selectedQueryDsData: null,
+        selectedQueryDsLoading: false,
+        showingDatasourceHelp: false,
+        toggleDatasourceHelp: jest.fn(),
+        cardType: QueryEditorType.Query,
+        pendingExpression: null,
+        setPendingExpression,
+        finalizePendingExpression: jest.fn(),
+      }}
+      actions={actions}
+    >
+      <SidebarCard
+        config={config}
+        isSelected={isSelected}
+        id={id}
+        onClick={onClick}
+        onDelete={jest.fn()}
+        onToggleHide={jest.fn()}
+        isHidden={false}
+        onDuplicate={jest.fn()}
+        showAddButton={showAddButton}
+      >
+        <span>Card content</span>
+      </SidebarCard>
+    </QueryEditorProvider>
+  );
+
+  return { user, addQuery, setSelectedQuery, setPendingExpression, onClick };
+}
 
 describe('SidebarCard', () => {
   afterAll(() => {
@@ -50,6 +125,9 @@ describe('SidebarCard', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -91,6 +169,9 @@ describe('SidebarCard', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Transformation,
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
@@ -103,5 +184,64 @@ describe('SidebarCard', () => {
 
     expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
     expect(setSelectedQuery).not.toHaveBeenCalled();
+  });
+
+  describe('add button and menu', () => {
+    it('renders the card and add button', () => {
+      renderSidebarCard();
+
+      expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
+      expect(screen.getByText('Card content')).toBeInTheDocument();
+    });
+
+    it('does not render the add button when showAddButton is false', () => {
+      renderSidebarCard({ showAddButton: false });
+
+      expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add below A/i })).not.toBeInTheDocument();
+    });
+
+    it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
+      const { user, addQuery, setSelectedQuery } = renderSidebarCard({ id: 'A' });
+
+      await user.click(screen.getByRole('button', { name: /add below A/i }));
+      await user.click(screen.getByRole('menuitem', { name: /add query/i }));
+
+      expect(addQuery).toHaveBeenCalledWith(undefined, 'A');
+      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'B', hide: false });
+    });
+
+    it('auto-selects the newly added query', async () => {
+      const addQuery = jest.fn().mockReturnValue('C');
+      const { user, setSelectedQuery } = renderSidebarCard({ id: 'B', addQuery });
+
+      await user.click(screen.getByRole('button', { name: /add below B/i }));
+      await user.click(screen.getByRole('menuitem', { name: /add query/i }));
+
+      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'C', hide: false });
+    });
+
+    it('does not call setSelectedQuery when addQuery returns undefined', async () => {
+      const addQuery = jest.fn().mockReturnValue(undefined);
+      const { user, setSelectedQuery } = renderSidebarCard({ addQuery });
+
+      await user.click(screen.getByRole('button', { name: /add below A/i }));
+      await user.click(screen.getByRole('menuitem', { name: /add query/i }));
+
+      expect(addQuery).toHaveBeenCalled();
+      expect(setSelectedQuery).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('add expression', () => {
+    it('clicking "Add expression" calls setPendingExpression with insertAfter', async () => {
+      const { user, setPendingExpression } = renderSidebarCard({ id: 'A' });
+
+      await user.click(screen.getByRole('button', { name: /add below A/i }));
+      await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
+
+      expect(setPendingExpression).toHaveBeenCalledWith({ insertAfter: 'A' });
+    });
   });
 });

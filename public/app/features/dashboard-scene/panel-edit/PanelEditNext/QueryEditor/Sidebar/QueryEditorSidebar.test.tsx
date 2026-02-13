@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType, SidebarSize } from '../../constants';
+import { SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptionsState } from '../testUtils';
+import { ds1SettingsMock, mockActions, mockUIStateBase } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
@@ -31,16 +31,11 @@ describe('QueryEditorSidebar', () => {
         qrState={{ queries, data: undefined, isLoading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -58,16 +53,11 @@ describe('QueryEditorSidebar', () => {
         qrState={{ queries: [], data: undefined, isLoading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: null,
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -93,16 +83,11 @@ describe('QueryEditorSidebar', () => {
         qrState={{ queries, data: undefined, isLoading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -114,7 +99,8 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /select card reduce/i })).toBeInTheDocument();
 
-    // Count total transformation cards (should be 2)
+    // Count total transformation cards (should be 2).
+    // Filter to "Select card" buttons only, excluding the "Add below" ("+" icon) buttons.
     const transformCards = screen.getAllByRole('button').filter((button) => {
       const label = button.getAttribute('aria-label') || '';
       return label.startsWith('Select card') && (label.includes('organize') || label.includes('reduce'));
@@ -138,16 +124,11 @@ describe('QueryEditorSidebar', () => {
         qrState={{ queries, data: undefined, isLoading: false }}
         panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
         uiState={{
+          ...mockUIStateBase,
           selectedQuery: queries[0],
           selectedTransformation: null,
           setSelectedQuery: jest.fn(),
           setSelectedTransformation: jest.fn(),
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
         }}
         actions={mockActions}
       >
@@ -161,5 +142,41 @@ describe('QueryEditorSidebar', () => {
 
     // Should render transformation card
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
+  });
+
+  it('should render "Add below" buttons only for query/expression cards, not transformations', () => {
+    const queries: DataQuery[] = [
+      { refId: 'A', datasource: { type: 'test', uid: 'test' } },
+      { refId: 'B', datasource: { type: 'test', uid: 'test' } },
+    ];
+
+    const transformations: Transformation[] = [
+      { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+    ];
+
+    render(
+      <QueryEditorProvider
+        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
+        qrState={{ queries, data: undefined, isLoading: false }}
+        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
+        uiState={{
+          ...mockUIStateBase,
+          selectedQuery: queries[0],
+          selectedTransformation: null,
+          setSelectedQuery: jest.fn(),
+          setSelectedTransformation: jest.fn(),
+        }}
+        actions={mockActions}
+      >
+        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
+      </QueryEditorProvider>
+    );
+
+    // Query cards should have an "Add below" button
+    expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add below B/i })).toBeInTheDocument();
+
+    // Transformation cards should NOT have an "Add below" button
+    expect(screen.queryByRole('button', { name: /add below organize/i })).not.toBeInTheDocument();
   });
 });

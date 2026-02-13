@@ -54,6 +54,7 @@ export const mockActions: QueryEditorActions = {
   deleteTransformation: jest.fn(),
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
+  reorderTransformations: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -83,4 +84,7 @@ export const mockUIStateBase = {
   toggleDatasourceHelp: jest.fn(),
   cardType: QueryEditorType.Query,
   queryOptions: mockQueryOptionsState,
+  pendingExpression: null,
+  setPendingExpression: jest.fn(),
+  finalizePendingExpression: jest.fn(),
 };
