@@ -291,14 +291,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     );
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
+      const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
       const reservedNames = new Set<string>(items.map((m) => m.text));
       reservedNames.add(t('panel.header-menu.styles', `Styles`));
       reservedNames.add(t('panel.header-menu.more', `More...`));
       reservedNames.add(t('panel.header-menu.remove', `Remove`));
+      reservedNames.add(extensionsSubmenuName);
 
       appenExtensionsToPanelMenu({
         extensions,
-        extensionsSubmenuName: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
+        extensionsSubmenuName,
         rootMenu: items,
         reservedNames,
       });
@@ -487,7 +489,7 @@ export function getPanelLinks(panel: VizPanel) {
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
   let queryRunner = getQueryRunnerFor(panel);
-  const targets: DataQuery[] = queryRunner?.state.queries as DataQuery[];
+  const targets: DataQuery[] = queryRunner?.state.queries ?? [];
   const id = getPanelIdForVizPanel(panel);
 
   let scopedVars = {};

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Store } from 'redux';
 
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
@@ -644,7 +645,7 @@ describe('getPanelMenu()', () => {
   describe('onNavigateToExplore', () => {
     const testUrl = '/testUrl';
     const windowOpen = jest.fn();
-    let event: unknown;
+    let event: React.MouseEvent<Element, MouseEvent>;
     let explore: PanelMenuItem;
     let navigateSpy: jest.SpyInstance;
 
@@ -660,7 +661,7 @@ describe('getPanelMenu()', () => {
       event = {
         ctrlKey: true,
         preventDefault: jest.fn(),
-      };
+      } as unknown as React.MouseEvent<Element, MouseEvent>;
 
       setStore({ dispatch: jest.fn() } as unknown as Store);
     });

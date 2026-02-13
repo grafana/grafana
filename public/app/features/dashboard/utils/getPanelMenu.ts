@@ -268,12 +268,14 @@ export function getPanelMenu(
   }
 
   if (extensions.length > 0 && !panel.isEditing) {
+    const extensionsSubmenuName = t('dashboard.get-panel-menu.text.extensions', 'Extensions');
     const reservedNames = new Set<string>(menu.map((m) => m.text));
     reservedNames.add(t('panel.header-menu.more', `More...`));
     reservedNames.add(t('panel.header-menu.remove', `Remove`));
+    reservedNames.add(extensionsSubmenuName);
 
     appenExtensionsToPanelMenu({
-      extensionsSubmenuName: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
+      extensionsSubmenuName,
       rootMenu: menu,
       extensions,
       reservedNames,

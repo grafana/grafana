@@ -1754,11 +1754,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
