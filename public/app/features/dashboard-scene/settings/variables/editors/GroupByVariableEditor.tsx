@@ -17,7 +17,7 @@ interface GroupByVariableEditorProps {
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { variable, onRunQuery, inline } = props;
-  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true } = variable.useState();
+  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true, defaultValue } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -40,6 +40,25 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
+  const onDefaultValueChange = (values: string[]) => {
+    if (values.length === 0) {
+      variable.setState({ defaultValue: undefined });
+    } else {
+      variable.setState({
+        defaultValue: {
+          value: values,
+          text: values,
+        },
+      });
+    }
+  };
+
+  const defaultValueStrings: string[] = defaultValue
+    ? Array.isArray(defaultValue.value)
+      ? defaultValue.value.map(String)
+      : [String(defaultValue.value)]
+    : [];
+
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
@@ -51,6 +70,8 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
+      defaultValue={defaultValueStrings}
+      onDefaultValueChange={onDefaultValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
       inline={inline}

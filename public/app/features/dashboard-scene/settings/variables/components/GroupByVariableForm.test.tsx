@@ -132,6 +132,28 @@ describe('GroupByVariableForm', () => {
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith(undefined);
   });
 
+  it('should call onDefaultValueChange when adding a new default value', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: [],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Add default value' }));
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith(['']);
+  });
+
+  it('should call onDefaultValueChange when removing a default value', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: ['job'],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Remove default value' }));
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([]);
+  });
+
   it('should render only datasource picker and alert when not supported', async () => {
     const mockOnAllowCustomValueChange = jest.fn();
     const { renderer } = await setup({

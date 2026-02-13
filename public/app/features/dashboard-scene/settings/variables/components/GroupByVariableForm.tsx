@@ -8,6 +8,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { DefaultValueEditor } from './DefaultValueEditor';
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
@@ -19,6 +20,8 @@ export interface GroupByVariableFormProps {
   defaultOptions?: MetricFindValue[];
   allowCustomValue: boolean;
   onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  defaultValue?: string[];
+  onDefaultValueChange?: (values: string[]) => void;
   inline?: boolean;
   datasourceSupported: boolean;
 }
@@ -31,6 +34,8 @@ export function GroupByVariableForm({
   onDefaultOptionsChange,
   allowCustomValue,
   onAllowCustomValueChange,
+  defaultValue,
+  onDefaultValueChange,
   inline,
   datasourceSupported,
 }: GroupByVariableFormProps) {
@@ -74,6 +79,14 @@ export function GroupByVariableForm({
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && onDefaultValueChange && (
+        <DefaultValueEditor
+          values={defaultValue ?? []}
+          onChange={onDefaultValueChange}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection}
+        />
+      )}
 
       {datasourceSupported && (
         <>
