@@ -52,9 +52,15 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         params: queryArg,
       }),
       onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs', {
-        onError: (_error, { updateCachedData }) => {
+        onError: (error, { updateCachedData }) => {
           updateCachedData((draft) => {
-            draft.items = [];
+            if (draft.items?.[0]) {
+              draft.items[0].status = {
+                ...draft.items[0].status,
+                state: 'error',
+                message: String(error),
+              };
+            }
           });
         },
       }),
