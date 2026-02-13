@@ -32,7 +32,6 @@ composableKinds: PanelCfg: {
 					sortOrder?:          common.LogsSortOrder | (*"Descending" | _)
 					fieldSelectorWidth?: number | *220
 					displayedFields?: [...string]
-					setDisplayedFields?: _
 					buildLinkToLogLine?: _
 				} @cuetsy(kind="interface")
 			}

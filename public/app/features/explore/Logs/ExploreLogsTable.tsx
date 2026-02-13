@@ -7,7 +7,6 @@ import {
   EventBusSrv,
   ExplorePanelsState,
   FieldConfigSource,
-  LogsSortOrder,
   PanelData,
   TimeRange,
 } from '@grafana/data';
@@ -25,28 +24,24 @@ import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
  * @constructor
  */
 export function ExploreLogsTable(props: {
-  tableFrameIndex: number;
   eventBus: EventBus;
   data: PanelData;
   timeRange: TimeRange;
   timeZone: 'utc' | 'browser' | string;
   buildLinkToLogLine: BuildLinkToLogLine;
-  displayedFields: string[];
   panelState: ExplorePanelsState | undefined;
-  // @todo move into options
-  sortOrder: LogsSortOrder;
   width: number;
   height: number;
-  options: Options;
   onOptionsChange: (options: Options) => void;
   onFieldConfigChange: (config: FieldConfigSource) => void;
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
+  externalOptions: Pick<Options, 'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex'>;
 }) {
-  const { onClickFilterLabel, onClickFilterOutLabel, tableFrameIndex } = props;
+  const { onClickFilterLabel, onClickFilterOutLabel } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
-  const frame = useMemo(() => frames[tableFrameIndex], [frames, tableFrameIndex]);
+  const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
 
   const onCellFilterAdded = useCallback(
     (filter: AdHocFilterItem) => {
@@ -80,13 +75,10 @@ export function ExploreLogsTable(props: {
         options={{
           ...logsTablePanelDefaultOptions,
           buildLinkToLogLine: props.buildLinkToLogLine,
-          displayedFields: props.displayedFields,
-          permalinkedLogId: props.panelState?.logs?.id,
-          ...props.options,
-          frameIndex: tableFrameIndex,
           showHeader: true,
           showControls: true,
           showCopyLogLink: true,
+          ...props.externalOptions,
         }}
         transparent={false}
         width={props.width}

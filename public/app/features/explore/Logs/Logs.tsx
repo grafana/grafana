@@ -6,6 +6,7 @@ import { usePrevious, useUnmount } from 'react-use';
 
 import {
   AbsoluteTimeRange,
+  compareArrayValues,
   CoreApp,
   DataFrame,
   DataHoverClearEvent,
@@ -38,7 +39,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataTopic } from '@grafana/schema';
+import { DataQuery, DataTopic, TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -69,6 +70,7 @@ import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
+
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -87,7 +89,8 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getDefaultSortBy } from './utils/logsTable';
 import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
@@ -128,7 +131,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[] | undefined;
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
@@ -202,22 +205,27 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
     panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
+  const tableFrameIndex: number = useMemo(() => {
+    const frameIndex = props.logsFrames?.findIndex((f) => f.refId === props.panelState?.logs?.refId);
+    if (frameIndex !== undefined && frameIndex !== -1) {
+      return frameIndex;
+    }
+    return 0;
+  }, [props.logsFrames, props.panelState?.logs?.refId]);
+
+  const tableSortByDefaultStringFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.sortBy);
+  const [tableSortBy, setTableSortBy] = useState<TableSortByFieldState[]>(
+    // @todo cast as unknown and narrow type
+    tableSortByDefaultStringFromStorage
+      ? JSON.parse(tableSortByDefaultStringFromStorage)
+      : getDefaultSortBy(props.logsFrames?.[tableFrameIndex], logsSortOrder)
+  );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
-  
-  // const [logsTableOptions, setLogsTableOptions] = useState<Options>({
-  //   sortBy: logsSortOrder,
-  // });
-
-  // @todo
-  const logsTableOptions: Options = {
-    sortOrder: logsSortOrder,
-  }
-
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
@@ -254,13 +262,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   }, [outlineItems]);
 
-  const tableFrameIndex: number = useMemo(() => {
-    const frameIndex = props.logsFrames?.findIndex((f) => f.refId === props.panelState?.logs?.refId);
-    if (frameIndex !== undefined && frameIndex !== -1) {
-      return frameIndex;
-    }
-    return 0;
-  }, [props.logsFrames, props.panelState?.logs?.refId]);
+  const handleSetTableSortBy = useCallback((sortBy: TableSortByFieldState[]) => {
+    store.set(LOGS_TABLE_SETTING_KEYS.sortBy, JSON.stringify(sortBy));
+    setTableSortBy(sortBy);
+  }, []);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
@@ -1082,15 +1087,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           {enableNewLogsTable && visualisationType === 'table' && (
             <ExploreLogsTable
-              options={logsTableOptions}
-              tableFrameIndex={tableFrameIndex}
               eventBus={eventBus}
               data={panelData}
               timeRange={props.range}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
-              displayedFields={displayedFields}
-              sortOrder={logsSortOrder}
+              externalOptions={{
+                sortOrder: logsSortOrder,
+                sortBy: tableSortBy,
+                displayedFields: displayedFields,
+                permalinkedLogId: props.panelState?.logs?.id,
+                frameIndex: tableFrameIndex,
+              }}
               width={width}
               height={tableHeight}
               onClickFilterLabel={onClickFilterLabel}
@@ -1103,7 +1111,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onChangeLogsSortOrder(options.sortOrder);
                   onLogOptionsChange('sortOrder', options.sortOrder);
                 }
-                if (options.sortOrder) {
+                if (
+                  options.sortBy &&
+                  !compareArrayValues(
+                    options?.sortBy ?? [],
+                    tableSortBy ?? [],
+                    (a, b) => a.displayName === b.displayName && a.desc === b.desc
+                  )
+                ) {
+                  handleSetTableSortBy(options.sortBy);
                 }
 
                 if (options.frameIndex !== tableFrameIndex) {
@@ -1112,8 +1128,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     updatePanelState({ refId });
                   }
                 }
-
-                console.log('on options change', options);
               }}
               onFieldConfigChange={function (config: FieldConfigSource): void {
                 throw new Error('onFieldConfigChange not implemented.');

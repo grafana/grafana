@@ -89,8 +89,6 @@ export function TableNGWrap({
     [onFieldConfigChange]
   );
 
-  console.log('tableNGWrap::render', options);
-
   return (
     <div className={styles.tableWrapper}>
       {showControls && (

@@ -191,6 +191,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -239,6 +240,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -289,6 +291,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}

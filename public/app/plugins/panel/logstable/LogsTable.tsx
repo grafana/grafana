@@ -167,8 +167,6 @@ export const LogsTable = ({
   // Don't render the table if we don't have the required data to show the visualization
   const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
 
-  console.log('LogsTable::render', options)
-
   return (
     <div className={styles.wrapper} ref={containerElement}>
       {renderTable && containerElement.current && (

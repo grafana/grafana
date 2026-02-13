@@ -19,7 +19,6 @@ export interface Options {
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
   permalinkedLogId?: string;
-  setDisplayedFields?: unknown;
   showControls?: boolean;
   showCopyLogLink?: boolean;
   showInspectLogLine?: boolean;
