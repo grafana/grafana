@@ -155,6 +155,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, grpcService)
+		require.NoError(t, err)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
 		err = grpcService.AwaitRunning(ctx)

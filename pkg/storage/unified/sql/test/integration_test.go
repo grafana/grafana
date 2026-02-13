@@ -315,6 +315,9 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	tracingService := tracing.NewNoopTracerService()
 	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
 	require.NoError(t, err)
+	backendService := backend.(services.Service)
+	require.NotNil(t, backendService)
+	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
