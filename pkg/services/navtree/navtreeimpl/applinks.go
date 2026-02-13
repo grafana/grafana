@@ -369,52 +369,33 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		// Drilldown
-		"grafana-metricsdrilldown-app": {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
-		"grafana-lokiexplore-app":      {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
-		"grafana-exploretraces-app":    {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
-		"grafana-pyroscope-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
-
-		// Assistant
-		"grafana-assistant-app": {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", IsNew: true},
-
-		// Alerts & IRM (Alerting is hardcoded at SortWeight 1)
-		"grafana-irm-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "IRM"},
-		"grafana-slo-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
-		"grafana-labelmanagement-app": {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4, Text: "Label management"},
-		"grafana-servicecenter-app":   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Service center"},
-		"grafana-incident-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
-		"grafana-oncall-app":          {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
-
-		// Machine Learning
-		"grafana-ml-app": {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
-
-		// Adaptive Telemetry
-		"grafana-adaptive-metrics-app": {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
-		"grafana-adaptivelogs-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
-		"grafana-adaptivetraces-app":   {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
-		"grafana-adaptiveprofiles-app": {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
-
-		// CMAB
-		"grafana-cmab-app": {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
-
-		// Testing & Synthetics
-		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
+		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 1, Icon: "asserts"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Frontend"},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Application"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Database", IsNew: true},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Kubernetes"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Icon: "cloud-provider"},
+		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
+		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
+		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
-
-		// Observability
-		"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 1, Icon: "asserts"},
-		"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Frontend"},
-		"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Application"},
-		"grafana-dbo11y-app":            {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Database", IsNew: true},
-		"grafana-k8s-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Kubernetes"},
-		"grafana-csp-app":               {SectionID: navtree.NavIDObservability, SortWeight: 6, Icon: "cloud-provider"},
-
-		// Connections
-		"grafana-easystart-app": {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-
-		// Config > Plugins
-		"grafana-cloud-link-app": {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
+		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "IRM"},
+		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4, Text: "Label management"},
+		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Service center"},
+		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
+		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", IsNew: true},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
+		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
+		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
+		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
+		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
+		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
+		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
