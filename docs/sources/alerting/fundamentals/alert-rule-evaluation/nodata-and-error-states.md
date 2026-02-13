@@ -142,7 +142,7 @@ When an alert rule evaluation results in a `No Data` or `Error` state, Grafana A
 - `datasource_uid`: The UID of the data source that caused the state.
 - `rulename`: The name of the alert rule that originated the alert.
 
-Note that `DatasourceNoData` and `DatasourceError` alert instances are independent from the original alert instance. They have different labels, which means existing silences, mute timings, and notification policies applied to the original alert may not apply to them. 
+Note that `DatasourceNoData` and `DatasourceError` alert instances are independent from the original alert instance. They have different labels, which means existing silences, mute timings, and notification policies applied to the original alert may not apply to them.
 
 You can manage these alerts like regular ones by using their labels to apply actions such as adding a silence, routing via notification policies, and more.
 
