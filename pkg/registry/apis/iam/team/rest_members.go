@@ -79,7 +79,8 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			responder.Error(apierrors.NewUnauthorized("functionality not available"))
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
 			return
 		}
 
@@ -103,20 +104,6 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 		if err != nil || !checkTeamAccess.Allowed {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
 				name, errors.New("you'll need additional permissions to perform this action. Permissions needed: \"GetPermissions\" on the \"Team\" resource")))
-			return
-		}
-
-		// https://github.com/grafana/grafana/blob/7ff64bb0e5bb75a1a1a61fa2d3bf208e7571a9a6/pkg/services/accesscontrol/resourcepermissions/store.go#L424
-		checkUserAccess, err := s.accessClient.Check(ctx, authInfo, types.CheckRequest{
-			Namespace: authInfo.GetNamespace(),
-			Group:     iamv0alpha1.UserResourceInfo.GroupResource().Group,
-			Resource:  iamv0alpha1.UserResourceInfo.GroupResource().Resource,
-			Verb:      utils.VerbGet,
-			Name:      authInfo.GetIdentifier(),
-		}, "")
-		if err != nil || !checkUserAccess.Allowed {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
-				authInfo.GetIdentifier(), errors.New("you'll need additional permissions to perform this action. Permissions needed: \"Get\" on the \"User\" resource")))
 			return
 		}
 

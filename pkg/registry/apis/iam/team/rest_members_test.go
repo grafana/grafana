@@ -359,51 +359,6 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.True(t, accessClient.checkCalled)
 		require.Equal(t, 1, accessClient.checkCallCount)
 	})
-
-	t.Run("should return 403 when user doesn't have the required action on user", func(t *testing.T) {
-		mockClient := &MockClient{}
-		accessClient := &fakeAccessClient{
-			checkFunc: func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
-				if req.Resource == iamv0alpha1.TeamResourceInfo.GroupResource().Resource {
-					// First call: team access check - allow
-					require.Equal(t, "test-namespace", req.Namespace)
-					require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Group, req.Group)
-					require.Equal(t, "get_permissions", req.Verb)
-					require.Equal(t, "testteam", req.Name)
-					return types.CheckResponse{Allowed: true}, nil
-				}
-				// Second call: user access check - deny
-				require.Equal(t, "test-namespace", req.Namespace)
-				require.Equal(t, iamv0alpha1.UserResourceInfo.GroupResource().Group, req.Group)
-				require.Equal(t, iamv0alpha1.UserResourceInfo.GroupResource().Resource, req.Resource)
-				require.Equal(t, "get", req.Verb)
-				require.Equal(t, "test-user", req.Name)
-				return types.CheckResponse{Allowed: false}, nil
-			},
-		}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), accessClient)
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-			UserUID:   "test-user",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "testteam", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/members", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.NotNil(t, responder.err)
-		require.Contains(t, responder.err.Error(), "forbidden")
-		require.True(t, accessClient.checkCalled)
-		require.Equal(t, 2, accessClient.checkCallCount)
-	})
 }
 
 func TestTeamMembersREST_parseResults(t *testing.T) {
