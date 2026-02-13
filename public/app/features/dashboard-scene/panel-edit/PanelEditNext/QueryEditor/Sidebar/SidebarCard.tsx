@@ -49,6 +49,11 @@ export const SidebarCard = ({
     }
   }, []);
 
+  // Setter function to reset the focus state of the card when the modal is closed.
+  const handleResetFocus = useCallback(() => {
+    setHasFocusWithin(false);
+  }, []);
+
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -77,7 +82,13 @@ export const SidebarCard = ({
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
         <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-          <Actions onDuplicate={onDuplicate} onDelete={onDelete} onToggleHide={onToggleHide} item={item} />
+          <Actions
+            handleResetFocus={handleResetFocus}
+            item={item}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onToggleHide={onToggleHide}
+          />
         </div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}

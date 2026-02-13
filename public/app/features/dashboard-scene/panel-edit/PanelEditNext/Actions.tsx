@@ -14,6 +14,7 @@ export interface ActionItem {
 
 interface ActionsProps {
   contentHeader?: boolean;
+  handleResetFocus?: () => void;
   item: ActionItem;
   onDelete: () => void;
   onDuplicate?: () => void;
@@ -27,7 +28,14 @@ interface ActionButtonConfig {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export function Actions({ contentHeader = false, item, onDelete, onDuplicate, onToggleHide }: ActionsProps) {
+export function Actions({
+  contentHeader = false,
+  handleResetFocus,
+  item,
+  onDelete,
+  onDuplicate,
+  onToggleHide,
+}: ActionsProps) {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
   const typeLabel = config.getLabel();
@@ -45,7 +53,7 @@ export function Actions({ contentHeader = false, item, onDelete, onDuplicate, on
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
+      handleResetFocus?.();
 
       if (requiresDeleteConfirmation) {
         setShowDeleteConfirmation(true);
@@ -53,13 +61,19 @@ export function Actions({ contentHeader = false, item, onDelete, onDuplicate, on
         onDelete();
       }
     },
-    [requiresDeleteConfirmation, onDelete]
+    [requiresDeleteConfirmation, onDelete, handleResetFocus]
   );
 
   const handleConfirmDelete = useCallback(() => {
     onDelete();
     setShowDeleteConfirmation(false);
-  }, [onDelete]);
+    handleResetFocus?.();
+  }, [onDelete, handleResetFocus]);
+
+  const handleDismissModal = useCallback(() => {
+    setShowDeleteConfirmation(false);
+    handleResetFocus?.();
+  }, [handleResetFocus]);
 
   const actionButtons = useMemo<ActionButtonConfig[]>(
     () =>
@@ -114,7 +128,7 @@ export function Actions({ contentHeader = false, item, onDelete, onDuplicate, on
           }
           confirmText={t('query-editor-next.delete-modal.confirm', 'Delete')}
           onConfirm={handleConfirmDelete}
-          onDismiss={() => setShowDeleteConfirmation(false)}
+          onDismiss={handleDismissModal}
         />
       )}
     </>
