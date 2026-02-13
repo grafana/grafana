@@ -4,10 +4,12 @@ import { TypedVariableModel } from '@grafana/data';
 import { StoreState } from 'app/types/store';
 
 import { getState } from '../../../store/store';
-import { toStateKey } from '../utils';
+import { toStateKey } from '../toStateKey';
 
+import { defaultVariablesFilter } from './defaultVariablesFilter';
+import { getNextVariableIndex } from './getNextVariableIndex';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
-import { KeyedVariableIdentifier, VariablesState } from './types';
+import { KeyedVariableIdentifier } from './types';
 
 export function getVariable(
   identifier: KeyedVariableIdentifier,
@@ -53,10 +55,6 @@ export function getVariablesByKey(key: string, state: StoreState = getState()): 
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
-function defaultVariablesFilter(variable: TypedVariableModel): boolean {
-  return variable.type !== 'system';
-}
-
 export const getSubMenuVariables = memoizeOne(
   (key: string, variables: Record<string, TypedVariableModel>): TypedVariableModel[] => {
     return getVariablesByKey(key, getState());
@@ -71,11 +69,6 @@ export type GetVariables = typeof getVariablesByKey;
 
 export function getNewVariableIndex(key: string, state: StoreState = getState()): number {
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
-}
-
-export function getNextVariableIndex(variables: TypedVariableModel[]): number {
-  const sorted = variables.filter(defaultVariablesFilter).sort((v1, v2) => v1.index - v2.index);
-  return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
 }
 
 export function getVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
@@ -117,8 +110,4 @@ export function getVariableWithName(name: string, state: StoreState = getState()
     return;
   }
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
-}
-
-export function getInstanceState(state: VariablesState, id: string) {
-  return state[id];
 }

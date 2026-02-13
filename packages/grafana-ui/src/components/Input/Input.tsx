@@ -95,6 +95,14 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
           ref={ref}
           className={styles.input}
           {...restProps}
+          onWheel={
+            restProps.type === 'number'
+              ? (e) => {
+                  e.currentTarget.blur();
+                  restProps.onWheel?.(e);
+                }
+              : restProps.onWheel
+          }
           style={{
             paddingLeft: prefix ? prefixRect.width + 12 : undefined,
             paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,

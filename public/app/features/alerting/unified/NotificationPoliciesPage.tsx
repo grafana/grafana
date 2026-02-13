@@ -15,6 +15,7 @@ import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
@@ -25,6 +26,10 @@ enum ActiveTab {
 
 const NotificationPoliciesTabs = () => {
   const styles = useStyles2(getStyles);
+
+  // When V2 navigation is enabled, Time Intervals has its own dedicated tab in the navigation,
+  // so we don't show local tabs here - just show the notification policies content directly
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
@@ -49,6 +54,18 @@ const NotificationPoliciesTabs = () => {
 
   const numberOfMuteTimings = muteTimings.length;
 
+  // V2 Navigation: No local tabs, just show notification policies content
+  if (useV2Nav) {
+    return (
+      <>
+        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+        <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
+        <PoliciesList />
+      </>
+    );
+  }
+
+  // Legacy Navigation: Show local tabs for Notification Policies and Time Intervals
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
@@ -124,8 +141,10 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): Q
 }
 
 function NotificationPoliciesPage() {
+  const { navId, pageNav } = useNotificationPoliciesNav();
+
   return (
-    <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <NotificationPoliciesTabs />
     </AlertmanagerPageWrapper>
   );

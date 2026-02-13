@@ -30,7 +30,9 @@ import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
+import { useExtraConfigState } from './useExtraConfigState';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
+import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -49,9 +51,7 @@ export interface ImportFormValues {
   // Step 2: Alert rules
   step2Completed: boolean;
   step2Skipped: boolean;
-  notificationPolicyOption: 'default' | 'imported' | 'manual';
-  manualLabelName: string;
-  manualLabelValue: string;
+  selectedRoutingTree: string; // Routing tree name from the API or from Step 1
   rulesSource: 'datasource' | 'yaml';
   rulesDatasourceUID?: string;
   rulesDatasourceName: string | null;
@@ -110,9 +110,7 @@ function ImportWizardContent() {
       // Step 2
       step2Completed: false,
       step2Skipped: false,
-      notificationPolicyOption: 'default',
-      manualLabelName: '',
-      manualLabelValue: '',
+      selectedRoutingTree: '',
       rulesSource: 'datasource',
       rulesDatasourceUID: undefined,
       rulesDatasourceName: null,
@@ -135,10 +133,13 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
+  // Watch the policyTreeName to check for existing extra config conflicts
+  const policyTreeName = watch('policyTreeName');
+  const { extraConfigState, existingIdentifier } = useExtraConfigState(policyTreeName);
+
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(async () => {
     const formValues = getValues();
-    const mergeMatchers = `${MERGE_MATCHERS_LABEL_NAME}=${formValues.policyTreeName}`;
 
     // Check if we have the required data to run dry-run
     if (!formValues.policyTreeName) {
@@ -160,7 +161,7 @@ function ImportWizardContent() {
           source: formValues.notificationsSource,
           datasourceName: formValues.notificationsDatasourceName ?? undefined,
           yamlFile: formValues.notificationsYamlFile,
-          mergeMatchers,
+          configIdentifier: formValues.policyTreeName,
         },
         // TODO: Set skipValidation to false once the backend endpoint is implemented
         { skipValidation: true }
@@ -206,7 +207,7 @@ function ImportWizardContent() {
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
-    setValue('notificationPolicyOption', 'default');
+    setValue('selectedRoutingTree', '');
   }, [setValue]);
 
   // Step 2 handlers
@@ -241,15 +242,13 @@ function ImportWizardContent() {
     const willImportRules = values.step2Completed && !values.step2Skipped;
 
     try {
-      const notificationsLabel = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
-
       // Import notifications first (if step 1 was completed)
       if (willImportNotifications) {
         await importNotifications({
           source: values.notificationsSource,
           datasourceName: values.notificationsDatasourceName ?? undefined,
           yamlFile: values.notificationsYamlFile,
-          mergeMatchers: notificationsLabel,
+          configIdentifier: values.policyTreeName,
         });
       }
 
@@ -263,13 +262,10 @@ function ImportWizardContent() {
           rulesPayload = filteredConfig;
         }
 
-        // Calculate extra labels based on notification policy option
-        let extraLabels: string | undefined;
-        if (values.notificationPolicyOption === 'imported') {
-          extraLabels = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
-        } else if (values.notificationPolicyOption === 'manual') {
-          extraLabels = `${values.manualLabelName}=${values.manualLabelValue}`;
-        }
+        // Add routing tree label to all imported rules
+        const extraLabels = values.selectedRoutingTree
+          ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
+          : undefined;
 
         await importRules({
           dataSourceUID: values.rulesDatasourceUID,
@@ -336,6 +332,8 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
+              extraConfigState={extraConfigState}
+              existingIdentifier={existingIdentifier}
             />
           )}
 
@@ -383,12 +381,26 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
+  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
+  extraConfigState: 'none' | 'same' | 'different';
+  /** Identifier of existing extra config, if any */
+  existingIdentifier?: string;
 }
 
-function Step1Wrapper({ canImport, onNext, onSkip, dryRunState, dryRunResult, onTriggerDryRun }: Step1WrapperProps) {
+function Step1Wrapper({
+  canImport,
+  onNext,
+  onSkip,
+  dryRunState,
+  dryRunResult,
+  onTriggerDryRun,
+  extraConfigState,
+  existingIdentifier,
+}: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  // Can proceed if form is valid and dry-run passed (not loading or error)
-  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
+  // Can proceed if form is valid, dry-run passed, and no conflicting extra config
+  const canProceed =
+    isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error' && extraConfigState !== 'different';
 
   return (
     <WizardStep
@@ -410,6 +422,8 @@ function Step1Wrapper({ canImport, onNext, onSkip, dryRunState, dryRunResult, on
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
+        extraConfigState={extraConfigState}
+        existingIdentifier={existingIdentifier}
       />
     </WizardStep>
   );
@@ -709,18 +723,11 @@ function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDatasource
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.routing', 'Notification routing')}</Text>
                     <Text>
-                      {formData.notificationPolicyOption === 'default' &&
-                        t('alerting.import-to-gma.review.routing-default', 'Default Grafana policy')}
-                      {formData.notificationPolicyOption === 'imported' &&
-                        t('alerting.import-to-gma.review.routing-imported', 'Imported policy ({{label}}={{value}})', {
-                          label: MERGE_MATCHERS_LABEL_NAME,
-                          value: formData.policyTreeName,
-                        })}
-                      {formData.notificationPolicyOption === 'manual' &&
-                        t('alerting.import-to-gma.review.routing-manual', 'Manual label ({{label}}={{value}})', {
-                          label: formData.manualLabelName,
-                          value: formData.manualLabelValue,
-                        })}
+                      {formData.selectedRoutingTree
+                        ? t('alerting.import-to-gma.review.routing-tree', 'Policy tree: {{name}}', {
+                            name: getRoutingTreeLabel(formData.selectedRoutingTree),
+                          })
+                        : t('alerting.import-to-gma.review.routing-none', 'No policy tree selected')}
                     </Text>
                   </div>
                   {(formData.namespace || formData.ruleGroup) && (

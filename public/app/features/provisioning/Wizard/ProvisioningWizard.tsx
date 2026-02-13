@@ -20,12 +20,13 @@ import { Stepper } from './Stepper';
 import { WizardButtonBar } from './components/WizardButtonBar';
 import { WizardStepContent } from './components/WizardStepContent';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { useWizardButtons } from './hooks/useWizardButtons';
 import { useWizardCancellation } from './hooks/useWizardCancellation';
 import { useWizardNavigation } from './hooks/useWizardNavigation';
 import { useWizardSubmission } from './hooks/useWizardSubmission';
-import { ConnectionCreationResult, RepoType, WizardFormData, WizardStep } from './types';
+import { ConnectionCreationResult, RepoType, WizardFormData } from './types';
 import { getSteps } from './utils/getSteps';
 
 const appEvents = getAppEvents();
@@ -37,7 +38,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   type: RepoType;
   settingsData?: RepositoryViewList;
 }) {
-  const initialStep: WizardStep = type === 'github' ? 'authType' : 'connection';
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
 
@@ -52,7 +52,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: 'github-app',
+      githubAuthType: type === 'github' ? 'github-app' : 'pat',
       githubAppMode: 'existing',
       githubApp: {},
     },
@@ -74,9 +74,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'githubAppMode',
   ]);
 
-  const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
+  const steps = useMemo(() => getSteps(repoType), [repoType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
-  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
+  const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
+  const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
+    isHealthy,
+    healthStatusNotReady,
+  });
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName,
     setStepStatusInfo,
@@ -94,7 +98,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     goToNextStep,
     goToPreviousStep,
   } = useWizardNavigation({
-    initialStep,
     steps,
     canSkipSync,
     setStepStatusInfo,
@@ -209,7 +212,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
             </Box>
 
             {hasStepError && 'error' in stepStatusInfo && (
-              <ProvisioningAlert error={stepStatusInfo.error} retry={stepStatusInfo.retry} />
+              <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
             )}
             {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}

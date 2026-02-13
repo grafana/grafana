@@ -15,6 +15,7 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
+import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -59,12 +60,7 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  // Migration Wizard UI requires either notifications or rules import permission (user can skip one step)
-  const canAccessMigrationWizardUI =
-    config.featureToggles.alertingMigrationWizardUI &&
-    (contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite) ||
-      (contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-        contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus)));
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 

@@ -540,8 +540,9 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	ZanzanaClient ZanzanaClientSettings
-	ZanzanaServer ZanzanaServerSettings
+	ZanzanaClient     ZanzanaClientSettings
+	ZanzanaServer     ZanzanaServerSettings
+	ZanzanaReconciler ZanzanaReconcilerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -628,6 +629,8 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
+	EnforceQuotas                              bool
+	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool

@@ -44,9 +44,8 @@ export interface Step2ValidationParams {
   rulesSource: 'yaml' | 'datasource';
   rulesYamlFile: File | null;
   rulesDatasourceUID: string | null | undefined;
-  notificationPolicyOption: 'imported' | 'default' | 'manual';
-  manualLabelName: string | null;
-  manualLabelValue: string | null;
+  /** Selected routing tree name */
+  selectedRoutingTree: string;
   targetDatasourceUID: string | null | undefined;
 }
 
@@ -54,16 +53,8 @@ export interface Step2ValidationParams {
  * Validates that Step 2 form is complete and valid
  */
 export function isStep2Valid(params: Step2ValidationParams): boolean {
-  const {
-    canImport,
-    rulesSource,
-    rulesYamlFile,
-    rulesDatasourceUID,
-    notificationPolicyOption,
-    manualLabelName,
-    manualLabelValue,
-    targetDatasourceUID,
-  } = params;
+  const { canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID } =
+    params;
 
   if (!canImport) {
     return false;
@@ -71,7 +62,8 @@ export function isStep2Valid(params: Step2ValidationParams): boolean {
   if (!hasValidSourceSelection(rulesSource, rulesYamlFile, rulesDatasourceUID)) {
     return false;
   }
-  if (notificationPolicyOption === 'manual' && (!manualLabelName || !manualLabelValue)) {
+  // A routing tree must be selected
+  if (!selectedRoutingTree) {
     return false;
   }
   if (!targetDatasourceUID) {

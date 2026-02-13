@@ -77,6 +77,14 @@ export function trackDashboardSceneCreatedOrSaved(
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
+  // Extract variable type counts from tracking info
+  const variables = Object.entries(sceneDashboardTrackingInfo ?? {})
+    .filter(([key]) => /^variable_type_.+_count$/.test(key))
+    .reduce<Record<string, number>>((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+
   const dashboardLibraryProperties =
     config.featureToggles.dashboardLibrary ||
     config.featureToggles.dashboardTemplates ||
@@ -102,12 +110,14 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+          ...variables,
           ...dashboardLibraryProperties,
         }
       : {
           uid: dashboard.state.uid || '',
           numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
           numRows: sceneDashboardTrackingInfo?.rowCount || 0,
+          ...variables,
           ...dashboardLibraryProperties,
         }),
   });

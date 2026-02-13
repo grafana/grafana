@@ -15118,17 +15118,8 @@
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
         "operationId": "reloadLDAPCfg",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
+          "410": {
+            "$ref": "#/components/responses/goneError"
           }
         },
         "security": [
@@ -17767,187 +17758,6 @@
         },
         "tags": [
           "dashboards"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/permissions": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
-        "operationId": "getDashboardPermissionsListByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getDashboardPermissionsListResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ]
-      },
-      "post": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
-        "operationId": "updateDashboardPermissionsByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDashboardACLCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Updates permissions for a dashboard.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
-        "operationId": "getDashboardVersionsByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/dashboardVersionsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets all existing versions for the dashboard.",
-        "tags": [
-          "dashboards",
-          "versions"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
-        "operationId": "getDashboardVersionByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "DashboardVersionID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/dashboardVersionResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get a specific dashboard version.",
-        "tags": [
-          "dashboards",
-          "versions"
         ]
       }
     },
@@ -22435,6 +22245,8 @@
     },
     "/playlists": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "searchPlaylists",
         "parameters": [
           {
@@ -22468,6 +22280,8 @@
         ]
       },
       "post": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "createPlaylist",
         "requestBody": {
           "content": {
@@ -22505,6 +22319,8 @@
     },
     "/playlists/{uid}": {
       "delete": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "deletePlaylist",
         "parameters": [
           {
@@ -22539,6 +22355,8 @@
         ]
       },
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "getPlaylist",
         "parameters": [
           {
@@ -22573,6 +22391,8 @@
         ]
       },
       "put": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "updatePlaylist",
         "parameters": [
           {
@@ -22620,6 +22440,8 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "operationId": "getPlaylistItems",
         "parameters": [
           {
@@ -27936,6 +27758,58 @@
           }
         },
         "summary": "Get an SSO Settings entry by Key",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "patch": {
+        "description": "Partially updates the SSO Settings for a provider. Only provided fields are updated.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "patchProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "settings": {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Patch SSO Settings",
         "tags": [
           "sso_settings"
         ]

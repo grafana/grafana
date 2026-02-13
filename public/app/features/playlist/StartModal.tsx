@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { Playlist } from '../../api/clients/playlist/v0alpha1';
+import { Playlist } from '../../api/clients/playlist/v1';
 
 import { PlaylistMode } from './types';
 

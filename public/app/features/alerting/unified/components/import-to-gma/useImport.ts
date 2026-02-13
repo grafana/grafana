@@ -12,7 +12,8 @@ interface MigrateNotificationsParams {
   /** Datasource name (not UID) - required when source is 'datasource' */
   datasourceName?: string;
   yamlFile: File | null;
-  mergeMatchers: string; // e.g., "__grafana_managed_route__=my-policy" (uses MERGE_MATCHERS_LABEL_NAME constant)
+  /** Configuration identifier - the name of the extra config (policy tree name) */
+  configIdentifier: string;
 }
 
 interface MigrateRulesParams {
@@ -35,7 +36,7 @@ export function useImportNotifications() {
 
   return useCallback(
     async (params: MigrateNotificationsParams) => {
-      const { source, datasourceName, yamlFile, mergeMatchers } = params;
+      const { source, datasourceName, yamlFile, configIdentifier } = params;
 
       let alertmanagerConfig: string;
       let templateFiles: Record<string, string> = {};
@@ -57,7 +58,7 @@ export function useImportNotifications() {
       await convertAlertmanagerConfig({
         alertmanagerConfig,
         templateFiles,
-        mergeMatchers,
+        configIdentifier,
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -172,7 +173,8 @@ interface DryRunNotificationsParams {
   /** Datasource name (not UID) - required when source is 'datasource' */
   datasourceName?: string;
   yamlFile: File | null;
-  mergeMatchers: string;
+  /** Configuration identifier - the name of the extra config (policy tree name) */
+  configIdentifier: string;
 }
 
 /**
@@ -202,7 +204,7 @@ export function useDryRunNotifications() {
       params: DryRunNotificationsParams,
       options: { skipValidation?: boolean } = {}
     ): Promise<DryRunValidationResult> => {
-      const { source, datasourceName, yamlFile, mergeMatchers } = params;
+      const { source, datasourceName, yamlFile, configIdentifier } = params;
       const { skipValidation = false } = options;
 
       // If skipValidation is true, return a success result immediately
@@ -239,7 +241,7 @@ export function useDryRunNotifications() {
         // const response = await dryRunAlertmanagerConfig({
         //   alertmanagerConfig,
         //   templateFiles,
-        //   mergeMatchers,
+        //   configIdentifier,
         // }).unwrap();
         // setResult(response);
         // return response;
@@ -250,7 +252,7 @@ export function useDryRunNotifications() {
         console.warn('[useDryRunNotifications] Backend endpoint not implemented yet. Using mock response.', {
           alertmanagerConfig: alertmanagerConfig.substring(0, 100) + '...',
           templateFiles,
-          mergeMatchers,
+          configIdentifier,
         });
 
         // Simulate a small delay to show loading state

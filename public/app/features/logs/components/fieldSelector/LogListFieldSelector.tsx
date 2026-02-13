@@ -10,11 +10,11 @@ import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
 import { LogListModel } from '../panel/processing';
 
-import { FIELD_SELECTOR_DEFAULT_WIDTH, FieldSelector, FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
+import { FieldSelector, FIELD_SELECTOR_MIN_WIDTH, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { logsFieldSelectorWrapperStyles } from './styles';
-import { getSuggestedFields } from './suggestedFields';
+import { getSuggestedFieldsFromLogList } from './suggestedFields';
 
 /**
  * FieldSelector wrapper for the LogList visualization.
@@ -69,7 +69,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
 
   const expand = useCallback(() => {
     const width = getFieldSelectorWidth(logOptionsStorageKey);
-    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? FIELD_SELECTOR_DEFAULT_WIDTH : width);
+    setSidebarWidthWrapper(width < 2 * FIELD_SELECTOR_MIN_WIDTH ? getDefaultFieldSelectorWidth() : width);
     reportInteraction('logs_field_selector_expand_clicked', {
       mode: 'logs',
     });
@@ -96,7 +96,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     [displayedFields, onClickHideField, onClickShowField]
   );
 
-  const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedFields), [displayedFields, logs]);
+  const suggestedFields = useMemo(() => getSuggestedFieldsFromLogList(logs, displayedFields), [displayedFields, logs]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {

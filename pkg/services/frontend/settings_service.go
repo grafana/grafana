@@ -14,13 +14,16 @@ import (
 
 // setupSettingsService initializes the Settings Service client if configured.
 // Expected configuration:
+// [tls_client_config]
+// root_ca_file =
+// insecure =
+//
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
 //
 // [settings_service]
 // url =
-// tls_skip_verify = false
 //
 // Returns nil if not configured (this is not an error condition). Errors returned should
 // be considered critical.
@@ -28,10 +31,15 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 	settingsSec := cfg.SectionWithEnvOverrides("settings_service")
 	settingsServiceURL := settingsSec.Key("url").String()
 	if settingsServiceURL == "" {
-		// If settings service URL is configured, return nil without error
+		// If settings service URL is not configured, return nil *without* error
 		return nil, nil
 	}
-	tlsSkipVerify := settingsSec.Key("tls_skip_verify").MustBool(false)
+
+	tlsConfigSection := cfg.SectionWithEnvOverrides("tls_client_config")
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: tlsConfigSection.Key("insecure").MustBool(false),
+		CAFile:   tlsConfigSection.Key("root_ca_file").String(),
+	}
 
 	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	token := gRPCAuth.Key("token").String()
@@ -54,9 +62,7 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 	settingsService, err := settingservice.New(settingservice.Config{
 		URL:                 settingsServiceURL,
 		TokenExchangeClient: tokenClient,
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: tlsSkipVerify,
-		},
+		TLSClientConfig:     tlsConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settings service client: %w", err)

@@ -125,6 +125,12 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 	}, nil
 }
 
+// DB returns the underlying db.DB for backwards compatibility queries.
+// TODO: remove when backwards compatibility is no longer needed.
+func (m *ResourceVersionManager) DB() db.DB {
+	return m.db
+}
+
 // ExecWithRV executes the given function with an incremented resource version
 func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
 	rvmInflightWrites.WithLabelValues(key.Group, key.Resource).Inc()

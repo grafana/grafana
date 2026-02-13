@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -38,7 +39,7 @@ type UserTeamREST struct {
 
 func NewUserTeamREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
 	return &UserTeamREST{
-		log:      log.New("grafana-apiserver.user.teams"),
+		log:      log.New("grafana-apiserver.users.teams"),
 		client:   client,
 		tracer:   tracer,
 		features: features,
@@ -102,6 +103,11 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			page, _ = strconv.Atoi(queryParams.Get("page"))
 			offset = (page - 1) * limit
 		}
+
+		span.SetAttributes(attribute.Int("limit", limit),
+			attribute.Int("page", page),
+			attribute.Int("offset", offset),
+			attribute.String("name", name))
 
 		searchRequest := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -206,7 +212,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	body := iamv0alpha1.GetTeamsBody{
-		Items: make([]iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam, len(result.Results.Rows)),
+		Items: make([]iamv0alpha1.GetTeamsUserTeam, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
@@ -214,7 +220,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 			return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{
+		body.Items[i] = iamv0alpha1.GetTeamsUserTeam{
 			User:       string(row.Cells[userIDX]),
 			Team:       string(row.Cells[teamIDX]),
 			Permission: string(row.Cells[permissionIDX]),

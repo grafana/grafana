@@ -25,7 +25,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.List", r.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.list(ctx, r)

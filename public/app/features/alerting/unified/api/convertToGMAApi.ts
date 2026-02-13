@@ -59,11 +59,11 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         alertmanagerConfig: string;
         /** Template files map */
         templateFiles?: Record<string, string>;
-        /** Merge matchers - label=value pairs that will be added to notification policies (e.g., "importedLabel=my-policy") */
-        mergeMatchers: string;
+        /** Configuration identifier - used as the extra config name (e.g., "prometheus-prod") */
+        configIdentifier: string;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, mergeMatchers }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -71,14 +71,12 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
-          // We use 'default' for X-Grafana-Alerting-Config-Identifier for now.
-          // The backend currently only supports ONE extra configuration at a time.
-          // Using 'default' allows overwriting the existing config on subsequent imports.
-          // TODO: Change to 'imported' once the API supports multiple extra configurations.
-          'X-Grafana-Alerting-Config-Identifier': 'default',
-          // We use __grafana_managed_route__ as the label name in X-Grafana-Alerting-Merge-Matchers.
-          // The value is the policy tree name chosen by the user.
-          'X-Grafana-Alerting-Merge-Matchers': mergeMatchers,
+          // The config identifier is the name of the extra configuration (policy tree name)
+          // This identifies the imported config and allows overwriting on subsequent imports
+          'X-Grafana-Alerting-Config-Identifier': configIdentifier,
+          // TODO: Remove this header once the backend no longer requires it
+          // For now, we send __grafana_managed_route__=<configIdentifier> to satisfy the backend validation
+          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
         },
       }),
     }),
@@ -103,11 +101,11 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         alertmanagerConfig: string;
         /** Template files map */
         templateFiles?: Record<string, string>;
-        /** Merge matchers - label=value pairs (e.g., "__grafana_managed_route__=my-policy") */
-        mergeMatchers: string;
+        /** Configuration identifier - used as the extra config name */
+        configIdentifier: string;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, mergeMatchers }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier }) => ({
         // TODO: Update URL once the backend endpoint is implemented
         url: `/api/convert/api/v1/alerts/dry-run`,
         method: 'POST',
@@ -116,8 +114,9 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
-          'X-Grafana-Alerting-Config-Identifier': 'default',
-          'X-Grafana-Alerting-Merge-Matchers': mergeMatchers,
+          'X-Grafana-Alerting-Config-Identifier': configIdentifier,
+          // TODO: Remove this header once the backend no longer requires it
+          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
         },
       }),
     }),

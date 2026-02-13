@@ -17,6 +17,7 @@
     "team": "team.one"
   },
   "selectableFields": {
+    "spec.external": "true",
     "spec.subject.name": "user.one",
     "spec.teamRef.name": "team.one"
   }
