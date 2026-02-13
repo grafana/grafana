@@ -895,12 +895,101 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
 
       expect(onClickShowFieldMock).toHaveBeenCalledTimes(1);
     });
+
+    it('calls onOptionsChange with updated displayedFields when showing a field', async () => {
+      const onOptionsChangeMock = jest.fn();
+
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: [],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
+          onOptionsChange: onOptionsChangeMock,
+        },
+        showControls
+      );
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.getByText('logline text')).toBeInTheDocument();
+
+      // Click to open log details
+      await userEvent.click(screen.getByText('logline text'));
+      // Click to show the 'app' field
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+
+      // Verify onOptionsChange was called with the field shown
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayedFields: ['app'],
+        })
+      );
+    });
+
+    it('calls onOptionsChange with updated displayedFields when hiding a field', async () => {
+      const onOptionsChangeMock = jest.fn();
+
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: ['app'],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
+          onOptionsChange: onOptionsChangeMock,
+        },
+        showControls
+      );
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+
+      // Click to open log details
+      await userEvent.click(screen.getByText('app=common_app'));
+      // Click to hide the 'app' field
+      await userEvent.click(screen.getByLabelText('Hide this field'));
+
+      // Verify onOptionsChange was called with the field hidden
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayedFields: [],
+        })
+      );
+    });
   });
 });
 
 const setup = (propsOverrides?: Partial<LogsPanelProps>, showControls = false) => {
   const props: LogsPanelProps = {
     ...defaultProps,
+    ...propsOverrides,
     data: {
       ...(propsOverrides?.data || defaultProps.data),
     },
