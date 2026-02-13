@@ -7,16 +7,15 @@
 
 import { z } from 'zod';
 
-import type { DashboardScene } from '../../scene/DashboardScene';
-import type { MutationResult } from '../types';
+import type { MutableDashboardScene, MutationResult } from '../types';
 
 export interface MutationContext {
-  scene: DashboardScene;
+  scene: MutableDashboardScene;
 }
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
 
-export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
+export type PermissionCheck = (scene: MutableDashboardScene) => PermissionCheckResult;
 
 /**
  * A complete mutation command: schema, handler, permission, and metadata.
@@ -40,7 +39,7 @@ export interface MutationCommand<T = unknown> {
 /**
  * Requires edit permissions on the dashboard (pure check, no side effects).
  */
-export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
+export function requiresEdit(scene: MutableDashboardScene): PermissionCheckResult {
   if (!scene.canEditDashboard()) {
     return {
       allowed: false,
@@ -61,7 +60,7 @@ export function readOnly(): PermissionCheckResult {
  * Enter edit mode if the dashboard is not already editing.
  * Call this at the top of any command handler that modifies the dashboard.
  */
-export function enterEditModeIfNeeded(scene: DashboardScene): void {
+export function enterEditModeIfNeeded(scene: MutableDashboardScene): void {
   if (!scene.state.isEditing) {
     scene.onEnterEditMode();
   }

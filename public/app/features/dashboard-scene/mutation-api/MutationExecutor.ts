@@ -10,24 +10,22 @@
  * @internal This class is not part of the public API surface.
  */
 
-import type { DashboardScene } from '../scene/DashboardScene';
-
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
-import type { MutationRequest, MutationResult } from './types';
+import type { MutableDashboardScene, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
 interface CommandRegistration {
   handler: MutationHandler;
-  canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
+  canExecute: (scene: MutableDashboardScene) => { allowed: true } | { allowed: false; error: string };
 }
 
 export class MutationExecutor {
-  private scene: DashboardScene;
+  private scene: MutableDashboardScene;
   private commands: Map<string, CommandRegistration> = new Map();
 
-  constructor(scene: DashboardScene) {
+  constructor(scene: MutableDashboardScene) {
     this.scene = scene;
     for (const cmd of ALL_COMMANDS) {
       this.registerCommand(cmd);

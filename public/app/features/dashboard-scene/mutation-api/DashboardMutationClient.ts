@@ -8,15 +8,13 @@
  * transactional execution with structured error responses.
  */
 
-import type { DashboardScene } from '../scene/DashboardScene';
-
 import { MutationExecutor } from './MutationExecutor';
-import type { MutationClient, MutationRequest, MutationResult } from './types';
+import type { MutableDashboardScene, MutationClient, MutationRequest, MutationResult } from './types';
 
 export class DashboardMutationClient implements MutationClient {
   private executor: MutationExecutor;
 
-  constructor(scene: DashboardScene) {
+  constructor(scene: MutableDashboardScene) {
     this.executor = new MutationExecutor(scene);
   }
 
