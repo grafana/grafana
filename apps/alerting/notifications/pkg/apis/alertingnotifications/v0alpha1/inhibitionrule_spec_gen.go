@@ -14,6 +14,11 @@ func NewInhibitionRuleMatcher() *InhibitionRuleMatcher {
 	return &InhibitionRuleMatcher{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for InhibitionRuleMatcher.
+func (InhibitionRuleMatcher) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleMatcher"
+}
+
 // +k8s:openapi-gen=true
 type InhibitionRuleSpec struct {
 	// source_matchers define the alerts that act as inhibitors (silencing other alerts)
@@ -30,6 +35,11 @@ func NewInhibitionRuleSpec() *InhibitionRuleSpec {
 	return &InhibitionRuleSpec{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for InhibitionRuleSpec.
+func (InhibitionRuleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleSpec"
+}
+
 // +k8s:openapi-gen=true
 type InhibitionRuleMatcherType string
 
@@ -40,9 +50,7 @@ const (
 	InhibitionRuleMatcherTypeNotEqualRegex InhibitionRuleMatcherType = "!~"
 )
 
-func (InhibitionRuleMatcher) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleMatcher"
-}
-func (InhibitionRuleSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleSpec"
+// OpenAPIModelName returns the OpenAPI model name for InhibitionRuleMatcherType.
+func (InhibitionRuleMatcherType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleMatcherType"
 }
