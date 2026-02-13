@@ -2367,7 +2367,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
-	}
+		{
+			Name:         "alertingNotificationHistoryGlobal",
+			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		}}
 )
 
 //go:embed toggles_gen.json
