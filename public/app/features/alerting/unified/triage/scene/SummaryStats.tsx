@@ -7,7 +7,8 @@ import { useQueryRunner } from '@grafana/scenes-react';
 import { Box, ErrorBoundaryAlert, Grid, Icon, type IconName, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { buildDeduplicatedExpr, getDataQuery, useQueryFilter } from './utils';
+import { summaryInstanceCountQuery, summaryRuleCountQuery } from './queries';
+import { useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
@@ -143,16 +144,11 @@ function SummaryStatsContent() {
     .replace(/^\s*,/, '');
 
   const instanceDataProvider = useQueryRunner({
-    queries: [getDataQuery(buildDeduplicatedExpr('alertstate', cleanFilter), { instant: true, format: 'table' })],
+    queries: [summaryInstanceCountQuery(cleanFilter)],
   });
 
   const ruleDataProvider = useQueryRunner({
-    queries: [
-      getDataQuery(buildDeduplicatedExpr('alertname, grafana_folder, grafana_rule_uid, alertstate', cleanFilter), {
-        instant: true,
-        format: 'table',
-      }),
-    ],
+    queries: [summaryRuleCountQuery(cleanFilter)],
   });
 
   const { data: instanceData } = instanceDataProvider.useState();

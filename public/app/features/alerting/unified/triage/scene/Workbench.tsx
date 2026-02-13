@@ -5,10 +5,11 @@ import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@graf
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
-import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
+import { DEFAULT_FIELDS, VARIABLES } from '../constants';
 
 import { convertToWorkbenchRows } from './dataTransform';
-import { buildDeduplicatedExpr, convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
+import { getWorkbenchQueries } from './queries';
+import { convertTimeRangeToDomain, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
@@ -22,21 +23,8 @@ export function WorkbenchRenderer() {
   const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
-  const badgeExpr = buildDeduplicatedExpr(countBy, queryFilter);
-
   const runner = useQueryRunner({
-    queries: [
-      getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${queryFilter}})`, {
-        refId: 'A',
-        format: 'table',
-      }),
-      getDataQuery(badgeExpr, {
-        refId: 'B',
-        instant: true,
-        range: false,
-        format: 'table',
-      }),
-    ],
+    queries: getWorkbenchQueries(countBy, queryFilter),
   });
   const { data } = runner.useState();
 
