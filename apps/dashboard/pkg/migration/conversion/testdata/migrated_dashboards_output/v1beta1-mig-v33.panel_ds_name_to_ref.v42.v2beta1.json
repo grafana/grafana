@@ -96,10 +96,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "default-ds-uid"
+                        "name": "non-default-test-ds-uid"
                       },
                       "spec": {
                         "description": "Nested target should also migrate from string to object"
@@ -144,10 +144,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "elasticsearch",
+                      "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "existing-target-uid"
+                        "name": "existing-ref-uid"
                       },
                       "spec": {
                         "description": "Target with existing object should remain unchanged"
@@ -302,10 +302,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "default-ds-uid"
+                        "name": "non-default-test-ds-uid"
                       },
                       "spec": {
                         "description": "Valid string should migrate to object"
@@ -320,10 +320,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "non-existing-ds"
+                        "name": "non-default-test-ds-uid"
                       },
                       "spec": {
                         "description": "Non-existing datasource should be preserved as-is (migration returns nil)"
@@ -394,7 +394,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "existing-ref"
+                        "name": "default-ds-uid"
                       },
                       "spec": {
                         "description": "Existing object target should remain unchanged"
@@ -409,10 +409,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "loki",
+                      "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "non-default-test-ds-uid"
+                        "name": "default-ds-uid"
                       },
                       "spec": {
                         "description": "String target should migrate to object"
@@ -523,7 +523,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "also-missing-ds"
+                        "name": "completely-missing-ds"
                       },
                       "spec": {
                         "description": "Unknown target datasource should remain unchanged (migration returns nil)"

@@ -555,6 +555,29 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			},
 		},
 		{
+			name:                  "no error, with extra configurations and managed routes enabled",
+			config:                string(cfgWithExtraUnmergedBytes),
+			enabledMultipleRoutes: true,
+			autogenFn:             NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
+					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+					require.NoError(t, err)
+					r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+					require.NoError(t, err)
+					managed := make(map[string]*definition.Route)
+					managed[r.Identifier] = r.ExtraRoute
+					r.Config.Route = legacy_storage.WithManagedRoutes(r.Config.Route, managed)
+					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
+						TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
+						AlertmanagerConfig: r.Config,
+						Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+					}
+					return cfgWithExtraMerged
+				}(),
+			},
+		},
+		{
 			name:                  "no error, with managed routes",
 			config:                string(mustMarshal(policy_exports.Config())),
 			enabledMultipleRoutes: true,
@@ -578,6 +601,37 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: policy_exports.Config().AlertmanagerConfig,
 				},
+			},
+		},
+		{
+			name: "do not add managed route from extra config if name conflict",
+			config: func() string {
+				cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+				require.NoError(t, err)
+
+				cfgWithExtraUnmerged.ManagedRoutes = map[string]*definition.Route{
+					"imported": {Receiver: "grafana-default-email"},
+				}
+				return string(mustMarshal(cfgWithExtraUnmerged))
+			}(),
+			enabledMultipleRoutes: true,
+			autogenFn:             NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
+					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+					require.NoError(t, err)
+					r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+					require.NoError(t, err)
+					r.Config.Route = legacy_storage.WithManagedRoutes(r.Config.Route, map[string]*definition.Route{
+						"imported": {Receiver: "grafana-default-email"},
+					})
+					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
+						TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
+						AlertmanagerConfig: r.Config,
+						Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+					}
+					return cfgWithExtraMerged
+				}(),
 			},
 		},
 	}
