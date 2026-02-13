@@ -189,7 +189,7 @@ func newService(
 		return auth.Authenticate(ctx)
 	})
 
-	svc := &service{
+	return &service{
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
@@ -203,12 +203,6 @@ func newService(
 		searchClient:       searchClient,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
-
-	if backendService, ok := backend.(services.Service); ok {
-		svc.subservices = append(svc.subservices, backendService)
-	}
-
-	return svc
 }
 
 func (s *service) initializeSubservicesManager() error {
@@ -337,6 +331,9 @@ func (s *service) starting(ctx context.Context) error {
 }
 
 // registerServer creates the resource/search server and registers the gRPC services on the provided server.
+// The backend must already be started before this is called, because NewResourceServer calls Init()
+// which requires the backend to be fully initialized (e.g. notifier, RV manager).
+// The UnifiedBackend module handles starting the backend eagerly in its factory.
 func (s *service) registerServer(provider grpcserver.Provider) error {
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {

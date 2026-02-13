@@ -222,16 +222,11 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
 	}
-	backend.Service = services.NewBasicService(func(serviceContext context.Context) error {
-		return backend.Init(serviceContext)
-	}, func(serviceContext context.Context) error {
-		<-serviceContext.Done()
-		return nil
-	}, func(_ error) error {
+	backend.Service = services.NewIdleService(backend.Init, func(_ error) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		return backend.Stop(ctx)
-	}).WithName("unified-storage-backend")
+	})
 	return backend, nil
 }
 

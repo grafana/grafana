@@ -203,6 +203,27 @@ func (s *ModuleServer) Run() error {
 		return s.grpcService, nil
 	})
 
+	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
+		var err error
+		if s.storageBackend == nil {
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil, !m.IsModuleEnabled(modules.StorageServer))
+			if err != nil {
+				return nil, err
+			}
+		}
+		// Dependent modules need the backend running during registering time (before they start)
+		var stopFunc func(error) error
+		if backendService, ok := s.storageBackend.(services.Service); ok {
+			if err := services.StartAndAwaitRunning(context.Background(), backendService); err != nil {
+				return nil, fmt.Errorf("failed to start storage backend: %w", err)
+			}
+			stopFunc = func(_ error) error {
+				return services.StopAndAwaitTerminated(context.Background(), backendService)
+			}
+		}
+		return services.NewIdleService(nil, stopFunc).WithName(modules.UnifiedBackend), nil
+	})
+
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
@@ -223,13 +244,6 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		var err error
-		if s.storageBackend == nil {
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil, false)
-			if err != nil {
-				return nil, err
-			}
-		}
 		// Only set docBuilders and indexMetrics if enable_search is true
 		var docBuilders resource.DocumentBuilderSupplier
 		var indexMetrics *resource.BleveIndexMetrics
@@ -242,23 +256,15 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.storageBackend)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
-		var err error
-		if s.storageBackend == nil {
-			disableStorageServices := true
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, nil, nil, disableStorageServices)
-			if err != nil {
-				return nil, err
-			}
-		}
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.grpcService, s.storageBackend)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
