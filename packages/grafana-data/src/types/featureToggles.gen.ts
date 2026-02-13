@@ -1342,6 +1342,11 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
+  /**
   * Enables app platform API for annotations
   * @default false
   */

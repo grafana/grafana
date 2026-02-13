@@ -20,39 +20,40 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 interface Props {
   value: ElasticsearchDataQuery;
+  queryLanguage: QueryLanguage;
+  showQueryLanguageSelector: boolean;
   onRunQuery: () => void;
 }
 
-export const CodeEditorSection = ({ value, onRunQuery }: Props) => {
+export const CodeEditorSection = ({ value, queryLanguage, showQueryLanguageSelector, onRunQuery }: Props) => {
   const dispatch = useDispatch();
   const datasource = useDatasource();
   const styles = useStyles2(getStyles);
 
-  const currentQueryLanguage: QueryLanguage = value.queryLanguage === 'esql' ? 'esql' : 'raw_dsl';
-  const editorLanguage = currentQueryLanguage === 'esql' ? 'sql' : 'json';
+  const editorLanguage = queryLanguage === 'esql' ? 'sql' : 'json';
 
   return (
     <>
-      <div className={styles.root}>
-        <InlineLabel width={17}>Query language</InlineLabel>
-        <div>
-          <QueryLanguageSelector
-            value={currentQueryLanguage}
-            onChange={(queryLanguage) => dispatch(changeQueryLanguage(queryLanguage))}
-          />
+      {showQueryLanguageSelector && (
+        <div className={styles.root}>
+          <InlineLabel width={17}>Query language</InlineLabel>
+          <div>
+            <QueryLanguageSelector
+              value={queryLanguage}
+              onChange={(nextLanguage) => dispatch(changeQueryLanguage(nextLanguage))}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <RawQueryEditor
-        value={currentQueryLanguage === 'raw_dsl' ? value.rawDSLQuery : value.esqlQuery}
+        value={queryLanguage === 'raw_dsl' ? value.rawDSLQuery : value.esqlQuery}
         language={editorLanguage}
-        onChange={(query) =>
-          dispatch(currentQueryLanguage === 'raw_dsl' ? changeRawDSLQuery(query) : changeEsqlQuery(query))
-        }
+        onChange={(query) => dispatch(queryLanguage === 'raw_dsl' ? changeRawDSLQuery(query) : changeEsqlQuery(query))}
         onFocusPopulate={(currentValue) => {
           const index = datasource.index?.trim();
           // Only prefill ES|QL queries when a datasource index is configured and the editor is empty.
-          if (currentQueryLanguage !== 'esql' || !index || currentValue.trim()) {
+          if (queryLanguage !== 'esql' || !index || currentValue.trim()) {
             return undefined;
           }
 

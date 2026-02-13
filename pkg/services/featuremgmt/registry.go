@@ -2115,6 +2115,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "elasticsearchESQLQuery",
+			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "kubernetesAnnotations",
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,
