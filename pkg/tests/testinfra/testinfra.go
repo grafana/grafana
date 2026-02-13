@@ -423,7 +423,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		return section, err
 	}
 
-	queryRetries := 3
+	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
