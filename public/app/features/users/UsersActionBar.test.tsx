@@ -1,30 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { config } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 
 import { Props, UsersActionBarUnconnected } from './UsersActionBar';
-import { initialState, searchQueryChanged } from './state/reducers';
+import { searchQueryChanged } from './state/reducers';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    user: {},
     hasPermission: () => true,
   },
 }));
 
 const setup = (propOverrides?: object) => {
-  const store = configureStore({
-    users: {
-      ...initialState,
-      externalUserMngInfo: config.externalUserMngInfo,
-      externalUserMngLinkName: config.externalUserMngLinkName,
-      externalUserMngLinkUrl: config.externalUserMngLinkUrl,
-    },
-  });
-
   const props: Props = {
     searchQuery: '',
     changeSearchQuery: mockToolkitActionCreator(searchQueryChanged),
@@ -35,11 +23,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(
-    <Provider store={store}>
-      <UsersActionBarUnconnected {...props} />
-    </Provider>
-  );
+  const { rerender } = render(<UsersActionBarUnconnected {...props} />);
 
   return { rerender, props };
 };
