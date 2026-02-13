@@ -109,10 +109,7 @@ export function Actions({ contentHeader = false, item, onDelete, onDuplicate, on
           body={null}
           description={
             item.type === QueryEditorType.Transformation
-              ? t(
-                  'query-editor-next.delete-modal.body-transformation',
-                  'Removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.'
-                )
+              ? t('query-editor-next.delete-modal.body-transformation', 'Removing one transformation may break others.')
               : t('query-editor-next.delete-modal.body-query', 'Are you sure you want to delete this query?')
           }
           confirmText={t('query-editor-next.delete-modal.confirm', 'Delete')}
