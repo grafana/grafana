@@ -3,6 +3,7 @@ package sqleng
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
@@ -16,6 +17,20 @@ import (
 	mssql "github.com/microsoft/go-mssqldb"
 	"github.com/microsoft/go-mssqldb/azuread"
 )
+
+// odbcNeedsEscape returns true if the value contains semicolon or closing brace,
+// which would break connection string parsing (semicolon is the key=value delimiter).
+func odbcNeedsEscape(s string) bool {
+	return strings.ContainsAny(s, ";}")
+}
+
+// escapeOdbcValue wraps a connection string value in ODBC braces so that semicolons
+// and other special characters (e.g. in passwords) are not interpreted as delimiters.
+// The go-mssqldb driver uses this when the connection string has the "odbc:" prefix.
+func escapeOdbcValue(s string) string {
+	escaped := strings.ReplaceAll(s, "}", "}}")
+	return "{" + escaped + "}"
+}
 
 func newMSSQL(driverName string, rowLimit int64, dsInfo DataSourceInfo, cnnstr string, logger log.Logger, proxyClient proxy.Client) (*sql.DB, error) {
 	var connector *mssql.Connector
@@ -121,9 +136,25 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 	case windowsAuthentication:
 		// No user id or password. We're using windows single sign on.
 	case kerberosRaw, kerberosKeytab, kerberosCredentialCacheFile, kerberosCredentialCache:
-		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, dsInfo.User, dsInfo.DecryptedSecureJSONData["password"], kerberosAuth)
+		user := dsInfo.User
+		pass := dsInfo.DecryptedSecureJSONData["password"]
+		if odbcNeedsEscape(pass) || odbcNeedsEscape(user) {
+			user = escapeOdbcValue(user)
+			pass = escapeOdbcValue(pass)
+			connStr = "odbc:" + kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		} else {
+			connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		}
 	default:
-		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
+		user := dsInfo.User
+		pass := dsInfo.DecryptedSecureJSONData["password"]
+		if odbcNeedsEscape(pass) || odbcNeedsEscape(user) {
+			user = escapeOdbcValue(user)
+			pass = escapeOdbcValue(pass)
+			connStr = "odbc:" + connStr + fmt.Sprintf("user id=%s;password=%s;", user, pass)
+		} else {
+			connStr += fmt.Sprintf("user id=%s;password=%s;", user, pass)
+		}
 	}
 
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
