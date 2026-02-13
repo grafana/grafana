@@ -51,11 +51,32 @@ message StorageTupleWrite {
   bytes condition_context = 3;
 }
 
+// ConsistencyPreference mirrors OpenFGA read consistency (minimize latency vs stronger read).
+enum ConsistencyPreference {
+  CONSISTENCY_PREFERENCE_UNSPECIFIED = 0;
+  CONSISTENCY_PREFERENCE_MINIMIZE_LATENCY = 1;
+  CONSISTENCY_PREFERENCE_HIGHER_CONSISTENCY = 2;
+}
+
+// OnMissingDelete defines behavior when deleting a tuple that does not exist.
+enum OnMissingDelete {
+  ON_MISSING_DELETE_ERROR = 0;
+  ON_MISSING_DELETE_IGNORE = 1;
+}
+
+// OnDuplicateInsert defines behavior when inserting a tuple that already exists.
+enum OnDuplicateInsert {
+  ON_DUPLICATE_INSERT_ERROR = 0;
+  ON_DUPLICATE_INSERT_IGNORE = 1;
+}
+
 // WriteTuplesRequest for atomic tuple writes and deletes.
 message WriteTuplesRequest {
   string store_id = 1;
   repeated StorageTupleWrite writes = 2;
   repeated StorageTupleKey deletes = 3;
+  OnMissingDelete on_missing_delete = 4;    // optional; ERROR if not set
+  OnDuplicateInsert on_duplicate_insert = 5; // optional; ERROR if not set
 }
 
 message WriteTuplesResponse {}
@@ -83,6 +104,8 @@ message ReadTuplesRequest {
   repeated UserTypeFilter user_type_filters = 6;  // optional: type restrictions
   int32 page_size = 7;
   string page_token = 8;
+  repeated string condition_names = 9;  // optional: filter by condition names
+  ConsistencyPreference consistency = 10;  // optional: read consistency per call
 }
 
 // UserRef identifies a user or userset for reverse lookup.
@@ -101,6 +124,7 @@ message ReadTuplesByUserRequest {
   repeated string object_ids = 5;  // optional filter
   repeated string condition_names = 6;  // optional filter
   bool sort_ascending = 7;
+  ConsistencyPreference consistency = 8;  // optional: read consistency per call
 }
 
 // ReadChangesRequest for changelog reads.
@@ -110,6 +134,7 @@ message ReadChangesRequest {
   string after_token = 3;
   int32 page_size = 4;
   int64 horizon_seconds = 5;  // exclude changes newer than now - horizon
+  optional bool sort_desc = 6;  // optional: true = newest first (default), false = oldest first
 }
 
 // Operation for changelog entry.

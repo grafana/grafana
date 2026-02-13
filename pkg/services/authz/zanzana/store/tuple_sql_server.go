@@ -41,7 +41,8 @@ func (s *TupleStorageSQLServer) WriteTuples(ctx context.Context, req *tuplepb.Wr
 	for _, w := range req.GetWrites() {
 		writes = append(writes, protoWriteToOpenFGATupleKey(w))
 	}
-	if err := s.ds.Write(ctx, req.GetStoreId(), deletes, writes); err != nil {
+	writeOpts := protoToTupleWriteOptions(req)
+	if err := s.ds.Write(ctx, req.GetStoreId(), deletes, writes, writeOpts...); err != nil {
 		return nil, err
 	}
 	return &tuplepb.WriteTuplesResponse{}, nil
@@ -54,14 +55,17 @@ func (s *TupleStorageSQLServer) ReadTuples(req *tuplepb.ReadTuplesRequest, strea
 		"user_filter", userFilterSummary(req.GetUserFilter()), "user_type_filters", len(req.GetUserTypeFilters()))
 	ctx := stream.Context()
 	filter := storage.ReadFilter{
-		Object:   tupleutils.BuildObject(req.GetObjectType(), req.GetObjectId()),
-		Relation: req.GetRelation(),
-		User:     "",
+		Object:     tupleutils.BuildObject(req.GetObjectType(), req.GetObjectId()),
+		Relation:   req.GetRelation(),
+		User:       "",
+		Conditions: req.GetConditionNames(),
 	}
 	if uf := req.GetUserFilter(); uf != nil {
 		filter.User = tupleutils.FromUserParts(uf.GetUserType(), uf.GetUserId(), uf.GetUserRelation())
 	}
-	opts := storage.ReadPageOptions{}
+	opts := storage.ReadPageOptions{
+		Consistency: storage.ConsistencyOptions{Preference: protoToConsistencyPreference(req.GetConsistency())},
+	}
 	if req.GetPageSize() > 0 {
 		opts.Pagination = storage.PaginationOptions{PageSize: int(req.GetPageSize()), From: req.GetPageToken()}
 	}
@@ -100,7 +104,10 @@ func (s *TupleStorageSQLServer) ReadTuplesByUser(req *tuplepb.ReadTuplesByUserRe
 		ObjectIDs:  objectIDs,
 		Conditions: req.GetConditionNames(),
 	}
-	opts := storage.ReadStartingWithUserOptions{WithResultsSortedAscending: req.GetSortAscending()}
+	opts := storage.ReadStartingWithUserOptions{
+		WithResultsSortedAscending: req.GetSortAscending(),
+		Consistency:                storage.ConsistencyOptions{Preference: protoToConsistencyPreference(req.GetConsistency())},
+	}
 	it, err := s.ds.ReadStartingWithUser(ctx, req.GetStoreId(), filter, opts)
 	if err != nil {
 		return err
@@ -133,9 +140,11 @@ func (s *TupleStorageSQLServer) ReadChanges(ctx context.Context, req *tuplepb.Re
 		ObjectType:    req.GetObjectType(),
 		HorizonOffset: horizon,
 	}
+	// Default sort_desc to true (newest first) when not set for backward compatibility.
+	sortDesc := req.GetSortDesc()
 	opts := storage.ReadChangesOptions{
 		Pagination: storage.PaginationOptions{PageSize: int(req.GetPageSize()), From: req.GetAfterToken()},
-		SortDesc:   true,
+		SortDesc:   sortDesc,
 	}
 	changes, contToken, err := s.ds.ReadChanges(ctx, req.GetStoreId(), filter, opts)
 	if err != nil {
@@ -240,4 +249,23 @@ func OpenFGATupleKeyAndTimestampToProto(k *openfgav1.TupleKey, ts *timestamppb.T
 		}
 	}
 	return out
+}
+
+// protoToConsistencyPreference maps our proto enum to OpenFGA API (same numeric values).
+func protoToConsistencyPreference(p tuplepb.ConsistencyPreference) openfgav1.ConsistencyPreference {
+	return openfgav1.ConsistencyPreference(p)
+}
+
+// protoToTupleWriteOptions builds storage write options from the request.
+func protoToTupleWriteOptions(req *tuplepb.WriteTuplesRequest) []storage.TupleWriteOption {
+	var opts []storage.TupleWriteOption
+	switch req.GetOnMissingDelete() {
+	case tuplepb.OnMissingDelete_ON_MISSING_DELETE_IGNORE:
+		opts = append(opts, storage.WithOnMissingDelete(storage.OnMissingDeleteIgnore))
+	}
+	switch req.GetOnDuplicateInsert() {
+	case tuplepb.OnDuplicateInsert_ON_DUPLICATE_INSERT_IGNORE:
+		opts = append(opts, storage.WithOnDuplicateInsert(storage.OnDuplicateInsertIgnore))
+	}
+	return opts
 }

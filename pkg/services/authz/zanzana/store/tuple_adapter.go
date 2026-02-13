@@ -111,7 +111,10 @@ func (a *TupleStorageAdapter) MaxTuplesPerWrite() int {
 
 // Write implements RelationshipTupleWriter by calling TupleStorageService.WriteTuples.
 func (a *TupleStorageAdapter) Write(ctx context.Context, store string, deletes storage.Deletes, writes storage.Writes, opts ...storage.TupleWriteOption) error {
+	writeOpts := storage.NewTupleWriteOptions(opts...)
 	req := &tuplepb.WriteTuplesRequest{StoreId: store}
+	req.OnMissingDelete = onMissingDeleteToProto(writeOpts.OnMissingDelete)
+	req.OnDuplicateInsert = onDuplicateInsertToProto(writeOpts.OnDuplicateInsert)
 	for _, d := range deletes {
 		req.Deletes = append(req.Deletes, openFGATupleKeyWithoutConditionToProto(d))
 	}
@@ -123,8 +126,8 @@ func (a *TupleStorageAdapter) Write(ctx context.Context, store string, deletes s
 }
 
 // Read implements RelationshipTupleReader by calling ReadTuples and wrapping the stream in an iterator.
-func (a *TupleStorageAdapter) Read(ctx context.Context, store string, filter storage.ReadFilter, _ storage.ReadOptions) (storage.TupleIterator, error) {
-	req := readFilterToReadTuplesRequest(store, filter, 0, "")
+func (a *TupleStorageAdapter) Read(ctx context.Context, store string, filter storage.ReadFilter, options storage.ReadOptions) (storage.TupleIterator, error) {
+	req := readFilterToReadTuplesRequest(store, filter, 0, "", options.Consistency.Preference)
 	tuples, _, err := a.readTuplesStream(ctx, req)
 	if err != nil {
 		return nil, err
@@ -138,7 +141,7 @@ func (a *TupleStorageAdapter) ReadPage(ctx context.Context, store string, filter
 	if options.Pagination.PageSize > 0 {
 		pageSize = options.Pagination.PageSize
 	}
-	req := readFilterToReadTuplesRequest(store, filter, pageSize, options.Pagination.From)
+	req := readFilterToReadTuplesRequest(store, filter, pageSize, options.Pagination.From, options.Consistency.Preference)
 	tuples, contToken, err := a.readTuplesStream(ctx, req)
 	if err != nil {
 		return nil, "", err
@@ -173,8 +176,8 @@ func (a *TupleStorageAdapter) readTuplesStream(ctx context.Context, req *tuplepb
 }
 
 // ReadUserTuple implements RelationshipTupleReader by calling ReadTuples with exact user filter.
-func (a *TupleStorageAdapter) ReadUserTuple(ctx context.Context, store string, filter storage.ReadUserTupleFilter, _ storage.ReadUserTupleOptions) (*openfgav1.Tuple, error) {
-	req := readFilterToReadTuplesRequest(store, storage.ReadFilter(filter), 1, "")
+func (a *TupleStorageAdapter) ReadUserTuple(ctx context.Context, store string, filter storage.ReadUserTupleFilter, options storage.ReadUserTupleOptions) (*openfgav1.Tuple, error) {
+	req := readFilterToReadTuplesRequest(store, storage.ReadFilter(filter), 1, "", options.Consistency.Preference)
 	req.UserFilter = &tuplepb.UserFilter{}
 	obj, rel, user := filter.Object, filter.Relation, filter.User
 	if user != "" {
@@ -200,13 +203,15 @@ func (a *TupleStorageAdapter) ReadUserTuple(ctx context.Context, store string, f
 }
 
 // ReadUsersetTuples implements RelationshipTupleReader by calling ReadTuples with user type filters.
-func (a *TupleStorageAdapter) ReadUsersetTuples(ctx context.Context, store string, filter storage.ReadUsersetTuplesFilter, _ storage.ReadUsersetTuplesOptions) (storage.TupleIterator, error) {
+func (a *TupleStorageAdapter) ReadUsersetTuples(ctx context.Context, store string, filter storage.ReadUsersetTuplesFilter, options storage.ReadUsersetTuplesOptions) (storage.TupleIterator, error) {
 	req := &tuplepb.ReadTuplesRequest{
-		StoreId:    store,
-		ObjectType: "",
-		ObjectId:   "",
-		Relation:   "",
-		PageSize:   0,
+		StoreId:        store,
+		ObjectType:     "",
+		ObjectId:       "",
+		Relation:       "",
+		PageSize:       0,
+		ConditionNames: filter.Conditions,
+		Consistency:    consistencyToProto(options.Consistency.Preference),
 	}
 	objType, objID := tupleutils.SplitObject(filter.Object)
 	req.ObjectType = objType
@@ -236,6 +241,7 @@ func (a *TupleStorageAdapter) ReadStartingWithUser(ctx context.Context, store st
 		Relation:       filter.Relation,
 		SortAscending:  options.WithResultsSortedAscending,
 		ConditionNames: filter.Conditions,
+		Consistency:    consistencyToProto(options.Consistency.Preference),
 	}
 	if filter.ObjectIDs != nil {
 		req.ObjectIds = filter.ObjectIDs.Values()
@@ -279,12 +285,14 @@ func (a *TupleStorageAdapter) ReadChanges(ctx context.Context, store string, fil
 	if horizonSeconds < 0 {
 		horizonSeconds = 0
 	}
+	sortDesc := options.SortDesc
 	req := &tuplepb.ReadChangesRequest{
 		StoreId:        store,
 		ObjectType:     filter.ObjectType,
 		AfterToken:     options.Pagination.From,
 		PageSize:       pageSize,
 		HorizonSeconds: horizonSeconds,
+		SortDesc:       &sortDesc,
 	}
 	resp, err := a.tupleClient.ReadChanges(ctx, req)
 	if err != nil {
@@ -544,21 +552,46 @@ func (a *TupleStorageAdapter) ReadAssertions(ctx context.Context, store, modelID
 
 // Helpers: proto <-> openfga conversions
 
-func readFilterToReadTuplesRequest(store string, filter storage.ReadFilter, pageSize int, pageToken string) *tuplepb.ReadTuplesRequest {
+func readFilterToReadTuplesRequest(store string, filter storage.ReadFilter, pageSize int, pageToken string, consistency openfgav1.ConsistencyPreference) *tuplepb.ReadTuplesRequest {
 	objType, objID := tupleutils.SplitObject(filter.Object)
 	req := &tuplepb.ReadTuplesRequest{
-		StoreId:    store,
-		ObjectType: objType,
-		ObjectId:   objID,
-		Relation:   filter.Relation,
-		PageSize:   int32(pageSize),
-		PageToken:  pageToken,
+		StoreId:        store,
+		ObjectType:     objType,
+		ObjectId:       objID,
+		Relation:       filter.Relation,
+		PageSize:       int32(pageSize),
+		PageToken:      pageToken,
+		ConditionNames: filter.Conditions,
+		Consistency:    consistencyToProto(consistency),
 	}
 	if filter.User != "" {
 		ut, uid, urel := tupleutils.ToUserParts(filter.User)
 		req.UserFilter = &tuplepb.UserFilter{UserType: ut, UserId: uid, UserRelation: urel}
 	}
 	return req
+}
+
+// consistencyToProto maps OpenFGA API consistency preference to our proto enum (same numeric values).
+func consistencyToProto(p openfgav1.ConsistencyPreference) tuplepb.ConsistencyPreference {
+	return tuplepb.ConsistencyPreference(p)
+}
+
+func onMissingDeleteToProto(v storage.OnMissingDelete) tuplepb.OnMissingDelete {
+	switch v {
+	case storage.OnMissingDeleteIgnore:
+		return tuplepb.OnMissingDelete_ON_MISSING_DELETE_IGNORE
+	default:
+		return tuplepb.OnMissingDelete_ON_MISSING_DELETE_ERROR
+	}
+}
+
+func onDuplicateInsertToProto(v storage.OnDuplicateInsert) tuplepb.OnDuplicateInsert {
+	switch v {
+	case storage.OnDuplicateInsertIgnore:
+		return tuplepb.OnDuplicateInsert_ON_DUPLICATE_INSERT_IGNORE
+	default:
+		return tuplepb.OnDuplicateInsert_ON_DUPLICATE_INSERT_ERROR
+	}
 }
 
 func openFGATupleKeyToProtoWrite(tk *openfgav1.TupleKey) *tuplepb.StorageTupleWrite {
