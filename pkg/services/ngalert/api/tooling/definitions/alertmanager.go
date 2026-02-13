@@ -779,18 +779,6 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 
 type ManagedInhibitionRules map[string]*models.InhibitionRule
 
-func (mir *ManagedInhibitionRules) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain ManagedInhibitionRules
-	if err := unmarshal((*plain)(mir)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (mir *ManagedInhibitionRules) UnmarshalJSON(b []byte) error {
-	return yaml.Unmarshal(b, &mir)
-}
-
 // ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
 // GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to
 // definitions.Route explicit.
