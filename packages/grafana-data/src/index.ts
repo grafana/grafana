@@ -426,7 +426,12 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
-export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './panel/PanelPlugin';
+export {
+  PanelPlugin,
+  type PresetsSupplierContext,
+  type SetFieldConfigOptionsArgs,
+  type StandardOptionConfig,
+} from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
   filterFieldConfigOverrides,
