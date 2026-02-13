@@ -42,7 +42,7 @@ import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
-import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './NotificationsScene';
+import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
 
 const PAGE_SIZE = 100;
 

@@ -47,11 +47,7 @@ import {
   getNotifications,
   notificationsDatasource,
 } from './NotificationsRuntimeDataSource';
-
-export const LABELS_FILTER = 'LABELS_FILTER';
-export const STATUS_FILTER = 'STATUS_FILTER';
-export const OUTCOME_FILTER = 'OUTCOME_FILTER';
-export const RECEIVER_FILTER = 'RECEIVER_FILTER';
+import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
 
 interface NotificationsSceneProps {
   defaultLabelsFilter?: string;
