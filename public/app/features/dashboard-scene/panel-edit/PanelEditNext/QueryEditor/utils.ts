@@ -5,9 +5,17 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../constants';
 
+import { PendingExpression } from './QueryEditorContext';
 import { Transformation } from './types';
 
-export function getEditorType(card: DataQuery | Transformation | null): QueryEditorType {
+export function getEditorType(
+  card: DataQuery | Transformation | null,
+  pendingExpression?: PendingExpression | null
+): QueryEditorType {
+  if (pendingExpression) {
+    return QueryEditorType.Expression;
+  }
+
   if (!card) {
     // Default to query type if no card is provided
     return QueryEditorType.Query;
