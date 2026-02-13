@@ -112,7 +112,7 @@ func (c *CatalogPlugins) String() string {
 // Filename returns a deterministic path for caching purposes.
 func (c *CatalogPlugins) Filename(ctx context.Context) (string, error) {
 	// Create a unique filename based on plugins and distribution
-	var pluginIDs []string
+	pluginIDs := make([]string, 0, len(c.ResolvedPlugins))
 	for _, p := range c.ResolvedPlugins {
 		pluginIDs = append(pluginIDs, fmt.Sprintf("%s-%s", p.ID, p.Version))
 	}

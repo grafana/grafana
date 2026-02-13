@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
@@ -81,8 +82,8 @@ func ParseCatalogPluginsList(list string) ([]CatalogPluginSpec, error) {
 		return nil, nil
 	}
 
-	var plugins []CatalogPluginSpec
 	items := strings.Split(list, ",")
+	plugins := make([]CatalogPluginSpec, 0, len(items))
 
 	for _, item := range items {
 		item = strings.TrimSpace(item)
@@ -112,7 +113,7 @@ func ParseCatalogPluginsList(list string) ([]CatalogPluginSpec, error) {
 
 // ParseCatalogPluginsFile parses a JSON manifest file containing plugins to bundle.
 func ParseCatalogPluginsFile(path string) ([]CatalogPluginSpec, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read manifest file: %w", err)
 	}
