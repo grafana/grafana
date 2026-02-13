@@ -39,6 +39,10 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
+	// FlagAlertingRuleGroupSortByFolderFullpath
+	// Sort alert rule groups by folder full path in the Prometheus rules API
+	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
+
 	// FlagLiveAPIServer
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"

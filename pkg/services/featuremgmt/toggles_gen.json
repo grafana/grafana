@@ -553,6 +553,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleGroupSortByFolderFullpath",
+        "resourceVersion": "1770763646748",
+        "creationTimestamp": "2026-02-10T22:47:26Z"
+      },
+      "spec": {
+        "description": "Sort alert rule groups by folder full path in the Prometheus rules API",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-03T11:18:25Z"

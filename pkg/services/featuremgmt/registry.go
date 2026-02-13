@@ -91,6 +91,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alertingRuleGroupSortByFolderFullpath",
+			Description: "Sort alert rule groups by folder full path in the Prometheus rules API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			Stage:        FeatureStageGeneralAvailability,

@@ -1008,8 +1008,9 @@ const (
 )
 
 type GroupCursor struct {
-	NamespaceUID string `json:"n"`
-	RuleGroup    string `json:"g"`
+	FolderFullpath string `json:"f,omitempty"`
+	NamespaceUID   string `json:"n"`
+	RuleGroup      string `json:"g"`
 }
 
 func EncodeGroupCursor(c GroupCursor) string {
@@ -1070,10 +1071,11 @@ type ListAlertRulesExtendedQuery struct {
 	RuleType           RuleTypeFilter
 	PluginOriginFilter PluginOriginFilter
 
-	Limit         int64
-	RuleLimit     int64
-	ContinueToken string
-	Compact       bool
+	Limit          int64
+	RuleLimit      int64
+	ContinueToken  string
+	Compact        bool
+	SortByFullpath bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

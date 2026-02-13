@@ -69,6 +69,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Sort alert rule groups by folder full path in the Prometheus rules API
+  * @default false
+  */
+  alertingRuleGroupSortByFolderFullpath?: boolean;
+  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
