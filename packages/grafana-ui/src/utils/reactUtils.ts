@@ -8,9 +8,7 @@ type ElementWithOptionalRef<T = HTMLElement> = React.ReactElement | { ref?: Reac
  * Extracts the ref from a React element. The ref is stored on element.ref (not in props).
  * React's TypeScript types omit ref from ReactElement, but it exists at runtime.
  */
-export function getRefFromElement<T = HTMLElement>(
-  element: ElementWithOptionalRef<T>
-): React.Ref<T> | undefined {
+export function getRefFromElement<T = HTMLElement>(element: ElementWithOptionalRef<T>): React.Ref<T> | undefined {
   return 'ref' in element ? element.ref : undefined;
 }
 
