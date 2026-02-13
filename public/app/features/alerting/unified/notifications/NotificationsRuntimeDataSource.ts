@@ -32,7 +32,7 @@ import { DataSourceInformation } from '../home/Insights';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 
 // Helper function to convert Matcher to API format
-function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
+export function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
   let type: string;
   if (matcher.isEqual && !matcher.isRegex) {
     type = '=';
@@ -229,7 +229,7 @@ export const getNotifications = async (
  * Convert notification entries to a DataFrame for visualization.
  * Groups notifications by time interval and counts them.
  */
-function notificationsToDataFrame(notificationResult: { entries: NotificationEntry[] }): DataFrame {
+export function notificationsToDataFrame(notificationResult: { entries: NotificationEntry[] }): DataFrame {
   // Extract entries from API response (properly typed from the generated client)
   const entriesArray = notificationResult.entries ?? [];
 
