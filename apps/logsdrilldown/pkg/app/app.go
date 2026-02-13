@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	logsdrilldownv1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
+	logsdrilldownv1beta1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1beta1"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -32,7 +33,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultsKind(),
 			},
 			{
-				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultColumnsKind(),
+				Kind: logsdrilldownv1beta1.LogsDrilldownDefaultColumnsKind(),
 			},
 		},
 	}

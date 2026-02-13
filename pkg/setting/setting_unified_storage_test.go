@@ -2,7 +2,6 @@ package setting
 
 import (
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
@@ -43,10 +42,15 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 				}
 				assert.Equal(t, exists, true, migratedResource)
 
+				expectedThreshold := 0
+				if AutoMigratedUnifiedResources[migratedResource] {
+					expectedThreshold = DefaultAutoMigrationThreshold
+				}
+
 				assert.Equal(t, UnifiedStorageConfig{
-					DualWriterMode:                      5,
-					DualWriterMigrationDataSyncDisabled: true,
-					EnableMigration:                     isEnabled,
+					DualWriterMode:         5,
+					EnableMigration:        isEnabled,
+					AutoMigrationThreshold: expectedThreshold,
 				}, resourceCfg, migratedResource)
 			}
 		}
@@ -54,9 +58,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		setMigratedResourceKey("dualWriterMode", "1") // migrated resources enabled by default will change to 5 in setUnifiedStorageConfig
 
 		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dualWriterMode", "2")
-		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dualWriterPeriodicDataSyncJobEnabled", "true")
-		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dataSyncerRecordsLimit", "1001")
-		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dataSyncerInterval", "10m")
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
@@ -67,10 +68,8 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		assert.Equal(t, exists, true)
 		assert.Equal(t, value, UnifiedStorageConfig{
-			DualWriterMode:                       2,
-			DualWriterPeriodicDataSyncJobEnabled: true,
-			DataSyncerRecordsLimit:               1001,
-			DataSyncerInterval:                   time.Minute * 10,
+			DualWriterMode:         2,
+			AutoMigrationThreshold: 0,
 		})
 
 		validateMigratedResources(false)

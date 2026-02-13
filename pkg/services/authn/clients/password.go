@@ -66,6 +66,10 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 			continue
 		}
 
+		if identity == nil {
+			continue
+		}
+
 		return identity, nil
 	}
 

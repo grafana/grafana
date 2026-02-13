@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -25,10 +24,6 @@ func New(providers ...PluginBackendProvider) *Service {
 	return &Service{
 		providerChain: providers,
 	}
-}
-
-func ProvideService(coreRegistry *coreplugin.Registry) *Service {
-	return New(coreRegistry.BackendFactoryProvider(), DefaultProvider)
 }
 
 func (s *Service) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {

@@ -47,7 +47,6 @@ export const meta: DataSourcePluginMeta<DataSourceJsonData> = {
 
 export const TestDataSettings: DataSourceInstanceSettings<TestJsonData> = {
   jsonData: { url: 'http://localhost:3000' },
-  id: 0,
   uid: '',
   type: '',
   name: 'Test Datasource',

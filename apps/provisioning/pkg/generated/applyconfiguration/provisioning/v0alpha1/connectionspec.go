@@ -11,17 +11,45 @@ import (
 // ConnectionSpecApplyConfiguration represents a declarative configuration of the ConnectionSpec type for use
 // with apply.
 type ConnectionSpecApplyConfiguration struct {
-	Type      *provisioningv0alpha1.ConnectionType         `json:"type,omitempty"`
-	URL       *string                                      `json:"url,omitempty"`
-	GitHub    *GitHubConnectionConfigApplyConfiguration    `json:"github,omitempty"`
+	// The connection display name (shown in the UI)
+	Title *string `json:"title,omitempty"`
+	// The connection description
+	Description *string `json:"description,omitempty"`
+	// The connection provider type
+	Type *provisioningv0alpha1.ConnectionType `json:"type,omitempty"`
+	// The connection URL
+	URL *string `json:"url,omitempty"`
+	// GitHub connection configuration
+	// Only applicable when provider is "github"
+	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
+	// Bitbucket connection configuration
+	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
-	Gitlab    *GitlabConnectionConfigApplyConfiguration    `json:"gitlab,omitempty"`
+	// Gitlab connection configuration
+	// Only applicable when provider is "gitlab"
+	Gitlab *GitlabConnectionConfigApplyConfiguration `json:"gitlab,omitempty"`
 }
 
 // ConnectionSpecApplyConfiguration constructs a declarative configuration of the ConnectionSpec type for use with
 // apply.
 func ConnectionSpec() *ConnectionSpecApplyConfiguration {
 	return &ConnectionSpecApplyConfiguration{}
+}
+
+// WithTitle sets the Title field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Title field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithTitle(value string) *ConnectionSpecApplyConfiguration {
+	b.Title = &value
+	return b
+}
+
+// WithDescription sets the Description field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Description field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithDescription(value string) *ConnectionSpecApplyConfiguration {
+	b.Description = &value
+	return b
 }
 
 // WithType sets the Type field in the declarative configuration to the given value

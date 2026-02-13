@@ -127,17 +127,27 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
       if (!childNodeName) {
         console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
         treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
-        return treeNode;
+        return;
       }
-      treeNode.children[childNodeName] = {
-        expanded: false,
-        scopeNodeId: childNodeName,
-        query: '',
-        children: undefined,
-        childrenLoaded: false,
-      };
+      // Create node if it doesn't exist
+      if (!treeNode.children[childNodeName]) {
+        treeNode.children[childNodeName] = {
+          expanded: false,
+          scopeNodeId: childNodeName,
+          query: '',
+          children: {},
+          childrenLoaded: false,
+        };
+      } else {
+        // Node exists, ensure it has children object for nested insertion
+        if (treeNode.children[childNodeName].children === undefined) {
+          treeNode.children[childNodeName] = {
+            ...treeNode.children[childNodeName],
+            children: {},
+          };
+        }
+      }
       treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
-      return treeNode;
     });
   }
   return newTree;

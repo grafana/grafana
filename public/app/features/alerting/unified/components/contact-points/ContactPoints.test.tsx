@@ -13,6 +13,7 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
@@ -305,7 +306,9 @@ describe('contact points', () => {
     });
 
     it('should disable buttons when provisioned', async () => {
-      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPoint, provisioned: true }} />);
+      const { user } = renderWithProvider(
+        <ContactPoint contactPoint={{ ...basicContactPoint, provenance: KnownProvenance.File }} />
+      );
 
       expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 
@@ -335,7 +338,7 @@ describe('contact points', () => {
 
       const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPointInUse, policies }} />);
 
-      expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /1 notification policies/ })).toBeInTheDocument();
 
       const moreActions = screen.getByRole('button', { name: /More/ });
       await user.click(moreActions);
@@ -516,8 +519,8 @@ describe('contact points', () => {
     it('renders number of alert rules and policies and does not permit deletion', async () => {
       const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithEverything} />);
 
-      expect(screen.getByText(/used by 3 alert rule/i)).toBeInTheDocument();
-      expect(screen.getByText(/used by 1 notification policy/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 3 alert rules/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 notification policies/i)).toBeInTheDocument();
 
       await clickMoreActionsButton(contactPointWithEverything.name);
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });

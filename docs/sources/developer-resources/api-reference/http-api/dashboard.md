@@ -231,6 +231,10 @@ JSON Body schema:
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **spec** – The dashboard json.
 
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
+{{< /admonition >}}
+
 **Example Response**:
 
 ```http
@@ -520,6 +524,10 @@ JSON Body schema:
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – The dashboard json.
+
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
+{{< /admonition >}}
 
 **Example Response**:
 

@@ -51,8 +51,9 @@ type Config struct {
 
 // ScopeConfig is used for YAML parsing - converts to v0alpha1.ScopeSpec
 type ScopeConfig struct {
-	Title   string              `yaml:"title"`
-	Filters []ScopeFilterConfig `yaml:"filters"`
+	Title       string              `yaml:"title"`
+	DefaultPath []string            `yaml:"defaultPath,omitempty"`
+	Filters     []ScopeFilterConfig `yaml:"filters"`
 }
 
 // ScopeFilterConfig is used for YAML parsing - converts to v0alpha1.ScopeFilter
@@ -116,9 +117,20 @@ func convertScopeSpec(cfg ScopeConfig) v0alpha1.ScopeSpec {
 	for i, f := range cfg.Filters {
 		filters[i] = convertFilter(f)
 	}
+
+	// Prefix defaultPath elements with the gdev prefix
+	var defaultPath []string
+	if len(cfg.DefaultPath) > 0 {
+		defaultPath = make([]string, len(cfg.DefaultPath))
+		for i, p := range cfg.DefaultPath {
+			defaultPath[i] = prefix + "-" + p
+		}
+	}
+
 	return v0alpha1.ScopeSpec{
-		Title:   cfg.Title,
-		Filters: filters,
+		Title:       cfg.Title,
+		DefaultPath: defaultPath,
+		Filters:     filters,
 	}
 }
 

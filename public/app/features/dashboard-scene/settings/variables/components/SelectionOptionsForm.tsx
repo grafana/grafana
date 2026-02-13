@@ -10,7 +10,9 @@ interface SelectionOptionsFormProps {
   multi: boolean;
   includeAll: boolean;
   allowCustomValue?: boolean;
+  disableAllowCustomValue?: boolean;
   allValue?: string | null;
+  disableCustomAllValue?: boolean;
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllowCustomValueChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -20,8 +22,10 @@ interface SelectionOptionsFormProps {
 export function SelectionOptionsForm({
   multi,
   allowCustomValue,
+  disableAllowCustomValue,
   includeAll,
   allValue,
+  disableCustomAllValue,
   onMultiChange,
   onAllowCustomValueChange,
   onIncludeAllChange,
@@ -39,18 +43,19 @@ export function SelectionOptionsForm({
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
-      {onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name={t('dashboard-scene.selection-options-form.name-allow-custom-values', 'Allow custom values')}
-          description={t(
-            'dashboard-scene.selection-options-form.description-enables-users-custom-values',
-            'Enables users to add custom values to the list'
-          )}
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
-      )}
+      {!disableAllowCustomValue &&
+        onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
+          <VariableCheckboxField
+            value={allowCustomValue ?? true}
+            name={t('dashboard-scene.selection-options-form.name-allow-custom-values', 'Allow custom values')}
+            description={t(
+              'dashboard-scene.selection-options-form.description-enables-users-custom-values',
+              'Enables users to add custom values to the list'
+            )}
+            onChange={onAllowCustomValueChange}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+          />
+        )}
       <VariableCheckboxField
         value={includeAll}
         name={t('dashboard-scene.selection-options-form.name-include-all-option', 'Include All option')}
@@ -61,7 +66,7 @@ export function SelectionOptionsForm({
         onChange={onIncludeAllChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
       />
-      {includeAll && (
+      {!disableCustomAllValue && includeAll && (
         <VariableTextField
           defaultValue={allValue ?? ''}
           onBlur={onAllValueChange}

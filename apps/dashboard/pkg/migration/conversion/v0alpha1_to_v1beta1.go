@@ -88,6 +88,11 @@ func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard,
 	// Which means that we have schemaVersion: 42 dashboards where datasource variable references are still strings
 	normalizeTemplateVariableDatasources(out.Spec.Object)
 
+	// Normalize panel and target datasources from string to object format
+	// This handles legacy dashboards where panels/targets have datasource: "$datasource" (string)
+	// instead of datasource: { uid: "$datasource" } (object)
+	normalizePanelDatasources(out.Spec.Object)
+
 	return nil
 }
 
@@ -133,4 +138,63 @@ func isTemplateVariableRef(s string) bool {
 		return false
 	}
 	return strings.HasPrefix(s, "$") || strings.HasPrefix(s, "${")
+}
+
+// normalizePanelDatasources converts panel and target string datasources to object format.
+// Legacy dashboards may have panels/targets with datasource: "$datasource" (string).
+// This normalizes them to datasource: { uid: "$datasource" } for consistent V1→V2 conversion.
+func normalizePanelDatasources(dashboard map[string]interface{}) {
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return
+	}
+
+	normalizePanelsDatasources(panels)
+}
+
+// normalizePanelsDatasources normalizes datasources in a list of panels (including nested row panels)
+func normalizePanelsDatasources(panels []interface{}) {
+	for _, panel := range panels {
+		panelMap, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Handle row panels with nested panels
+		if panelType, _ := panelMap["type"].(string); panelType == "row" {
+			if nestedPanels, ok := panelMap["panels"].([]interface{}); ok {
+				normalizePanelsDatasources(nestedPanels)
+			}
+		}
+
+		// Normalize panel-level datasource
+		if ds := panelMap["datasource"]; ds != nil {
+			if dsStr, ok := ds.(string); ok && isTemplateVariableRef(dsStr) {
+				panelMap["datasource"] = map[string]interface{}{
+					"uid": dsStr,
+				}
+			}
+		}
+
+		// Normalize target-level datasources
+		targets, ok := panelMap["targets"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, target := range targets {
+			targetMap, ok := target.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			if ds := targetMap["datasource"]; ds != nil {
+				if dsStr, ok := ds.(string); ok && isTemplateVariableRef(dsStr) {
+					targetMap["datasource"] = map[string]interface{}{
+						"uid": dsStr,
+					}
+				}
+			}
+		}
+	}
 }

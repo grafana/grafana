@@ -20,6 +20,3 @@ export const cloudMigrationAPI = generatedAPI.injectEndpoints({
 });
 
 export const { useGetLocalPluginListQuery } = cloudMigrationAPI;
-
-// eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';

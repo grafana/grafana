@@ -43,13 +43,12 @@ func main() {
 	})
 
 	pluginKindGen.Append(
-		&codegen.PluginRegistryJenny{},
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
 	pluginKindGen.AddPostprocessors(
-		corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"),
+		corecodegen.PluginsSlashHeaderMapper("public/app/plugins/gen.go", filepath.Join("public", "app", "plugins")),
 		corecodegen.GoFormat(),
 		splitSchiffer(),
 	)

@@ -9,12 +9,15 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
-import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
+import {
+  useGetAllVariableOptions,
+  VariableValuesPreview,
+} from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
@@ -75,6 +78,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     hideModal();
   };
 
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
+
   return (
     <form
       aria-label={t('dashboard-scene.variable-editor-form.aria-label-variable-editor-form', 'Variable editor form')}
@@ -123,7 +128,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>

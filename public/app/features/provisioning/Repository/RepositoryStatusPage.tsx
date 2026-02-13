@@ -5,12 +5,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
-import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 
 import { RepositoryActions } from './RepositoryActions';
@@ -36,6 +36,7 @@ export default function RepositoryStatusPage() {
   const tab = queryParams['tab'] ?? TabSelection.Overview;
 
   const notFound = query.isError && isNotFoundError(query.error);
+  const hasError = query.isError && !notFound;
 
   const tabInfo = useMemo<SelectableValue<TabSelection>>(
     () => [
@@ -63,7 +64,11 @@ export default function RepositoryStatusPage() {
       actions={data && <RepositoryActions repository={data} />}
     >
       <Page.Contents isLoading={query.isLoading}>
-        <InlineSecureValueWarning repo={data} />
+        {hasError && (
+          <Alert severity="error" title={t('provisioning.repository-status.error', 'Failed to load repository')}>
+            {getErrorMessage(query.error)}
+          </Alert>
+        )}
         {notFound ? (
           <EmptyState
             message={t('provisioning.repository-status-page.not-found-message', 'Repository not found')}

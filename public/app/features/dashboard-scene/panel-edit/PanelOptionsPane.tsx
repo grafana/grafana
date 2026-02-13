@@ -53,6 +53,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   onToggleVizPicker = () => {
     const newState = !this.state.isVizPickerOpen;
+
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
@@ -63,14 +64,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     });
   };
 
-  onChangePanelPlugin = (options: VizTypeChangeDetails) => {
-    const panel = this.state.panelRef.resolve();
+  onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
       plugin_id: pluginId,
+      from_suggestions: options.fromSuggestions ?? false,
     });
 
     // clear custom options
@@ -229,10 +230,12 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
       {isVizPickerOpen && (
         <PanelVizTypePicker
           panel={panel}
-          onChange={model.onChangePanelPlugin}
+          onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          isNewPanel={isNewPanel}
+          hasPickedViz={hasPickedViz}
         />
       )}
     </>

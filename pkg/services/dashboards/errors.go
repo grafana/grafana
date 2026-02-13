@@ -79,6 +79,11 @@ var (
 		Reason:     "message too long, max 500 characters",
 		StatusCode: 400,
 	}
+	ErrDashboardTagTooLong = dashboardaccess.DashboardErr{
+		Reason:     "dashboard tag too long, max 50 characters",
+		StatusCode: 400,
+		Status:     "tag-too-long",
+	}
 	ErrDashboardCannotSaveProvisionedDashboard = dashboardaccess.DashboardErr{
 		Reason:     "Cannot save provisioned dashboard",
 		StatusCode: 400,

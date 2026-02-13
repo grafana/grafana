@@ -8,7 +8,7 @@ import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
 import { SyncRepository } from './SyncRepository';
@@ -32,7 +32,7 @@ export function RepositoryListItem({ repository }: Props) {
 
       meta.push(
         <TextLink key="link" external href={href}>
-          {href.split('/').slice(3).join('/')}
+          {formatRepoUrl(href)}
         </TextLink>
       );
     } else if (spec?.type === 'local') {

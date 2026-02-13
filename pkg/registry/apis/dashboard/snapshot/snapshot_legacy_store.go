@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,6 @@ type SnapshotLegacyStore struct {
 	ResourceInfo utils.ResourceInfo
 	Service      dashboardsnapshots.Service
 	Namespacer   request.NamespaceMapper
-	Options      dashV0.SnapshotSharingOptions
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -117,15 +115,6 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 }
 
 func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.checkEnabled(info.Value)
-	if err != nil {
-		return nil, err
-	}
 	query := dashboardsnapshots.GetDashboardSnapshotQuery{
 		Key: name,
 	}
@@ -139,11 +128,4 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 		return convertSnapshotToK8sResource(res, s.Namespacer), nil
 	}
 	return nil, s.ResourceInfo.NewNotFound(name)
-}
-
-func (s *SnapshotLegacyStore) checkEnabled(ns string) error {
-	if !s.Options.SnapshotsEnabled {
-		return fmt.Errorf("snapshots not enabled")
-	}
-	return nil
 }

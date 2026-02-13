@@ -3,20 +3,25 @@ keywords:
   - grafana
   - dashboard
   - template
+  - suggestions
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Create template dashboards
-title: Create dashboards from templates
-description: Learn how to create dashboards from templates
+menuTitle: Create template and suggested dashboards
+title: Create dashboards from templates and suggestions
+description: Learn how to create dashboards from templates and suggestions
 weight: 3
 ---
 
-{{< docs/public-preview product="Dashboard templates" >}}
+# Create dashboards from templates and suggestions
 
-# Create dashboards from templates
+Grafana provides alternative ways to start building a dashboard.
+
+## Create dashboards from templates
+
+{{< docs/public-preview product="Dashboard templates" >}}
 
 Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data. These dashboards use sample data, which you can replace with your own data, making it easier to get started with monitoring and analysis.
 
@@ -48,3 +53,23 @@ To create a dashboard from a template, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v12.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save dashboard**.
+
+## Create dashboards from suggestions
+
+{{< docs/public-preview product="Suggested dashboards" >}}
+
+You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page, which gives you access to suggestions based on the data source.
+
+To begin building a dashboard directly from a data source, follow these steps:
+
+1. Navigate to **Connections > Data sources**.
+1. On the row of the data source for which you want to build a dashboard, click **Build a dashboard**.
+
+   The empty dashboard page opens.
+
+1. Select one of the suggested dashboards by clicking its **Use dashboard** button. This can be helpful when you're not sure how to most effectively visualize your data.
+   The suggested dashboards are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch). If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
+
+   ![Empty dashboard with add visualization and suggested dashboard options](/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v12.3.png)
+
+1. Complete the rest of the dashboard configuration. For more detailed steps, refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/), beginning at step five.

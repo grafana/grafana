@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 
 import { getLanguage } from '@grafana/i18n/internal';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 

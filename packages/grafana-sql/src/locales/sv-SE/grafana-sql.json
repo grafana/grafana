@@ -69,6 +69,12 @@
         "placeholder-select-format": "Välj format",
         "run-query": "Kör fråga"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Tryck på CTRL/CMD+Retur för att köra frågan",
         "tooltip-collapse": "Minimera redigeraren",

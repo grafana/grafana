@@ -34,9 +34,10 @@ export const useGetResourceRepositoryView = ({
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
 
   const provisioningEnabled = config.featureToggles.provisioning;
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
-    !provisioningEnabled || skipQuery || hasNoRole ? skipToken : undefined
-  );
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || hasNoRole || (!name && !folderName);
+  const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
+
+  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(settingsQueryArg);
 
   const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(

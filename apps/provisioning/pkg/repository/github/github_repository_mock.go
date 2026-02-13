@@ -5,10 +5,8 @@ package github
 import (
 	context "context"
 
-	mock "github.com/stretchr/testify/mock"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
-
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	mock "github.com/stretchr/testify/mock"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -275,6 +273,107 @@ func (_c *MockGithubRepository_Delete_Call) Return(_a0 error) *MockGithubReposit
 }
 
 func (_c *MockGithubRepository_Delete_Call) RunAndReturn(run func(context.Context, string, string, string) error) *MockGithubRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCurrentBranch provides a mock function with no fields
+func (_m *MockGithubRepository) GetCurrentBranch() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrentBranch")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// MockGithubRepository_GetCurrentBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCurrentBranch'
+type MockGithubRepository_GetCurrentBranch_Call struct {
+	*mock.Call
+}
+
+// GetCurrentBranch is a helper method to define mock.On call
+func (_e *MockGithubRepository_Expecter) GetCurrentBranch() *MockGithubRepository_GetCurrentBranch_Call {
+	return &MockGithubRepository_GetCurrentBranch_Call{Call: _e.mock.On("GetCurrentBranch")}
+}
+
+func (_c *MockGithubRepository_GetCurrentBranch_Call) Run(run func()) *MockGithubRepository_GetCurrentBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_GetCurrentBranch_Call) Return(_a0 string) *MockGithubRepository_GetCurrentBranch_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGithubRepository_GetCurrentBranch_Call) RunAndReturn(run func() string) *MockGithubRepository_GetCurrentBranch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDefaultBranch provides a mock function with given fields: ctx
+func (_m *MockGithubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefaultBranch")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_GetDefaultBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDefaultBranch'
+type MockGithubRepository_GetDefaultBranch_Call struct {
+	*mock.Call
+}
+
+// GetDefaultBranch is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGithubRepository_Expecter) GetDefaultBranch(ctx interface{}) *MockGithubRepository_GetDefaultBranch_Call {
+	return &MockGithubRepository_GetDefaultBranch_Call{Call: _e.mock.On("GetDefaultBranch", ctx)}
+}
+
+func (_c *MockGithubRepository_GetDefaultBranch_Call) Run(run func(ctx context.Context)) *MockGithubRepository_GetDefaultBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_GetDefaultBranch_Call) Return(_a0 string, _a1 error) *MockGithubRepository_GetDefaultBranch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_GetDefaultBranch_Call) RunAndReturn(run func(context.Context) (string, error)) *MockGithubRepository_GetDefaultBranch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -830,6 +929,39 @@ func (_c *MockGithubRepository_ResourceURLs_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// SetBranch provides a mock function with given fields: branch
+func (_m *MockGithubRepository) SetBranch(branch string) {
+	_m.Called(branch)
+}
+
+// MockGithubRepository_SetBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetBranch'
+type MockGithubRepository_SetBranch_Call struct {
+	*mock.Call
+}
+
+// SetBranch is a helper method to define mock.On call
+//   - branch string
+func (_e *MockGithubRepository_Expecter) SetBranch(branch interface{}) *MockGithubRepository_SetBranch_Call {
+	return &MockGithubRepository_SetBranch_Call{Call: _e.mock.On("SetBranch", branch)}
+}
+
+func (_c *MockGithubRepository_SetBranch_Call) Run(run func(branch string)) *MockGithubRepository_SetBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_SetBranch_Call) Return() *MockGithubRepository_SetBranch_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockGithubRepository_SetBranch_Call) RunAndReturn(run func(string)) *MockGithubRepository_SetBranch_Call {
+	_c.Run(run)
+	return _c
+}
+
 // Stage provides a mock function with given fields: ctx, opts
 func (_m *MockGithubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	ret := _m.Called(ctx, opts)
@@ -993,53 +1125,6 @@ func (_c *MockGithubRepository_Update_Call) Return(_a0 error) *MockGithubReposit
 }
 
 func (_c *MockGithubRepository_Update_Call) RunAndReturn(run func(context.Context, string, string, []byte, string) error) *MockGithubRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Validate provides a mock function with no fields
-func (_m *MockGithubRepository) Validate() field.ErrorList {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Validate")
-	}
-
-	var r0 field.ErrorList
-	if rf, ok := ret.Get(0).(func() field.ErrorList); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(field.ErrorList)
-		}
-	}
-
-	return r0
-}
-
-// MockGithubRepository_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
-type MockGithubRepository_Validate_Call struct {
-	*mock.Call
-}
-
-// Validate is a helper method to define mock.On call
-func (_e *MockGithubRepository_Expecter) Validate() *MockGithubRepository_Validate_Call {
-	return &MockGithubRepository_Validate_Call{Call: _e.mock.On("Validate")}
-}
-
-func (_c *MockGithubRepository_Validate_Call) Run(run func()) *MockGithubRepository_Validate_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockGithubRepository_Validate_Call) Return(_a0 field.ErrorList) *MockGithubRepository_Validate_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockGithubRepository_Validate_Call) RunAndReturn(run func() field.ErrorList) *MockGithubRepository_Validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

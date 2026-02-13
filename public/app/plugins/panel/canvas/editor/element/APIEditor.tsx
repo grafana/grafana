@@ -23,6 +23,7 @@ export interface APIEditorConfig {
   contentType?: string;
   queryParams?: Array<[string, string]>;
   headerParams?: Array<[string, string]>;
+  successMessage: string;
 }
 
 const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
@@ -121,6 +122,16 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
+  const onSuccessMessageChange = useCallback(
+    (successMessage = '') => {
+      onChange({
+        ...value,
+        successMessage,
+      });
+    },
+    [onChange, value]
+  );
+
   const renderJSON = (data: string) => {
     try {
       const json = JSON.parse(interpolateVariables(data));
@@ -186,14 +197,22 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
 
       <br />
-      <Field label={t('canvas.apieditor.label-query-parameters', 'Query parameters')}>
+      <Field label={t('canvas.apieditor.label-query-parameters', 'Query parameters')} noMargin>
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
       </Field>
-      <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')}>
+      <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')} noMargin>
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
+      <Field label={t('canvas.apieditor.label-successmessage', 'Success message')} noMargin>
+        <StringValueEditor
+          context={context}
+          value={value.successMessage}
+          onChange={onSuccessMessageChange}
+          item={dummyStringSettings}
+        />
+      </Field>
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
-        <Field label={t('canvas.apieditor.label-payload', 'Payload')}>
+        <Field label={t('canvas.apieditor.label-payload', 'Payload')} noMargin>
           <StringValueEditor
             context={context}
             value={value?.data ?? '{}'}
@@ -202,6 +221,7 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </Field>
       )}
+
       {renderTestAPIButton(value)}
       <br />
       {value?.method !== HttpRequestMethod.GET &&

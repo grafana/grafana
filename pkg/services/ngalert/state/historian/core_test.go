@@ -92,7 +92,7 @@ func TestShouldRecord(t *testing.T) {
 		}
 
 		t.Run(fmt.Sprintf("%s -> %s should be %v", trans.PreviousFormatted(), trans.Formatted(), !ok), func(t *testing.T) {
-			require.Equal(t, !ok, shouldRecord(trans))
+			require.Equal(t, !ok, ShouldRecord(trans))
 		})
 	}
 }

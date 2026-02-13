@@ -1942,6 +1942,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		// HOWEVER, maybe OK to leave this for now and "fix" it by using file provisioning for mode 4
 		m.Kind = utils.ManagerKindClassicFP // nolint:staticcheck
 		m.Identity = provisioning.Name
+		m.AllowsEdits = provisioning.AllowUIUpdates
 		s.Path = provisioning.ExternalID
 		s.Checksum = provisioning.CheckSum
 		s.TimestampMillis = time.Unix(provisioning.Updated, 0).UnixMilli()

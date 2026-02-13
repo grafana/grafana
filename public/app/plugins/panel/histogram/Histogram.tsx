@@ -112,7 +112,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     direction: ScaleDirection.Right,
     range: useLogScale
       ? (u, wantedMin, wantedMax) => {
-          return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+          return uPlot.rangeLog(wantedMin, (wantedMax ?? 1) * bucketFactor, 2, true);
         }
       : (u, wantedMin, wantedMax) => {
           // these settings will prevent zooming, probably okay?

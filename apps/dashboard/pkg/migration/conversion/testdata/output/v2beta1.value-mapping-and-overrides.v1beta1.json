@@ -36,6 +36,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with ValueMap mapping type - maps specific text values to colors and display text",
         "fieldConfig": {
           "defaults": {
@@ -104,6 +108,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with RangeMap mapping type - maps numerical ranges to colors and display text",
         "fieldConfig": {
           "defaults": {
@@ -188,6 +196,10 @@
         "type": "gauge"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with RegexMap mapping type - maps values matching regex patterns to colors",
         "fieldConfig": {
           "defaults": {
@@ -267,6 +279,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with SpecialValueMap mapping type - maps special values like null, NaN, true, false to display text",
         "fieldConfig": {
           "defaults": {
@@ -380,6 +396,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with all mapping types combined - demonstrates mixing different mapping types and multiple override matchers",
         "fieldConfig": {
           "defaults": {
@@ -567,6 +587,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
         "description": "Panel with override that has empty properties array - tests conversion of overrides without any property modifications",
         "fieldConfig": {
           "overrides": [

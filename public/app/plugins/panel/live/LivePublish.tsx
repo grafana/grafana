@@ -37,7 +37,7 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
         alert('expected stream scope!');
         return;
       }
-      return getBackendSrv().post(`api/live/push/${addr.namespace}`, body);
+      return getBackendSrv().post(`api/live/push/${addr.stream}`, body);
     }
 
     if (!isValidLiveChannelAddress(addr)) {

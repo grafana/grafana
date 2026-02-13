@@ -5,6 +5,7 @@ import { Role } from './accessControl';
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
+  created?: string;
   lastSeenAt: string;
   lastSeenAtAge: string;
   login: string;
@@ -49,6 +50,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  created?: string;
   lastSeenAt?: string;
   lastSeenAtAge?: string;
   licensedRole?: string;

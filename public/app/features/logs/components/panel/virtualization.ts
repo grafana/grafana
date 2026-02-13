@@ -182,7 +182,7 @@ export class LogLineVirtualization {
   calculateFieldDimensions = (
     logs: LogListModel[],
     displayedFields: string[] = [],
-    timestampResolution: LogLineTimestampResolution,
+    timestampResolution?: LogLineTimestampResolution,
     showUniqueLabels?: boolean
   ) => {
     if (!logs.length) {
@@ -192,9 +192,12 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
-      if (width > timestampWidth) {
-        timestampWidth = Math.round(width);
+      let width = 0;
+      if (timestampResolution) {
+        width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
+        if (width > timestampWidth) {
+          timestampWidth = Math.round(width);
+        }
       }
       width = this.measureTextWidth(logs[i].displayLevel);
       if (width > levelWidth) {
@@ -205,19 +208,23 @@ export class LogLineVirtualization {
         fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
       }
     }
-    const dimensions: LogFieldDimension[] = [
-      {
+    const dimensions: LogFieldDimension[] = [];
+    if (timestampResolution) {
+      dimensions.push({
         field: 'timestamp',
+        internal: true,
         width: timestampWidth,
-      },
-      {
-        field: 'level',
-        width: levelWidth,
-      },
-    ];
+      });
+    }
+    dimensions.push({
+      field: 'level',
+      internal: true,
+      width: levelWidth,
+    });
     if (showUniqueLabels) {
       dimensions.push({
         field: 'unique-labels',
+        internal: true,
         width: 0,
       });
     }
@@ -322,6 +329,7 @@ export function getLogLineSize(
 }
 
 export interface LogFieldDimension {
+  internal?: boolean;
   field: string;
   width: number;
 }

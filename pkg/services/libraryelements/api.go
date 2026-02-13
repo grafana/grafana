@@ -160,6 +160,7 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 			UID:        web.Params(c.Req)[":uid"],
 			FolderName: dashboards.RootFolderName,
 		},
+		nil,
 	)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library element")
@@ -199,6 +200,8 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		FolderFilter:     c.Query("folderFilter"),
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
+	// Add cache entry to context for enabling folder tree caching
+	c.Req = c.Req.WithContext(withCache(c.Req.Context()))
 	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library elements")
@@ -293,7 +296,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 	// make sure the library element exists
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, model.GetLibraryElementCommand{
 		UID: libraryPanelUID,
-	})
+	}, nil)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library element")
 	}
@@ -501,9 +504,15 @@ type GetLibraryElementsParams struct {
 	// required:false
 	ExcludeUID string `json:"excludeUid"`
 	// A comma separated list of folder ID(s) to filter the elements by.
+	// Deprecated: Use FolderFilterUIDs instead.
 	// in:query
 	// required:false
+	// deprecated:true
 	FolderFilter string `json:"folderFilter"`
+	// A comma separated list of folder UID(s) to filter the elements by.
+	// in:query
+	// required:false
+	FolderFilterUIDs string `json:"folderFilterUIDs"`
 	// The number of results per page.
 	// in:query
 	// required:false

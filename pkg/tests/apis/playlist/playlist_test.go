@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 var gvr = schema.GroupVersionResource{
 	Group:    "playlist.grafana.app",
-	Version:  "v0alpha1",
+	Version:  "v1",
 	Resource: "playlists",
 }
 
@@ -55,6 +55,47 @@ func TestIntegrationPlaylist(t *testing.T) {
 		// t.Logf("%s", disco)
 		require.JSONEq(t, `[
           {
+            "freshness": "Current",
+            "resources": [
+              {
+                "resource": "playlists",
+                "responseKind": {
+                  "group": "",
+                  "kind": "Playlist",
+                  "version": ""
+                },
+                "scope": "Namespaced",
+                "singularResource": "playlist",
+                "subresources": [
+                  {
+                    "responseKind": {
+                      "group": "",
+                      "kind": "Playlist",
+                      "version": ""
+                    },
+                    "subresource": "status",
+                    "verbs": [
+                      "get",
+                      "patch",
+                      "update"
+                    ]
+                  }
+                ],
+                "verbs": [
+                  "create",
+                  "delete",
+                  "deletecollection",
+                  "get",
+                  "list",
+                  "patch",
+                  "update",
+                  "watch"
+                ]
+              }
+            ],
+            "version": "v1"
+          },
+		  {
             "freshness": "Current",
             "resources": [
               {
@@ -426,6 +467,45 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 	})
 
+	t.Run("Check CRUD operations with None role", func(t *testing.T) {
+		// Create a playlist with admin user
+		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		created, err := clientAdmin.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+
+		clientNone := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.None,
+			GVR:  gvr,
+		})
+
+		// Now check if None user can perform a Get to start a playlist
+		_, err = clientNone.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// None role can get but can not create edit or delete a playlist
+		_, err = clientNone.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.Error(t, err)
+
+		_, err = clientNone.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+		require.Error(t, err)
+
+		err = clientNone.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err)
+
+		// delete created resource
+		err = clientAdmin.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
 	t.Run("Check k8s client-go List from different org users", func(t *testing.T) {
 		// Check Org1 Viewer
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -505,7 +585,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "apiVersion": "playlist.grafana.app/v1",
   "kind": "Playlist",
   "metadata": {
     "creationTimestamp": "${creationTimestamp}",
@@ -558,7 +638,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 
 		expectedUnstructuredResult := &unstructured.Unstructured{
 			Object: map[string]any{
-				"apiVersion": "playlist.grafana.app/v0alpha1",
+				"apiVersion": "playlist.grafana.app/v1",
 				"kind":       "Playlist",
 				"metadata": map[string]any{
 					"creationTimestamp": "123",

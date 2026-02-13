@@ -6,7 +6,6 @@ import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPag
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
@@ -24,13 +23,14 @@ import { DashboardRoutes } from 'app/types/dashboard';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { isDashboardSceneEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
-  return [
+  const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
@@ -60,6 +60,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/assistant-preview/*',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.AssistantPreview,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "DashboardScenePage" */ '../features/dashboard-scene/pages/DashboardScenePage')
+      ),
+    },
+    {
       path: '/dashboard/new-with-ds/:datasourceUid',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
@@ -77,6 +87,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/:type/:slug',
+      allowAnonymous: (params) => params.type === 'snapshot',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -98,7 +109,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
+        isDashboardSceneEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -109,7 +120,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
+        isDashboardSceneEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -139,7 +150,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/datasources/correlations',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+        () =>
+          import(/* webpackChunkName: "CorrelationsPageWrapper" */ 'app/features/correlations/CorrelationsPageWrapper')
       ),
     },
     {
@@ -223,7 +235,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/extensions',
-      navId: 'extensions',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
       component:
@@ -317,11 +328,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: config.featureToggles.ssoSettingsLDAP
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
-          )
-        : LdapPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+      ),
     },
     {
       path: '/admin/authentication/:provider',
@@ -395,6 +404,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/invite/:code',
+      allowAnonymous: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
@@ -534,7 +544,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.restoreDashboards && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
@@ -560,7 +569,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/*',
       component: PageNotFound,
     },
-  ].filter(isTruthy);
+  ];
+
+  return routes.filter(isTruthy);
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {

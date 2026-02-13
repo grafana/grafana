@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Elasticsearch",
   "id": "elasticsearch",
+  "executable": "gpx_elasticsearch",
   "category": "logging",
   "info": {
     "description": "Open source logging & analytics database",
@@ -27,7 +28,8 @@
         "name": "Documentation",
         "url": "https://grafana.com/docs/grafana/latest/datasources/elasticsearch/"
       }
-    ]
+    ],
+    "version": "%VERSION%"
   },
   "alerting": true,
   "annotations": true,
@@ -36,5 +38,9 @@
   "backend": true,
   "queryOptions": {
     "minInterval": true
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.6.0",
+    "plugins": []
   }
 }

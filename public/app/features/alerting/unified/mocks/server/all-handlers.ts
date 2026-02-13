@@ -13,12 +13,14 @@ import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/hand
 import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/routingtrees.k8s';
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import receiverTestK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8sReceiverTest';
 import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/mimirRuler';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import userStorageHandlers from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 
 /**
  * All alerting-specific handlers that are required across tests
@@ -35,6 +37,7 @@ export const alertingHandlers = [
   // Kubernetes-style handlers
   ...timeIntervalK8sHandlers,
   ...receiverK8sHandlers,
+  ...receiverTestK8sHandlers,
   ...templatesK8sHandlers,
   ...routingTreeK8sHandlers,
 ];
@@ -55,6 +58,7 @@ const allHandlers = [
   ...datasourcesHandlers,
   ...evalHandlers,
   ...pluginsHandlers,
+  ...userStorageHandlers,
 ];
 
 export default allHandlers;

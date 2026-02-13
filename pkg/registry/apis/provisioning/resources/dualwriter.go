@@ -11,6 +11,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -32,7 +33,7 @@ type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
 	folders *FolderManager
-	access  authlib.AccessChecker
+	access  auth.AccessChecker
 }
 
 type DualWriteOptions struct {
@@ -48,7 +49,7 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
@@ -69,7 +70,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
+		return nil, err
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource
@@ -125,6 +126,12 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		}
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
 	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
@@ -154,6 +161,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 
 	if err := r.authorizeCreateFolder(ctx, opts.Path); err != nil {
 		return nil, err
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
 	// Now actually create the folder
@@ -492,11 +505,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 }
 
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
@@ -504,27 +512,15 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		name = parsed.Obj.GetName()
 	}
 
-	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-		Group:     parsed.GVR.Group,
-		Resource:  parsed.GVR.Resource,
-		Namespace: id.GetNamespace(),
-		Name:      name,
-		Verb:      verb,
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    parsed.GVR.Group,
+		Resource: parsed.GVR.Resource,
+		Name:     name,
+		Verb:     verb,
 	}, parsed.Meta.GetFolder())
-	if err != nil || !rsp.Allowed {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to perform %s on the resource", verb))
-	}
-
-	return nil
 }
 
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
 	// Determine parent folder from path
 	parentFolder := ""
 	if path != "" {
@@ -537,19 +533,12 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string)
 	}
 
 	// For folder create operations, use empty name to check parent folder permissions
-	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-		Group:     FolderResource.Group,
-		Resource:  FolderResource.Resource,
-		Namespace: id.GetNamespace(),
-		Name:      "", // Empty name for create operations
-		Verb:      utils.VerbCreate,
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     "", // Empty name for create operations
+		Verb:     utils.VerbCreate,
 	}, parentFolder)
-	if err != nil || !rsp.Allowed {
-		return apierrors.NewForbidden(FolderResource.GroupResource(), path,
-			fmt.Errorf("no access to create folder in parent folder '%s'", parentFolder))
-	}
-
-	return nil
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
@@ -565,8 +554,14 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		}
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
 	// For branch operations, just delete from the repository without updating Grafana DB
-	err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
+	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 	}
@@ -634,6 +629,11 @@ func (r *DualReadWriter) isConfiguredBranch(opts DualWriteOptions) bool {
 // or if the ref matches the configured branch
 func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *ParsedResource) bool {
 	if parsed != nil && parsed.Client == nil {
+		return false
+	}
+
+	// Only dual write if sync is enabled
+	if !r.repo.Config().Spec.Sync.Enabled {
 		return false
 	}
 

@@ -39,10 +39,14 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './savedSearchesSchema';
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
@@ -86,6 +90,19 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const popupRef = useRef<HTMLDivElement>(null);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
+  // Feature toggle for saved searches
+  const savedSearchesEnabled = shouldUseSavedSearches();
+
+  // Saved searches hook with UserStorage persistence
+  const {
+    savedSearches,
+    isLoading: savedSearchesLoading,
+    saveSearch,
+    renameSearch,
+    deleteSearch,
+    setDefaultSearch,
+  } = useSavedSearches();
+
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
@@ -96,6 +113,20 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   useEffect(() => {
     setValue('query', searchQuery);
   }, [searchQuery, setValue]);
+
+  // Apply saved search - triggers filtering (which updates search input and URL)
+  const handleApplySearch = useCallback(
+    (search: SavedSearch) => {
+      const parsedFilter = getSearchFilterFromQuery(search.query);
+      updateFilters(parsedFilter);
+
+      // Track analytics
+      trackSavedSearchApplied(search);
+    },
+    [updateFilters]
+  );
+
+  // Auto-apply of default search is handled in RuleListPage (before FilterView mounts)
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
@@ -240,7 +271,21 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               {filterButtonLabel}
             </Button>
           </PopupCard>
-          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          {savedSearchesEnabled && (
+            <SavedSearches
+              savedSearches={savedSearches}
+              currentSearchQuery={searchQuery}
+              onSave={saveSearch}
+              onRename={renameSearch}
+              onDelete={deleteSearch}
+              onApply={handleApplySearch}
+              onSetDefault={setDefaultSearch}
+              isLoading={savedSearchesLoading}
+            />
+          )}
+          <Box marginLeft={2}>
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          </Box>
         </Stack>
       </Stack>
     </form>

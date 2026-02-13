@@ -9,7 +9,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { SaveProvisionedDashboardForm, Props } from './SaveProvisionedDashboardForm';
+import { Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -118,6 +118,7 @@ function setup(props: Partial<Props> = {}) {
       closeModal: jest.fn(),
       getSaveAsModel: jest.fn().mockReturnValue(mockDashboard),
       setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
     } as unknown as DashboardScene,
     drawer: {
       onClose: jest.fn(),
@@ -151,10 +152,7 @@ function setup(props: Partial<Props> = {}) {
       workflow: 'write',
     },
     readOnly: false,
-    workflowOptions: [
-      { label: 'Branch', value: 'branch' },
-      { label: 'Write', value: 'write' },
-    ],
+    canPushToConfiguredBranch: true,
     ...props,
   };
 
@@ -190,7 +188,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
@@ -201,7 +199,7 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByTestId('common-options')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: /description/i })).not.toBeInTheDocument();
   });
@@ -291,6 +289,7 @@ describe('SaveProvisionedDashboardForm', () => {
         closeModal: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
     });
 
@@ -385,6 +384,7 @@ describe('SaveProvisionedDashboardForm', () => {
         closeModal: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
     });
 
@@ -408,10 +408,10 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByTestId('common-options')).not.toBeInTheDocument();
 
     // Workflow options are not shown
-    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
 
     // Branch field is not shown
-    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
   });
 
   it('enables save button when only the comment changes', async () => {
@@ -431,6 +431,7 @@ describe('SaveProvisionedDashboardForm', () => {
         closeModal: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
     });
 
@@ -443,6 +444,72 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(saveButton).toBeEnabled();
+    });
+  });
+
+  it('should save dashboard with raw JSON from editor', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
+    const rawJson = JSON.stringify({
+      title: 'Raw JSON Dashboard',
+      panels: [],
+      schemaVersion: 36,
+    });
+
+    const dashboardFromRawJson = {
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        generateName: 'p',
+        name: undefined,
+      },
+      spec: {
+        title: 'Raw JSON Dashboard',
+        panels: [],
+        schemaVersion: 36,
+      },
+    };
+
+    const { user } = setup({
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        getSaveResource: jest.fn().mockReturnValue(dashboardFromRawJson),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(dashboardFromRawJson),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(rawJson),
+      } as unknown as DashboardScene,
+    });
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    expect(saveButton).toBeEnabled();
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
+    await user.type(commentInput, 'Save with raw JSON');
+
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(mockAction).toHaveBeenCalledWith({
+        ref: 'dashboard/2023-01-01-abcde',
+        name: 'test-repo',
+        path: 'test-dashboard.json',
+        message: 'Save with raw JSON',
+        body: dashboardFromRawJson,
+      });
     });
   });
 });

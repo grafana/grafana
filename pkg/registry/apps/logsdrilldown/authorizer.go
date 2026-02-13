@@ -24,26 +24,38 @@ func GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionDeny, "valid user is required", err
 		}
 
+		// check if is admin
+		if u.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "isGrafanaAdmin", nil
+		}
+
 		// Auth handling for LogsDrilldownDefaults resource
 		if attr.GetResource() == "logsdrilldowndefaults" {
 			// Allow list and get for everyone
 			if attr.GetVerb() == "list" || attr.GetVerb() == "get" {
 				return authorizer.DecisionAllow, "", nil
 			}
-			// Only allow admins to update (create, update, patch, delete)
-			if u.GetIsGrafanaAdmin() {
-				return authorizer.DecisionAllow, "", nil
-			}
 			// Deny all other operations for non-admins
 			return authorizer.DecisionDeny, "admin access required", nil
 		}
 
-		// check if is admin
-		if u.GetIsGrafanaAdmin() {
-			return authorizer.DecisionAllow, "", nil
+		p := u.GetPermissions()
+
+		// Auth handling for Logs Drilldown default columns
+		if attr.GetResource() == "logsdrilldowndefaultcolumns" {
+			// Allow get for all users
+			if attr.GetVerb() == "get" {
+				return authorizer.DecisionAllow, "", nil
+			}
+			// require plugins:write permissions for other operations
+			_, ok := p[accesscontrol.PluginRolePrefix+"write"]
+			if ok {
+				return authorizer.DecisionAllow, "user has plugins:write", nil
+			} else {
+				return authorizer.DecisionDeny, "user missing plugins:write", nil
+			}
 		}
 
-		p := u.GetPermissions()
 		if len(p) == 0 {
 			return authorizer.DecisionDeny, "no permissions", nil
 		}

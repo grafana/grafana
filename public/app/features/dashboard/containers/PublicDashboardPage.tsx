@@ -20,7 +20,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import { PublicDashboardFooter } from '../components/PublicDashboard/PublicDashboardsFooter';
+import { DashboardBrandingFooter } from '../components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -114,7 +114,7 @@ const PublicDashboardPage = (props: Props) => {
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
       <div className={styles.footer}>
-        <PublicDashboardFooter />
+        <DashboardBrandingFooter />
       </div>
     </Page>
   );

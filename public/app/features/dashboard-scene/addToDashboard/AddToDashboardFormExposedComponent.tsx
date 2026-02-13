@@ -27,7 +27,7 @@ export const AddToDashboardFormExposedComponent = (props: Partial<Props<Absolute
       buildPanel={
         props.buildPanel ??
         (() => ({
-          type: 'timeseries',
+          type: 'timeseries', // TODO: should this be `getDefaultPluginId()`?
           title: t('dashboard-scene.add-to-dashboard-form-exposed.title.new-panel', 'New panel'),
           targets: [],
         }))

@@ -1,8 +1,13 @@
 package featuremgmt
 
 import (
+	"fmt"
+	"maps"
+
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // inMemoryBulkProvider is a wrapper around memprovider.InMemoryProvider that
@@ -28,37 +33,21 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(confFlags map[string]bool) (openfeature.FeatureProvider, error) {
-	flags := make(map[string]memprovider.InMemoryFlag, len(standardFeatureFlags))
+func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+	flags := make(map[string]memprovider.InMemoryFlag, len(standardFlags))
+
+	// Parse and add standard flags
+	for _, flag := range standardFlags {
+		inMemFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse flag %s: %w", flag.Name, err)
+		}
+
+		flags[flag.Name] = inMemFlag
+	}
 
 	// Add flags from config.ini file
-	for name, value := range confFlags {
-		flags[name] = createInMemoryFlag(name, value)
-	}
-
-	// Add standard flags
-	for _, flag := range standardFeatureFlags {
-		if _, exists := flags[flag.Name]; !exists {
-			enabled := flag.Expression == "true"
-			flags[flag.Name] = createInMemoryFlag(flag.Name, enabled)
-		}
-	}
+	maps.Copy(flags, confFlags)
 
 	return newInMemoryBulkProvider(flags), nil
-}
-
-func createInMemoryFlag(name string, enabled bool) memprovider.InMemoryFlag {
-	variant := "disabled"
-	if enabled {
-		variant = "enabled"
-	}
-
-	return memprovider.InMemoryFlag{
-		Key:            name,
-		DefaultVariant: variant,
-		Variants: map[string]interface{}{
-			"enabled":  true,
-			"disabled": false,
-		},
-	}
 }

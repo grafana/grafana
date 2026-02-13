@@ -8,6 +8,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/codes"
+	"google.golang.org/grpc/status"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -28,13 +29,16 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 	defer span.End()
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Mutate", req.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Mutate").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.mutate(ctx, req)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		s.logger.Error("failed to perform mutate request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform mutate request")
 	}
@@ -43,7 +47,7 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 }
 
 func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*authzextv1.MutateResponse, error) {
-	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
+	if err := authorizeWrite(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -148,6 +152,13 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 	return deduplicatedWriteTuples, deduplicatedDeleteTuples
 }
 
+// WriteTuples writes tuples directly to OpenFGA for a given store.
+// This is used internally by mutate operations and the reconciler.
+// Tuples are automatically deduplicated before writing.
+func (s *Server) WriteTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
+}
+
 func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
 	writeReq := &openfgav1.WriteRequest{
 		StoreId:              store.ID,
@@ -170,7 +181,7 @@ func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples 
 		}
 	}
 
-	_, err := s.openfga.Write(ctx, writeReq)
+	_, err := s.openFGAClient.Write(ctx, writeReq)
 	return err
 }
 

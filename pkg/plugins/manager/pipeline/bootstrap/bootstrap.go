@@ -6,12 +6,13 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/tracing"
 	"github.com/grafana/grafana/pkg/semconv"
 )
 
@@ -54,7 +55,7 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 	}
 
 	if opts.DecorateFuncs == nil {
-		opts.DecorateFuncs = DefaultDecorateFuncs(cfg)
+		opts.DecorateFuncs = DefaultDecorateFuncs(cfg, pluginscdn.ProvideService(cfg))
 	}
 
 	return &Bootstrap{

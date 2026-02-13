@@ -77,13 +77,12 @@
         "id": 1,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -117,7 +116,7 @@
           }
         ],
         "title": "Plain",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -156,13 +155,12 @@
         "id": 4,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": false,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -196,7 +194,7 @@
           }
         ],
         "title": "Center glow",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -235,13 +233,12 @@
         "id": 3,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -275,86 +272,7 @@
           }
         ],
         "title": "Center and bar glow",
-        "type": "radialbar"
-      },
-      {
-        "datasource": {
-          "type": "grafana-testdata-datasource"
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": 0
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 6,
-          "w": 4,
-          "x": 12,
-          "y": 1
-        },
-        "id": 5,
-        "maxDataPoints": 20,
-        "options": {
-          "barWidthFactor": 0.4,
-          "effects": {
-            "barGlow": true,
-            "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
-          },
-          "orientation": "auto",
-          "reduceOptions": {
-            "calcs": [
-              "lastNotNull"
-            ],
-            "fields": "",
-            "values": false
-          },
-          "segmentCount": 1,
-          "segmentSpacing": 0.3,
-          "shape": "circle",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": false,
-          "sparkline": false
-        },
-        "pluginVersion": "13.0.0-pre",
-        "targets": [
-          {
-            "alias": "1",
-            "datasource": {
-              "type": "grafana-testdata-datasource"
-            },
-            "max": 100,
-            "min": 1,
-            "noise": 22,
-            "refId": "A",
-            "scenarioId": "random_walk",
-            "spread": 22,
-            "startValue": 1
-          }
-        ],
-        "title": "Spotlight",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -393,13 +311,12 @@
         "id": 8,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -433,7 +350,7 @@
           }
         ],
         "title": "Sparkline",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -472,13 +389,12 @@
         "id": 22,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -512,7 +428,7 @@
           }
         ],
         "title": "Square butts",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -551,13 +467,12 @@
         "id": 23,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -591,7 +506,7 @@
           }
         ],
         "title": "Square butts gauge",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "collapsed": false,
@@ -643,13 +558,12 @@
         "id": 18,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.1,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -683,7 +597,7 @@
           }
         ],
         "title": "Bar width 0,1",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -722,13 +636,12 @@
         "id": 19,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.32,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -762,7 +675,7 @@
           }
         ],
         "title": "Bar width 0,32",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -801,13 +714,12 @@
         "id": 20,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.57,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -841,7 +753,7 @@
           }
         ],
         "title": "Bar width 0,57",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -880,13 +792,12 @@
         "id": 21,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidthFactor": 0.8,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": false,
-            "rounded": true,
-            "spotlight": true
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -920,7 +831,7 @@
           }
         ],
         "title": "Bar width 0,8",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "collapsed": false,
@@ -976,13 +887,12 @@
         "id": 25,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1012,7 +922,7 @@
           }
         ],
         "title": "Plain thresholds",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1055,13 +965,12 @@
         "id": 26,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1091,7 +1000,7 @@
           }
         ],
         "title": "Thresholds segmented",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1134,13 +1043,12 @@
         "id": 29,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": true,
-            "rounded": false,
-            "spotlight": false
+            "gradient": true
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1170,7 +1078,7 @@
           }
         ],
         "title": "Segmented + gradient",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1213,13 +1121,12 @@
         "id": 30,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1249,7 +1156,7 @@
           }
         ],
         "title": "Plain thresholds",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1292,13 +1199,12 @@
         "id": 28,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.72,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": false,
-            "rounded": false,
-            "spotlight": false
+            "gradient": false
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1328,7 +1234,7 @@
           }
         ],
         "title": "Thresholds circle segmented",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "collapsed": false,
@@ -1388,13 +1294,12 @@
         "id": 32,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": true,
-            "rounded": false,
-            "spotlight": false
+            "gradient": true
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1424,7 +1329,7 @@
           }
         ],
         "title": "Thresholds labels",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1471,13 +1376,12 @@
         "id": 34,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": true,
-            "rounded": false,
-            "spotlight": false
+            "gradient": true
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1507,7 +1411,7 @@
           }
         ],
         "title": "Thresholds labels only",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1554,13 +1458,12 @@
         "id": 33,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "flat",
           "barWidthFactor": 0.9,
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "gradient": true,
-            "rounded": false,
-            "spotlight": false
+            "gradient": true
           },
           "orientation": "auto",
           "reduceOptions": {
@@ -1590,7 +1493,7 @@
           }
         ],
         "title": "Thresholds labels + circle",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "collapsed": false,
@@ -1645,15 +1548,15 @@
         "id": 9,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "spotlight": true
+            "gradient": true
           },
+          "endpointMarker": "glow",
           "glow": "both",
           "orientation": "auto",
           "reduceOptions": {
@@ -1668,8 +1571,7 @@
           "shape": "circle",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": false,
-          "spotlight": true
+          "sparkline": false
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -1689,7 +1591,7 @@
           }
         ],
         "title": "Auto gradient + classic palette",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1731,14 +1633,13 @@
         "id": 11,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.4,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "spotlight": true
+            "gradient": true
           },
           "glow": "both",
           "orientation": "auto",
@@ -1754,8 +1655,7 @@
           "shape": "gauge",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": true,
-          "spotlight": true
+          "sparkline": true
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -1775,7 +1675,7 @@
           }
         ],
         "title": "Continuous color scheme ",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "collapsed": false,
@@ -1831,14 +1731,13 @@
         "id": 13,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.49,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "spotlight": true
+            "gradient": true
           },
           "glow": "both",
           "orientation": "auto",
@@ -1854,8 +1753,7 @@
           "shape": "circle",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": false,
-          "spotlight": true
+          "sparkline": false
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -1875,7 +1773,7 @@
           }
         ],
         "title": "Active gateways",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -1918,15 +1816,13 @@
         "id": 14,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.49,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "sparkline": false,
-            "spotlight": true
+            "gradient": true
           },
           "glow": "both",
           "orientation": "auto",
@@ -1942,8 +1838,7 @@
           "shape": "circle",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": false,
-          "spotlight": true
+          "sparkline": false
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -1963,7 +1858,7 @@
           }
         ],
         "title": "Active pods",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -2005,14 +1900,13 @@
         "id": 15,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.84,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "spotlight": true
+            "gradient": true
           },
           "glow": "both",
           "orientation": "auto",
@@ -2028,8 +1922,7 @@
           "shape": "circle",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": false,
-          "spotlight": true
+          "sparkline": false
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -2049,7 +1942,7 @@
           }
         ],
         "title": "Backend",
-        "type": "radialbar"
+        "type": "gauge"
       },
       {
         "datasource": {
@@ -2091,14 +1984,13 @@
         "id": 16,
         "maxDataPoints": 20,
         "options": {
+          "barShape": "rounded",
           "barWidth": 12,
           "barWidthFactor": 0.66,
           "effects": {
             "barGlow": true,
             "centerGlow": true,
-            "gradient": true,
-            "rounded": true,
-            "spotlight": true
+            "gradient": true
           },
           "glow": "both",
           "orientation": "auto",
@@ -2114,8 +2006,7 @@
           "shape": "circle",
           "showThresholdLabels": false,
           "showThresholdMarkers": false,
-          "sparkline": false,
-          "spotlight": true
+          "sparkline": false
         },
         "pluginVersion": "13.0.0-pre",
         "targets": [
@@ -2135,7 +2026,7 @@
           }
         ],
         "title": "Backend",
-        "type": "radialbar"
+        "type": "gauge"
       }
     ],
     "preload": false,

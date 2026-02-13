@@ -14,6 +14,9 @@ outputs:
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_changed || 'true' }}
+  frontend-packages:
+    description: Whether any frontend packages have changed
+    value: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}
   e2e:
     description: Whether the e2e tests or self have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_any_changed == 'true' ||
@@ -97,8 +100,15 @@ runs:
             - '.yarn/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
+          frontend_packages:
+            - '.github/actions/checkout/**'
+            - '.github/actions/change-detection/**'
+            - 'packages/**'
+            - './scripts/validate-npm-packages.sh'
+            - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
+            - 'e2e-playwright/**'
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
             - 'emails/**'
@@ -152,6 +162,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.backend_all_changed_files }}"
         echo "Frontend: ${{ steps.changed-files.outputs.frontend_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_changed_files }}"
+        echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_changed_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.e2e_all_changed_files }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_changed_files }}"

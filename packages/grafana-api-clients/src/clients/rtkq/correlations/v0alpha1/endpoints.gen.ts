@@ -408,9 +408,7 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type CorrelationTargetSpec = {
-  [key: string]: {
-    [key: string]: any;
-  };
+  [key: string]: any;
 };
 export type CorrelationTransformationSpec = {
   expression: string;

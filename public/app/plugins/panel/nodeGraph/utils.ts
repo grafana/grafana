@@ -71,7 +71,9 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
     title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
     subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()) ||
+      fieldsCache.getFirstFieldOfType(FieldType.number),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
@@ -111,7 +113,9 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
     source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
     target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()) ||
+      fieldsCache.getFirstFieldOfType(FieldType.number),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
     // @deprecated -- for edges use color instead

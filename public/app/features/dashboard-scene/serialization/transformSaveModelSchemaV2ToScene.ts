@@ -45,7 +45,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -53,7 +53,6 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
-  DeprecatedInternalId,
   AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -141,11 +140,6 @@ export function transformSaveModelSchemaV2ToScene(
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
-  let dashboardId: number | undefined = undefined;
-
-  if (metadata.labels?.[DeprecatedInternalId]) {
-    dashboardId = parseInt(metadata.labels[DeprecatedInternalId], 10);
-  }
 
   const meta: DashboardMeta = {
     canShare: dto.access.canShare !== false,
@@ -210,7 +204,6 @@ export function transformSaveModelSchemaV2ToScene(
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      id: dashboardId,
       isDirty: false,
       links: [...dashboard.links, ...(options?.defaultLinks ?? [])],
       meta,
@@ -241,7 +234,7 @@ export function transformSaveModelSchemaV2ToScene(
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
-          uid: dashboardId?.toString(),
+          uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
@@ -366,12 +359,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     }
     return new AdHocFiltersVariable(adhocVariableState);
   }
+
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-
       query: variable.spec.query,
       isMulti: variable.spec.multi,
       allValue: variable.spec.allValue || undefined,
@@ -380,6 +373,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -400,6 +394,16 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      ...(variable.spec.staticOptions?.length
+        ? {
+            staticOptions: variable.spec.staticOptions.map((option) => ({
+              label: String(option.text),
+              value: String(option.value),
+              properties: option.properties,
+            })),
+          }
+        : {}),
+      ...(variable.spec.staticOptionsOrder !== undefined && { staticOptionsOrder: variable.spec.staticOptionsOrder }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({

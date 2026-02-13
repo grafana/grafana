@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +24,23 @@ import (
 	"k8s.io/client-go/transport"
 
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/semconv"
 )
 
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/setting")
+// settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
+type settingTracer struct {
+	trace.Tracer
+}
+
+// Inject propagates trace context into HTTP headers.
+func (t *settingTracer) Inject(ctx context.Context, header http.Header, _ trace.Span) {
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
+}
+
+var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafana/pkg/services/setting")}
 
 const LogPrefix = "setting.service"
 
@@ -36,9 +50,15 @@ const DefaultBurst = 25
 
 const (
 	ApiGroup   = "setting.grafana.app"
-	apiVersion = "v0alpha1"
+	apiVersion = "v1beta1"
 	resource   = "settings"
 )
+
+const defaultServiceName = "grafana"
+
+// standard OpenTelemetry environment variable for service name.
+// refer to: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
+const otelServiceNameEnvVar = "OTEL_SERVICE_NAME"
 
 var settingGroupVersion = schema.GroupVersion{
 	Group:   ApiGroup,
@@ -126,6 +146,10 @@ type Config struct {
 	Burst int
 	// PageSize sets the number of items per API page (defaults to DefaultPageSize).
 	PageSize int64
+	// ServiceName is used to identify the client in the UserAgent header.
+	// The UserAgent format is "settings-client <version> (<service_name>)".
+	// Falls back to the OTEL_SERVICE_NAME environment variable, then to "grafana".
+	ServiceName string
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -136,11 +160,19 @@ type Setting struct {
 	Key string `json:"key"`
 	// Setting value
 	Value string `json:"value"`
+	// Labels resource labels
+	Labels map[string]string `json:"-"`
+}
+
+// settingResourceMetadata contains the metadata fields we care about from the K8s resource.
+type settingResourceMetadata struct {
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // settingResource represents a single Setting resource from the K8s API.
 type settingResource struct {
-	Spec Setting `json:"spec"`
+	Metadata settingResourceMetadata `json:"metadata"`
+	Spec     Setting                 `json:"spec"`
 }
 
 // settingListMetadata contains pagination info from the K8s list response.
@@ -344,6 +376,7 @@ func parseItems(decoder *json.Decoder) ([]*Setting, error) {
 			Section: item.Spec.Section,
 			Key:     item.Spec.Key,
 			Value:   item.Spec.Value,
+			Labels:  item.Metadata.Labels,
 		})
 	}
 
@@ -377,15 +410,22 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		return nil, fmt.Errorf("must set either TokenExchangeClient or WrapTransport")
 	}
 
-	wrapTransport := config.WrapTransport
-	if wrapTransport == nil {
+	authTransport := config.WrapTransport
+	if authTransport == nil {
 		log.Debug("using default wrapTransport with TokenExchangeClient")
-		wrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		authTransport = func(rt http.RoundTripper) http.RoundTripper {
 			return &authRoundTripper{
 				tokenClient: config.TokenExchangeClient,
 				transport:   rt,
 			}
 		}
+	}
+
+	// Wrap with tracing middleware to propagate trace context to all outbound requests
+	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
+	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
+		return authTransport(tracingRT)
 	}
 
 	qps := DefaultQPS
@@ -398,6 +438,16 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		burst = config.Burst
 	}
 
+	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = os.Getenv(otelServiceNameEnvVar)
+	}
+
+	if serviceName == "" {
+		serviceName = defaultServiceName
+	}
+	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, serviceName)
+
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
@@ -407,6 +457,7 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 		WrapTransport:   wrapTransport,
 		QPS:             qps,
 		Burst:           burst,
+		UserAgent:       userAgent,
 		// Configure for our API group
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{

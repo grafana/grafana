@@ -31,6 +31,10 @@ const (
 	maxLimit           = 1000
 	Namespace          = "grafana"
 	Subsystem          = "alerting"
+
+	// LogQL field path for alert rule UID after JSON parsing.
+	// Loki flattens nested JSON fields with underscores: alert.labels.__alert_rule_uid__ -> alert_labels___alert_rule_uid__
+	lokiAlertRuleUIDField = "alert_labels___alert_rule_uid__"
 )
 
 var (
@@ -111,12 +115,12 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	if query.RuleUID != nil {
-		selectors = append(selectors,
-			fmt.Sprintf(`%s=%q`, historian.LabelRuleUID, *query.RuleUID))
-	}
-
 	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+
+	// Add ruleUID filter as JSON line filter if specified.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` | %s = %q`, lokiAlertRuleUIDField, *query.RuleUID)
+	}
 
 	// Add receiver filter if specified.
 	if query.Receiver != nil && *query.Receiver != "" {
@@ -211,16 +215,13 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
-	alerts := make([]EntryAlert, len(lokiEntry.Alerts))
-	for i, a := range lokiEntry.Alerts {
-		alerts[i] = EntryAlert{
-			Status:      a.Status,
-			Labels:      a.Labels,
-			Annotations: a.Annotations,
-			StartsAt:    a.StartsAt,
-			EndsAt:      a.EndsAt,
-		}
-	}
+	alerts := []EntryAlert{{
+		Status:      lokiEntry.Alert.Status,
+		Labels:      lokiEntry.Alert.Labels,
+		Annotations: lokiEntry.Alert.Annotations,
+		StartsAt:    lokiEntry.Alert.StartsAt,
+		EndsAt:      lokiEntry.Alert.EndsAt,
+	}}
 
 	return Entry{
 		Timestamp:    s.T,

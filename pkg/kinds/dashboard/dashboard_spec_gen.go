@@ -423,7 +423,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -853,6 +853,8 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+	ValuesFormat *VariableModelValuesFormat `json:"valuesFormat,omitempty"`
 	// Determine whether regex applies to variable value or display text
 	RegexApplyTo *VariableRegexApplyTo `json:"regexApplyTo,omitempty"`
 	// Additional static options for query variable
@@ -868,6 +870,7 @@ func NewVariableModel() *VariableModel {
 		Multi:            (func(input bool) *bool { return &input })(false),
 		AllowCustomValue: (func(input bool) *bool { return &input })(true),
 		IncludeAll:       (func(input bool) *bool { return &input })(false),
+		ValuesFormat:     (func(input VariableModelValuesFormat) *VariableModelValuesFormat { return &input })(VariableModelValuesFormatCsv),
 	}
 }
 
@@ -916,6 +919,8 @@ type VariableOption struct {
 	Text StringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value StringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewVariableOption creates a new VariableOption object.
@@ -1205,6 +1210,13 @@ const (
 	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
 	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
 	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+)
+
+type VariableModelValuesFormat string
+
+const (
+	VariableModelValuesFormatCsv  VariableModelValuesFormat = "csv"
+	VariableModelValuesFormatJson VariableModelValuesFormat = "json"
 )
 
 type VariableModelStaticOptionsOrder string

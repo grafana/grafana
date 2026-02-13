@@ -13,6 +13,11 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+export type UseResourceStatsOptions = {
+  isHealthy?: boolean; // true only when healthy AND reconciled
+  healthStatusNotReady?: boolean; // true when waiting for reconciliation
+};
+
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
 
@@ -100,11 +105,23 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target'], migrateResources?: boolean) {
-  const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
+// TODO: update params to be object
+export function useResourceStats(
+  repoName?: string,
+  syncTarget?: RepositoryView['target'],
+  migrateResources?: boolean,
+  options?: UseResourceStatsOptions
+) {
+  const { isHealthy, healthStatusNotReady } = options || {};
+
+  const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
+  // isHealthy already includes reconciliation check - safe to fetch files
+  const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
@@ -121,22 +138,10 @@ export function useResourceStats(repoName?: string, syncTarget?: RepositoryView[
     };
   }, [resourceStatsQuery.data]);
 
-  // Calculate base requiresMigration: true if there are resources to migrate
-  const baseRequiresMigration = resourceCount > 0;
-
-  // Calculate final requiresMigration based on sync target and user selection
-  // For instance sync: always use baseRequiresMigration (checkbox is disabled and always true)
+  // Calculate requiresMigration based on sync target and user selection
+  // For instance sync: migrate if there are resources (checkbox is disabled and always true)
   // For folder sync: only migrate if user explicitly opts in via checkbox
-  const requiresMigration = useMemo(() => {
-    if (syncTarget === 'instance') {
-      return baseRequiresMigration;
-    }
-    if (syncTarget === 'folder') {
-      return migrateResources ?? false;
-    }
-    return baseRequiresMigration;
-  }, [syncTarget, baseRequiresMigration, migrateResources]);
-
+  const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
   const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings

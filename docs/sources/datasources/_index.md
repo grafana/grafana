@@ -112,6 +112,12 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data](ref:query-transform-data).
 
+## Build a dashboard from the data source
+
+After you've configured a data source, you can start creating a dashboard directly from it, by clicking the **Build a dashboard** button.
+
+For more information, refer to [Begin dashboard creation from data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#begin-dashboard-creation-from-connections).
+
 ## Special data sources
 
 Grafana includes three special data sources:

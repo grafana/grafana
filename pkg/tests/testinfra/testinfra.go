@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -38,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -134,10 +137,18 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	})
 
 	// UnifiedStorageOverGRPC
-	var storage sql.UnifiedStorageGrpcService
+	var storage resource.UnifiedStorageGrpcService
+	var grpcService *grpcserver.DSKitService
 	if runstore {
+		tracer := otel.Tracer("test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		require.NoError(t, err)
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil, grpcService)
+		require.NoError(t, err)
+		err = grpcService.StartAsync(ctx)
+		require.NoError(t, err)
+		err = grpcService.AwaitRunning(ctx)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -146,7 +157,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		require.NoError(t, err)
 
 		require.NoError(t, err)
-		t.Logf("Unified storage running on %s", storage.GetAddress())
+		t.Logf("Unified storage running on %s", grpcService.GetAddress())
 	}
 
 	go func() {
@@ -161,6 +172,9 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		}
 		if storage != nil {
 			storage.StopAsync()
+		}
+		if grpcService != nil {
+			grpcService.StopAsync()
 		}
 	})
 
@@ -320,8 +334,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
 	require.NoError(t, err)
-	if !opts.OpenFeatureAPIEnabled {
-		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+
+	if opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
 		require.NoError(t, err)
@@ -369,6 +384,39 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.DisableZanzanaServerCheckQueryCache {
+		zanzanaServerSect, err := cfg.NewSection("zanzana.server")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_cache_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_ttl", "0")
+		require.NoError(t, err)
+	}
+
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
@@ -389,7 +437,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		return section, err
 	}
 
-	queryRetries := 3
+	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -524,6 +572,25 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.HARedisAddr != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_address", opts.HARedisAddr)
+		require.NoError(t, err)
+	}
+	if opts.HARedisPeerName != "" {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_redis_peer_name", opts.HARedisPeerName)
+		require.NoError(t, err)
+	}
+	if opts.HASingleNodeEvaluation {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("ha_single_node_evaluation", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.GrafanaComAPIURL != "" {
 		grafanaComSection, err := getOrCreateSection("grafana_com")
 		require.NoError(t, err)
@@ -556,6 +623,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
 			require.NoError(t, err)
+			_, err = section.NewKey("autoMigrationThreshold", fmt.Sprintf("%d", v.AutoMigrationThreshold))
+			require.NoError(t, err)
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {
@@ -586,6 +655,26 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningRepositoryTypes) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("repository_types", strings.Join(opts.ProvisioningRepositoryTypes, "|"))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningMaxResourcesPerRepository > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
+		require.NoError(t, err)
+	}
+	// Write max_repositories if explicitly set.
+	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
+	if opts.ProvisioningMaxRepositories != 10 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -609,6 +698,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.ZanzanaReconciliationInterval != 0 {
+		reconcilerSect, err := getOrCreateSection("zanzana.reconciler")
+		require.NoError(t, err)
+		_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
+		require.NoError(t, err)
+	}
+
+	if opts.DisableZanzanaCache {
+		rbacSect, err := cfg.NewSection("rbac")
+		require.NoError(t, err)
+		_, err = rbacSect.NewKey("disable_zanzana_cache", "true")
+		require.NoError(t, err)
+	}
+
 	dashboardsSection, err := getOrCreateSection("dashboards")
 	require.NoError(t, err)
 	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
@@ -624,9 +727,16 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	maxConns := opts.DBMaxConns
+	if maxConns <= 0 {
+		maxConns = 2
+	}
+
+	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -676,6 +786,9 @@ type GrafanaOpts struct {
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
+	ProvisioningRepositoryTypes           []string
+	ProvisioningMaxResourcesPerRepository int64
+	ProvisioningMaxRepositories           int64
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
@@ -687,6 +800,12 @@ type GrafanaOpts struct {
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool
+	ZanzanaReconciliationInterval         time.Duration
+	DisableZanzanaCache                   bool
+	DisableZanzanaServerCheckQueryCache   bool
+
+	// If set to 0, the default (2) is used.
+	DBMaxConns int
 
 	// Allow creating grafana dir beforehand
 	Dir     string
@@ -697,6 +816,11 @@ type GrafanaOpts struct {
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
+
+	// Alerting High Availability configuration
+	HARedisAddr            string
+	HARedisPeerName        string
+	HASingleNodeEvaluation bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

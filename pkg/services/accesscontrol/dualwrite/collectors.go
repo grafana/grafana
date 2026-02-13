@@ -2,8 +2,12 @@ package dualwrite
 
 import (
 	"context"
+	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -433,8 +437,13 @@ func anonymousRoleBindingsCollector(cfg *setting.Cfg, store db.DB) legacyTupleCo
 	}
 }
 
-func zanzanaCollector(relations []string) zanzanaTupleCollector {
+func zanzanaCollector(relations []string, pageSize int32) zanzanaTupleCollector {
 	return func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error) {
+		ctx, span := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.zanzanaTupleCollector",
+			trace.WithAttributes(attribute.String("namespace", namespace)),
+		)
+		defer span.End()
+
 		// list will use continuation token to collect all tuples for object and relation
 		list := func(relation string) ([]*openfgav1.Tuple, error) {
 			first, err := client.Read(ctx, &authzextv1.ReadRequest{
@@ -443,10 +452,11 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 					Object:   object,
 					Relation: relation,
 				},
+				PageSize: wrapperspb.Int32(pageSize),
 			})
 
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("read first tuples: %w", err)
 			}
 
 			c := first.ContinuationToken
@@ -459,9 +469,10 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 						Object:   object,
 						Relation: relation,
 					},
+					PageSize: wrapperspb.Int32(pageSize),
 				})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("read continuation tuples: %w", err)
 				}
 
 				c = res.ContinuationToken

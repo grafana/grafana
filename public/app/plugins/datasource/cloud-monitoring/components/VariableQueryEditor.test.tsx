@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { VariableModel } from '@grafana/data';
 
@@ -41,10 +41,7 @@ const props: Props = {
 describe('VariableQueryEditor', () => {
   it('renders correctly', async () => {
     const { container } = render(<CloudMonitoringVariableQueryEditor {...props} />);
-    const select = await screen.findByRole('combobox');
-    waitFor(() => {
-      expect(select).toHaveValue('projects');
-    });
+    await screen.findByText('Projects');
     expect(container).toMatchSnapshot();
   });
 

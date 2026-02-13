@@ -1,6 +1,7 @@
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { isVersionGtOrEq } from 'app/core/utils/version';
 
 import { API_ROOT, GCOM_API_ROOT, INSTANCE_API_ROOT } from './constants';
 import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
@@ -8,6 +9,7 @@ import {
   LocalPlugin,
   RemotePlugin,
   CatalogPluginDetails,
+  CatalogPluginInsights,
   Version,
   PluginVersion,
   InstancePlugin,
@@ -27,6 +29,20 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const local = localPlugins.find((p) => p.id === id);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
+  // Add installed version to the list if it's missing (could be deprecated/deleted)
+  const installedVersion = local?.info.version;
+  const installedVersionMissing = !versions.some((v) => v.version === installedVersion);
+  if (installedVersion && installedVersionMissing) {
+    const missingVersion = await getPluginVersion(id, installedVersion);
+    if (missingVersion?.status === 'deprecated') {
+      missingVersion.isCompatible = false;
+      versions.push(missingVersion);
+      versions.sort((a, b) => {
+        return isVersionGtOrEq(a.version, b.version) ? -1 : 1;
+      });
+    }
+  }
+
   return {
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
@@ -45,6 +61,21 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     signature: local?.signature,
     screenshots: remote?.json?.info.screenshots || local?.info.screenshots,
   };
+}
+
+export async function getPluginInsights(id: string, version: string | undefined): Promise<CatalogPluginInsights> {
+  if (!version) {
+    throw new Error('Version is required');
+  }
+  try {
+    const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}/insights`);
+    return insights;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
+    throw error;
+  }
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
@@ -88,6 +119,28 @@ async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   }
 }
 
+async function getPluginVersion(id: string, version: string): Promise<Version> {
+  try {
+    const v: PluginVersion = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}`);
+
+    return {
+      version: v.version,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+      isCompatible: v.isCompatible,
+      grafanaDependency: v.grafanaDependency,
+      angularDetected: v.angularDetected,
+      status: v.status,
+    };
+  } catch (error) {
+    if (isFetchError(error)) {
+      // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+      error.isHandled = true;
+    }
+    throw error;
+  }
+}
+
 async function getPluginVersions(id: string, isPublished: boolean): Promise<Version[]> {
   try {
     if (!isPublished) {
@@ -103,6 +156,7 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
       isCompatible: v.isCompatible,
       grafanaDependency: v.grafanaDependency,
       angularDetected: v.angularDetected,
+      status: v.status,
     }));
   } catch (error) {
     if (isFetchError(error)) {

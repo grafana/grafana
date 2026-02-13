@@ -30,8 +30,9 @@ type Plugin struct {
 	Error *plugins.Error
 
 	// SystemJS fields
-	Module  string
-	BaseURL string
+	Module          string
+	BaseURL         string
+	LoadingStrategy plugins.LoadingStrategy
 
 	Angular plugins.AngularMeta
 
@@ -76,6 +77,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureOrg:      p.SignatureOrg,
 		Error:             p.Error,
 		Module:            p.Module,
+		LoadingStrategy:   p.LoadingStrategy,
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,

@@ -32,12 +32,30 @@ type ApiInstaller[T runtime.Object] interface {
 
 	// ValidateOnDelete validates object deletion.
 	ValidateOnDelete(ctx context.Context, obj T) error
+
+	// MutateOnCreate mutates the object on creation.
+	MutateOnCreate(ctx context.Context, obj T) error
+
+	// MutateOnUpdate mutates the object on update.
+	MutateOnUpdate(ctx context.Context, oldObj, newObj T) error
+
+	// MutateOnDelete mutates the object on deletion.
+	MutateOnDelete(ctx context.Context, obj T) error
+
+	// MutateOnConnect mutates the object on connect.
+	MutateOnConnect(ctx context.Context, obj T) error
 }
 
 // RoleApiInstaller provides Role-specific API registration and validation.
 // This interface allows enterprise implementations to provide custom role handling
 // while keeping the core IAM registration logic in OSS.
 type RoleApiInstaller ApiInstaller[*iamv0.Role]
+
+// GlobalRoleApiInstaller provides GlobalRole-specific API registration and validation.
+type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
+
+// TeamLBACApiInstaller provides TeamLBACRule-specific API registration and validation.
+type TeamLBACApiInstaller ApiInstaller[*iamv0.TeamLBACRule]
 
 // NoopApiInstaller is a no-op implementation for when roles are not available (OSS).
 type NoopApiInstaller[T runtime.Object] struct {
@@ -70,10 +88,44 @@ func (n *NoopApiInstaller[T]) ValidateOnDelete(ctx context.Context, obj T) error
 	return nil
 }
 
+func (n *NoopApiInstaller[T]) MutateOnCreate(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnUpdate(ctx context.Context, oldObj, newObj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnDelete(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
+func (n *NoopApiInstaller[T]) MutateOnConnect(ctx context.Context, obj T) error {
+	// No mutation needed in OSS
+	return nil
+}
+
 // ProvideNoopRoleApiInstaller provides a no-op role installer specifically for Role types.
 // This is needed for Wire dependency injection which doesn't handle generic functions well.
 func ProvideNoopRoleApiInstaller() RoleApiInstaller {
 	return &NoopApiInstaller[*iamv0.Role]{
 		ResourceInfo: iamv0.RoleInfo,
+	}
+}
+
+// ProvideNoopGlobalRoleApiInstaller provides a no-op global role installer specifically for GlobalRole types.
+func ProvideNoopGlobalRoleApiInstaller() GlobalRoleApiInstaller {
+	return &NoopApiInstaller[*iamv0.GlobalRole]{
+		ResourceInfo: iamv0.GlobalRoleInfo,
+	}
+}
+
+// ProvideNoopTeamLBACApiInstaller provides a no-op TeamLBACRule installer specifically for TeamLBACRule types.
+func ProvideNoopTeamLBACApiInstaller() TeamLBACApiInstaller {
+	return &NoopApiInstaller[*iamv0.TeamLBACRule]{
+		ResourceInfo: iamv0.TeamLBACRuleInfo,
 	}
 }

@@ -3,8 +3,8 @@ package elasticsearch
 import (
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/simplejson"
 )
 
 // addDateHistogramAgg adds a date histogram aggregation to the aggregation builder

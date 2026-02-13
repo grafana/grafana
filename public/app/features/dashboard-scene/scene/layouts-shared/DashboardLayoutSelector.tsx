@@ -11,6 +11,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
@@ -22,36 +23,49 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
-  const disableTabs = useMemo(() => {
+  const disableTabsReason = useMemo(() => {
     if (config.featureToggles.unlimitedLayoutsNesting) {
-      return false;
+      return undefined;
     }
+
+    // Check parent hierarchy
     let parent = layoutManager.parent;
     while (parent) {
       if (parent instanceof TabsLayoutManager) {
-        return true;
+        return 'parent';
       }
       parent = parent.parent;
     }
 
-    return false;
+    // Check child hierarchy
+    if (containsTabsLayout(layoutManager)) {
+      return 'child';
+    }
+
+    return undefined;
   }, [layoutManager]);
 
-  const onChangeLayout = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
+  const promptLayoutChange = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
+
+  const switchLayout = useCallback(
+    (layoutItem: LayoutRegistryItem) => {
+      const layoutParent = layoutManager.parent;
+
+      if (layoutParent && isLayoutParent(layoutParent)) {
+        layoutParent.switchLayout(layoutItem.createFromLayout(layoutManager));
+      }
+    },
+    [layoutManager]
+  );
 
   const onConfirmNewLayout = useCallback(() => {
     if (!newLayout) {
       return;
     }
 
-    const layoutParent = layoutManager.parent;
-
-    if (layoutParent && isLayoutParent(layoutParent)) {
-      layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
-    }
-
+    switchLayout(newLayout);
     setNewLayout(undefined);
-  }, [newLayout, layoutManager]);
+  }, [newLayout, switchLayout]);
 
   const onDismissNewLayout = useCallback(() => setNewLayout(undefined), []);
 
@@ -59,8 +73,15 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
   const radioOptions = options.map((opt) => {
     let description = opt.description;
-    if (disableTabs && opt.id === TabsLayoutManager.descriptor.id) {
-      description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+    if (disableTabsReason && opt.id === TabsLayoutManager.descriptor.id) {
+      if (disableTabsReason === 'parent') {
+        description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+      } else {
+        description = t(
+          'dashboard.canvas-actions.disabled-child-contains-tabs',
+          'Cannot change to tabs because a row already contains tabs'
+        );
+      }
       disabledOptions.push(opt);
     }
 
@@ -80,20 +101,22 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           fullWidth
           value={layoutManager.descriptor}
           options={radioOptions}
-          onChange={onChangeLayout}
+          onChange={!isGridLayout ? switchLayout : promptLayoutChange}
           disabledOptions={disabledOptions}
         />
       </Box>
-      <ConfirmModal
-        isOpen={!!newLayout}
-        title={t('dashboard.layout.panel.modal.title', 'Change layout')}
-        body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
-        confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
-        dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
-        confirmButtonVariant="primary"
-        onConfirm={onConfirmNewLayout}
-        onDismiss={onDismissNewLayout}
-      />
+      {isGridLayout && (
+        <ConfirmModal
+          isOpen={!!newLayout}
+          title={t('dashboard.layout.panel.modal.title', 'Change layout')}
+          body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
+          confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
+          dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
+          confirmButtonVariant="primary"
+          onConfirm={onConfirmNewLayout}
+          onDismiss={onDismissNewLayout}
+        />
+      )}
     </>
   );
 }

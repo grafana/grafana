@@ -99,34 +99,31 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 		return nil, err
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeTraces {
-		frames, err := transformTraceSearchResponse(pCtx, &response)
-		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
-			return nil, err
-		}
-		result.Frames = frames
-		return result, nil
+	// Match frontend behavior: when tableType isn't set, default to the "table" view (traces).
+	tableType := dataquery.SearchTableTypeTraces
+	if model.TableType != nil {
+		tableType = *model.TableType
 	}
 
-	if *model.TableType == dataquery.SearchTableTypeSpans {
+	switch tableType {
+	case dataquery.SearchTableTypeSpans:
 		frames, err := transformSpanSearchResponse(pCtx, &response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
-	}
-
-	if *model.TableType == dataquery.SearchTableTypeRaw {
+	case dataquery.SearchTableTypeRaw:
 		frames, err := transformRawSearchResponse(&response)
 		if err != nil {
-			ctxLogger.Error("Failed to convert SearchResponse to frames", "error", err, "function", logEntrypoint())
 			return nil, err
 		}
 		result.Frames = frames
-		return result, nil
+	default:
+		frames, err := transformTraceSearchResponse(pCtx, &response)
+		if err != nil {
+			return nil, err
+		}
+		result.Frames = frames
 	}
 
 	return result, nil

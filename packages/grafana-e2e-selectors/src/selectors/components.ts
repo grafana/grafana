@@ -56,13 +56,22 @@ export const versionedComponents = {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
+    bodyContainer: {
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
   },
   Sidebar: {
+    container: {
+      '12.4.0': 'data-testid Sidebar container',
+    },
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+    newPanelButton: {
+      '12.4.0': 'data-testid sidebar add new panel',
     },
   },
   EditPaneHeader: {
@@ -79,7 +88,19 @@ export const versionedComponents = {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
   },
+  LayoutContainer: {
+    '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
+  },
   TimePicker: {
+    moveBackwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-backward-button',
+    },
+    moveForwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-forward-button',
+    },
+    zoomOut: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-zoom-out-button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },
@@ -535,6 +556,11 @@ export const versionedComponents = {
           '12.3.0': 'data-testid viz-tooltip-wrapper',
         },
       },
+      Gauge: {
+        Container: {
+          '12.4.0': 'data-testid gauge container',
+        },
+      },
     },
   },
   VizLegend: {
@@ -662,6 +688,9 @@ export const versionedComponents = {
       },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
+      },
+      addAnnotationButton: {
+        '12.6.0': 'data-testid add annotation button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
@@ -1277,6 +1306,9 @@ export const versionedComponents = {
     submit: {
       [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-submit',
     },
+    floatGridItemsWarning: {
+      [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-float-grid-items-warning',
+    },
   },
   PanelAlertTabContent: {
     content: {
@@ -1287,6 +1319,9 @@ export const versionedComponents = {
   VisualizationPreview: {
     card: {
       [MIN_GRAFANA_VERSION]: (name: string) => `data-testid suggestion-${name}`,
+    },
+    confirm: {
+      '12.4.0': (name: string) => `data-testid suggestion-${name} confirm button`,
     },
   },
   ColorSwatch: {

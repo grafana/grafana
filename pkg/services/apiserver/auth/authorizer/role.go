@@ -15,6 +15,8 @@ var _ authorizer.Authorizer = &roleAuthorizer{}
 
 var orgRoleNoneAsViewerAPIGroups = []string{
 	"productactivation.ext.grafana.com",
+	// playlist can be removed after this issue is resolved: https://github.com/grafana/grafana/issues/115712
+	"playlist.grafana.app",
 }
 
 type roleAuthorizer struct{}

@@ -41,6 +41,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 24,
@@ -73,11 +77,15 @@
           "x": 0,
           "y": 3
         },
-        "id": -1,
+        "id": 23,
         "title": "Application Service",
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -103,6 +111,10 @@
         "type": "text"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -128,6 +140,10 @@
         "type": "text"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "fieldConfig": {
           "defaults": {
             "thresholds": {
@@ -174,6 +190,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "loki",
+          "uid": "${loki}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -202,6 +222,10 @@
         "type": "logs"
       },
       {
+        "datasource": {
+          "type": "loki",
+          "uid": "${loki}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -230,6 +254,10 @@
         "type": "logs"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -255,6 +283,10 @@
         "type": "text"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "description": "Number of concurrent processing threads available for handling operations",
         "gridPos": {
           "h": 7,
@@ -280,6 +312,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "tempo",
+          "uid": "${tempo}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -324,6 +360,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "description": "Histogram showing p99, p95, p50, and p10 percentiles for job processing duration based on number of resources changed",
         "fieldConfig": {
           "defaults": {
@@ -425,6 +465,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "description": "Histogram showing p99, p95, p50, and p10 percentiles for job processing duration based on number of resources changed",
         "gridPos": {
           "h": 7,
@@ -477,6 +521,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "description": "Total number of jobs waiting to be processed",
         "gridPos": {
           "h": 7,
@@ -502,6 +550,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "fieldConfig": {
           "defaults": {
             "unit": "s"
@@ -532,6 +584,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "description": "How long a job is in the queue before being picked up",
         "gridPos": {
           "h": 7,
@@ -584,6 +640,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -609,6 +669,10 @@
         "type": "text"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -633,6 +697,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -675,6 +743,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
         "gridPos": {
           "h": 7,
           "w": 8,
@@ -846,7 +918,7 @@
       ]
     },
     "timezone": "utc",
-    "title": "Span Zero Demo Dashboard"
+    "title": "Span Zero + ID Collision Prevention Demo"
   },
   "status": {
     "conversion": {

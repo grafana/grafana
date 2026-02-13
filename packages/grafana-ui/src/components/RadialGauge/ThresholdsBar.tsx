@@ -1,20 +1,23 @@
-import { FieldDisplay, Threshold } from '@grafana/data';
+import { FieldDisplay, Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialColorDefs } from './RadialColorDefs';
-import { GaugeDimensions } from './utils';
+import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
+import { getThresholdPercentageValue } from './utils';
 
-export interface Props {
-  dimensions: GaugeDimensions;
+interface ThresholdsBarProps {
+  dimensions: RadialGaugeDimensions;
   angleRange: number;
   startAngle: number;
   endAngle: number;
+  shape: RadialShape;
   fieldDisplay: FieldDisplay;
   roundedBars?: boolean;
   glowFilter?: string;
-  colorDefs: RadialColorDefs;
   thresholds: Threshold[];
+  thresholdsMode?: ThresholdsMode;
+  gradient?: GradientStop[];
 }
+
 export function ThresholdsBar({
   dimensions,
   fieldDisplay,
@@ -22,13 +25,11 @@ export function ThresholdsBar({
   angleRange,
   roundedBars,
   glowFilter,
-  colorDefs,
   thresholds,
-}: Props) {
-  const fieldConfig = fieldDisplay.field;
-  const min = fieldConfig.min ?? 0;
-  const max = fieldConfig.max ?? 100;
-
+  thresholdsMode = ThresholdsMode.Absolute,
+  shape,
+  gradient,
+}: ThresholdsBarProps) {
   const thresholdDimensions = {
     ...dimensions,
     barWidth: dimensions.thresholdsBarWidth,
@@ -40,7 +41,8 @@ export function ThresholdsBar({
 
   for (let i = 1; i < thresholds.length; i++) {
     const threshold = thresholds[i];
-    let valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
+    const percentage = getThresholdPercentageValue(threshold, thresholdsMode, fieldDisplay);
+    let valueDeg = percentage * angleRange;
 
     if (valueDeg > angleRange) {
       valueDeg = angleRange;
@@ -48,27 +50,27 @@ export function ThresholdsBar({
       valueDeg = 0;
     }
 
-    let lengthDeg = valueDeg - currentStart + startAngle;
+    const lengthDeg = valueDeg - currentStart + startAngle;
+    const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
-      <RadialArcPath
-        key={i}
-        startAngle={currentStart}
-        arcLengthDeg={lengthDeg}
-        dimensions={thresholdDimensions}
-        roundedBars={roundedBars}
-        glowFilter={glowFilter}
-        color={colorDefs.getColor(threshold.color, true)}
-      />
+      <g key={i} data-testid="radial-gauge-thresholds-bar">
+        <RadialArcPath
+          arcLengthDeg={lengthDeg}
+          barEndcaps={shape === 'circle' && roundedBars}
+          dimensions={thresholdDimensions}
+          fieldDisplay={fieldDisplay}
+          glowFilter={glowFilter}
+          roundedBars={roundedBars}
+          shape={shape}
+          startAngle={currentStart}
+          {...colorProps}
+        />
+      </g>
     );
 
     currentStart += lengthDeg;
   }
 
-  return (
-    <>
-      <g>{paths}</g>
-      <defs>{colorDefs.getDefs()}</defs>
-    </>
-  );
+  return <g>{paths}</g>;
 }

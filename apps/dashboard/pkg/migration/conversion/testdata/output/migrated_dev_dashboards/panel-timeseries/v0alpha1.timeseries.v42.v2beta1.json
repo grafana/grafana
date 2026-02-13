@@ -3674,7 +3674,8 @@
                     },
                     "showPoints": "never",
                     "spanNulls": true
-                  }
+                  },
+                  "nullValueMode": "null"
                 },
                 "overrides": [
                   {
@@ -3809,7 +3810,8 @@
                     },
                     "showPoints": "never",
                     "spanNulls": true
-                  }
+                  },
+                  "nullValueMode": "null"
                 },
                 "overrides": [
                   {

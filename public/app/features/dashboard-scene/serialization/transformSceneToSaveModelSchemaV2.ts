@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 
 import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
@@ -13,8 +14,11 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableRefresh } from '@grafana/schema';
+import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   Spec as DashboardV2Spec,
@@ -86,7 +90,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description,
+    description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
@@ -131,7 +135,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF variables
 
     // elements
-    elements: getElements(scene, dsReferencesMapping),
+    elements: getElements(scene, dsReferencesMapping, isSnapshot),
     // EOF elements
 
     // annotations
@@ -146,7 +150,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return sortedDeepCloneWithoutNulls(dashboardSchemaV2, true);
+      // Strip BOMs from all strings to prevent CUE validation errors ("illegal byte order mark")
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2, true, true);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -174,17 +179,18 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping) {
+function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
   const panelsArray = panels.map((vizPanel) => {
-    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping);
+    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
   });
   return createElements(panelsArray, scene);
 }
 
 export function vizPanelToSchemaV2(
   vizPanel: VizPanel,
-  dsReferencesMapping?: DSReferencesMapping
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
 ): PanelKind | LibraryPanelKind {
   if (isLibraryPanel(vizPanel)) {
     const behavior = getLibraryPanelBehavior(vizPanel)!;
@@ -220,7 +226,7 @@ export function vizPanelToSchemaV2(
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries: getVizPanelQueries(vizPanel, dsReferencesMapping),
+          queries: getVizPanelQueries(vizPanel, dsReferencesMapping, isSnapshot),
           transformations: getVizPanelTransformations(vizPanel),
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
@@ -294,9 +300,51 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
+export function getVizPanelQueries(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
+): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
+
+  if (isSnapshot) {
+    const dataProvider = vizPanel.state.$data;
+    if (!dataProvider) {
+      return queries;
+    }
+
+    let snapshotData = getPanelDataFrames(dataProvider.state.data);
+    if (dataProvider instanceof SceneDataTransformer) {
+      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
+    }
+
+    const snapshotQuery: DataQueryKind = {
+      kind: 'DataQuery',
+      version: defaultDataQueryKind().version,
+      group: 'grafana',
+      datasource: {
+        name: 'grafana',
+      },
+      spec: {
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: snapshotData,
+      },
+    };
+
+    queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        query: snapshotQuery,
+        refId: 'A',
+        hidden: false,
+      },
+    });
+
+    return queries;
+  }
+
+  // Regular query handling (non-snapshot)
   const vizPanelQueries = queryRunner?.state.queries;
 
   if (vizPanelQueries) {
@@ -316,7 +364,9 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
       const dataQuery: DataQueryKind = {
         kind: 'DataQuery',
         version: defaultDataQueryKind().version,
-        group: queryDatasource ? getDataQueryKind(query, queryRunner) : defaultDataQueryKind().group,
+        group: queryDatasource
+          ? queryDatasource.type || getDataQueryKind(query, queryRunner)
+          : defaultDataQueryKind().group,
         datasource: {
           name: queryDatasource?.uid,
         },
@@ -352,11 +402,6 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   if (typeof query === 'string') {
     const defaultDS = getDefaultDataSourceRef();
     return defaultDS?.type || '';
-  }
-
-  // Query has explicit datasource with type
-  if (query.datasource?.type) {
-    return query.datasource.type;
   }
 
   // If query has a datasource UID (even without type), check if it matches the queryRunner's datasource
@@ -635,15 +680,16 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 
   if (spec.variables) {
     spec.variables.forEach((variable) => {
-      if ('query' in variable) {
-        variable.query = '';
+      if ('query' in variable.spec) {
+        variable.spec.query = '';
       }
-      if ('options' in variable && 'current' in variable) {
-        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      if ('options' in variable.spec && 'current' in variable.spec) {
+        variable.spec.options =
+          variable.spec.current && !isEmptyObject(variable.spec.current) ? [variable.spec.current] : [];
       }
 
-      if ('refresh' in variable) {
-        variable.refresh = VariableRefresh.never;
+      if ('refresh' in variable.spec) {
+        variable.spec.refresh = 'never';
       }
     });
   }
@@ -846,40 +892,49 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
-  // Get the element identifier - refId for queries, name for variables
-  const elementId = getElementIdentifier(element, type);
+  let datasource: DataSourceRef | undefined;
 
-  // If the ds was autossigned, return the datasource initial ds value.
-  if (autoAssignedDsRef?.has(elementId)) {
-    const dsType = autoAssignedDsRef.get(elementId);
-    // If the ds type was not undefined means the datasource was autossigned, so return the datasource with only the type
-    return dsType ? { type: dsType } : undefined;
-  }
-
-  // Return appropriate datasource reference based on element type
+  // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
     if ('datasource' in element && element.datasource) {
-      // Check if datasource is empty object {} (no keys), treat it as missing
-      // and fall through to use panel datasource (matches backend behavior)
       const isEmptyDatasourceObject =
         typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
-
       if (!isEmptyDatasourceObject) {
-        // If element has its own datasource (and it's not empty), use that
-        return element.datasource;
+        datasource = element.datasource;
       }
     }
 
-    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
-    return context?.state?.datasource;
+    const panelDS = context?.state?.datasource;
+    if (panelDS?.uid) {
+      const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
+      const notExpr =
+        !datasource ||
+        (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+
+      if (notMixed && (!datasource || (panelDS?.uid !== datasource.uid && notExpr))) {
+        datasource = panelDS;
+      }
+    }
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    return element.state.datasource || undefined;
+    datasource = element.state.datasource || undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    return element.datasource || undefined;
+    datasource = element.datasource || undefined;
+  }
+
+  // If a datasource was resolved from the element, use it
+  if (datasource) {
+    return datasource;
+  }
+
+  const elementId = getElementIdentifier(element, type);
+  if (autoAssignedDsRef?.has(elementId)) {
+    const dsType = autoAssignedDsRef.get(elementId);
+    // If the ds type was defined, return datasource with only the type; otherwise undefined
+    return dsType ? { type: dsType } : undefined;
   }
 
   return undefined;

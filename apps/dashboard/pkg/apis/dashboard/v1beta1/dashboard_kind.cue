@@ -222,8 +222,10 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
-      // Determine whether regex applies to variable value or display text
-      regexApplyTo?: #VariableRegexApplyTo
+			// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+			valuesFormat?: "csv" | "json" | *"csv"
+			// Determine whether regex applies to variable value or display text
+			regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -239,6 +241,8 @@ lineage: schemas: [{
 			text: string | [...string]
 			// Value of the option
 			value: string | [...string]
+			// Additional properties for multi-props variables
+			properties?: {[string]: string}
 		} @cuetsy(kind="interface")
 
 		// Options to config when to refresh a variable
@@ -787,7 +791,7 @@ lineage: schemas: [{
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// Unit a field should use. The unit you select is applied to all fields except time.
-			// You can use the units ID availables in Grafana or a custom unit.
+			// You can use the units ID available in Grafana or a custom unit.
 			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 			// As custom unit, you can use the following formats:
 			// `suffix:<suffix>` for custom unit that should go after value.

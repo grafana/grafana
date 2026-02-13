@@ -44,7 +44,7 @@ type gitRepository struct {
 }
 
 func NewRepository(
-	ctx context.Context,
+	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
@@ -78,44 +78,70 @@ func (r *gitRepository) Branch() string {
 	return r.gitConfig.Branch
 }
 
-func (r *gitRepository) Config() *provisioning.Repository {
-	return r.config
+func (r *gitRepository) SetBranch(branch string) {
+	r.gitConfig.Branch = branch
 }
 
-// Validate implements provisioning.Repository.
-func (r *gitRepository) Validate() (list field.ErrorList) {
-	cfg := r.gitConfig
+func (r *gitRepository) GetCurrentBranch() string {
+	return r.gitConfig.Branch
+}
 
-	t := string(r.config.Spec.Type)
-	if cfg.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
-	} else {
-		if !isValidGitURL(cfg.URL) {
-			list = append(list, field.Invalid(field.NewPath("spec", t, "url"), cfg.URL, "invalid git URL format"))
+func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	ctx, _ = r.withGitContext(ctx, "")
+
+	// Get all refs to find the default branch
+	refs, err := r.client.ListRefs(ctx)
+	if err != nil {
+		return "", fmt.Errorf("list refs: %w", err)
+	}
+
+	var hasMain, hasMaster bool
+	var firstBranch string
+
+	// Single pass through refs to find main, master, or first branch alphabetically
+	for _, ref := range refs {
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
+		}
+
+		branchName := strings.TrimPrefix(ref.Name, "refs/heads/")
+
+		// Check for main or master
+		switch branchName {
+		case "main":
+			hasMain = true
+		case "master":
+			hasMaster = true
+		}
+
+		// Track first branch alphabetically as fallback
+		if firstBranch == "" || branchName < firstBranch {
+			firstBranch = branchName
 		}
 	}
-	if cfg.Branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(cfg.Branch) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
+
+	// No branches found
+	if firstBranch == "" {
+		return "", fmt.Errorf("no branches found in repository")
 	}
 
-	// Readonly repositories may not need a token (if public)
-	if len(r.config.Spec.Workflows) > 0 {
-		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
-		}
+	// Prefer main, then master, then first branch alphabetically
+	if hasMain {
+		return "main", nil
+	}
+	if hasMaster {
+		return "master", nil
 	}
 
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, err.Error()))
-	}
+	// If neither main nor master exists, return the first branch alphabetically.
+	// This provides deterministic behavior when working with repositories that use
+	// non-standard default branch names (e.g., "develop", "trunk", custom names).
+	// Users can always change the branch afterward or specify it directly in the repository configuration.
+	return firstBranch, nil
+}
 
-	if safepath.IsAbs(cfg.Path) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, "path must be relative"))
-	}
-
-	return list
+func (r *gitRepository) Config() *provisioning.Repository {
+	return r.config
 }
 
 func isValidGitURL(gitURL string) bool {
@@ -148,6 +174,16 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	ctx, _ = r.withGitContext(ctx, "")
 
 	t := string(r.config.Spec.Type)
+
+	// In case the branch is empty
+	if r.GetCurrentBranch() == "" {
+		branch, err := r.GetDefaultBranch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		r.SetBranch(branch)
+	}
 
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
 		detail := "not authorized"

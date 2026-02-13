@@ -12,6 +12,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../../utils/interactions';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
@@ -62,7 +63,8 @@ export class VariableAddEditableElement implements EditableDashboardElement {
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.variableAdd);
 }
 
-function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
+/** @internal Exported for testing */
+export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
@@ -78,6 +80,7 @@ function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      DashboardInteractions.newVariableTypeSelected({ type });
     },
     [variableAdd]
   );

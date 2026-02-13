@@ -178,7 +178,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 	res, err := common.List(
 		ctx, resource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.ServiceAccount], error) {
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.ServiceAccount], error) {
 			found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
 				Pagination: p,
 			})
@@ -187,12 +187,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			items := make([]iamv0alpha1.ServiceAccount, 0, len(found.Items))
+			items := make([]*iamv0alpha1.ServiceAccount, 0, len(found.Items))
 			for _, sa := range found.Items {
-				items = append(items, s.toSAItem(sa, ns.Value))
+				saItem := s.toSAItem(sa, ns.Value)
+				items = append(items, &saItem)
 			}
 
-			return &common.ListResponse[iamv0alpha1.ServiceAccount]{
+			return &common.ListResponse[*iamv0alpha1.ServiceAccount]{
 				Items:    items,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -204,7 +205,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0alpha1.ServiceAccountList{Items: res.Items}
+	items := make([]iamv0alpha1.ServiceAccount, len(res.Items))
+	for i, sa := range res.Items {
+		items[i] = *sa
+	}
+
+	obj := &iamv0alpha1.ServiceAccountList{Items: items}
 	obj.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil

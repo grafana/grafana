@@ -1,7 +1,7 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import { t } from '@grafana/i18n';
-import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 
 export const collectionsAPIv1alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {

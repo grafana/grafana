@@ -43,21 +43,11 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email",
+			"receiver": "empty",
 			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureFields": {}
-			}]
+			"name": "empty"
 		}]
 	}
 }
@@ -249,6 +239,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Record:               gettable.Record,
 		Metadata:             gettable.Metadata,
 	}
 }
@@ -1083,6 +1074,22 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	return sendRequestJSON[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
+// GetPrometheusRulesWithStatus fetches rules from the Prometheus-compatible rules API.
+func (a apiClient) GetPrometheusRulesWithStatus(t *testing.T) (apimodels.RuleResponse, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/prometheus/grafana/api/v1/rules", a.url), nil)
+	require.NoError(t, err)
+	return sendRequestJSON[apimodels.RuleResponse](t, req, http.StatusOK)
+}
+
+// GetPrometheusRules fetches rules from the Prometheus-compatible rules API, asserting success.
+func (a apiClient) GetPrometheusRules(t *testing.T) apimodels.RuleResponse {
+	t.Helper()
+	resp, status, body := a.GetPrometheusRulesWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return resp
+}
+
 func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
@@ -1286,7 +1293,7 @@ func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle
 	requireStatusCode(t, http.StatusAccepted, status, raw)
 }
 
-func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertPrometheusResponse {
+func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertAlertmanagerResponse {
 	t.Helper()
 
 	resp, status, body := a.RawConvertPrometheusPostAlertmanagerConfig(t, amCfg, headers)
@@ -1295,7 +1302,7 @@ func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg a
 	return resp
 }
 
-func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertAlertmanagerResponse, int, string) {
 	t.Helper()
 
 	path := "%s/api/convert/api/v1/alerts"
@@ -1321,7 +1328,7 @@ func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCf
 		req.Header.Set(key, value)
 	}
 
-	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+	return sendRequestJSON[apimodels.ConvertAlertmanagerResponse](t, req, http.StatusAccepted)
 }
 
 func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.AlertmanagerUserConfig {
@@ -1537,4 +1544,18 @@ func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, 
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) TestReceiver(t *testing.T, params apimodels.TestReceiversConfigBodyParams) ([]byte, int, error) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(params)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/receivers/test", a.url), &buf)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	return sendRequestRaw(t, req)
 }

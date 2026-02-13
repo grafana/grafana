@@ -1,4 +1,4 @@
-import { PlaylistSpec } from '../../api/clients/playlist/v0alpha1';
+import { PlaylistSpec } from '../../api/clients/playlist/v1';
 import { DashboardQueryResult } from '../search/service/types';
 export type PlaylistMode = boolean;
 

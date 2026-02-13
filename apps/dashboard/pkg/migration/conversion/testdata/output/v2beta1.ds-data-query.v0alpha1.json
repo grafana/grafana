@@ -150,6 +150,9 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -245,6 +248,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -341,6 +348,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -400,6 +410,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "gdev-testdata"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -697,6 +711,146 @@
         ],
         "title": "Mixed DS WITHOUT REFS",
         "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "-- Dashboard --"
+        },
+        "description": "Panel with a single -- Dashboard -- datasource query",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 8,
+          "x": 0,
+          "y": 6
+        },
+        "id": 7,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.1.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "-- Dashboard --"
+            },
+            "panelId": 1,
+            "refId": "A",
+            "withTransforms": true
+          }
+        ],
+        "title": "Single Dashboard DS Query",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "mixed",
+          "uid": "-- Mixed --"
+        },
+        "description": "Panel with multiple -- Dashboard -- datasource queries (should be mixed)",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 8,
+          "x": 8,
+          "y": 6
+        },
+        "id": 8,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.1.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "-- Dashboard --"
+            },
+            "panelId": 1,
+            "refId": "A",
+            "withTransforms": true
+          },
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "-- Dashboard --"
+            },
+            "panelId": 2,
+            "refId": "B",
+            "withTransforms": true
+          },
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "-- Dashboard --"
+            },
+            "panelId": 3,
+            "refId": "C",
+            "withTransforms": true
+          }
+        ],
+        "title": "Multiple Dashboard DS Queries",
+        "type": "stat"
       }
     ],
     "preload": false,

@@ -115,12 +115,15 @@ export const OrgUsersTable = ({
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'lastSeenAtAge'>) => {
+          // If lastSeenAt is before created, user has never logged in
+          const neverLoggedIn =
+            original.lastSeenAt && original.created && new Date(original.lastSeenAt) < new Date(original.created);
           return (
             <>
               {value && (
                 <>
-                  {value === '10 years' ? (
+                  {neverLoggedIn ? (
                     <Text color={'disabled'}>
                       <Trans i18nKey="admin.org-uers.last-seen-never">Never</Trans>
                     </Text>

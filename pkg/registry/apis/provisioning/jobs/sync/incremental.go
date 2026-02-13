@@ -60,7 +60,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if len(affectedFolders) > 0 {
 		cleanupStart := time.Now()
 		span.AddEvent("checking if impacted folders should be deleted", trace.WithAttributes(attribute.Int("affected_folders", len(affectedFolders))))
-		err := cleanupOrphanedFolders(ctx, repo, affectedFolders, repositoryResources, tracer)
+		err := cleanupOrphanedFolders(ctx, repo, affectedFolders, repositoryResources, tracer, progress)
 		metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("cleanup orphaned folders: %w", err))
@@ -85,6 +85,19 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			return nil, tracing.Error(span, err)
 		}
 
+		// Check if this resource is nested under a failed folder creation
+		// This only applies to creation/update/rename operations, not deletions
+		if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
+			// Skip this resource since its parent folder failed to be created
+			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
+			progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
+				WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
+				AsSkipped().
+				Build())
+			skipSpan.End()
+			continue
+		}
+
 		if err := resources.IsPathSupported(change.Path); err != nil {
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
@@ -98,32 +111,28 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
-					return nil, tracing.Error(span, fmt.Errorf("unable to create empty file folder: %w", err))
+
+					progress.Record(ensureFolderCtx, jobs.NewFolderResult(change.Path).
+						WithError(err).
+						WithAction(repository.FileActionIgnored).
+						Build())
+					continue
 				}
 
-				progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-					Path:   safeSegment,
-					Action: repository.FileActionCreated,
-					Group:  resources.FolderResource.Group,
-					Kind:   resources.FolderKind.Kind,
-					Name:   folder,
-				})
+				progress.Record(ensureFolderCtx, jobs.NewFolderResult(folder).
+					WithPath(safeSegment).
+					WithAction(repository.FileActionCreated).
+					Build())
 				ensureFolderSpan.End()
 				continue
 			}
 
-			progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionIgnored,
-			})
+			progress.Record(ensureFolderCtx, jobs.NewPathOnlyResult(change.Path).WithAction(repository.FileActionIgnored).Build())
 			ensureFolderSpan.End()
 			continue
 		}
 
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-		}
+		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
@@ -131,22 +140,18 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
-				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 			writeSpan.End()
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
 			if err != nil {
 				removeSpan.RecordError(err)
-				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 
 			if folderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = folderName
@@ -158,11 +163,9 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
 				renameSpan.RecordError(err)
-				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 
 			if oldFolderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = oldFolderName
@@ -172,7 +175,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		case repository.FileActionIgnored:
 			// do nothing
 		}
-		progress.Record(ctx, result)
+		progress.Record(ctx, resultBuilder.Build())
 	}
 
 	return affectedFolders, nil
@@ -185,6 +188,7 @@ func cleanupOrphanedFolders(
 	affectedFolders map[string]string,
 	repositoryResources resources.RepositoryResources,
 	tracer tracing.Tracer,
+	progress jobs.JobProgressRecorder,
 ) error {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.cleanup_orphaned_folders")
 	defer span.End()
@@ -197,6 +201,12 @@ func cleanupOrphanedFolders(
 
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
+
+		// Check if any resources under this folder failed to delete
+		if progress.HasDirPathFailedDeletion(path) {
+			span.AddEvent("skipping orphaned folder cleanup: a child resource in its path failed to be deleted")
+			continue
+		}
 
 		// if we can no longer find the folder in git, then we can delete it from grafana
 		_, err := readerRepo.Read(ctx, path, "")
