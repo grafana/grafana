@@ -106,12 +106,13 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
-	backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
-	if err != nil {
-		return nil, err
-	}
+
 	switch opts.StorageType {
 	case options.StorageTypeFile:
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
+		if err != nil {
+			return nil, err
+		}
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{
@@ -155,6 +156,11 @@ func newClient(opts options.StorageOptions,
 
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
 		if err != nil {
 			return nil, err
 		}
