@@ -13183,8 +13183,9 @@
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
       "card-click": "Select card {{id}}",
+      "data": "Data",
+      "data-mode": "Data Mode",
       "queries-expressions": "Queries & Expressions",
-      "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"
     },

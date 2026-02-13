@@ -3,10 +3,10 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
-import { QueryEditorTypeConfig } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorTypeConfig } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
 
@@ -66,7 +66,7 @@ export const SidebarCard = ({
   return (
     <div className={styles.wrapper}>
       <div
-        className={cx(styles.card, { [styles.hidden]: isHidden })}
+        className={styles.card}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -76,24 +76,16 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={styles.cardHeader}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Icon name={config.icon} />
-            <Text weight="light" variant="body">
-              {typeText}
-            </Text>
-          </Stack>
-          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              isHidden={isHidden}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onToggleHide={onToggleHide}
-              typeLabel={typeText}
-            />
-          </div>
+        <div className={cx(styles.cardContent, { [styles.hidden]: isHidden })}>{children}</div>
+        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+          <Actions
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            onToggleHide={onToggleHide}
+            isHidden={isHidden}
+            typeLabel={typeText}
+          />
         </div>
-        <div className={styles.cardContent}>{children}</div>
       </div>
       {hasAddButton && <AddCardButton afterRefId={id} />}
     </div>
@@ -104,13 +96,25 @@ function getStyles(
   theme: GrafanaTheme2,
   { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
 ) {
+  const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    paddingRight: theme.spacing(1),
+    // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
+    paddingLeft: theme.spacing(3),
+    background: `linear-gradient(270deg, ${backgroundColor} 80%, rgba(32, 38, 47, 0.00) 100%)`,
     opacity: 0,
-    marginLeft: 'auto',
-
+    transform: 'translateX(8px)',
+    pointerEvents: 'none',
+    // This transition handles the opacity and transform of the hover actions when the card is hovered.
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
+      transition: theme.transitions.create(['opacity', 'transform'], {
+        duration: theme.transitions.duration.standard,
       }),
     },
   });
@@ -118,7 +122,7 @@ function getStyles(
   return {
     wrapper: css({
       position: 'relative',
-      marginInline: theme.spacing(2),
+      marginInlineStart: theme.spacing(2),
 
       // The hover-zone pseudo-elements and add-button visibility rules are
       // only needed when the card has an AddCardButton.
@@ -132,8 +136,8 @@ function getStyles(
           content: '""',
           position: 'absolute',
           top: 0,
-          left: `calc(-1 * ${theme.spacing(1.5)})`,
-          width: theme.spacing(1.5),
+          left: `calc(-1 * ${theme.spacing(3.5)})`,
+          width: theme.spacing(3.5),
           height: `calc(100% + ${theme.spacing(1.5)})`,
         },
 
@@ -142,8 +146,8 @@ function getStyles(
           content: '""',
           position: 'absolute',
           top: '100%',
-          left: `calc(-1 * ${theme.spacing(1.5)})`,
-          width: `calc(100% + ${theme.spacing(1.5)})`,
+          left: `calc(-1 * ${theme.spacing(3.5)})`,
+          width: `calc(100% + ${theme.spacing(3.5)})`,
           height: theme.spacing(1.5),
         },
 
@@ -157,65 +161,60 @@ function getStyles(
         },
       }),
     }),
+
     card: css({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
-      border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      cursor: 'pointer',
-      padding: 0,
-      boxShadow: isSelected ? `0 0 9px 0 rgba(58, 139, 255, 0.3)` : 'none',
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-
-      '&:hover': {
-        background: isSelected
-          ? theme.colors.action.selected
-          : theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-        borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
-      },
-
-      [`&:hover .${hoverActions}`]: {
-        opacity: 1,
-      },
-
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.border}`,
-        outlineOffset: '2px',
-      },
-    }),
-    cardHeader: css({
+      position: 'relative',
+      minHeight: '30px',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1),
-      background: theme.colors.background.primary,
-      color: config.color,
-      borderTopRightRadius: theme.shape.radius.default,
-      borderTopLeftRadius: theme.shape.radius.default,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      width: '100%',
+      background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
+      borderLeft: `${isSelected ? 3 : 1}px solid ${config.color}`,
+      cursor: 'pointer',
+
+      // This transitions the background color of the card when it is hovered.
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+      '&:hover': {
+        background: backgroundColor,
+      },
+      [`&:hover .${hoverActions}`]: {
+        opacity: 1,
+        transform: 'translateX(0)',
+        pointerEvents: 'auto',
+      },
     }),
+
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,
+      transform: 'translateX(0)',
+      pointerEvents: 'auto',
     }),
+
     cardContent: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(1),
+      padding: theme.spacing(0.5, 1),
+      overflow: 'hidden',
+      minWidth: 0,
+      flex: 1,
+      // This transitions the opacity of the card text when the card is hidden.
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['opacity'], {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
     }),
     hidden: css({
-      opacity: 0.6,
+      opacity: 0.7,
     }),
   };
 }

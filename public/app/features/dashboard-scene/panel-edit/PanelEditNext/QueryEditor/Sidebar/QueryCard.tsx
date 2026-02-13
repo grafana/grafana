@@ -1,12 +1,13 @@
 import { DataQuery } from '@grafana/schema';
-import { Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
+import { CardTitle } from './CardTitle';
 import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
@@ -15,7 +16,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const isSelected = selectedQuery?.refId === query.refId;
-
+  const isHidden = !!query.hide;
   return (
     <SidebarCard
       config={QUERY_EDITOR_TYPE_CONFIG[editorType]}
@@ -25,13 +26,18 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       onDuplicate={() => duplicateQuery(query.refId)}
       onDelete={() => deleteQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
-      isHidden={!!query.hide}
+      isHidden={isHidden}
       showAddButton={true}
     >
-      <DataSourceLogo dataSource={queryDsSettings} />
-      <Text weight="light" variant="code" color="secondary">
-        {query.refId}
-      </Text>
+      {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
+      {editorType === QueryEditorType.Expression && (
+        <Icon
+          name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon}
+          color={QUERY_EDITOR_TYPE_CONFIG[editorType].color}
+          size="sm"
+        />
+      )}
+      <CardTitle title={query.refId} isHidden={isHidden} />
     </SidebarCard>
   );
 };
