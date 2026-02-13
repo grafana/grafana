@@ -24,6 +24,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				// @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
 				Options: {
 					// Represents the index of the selected frame
 					frameIndex: number | *0
