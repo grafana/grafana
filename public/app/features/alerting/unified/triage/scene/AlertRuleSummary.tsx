@@ -63,6 +63,13 @@ function AlertRuleSummaryViz({ ruleUID }: { ruleUID: string }) {
         options: { include: 'A' },
       },
       {
+        id: 'renameByRegex',
+        options: {
+          regex: 'Value #A',
+          renamePattern: 'Value',
+        },
+      },
+      {
         id: 'filterByValue',
         options: {
           filters: [

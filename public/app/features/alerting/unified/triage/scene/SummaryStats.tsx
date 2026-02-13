@@ -7,9 +7,7 @@ import { useQueryRunner } from '@grafana/scenes-react';
 import { Box, ErrorBoundaryAlert, Grid, Icon, type IconName, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { METRIC_NAME } from '../constants';
-
-import { getDataQuery, useQueryFilter } from './utils';
+import { buildDeduplicatedExpr, getDataQuery, useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
@@ -138,25 +136,22 @@ function SummaryStatsContent() {
   const filter = useQueryFilter();
   const alertstateFilter = parseAlertstateFilter(filter);
 
-  const instanceDataProvider = useQueryRunner({
-    queries: [getDataQuery(`count by (alertstate) (${METRIC_NAME}{${filter}})`, { instant: true, format: 'table' })],
-  });
-
-  // Always remove alertstate filter from rule query to get accurate counts across both states
-  // This ensures we can count rules that have instances in either state
-  const ruleFilter = filter
+  // Strip alertstate from filter since the dedup queries add their own alertstate matchers
+  const cleanFilter = filter
     .replace(/alertstate\s*=~?\s*"(firing|pending)"[,\s]*/, '')
     .replace(/,\s*$/, '')
     .replace(/^\s*,/, '');
+
+  const instanceDataProvider = useQueryRunner({
+    queries: [getDataQuery(buildDeduplicatedExpr('alertstate', cleanFilter), { instant: true, format: 'table' })],
+  });
+
   const ruleDataProvider = useQueryRunner({
     queries: [
-      getDataQuery(
-        `count by (alertname, grafana_folder, grafana_rule_uid, alertstate) (${METRIC_NAME}{${ruleFilter}})`,
-        {
-          instant: true,
-          format: 'table',
-        }
-      ),
+      getDataQuery(buildDeduplicatedExpr('alertname, grafana_folder, grafana_rule_uid, alertstate', cleanFilter), {
+        instant: true,
+        format: 'table',
+      }),
     ],
   });
 

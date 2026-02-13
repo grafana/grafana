@@ -8,7 +8,7 @@ import { Workbench } from '../Workbench';
 import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
 
 import { convertToWorkbenchRows } from './dataTransform';
-import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
+import { buildDeduplicatedExpr, convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
@@ -22,17 +22,7 @@ export function WorkbenchRenderer() {
   const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
-  // Build the badge query with PromQL-level deduplication.
-  // Prefers firing over pending: instances that were both pending and firing
-  // during the time range are counted only as firing.
-  const firingFilter = queryFilter ? `alertstate="firing",${queryFilter}` : 'alertstate="firing"';
-  const pendingFilter = queryFilter ? `alertstate="pending",${queryFilter}` : 'alertstate="pending"';
-  const badgeExpr =
-    `count by (${countBy}) (` +
-    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]) or ` +
-    `(last_over_time(${METRIC_NAME}{${pendingFilter}}[$__range]) ` +
-    `unless ignoring(alertstate, grafana_alertstate) ` +
-    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range])))`;
+  const badgeExpr = buildDeduplicatedExpr(countBy, queryFilter);
 
   const runner = useQueryRunner({
     queries: [
