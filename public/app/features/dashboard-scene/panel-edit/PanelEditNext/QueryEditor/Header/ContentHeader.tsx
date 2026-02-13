@@ -5,7 +5,7 @@ import { RefObject, useRef } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Icon, Text } from '@grafana/ui';
+import { Button, useStyles2, Icon, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -15,7 +15,6 @@ import { Transformation } from '../types';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
-import { PendingExpressionHeader } from './PendingExpressionHeader';
 
 function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
@@ -43,6 +42,7 @@ export interface ContentHeaderProps {
   queries: DataQuery[];
   cardType: QueryEditorType;
   pendingExpression?: boolean;
+  onCancelPendingExpression?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
@@ -77,6 +77,7 @@ export function ContentHeader({
   queries,
   cardType,
   pendingExpression,
+  onCancelPendingExpression,
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
@@ -89,7 +90,19 @@ export function ContentHeader({
   const styles = useStyles2(getContentHeaderStyles, { cardType });
 
   if (pendingExpression) {
-    return <PendingExpressionHeader />;
+    return (
+      <div className={styles.container}>
+        <div className={styles.leftSection}>
+          <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon} size="sm" />
+          <Text weight="light" variant="body" color="secondary">
+            <Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>
+          </Text>
+        </div>
+        <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingExpression}>
+          <Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>
+        </Button>
+      </div>
+    );
   }
 
   if (!selectedQuery && !selectedTransformation) {
@@ -157,7 +170,8 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  const { selectedQuery, selectedTransformation, cardType, pendingExpression } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation, cardType, pendingExpression, setPendingExpression } =
+    useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
@@ -168,6 +182,7 @@ export function ContentHeaderSceneWrapper({
       queries={queries}
       cardType={cardType}
       pendingExpression={!!pendingExpression}
+      onCancelPendingExpression={() => setPendingExpression(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}
