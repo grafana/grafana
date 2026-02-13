@@ -26,7 +26,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
   const { repository } = useGetResourceRepositoryView({ name: slug });
 
-  // early return if there is an error
+  // early return if there is an error loading dashboard file from repository
   if (file.data?.errors) {
     return (
       <Alert
