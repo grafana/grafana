@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          GOAMD64=v4 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
     # Run this workflow only for PRs from forks
@@ -113,7 +113,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          GOAMD64=v4 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -139,7 +139,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
+            GOAMD64=v4 go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -220,7 +220,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 GOAMD64=v4 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -265,7 +265,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 GOAMD64=v4 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -309,7 +309,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          GOAMD64=v4 go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -356,7 +356,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          GOAMD64=v4 go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -382,7 +382,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' \
+            GOAMD64=v4 go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -468,7 +468,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 GOAMD64=v4 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -518,7 +518,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 GOAMD64=v4 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
