@@ -71,6 +71,24 @@ func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.
 	}
 }
 
+// IsQuotaExceeded checks if the resource quota condition indicates the quota has been exceeded.
+func IsQuotaExceeded(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionFalse &&
+				conditions[i].Reason == provisioning.ReasonQuotaExceeded
+		}
+	}
+	return false
+}
+
+func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
+	if quota.MaxResourcesPerRepository == 0 {
+		return true
+	}
+	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository
+}
+
 // calculateTotalResources sums up all resource counts from the stats.
 func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	var total int64
@@ -107,3 +125,24 @@ func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string)
 
 // Ensure FixedQuotaGetter implements QuotaGetter interface.
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+func NewQuotaExceededError(err error) *QuotaExceededError {
+	return &QuotaExceededError{Err: err}
+}
+
+type QuotaExceededError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *QuotaExceededError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "quota exceeded"
+}
+
+// Unwrap implements error unwrapping to support errors.Is and errors.As
+func (e *QuotaExceededError) Unwrap() error {
+	return e.Err
+}

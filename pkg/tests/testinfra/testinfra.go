@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -135,16 +138,25 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	})
 
 	// UnifiedStorageOverGRPC
-	var storage sql.UnifiedStorageGrpcService
+	var storage resource.UnifiedStorageGrpcService
+	var grpcService *grpcserver.DSKitService
 	if runstore {
+		tracer := otel.Tracer("test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		require.NoError(t, err)
+
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
 		tracingService := tracing.NewNoopTracerService()
 		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
 		require.NoError(t, err)
+		//TODO: start storage backend
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, kv.Config{}, nil, storageBackend, nil)
+			env.Cfg.Logger, registerer, nil, nil, nil, kv.Config{}, nil, grpcService, storageBackend)
+		err = grpcService.StartAsync(ctx)
+		require.NoError(t, err)
+		err = grpcService.AwaitRunning(ctx)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -153,7 +165,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		require.NoError(t, err)
 
 		require.NoError(t, err)
-		t.Logf("Unified storage running on %s", storage.GetAddress())
+		t.Logf("Unified storage running on %s", grpcService.GetAddress())
 	}
 
 	go func() {
@@ -168,6 +180,9 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		}
 		if storage != nil {
 			storage.StopAsync()
+		}
+		if grpcService != nil {
+			grpcService.StopAsync()
 		}
 	})
 
@@ -430,7 +445,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		return section, err
 	}
 
-	queryRetries := 3
+	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)

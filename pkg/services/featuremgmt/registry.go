@@ -2350,6 +2350,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "alertingNotificationHistoryRuleViewer",
+			Description:  "Enables the notification history tab in the rule viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 

@@ -1487,4 +1487,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingIgnorePendingForNoDataAndError?: boolean;
+  /**
+  * Enables the notification history tab in the rule viewer
+  * @default false
+  */
+  alertingNotificationHistoryRuleViewer?: boolean;
 }
