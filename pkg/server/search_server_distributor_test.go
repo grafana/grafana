@@ -392,7 +392,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	backend, err := sql.ProvideStorageBackend(cfg, nil, nil, nil, tracer)
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:       backend,

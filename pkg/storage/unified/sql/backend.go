@@ -15,6 +15,7 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,7 +30,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -59,22 +59,10 @@ type GarbageCollectionConfig struct {
 
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
-	db infraDB.DB,
-	reg prometheus.Registerer,
-	storageMetrics *resource.StorageMetrics,
-	tracer trace.Tracer,
 ) (resource.StorageBackend, error) {
-	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
-		MustString(string(options.StorageTypeUnified)))
-
-	switch storageType {
-	case options.StorageTypeFile:
-		return newFileBackend(cfg)
-	case options.StorageTypeUnifiedGrpc:
-		return nil, nil
-	default:
-		return newStorageBackend(cfg, db, reg, storageMetrics, tracer)
-	}
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
+	return nil, nil
 }
 
 type Backend interface {
@@ -82,13 +70,22 @@ type Backend interface {
 	resourcepb.DiagnosticsServer
 }
 
-func newStorageBackend(
+func NewStorageBackend(
 	cfg *setting.Cfg,
 	db infraDB.DB,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	tracer trace.Tracer,
 ) (resource.StorageBackend, error) {
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+	switch storageType {
+	case options.StorageTypeFile:
+		return newFileBackend(cfg)
+	case options.StorageTypeUnifiedGrpc:
+		return nil, nil
+	}
+	// create default unified backend
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err

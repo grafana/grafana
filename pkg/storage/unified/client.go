@@ -56,8 +56,8 @@ type clientMetrics struct {
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(opts *Options,
+	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -68,7 +68,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, indexMetrics, opts.SecureValues, backend)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -96,16 +96,20 @@ func ProvideUnifiedStorageClient(opts *Options,
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
-	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
-
+	backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
+	if err != nil {
+		return nil, err
+	}
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
