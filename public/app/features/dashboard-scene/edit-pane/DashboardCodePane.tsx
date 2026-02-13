@@ -73,7 +73,6 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
             showMiniMap={false}
-            showValidationAlert={false}
           />
         </div>
 

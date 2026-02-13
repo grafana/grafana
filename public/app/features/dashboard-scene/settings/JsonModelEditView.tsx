@@ -271,7 +271,6 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             onValidationChange={handleValidationChange}
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
-            showValidationAlert={false}
           />
         ) : (
           <CodeEditor
