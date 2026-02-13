@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
       "title-no-alertmanager-found": "No Alertmanager found"
     },
+    "notification-history": {
+      "annotations": "Annotations:",
+      "column": {
+        "contact-point": "Contact point",
+        "group-labels": "Group Labels",
+        "state": "State",
+        "time": "Time"
+      },
+      "description": "Description:",
+      "empty": "No notifications have been sent for this alert rule in the last {{days}} days",
+      "empty-filtered": "No notifications match the current filters for the last {{days}} days",
+      "error": {
+        "default": "Unable to fetch notification history",
+        "title": "Error fetching notifications"
+      },
+      "filter": {
+        "label": "Filter notifications",
+        "outcome": "Outcome",
+        "placeholder": "Search labels...",
+        "status": "Status",
+        "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
+      },
+      "firing-alerts_one": "Firing Alerts ({{count}})",
+      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "labels": "Labels:",
+      "loading": "Loading notifications...",
+      "notification-error": "Notification Error",
+      "outcome": {
+        "failed": "Failed",
+        "success": "Success"
+      },
+      "resolved-alerts_one": "Resolved Alerts ({{count}})",
+      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "started": "Started:",
+      "status": {
+        "firing": "Firing",
+        "resolved": "Resolved"
+      },
+      "summary": "Summary:"
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
@@ -3392,6 +3432,7 @@
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
+          "notifications": "Notifications",
           "query-and-conditions": "Query and conditions",
           "versions": "Versions"
         }
@@ -4962,6 +5003,33 @@
         "new-panel": "New panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "Add event data to graphs",
+      "label-annotation-query": "Annotation query",
+      "tooltip-add-new-annotation-query": "Add new annotation query"
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "Change annotation color",
+        "change-annotation-controls-display": "Change annotation controls display",
+        "change-annotation-enabled-state": "Change annotation enabled state",
+        "change-annotation-name": "Change annotation name",
+        "change-annotation-panel-filter": "Change annotation panel filter"
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": "Reorder annotations list"
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": "Annotation"
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": "Use saved query"
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "control-display-options": {
@@ -5115,6 +5183,9 @@
       "message": {
         "dashboard-not-found": "Dashboard not found"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": "Dashboard controls"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -6169,7 +6240,46 @@
       "tab-title": "Change tab title"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "Change annotation data source",
+        "choose-panels": "Choose panels",
+        "color": "Color",
+        "color-description": "Color to use for the annotation event markers",
+        "data-source": "Data source",
+        "display": "Show annotation controls in",
+        "display-options": {
+          "above-dashboard": "Above dashboard",
+          "controls-menu": "Controls menu",
+          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "hidden": "Hidden",
+          "hidden-description": "Hides the toggle for turning this annotation on or off"
+        },
+        "enabled": "Enabled",
+        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
+        "name": "Name",
+        "open-query-editor": "Open query editor",
+        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
+        "panel-filter": {
+          "all-panels": "All panels",
+          "all-panels-description": "Send the annotation data to all panels that support annotations",
+          "all-panels-except": "All panels except",
+          "all-panels-except-description": "Do not send annotation data to the following panels",
+          "selected-panels": "Selected panels",
+          "selected-panels-description": "Send the annotations to the explicitly listed panels"
+        },
+        "query": "Query",
+        "query-editor-close": "Close",
+        "query-editor-modal-title": "Annotation Query",
+        "show-in": "Show in"
+      },
+      "annotations": {
+        "add-annotation": "Add annotation",
+        "reorder": "Drag to reorder",
+        "select-annotation": "Select"
+      },
       "elements": {
+        "annotation": "Annotation",
+        "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
         "local-variable": "Local variable",
@@ -10564,9 +10674,11 @@
       "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
-        "disabled": "Columns are not supported with line wrapping enabled",
-        "disabled-label": "Columns not suported",
-        "enable": "Enable columns"
+        "disabled-label": "Columns not supported",
+        "disabled-text": "Columns enabled",
+        "enable": "Enable columns",
+        "enabled-text": "Columns disabled",
+        "not-supported": "Columns are not supported with line wrapping enabled"
       },
       "wrap-lines": "Wrap lines"
     },
@@ -11325,8 +11437,8 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add to Bookmarks",
-      "remove-bookmark": "Remove from Bookmarks"
+      "add-bookmark": "Add {{itemName}} to Bookmarks",
+      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
@@ -11660,7 +11772,8 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Apply {{suggestionName}} visualization",
+      "edit": "Edit",
+      "edit-aria-label": "Edit {{suggestionName}} visualization",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -11670,8 +11783,7 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
-      "unknown-viz-type": "Unknown visualization type",
-      "use-this-suggestion": "Use this suggestion"
+      "unknown-viz-type": "Unknown visualization type"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
@@ -12993,6 +13105,8 @@
     },
     "header": {
       "expression": "Expression",
+      "pending-expression": "Select an Expression",
+      "pending-expression-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13009,7 +13123,6 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
-      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",

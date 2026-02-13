@@ -484,6 +484,15 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "useNewAPIsForDatasourceCRUD",
+			Description:     "Use the new datasource API groups for datasource CRUD requests",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+			Expression:      "false",
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -957,6 +966,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingSyncNotifiersApiMigration",
+			Description:  "Use the new k8s API for fetching integration type schemas",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 			Expression:   "false",
 		},
 		{
@@ -2319,8 +2336,32 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamSync",
+			Description:  "Use the new APIs for syncing users to teams",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingIgnorePendingForNoDataAndError",
+			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryRuleViewer",
+			Description:  "Enables the notification history tab in the rule viewer",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
