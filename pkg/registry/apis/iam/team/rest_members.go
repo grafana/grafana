@@ -2,12 +2,14 @@ package team
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -77,7 +79,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			http.Error(w, "functionality not available", http.StatusForbidden)
+			responder.Error(apierrors.NewUnauthorized("functionality not available"))
 			return
 		}
 
@@ -86,7 +88,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 
 		authInfo, ok := types.AuthInfoFrom(ctx)
 		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
 			return
 		}
 
@@ -99,7 +101,8 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			Name:      name,
 		}, "")
 		if err != nil || !checkTeamAccess.Allowed {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("you'll need additional permissions to perform this action. Permissions needed: \"GetPermissions\" on the \"Team\" resource")))
 			return
 		}
 
@@ -112,7 +115,8 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			Name:      authInfo.GetIdentifier(),
 		}, "")
 		if err != nil || !checkUserAccess.Allowed {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				authInfo.GetIdentifier(), errors.New("you'll need additional permissions to perform this action. Permissions needed: \"Get\" on the \"User\" resource")))
 			return
 		}
 
