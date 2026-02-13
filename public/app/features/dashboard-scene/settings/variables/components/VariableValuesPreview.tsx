@@ -110,13 +110,15 @@ function VariableValuesWithPropsPreview({
   }, [options, properties]);
 
   return (
-    <InteractiveTable
-      className={styles.table}
-      columns={columns}
-      data={data}
-      getRowId={(r) => String(r.value)}
-      pageSize={8}
-    />
+    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable}>
+      <InteractiveTable
+        className={styles.table}
+        columns={columns}
+        data={data}
+        getRowId={(r) => String(r.value)}
+        pageSize={8}
+      />
+    </div>
   );
 }
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
