@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -15,41 +14,35 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func ConvertToK8sResources(orgID int64, rules []ngmodels.InhibitionRule, namespacer request.NamespaceMapper, selector fields.Selector) (*model.InhibitionRuleList, error) {
+func ConvertToK8sResources(orgID int64, rules []ngmodels.InhibitionRule, namespacer request.NamespaceMapper, selector fields.Selector) *model.InhibitionRuleList {
 	result := &model.InhibitionRuleList{}
 
 	for _, rule := range rules {
-		item := buildInhibitionRule(orgID, rule, namespacer)
-		if selector != nil && !selector.Empty() && !selector.Matches(model.InhibitionRuleSelectableFields(&item)) {
+		item := ConvertToK8sResource(orgID, rule, namespacer)
+		if selector != nil && !selector.Empty() && !selector.Matches(model.InhibitionRuleSelectableFields(item)) {
 			continue
 		}
-		result.Items = append(result.Items, item)
+		result.Items = append(result.Items, *item)
 	}
-	return result, nil
+
+	return result
 }
 
-func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) (*model.InhibitionRule, error) {
-	result := buildInhibitionRule(orgID, rule, namespacer)
-	result.UID = gapiutil.CalculateClusterWideUID(&result)
-	return &result, nil
-}
-
-func buildInhibitionRule(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) model.InhibitionRule {
+func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
 	i := model.InhibitionRule{
 		ObjectMeta: metav1.ObjectMeta{
-			UID:             types.UID(rule.UID),
-			Name:            rule.UID,
+			Name:            rule.Name,
 			Namespace:       namespacer(orgID),
 			ResourceVersion: rule.Version,
 		},
 		Spec: convertDomainToK8sSpec(rule),
 	}
-	i.SetProvenanceStatus(string(rule.Provenance))
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
+	i.SetProvenanceStatus(string(rule.Provenance))
 	i.SetCanUse(rule.Provenance != ngmodels.ProvenanceConvertedPrometheus)
 
-	return i
+	return &i
 }
 
 func convertDomainToK8sSpec(rule ngmodels.InhibitionRule) model.InhibitionRuleSpec {

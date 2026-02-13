@@ -69,7 +69,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector), nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -86,7 +86,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	return ConvertToK8sResource(info.OrgID, rule, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, rule, s.namespacer), nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -116,7 +116,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, out, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, out, s.namespacer), nil
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -160,8 +160,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := ConvertToK8sResource(info.OrgID, updated, s.namespacer)
-	return r, false, err
+	return ConvertToK8sResource(info.OrgID, updated, s.namespacer), false, nil
 }
 
 // GracefulDeleter
