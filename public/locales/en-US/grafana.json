@@ -13105,6 +13105,8 @@
     },
     "header": {
       "expression": "Expression",
+      "pending-expression": "Select an Expression",
+      "pending-expression-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13121,7 +13123,6 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
-      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",
