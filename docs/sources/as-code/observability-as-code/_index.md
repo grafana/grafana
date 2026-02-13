@@ -32,7 +32,7 @@ cards:
     - title: On-prem file provisioning
       height: 24
       href: ./provision-resources/
-      description: File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
+      description: On-prem file provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
   title_class: pt-0 lh-1
 hero:
   title: Observability as Code
