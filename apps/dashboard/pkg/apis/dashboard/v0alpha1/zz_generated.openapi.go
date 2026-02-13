@@ -1373,6 +1373,13 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
+					"deleteKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Snapshot delete key",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw dashboard (unstructured for now)",
