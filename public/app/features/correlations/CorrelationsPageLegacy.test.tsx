@@ -212,7 +212,7 @@ afterAll(() => {
   jest.restoreAllMocks();
 });
 
-describe('CorrelationsPage', () => {
+describe('CorrelationsPage - Legacy', () => {
   describe('With no correlations', () => {
     beforeEach(async () => {
       await renderWithContext({
