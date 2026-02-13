@@ -12,7 +12,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -88,11 +87,6 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
 	if !exists || sourcePath == "" {
 		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
-	}
-
-	// For folder resources, ensure the path has a trailing slash for proper deletion
-	if gvk.Kind == "Folder" && !safepath.IsDir(sourcePath) {
-		sourcePath = sourcePath + "/"
 	}
 
 	return sourcePath, nil
