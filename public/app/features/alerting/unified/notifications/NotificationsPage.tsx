@@ -1,5 +1,5 @@
-import { withPageErrorBoundary } from '../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { NotificationsScene } from './NotificationsScene';
 

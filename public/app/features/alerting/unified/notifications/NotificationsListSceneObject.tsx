@@ -115,7 +115,7 @@ export const NotificationsList = React.memo(function NotificationsList({
   }, [data?.entries]);
 
   if (isError) {
-    let errorMessage = 'Unable to fetch notification history';
+    let errorMessage = t('alerting.notifications-list.unable-to-fetch', 'Unable to fetch notification history');
     if (error) {
       if (typeof error === 'object' && error !== null && 'data' in error) {
         errorMessage = JSON.stringify(error.data);
@@ -275,7 +275,9 @@ interface NotificationStateProps {
 
 function NotificationState({ status }: NotificationStateProps) {
   const isFiring = status === 'firing';
-  const statusText = isFiring ? 'Firing' : 'Resolved';
+  const statusText = isFiring
+    ? t('alerting.notifications-list.status-firing', 'Firing')
+    : t('alerting.notifications-list.status-resolved', 'Resolved');
   const state = isFiring ? 'bad' : 'good';
   return <StateTag state={state}>{statusText}</StateTag>;
 }
