@@ -140,7 +140,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
 		tracingService := tracing.NewNoopTracerService()
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
 		require.NoError(t, err)
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,

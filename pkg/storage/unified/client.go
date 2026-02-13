@@ -109,7 +109,7 @@ func newClient(opts options.StorageOptions,
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer, false)
 		if err != nil {
 			return nil, err
 		}
@@ -160,7 +160,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer, false)
 		if err != nil {
 			return nil, err
 		}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -392,8 +393,11 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer)
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
 	require.NoError(t, err)
+	backendService := backend.(services.Service)
+	require.NotNil(t, backendService)
+	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:       backend,
 		Cfg:           cfg,

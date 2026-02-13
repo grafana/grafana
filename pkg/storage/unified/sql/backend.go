@@ -80,6 +80,7 @@ func NewStorageBackend(
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	tracer trace.Tracer,
+	disableStorageServices bool,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
@@ -114,7 +115,7 @@ func NewStorageBackend(
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
-			DisableStorageServices:  cfg.DisableStorageServices,
+			DisableStorageServices:  disableStorageServices,
 		})
 	}
 
@@ -226,7 +227,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}, func(serviceContext context.Context) error {
 		<-serviceContext.Done()
 		return nil
-	}, func(failureCase error) error {
+	}, func(_ error) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		return backend.Stop(ctx)

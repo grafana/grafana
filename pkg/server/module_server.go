@@ -210,7 +210,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
 		var err error
 		if s.storageBackend == nil {
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil) // ensure storage backend is initialized
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil, false)
 			if err != nil {
 				return nil, err
 			}
@@ -229,8 +229,8 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
 		var err error
 		if s.storageBackend == nil {
-			s.cfg.DisableStorageServices = true
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, nil, nil)
+			disableStorageServices := true
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, nil, nil, disableStorageServices)
 			if err != nil {
 				return nil, err
 			}
