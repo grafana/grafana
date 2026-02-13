@@ -19,26 +19,55 @@ export function appenExtensionsToPanelMenu(options: AppendToPanelMenuOpts): void
   const submenuGroups = groupBySubmenu(extensions, reservedNames, extensionsSubmenuName);
   const groupKeys = Object.keys(submenuGroups).sort();
 
+  let dividerAdded = false;
+
   for (const key of groupKeys) {
     if (key === ROOT_CATEGORY) {
-      const rootCategory = submenuGroups[key];
-      if (Array.isArray(rootCategory.subMenu)) {
-        rootMenu.push(...rootCategory.subMenu);
+      const menuItem = submenuGroups[key];
+      if (shouldAppendSubmenu(menuItem)) {
+        rootMenu.push(...menuItem.subMenu);
       }
       continue;
     }
 
-    if (key === EXTENSIONS_CATEGORY) {
-      // Add divider before starting to add ungrouped items to the extensions category
-      rootMenu.push({
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        text: 'divider',
-        type: 'divider',
-      });
+    if (key.startsWith(SUBMENU_CATEGORY_PREFIX) && !key.startsWith(EXTENSIONS_CATEGORY)) {
+      const menuItem = submenuGroups[key];
+      if (shouldAppendSubmenu(menuItem)) {
+        rootMenu.push(menuItem);
+      }
+      continue;
     }
 
-    rootMenu.push(submenuGroups[key]);
+    if (key.startsWith(`${EXTENSIONS_CATEGORY}/`)) {
+      const extensionsMenuItem = submenuGroups[EXTENSIONS_CATEGORY];
+      const menuItem = submenuGroups[key];
+
+      if (!Array.isArray(extensionsMenuItem.subMenu)) {
+        extensionsMenuItem.subMenu = [];
+      }
+
+      if (!dividerAdded && shouldAppendSubmenu(extensionsMenuItem)) {
+        dividerAdded = true;
+        extensionsMenuItem.subMenu.unshift({
+          text: '',
+          type: 'divider',
+        });
+      }
+
+      extensionsMenuItem.subMenu.unshift(menuItem);
+    }
   }
+
+  const extensionsMenuItem = submenuGroups[EXTENSIONS_CATEGORY];
+  if (shouldAppendSubmenu(extensionsMenuItem)) {
+    rootMenu.push(extensionsMenuItem);
+  }
+}
+
+type PanelSubMenuItem = PanelMenuItem & { subMenu: PanelMenuItem[] };
+
+function shouldAppendSubmenu(menuItem: PanelMenuItem | undefined): menuItem is PanelSubMenuItem {
+  return !!menuItem && Array.isArray(menuItem.subMenu) && menuItem.subMenu?.length > 0;
 }
 
 function groupBySubmenu(
