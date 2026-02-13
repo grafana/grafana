@@ -121,7 +121,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			if err != nil {
 				// Note: special case for token rotation
 				// We don't want to fallthrough in this case
-				var tokenRotationErr authn.ErrTokenNeedsRotation
+				var tokenRotationErr authn.TokenNeedsRotationError
 				if errors.As(err, &tokenRotationErr) {
 					return nil, err
 				}

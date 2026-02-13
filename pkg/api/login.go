@@ -96,7 +96,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	var tokenRotationErr authn.ErrTokenNeedsRotation
+	var tokenRotationErr authn.TokenNeedsRotationError
 	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
 		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
