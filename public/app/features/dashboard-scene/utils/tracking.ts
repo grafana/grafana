@@ -34,19 +34,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
-
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
     outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
