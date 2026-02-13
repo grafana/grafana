@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "To rule list"
     },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
+      "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
+      "compareVersions": "Compare versions",
+      "comparing-versions": "Comparing versions",
+      "condition": "Alert condition",
+      "contactPointRouting": "Contact point routing",
+      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
+      "errorloading": "Failed to load alert rule versions",
+      "execErrorState": "Alert state when execution error",
+      "intervalSeconds": "Evaluation interval",
+      "labels": "Labels",
+      "latest": "Latest",
+      "name": "Name",
+      "namespace_uid": "Folder UID",
+      "noDataState": "Alert state when no data",
+      "noVersionsFound": "No versions found for this rule",
+      "paused": "Paused state",
+      "pendingPeriod": "Pending period",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Version update was made via provisioning",
+      "queryAndAlertCondition": "Query and alert condition",
+      "restore": "Restore",
+      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
+      "restore-modal": {
+        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "confirm": "Yes, restore configuration",
+        "error": "Could not restore alert rule version ",
+        "summary": "Summary of changes to be applied:",
+        "title": "Restore version"
+      },
+      "restore-version": "Restore to version {{version}}",
+      "rule_group": "Rule group",
+      "unknown": "Unknown",
+      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Search alert rules by name",
       "no-alert-rules-found": "No alert rules found",
       "placeholder-sort-default-az": "Sort (Default A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Alerting",
-      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
-      "annotations": "Annotations",
-      "compare": "Compare",
-      "compare-with-latest": "Compare with latest version",
-      "compareVersions": "Compare versions",
-      "comparing-versions": "Comparing versions",
-      "condition": "Alert condition",
-      "contactPointRouting": "Contact point routing",
-      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
-      "errorloading": "Failed to load alert rule versions",
-      "execErrorState": "Alert state when execution error",
-      "intervalSeconds": "Evaluation interval",
-      "labels": "Labels",
-      "latest": "Latest",
-      "name": "Name",
-      "namespace_uid": "Folder UID",
-      "noDataState": "Alert state when no data",
-      "noVersionsFound": "No versions found for this rule",
-      "paused": "Paused state",
-      "pendingPeriod": "Pending period",
-      "provisioning": "Provisioning",
-      "provisioning-change-description": "Version update was made via provisioning",
-      "queryAndAlertCondition": "Query and alert condition",
-      "restore": "Restore",
-      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
-      "restore-modal": {
-        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
-        "confirm": "Yes, restore configuration",
-        "error": "Could not restore alert rule version ",
-        "summary": "Summary of changes to be applied:",
-        "title": "Restore version"
-      },
-      "restore-version": "Restore to version {{version}}",
-      "rule_group": "Rule group",
-      "unknown": "Unknown",
-      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}",
-      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
-      "warning-restore-manually-title": "Restoring rule manually"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "This policy matches all labels"
@@ -3079,11 +3079,6 @@
       "title-preview-not-available": "Preview not available",
       "valid-matcher-affected-alerts": "Add a valid matcher to see affected alerts"
     },
-    "silences": {
-      "affected-instances": "Affected alert instances",
-      "only-firing-instances": "Only alert instances in the firing state are displayed.",
-      "preview-affected-instances": "Preview the alert instances affected by this silence."
-    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Details about the silence",
       "label-comment": "Comment",
@@ -3105,6 +3100,11 @@
       "text-loading-silences": "Loading silences...",
       "title-error-loading-silences": "Error loading silences",
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
+    },
+    "silences": {
+      "affected-instances": "Affected alert instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simple-condition-editor": {
       "label-of-query": "OF QUERY",
@@ -6658,8 +6658,8 @@
       "aria-label-expand": "Expand {{title}} category"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Search options",
       "Recent options-title-recent-options": "Recent options",
+      "placeholder-search-options": "Search options",
       "title-matched_one": "Matched {{count}}/{{totalCount}} options",
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
@@ -10210,17 +10210,17 @@
       "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
       "title": "Basic login disabled"
     },
-    "search_filter": {
-      "description": "LDAP search filter used to locate specific entries within the directory.",
-      "error": "Search filter is a required field",
-      "label": "Search filter",
-      "placeholder": "example: cn=%s"
-    },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
       "error": "Search base DNS is a required field",
       "label": "Search base DNS",
       "placeholder": "example: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP search filter used to locate specific entries within the directory.",
+      "error": "Search filter is a required field",
+      "label": "Search filter",
+      "placeholder": "example: cn=%s"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
@@ -13185,10 +13185,10 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Query options",
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Hide time info",
-      "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -13524,9 +13524,9 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
+      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
       "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
       "body-delete_other": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
-      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
       "body-disable-service-account": "Are you sure you want to disable '{{accountToDisable}}'?",
       "confirmText-delete": "Delete",
       "confirmText-disable-service-account": "Disable service account",
@@ -14206,9 +14206,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 hours",
     "1_day": "1 day",
     "1_hour": "1 hour",
-    "12_hours": "12 hours",
     "30_days": "30 days",
     "6_hours": "6 hours",
     "7_days": "7 days"
@@ -15474,8 +15474,8 @@
       "title-dependencies": "Dependencies"
     },
     "variables-unknown-button": {
-      "usage-title": "Showing usages for: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Show usages"
+      "VariablesUnknownButton-tooltip-show-usages": "Show usages",
+      "usage-title": "Showing usages for: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Renamed or missing variables",
