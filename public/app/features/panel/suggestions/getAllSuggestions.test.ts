@@ -21,7 +21,7 @@ import {
   VizOrientation,
 } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
+import { clearPanelPluginCache, getPanelPluginMeta } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
 import { panelsToCheckFirst } from './consts';
@@ -477,6 +477,34 @@ scenario('Given a preferredVisualisationType', (ctx) => {
 
   it('should return the preferred visualization first', () => {
     expect(ctx.suggestions[0]).toEqual(expect.objectContaining({ pluginId: 'table' }));
+  });
+});
+
+scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'chart',
+      },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+      ],
+    }),
+  ]);
+
+  it('should stable-ly sort the results', async () => {
+    const dataSummary = getPanelDataSummary(ctx.data);
+    const timeseriesPlugin = await pluginImporter.importPanel(getPanelPluginMeta('timeseries'));
+    const timeseriesSuggestions = timeseriesPlugin.getSuggestions(dataSummary);
+    if (!timeseriesSuggestions) {
+      throw new Error('No suggestions from timeseries plugin');
+    }
+    for (let i = 0; i < timeseriesSuggestions.length; i++) {
+      const suggestion = timeseriesSuggestions[i];
+      expect(ctx.suggestions[i].name).toEqual(suggestion.name);
+    }
   });
 });
 

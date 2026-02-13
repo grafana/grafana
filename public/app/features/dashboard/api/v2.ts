@@ -1,7 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -145,12 +144,7 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
-      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
-      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
-      const originalUid = options?.k8s?.name;
-      if (originalUid && obj.metadata.name !== originalUid && obj.metadata.labels) {
-        delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-      }
+      delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -158,9 +152,7 @@ export class K8sDashboardV2API
       [AnnoKeyGrantPermissions]: 'default',
     };
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
-    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
-      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-    }
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -176,15 +168,9 @@ export class K8sDashboardV2API
       })
     );
 
-    let dashId = 0;
-    if (v.metadata.labels?.[DeprecatedInternalId]) {
-      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
-    }
-
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: dashId,
       status: 'success',
       url,
       slug,
@@ -233,6 +219,7 @@ export class K8sDashboardV2API
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 

@@ -4904,7 +4904,6 @@
       "paste-panel": "Paneli yapıştır",
       "paste-row": "Satırı yapıştır",
       "paste-tab": "Sekmeyi yapıştır",
-      "un-group-panels": "Gruplandırmayı çöz",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Sıfırla"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Seçenekler yüklenemedi",
       "loading": "Seçenekler yükleniyor...",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Satırları çöz",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Kontrolleri göster",
     "name-time": "",
     "name-unique-labels": "Benzersiz etiketler",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Satırları kaydır",
     "order-options": {
       "label-newest-first": "Yeniden eskiye",
@@ -10660,6 +10670,16 @@
       "message-same-name-current-folder": "",
       "message-same-name-general": ""
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Seçenek bulunamadı"
@@ -11502,9 +11522,6 @@
     "noOptionsMessage-no-organizations-found": "Kuruluş bulunamadı",
     "select-placeholder": "Kuruluş Seçin"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Başlığı düzenle"
@@ -12132,7 +12149,6 @@
       "placeholder-my-repository-connection": "Depo bağlantım",
       "retry-action": "",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} pano",
@@ -12656,12 +12672,9 @@
       "error-starting-job": "İş başlatılırken hata oluştu"
     },
     "sync-repository": {
-      "body-edit-configuration": "Yapılandırmayı düzenle",
-      "button-edit": "Düzenle",
       "error-pulling-resources": "Kaynaklar çekilirken hata oluştu",
       "pull": "Çek",
       "success-pull-started": "Çekme işlemi başlatıldı",
-      "title-pull-not-enabled": "Çekme etkin değil",
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
@@ -12670,7 +12683,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
@@ -12707,8 +12721,6 @@
       "button-cancelling": "",
       "button-next": "Sonlandır",
       "button-start": "Senkronizasyonu başlat",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12914,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Sorgu adını düzenle"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(İzleme kimliği: {{traceId}})"
     },
     "query-group": {
@@ -13033,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14241,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Yanıtta veri bulunamadı"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

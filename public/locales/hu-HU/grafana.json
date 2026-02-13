@@ -4904,7 +4904,6 @@
       "paste-panel": "Panel beillesztése",
       "paste-row": "Sor beillesztése",
       "paste-tab": "Lap beillesztése",
-      "un-group-panels": "Csoport szétbontása",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Visszaállítás"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "A beállítások betöltése sikertelen",
       "loading": "Beállítások betöltése...",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Sortörés megszüntetése",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "Sortörés"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Vezérlőelemek megjelenítése",
     "name-time": "Időbélyegek megjelenítése",
     "name-unique-labels": "Egyedi címkék",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "Sortörés",
     "order-options": {
       "label-newest-first": "Újabbat előre",
@@ -10660,6 +10670,16 @@
       "message-same-name-current-folder": "Már létezik ugyanilyen nevű irányítópult vagy mappa az aktuális mappában",
       "message-same-name-general": "Már létezik ugyanilyen nevű mappa vagy irányítópult a gyökérmappában"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nem található beállítás"
@@ -11502,9 +11522,6 @@
     "noOptionsMessage-no-organizations-found": "Nem található szervezet",
     "select-placeholder": "Szervezet kijelölése"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Cím szerkesztése"
@@ -12132,7 +12149,6 @@
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "retry-action": "",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} irányítópult",
@@ -12656,12 +12672,9 @@
       "error-starting-job": "Hiba a feladat indításakor"
     },
     "sync-repository": {
-      "body-edit-configuration": "A konfiguráció szerkesztése",
-      "button-edit": "Szerkesztés",
       "error-pulling-resources": "Hiba az erőforrások lekérésekor",
       "pull": "Lekérés",
       "success-pull-started": "Lekérés elindítva",
-      "title-pull-not-enabled": "A lekérés nincs engedélyezve",
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
@@ -12670,7 +12683,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "és kattintson erre:",
@@ -12707,8 +12721,6 @@
       "button-cancelling": "",
       "button-next": "Befejezés",
       "button-start": "Szinkronizálás indítása",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12914,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Lekérdezés nevének szerkesztése"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(Nyomkövetési azonosító: {{traceId}})"
     },
     "query-group": {
@@ -13033,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14241,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Nem található adat a válaszban"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

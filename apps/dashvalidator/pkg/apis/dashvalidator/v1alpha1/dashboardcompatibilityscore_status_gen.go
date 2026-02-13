@@ -149,3 +149,16 @@ const (
 	DashboardCompatibilityScoreStatusOperatorStateStateInProgress DashboardCompatibilityScoreStatusOperatorStateState = "in_progress"
 	DashboardCompatibilityScoreStatusOperatorStateStateFailed     DashboardCompatibilityScoreStatusOperatorStateState = "failed"
 )
+
+func (DashboardCompatibilityScoreDataSourceResult) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceResult"
+}
+func (DashboardCompatibilityScoreQueryBreakdown) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreQueryBreakdown"
+}
+func (DashboardCompatibilityScorestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScorestatusOperatorState"
+}
+func (DashboardCompatibilityScoreStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreStatus"
+}

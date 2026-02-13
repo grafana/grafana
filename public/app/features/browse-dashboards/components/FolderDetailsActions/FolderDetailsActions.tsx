@@ -1,13 +1,17 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 
-import { OwnerReference } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { useGetTeamQuery } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { TeamOwnerReferences } from 'app/core/components/OwnerReferences/OwnerReference';
+import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getFolderPermissions } from '../../permissions';
 import CreateNewButton from '../CreateNewButton';
@@ -25,10 +29,12 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
     });
   };
 
+  const canReadTeams = contextSrv.hasPermission(AccessControlAction.ActionTeamsRead);
+
   return (
     <Stack alignItems="center">
-      {config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
-        <FolderOwners ownerReferences={folderDTO.ownerReferences || []} />
+      {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+        <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
       {config.featureToggles.restoreDashboards && (
         <LinkButton
@@ -53,11 +59,13 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   );
 };
 
-const FolderOwners = ({ ownerReferences }: { ownerReferences: OwnerReference[] }) => {
+const FolderOwners = ({ ownerReferences }: { ownerReferences?: OwnerReferenceType[] }) => {
   const styles = useStyles2(getStyles);
   const teamOwnerReferences = ownerReferences?.filter((ref) => ref.kind === 'Team');
+  const teamUid = teamOwnerReferences?.at(0)?.uid;
+  const { data: team, isLoading: isLoadingTeam } = useGetTeamQuery(teamUid ? { name: teamUid } : skipToken);
 
-  if (!teamOwnerReferences || teamOwnerReferences.length === 0) {
+  if (!teamOwnerReferences || teamOwnerReferences.length === 0 || isLoadingTeam || !team) {
     return null;
   }
 
@@ -66,7 +74,7 @@ const FolderOwners = ({ ownerReferences }: { ownerReferences: OwnerReference[] }
       <Text>
         <Trans i18nKey="browse-dashboards.folder-owners.owned-by">Owned by:</Trans>
       </Text>
-      <TeamOwnerReferences ownerReferences={teamOwnerReferences} />
+      <OwnerReference team={team} />
     </div>
   );
 };

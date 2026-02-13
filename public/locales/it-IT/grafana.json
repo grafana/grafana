@@ -4904,7 +4904,6 @@
       "paste-panel": "Incolla pannello",
       "paste-row": "Incolla riga",
       "paste-tab": "Incolla scheda",
-      "un-group-panels": "Annulla raggruppamento",
       "ungroup-rows": "",
       "ungroup-tabs": ""
     },
@@ -9519,6 +9518,10 @@
     "secret-form-field": {
       "reset": "Ripristino"
     },
+    "secret-text-area": {
+      "hide-content": "",
+      "show-content": ""
+    },
     "segment-async": {
       "error": "Impossibile caricare le opzioni",
       "loading": "Caricamento opzioni in corso...",
@@ -10534,6 +10537,12 @@
         "filter-level": ""
       },
       "unwrap-lines": "Rimuovi a capo",
+      "unwrapped-columns": {
+        "disable": "",
+        "disabled": "",
+        "disabled-label": "",
+        "enable": ""
+      },
       "wrap-lines": "A capo"
     },
     "logs-navigation": {
@@ -10560,6 +10569,7 @@
     "name-show-controls": "Mostra controlli",
     "name-time": "Mostra marche temporali",
     "name-unique-labels": "Etichette univoche",
+    "name-unwrapped-columns": "",
     "name-wrap-lines": "A capo",
     "order-options": {
       "label-newest-first": "Prima il più recente",
@@ -10660,6 +10670,16 @@
       "message-same-name-current-folder": "Esiste già una dashboard o una cartella con lo stesso nome nella cartella corrente",
       "message-same-name-general": "Esiste già una cartella o una dashboard con lo stesso nome nella cartella principale"
     }
+  },
+  "manage-owner-references": {
+    "folder-owner-error": "",
+    "folder-owner-removed": "",
+    "folder-owner-updated": "",
+    "manage-folder-owner": "",
+    "manage-folder-owner-alert-text": "",
+    "manage-folder-owner-alert-title": "",
+    "save-owner": "",
+    "select-owner": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
@@ -11502,9 +11522,6 @@
     "noOptionsMessage-no-organizations-found": "Nessuna organizzazione trovata",
     "select-placeholder": "Seleziona organizzazione"
   },
-  "owner-reference": {
-    "team-members": ""
-  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Modifica titolo"
@@ -12132,7 +12149,6 @@
       "placeholder-my-repository-connection": "La mia connessione al repository",
       "retry-action": "",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
-      "text-waiting-for-repository-health": "",
       "unmanaged-resources-label": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} dashboard",
@@ -12656,12 +12672,9 @@
       "error-starting-job": "Errore durante l'avvio dell'attività"
     },
     "sync-repository": {
-      "body-edit-configuration": "Modifica configurazione",
-      "button-edit": "Modifica",
       "error-pulling-resources": "Errore durante il pull delle risorse",
       "pull": "Pull",
       "success-pull-started": "Pull avviato",
-      "title-pull-not-enabled": "Il pull non è abilitato",
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
@@ -12670,7 +12683,8 @@
       "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": ""
+      "repository-unhealthy": "",
+      "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "e fare clic",
@@ -12707,8 +12721,6 @@
       "button-cancelling": "",
       "button-next": "Fine",
       "button-start": "Inizia la sincronizzazione",
-      "check-status-button": "",
-      "check-status-message": "",
       "connect-step": "",
       "connection-not-ready": "",
       "discard-modal": {
@@ -12914,6 +12926,9 @@
       "query-name-div-title-edit-query-name": "Modifica il nome della query"
     },
     "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
       "trace-id": "(ID traccia: {{traceId}})"
     },
     "query-group": {
@@ -13033,6 +13048,11 @@
       "toggle-size": "",
       "transformations": ""
     }
+  },
+  "query-editor-renderer": {
+    "datasource-load-error-title": "",
+    "loading-datasource": "",
+    "no-query-editor-component": ""
   },
   "query-library": {
     "exposed-compoment": {
@@ -14241,6 +14261,9 @@
     "traces-panel": {
       "no-data-found-in-response": "Nessun dato trovato in risposta"
     }
+  },
+  "transformation-editor-renderer": {
+    "no-transformation-editor-title": ""
   },
   "transformations": {
     "empty": {

@@ -34,3 +34,9 @@ func NewCoreRoleSpec() *CoreRoleSpec {
 		Permissions: []CoreRolespecPermission{},
 	}
 }
+func (CoreRolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecPermission"
+}
+func (CoreRoleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleSpec"
+}
