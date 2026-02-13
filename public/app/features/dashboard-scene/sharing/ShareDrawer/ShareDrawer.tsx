@@ -7,6 +7,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
+import { useFocusReturn } from '../FocusReturnContext';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
@@ -15,7 +16,6 @@ import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
 import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
 
-import { useFocusReturn } from '../FocusReturnContext';
 import { ShareDrawerContext } from './ShareDrawerContext';
 
 export interface ShareDrawerState extends SceneObjectState {
