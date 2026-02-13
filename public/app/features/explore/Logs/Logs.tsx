@@ -37,7 +37,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataTopic } from '@grafana/schema';
 import {
   Button,
@@ -64,9 +64,7 @@ import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
-import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
 import { Options } from 'app/plugins/panel/logstable/options/types';
-import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
@@ -84,6 +82,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
+import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -245,6 +244,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
     return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   }, [outlineItems]);
+
+  const tableFrameIndex: number = useMemo(() => {
+    const frameIndex = props.logsFrames?.findIndex((f) => f.refId === props.panelState?.logs?.refId);
+    if (frameIndex !== undefined && frameIndex !== -1) {
+      return frameIndex;
+    }
+    return 0;
+  }, [props.logsFrames, props.panelState?.logs?.refId]);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
@@ -1065,32 +1072,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             )}
 
           {enableNewLogsTable && visualisationType === 'table' && (
-            <LogsTable
+            <ExploreLogsTable
+              tableFrameIndex={tableFrameIndex}
+              eventBus={eventBus}
               data={panelData}
-              id={0}
               timeRange={props.range}
               timeZone={timeZone}
-              options={{
-                ...logsTablePanelDefaultOptions,
-                showHeader: true,
-                showControls: true,
-                showCopyLogLink: true,
-                frameIndex: 0,
-                buildLinkToLogLine: onTablePermalinkClick,
-                displayedFields,
-                permalinkedLogId: panelState?.logs?.id,
-                sortOrder: logsSortOrder,
-              }}
-              transparent={false}
+              buildLinkToLogLine={onTablePermalinkClick}
+              displayedFields={displayedFields}
+              sortOrder={logsSortOrder}
               width={width}
               height={tableHeight}
-              fieldConfig={{
-                defaults: {},
-                overrides: [],
-              }}
-              renderCounter={0}
-              title={''}
-              eventBus={props.eventBus}
               onOptionsChange={(options: Options) => {
                 if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
                   setDisplayedFields(options.displayedFields);
@@ -1100,13 +1092,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange('sortOrder', options.sortOrder);
                 }
 
+                if (options.frameIndex !== tableFrameIndex) {
+                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
+                  if (refId) {
+                    updatePanelState({ refId });
+                  }
+                }
+
                 console.log('on options change', options);
               }}
               onFieldConfigChange={function (config: FieldConfigSource): void {
                 throw new Error('onFieldConfigChange not implemented.');
               }}
-              replaceVariables={getTemplateSrv().replace}
               onChangeTimeRange={onChangeTime}
+              panelState={panelState}
             />
           )}
 

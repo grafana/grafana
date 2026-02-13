@@ -74,8 +74,6 @@ export const LogsTable = ({
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
 
-  const sortOrder = options.sortOrder ?? defaultOptions.sortOrder ?? LogsSortOrder.Descending;
-
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
     : undefined;
