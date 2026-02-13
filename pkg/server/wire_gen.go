@@ -857,7 +857,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	myResourceAppInstaller, err := myresource.RegisterAppInstaller(cfg)
+	myResourceAppInstaller, err := myresource.RegisterAppInstaller(cfg, sqlStore)
 	if err != nil {
 		return nil, err
 	}
@@ -1553,7 +1553,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	myResourceAppInstaller, err := myresource.RegisterAppInstaller(cfg)
+	myResourceAppInstaller, err := myresource.RegisterAppInstaller(cfg, sqlStore)
 	if err != nil {
 		return nil, err
 	}

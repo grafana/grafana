@@ -16,6 +16,7 @@ import (
 	myresourceapp "github.com/grafana/grafana/apps/myresource/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,13 +29,16 @@ var (
 
 type MyResourceAppInstaller struct {
 	appsdkapiserver.AppInstaller
+	db         db.DB
 	namespacer request.NamespaceMapper
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
+	sql db.DB,
 ) (*MyResourceAppInstaller, error) {
 	installer := &MyResourceAppInstaller{
+		db:         sql,
 		namespacer: request.GetNamespaceMapper(cfg),
 	}
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, myresourceapp.New)
@@ -61,6 +65,7 @@ func (s *MyResourceAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		return nil
 	}
 	legacyStore := &legacyStorage{
+		store:      &store{db: s.db},
 		namespacer: s.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
