@@ -1,0 +1,11 @@
+apiVersion: aggregation.grafana.app/v0alpha1
+kind: DataPlaneService
+metadata:
+  name: v0alpha1.grafana-llm-app.grafana.app
+spec:
+  pluginID: grafana-llm-app
+  pluginType: app
+  group: grafana-llm-app.grafana.app
+  version: v0alpha1
+  services:
+    - type: settings

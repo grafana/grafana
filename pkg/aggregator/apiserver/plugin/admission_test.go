@@ -77,7 +77,7 @@ func TestAdmissionMutation(t *testing.T) {
 	}
 
 	delegate := fakes.NewFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
-	handler := NewPluginHandler(pc, dps, contextProvider, delegate)
+	handler := NewPluginHandler(pc, dps, contextProvider, &fakes.FakePluginSettingsProvider{}, delegate)
 
 	t.Run("should return mutation response", func(t *testing.T) {
 		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/admission/mutate", bytes.NewBuffer(jsonAdmissionReview))
@@ -171,7 +171,7 @@ func TestAdmissionValidation(t *testing.T) {
 	}
 
 	delegate := fakes.NewFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
-	handler := NewPluginHandler(pc, dps, contextProvider, delegate)
+	handler := NewPluginHandler(pc, dps, contextProvider, &fakes.FakePluginSettingsProvider{}, delegate)
 
 	t.Run("should return validation response", func(t *testing.T) {
 		req, err := http.NewRequest("POST", "/apis/testds.example.com/v1/admission/validate", bytes.NewBuffer(jsonAdmissionReview))

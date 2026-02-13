@@ -60,7 +60,7 @@ func TestQueryDataHandler(t *testing.T) {
 	}
 
 	delegate := fakes.NewFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
-	handler := NewPluginHandler(pc, dps, contextProvider, delegate)
+	handler := NewPluginHandler(pc, dps, contextProvider, &fakes.FakePluginSettingsProvider{}, delegate)
 
 	qdr := datav0alpha1.QueryDataRequest{
 		TimeRange: datav0alpha1.TimeRange{},

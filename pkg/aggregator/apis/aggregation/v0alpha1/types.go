@@ -77,6 +77,8 @@ const (
 	RouteServiceType ServiceType = "route"
 	// DataSourceProxyServiceType is a reverse proxy for making requests directly to the HTTP URL specified in datasource instance settings.
 	DataSourceProxyServiceType ServiceType = "datsource-proxy"
+	// SettingsServiceType exposes plugin settings as a singleton namespaced resource.
+	SettingsServiceType ServiceType = "settings"
 )
 
 // ConditionStatus indicates the status of a condition (true, false, or unknown).
@@ -125,6 +127,43 @@ type DataPlaneServiceStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []DataPlaneServiceCondition `json:"conditions,omitempty"`
+}
+
+// PluginSettingDTO holds plugin metadata and user-configured settings for a given org.
+// Fields mirror dtos.PluginSetting from pkg/api/dtos/plugins.go.
+// Complex plugin types (Info, Includes, Dependencies, Extensions) use `any`
+// to avoid a dependency on pkg/plugins from the aggregator module.
+// TODO: Remove duplication from pkg/api/dtos/plugins.go without a dependency on core grafana.
+type PluginSettingDTO struct {
+	Name            string            `json:"name"`
+	Type            string            `json:"type"`
+	ID              string            `json:"id"`
+	Enabled         bool              `json:"enabled"`
+	Pinned          bool              `json:"pinned"`
+	AutoEnabled     bool              `json:"autoEnabled"`
+	Module          string            `json:"module"`
+	BaseURL         string            `json:"baseUrl"`
+	Info            any               `json:"info"`
+	Includes        any               `json:"includes"`
+	Dependencies    any               `json:"dependencies"`
+	Extensions      any               `json:"extensions"`
+	DefaultNavURL   string            `json:"defaultNavUrl"`
+	State           string            `json:"state"`
+	Signature       string            `json:"signature"`
+	SignatureType   string            `json:"signatureType"`
+	SignatureOrg    string            `json:"signatureOrg"`
+	AngularDetected bool              `json:"angularDetected"`
+	LoadingStrategy any               `json:"loadingStrategy"`
+	ModuleHash      string            `json:"moduleHash,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
+
+	// User-configured settings (per org)
+	JsonData         map[string]any  `json:"jsonData"`
+	SecureJsonFields map[string]bool `json:"secureJsonFields"`
+
+	// Update info
+	LatestVersion string `json:"latestVersion"`
+	HasUpdate     bool   `json:"hasUpdate"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

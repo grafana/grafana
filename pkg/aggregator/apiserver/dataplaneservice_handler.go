@@ -16,10 +16,11 @@ import (
 
 // dataPlaneServiceHandler provides a http.Handler which will proxy traffic to a plugin client.
 type dataPlaneServiceHandler struct {
-	localDelegate         http.Handler
-	client                plugin.PluginClient
-	pluginContextProvider plugin.PluginContextProvider
-	handlingInfo          atomic.Value
+	localDelegate          http.Handler
+	client                 plugin.PluginClient
+	pluginContextProvider  plugin.PluginContextProvider
+	pluginSettingsProvider plugin.PluginSettingsProvider
+	handlingInfo           atomic.Value
 }
 
 type handlingInfo struct {
@@ -60,6 +61,7 @@ func (r *dataPlaneServiceHandler) updateDataPlaneService(dataplaneService *aggre
 		r.client,
 		*dataplaneService,
 		r.pluginContextProvider,
+		r.pluginSettingsProvider,
 		r.localDelegate,
 	)
 

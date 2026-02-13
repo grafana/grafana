@@ -21,12 +21,19 @@ type PluginContextProvider interface {
 	GetPluginContext(ctx context.Context, pluginID, uid string) (backend.PluginContext, error)
 }
 
+// PluginSettingsProvider retrieves plugin settings for a given plugin and namespace.
+// The implementation is responsible for mapping the namespace to the appropriate org.
+type PluginSettingsProvider interface {
+	GetPluginSettings(ctx context.Context, pluginID string, namespace string) (aggregationv0alpha1.PluginSettingDTO, error)
+}
+
 type PluginHandler struct {
 	mux      *http.ServeMux
 	delegate http.Handler
 
-	client                PluginClient
-	pluginContextProvider PluginContextProvider
+	client                 PluginClient
+	pluginContextProvider  PluginContextProvider
+	pluginSettingsProvider PluginSettingsProvider
 
 	dataplaneService aggregationv0alpha1.DataPlaneService
 
@@ -37,15 +44,17 @@ func NewPluginHandler(
 	client PluginClient,
 	dataplaneService aggregationv0alpha1.DataPlaneService,
 	pluginContextProvider PluginContextProvider,
+	pluginSettingsProvider PluginSettingsProvider,
 	delegate http.Handler,
 ) *PluginHandler {
 	h := &PluginHandler{
-		mux:                   http.NewServeMux(),
-		delegate:              delegate,
-		client:                client,
-		pluginContextProvider: pluginContextProvider,
-		dataplaneService:      dataplaneService,
-		admissionCodecs:       admission.GetCodecs(),
+		mux:                    http.NewServeMux(),
+		delegate:               delegate,
+		client:                 client,
+		pluginContextProvider:  pluginContextProvider,
+		pluginSettingsProvider: pluginSettingsProvider,
+		dataplaneService:       dataplaneService,
+		admissionCodecs:        admission.GetCodecs(),
 	}
 	h.registerRoutes()
 	return h
@@ -69,6 +78,8 @@ func (h *PluginHandler) registerRoutes() {
 			// TODO: implement in future PR
 		case aggregationv0alpha1.StreamServiceType:
 			// TODO: implement in future PR
+		case aggregationv0alpha1.SettingsServiceType:
+			h.mux.Handle(proxyPath("/namespaces/{namespace}/settings"), h.SettingsHandler())
 		}
 	}
 

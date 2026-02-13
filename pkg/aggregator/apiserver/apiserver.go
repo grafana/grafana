@@ -24,8 +24,9 @@ import (
 )
 
 type ExtraConfig struct {
-	PluginClient          plugin.PluginClient
-	PluginContextProvider plugin.PluginContextProvider
+	PluginClient           plugin.PluginClient
+	PluginContextProvider  plugin.PluginContextProvider
+	PluginSettingsProvider plugin.PluginSettingsProvider
 }
 
 type Config struct {
@@ -56,13 +57,14 @@ type preparedGrafanaAggregator struct {
 
 // GrafanaAggregator contains state for a Kubernetes cluster master/api server.
 type GrafanaAggregator struct {
-	GenericAPIServer      *genericapiserver.GenericAPIServer
-	RegistrationInformers informers.SharedInformerFactory
-	delegateHandler       http.Handler
-	proxyHandlers         map[string]*dataPlaneServiceHandler
-	handledGroupVersions  map[string]sets.Set[string]
-	PluginClient          plugin.PluginClient
-	PluginContextProvider plugin.PluginContextProvider
+	GenericAPIServer       *genericapiserver.GenericAPIServer
+	RegistrationInformers  informers.SharedInformerFactory
+	delegateHandler        http.Handler
+	proxyHandlers          map[string]*dataPlaneServiceHandler
+	handledGroupVersions   map[string]sets.Set[string]
+	PluginClient           plugin.PluginClient
+	PluginContextProvider  plugin.PluginContextProvider
+	PluginSettingsProvider plugin.PluginSettingsProvider
 }
 
 // Complete fills in any fields not set that are required to have valid data. It's mutating the receiver.
@@ -102,13 +104,14 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	)
 
 	s := &GrafanaAggregator{
-		GenericAPIServer:      genericServer,
-		RegistrationInformers: informerFactory,
-		delegateHandler:       delegationTarget.UnprotectedHandler(),
-		handledGroupVersions:  map[string]sets.Set[string]{},
-		proxyHandlers:         map[string]*dataPlaneServiceHandler{},
-		PluginClient:          c.ExtraConfig.PluginClient,
-		PluginContextProvider: c.ExtraConfig.PluginContextProvider,
+		GenericAPIServer:       genericServer,
+		RegistrationInformers:  informerFactory,
+		delegateHandler:        delegationTarget.UnprotectedHandler(),
+		handledGroupVersions:   map[string]sets.Set[string]{},
+		proxyHandlers:          map[string]*dataPlaneServiceHandler{},
+		PluginClient:           c.ExtraConfig.PluginClient,
+		PluginContextProvider:  c.ExtraConfig.PluginContextProvider,
+		PluginSettingsProvider: c.ExtraConfig.PluginSettingsProvider,
 	}
 
 	dataplaneServiceRegistrationController := NewDataPlaneServiceRegistrationController(informerFactory.Aggregation().V0alpha1().DataPlaneServices(), s)
@@ -154,9 +157,10 @@ func (s *GrafanaAggregator) AddDataPlaneService(dataplaneService *v0alpha1.DataP
 
 	proxyPath := "/apis/" + dataplaneService.Spec.Group + "/" + dataplaneService.Spec.Version
 	proxyHandler := &dataPlaneServiceHandler{
-		localDelegate:         s.delegateHandler,
-		client:                s.PluginClient,
-		pluginContextProvider: s.PluginContextProvider,
+		localDelegate:          s.delegateHandler,
+		client:                 s.PluginClient,
+		pluginContextProvider:  s.PluginContextProvider,
+		pluginSettingsProvider: s.PluginSettingsProvider,
 	}
 	proxyHandler.updateDataPlaneService(dataplaneService)
 	s.proxyHandlers[dataplaneService.Name] = proxyHandler

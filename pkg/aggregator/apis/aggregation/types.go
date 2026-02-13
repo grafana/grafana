@@ -77,6 +77,8 @@ const (
 	RouteServiceType ServiceType = "route"
 	// DataSourceProxyServiceType is a reverse proxy for making requests directly to the HTTP URL specified in datasource instance settings.
 	DataSourceProxyServiceType ServiceType = "datsource-proxy"
+	// SettingsServiceType exposes plugin settings as a singleton namespaced resource.
+	SettingsServiceType ServiceType = "settings"
 )
 
 // ConditionStatus indicates the status of a condition (true, false, or unknown).

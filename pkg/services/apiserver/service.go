@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -100,6 +102,7 @@ type service struct {
 	datasources        datasource.ScopedPluginDatasourceProvider
 	contextProvider    datasource.PluginContextWrapper
 	pluginStore        pluginstore.Store
+	pluginSettings     pluginsettings.Service
 	unified            resource.ResourceClient
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
@@ -123,6 +126,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	pluginSettingsSvc pluginsettings.Service,
 	dualWriter dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
@@ -154,6 +158,7 @@ func ProvideService(
 		datasources:                       datasources,
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
+		pluginSettings:                    pluginSettingsSvc,
 		dualWriter:                        dualWriter,
 		unified:                           unified,
 		secrets:                           secrets,
@@ -542,6 +547,10 @@ func (s *service) startDataplaneAggregator(
 				datasources:     s.datasources,
 				contextProvider: s.contextProvider,
 			},
+			PluginSettingsProvider: &pluginSettingsProvider{
+				pluginStore:    s.pluginStore,
+				pluginSettings: s.pluginSettings,
+			},
 		},
 	}
 
@@ -640,6 +649,71 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+type pluginSettingsProvider struct {
+	pluginStore    pluginstore.Store
+	pluginSettings pluginsettings.Service
+}
+
+func (p *pluginSettingsProvider) GetPluginSettings(ctx context.Context, pluginID string, namespace string) (aggregationv0alpha1.PluginSettingDTO, error) {
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
+		return aggregationv0alpha1.PluginSettingDTO{}, fmt.Errorf("plugin not found: %s", pluginID)
+	}
+
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return aggregationv0alpha1.PluginSettingDTO{}, fmt.Errorf("invalid namespace: %w", err)
+	}
+
+	dto := aggregationv0alpha1.PluginSettingDTO{
+		Name:             plugin.Name,
+		Type:             string(plugin.Type),
+		ID:               plugin.ID,
+		Enabled:          plugin.AutoEnabled,
+		Pinned:           plugin.AutoEnabled,
+		AutoEnabled:      plugin.AutoEnabled,
+		Module:           plugin.Module,
+		BaseURL:          plugin.BaseURL,
+		Info:             plugin.Info,
+		Includes:         plugin.Includes,
+		Dependencies:     plugin.Dependencies,
+		Extensions:       plugin.Extensions,
+		DefaultNavURL:    plugin.DefaultNavURL,
+		State:            string(plugin.State),
+		Signature:        string(plugin.Signature),
+		SignatureType:    string(plugin.SignatureType),
+		SignatureOrg:     plugin.SignatureOrg,
+		AngularDetected:  plugin.Angular.Detected,
+		LoadingStrategy:  plugin.LoadingStrategy,
+		Translations:     plugin.Translations,
+		JsonData:         map[string]any{},
+		SecureJsonFields: map[string]bool{},
+	}
+
+	ps, err := p.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+		PluginID: pluginID,
+		OrgID:    ns.OrgID,
+	})
+	if err != nil {
+		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return aggregationv0alpha1.PluginSettingDTO{}, fmt.Errorf("failed to get plugin settings: %w", err)
+		}
+		// No settings found — return defaults from the plugin metadata
+		return dto, nil
+	}
+
+	dto.Enabled = ps.Enabled
+	dto.Pinned = ps.Pinned
+	dto.JsonData = ps.JSONData
+	for k, v := range p.pluginSettings.DecryptedValues(ps) {
+		if len(v) > 0 {
+			dto.SecureJsonFields[k] = true
+		}
+	}
+
+	return dto, nil
 }
 
 func useNamespaceFromPath(path string, user *user.SignedInUser) {
