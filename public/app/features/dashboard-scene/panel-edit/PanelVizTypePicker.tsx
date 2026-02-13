@@ -135,7 +135,7 @@ export function PanelVizTypePicker({
             label={tab.label}
             active={listMode === tab.value}
             onChangeTab={() => handleListModeChange(tab.value)}
-            testId={VisualizationSelectPaneTab[tab.value]}
+            data-testid={selectors.components.Tab.title(VisualizationSelectPaneTab[tab.value])}
           />
         ))}
       </TabsBar>
