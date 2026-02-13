@@ -1488,16 +1488,6 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
-  * Enables validation on the InfluxDB data source configuration page
-  * @default false
-  */
-  influxDBConfigValidation?: boolean;
-  /**
-  * Enables validation on the ClickHouse data source configuration page
-  * @default false
-  */
-  clickHouseConfigValidation?: boolean;
-  /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
   */
@@ -1507,4 +1497,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }

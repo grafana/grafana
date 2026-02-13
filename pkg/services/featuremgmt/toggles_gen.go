@@ -814,14 +814,6 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
-	// FlagInfluxDBConfigValidation
-	// Enables validation on the InfluxDB data source configuration page
-	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
-
-	// FlagClickHouseConfigValidation
-	// Enables validation on the ClickHouse data source configuration page
-	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
-
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
@@ -829,4 +821,12 @@ const (
 	// FlagAlertingNotificationHistoryRuleViewer
 	// Enables the notification history tab in the rule viewer
 	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagInfluxDBConfigValidation
+	// Enables validation on the InfluxDB data source configuration page
+	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 )

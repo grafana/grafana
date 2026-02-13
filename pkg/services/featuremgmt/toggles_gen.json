@@ -1094,8 +1094,8 @@
     {
       "metadata": {
         "name": "clickHouseConfigValidation",
-        "resourceVersion": "1770911411076",
-        "creationTimestamp": "2026-02-12T15:50:11Z"
+        "resourceVersion": "1770997997028",
+        "creationTimestamp": "2026-02-13T15:53:17Z"
       },
       "spec": {
         "description": "Enables validation on the ClickHouse data source configuration page",
@@ -2280,8 +2280,8 @@
     {
       "metadata": {
         "name": "influxDBConfigValidation",
-        "resourceVersion": "1770837437373",
-        "creationTimestamp": "2026-02-11T19:17:17Z"
+        "resourceVersion": "1770997997028",
+        "creationTimestamp": "2026-02-13T15:53:17Z"
       },
       "spec": {
         "description": "Enables validation on the InfluxDB data source configuration page",
