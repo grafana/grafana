@@ -821,4 +821,8 @@ const (
 	// FlagAlertingNotificationHistoryRuleViewer
 	// Enables the notification history tab in the rule viewer
 	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagAlertingNotificationHistoryGlobal
+	// Enables the notification history global menu item viewer
+	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
 )
