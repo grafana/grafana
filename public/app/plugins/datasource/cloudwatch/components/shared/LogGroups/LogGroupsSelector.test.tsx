@@ -111,7 +111,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something' });
+    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something', listAllLogGroups: true });
   });
 
   it('calls fetchLogGroups with an account when selected', async () => {
@@ -140,7 +140,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     secondCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
+    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '', listAllLogGroups: true });
   });
 
   it('shows a log group as checked after the user checks it', async () => {
@@ -187,9 +187,8 @@ describe('LogGroupsSelector', () => {
     ]);
   });
 
-  const labelText =
-    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
-  it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
+  const labelText = /50 CloudWatch log groups can be queried at one time/i;
+  it('should always display max query limit info label', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
@@ -197,27 +196,58 @@ describe('LogGroupsSelector', () => {
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
-    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
-    defer.resolve();
-    await waitFor(() => expect(screen.queryByText(labelText)).not.toBeInTheDocument());
-  });
-
-  it('should display max result info label in case 50 or more logs groups are being displayed', async () => {
-    const defer = new Deferred();
-    const fetchLogGroups = jest.fn(async () => {
-      await Promise.all([defer.promise]);
-      return Array(50).map((i) => ({
-        value: {
-          arn: `logGroup${i}`,
-          name: `logGroup${i}`,
-        },
-      }));
-    });
-    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select log groups'));
-    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
+  });
+
+  it('shows pagination and allows navigation to the next page', async () => {
+    const fetchLogGroups = jest.fn(async () =>
+      Array.from({ length: 51 }, (_, i) => ({
+        value: {
+          arn: `arn:${String(i + 1).padStart(3, '0')}`,
+          name: `logGroup${String(i + 1).padStart(3, '0')}`,
+        },
+      }))
+    );
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByText('Select log groups'));
+
+    await waitFor(() => expect(screen.getByLabelText('logGroup001')).toBeInTheDocument());
+    expect(screen.queryByLabelText('logGroup051')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'next page' }));
+
+    await waitFor(() => expect(screen.getByLabelText('logGroup051')).toBeInTheDocument());
+    expect(screen.queryByLabelText('logGroup001')).not.toBeInTheDocument();
+  });
+
+  it('supports sorting results by name', async () => {
+    const fetchLogGroups = jest.fn(async () => [
+      {
+        value: {
+          arn: 'arn:zeta',
+          name: 'zeta-group',
+        },
+      },
+      {
+        value: {
+          arn: 'arn:alpha',
+          name: 'alpha-group',
+        },
+      },
+    ]);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByText('Select log groups'));
+
+    await waitFor(() => expect(screen.getByLabelText('alpha-group')).toBeInTheDocument());
+    let labels = screen.getAllByText(/-group$/).map((node) => node.textContent);
+    expect(labels).toEqual(['alpha-group', 'zeta-group']);
+
+    await selectEvent.select(screen.getByLabelText('Sort order'), 'Name (Z-A)', { container: document.body });
+
+    await waitFor(() => expect(screen.getByLabelText('zeta-group')).toBeInTheDocument());
+    labels = screen.getAllByText(/-group$/).map((node) => node.textContent);
+    expect(labels).toEqual(['zeta-group', 'alpha-group']);
   });
 
   it('should display log groups counter label', async () => {
