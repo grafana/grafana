@@ -1002,6 +1002,61 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 };
 
 /**
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
+ */
+export interface TableFieldOptions extends HideableFieldConfig {
+  align: FieldTextAlignment;
+  cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellDisplayMode;
+  filterable?: boolean;
+  /**
+   * options for the footer for this field
+   */
+  footer?: TableFooterOptions;
+  /**
+   * Hides any header for a column, useful for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
+  inspect: boolean;
+  minWidth?: number;
+  /**
+   * The name of the field which contains styling overrides for this cell
+   */
+  styleField?: string;
+  /**
+   * Selecting or hovering this field will show a tooltip containing the content within the target field
+   */
+  tooltip?: {
+    /**
+     * The name of the field to get the tooltip content from
+     */
+    field: string;
+    /**
+     * placement of the tooltip
+     */
+    placement?: TableCellTooltipPlacement;
+  };
+  width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
+export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
+  align: 'auto',
+  inspect: false,
+};
+
+/**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database
  */
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
