@@ -19,7 +19,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { getFieldKeyLabel, prepSeries, prepConfig, PrepConfigOpts } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -258,5 +258,50 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[1].config.unit).toBeUndefined();
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
+  });
+});
+
+describe('getFieldKeyLabel', () => {
+  const baseField: Field = {
+    name: 'orders.raw_customers_first_name',
+    type: FieldType.string,
+    config: {},
+    values: [],
+  };
+
+  it('should return displayNameFromDS when set', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayNameFromDS: 'Orders Raw Customers First Name' },
+      state: { displayName: 'Some Calculated Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('Orders Raw Customers First Name');
+  });
+
+  it('should fall back to state.displayName when displayNameFromDS is not set', () => {
+    const field: Field = {
+      ...baseField,
+      config: {},
+      state: { displayName: 'Some Calculated Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('Some Calculated Name');
+  });
+
+  it('should fall back to field name when neither displayNameFromDS nor state.displayName is set', () => {
+    const field: Field = {
+      ...baseField,
+      config: {},
+      state: undefined,
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
+  });
+
+  it('should fall back to field name when state exists but displayName is undefined', () => {
+    const field: Field = {
+      ...baseField,
+      config: {},
+      state: {},
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
   });
 });

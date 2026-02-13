@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepConfig, prepSeries } from './utils';
+import { getFieldKeyLabel, prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -180,7 +180,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     key: xField.name,
                     operator: FILTER_FOR_OPERATOR,
                     value,
-                    keyLabel: xField.config.displayNameFromDS ?? xField.state?.displayName ?? xField.name,
+                    keyLabel: getFieldKeyLabel(xField),
                   };
 
                   const adHocFilters: AdHocFilterModel[] = [
