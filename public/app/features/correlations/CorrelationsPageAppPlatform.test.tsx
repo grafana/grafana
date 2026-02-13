@@ -7,7 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv } from '@grafana/runtime';
+import { config, DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -20,8 +20,10 @@ import { Correlation } from './types';
 
 jest.mock('@grafana/api-clients/rtkq/correlations/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/correlations/v0alpha1'),
-  useListCorrelationQuery: jest.fn().mockReturnValue({ hi: 'test' }),
-  useCreateCorrelationMutation: jest.fn().mockReturnValue({ hi: 'test2' }),
+  useListCorrelationQuery: jest.fn().mockReturnValue([]),
+  useCreateCorrelationMutation: jest.fn().mockImplementation(() => {
+    return [jest.fn(), { data: undefined, isLoading: false, isError: false }];
+  }),
 }));
 
 // Set app events up, otherwise plugin modules will fail to load
@@ -143,12 +145,18 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+const originalFeatureToggles = config.featureToggles;
+
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
+  /** this test renders a specific page for app platform, but other forms used internally have a wrapper and use the FF still*/
+
+  config.featureToggles.kubernetesCorrelations = true;
 });
 
 afterAll(() => {
   jest.restoreAllMocks();
+  config.featureToggles = originalFeatureToggles;
 });
 
 describe('CorrelationsPage - App platform', () => {
