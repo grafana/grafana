@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { createElement, useCallback, useMemo } from 'react';
+import { createElement, useMemo } from 'react';
 
 import { DataFrame, DataTransformerConfig, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
