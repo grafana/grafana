@@ -316,60 +316,74 @@ receivers:
 
 		result, err := imported.GetInhibitRules(true)
 		require.NoError(t, err)
-		require.Equal(t, []config.InhibitRule{
-			{
-				SourceMatchers: []*labels.Matcher{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "alertname",
-						Value: "SourceAlert",
+		require.Equal(t, definitions.ManagedInhibitionRules{
+			"test-inhibit-0": {
+				Name:       "test-inhibit-0",
+				UID:        "dGVzdC1pbmhpYml0LTA",
+				Version:    "8ea121175ec5f716",
+				Provenance: "converted_prometheus",
+				Origin:     "imported",
+				InhibitRule: config.InhibitRule{
+					SourceMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "alertname",
+							Value: "SourceAlert",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
 					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "__grafana_managed_route__",
-						Value: "test",
+					TargetMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "alertname",
+							Value: "TargetAlert",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
 					},
+					Equal: []string{"cluster"},
 				},
-				TargetMatchers: []*labels.Matcher{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "alertname",
-						Value: "TargetAlert",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "__grafana_managed_route__",
-						Value: "test",
-					},
-				},
-				Equal: []string{"cluster"},
 			},
-			{
-				SourceMatchers: []*labels.Matcher{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "severity",
-						Value: "critical",
+			"test-inhibit-1": {
+				Name:       "test-inhibit-1",
+				UID:        "dGVzdC1pbmhpYml0LTE",
+				Version:    "74cb0d8b8dcff9f0",
+				Provenance: "converted_prometheus",
+				Origin:     "imported",
+				InhibitRule: config.InhibitRule{
+					SourceMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "severity",
+							Value: "critical",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
 					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "__grafana_managed_route__",
-						Value: "test",
+					TargetMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "severity",
+							Value: "warning",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
 					},
+					Equal: []string{"instance"},
 				},
-				TargetMatchers: []*labels.Matcher{
-					{
-						Type:  labels.MatchEqual,
-						Name:  "severity",
-						Value: "warning",
-					},
-					{
-						Type:  labels.MatchEqual,
-						Name:  "__grafana_managed_route__",
-						Value: "test",
-					},
-				},
-				Equal: []string{"instance"},
 			},
 		}, result)
 	})

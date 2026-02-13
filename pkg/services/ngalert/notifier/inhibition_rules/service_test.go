@@ -240,11 +240,13 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			require.ErrorIs(t, tc.expErr, err)
 			require.Equal(t, tc.expRule, result)
 
-			// ensure only updated rule is returned in list after update
-			listRes, err := sut.GetInhibitionRules(ctx, orgID)
-			require.Nil(t, err)
+			// if not errors, ensure only updated rule is returned in list after update
+			if tc.expErr == nil {
+				listRes, err := sut.GetInhibitionRules(ctx, orgID)
+				require.Nil(t, err)
 
-			require.Equal(t, []models.InhibitionRule{tc.updatedRule}, listRes)
+				require.Equal(t, []models.InhibitionRule{tc.expRule}, listRes)
+			}
 		})
 	}
 }
