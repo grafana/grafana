@@ -15,6 +15,7 @@ import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
 import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
 
+import { useFocusReturn } from '../FocusReturnContext';
 import { ShareDrawerContext } from './ShareDrawerContext';
 
 export interface ShareDrawerState extends SceneObjectState {
@@ -64,6 +65,7 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
 function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const { activeShare } = model.useState();
   const dashboard = getDashboardSceneFor(model);
+  const focusReturn = useFocusReturn();
 
   return (
     <Drawer
@@ -71,6 +73,7 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
       subtitle={activeShare?.getSubtitle?.()}
       onClose={model.onDismiss}
       size="md"
+      returnFocusRef={focusReturn?.triggerRef}
     >
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {activeShare && <activeShare.Component model={activeShare} />}

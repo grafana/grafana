@@ -18,6 +18,12 @@ import { Text } from '../Text/Text';
 
 export interface Props {
   children: ReactNode;
+  /**
+   * Optional ref to the element that triggered the drawer. When the drawer closes,
+   * focus will return to this element for accessibility (WCAG 2.4.3 Focus Order).
+   * If not provided, the default FloatingFocusManager behavior is used.
+   */
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
   /** Title shown at the top of the drawer */
   title?: ReactNode;
   /** Subtitle shown below the title */
@@ -74,6 +80,7 @@ export function Drawer({
   width,
   size = 'md',
   tabs,
+  returnFocusRef,
 }: Props) {
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
@@ -129,7 +136,12 @@ export function Drawer({
         motionName: styles.maskMotion,
       }}
     >
-      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
+      <FloatingFocusManager
+        context={context}
+        modal
+        returnFocus={returnFocusRef ?? true}
+        getInsideElements={() => [getPortalContainer()]}
+      >
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div

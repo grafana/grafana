@@ -16,7 +16,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
-import { renderOrCallToRender } from '../../utils/reactUtils';
+import { getRefFromElement, renderOrCallToRender, setRef } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
@@ -83,10 +83,27 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
     }
   };
 
+  const childRef = getRefFromElement<HTMLElement>(children);
+
+  /**
+   * Merges our ref with the child's ref. When the trigger mounts/unmounts, React calls
+   * this callback with the DOM element (or null). We forward it to both:
+   * 1. refs.setReference(ref) - so floating-ui can position the dropdown
+   * 2. setRef(childRef, ref) - so the parent keeps a reference (e.g. for focus return when
+   *    the dropdown closes; see ShareDrawer a11y)
+   */
+  const handleRef = useCallback(
+    (ref: HTMLElement | null) => {
+      refs.setReference(ref);
+      setRef(childRef, ref);
+    },
+    [childRef, refs]
+  );
+
   return (
     <>
       {React.cloneElement(children, {
-        ref: refs.setReference,
+        ref: handleRef,
         ...getReferenceProps(),
       })}
       {show && (

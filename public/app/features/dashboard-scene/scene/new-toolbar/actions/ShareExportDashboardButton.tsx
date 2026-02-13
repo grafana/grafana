@@ -2,6 +2,7 @@ import { ReactElement, useState } from 'react';
 
 import { ButtonGroup, Dropdown, ToolbarButton } from '@grafana/ui';
 
+import { useFocusReturn } from '../../../sharing/FocusReturnContext';
 import { ToolbarActionProps } from '../types';
 
 interface Props extends ToolbarActionProps {
@@ -31,6 +32,7 @@ export const ShareExportDashboardButton = ({
   variant = 'canvas',
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
+  const focusReturn = useFocusReturn();
 
   return (
     <ButtonGroup data-testid={groupTestId}>
@@ -53,6 +55,7 @@ export const ShareExportDashboardButton = ({
         }}
       >
         <ToolbarButton
+          ref={focusReturn?.triggerRef}
           aria-label={arrowLabel}
           data-testid={arrowTestId}
           icon={isOpen ? 'angle-up' : 'angle-down'}
