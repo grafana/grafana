@@ -4,16 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Alert,
-  CodeEditor,
-  RadioButtonGroup,
-  Spinner,
-  Stack,
-  useStyles2,
-  type Monaco,
-  type MonacoEditor,
-} from '@grafana/ui';
+import { CodeEditor, RadioButtonGroup, Spinner, Stack, useStyles2, type Monaco, type MonacoEditor } from '@grafana/ui';
 
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
@@ -39,8 +30,6 @@ export interface DashboardSchemaEditorProps {
   showMiniMap?: boolean;
   /** Whether to show line numbers (default: true) */
   showLineNumbers?: boolean;
-  /** Whether to show the validation error alert above the editor (default: true) */
-  showValidationAlert?: boolean;
   /** Whether to show the format toggle (JSON/YAML) (default: false) */
   showFormatToggle?: boolean;
   /** Initial format (default: 'json') */
@@ -60,7 +49,6 @@ export function DashboardSchemaEditor({
   containerStyles,
   showMiniMap = true,
   showLineNumbers = true,
-  showValidationAlert = true,
   showFormatToggle = false,
   initialFormat = 'json',
 }: DashboardSchemaEditorProps) {
@@ -363,15 +351,6 @@ export function DashboardSchemaEditor({
     );
   }
 
-  // Determine if there are any errors to show
-  const hasErrors = hasValidationErrors || !!yamlParseError;
-  const errorMessage = yamlParseError
-    ? t('dashboard-schema-editor.yaml-parse-error', 'Invalid YAML syntax: {{error}}', { error: yamlParseError })
-    : t(
-        'dashboard-schema-editor.fix-validation-errors',
-        'The document contains validation errors. Fix them before applying changes.'
-      );
-
   return (
     <div className={wrapperClassName}>
       {showFormatToggle && (
@@ -380,11 +359,6 @@ export function DashboardSchemaEditor({
             <span className={styles.formatLabel}>{t('dashboard-schema-editor.format-label', 'Format:')}</span>
             <RadioButtonGroup options={formatOptions} value={format} onChange={handleFormatChange} size="sm" />
           </Stack>
-        </div>
-      )}
-      {showValidationAlert && hasErrors && (
-        <div className={styles.alertContainer}>
-          <Alert title={errorMessage} severity="warning" topSpacing={0} bottomSpacing={0} />
         </div>
       )}
       <div className={styles.editorContainer}>
@@ -447,9 +421,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     flex: 1,
     color: theme.colors.text.secondary,
-  }),
-  // Alert should not grow, only take its natural size
-  alertContainer: css({
-    flex: '0 0 auto',
   }),
 });
