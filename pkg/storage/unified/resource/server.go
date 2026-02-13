@@ -451,6 +451,7 @@ type server struct {
 	once    sync.Once
 	initErr error
 
+	stopping         atomic.Bool
 	maxPageSizeBytes int
 	reg              prometheus.Registerer
 	queue            QOSEnqueuer
@@ -489,6 +490,7 @@ func (s *server) Init(ctx context.Context) error {
 }
 
 func (s *server) Stop(ctx context.Context) error {
+	s.stopping.Store(true)
 	s.initErr = fmt.Errorf("service is stopping")
 
 	var stopFailed bool
@@ -1490,6 +1492,9 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	if s.stopping.Load() {
+		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_NOT_SERVING}, nil
+	}
 	return s.diagnostics.IsHealthy(ctx, req)
 }
 
