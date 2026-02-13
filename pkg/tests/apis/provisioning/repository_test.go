@@ -505,21 +505,26 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 
-		// Verify finalizers were added
 		createdRepo := unstructuredToRepository(t, created)
 		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be present after creation")
+		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 
-		// Update the repository and try to remove finalizers
-		created.SetFinalizers([]string{}) // Explicitly set to empty array
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			storedRepo, err := helper.Repositories.Resource.Get(ctx, "repo-update-finalizers", metav1.GetOptions{})
+			require.NoError(t, err, "repository retrieve should succeed")
 
-		updated, err := helper.Repositories.Resource.Update(ctx, created, metav1.UpdateOptions{})
-		require.NoError(t, err, "repository update should succeed")
+			// Update the repository and try to remove finalizers
+			storedRepo.SetFinalizers([]string{})
+			updated, err := helper.Repositories.Resource.Update(ctx, storedRepo, metav1.UpdateOptions{})
+			require.NoError(collect, err, "repository update should succeed")
 
-		// Verify finalizers were re-added by the mutator
-		updatedRepo := unstructuredToRepository(t, updated)
-		require.NotEmpty(t, updatedRepo.Finalizers, "finalizers should be re-added after update")
-		require.Contains(t, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
-		require.Contains(t, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+			// Verify finalizers were re-added by the mutator
+			updatedRepo := unstructuredToRepository(t, updated)
+			require.NotEmpty(collect, updatedRepo.Finalizers, "finalizers should be re-added after update")
+			require.Contains(collect, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+			require.Contains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+		}, waitTimeoutDefault, waitIntervalDefault)
 	})
 }
 
