@@ -52,7 +52,7 @@ const buildRepoUrl = ({ baseUrl, branch, providerSegments, path }: BuildRepoUrlP
   }
 
   // Normalize base URL: trim whitespace + remove trailing slashes + remove .git suffix if present
-  const cleanBase = buildCleanBaseUrl(baseUrl.trim()).replace(/\.git\/?$/i, '');
+  const cleanBase = buildCleanBaseUrl(baseUrl);
 
   const cleanBranch = branch?.trim() || undefined;
 
