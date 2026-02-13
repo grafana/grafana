@@ -8,7 +8,6 @@ import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
-import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -141,7 +140,7 @@ export function QueryEditorContextWrapper({
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
-      cardType: pendingExpression ? QueryEditorType.Expression : getEditorType(selectedQuery || selectedTransformation),
+      cardType: getEditorType(selectedQuery || selectedTransformation, pendingExpression),
       pendingExpression,
       setPendingExpression,
       finalizePendingExpression,
