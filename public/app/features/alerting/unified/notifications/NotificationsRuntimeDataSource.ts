@@ -1,5 +1,14 @@
+import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
+import {
+  CreateNotificationqueryBody,
+  CreateNotificationqueryMatcher,
+  CreateNotificationqueryNotificationEntry,
+  CreateNotificationqueryNotificationOutcome,
+  CreateNotificationqueryNotificationStatus,
+  generatedAPI as notificationsApi,
+} from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import {
   DataFrame,
   DataQueryRequest,
@@ -16,18 +25,10 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { dispatch } from 'app/store/store';
-import {
-  generatedAPI as notificationsApi,
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationStatus,
-  CreateNotificationqueryNotificationOutcome,
-} from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { dispatch } from 'app/store/store';
 
 import { DataSourceInformation } from '../home/Insights';
-import { groupBy } from 'lodash';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 
 // Helper function to convert Matcher to API format
@@ -48,6 +49,17 @@ function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
     label: matcher.name,
     value: matcher.value,
   };
+}
+
+const VALID_STATUSES: string[] = ['firing', 'resolved'];
+const VALID_OUTCOMES: string[] = ['success', 'error'];
+
+export function isNotificationStatus(value: string): value is CreateNotificationqueryNotificationStatus {
+  return VALID_STATUSES.includes(value);
+}
+
+export function isNotificationOutcome(value: string): value is CreateNotificationqueryNotificationOutcome {
+  return VALID_OUTCOMES.includes(value);
 }
 
 const notificationsDataSourceUid = 'grafana-notifications-ds';
@@ -117,8 +129,8 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
     const notificationResult = await getNotifications(
       from,
       to,
-      statusFilter !== 'all' ? (statusFilter as CreateNotificationqueryNotificationStatus) : undefined,
-      outcomeFilter !== 'all' ? (outcomeFilter as CreateNotificationqueryNotificationOutcome) : undefined,
+      isNotificationStatus(statusFilter) ? statusFilter : undefined,
+      isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
       receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
       groupLabels
     );
@@ -133,10 +145,7 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({
       status: 'success',
-      message: t(
-        'alerting.notifications-runtime-datasource.message.data-source-is-working',
-        'Data source is working'
-      ),
+      message: t('alerting.notifications-runtime-datasource.message.data-source-is-working', 'Data source is working'),
       title: t('alerting.notifications-runtime-datasource.title.success', 'Success'),
     });
   }
@@ -146,21 +155,10 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
    * Returns common alerting label keys. Users can also type custom keys.
    */
   async getTagKeys(options?: DataSourceGetTagKeysOptions<NotificationsAPIQuery>): Promise<MetricFindValue[]> {
-    console.log('[NotificationsDataSource] getTagKeys called');
     // Return common alerting label keys
-    const commonKeys = [
-      'alertname',
-      'severity',
-      'namespace',
-      'cluster',
-      'job',
-      'instance',
-      'grafana_folder',
-    ];
+    const commonKeys = ['alertname', 'severity', 'namespace', 'cluster', 'job', 'instance', 'grafana_folder'];
 
-    const result = commonKeys.map((key) => ({ text: key }));
-    console.log('[NotificationsDataSource] getTagKeys returning:', result);
-    return result;
+    return commonKeys.map((key) => ({ text: key }));
   }
 
   /**
@@ -168,7 +166,6 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
    * Returns empty array to allow free-text entry.
    */
   async getTagValues(options: DataSourceGetTagValuesOptions<NotificationsAPIQuery>): Promise<MetricFindValue[]> {
-    console.log('[NotificationsDataSource] getTagValues called with key:', options.key);
     // Return empty array to allow users to type any value
     // In the future, we could query the API for actual values
     return [];
@@ -189,14 +186,10 @@ export function ensureNotificationsDataSourceRegistered() {
       const ds = new NotificationsAPIDatasource(notificationsDataSourceUid, notificationsDataSourcePluginId);
       sceneUtils.registerRuntimeDataSource({ dataSource: ds });
       datasourceRegistered = true;
-      console.log('[NotificationsDataSource] Successfully registered datasource with UID:', notificationsDataSourceUid);
     } catch (e) {
-      console.error('[NotificationsDataSource] Failed to register datasource:', e);
       // Datasource might already be registered, or registration failed
       datasourceRegistered = true;
     }
-  } else {
-    console.log('[NotificationsDataSource] Datasource already registered');
   }
 }
 
@@ -210,7 +203,7 @@ export const getNotifications = async (
   outcome?: CreateNotificationqueryNotificationOutcome,
   receiver?: string,
   groupLabels?: CreateNotificationqueryMatcher[]
-) => {
+): Promise<CreateNotificationqueryBody> => {
   const result = await dispatch(
     notificationsApi.endpoints.createNotificationquery.initiate(
       {
@@ -224,9 +217,8 @@ export const getNotifications = async (
           groupLabels: groupLabels || [],
         },
       },
-      {
-        forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval),
-      }
+      // @ts-expect-error forceRefetch is a valid RTK Query initiate option but not included in generated types
+      { forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval) }
     )
   ).unwrap();
 
@@ -266,8 +258,9 @@ function notificationsToDataFrame(notificationResult: { entries: NotificationEnt
   const timestamps = entriesArray.map((entry) => new Date(entry.timestamp).getTime());
 
   // Group timestamps by interval
-  const groupedTimestamps = groupBy(timestamps, (time: number) =>
-    Math.floor(time / GROUPING_INTERVAL) * GROUPING_INTERVAL
+  const groupedTimestamps = groupBy(
+    timestamps,
+    (time: number) => Math.floor(time / GROUPING_INTERVAL) * GROUPING_INTERVAL
   );
 
   // Create time field with grouped time values

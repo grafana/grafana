@@ -5,15 +5,13 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
+  CreateNotificationqueryMatcher,
   CreateNotificationqueryNotificationEntry,
   CreateNotificationqueryNotificationEntryAlert,
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationStatus,
-  CreateNotificationqueryNotificationOutcome,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -23,17 +21,28 @@ import {
   VariableDependencyConfig,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Badge, LoadingBar, Pagination, Stack, Text, TextLink, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
-
-import { usePagination } from '../hooks/usePagination';
-import { combineMatcherStrings } from '../utils/alertmanager';
-import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
-import { CollapseToggle } from '../components/CollapseToggle';
-import { StateTag } from '../components/StateTag';
+import {
+  Alert,
+  Badge,
+  LoadingBar,
+  Pagination,
+  Stack,
+  Text,
+  TextLink,
+  Tooltip,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { LABELS_FILTER, STATUS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER } from './NotificationsScene';
+import { CollapseToggle } from '../components/CollapseToggle';
+import { StateTag } from '../components/StateTag';
+import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
+import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
+
+import { isNotificationOutcome, isNotificationStatus } from './NotificationsRuntimeDataSource';
+import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './NotificationsScene';
 
 // Helper function to convert Matcher to API format
 function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
@@ -87,7 +96,6 @@ export const NotificationsList = React.memo(function NotificationsList({
     }
 
     if (typeof timeRange.from.unix !== 'function' || typeof timeRange.to.unix !== 'function') {
-      console.error('Invalid time range object - missing unix() method');
       return;
     }
 
@@ -107,14 +115,14 @@ export const NotificationsList = React.memo(function NotificationsList({
           from: fromDate,
           to: toDate,
           limit: 1000,
-          status: statusFilter !== 'all' ? (statusFilter as CreateNotificationqueryNotificationStatus) : undefined,
-          outcome: outcomeFilter !== 'all' ? (outcomeFilter as CreateNotificationqueryNotificationOutcome) : undefined,
+          status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
+          outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
           groupLabels,
         },
       });
-    } catch (e) {
-      console.error('Error creating notification query:', e);
+    } catch {
+      // Error is handled by the RTK Query isError state
     }
     // Don't include createNotificationQuery in deps to avoid infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,14 +139,14 @@ export const NotificationsList = React.memo(function NotificationsList({
     let errorMessage = 'Unable to fetch notification history';
     if (error) {
       if (typeof error === 'object' && error !== null && 'data' in error) {
-        errorMessage = JSON.stringify((error as any).data);
+        errorMessage = JSON.stringify(error.data);
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
     }
 
     return (
-      <Alert title="Error fetching notifications" severity="error">
+      <Alert title={t('alerting.notifications-list.error-fetching', 'Error fetching notifications')} severity="error">
         {errorMessage}
       </Alert>
     );
@@ -210,9 +218,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.group-labels">Group Labels</Trans>
         </Text>
       </div>
-      <div className={styles.statusCol}>
-        <Text variant="body">{/* Status badge column */}</Text>
-      </div>
+      <div className={styles.statusCol}>{/* Status badge column */}</div>
       <div className={styles.receiverCol}>
         <Text variant="body">
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
@@ -258,9 +264,15 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         </div>
         <div className={styles.statusCol}>
           {record.outcome === 'error' && (
-            <Tooltip content={record.error || 'No error details available'}>
+            <Tooltip
+              content={record.error || t('alerting.notifications-list.no-error-details', 'No error details available')}
+            >
               <span>
-                <Badge color="orange" icon="exclamation-triangle" text="Failed" />
+                <Badge
+                  color="orange"
+                  icon="exclamation-triangle"
+                  text={t('alerting.notifications-list.outcome-failed', 'Failed')}
+                />
               </span>
             </Tooltip>
           )}
@@ -297,8 +309,12 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
   // Split alerts into firing and resolved
-  const firingAlerts = record.alerts.filter((alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing');
-  const resolvedAlerts = record.alerts.filter((alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved');
+  const firingAlerts = record.alerts.filter(
+    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing'
+  );
+  const resolvedAlerts = record.alerts.filter(
+    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved'
+  );
 
   const renderAlert = (alert: CreateNotificationqueryNotificationEntryAlert, index: number) => {
     const ruleUid = alert.labels?.__alert_rule_uid__;
@@ -395,7 +411,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
   return (
     <Stack direction="column" gap={2}>
       {record.error && (
-        <Alert title="Notification Error" severity="warning">
+        <Alert title={t('alerting.notifications-list.notification-error', 'Notification Error')} severity="warning">
           {record.error}
         </Alert>
       )}

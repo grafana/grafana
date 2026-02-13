@@ -39,14 +39,14 @@ import {
 } from '@grafana/ui';
 
 import { LogMessages, logInfo } from '../Analytics';
+import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 
 import { NotificationsListObject } from './NotificationsListSceneObject';
 import {
-  notificationsDatasource,
   ensureNotificationsDataSourceRegistered,
   getNotifications,
+  notificationsDatasource,
 } from './NotificationsRuntimeDataSource';
-import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 
 export const LABELS_FILTER = 'LABELS_FILTER';
 export const STATUS_FILTER = 'STATUS_FILTER';
@@ -75,17 +75,12 @@ export const NotificationsScene = ({
   hideFilters,
 }: NotificationsSceneProps = {}) => {
   const [isDataSourceReady, setIsDataSourceReady] = useState(false);
-  const [availableKeys, setAvailableKeys] = useState<Array<{ text: string; value: string }>>([
+  const [availableKeys, setAvailableKeys] = useState<Array<{ text: string; value: string }>>(() => {
     // Fallback keys if API query fails
-    { text: 'alertname', value: 'alertname' },
-    { text: 'severity', value: 'severity' },
-    { text: 'namespace', value: 'namespace' },
-    { text: 'cluster', value: 'cluster' },
-    { text: 'job', value: 'job' },
-    { text: 'instance', value: 'instance' },
-    { text: 'grafana_folder', value: 'grafana_folder' },
-  ]);
-  const [availableValues, setAvailableValues] = useState<Record<string, Array<{ text: string; value: string }>>>({});
+    const fallbackKeys = ['alertname', 'severity', 'namespace', 'cluster', 'job', 'instance', 'grafana_folder'];
+    return fallbackKeys.map((key) => ({ text: key, value: key }));
+  });
+  const [, setAvailableValues] = useState<Record<string, Array<{ text: string; value: string }>>>({});
   const [availableReceivers, setAvailableReceivers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -112,9 +107,9 @@ export const NotificationsScene = ({
         const keysSet = new Set<string>();
         const valuesMap = new Map<string, Set<string>>();
         const receiversSet = new Set<string>();
-        const entries = (notifications as any)?.entries || [];
+        const entries = notifications.entries ?? [];
 
-        entries.forEach((entry: any) => {
+        entries.forEach((entry) => {
           if (entry.groupLabels) {
             Object.entries(entry.groupLabels).forEach(([key, value]) => {
               keysSet.add(key);
@@ -135,7 +130,7 @@ export const NotificationsScene = ({
         if (keysSet.size > 0) {
           const dynamicKeys = Array.from(keysSet)
             .sort()
-            .map(key => ({ text: key, value: key }));
+            .map((key) => ({ text: key, value: key }));
           setAvailableKeys(dynamicKeys);
         }
 
@@ -144,7 +139,7 @@ export const NotificationsScene = ({
         valuesMap.forEach((values, key) => {
           valuesRecord[key] = Array.from(values)
             .sort()
-            .map(val => ({ text: val, value: val }));
+            .map((val) => ({ text: val, value: val }));
         });
         setAvailableValues(valuesRecord);
 
@@ -152,9 +147,8 @@ export const NotificationsScene = ({
         if (receiversSet.size > 0) {
           setAvailableReceivers(Array.from(receiversSet).sort());
         }
-      } catch (error) {
-        console.error('[NotificationsScene] Failed to fetch available label keys:', error);
-        // Keep fallback keys
+      } catch {
+        // Keep fallback keys if fetching available label keys fails
       }
     };
 
@@ -213,9 +207,10 @@ export const NotificationsScene = ({
       label: t('alerting.notifications-scene.receiver-filter-variable.label.receiver', 'Contact point:'),
       value: 'all',
       hide: VariableHide.dontHide,
-      query: availableReceivers.length > 0
-        ? `All : all, ${availableReceivers.map(receiver => `${receiver} : ${receiver}`).join(', ')}`
-        : 'All : all',
+      query:
+        availableReceivers.length > 0
+          ? `All : all, ${availableReceivers.map((receiver) => `${receiver} : ${receiver}`).join(', ')}`
+          : 'All : all',
     });
 
     return new EmbeddedScene({
@@ -245,7 +240,7 @@ export const NotificationsScene = ({
         ],
       }),
     });
-  }, [defaultLabelsFilter, defaultTimeRange, hideFilters, isDataSourceReady, availableKeys, availableReceivers]);
+  }, [defaultTimeRange, hideFilters, isDataSourceReady, availableKeys, availableReceivers]);
 
   const isUrlSyncInitialized = useUrlSync(scene);
 
