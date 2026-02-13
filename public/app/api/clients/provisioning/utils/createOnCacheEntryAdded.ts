@@ -5,15 +5,24 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
-interface OnCacheEntryAddedOptions {
+interface WatchErrorHelpers<List> {
+  updateCachedData: (fn: (draft: List) => void) => void;
+  dispatch: (action: unknown) => void;
+}
+
+interface OnCacheEntryAddedOptions<List = unknown> {
   showErrorNotification?: boolean;
+  onError?: (error: unknown, helpers: WatchErrorHelpers<List>) => void;
 }
 
 /**
  * Creates a cache entry handler for RTK Query that watches for changes to a resource
  * and updates the cache accordingly.
  */
-export function createOnCacheEntryAdded<Spec, Status>(resourceName: string, options: OnCacheEntryAddedOptions = {}) {
+export function createOnCacheEntryAdded<Spec, Status>(
+  resourceName: string,
+  options: OnCacheEntryAddedOptions<ResourceList<Spec, Status>> = {}
+) {
   const { showErrorNotification = true } = options;
 
   return async function onCacheEntryAdded<List extends ResourceList<Spec, Status>>(
@@ -71,6 +80,7 @@ export function createOnCacheEntryAdded<Spec, Status>(resourceName: string, opti
           if (showErrorNotification) {
             dispatch(notifyApp(createErrorNotification('Error watching for resource updates', error)));
           }
+          options.onError?.(error, { updateCachedData, dispatch });
         },
       });
     } catch (error) {

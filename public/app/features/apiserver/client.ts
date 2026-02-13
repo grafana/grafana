@@ -70,7 +70,6 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           }),
           filter((event) => isLiveChannelMessageEvent(event)),
           map((event) => event.message),
-          retry({ count: 3, delay: 1000 }),
           catchError((error) => {
             console.error('Live channel watch stream error:', error);
             throw error;

@@ -51,7 +51,13 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/jobs`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs'),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs', {
+        onError: (_error, { updateCachedData }) => {
+          updateCachedData((draft) => {
+            draft.items = [];
+          });
+        },
+      }),
     },
     listRepository: {
       query: ({ watch, ...queryArg }) => ({
