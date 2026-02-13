@@ -2,6 +2,8 @@ import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafa
 
 import { appenExtensionsToPanelMenu, AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
 
+const ROOT_CATEGORY = '${root}';
+
 function createLink(overrides: Partial<PluginExtensionLink> = {}): PluginExtensionLink {
   return {
     id: '1',
@@ -14,7 +16,7 @@ function createLink(overrides: Partial<PluginExtensionLink> = {}): PluginExtensi
   };
 }
 
-function createOpts(overrides: Partial<AppendToPanelMenuOpts> = {}): AppendToPanelMenuOpts {
+function createOptions(overrides: Partial<AppendToPanelMenuOpts> = {}): AppendToPanelMenuOpts {
   return {
     rootMenu: [],
     extensions: [],
@@ -28,99 +30,73 @@ function findMenuItemByText(menu: PanelMenuItem[], text: string): PanelMenuItem 
   return menu.find((m) => m.text === text);
 }
 
+function findExtensionsSubmenu(rootMenu: PanelMenuItem[]): PanelMenuItem | undefined {
+  return findMenuItemByText(rootMenu, 'Extensions') ?? findMenuItemByText(rootMenu, 'Plugin actions');
+}
+
 describe('appenExtensionsToPanelMenu', () => {
   it('does nothing when extensions is empty', () => {
     const rootMenu: PanelMenuItem[] = [];
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions: [] }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions: [] }));
     expect(rootMenu).toHaveLength(0);
   });
 
-  it('appends extension without group/category to Extensions submenu with divider before it', () => {
+  it('appends extension both with and without group to Extensions submenu', () => {
     const rootMenu: PanelMenuItem[] = [];
-    const extensions = [createLink({ title: 'Declare incident', path: '/a/declare' })];
+    const extensions = [
+      createLink({ title: 'Declare incident', path: '/a/declare' }),
+      createLink({ title: 'Declare incident 2', path: '/a/declare', group: { name: 'Incidents' } }),
+    ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
-    expect(rootMenu).toHaveLength(2);
-    expect(rootMenu[0]).toMatchObject({ text: 'divider', type: 'divider' });
-    expect(rootMenu[1]).toMatchObject({
+    expect(rootMenu).toHaveLength(1);
+    expect(rootMenu[0]).toMatchObject({
       text: 'Extensions',
       type: 'submenu',
       iconClassName: 'plug',
     });
-    const extSub = rootMenu[1];
-    expect(extSub.subMenu).toHaveLength(1);
+
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub.subMenu).toHaveLength(3);
     expect(extSub.subMenu![0]).toMatchObject({
+      text: 'Incidents',
+      type: 'submenu',
+    });
+    expect(extSub.subMenu![1]).toMatchObject({
+      type: 'divider',
+    });
+    expect(extSub.subMenu![2]).toMatchObject({
       text: 'Declare incident',
       href: '/a/declare',
     });
   });
 
-  it('maps path, icon, onClick, openInNewTab to panel menu item', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const onClick = jest.fn();
-    const extensions = [
-      createLink({
-        title: 'Action',
-        path: '/action',
-        icon: 'info',
-        onClick,
-        openInNewTab: true,
-      }),
-    ];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
-
-    const extSub = rootMenu[1];
-    const item = extSub.subMenu![0];
-    expect(item.href).toBe('/action');
-    expect(item.iconClassName).toBe('info');
-    expect(item.target).toBe('_blank');
-    item.onClick?.({} as React.MouseEvent);
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('appends group.name ${root} items directly to rootMenu', () => {
+  it('pushes ROOT_CATEGORY group items directly onto root menu', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [
-      createLink({
-        title: 'Root Action',
-        path: '/root',
-        group: { name: '${root}' },
-      }),
+      createLink({ title: 'Root action', path: '/root/1', group: { name: ROOT_CATEGORY } }),
+      createLink({ title: 'Root action 2', path: '/root/2', group: { name: ROOT_CATEGORY } }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
-
-    expect(rootMenu).toHaveLength(1);
-    expect(rootMenu[0]).toMatchObject({ text: 'Root Action', href: '/root' });
-  });
-
-  it('spreads multiple ${root} items into rootMenu', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const extensions = [
-      createLink({ title: 'A', path: '/a', group: { name: '${root}' } }),
-      createLink({ title: 'B', path: '/b', group: { name: '${root}' } }),
-    ];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(2);
-    expect(rootMenu[0]).toMatchObject({ text: 'A', href: '/a' });
-    expect(rootMenu[1]).toMatchObject({ text: 'B', href: '/b' });
+    expect(rootMenu[0]).toMatchObject({ text: 'Root action', href: '/root/1' });
+    expect(rootMenu[1]).toMatchObject({ text: 'Root action 2', href: '/root/2' });
   });
 
-  it('creates root-level submenu for group.name ${root}/SubmenuName', () => {
+  it('creates root-level submenu for SUBMENU_CATEGORY_PREFIX group', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [
       createLink({
-        title: 'Drilldown Action',
-        path: '/drill',
-        group: { name: '${root}/Metrics drilldown', icon: 'code-branch' },
+        title: 'Drilldown link',
+        path: '/drill/1',
+        group: { name: `${ROOT_CATEGORY}/Metrics drilldown`, icon: 'code-branch' },
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0]).toMatchObject({
@@ -129,42 +105,20 @@ describe('appenExtensionsToPanelMenu', () => {
       iconClassName: 'code-branch',
     });
     expect(rootMenu[0].subMenu).toHaveLength(1);
-    expect(rootMenu[0].subMenu![0]).toMatchObject({
-      text: 'Drilldown Action',
-      href: '/drill',
-    });
+    expect(rootMenu[0].subMenu![0]).toMatchObject({ text: 'Drilldown link', href: '/drill/1' });
   });
 
-  it('puts extension with category (no group) under Extensions as named submenu', () => {
+  it('uses metrics-drilldown category when extension has no group', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [
       createLink({
-        title: 'Declare incident',
-        path: '/declare',
-        category: 'Incident',
-      }),
-    ];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
-
-    const incidentSub = findMenuItemByText(rootMenu, 'Incident');
-    expect(incidentSub).toBeDefined();
-    expect(incidentSub!.type).toBe('submenu');
-    expect(incidentSub!.subMenu).toHaveLength(1);
-    expect(incidentSub!.subMenu![0]).toMatchObject({ text: 'Declare incident', href: '/declare' });
-  });
-
-  it('uses metrics-drilldown category as ${root}/Metrics drilldown with icon', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const extensions = [
-      createLink({
-        title: 'Drill',
-        path: '/drill',
+        title: 'Metrics action',
+        path: '/metrics/1',
         category: 'metrics-drilldown',
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0]).toMatchObject({
@@ -172,115 +126,173 @@ describe('appenExtensionsToPanelMenu', () => {
       type: 'submenu',
       iconClassName: 'code-branch',
     });
-    expect(rootMenu[0].subMenu![0]).toMatchObject({ text: 'Drill', href: '/drill' });
+    expect(rootMenu[0].subMenu).toHaveLength(1);
+    expect(rootMenu[0].subMenu![0]).toMatchObject({ text: 'Metrics action', href: '/metrics/1' });
   });
 
-  it('groups multiple extensions in same ${root}/Sub into one submenu', () => {
+  it('puts extension with custom category (no group) under Extensions submenu', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [
-      createLink({ title: 'One', path: '/1', group: { name: '${root}/Testing' } }),
-      createLink({ title: 'Two', path: '/2', group: { name: '${root}/Testing' } }),
+      createLink({ title: 'No group', path: '/no-group' }),
+      createLink({
+        title: 'Custom action',
+        path: '/custom/1',
+        category: 'Custom category',
+      }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
-    const sub = rootMenu[0];
-    expect(sub.text).toBe('Testing');
-    expect(sub.subMenu).toHaveLength(2);
-    expect(sub.subMenu![0]).toMatchObject({ text: 'One', href: '/1' });
-    expect(sub.subMenu![1]).toMatchObject({ text: 'Two', href: '/2' });
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub.subMenu).toHaveLength(3); // Custom category submenu, divider, no-group item
+    expect(extSub.subMenu![0]).toMatchObject({
+      text: 'Custom category',
+      type: 'submenu',
+    });
+    expect(extSub.subMenu![0].subMenu).toHaveLength(1);
+    expect(extSub.subMenu![0].subMenu![0]).toMatchObject({ text: 'Custom action', href: '/custom/1' });
+    expect(extSub.subMenu![1]).toMatchObject({ type: 'divider' });
+    expect(extSub.subMenu![2]).toMatchObject({ text: 'No group', href: '/no-group' });
   });
 
-  it('orders: root items, then divider + Extensions, then root submenus (sorted group keys)', () => {
+  it('falls back to Extensions submenu when SUBMENU name is reserved and truncated empty', () => {
     const rootMenu: PanelMenuItem[] = [];
-    const extensions = [
-      createLink({ title: 'Root', path: '/r', group: { name: '${root}' } }),
-      createLink({ title: 'In Sub', path: '/s', group: { name: '${root}/Sub' } }),
-      createLink({ title: 'Ungrouped', path: '/u' }),
-    ];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
-
-    const texts = rootMenu.map((m) => m.text);
-    expect(texts).toContain('Root');
-    expect(texts).toContain('divider');
-    expect(texts).toContain('Extensions');
-    expect(texts).toContain('Sub');
-    const rootIdx = texts.indexOf('Root');
-    const divIdx = texts.indexOf('divider');
-    const extIdx = texts.indexOf('Extensions');
-    expect(rootIdx).toBeLessThan(divIdx);
-    expect(divIdx).toBeLessThan(extIdx);
-  });
-
-  it('uses extensionsSubmenuName for the Extensions submenu label', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const extensions = [createLink({ title: 'X', path: '/x' })];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions, extensionsSubmenuName: 'Plugin actions' }));
-
-    expect(rootMenu[1]).toMatchObject({ text: 'Plugin actions', type: 'submenu' });
-  });
-
-  it('truncates long titles to 25 chars using truncateTitle', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const longTitle = 'This is a very long menu item title that should be truncated';
-    const extensions = [createLink({ title: longTitle, path: '/long' })];
-
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
-
-    const extSub = findMenuItemByText(rootMenu, 'Extensions');
-    expect(extSub).toBeDefined();
-    const item = extSub!.subMenu![0];
-    // truncateTitle slices (0, 22), trimEnd, then adds '...' → "This is a very long me..."
-    expect(item.text).toBe('This is a very long me...');
-  });
-
-  it('truncates long group names to 25 chars using truncateTitle', () => {
-    const rootMenu: PanelMenuItem[] = [];
-    const longGroupName = 'This is a very long submenu name';
     const extensions = [
       createLink({
-        title: 'Action',
-        path: '/p',
-        group: { name: `\${root}/${longGroupName}` },
+        title: 'Fallback link',
+        path: '/fallback/1',
+        group: { name: `${ROOT_CATEGORY}/` },
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions, reservedNames: new Set(['']) }));
 
-    const sub = rootMenu[0];
-    // truncateTitle("This is a very long submenu name", 25) → "This is a very long su..."
-    expect(sub.text).toBe('This is a very long su...');
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub).toBeDefined();
+    expect(extSub.subMenu).toHaveLength(1);
+    expect(extSub.subMenu![0]).toMatchObject({ text: 'Fallback link', href: '/fallback/1' });
   });
 
-  it('mutates existing rootMenu without clearing it', () => {
-    const rootMenu: PanelMenuItem[] = [{ text: 'Existing', type: 'submenu' }];
-    const extensions = [createLink({ title: 'New', path: '/new', group: { name: '${root}' } })];
+  it('maps extension openInNewTab to target _blank and preserves icon and onClick', () => {
+    const onClick = jest.fn();
+    const rootMenu: PanelMenuItem[] = [];
+    const extensions = [
+      createLink({
+        title: 'New tab link',
+        path: '/newtab',
+        openInNewTab: true,
+        icon: 'external-link-alt',
+        onClick,
+      }),
+    ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub.subMenu![0]).toMatchObject({
+      text: 'New tab link',
+      href: '/newtab',
+      target: '_blank',
+      iconClassName: 'external-link-alt',
+    });
+    expect(extSub.subMenu![0].onClick).toBe(onClick);
+  });
+
+  it('appends Extensions submenu last when root has ROOT and root-level submenus', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const extensions = [
+      createLink({ title: 'Root item', path: '/r', group: { name: ROOT_CATEGORY } }),
+      createLink({
+        title: 'Drill item',
+        path: '/d',
+        group: { name: `${ROOT_CATEGORY}/Drilldown` },
+      }),
+      createLink({ title: 'Under Extensions', path: '/e' }),
+    ];
+
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+
+    expect(rootMenu).toHaveLength(3);
+    expect(rootMenu[0]).toMatchObject({ text: 'Root item' });
+    expect(rootMenu[1]).toMatchObject({ text: 'Drilldown', type: 'submenu' });
+    expect(rootMenu[2]).toMatchObject({ text: 'Extensions', type: 'submenu' });
+  });
+
+  it('does not append Extensions submenu when no extensions use it', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const extensions = [
+      createLink({ title: 'Only root', path: '/r', group: { name: ROOT_CATEGORY } }),
+      createLink({
+        title: 'Only drill',
+        path: '/d',
+        group: { name: `${ROOT_CATEGORY}/Drill` },
+      }),
+    ];
+
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(2);
-    expect(rootMenu[0]).toMatchObject({ text: 'Existing' });
-    expect(rootMenu[1]).toMatchObject({ text: 'New', href: '/new' });
+    expect(findExtensionsSubmenu(rootMenu)).toBeUndefined();
   });
 
-  it('group.name without ${root} creates submenu under Extensions', () => {
+  it('truncates long titles via truncateTitle', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const longTitle = 'A'.repeat(30);
+    const extensions = [createLink({ title: longTitle, path: '/long' })];
+
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub.subMenu![0].text).toBe('A'.repeat(22) + '...');
+  });
+
+  it('treats empty or whitespace group name as Extensions', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const extensions = [
+      createLink({ title: 'No group', path: '/a' }),
+      createLink({ title: 'Empty group', path: '/b', group: { name: '' } }),
+      createLink({ title: 'Whitespace group', path: '/c', group: { name: '   ' } }),
+    ];
+
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub.subMenu!.length).toBeGreaterThanOrEqual(3);
+    const texts = extSub.subMenu!.map((m) => (m.type === 'submenu' ? m.subMenu?.[0]?.text : m.text)).filter(Boolean);
+    expect(texts).toContain('No group');
+    expect(texts).toContain('Empty group');
+    expect(texts).toContain('Whitespace group');
+  });
+
+  it('sorts root-level submenu groups by key', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [
       createLink({
-        title: 'Declare',
-        path: '/d',
-        group: { name: 'Incident', icon: 'bell' },
+        title: 'Z last',
+        path: '/z',
+        group: { name: `${ROOT_CATEGORY}/Zebra` },
+      }),
+      createLink({
+        title: 'A first',
+        path: '/a',
+        group: { name: `${ROOT_CATEGORY}/Alpha` },
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOpts({ rootMenu, extensions }));
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
-    const incidentSub = findMenuItemByText(rootMenu, 'Incident');
-    expect(incidentSub).toBeDefined();
-    expect(incidentSub!.iconClassName).toBe('bell');
-    expect(incidentSub!.subMenu![0]).toMatchObject({ text: 'Declare', href: '/d' });
+    expect(rootMenu[0]).toMatchObject({ text: 'Alpha' });
+    expect(rootMenu[1]).toMatchObject({ text: 'Zebra' });
+  });
+
+  it('uses custom extensionsSubmenuName', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const extensions = [createLink({ title: 'Link', path: '/x' })];
+
+    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions, extensionsSubmenuName: 'Plugin actions' }));
+
+    expect(rootMenu).toHaveLength(1);
+    expect(rootMenu[0].text).toBe('Plugin actions');
   });
 });
