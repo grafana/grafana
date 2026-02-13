@@ -228,6 +228,10 @@ func (o *ResourcePermission) DeepCopyInto(dst *ResourcePermission) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (ResourcePermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermission"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &ResourcePermission{}
 
@@ -279,6 +283,10 @@ func (o *ResourcePermissionList) DeepCopy() *ResourcePermissionList {
 
 func (o *ResourcePermissionList) DeepCopyInto(dst *ResourcePermissionList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ResourcePermissionList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionList"
 }
 
 // Interface compliance compile-time check

@@ -84,10 +84,7 @@ function setup(props: Partial<Props> = {}) {
       workflows: ['branch', 'write'],
       target: 'folder',
     },
-    workflowOptions: [
-      { label: 'Write', value: 'write' },
-      { label: 'Branch', value: 'branch' },
-    ],
+    canPushToConfiguredBranch: true,
     targetFolderUID: 'target-folder-uid',
     targetFolderTitle: 'Target Folder',
     onDismiss: jest.fn(),

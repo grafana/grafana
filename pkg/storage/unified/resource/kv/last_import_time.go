@@ -101,23 +101,24 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 		yield("", err)
 		return
 	}
-	defer closeRows(rows, yield)
+	shouldYield := true
+	defer func() { closeRows(rows, yield, shouldYield) }()
 
 	for rows.Next() {
 		var ns, group, resource string
 		var lastImportTime time.Time
 		if err := rows.Scan(&ns, &group, &resource, &lastImportTime); err != nil {
-			yield("", fmt.Errorf("error reading row: %w", err))
+			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 			return
 		}
 
-		if !yield(LastImportTimeKey(ns, group, resource, lastImportTime), nil) {
+		if shouldYield = yield(LastImportTimeKey(ns, group, resource, lastImportTime), nil); !shouldYield {
 			return
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		yield("", fmt.Errorf("failed to read rows: %w", err))
+		shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
 	}
 }
 

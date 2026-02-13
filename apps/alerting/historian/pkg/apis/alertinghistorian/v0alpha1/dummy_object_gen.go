@@ -243,6 +243,10 @@ func (o *Dummy) DeepCopyInto(dst *Dummy) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (Dummy) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Dummy{}
 
@@ -294,6 +298,10 @@ func (o *DummyList) DeepCopy() *DummyList {
 
 func (o *DummyList) DeepCopyInto(dst *DummyList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (DummyList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
 }
 
 // Interface compliance compile-time check

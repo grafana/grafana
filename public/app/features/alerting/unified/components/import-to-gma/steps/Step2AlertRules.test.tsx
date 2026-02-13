@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -36,9 +36,7 @@ function TestWrapper({
       notificationsDatasourceUID: undefined,
       notificationsDatasourceName: null,
       notificationsYamlFile: null,
-      notificationPolicyOption: 'default',
-      manualLabelName: '',
-      manualLabelValue: '',
+      selectedRoutingTree: '',
       rulesSource: 'datasource',
       rulesDatasourceUID: undefined,
       rulesDatasourceName: null,
@@ -137,7 +135,7 @@ describe('Step2AlertRules', () => {
       expect(screen.getByText(/you skipped importing alertmanager resources/i)).toBeInTheDocument();
     });
 
-    it('should render notification routing options', () => {
+    it('should render notification routing dropdown', () => {
       render(
         <TestWrapper>
           <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
@@ -145,41 +143,7 @@ describe('Step2AlertRules', () => {
       );
 
       expect(screen.getByText(/notification routing/i)).toBeInTheDocument();
-      expect(screen.getByText(/use grafana default policy/i)).toBeInTheDocument();
-      expect(screen.getByText(/enter label manually/i)).toBeInTheDocument();
-    });
-
-    it('should show "imported policy" option only when step1Completed=true', () => {
-      const { rerender } = render(
-        <TestWrapper defaultValues={{ policyTreeName: 'test-policy' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
-        </TestWrapper>
-      );
-
-      expect(screen.queryByText(/use imported policy/i)).not.toBeInTheDocument();
-
-      rerender(
-        <TestWrapper defaultValues={{ policyTreeName: 'test-policy' }}>
-          <Step2Content step1Completed={true} step1Skipped={false} canImport={true} />
-        </TestWrapper>
-      );
-
-      expect(screen.getByText(/use imported policy/i)).toBeInTheDocument();
-    });
-
-    it('should show manual label fields when "manual" routing selected', async () => {
-      const user = userEvent.setup();
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
-        </TestWrapper>
-      );
-
-      const manualOption = screen.getByText(/enter label manually/i);
-      await user.click(manualOption);
-
-      expect(screen.getByPlaceholderText(/team/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/backend/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/select a policy tree/i)).toBeInTheDocument();
     });
 
     it('should render source selection and target settings', () => {
@@ -278,36 +242,14 @@ describe('Step2AlertRules', () => {
       expect(onResult).toHaveBeenCalledWith(false);
     });
 
-    it('should return false when manual routing but missing label name', () => {
+    it('should return false when no routing tree selected', () => {
       const onResult = jest.fn();
       render(
         <TestWrapper
           defaultValues={{
             rulesSource: 'datasource',
             rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'manual',
-            manualLabelName: '',
-            manualLabelValue: 'value',
-            targetDatasourceUID: 'prometheus-uid',
-          }}
-        >
-          <ValidationHookWrapper canImport={true} onResult={onResult} />
-        </TestWrapper>
-      );
-
-      expect(onResult).toHaveBeenCalledWith(false);
-    });
-
-    it('should return false when manual routing but missing label value', () => {
-      const onResult = jest.fn();
-      render(
-        <TestWrapper
-          defaultValues={{
-            rulesSource: 'datasource',
-            rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'manual',
-            manualLabelName: 'team',
-            manualLabelValue: '',
+            selectedRoutingTree: '',
             targetDatasourceUID: 'prometheus-uid',
           }}
         >
@@ -325,7 +267,7 @@ describe('Step2AlertRules', () => {
           defaultValues={{
             rulesSource: 'datasource',
             rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'default',
+            selectedRoutingTree: '',
             targetDatasourceUID: undefined,
           }}
         >
@@ -336,14 +278,14 @@ describe('Step2AlertRules', () => {
       expect(onResult).toHaveBeenCalledWith(false);
     });
 
-    it('should return true when all required fields are filled (datasource source, default policy)', () => {
+    it('should return true when all required fields are filled (datasource source)', () => {
       const onResult = jest.fn();
       render(
         <TestWrapper
           defaultValues={{
             rulesSource: 'datasource',
             rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'default',
+            selectedRoutingTree: 'my-routing-tree',
             targetDatasourceUID: 'prometheus-uid',
           }}
         >
@@ -354,7 +296,7 @@ describe('Step2AlertRules', () => {
       expect(onResult).toHaveBeenCalledWith(true);
     });
 
-    it('should return true when all required fields are filled (yaml source, default policy)', () => {
+    it('should return true when all required fields are filled (yaml source)', () => {
       const mockFile = new File(['test'], 'test.yaml', { type: 'text/yaml' });
       const onResult = jest.fn();
       render(
@@ -362,7 +304,7 @@ describe('Step2AlertRules', () => {
           defaultValues={{
             rulesSource: 'yaml',
             rulesYamlFile: mockFile,
-            notificationPolicyOption: 'default',
+            selectedRoutingTree: 'my-routing-tree',
             targetDatasourceUID: 'prometheus-uid',
           }}
         >
@@ -373,34 +315,14 @@ describe('Step2AlertRules', () => {
       expect(onResult).toHaveBeenCalledWith(true);
     });
 
-    it('should return true when all required fields are filled (datasource source, manual policy)', () => {
+    it('should return true when all required fields are filled (with policyTreeName from Step 1)', () => {
       const onResult = jest.fn();
       render(
         <TestWrapper
           defaultValues={{
             rulesSource: 'datasource',
             rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'manual',
-            manualLabelName: 'team',
-            manualLabelValue: 'backend',
-            targetDatasourceUID: 'prometheus-uid',
-          }}
-        >
-          <ValidationHookWrapper canImport={true} onResult={onResult} />
-        </TestWrapper>
-      );
-
-      expect(onResult).toHaveBeenCalledWith(true);
-    });
-
-    it('should return true when all required fields are filled (datasource source, imported policy)', () => {
-      const onResult = jest.fn();
-      render(
-        <TestWrapper
-          defaultValues={{
-            rulesSource: 'datasource',
-            rulesDatasourceUID: 'prometheus-uid',
-            notificationPolicyOption: 'imported',
+            selectedRoutingTree: 'test-policy',
             policyTreeName: 'test-policy',
             targetDatasourceUID: 'prometheus-uid',
           }}

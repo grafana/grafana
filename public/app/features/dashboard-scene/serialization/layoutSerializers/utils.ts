@@ -10,7 +10,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
+import { DataSourceRef } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   AutoGridLayoutItemKind,
@@ -22,7 +22,7 @@ import {
   TabsLayoutTabKind,
   DataQueryKind,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 

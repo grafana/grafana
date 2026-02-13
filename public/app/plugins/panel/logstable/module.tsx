@@ -46,5 +46,12 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'Enables/disables the log line link button in the first column of each row'
         ),
         defaultValue: defaultOptions.showCopyLogLink,
+      })
+      .addBooleanSwitch({
+        path: 'showControls',
+        name: t('logs.name-show-controls', 'Show controls'),
+        category: logsTableCategory,
+        description: t('logstable.description-show-controls', 'Display table controls'),
+        defaultValue: defaultOptions.showControls ?? false,
       });
   });

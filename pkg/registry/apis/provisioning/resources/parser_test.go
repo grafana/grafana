@@ -77,7 +77,7 @@ spec:
   title: Test dashboard
 `),
 		})
-		require.EqualError(t, err, "name.metadata.name: Required value: missing name in resource")
+		require.EqualError(t, err, "resource validation failed: name.metadata.name: Required value: missing name in resource")
 	})
 
 	t.Run("generate name will generate a name", func(t *testing.T) {

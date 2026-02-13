@@ -114,22 +114,23 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			yield("", err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			if err := rows.Scan(&key); err != nil {
-				yield("", fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
-			if !yield(strings.TrimPrefix(key, section+"/"), nil) {
+			if shouldYield = yield(strings.TrimPrefix(key, section+"/"), nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield("", fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -178,13 +179,14 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			var value []byte
 			if err := rows.Scan(&key, &value); err != nil {
-				yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
@@ -192,13 +194,13 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 				Key:   strings.TrimPrefix(key, section+"/"),
 				Value: io.NopCloser(bytes.NewReader(value)),
 			}
-			if !yield(kv, nil) {
+			if shouldYield = yield(kv, nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -384,8 +386,8 @@ func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
 
-func closeRows[T any](rows *sql.Rows, yield func(T, error) bool) {
-	if err := rows.Close(); err != nil {
+func closeRows[T any](rows *sql.Rows, yield func(T, error) bool, shouldYield bool) {
+	if err := rows.Close(); err != nil && shouldYield {
 		var zero T
 		yield(zero, fmt.Errorf("error closing rows: %w", err))
 	}

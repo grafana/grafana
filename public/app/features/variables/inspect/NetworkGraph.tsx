@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { DataSet } from 'vis-data';
 import type { Network, Options, Data, Edge, Node } from 'vis-network';
 
-import { GraphEdge, GraphNode } from './utils';
+import { GraphEdge, GraphNode } from './types';
 
 interface OwnProps {
   nodes: GraphNode[];

@@ -561,7 +561,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
-	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get quota status: %w", err)
+	}
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
 	if err != nil {
 		return fmt.Errorf("check repository quota: %w", err)
@@ -577,7 +580,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
-	shouldGenerateToken := false
+	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
 	}
@@ -711,6 +714,26 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
+	}
+
+	// If branch is empty, fetch and set the default branch before running health check
+	if branchHandler, ok := repo.(repository.BranchHandler); ok {
+		if branchHandler.GetCurrentBranch() == "" {
+			logger.Info("given repository branch is empty, getting default branch")
+
+			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get default branch: %w", err)
+			}
+
+			branchHandler.SetBranch(defaultBranch)
+
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  fmt.Sprintf("/spec/%s/branch", repo.Config().Spec.Type),
+				"value": defaultBranch,
+			})
+		}
 	}
 
 	// Handle health checks using the health checker

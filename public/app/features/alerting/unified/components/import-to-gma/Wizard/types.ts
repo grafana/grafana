@@ -36,11 +36,3 @@ export interface RulesSourceOption {
   description: string;
   value: RulesSourceType;
 }
-
-export type PolicyOptionValue = 'default' | 'imported' | 'manual';
-
-export interface PolicyOption {
-  label: string;
-  value: PolicyOptionValue;
-  description: string;
-}
