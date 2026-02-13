@@ -10,7 +10,7 @@ import {
   SceneObjectRef,
   SceneObjectState,
 } from '@grafana/scenes';
-import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';

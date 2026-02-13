@@ -61,7 +61,7 @@ export interface QueryEditorUIState {
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
-  addQuery: (query?: Partial<DataQuery>) => void;
+  addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
   deleteQuery: (refId: string) => void;
   duplicateQuery: (refId: string) => void;
   toggleQueryHide: (refId: string) => void;

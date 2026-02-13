@@ -341,7 +341,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // something selected without knowing the parent so we default to assuming it's not the same parent.
     const sameParent =
       this.state.selectedScopes[0]?.scopeNodeId &&
-      this.state.nodes[this.state.selectedScopes[0].scopeNodeId].spec.parentName === scopeNode.spec.parentName;
+      this.state.nodes[this.state.selectedScopes[0].scopeNodeId]?.spec.parentName === scopeNode.spec.parentName;
 
     if (
       !sameParent ||

@@ -287,6 +287,35 @@
     },
     {
       "metadata": {
+        "name": "alertingIgnorePendingForNoDataAndError",
+        "resourceVersion": "1770892873705",
+        "creationTimestamp": "2026-02-12T10:41:13Z"
+      },
+      "spec": {
+        "description": "Makes NoData and Error alerts fire immediately, without 'pending' stage",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingIgnorePendingForNoDataAndError",
+        "resourceVersion": "1770833927064",
+        "creationTimestamp": "2026-02-11T18:18:47Z",
+        "deletionTimestamp": "2026-02-12T10:41:13Z"
+      },
+      "spec": {
+        "description": "Makes NoData and Error alerts fire immediately, without 'pending' stage",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingImportAlertmanagerAPI",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-06-10T08:32:50Z"
@@ -446,6 +475,23 @@
       },
       "spec": {
         "description": "Enables the notification history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationHistoryRuleViewer",
+        "resourceVersion": "1770841844273",
+        "creationTimestamp": "2026-02-11T20:15:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-11 20:30:44.273158713 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the notification history tab in the rule viewer",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
@@ -632,6 +678,20 @@
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingSyncNotifiersApiMigration",
+        "resourceVersion": "0",
+        "creationTimestamp": "2026-02-06T00:00:00Z"
+      },
+      "spec": {
+        "description": "Use the new k8s API for fetching integration type schemas",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1461,19 +1521,14 @@
     },
     {
       "metadata": {
-        "name": "datasourceRemoveDeprecatedIdApi",
-        "resourceVersion": "1769095435732",
-        "creationTimestamp": "2026-01-22T15:23:04Z",
-        "deletionTimestamp": "2026-01-22T15:24:49Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
-        }
+        "name": "datasourcesRerouteLegacyCRUDAPIs",
+        "resourceVersion": "1768836802577",
+        "creationTimestamp": "2026-01-19T15:33:22Z"
       },
       "spec": {
-        "description": "Does not registers datasource apis that use the numeric id",
+        "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -1735,13 +1790,16 @@
     {
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
-        "resourceVersion": "1768214542023",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -1956,13 +2014,16 @@
     {
       "metadata": {
         "name": "foldersAppPlatformAPI",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -2812,6 +2873,20 @@
       },
       "spec": {
         "description": "Enables search for team bindings in the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamSync",
+        "resourceVersion": "1770656731636",
+        "creationTimestamp": "2026-02-09T17:05:31Z"
+      },
+      "spec": {
+        "description": "Use the new APIs for syncing users to teams",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -3999,16 +4074,16 @@
     {
       "metadata": {
         "name": "recentlyViewedDashboards",
-        "resourceVersion": "1765227168175",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-12-10T16:28:19Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-12-08 20:52:48.175129 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables recently viewed dashboards section in the browsing dashboard page",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -4134,13 +4209,16 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-05-23T14:35:54Z"
+        "resourceVersion": "1770896695157",
+        "creationTimestamp": "2025-05-23T14:35:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
     },
@@ -4446,17 +4524,17 @@
     {
       "metadata": {
         "name": "starsFromAPIServer",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-08-29T14:46:39Z",
         "deletionTimestamp": "2025-09-01T09:33:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
         }
       },
       "spec": {
         "description": "populate star status from apiserver",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4527,14 +4605,17 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1764664939750",
+        "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-12 11:44:55.157718 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "expression": "false"
       }
     },

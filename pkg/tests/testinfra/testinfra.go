@@ -423,7 +423,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		return section, err
 	}
 
-	queryRetries := 3
+	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -685,9 +685,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	}
 
 	if opts.ZanzanaReconciliationInterval != 0 {
-		rbacSect, err := cfg.NewSection("rbac")
+		reconcilerSect, err := getOrCreateSection("zanzana.reconciler")
 		require.NoError(t, err)
-		_, err = rbacSect.NewKey("zanzana_reconciliation_interval", opts.ZanzanaReconciliationInterval.String())
+		_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
 		require.NoError(t, err)
 	}
 
@@ -721,6 +721,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
