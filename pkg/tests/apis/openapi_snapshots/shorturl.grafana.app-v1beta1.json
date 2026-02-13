@@ -1205,10 +1205,7 @@
           "details": {
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
@@ -1248,10 +1245,7 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastSeenAt": {
             "description": "The last time the short URL was used, 0 is the initial value",

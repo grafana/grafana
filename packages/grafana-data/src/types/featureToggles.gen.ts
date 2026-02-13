@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
@@ -1488,8 +1493,8 @@ export interface FeatureToggles {
   */
   alertingIgnorePendingForNoDataAndError?: boolean;
   /**
-  * Enables the logs tableNG panel to replace existing tableRT
+  * Enables the notification history tab in the rule viewer
   * @default false
   */
-  logsTablePanel?: boolean;
+  alertingNotificationHistoryRuleViewer?: boolean;
 }

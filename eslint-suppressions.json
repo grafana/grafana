@@ -2128,11 +2128,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ThemePicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx": {
     "no-restricted-syntax": {
       "count": 1

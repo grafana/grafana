@@ -13,12 +13,22 @@ const (
 	CreateNotificationqueryRequestNotificationStatusResolved CreateNotificationqueryRequestNotificationStatus = "resolved"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestNotificationStatus.
+func (CreateNotificationqueryRequestNotificationStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestNotificationStatus"
+}
+
 type CreateNotificationqueryRequestNotificationOutcome string
 
 const (
 	CreateNotificationqueryRequestNotificationOutcomeSuccess CreateNotificationqueryRequestNotificationOutcome = "success"
 	CreateNotificationqueryRequestNotificationOutcomeError   CreateNotificationqueryRequestNotificationOutcome = "error"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestNotificationOutcome.
+func (CreateNotificationqueryRequestNotificationOutcome) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestNotificationOutcome"
+}
 
 type CreateNotificationqueryRequestMatchers []CreateNotificationqueryRequestMatcher
 
@@ -31,6 +41,11 @@ type CreateNotificationqueryRequestMatcher struct {
 // NewCreateNotificationqueryRequestMatcher creates a new CreateNotificationqueryRequestMatcher object.
 func NewCreateNotificationqueryRequestMatcher() *CreateNotificationqueryRequestMatcher {
 	return &CreateNotificationqueryRequestMatcher{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestMatcher.
+func (CreateNotificationqueryRequestMatcher) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestMatcher"
 }
 
 type CreateNotificationqueryRequestBody struct {
@@ -57,6 +72,11 @@ func NewCreateNotificationqueryRequestBody() *CreateNotificationqueryRequestBody
 	return &CreateNotificationqueryRequestBody{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestBody.
+func (CreateNotificationqueryRequestBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
+}
+
 type CreateNotificationqueryRequestMatcherType string
 
 const (
@@ -66,9 +86,7 @@ const (
 	CreateNotificationqueryRequestMatcherTypeNotEqualRegex CreateNotificationqueryRequestMatcherType = "!~"
 )
 
-func (CreateNotificationqueryRequestMatcher) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestMatcher"
-}
-func (CreateNotificationqueryRequestBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
+// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestMatcherType.
+func (CreateNotificationqueryRequestMatcherType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestMatcherType"
 }

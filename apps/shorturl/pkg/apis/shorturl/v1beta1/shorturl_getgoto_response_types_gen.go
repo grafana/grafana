@@ -11,6 +11,8 @@ type GetGotoResponse struct {
 func NewGetGotoResponse() *GetGotoResponse {
 	return &GetGotoResponse{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetGotoResponse.
 func (GetGotoResponse) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGotoResponse"
 }

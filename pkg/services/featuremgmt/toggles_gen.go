@@ -818,7 +818,7 @@ const (
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 
-	// FlagLogsTablePanel
-	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanel = "logsTablePanel"
+	// FlagAlertingNotificationHistoryRuleViewer
+	// Enables the notification history tab in the rule viewer
+	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
 )

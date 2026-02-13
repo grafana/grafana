@@ -483,6 +483,23 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryRuleViewer",
+        "resourceVersion": "1770841844273",
+        "creationTimestamp": "2026-02-11T20:15:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-11 20:30:44.273158713 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the notification history tab in the rule viewer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-11-22T11:07:45Z"
@@ -4955,6 +4972,21 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "useNewAPIsForDatasourceCRUD",
+        "resourceVersion": "1770975026132",
+        "creationTimestamp": "2026-02-13T09:30:26Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "requiresRestart": true,
         "expression": "false"
       }
     },
