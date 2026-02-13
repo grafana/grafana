@@ -1,12 +1,7 @@
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { TeamDeleteModal, Props } from './TeamDeleteModal';
-
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
 
 describe('TeamDeleteModal', () => {
   const mockOnDismiss = jest.fn();
@@ -46,16 +41,16 @@ describe('TeamDeleteModal', () => {
   });
 
   it('calls onConfirm when clicking the `Delete` button', async () => {
-    render(<TeamDeleteModal {...defaultProps} />);
+    const { user } = render(<TeamDeleteModal {...defaultProps} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
     expect(mockOnConfirm).toHaveBeenCalled();
   });
 
   it('calls onDismiss when clicking the `Cancel` button', async () => {
-    render(<TeamDeleteModal {...defaultProps} />);
+    const { user } = render(<TeamDeleteModal {...defaultProps} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });
