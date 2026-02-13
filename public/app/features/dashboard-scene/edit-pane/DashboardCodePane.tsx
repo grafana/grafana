@@ -4,14 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/src/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
-import { DashboardSchemaEditor, type EditorFormat } from '../v2schema/DashboardSchemaEditor';
+import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditActionEvent, DashboardStateChangedEvent } from './shared';
 
@@ -26,16 +26,11 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState(() => getJsonText(dashboard));
   const [isExpanded, setIsExpanded] = useState(false);
-  const [editorFormat, setEditorFormat] = useState<EditorFormat>('json');
+  const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
 
-  // Update JSON when dashboard changes
   useEffect(() => {
     setJsonText(getJsonText(dashboard));
   }, [dashboard]);
-
-  const handleValidationChange = useCallback((hasErrors: boolean) => {
-    setHasValidationErrors(hasErrors);
-  }, []);
 
   const handleChange = useCallback((value: string) => {
     setJsonText(value);
@@ -50,8 +45,6 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
     }
   }, [dashboard, jsonText]);
 
-  const isApplyDisabled = hasValidationErrors;
-
   const applyTooltip =
     editorFormat === 'yaml'
       ? t(
@@ -61,8 +54,8 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
       : t('dashboard.schema-editor.apply-button-disabled-tooltip', 'Fix validation errors before applying changes');
 
   const applyButton = (
-    <Tooltip content={applyTooltip} placement="top" show={isApplyDisabled ? undefined : false}>
-      <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
+    <Tooltip content={applyTooltip} placement="top" show={hasValidationErrors ? undefined : false}>
+      <Button onClick={handleApply} disabled={hasValidationErrors} size="sm">
         {t('dashboard.schema-editor.apply-button', 'Apply changes')}
       </Button>
     </Tooltip>
@@ -79,24 +72,22 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
     </Alert>
   ) : null;
 
+  const editorProps = {
+    value: jsonText,
+    onChange: handleChange,
+    onValidationChange: setHasValidationErrors,
+    onFormatChange: setEditorFormat,
+    showFormatToggle: true,
+  };
+
   return (
     <div className={styles.wrapper}>
       <Sidebar.PaneHeader title={t('dashboard.code-pane.header', 'Edit as code')} />
       <div className={styles.content}>
         {errorAlert}
-
         <div className={styles.editorContainer}>
-          <DashboardSchemaEditor
-            value={jsonText}
-            onChange={handleChange}
-            onValidationChange={handleValidationChange}
-            onFormatChange={setEditorFormat}
-            containerStyles={styles.codeEditor}
-            showFormatToggle={true}
-            showMiniMap={false}
-          />
+          <DashboardSchemaEditor {...editorProps} containerStyles={styles.codeEditor} />
         </div>
-
         <div className={styles.toolbar}>
           {applyButton}
           <IconButton
@@ -120,14 +111,7 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
         >
           <div className={styles.modalEditorWrapper}>
             {errorAlert}
-            <DashboardSchemaEditor
-              value={jsonText}
-              onChange={handleChange}
-              onValidationChange={handleValidationChange}
-              onFormatChange={setEditorFormat}
-              showFormatToggle={true}
-              showMiniMap={true}
-            />
+            <DashboardSchemaEditor {...editorProps} />
             <div className={styles.toolbar}>
               {applyButton}
               <IconButton
@@ -145,19 +129,14 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
 }
 
 function getJsonText(dashboard: DashboardScene): string {
-  const spec = transformSceneToSaveModelSchemaV2(dashboard);
-  return JSON.stringify(spec, null, 2);
+  return JSON.stringify(transformSceneToSaveModelSchemaV2(dashboard), null, 2);
 }
 
 function applyJsonToDashboard(dashboard: DashboardScene, jsonText: string): { success: boolean; error?: string } {
   try {
     const spec = JSON.parse(jsonText);
-
-    // Get existing metadata from serializer and access from dashboard meta
-    const metadata = dashboard.serializer.metadata;
     const { meta } = dashboard.state;
 
-    // Build a DTO for the transformation function - only spec changes, metadata/access stays the same
     const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
       apiVersion: 'v2beta1',
       kind: 'DashboardWithAccessInfo',
@@ -165,7 +144,7 @@ function applyJsonToDashboard(dashboard: DashboardScene, jsonText: string): { su
         name: dashboard.state.uid ?? '',
         resourceVersion: '',
         creationTimestamp: '',
-        ...metadata,
+        ...dashboard.serializer.metadata,
       },
       spec,
       access: {
@@ -181,46 +160,30 @@ function applyJsonToDashboard(dashboard: DashboardScene, jsonText: string): { su
       },
     };
 
-    // Capture previous state for undo
     const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
-
-    // Transform JSON to scene
     const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
     const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
-    // Enter edit mode if not already
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    // Apply the new state
-    dashboard.setState(newState);
+    dashboard.setState({ ...newState, isDirty: true });
 
-    // Mark as dirty
-    dashboard.setState({ isDirty: true });
-
-    // Publish event for undo/redo tracking
     dashboard.publishEvent(
       new DashboardEditActionEvent({
         source: dashboard,
         description: t('dashboard.schema-editor.undo-title', 'Schema edit'),
-        perform: () => {
-          dashboard.setState(newState);
-        },
-        undo: () => {
-          dashboard.setState(previousState);
-        },
+        perform: () => dashboard.setState(newState),
+        undo: () => dashboard.setState(previousState),
       }),
       true
     );
-
-    // Notify of state change
     dashboard.publishEvent(new DashboardStateChangedEvent({ source: dashboard }), true);
 
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, error: message };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 

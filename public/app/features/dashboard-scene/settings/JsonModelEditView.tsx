@@ -27,7 +27,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
-import { DashboardSchemaEditor, type EditorFormat } from '../v2schema/DashboardSchemaEditor';
+import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
@@ -107,7 +107,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
-  const [editorFormat, setEditorFormat] = useState<EditorFormat>('json');
+  const [editorFormat, setSchemaEditorFormat] = useState<SchemaEditorFormat>('json');
 
   const dashboard = model.getDashboard();
   const isProvisionedNG = useIsProvisionedNG(dashboard);
@@ -274,7 +274,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             value={jsonText}
             onChange={handleEditorChange}
             onValidationChange={handleValidationChange}
-            onFormatChange={setEditorFormat}
+            onFormatChange={setSchemaEditorFormat}
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
           />
