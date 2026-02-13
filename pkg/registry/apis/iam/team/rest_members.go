@@ -90,11 +90,12 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
+		// https://github.com/grafana/grafana/blob/8649534e37b4c3520af538e311fb3a84c7b9f29f/public/app/features/teams/TeamPages.tsx#L74
 		checkTeamAccess, err := s.accessClient.Check(ctx, authInfo, types.CheckRequest{
 			Namespace: authInfo.GetNamespace(),
 			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
 			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-			Verb:      utils.VerbSetPermissions,
+			Verb:      utils.VerbGetPermissions,
 			Name:      name,
 		}, "")
 		if err != nil || !checkTeamAccess.Allowed {
