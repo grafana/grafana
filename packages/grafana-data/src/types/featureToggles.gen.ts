@@ -1498,6 +1498,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryRuleViewer?: boolean;
   /**
+  * Enables the notification history global menu item viewer
+  * @default false
+  */
+  alertingNotificationHistoryGlobal?: boolean;
+  /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */

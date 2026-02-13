@@ -483,6 +483,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryGlobal",
+        "resourceVersion": "1770976040912",
+        "creationTimestamp": "2026-02-13T09:47:20Z"
+      },
+      "spec": {
+        "description": "Enables the notification history global menu item viewer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistoryRuleViewer",
         "resourceVersion": "1770841844273",
         "creationTimestamp": "2026-02-11T20:15:04Z",

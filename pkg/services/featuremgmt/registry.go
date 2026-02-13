@@ -2368,6 +2368,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingNotificationHistoryGlobal",
+			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "logsTablePanel",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
 			Stage:        FeatureStageExperimental,
