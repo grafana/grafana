@@ -22,7 +22,8 @@ describe('TeamDeleteModal', () => {
     render(<TeamDeleteModal {...defaultProps} />);
 
     expect(await screen.findByRole('dialog', { name: 'Delete' })).toBeInTheDocument();
-    expect(await screen.findByText(`This action will delete the team ${mockTeam.spec.title}`)).toBeInTheDocument();
+    expect(await screen.findByText(/This action will delete the team/)).toBeInTheDocument();
+    expect(await screen.findByText(`${mockTeam.spec.title}`)).toBeInTheDocument();
   });
 
   it('displays a `Cancel` and a `Delete` button', async () => {
