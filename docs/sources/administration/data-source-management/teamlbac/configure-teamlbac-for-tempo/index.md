@@ -91,26 +91,19 @@ LBAC rules guidelines:
 - Use only resource scope attributes, for example `{ resource.env="prod" }`.
 - Use double quotes for string values, for example: `{ resource.env="prod" }`.
 - You can use regular expressions matching with `=~` operator, for example: `{ resource.team =~ "team-a|team-b" }`.
-- You can use `= nil` to match spans where an attribute does not exist, for example: `{ resource.attribute = nil }`.
+- LBAC does not support `nil`; you cannot match spans where an attribute does not exist.
 - You can have up to two conditions in the same rule using a comma (`,`) as an `AND` operator, for example: `{ resource.env="prod", resource.team="frontend" }`.
 
 #### Attribute existence and missing attributes
 
 Attribute selectors use exact-match semantics.
 For example, a selector like `{ resource.restricted = false }` matches only spans where the attribute exists and equals that value.
-Spans without the attribute at all do not match and are excluded from results.
+If the attributes referenced in a rule do not exist on a span, that span is skipped and does not appear in the results.
 
-To match spans where an attribute is not set, use `= nil`.
-For example, `{ resource.attribute = nil }` matches spans that do not have that attribute.
-
-When you want "allow by default unless explicitly restricted" semantics (for example, an attribute like `restricted` where unset means allow), use two rules so users can access spans that are explicitly not restricted or that lack the attribute:
-
-```
-{ resource.restricted = false }
-{ resource.restricted = nil }
-```
-
-Because multiple rules are combined with OR, a span matches if it has `restricted = false` or if it has no `restricted` attribute.
+LBAC does not support `nil`, so you cannot match spans where an attribute is not set.
+If you want "allow when restricted=false or when attribute absent" semantics, you cannot achieve that with LBAC.
+To allow access only when an attribute is explicitly not restricted, use a single rule such as `{ resource.restricted = false }`.
+Note that this excludes spans that do not have the `restricted` attribute.
 
 Refer to [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/next/administration/data-source-management/teamlbac/create-teamlbac-rules/) for more information.
 
@@ -153,15 +146,15 @@ Team B → `{ resource.service.name="frontend" }`
 
 #### Restrict access by a boolean attribute
 
-To allow access only when spans are not restricted (either explicitly `restricted = false` or when the attribute is absent), use two rules.
-For example, a single rule `{ resource.restricted = false }` would exclude spans that do not have the `restricted` attribute at all.
+A rule like `{ resource.restricted = false }` matches only spans that have the attribute explicitly set to `false`.
+Spans without the `restricted` attribute do not match and are excluded.
+
+Because LBAC does not support `nil`, you cannot match spans where the attribute is absent.
+If your instrumentation ensures the `restricted` attribute is always set (for example, `false` when not restricted), use:
 
 ```
 { resource.restricted = false }
-{ resource.restricted = nil }
 ```
-
-Users receive access to spans that have `restricted = false` or that lack the `restricted` attribute entirely.
 
 ## How LBAC affects returned data
 
