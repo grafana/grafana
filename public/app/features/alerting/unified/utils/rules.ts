@@ -272,10 +272,6 @@ export function getRulePluginOrigin(rule?: PromRuleCompact | RulerRuleDTO): Rule
   return { pluginId };
 }
 
-function isPluginInstalled(pluginId: string) {
-  return Boolean(config.apps[pluginId]);
-}
-
 export function isPluginProvidedRule(rule?: PromRuleCompact | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
