@@ -500,12 +500,14 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey, onLogOptionsChange]
   );
 
+  //
   const downloadLogs = useCallback(
     (format: DownloadFormat) => {
       const filteredLogs =
         logListState.filterLevels.length === 0
           ? logs
           : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
+
       download(format, filteredLogs, logsMeta, displayedFields);
     },
     [displayedFields, logListState.filterLevels, logs, logsMeta]

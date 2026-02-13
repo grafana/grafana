@@ -14,6 +14,7 @@ describe('LogTableControls', () => {
         setControlsExpanded={jest.fn()}
         sortOrder={sortOrder}
         setSortOrder={jest.fn()}
+        downloadLogs={jest.fn()}
       />
     );
     expect(screen.getByLabelText('Expand')).toBeInTheDocument();
@@ -35,6 +36,7 @@ describe('LogTableControls', () => {
         setControlsExpanded={setControlsExpanded}
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
+        downloadLogs={jest.fn()}
       />
     );
     expect(screen.getByLabelText(expandedText)).toBeInTheDocument();
@@ -56,6 +58,7 @@ describe('LogTableControls', () => {
           setControlsExpanded={jest.fn()}
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
+          downloadLogs={jest.fn()}
         />
       );
 
@@ -68,4 +71,6 @@ describe('LogTableControls', () => {
       );
     }
   );
+
+  it.todo('downloadLogs');
 });

@@ -17,6 +17,8 @@ import { getDefaultControlsExpandedMode } from 'app/features/logs/components/pan
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
 
 import { TablePanel } from '../table/TablePanel';
 
@@ -89,6 +91,14 @@ export function TableNGWrap({
     [onFieldConfigChange]
   );
 
+  const downloadLogs = useCallback(
+    (format: DownloadFormat) => {
+      const { meta, rows } = dataFrameToLogsModel(data.series);
+      download(format, rows, meta, options.displayedFields);
+    },
+    [data.series, options.displayedFields]
+  );
+
   return (
     <div className={styles.tableWrapper}>
       {showControls && (
@@ -99,6 +109,7 @@ export function TableNGWrap({
             setControlsExpanded={setControlsExpanded}
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
+            downloadLogs={downloadLogs}
           />
         </div>
       )}
