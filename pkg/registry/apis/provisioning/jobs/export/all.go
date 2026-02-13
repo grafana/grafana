@@ -59,12 +59,7 @@ func checkExportQuota(quotaStatus provisioning.QuotaStatus, repoStats []provisio
 
 	usage := quotas.NewQuotaUsageFromStats(repoStats)
 
-	withinQuota, err := quotas.WouldStayWithinQuota(quotaStatus, usage, netChange)
-	if err != nil {
-		return fmt.Errorf("checking quota: %w", err)
-	}
-
-	if !withinQuota {
+	if ok := quotas.WouldStayWithinQuota(quotaStatus, usage, netChange); !ok {
 		finalCount := usage.TotalResources + netChange
 		return &quotas.QuotaExceededError{
 			Err: fmt.Errorf("export would exceed quota: %d/%d resources",
