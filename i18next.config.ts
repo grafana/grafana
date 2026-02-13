@@ -1,3 +1,4 @@
+import { globSync } from 'fs';
 import { defineConfig } from 'i18next-cli';
 
 const collator = new Intl.Collator('en-US', {
@@ -15,7 +16,9 @@ export default defineConfig({
       'public/app/plugins/datasource/**/*',
       'packages/*/dist/**/*',
     ],
-    input: ['public/**/*.{tsx,ts}', 'packages/grafana-ui/**/*.{tsx,ts}', 'packages/grafana-data/**/*.{tsx,ts}'],
+    input: ['public/**/*.{tsx,ts}', 'packages/grafana-ui/**/*.{tsx,ts}', 'packages/grafana-data/**/*.{tsx,ts}']
+      .flatMap((pattern) => globSync(pattern))
+      .sort(),
     output: 'public/locales/{{language}}/{{namespace}}.json',
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
