@@ -20,6 +20,11 @@ func NewGetSearchUsersUserHit() *GetSearchUsersUserHit {
 	return &GetSearchUsersUserHit{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersUserHit.
+func (GetSearchUsersUserHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
+}
+
 // +k8s:openapi-gen=true
 type GetSearchUsersResponse struct {
 	Offset    int64                   `json:"offset"`
@@ -35,9 +40,8 @@ func NewGetSearchUsersResponse() *GetSearchUsersResponse {
 		Hits: []GetSearchUsersUserHit{},
 	}
 }
-func (GetSearchUsersUserHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersResponse.
 func (GetSearchUsersResponse) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersResponse"
 }
