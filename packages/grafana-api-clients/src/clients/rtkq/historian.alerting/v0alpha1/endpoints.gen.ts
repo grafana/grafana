@@ -415,9 +415,7 @@ export type ApiResourceList = {
 };
 export type GetAlertstatehistoryResponse = {
   body: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
 };
 export type Time = string;
@@ -510,9 +508,7 @@ export type DummyOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -523,9 +519,7 @@ export type DummyOperatorState = {
 export type DummyStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
