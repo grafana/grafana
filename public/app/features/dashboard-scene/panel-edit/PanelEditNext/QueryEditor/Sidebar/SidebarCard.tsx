@@ -124,7 +124,6 @@ function getStyles(
     wrapper: css({
       position: 'relative',
       marginInlineStart: theme.spacing(2),
-
       // The hover-zone pseudo-elements extend the hover area to cover the
       // centered add button between cards, making it easier to discover and access.
       ...(hasAddButton && {
@@ -137,8 +136,8 @@ function getStyles(
           left: `calc(-1 * ${theme.spacing(1.5)})`,
           width: theme.spacing(1.5),
           height: `calc(100% + ${theme.spacing(0.5)})`,
+          // background: 'red',
         },
-
         // Area around button: covers the gap between cards horizontally to the button.
         '&::after': {
           content: '""',
@@ -147,12 +146,11 @@ function getStyles(
           left: `calc(-1 * ${theme.spacing(1.5)})`,
           width: `calc(100% + ${theme.spacing(1.5)})`,
           height: theme.spacing(0.5),
+          //background: 'red',
         },
-
         '&:hover': {
           zIndex: 1,
         },
-
         '&:hover [data-add-button], & [data-menu-open]': {
           opacity: 1,
           pointerEvents: 'auto',

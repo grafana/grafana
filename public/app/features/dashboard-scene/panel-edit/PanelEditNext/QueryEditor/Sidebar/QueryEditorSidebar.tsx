@@ -49,7 +49,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           </Text>
         </Stack>
       </div>
-      <ScrollContainer>
+      {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
+      <ScrollContainer overflowX="hidden">
         <div className={styles.content}>
           <QuerySidebarCollapsableHeader
             label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
