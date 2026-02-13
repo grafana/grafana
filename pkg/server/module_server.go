@@ -211,7 +211,7 @@ func (s *ModuleServer) Run() error {
 				return nil, err
 			}
 		}
-		// Dependent modules need the backend running during registering time (before they start)
+		// Dependent modules need the backend running before they start (at registering time)
 		var stopFunc func(error) error
 		if backendService, ok := s.storageBackend.(services.Service); ok {
 			if err := services.StartAndAwaitRunning(context.Background(), backendService); err != nil {

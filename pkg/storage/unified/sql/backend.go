@@ -70,7 +70,7 @@ type Backend interface {
 	resourcepb.DiagnosticsServer
 }
 
-// NewStorageBackend creates the unified storage backend based on storage_type.
+// NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
 // For all other storage types a SQL backend will be created.

@@ -113,6 +113,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
+
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{

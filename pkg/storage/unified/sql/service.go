@@ -86,9 +86,6 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	if backend == nil {
-		return nil, fmt.Errorf("missing storage backend")
-	}
 	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
@@ -96,11 +93,11 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		if err != nil {
 			return nil, err
 		}
-	}
-	if len(s.subservices) > 0 {
-		err := s.initializeSubservicesManager()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
+		if len(s.subservices) > 0 {
+			err := s.initializeSubservicesManager()
+			if err != nil {
+				return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
+			}
 		}
 	}
 
@@ -125,9 +122,6 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	if backend == nil {
-		return nil, fmt.Errorf("missing storage backend")
-	}
 	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
@@ -331,9 +325,6 @@ func (s *service) starting(ctx context.Context) error {
 }
 
 // registerServer creates the resource/search server and registers the gRPC services on the provided server.
-// The backend must already be started before this is called, because NewResourceServer calls Init()
-// which requires the backend to be fully initialized (e.g. notifier, RV manager).
-// The UnifiedBackend module handles starting the backend eagerly in its factory.
 func (s *service) registerServer(provider grpcserver.Provider) error {
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {

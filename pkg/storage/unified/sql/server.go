@@ -36,8 +36,8 @@ type ServerOptions struct {
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
 	SearchClient     resourcepb.ResourceIndexClient
-	IndexMetrics     *resource.BleveIndexMetrics
 	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport

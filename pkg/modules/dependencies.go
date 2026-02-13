@@ -24,9 +24,8 @@ var dependencyMap = map[string][]string{
 	SearchServerRing: {InstrumentationServer, MemberlistKV},
 	GrafanaAPIServer: {InstrumentationServer},
 
-	UnifiedBackend: {},               // no deps, starts first, stops last
-	GRPCServer:     {UnifiedBackend}, // stops after StorageServer, before UnifiedBackend
-	// TODO: remove SearchServerRing from StorageServer once we only use sharding in SearchServer
+	GRPCServer: {UnifiedBackend}, // stops after StorageServer, before UnifiedBackend
+	// TODO: remove SearchServerRing once we only use sharding in SearchServer
 	StorageServer: {InstrumentationServer, GRPCServer, SearchServerRing}, // stops first
 	SearchServer:  {InstrumentationServer, GRPCServer, SearchServerRing},
 
