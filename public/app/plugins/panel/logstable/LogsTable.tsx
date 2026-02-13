@@ -140,6 +140,7 @@ export const LogsTable = ({
     supportsPermalink: supportsPermalink(),
     onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
     options,
+    fieldConfig,
   });
 
   // Build panel data

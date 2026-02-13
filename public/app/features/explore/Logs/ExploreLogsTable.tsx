@@ -84,7 +84,11 @@ export function ExploreLogsTable(props: {
         width={props.width}
         height={props.height}
         fieldConfig={{
-          defaults: {},
+          defaults: {
+            custom: {
+              filterable: true,
+            },
+          },
           overrides: [],
         }}
         renderCounter={0}

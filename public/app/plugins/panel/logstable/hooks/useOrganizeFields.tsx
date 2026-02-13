@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, transformDataFrame } from '@grafana/data';
+import { DataFrame, FieldConfigSource, transformDataFrame } from '@grafana/data';
 import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -22,6 +22,7 @@ interface Props {
   logsFrame: LogsFrame | null;
   supportsPermalink: boolean;
   onPermalinkClick: BuildLinkToLogLine;
+  fieldConfig: FieldConfigSource;
 }
 
 export function useOrganizeFields({
@@ -32,6 +33,7 @@ export function useOrganizeFields({
   supportsPermalink,
   onPermalinkClick,
   options,
+  fieldConfig,
 }: Props) {
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
   const isMounted = useMountedState();
@@ -51,7 +53,8 @@ export function useOrganizeFields({
       timeFieldName,
       bodyFieldName,
       supportsPermalink,
-      onPermalinkClick
+      onPermalinkClick,
+      fieldConfig
     )
       .then((frame) => {
         if (frame && isMounted()) {
@@ -70,6 +73,7 @@ export function useOrganizeFields({
     supportsPermalink,
     onPermalinkClick,
     isMounted,
+    fieldConfig,
   ]);
 
   return { organizedFrame };
@@ -82,7 +86,8 @@ const organizeFields = async (
   timeFieldName: string,
   bodyFieldName: string,
   supportsPermalink: boolean,
-  onPermalinkClick: BuildLinkToLogLine
+  onPermalinkClick: BuildLinkToLogLine,
+  fieldConfig: FieldConfigSource
 ) => {
   if (!extractedFrame) {
     return Promise.resolve(null);
@@ -106,9 +111,11 @@ const organizeFields = async (
     for (const [fieldIndex, field] of frame.fields.entries()) {
       const isFirstField = fieldIndex === 0;
       field.config = {
+        ...fieldConfig.defaults,
         ...field.config,
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
+          ...fieldConfig.defaults.custom,
           ...field.config.custom,
           width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName, options),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
