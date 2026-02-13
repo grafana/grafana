@@ -1497,4 +1497,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanel?: boolean;
 }

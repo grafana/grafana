@@ -821,4 +821,8 @@ const (
 	// FlagAlertingNotificationHistoryRuleViewer
 	// Enables the notification history tab in the rule viewer
 	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagLogsTablePanel
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanel = "logsTablePanel"
 )
