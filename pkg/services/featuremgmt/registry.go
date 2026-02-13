@@ -2367,6 +2367,22 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "influxDBConfigValidation",
+			Description:  "Enables validation on the InfluxDB data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPartnerPluginsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "clickHouseConfigValidation",
+			Description:  "Enables validation on the ClickHouse data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPartnerPluginsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 

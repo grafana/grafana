@@ -1093,6 +1093,20 @@
     },
     {
       "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1770997997028",
+        "creationTimestamp": "2026-02-13T15:53:17Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-01-10T13:19:01Z",
@@ -2260,6 +2274,20 @@
         "description": "Enables running Infinity queries in parallel",
         "stage": "privatePreview",
         "codeowner": "@grafana/oss-big-tent",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1770997997028",
+        "creationTimestamp": "2026-02-13T15:53:17Z"
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
