@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -153,14 +152,11 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
-	userIdString := int64ToStringOrEmpty(userId)
-	orgIdString := int64ToStringOrEmpty(reqContext.OrgID)
-
-	reqContext.Logger = reqContext.Logger.New("userId", userIdString, "orgId", orgIdString, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", userId, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 	span.AddEvent("user", trace.WithAttributes(
 		attribute.String("uname", reqContext.Login),
-		attribute.String("orgId", orgIdString),
-		attribute.String("userId", userIdString),
+		attribute.Int64("orgId", reqContext.OrgID),
+		attribute.Int64("userId", userId),
 	))
 
 	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
@@ -268,11 +264,4 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 		return list
 	}
 	return nil
-}
-
-func int64ToStringOrEmpty(n int64) string {
-	if n == 0 {
-		return ""
-	}
-	return strconv.FormatInt(n, 10)
 }
