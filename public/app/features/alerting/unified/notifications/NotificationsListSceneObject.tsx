@@ -39,6 +39,7 @@ import { StateTag } from '../components/StateTag';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
+import { stringifyErrorLike } from '../utils/misc';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './NotificationsScene';
@@ -115,14 +116,9 @@ export const NotificationsList = React.memo(function NotificationsList({
   }, [data?.entries]);
 
   if (isError) {
-    let errorMessage = t('alerting.notifications-list.unable-to-fetch', 'Unable to fetch notification history');
-    if (error) {
-      if (typeof error === 'object' && error !== null && 'data' in error) {
-        errorMessage = JSON.stringify(error.data);
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-    }
+    const errorMessage = error
+      ? stringifyErrorLike(error)
+      : t('alerting.notifications-list.unable-to-fetch', 'Unable to fetch notification history');
 
     return (
       <Alert title={t('alerting.notifications-list.error-fetching', 'Error fetching notifications')} severity="error">
