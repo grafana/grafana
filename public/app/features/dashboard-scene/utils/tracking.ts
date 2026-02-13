@@ -6,7 +6,6 @@ import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLib
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
 
