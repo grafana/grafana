@@ -5,11 +5,21 @@
  * The MutationExecutor iterates over ALL_COMMANDS generically.
  */
 
+import { addRowCommand } from './addRow';
+import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
+import { getLayoutCommand } from './getLayout';
 import { listVariablesCommand } from './listVariables';
+import { movePanelCommand } from './movePanel';
+import { moveRowCommand } from './moveRow';
+import { moveTabCommand } from './moveTab';
+import { removeRowCommand } from './removeRow';
+import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
+import { updateRowCommand } from './updateRow';
+import { updateTabCommand } from './updateTab';
 import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
@@ -19,6 +29,16 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateVariableCommand,
   listVariablesCommand,
   enterEditModeCommand,
+  getLayoutCommand,
+  addRowCommand,
+  removeRowCommand,
+  updateRowCommand,
+  moveRowCommand,
+  addTabCommand,
+  removeTabCommand,
+  updateTabCommand,
+  moveTabCommand,
+  movePanelCommand,
 ];
 
 /** All valid command names. */
