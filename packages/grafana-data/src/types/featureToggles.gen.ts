@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
