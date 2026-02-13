@@ -155,7 +155,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateInhibitionRule(ctx, p.Name, rule, info.OrgID)
+	updated, err := s.service.UpdateInhibitionRule(ctx, name, rule, info.OrgID)
 	if err != nil {
 		return nil, false, err
 	}

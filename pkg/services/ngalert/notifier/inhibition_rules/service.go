@@ -74,12 +74,11 @@ func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID in
 	result, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
 		return models.InhibitionRule{}, err
-	}
-	if found {
-		return result, nil
+	} else if !found {
+		return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 	}
 
-	return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
+	return result, nil
 }
 
 // CreateInhibitionRule adds a new inhibition rule
@@ -102,13 +101,14 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
-	revision.Config.ManagedInhibitionRules[rule.Name] = &rule
+	created := models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	revision.Config.ManagedInhibitionRules[created.Name] = created
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 		return models.InhibitionRule{}, err
 	}
 
-	return *models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance), nil
+	return *created, nil
 }
 
 func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
@@ -153,13 +153,16 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 	if renamed {
 		delete(revision.Config.ManagedInhibitionRules, existing.Name)
 	}
-	revision.Config.ManagedInhibitionRules[rule.Name] = &rule
+
+	// Create the updated rule with all fields properly set
+	updated := models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	revision.Config.ManagedInhibitionRules[updated.Name] = updated
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 		return models.InhibitionRule{}, err
 	}
 
-	return *models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance), nil
+	return *updated, nil
 }
 
 // DeleteInhibitionRule deletes an inhibition rule by UID
@@ -190,7 +193,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 		return err
 	}
 
-	delete(revision.Config.ManagedInhibitionRules, existing.UID)
+	delete(revision.Config.ManagedInhibitionRules, existing.Name)
 	return svc.configStore.Save(ctx, revision, orgID)
 }
 
