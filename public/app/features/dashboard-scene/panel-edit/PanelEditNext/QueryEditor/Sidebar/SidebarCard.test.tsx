@@ -65,12 +65,12 @@ function renderSidebarCard({
     {
       queries,
       selectedQuery: queries[0],
-      uiStateOverrides: { setSelectedQuery },
+      uiStateOverrides: { setSelectedQuery, setPendingExpression },
       actionsOverrides: { addQuery },
     }
   );
 
-  return { ...result, addQuery, setSelectedQuery, onClick };
+  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onClick };
 }
 
 describe('SidebarCard', () => {

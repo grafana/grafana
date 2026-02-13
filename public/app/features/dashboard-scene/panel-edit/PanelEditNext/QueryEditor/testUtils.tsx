@@ -176,6 +176,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     toggleDatasourceHelp: jest.fn(),
     transformToggles: mockTransformToggles,
     cardType: selectedTransformation ? QueryEditorType.Transformation : QueryEditorType.Query,
+    pendingExpression: null,
+    setPendingExpression: jest.fn(),
+    finalizePendingExpression: jest.fn(),
     ...uiStateOverrides,
   };
 
