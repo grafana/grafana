@@ -211,4 +211,3 @@ func MergeCatalogPluginSpecs(plugins []CatalogPluginSpec) ([]CatalogPluginSpec, 
 
 	return merged, nil
 }
-
