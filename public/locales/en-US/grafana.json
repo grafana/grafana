@@ -4761,6 +4761,10 @@
       "view-json-diff": "View JSON diff to see all changes"
     }
   },
+  "correlation": {
+    "edit-error": "Error updating correlation",
+    "edit-success": "Correlation updated"
+  },
   "correlations": {
     "add-new": "Add new",
     "alert": {

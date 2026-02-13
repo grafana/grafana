@@ -29,4 +29,4 @@ Run `yarn generate:api-client` and follow the prompts. See [API Client Generator
 
 ## Updating generated clients
 
-To update the existing clients, for example, when the OpenAPI spec has changed, run `yarn generate-apis`. This will regenerate all the clients based on the current OpenAPI snapshots.
+To update the existing clients, for example, when the OpenAPI spec has changed, run `go test ./pkg/tests/apis -run TestIntegrationOpenAPIs`, followed by `yarn generate-apis`. This will regenerate all the clients based on the current OpenAPI snapshots.

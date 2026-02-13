@@ -43,9 +43,9 @@ TargetSpec: {
 
 TransformationSpec: {
 	type: "regex" | "logfmt"
-	expression: string
-	field: string
-	mapValue: string
+	expression?: string
+	field?: string
+	mapValue?: string
 }
 
 CorrelationType: "query" | "external"
