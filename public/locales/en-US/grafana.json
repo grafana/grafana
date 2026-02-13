@@ -9737,6 +9737,9 @@
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sparkline": {
         "no-data": "no data"
+      },
+      "tooltip": {
+        "trigger": "Toggle tooltip"
       }
     },
     "tags": {
