@@ -1,11 +1,11 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { runA11yAudit } from '../utils/a11y';
+import { runA11yAudit } from '../utils/axe-a11y';
 
 test('Is accessible', { tag: ['@acceptance', '@a11y'] }, async ({ selectors, page }) => {
   await page.goto(selectors.pages.Login.url);
   await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
-  await runA11yAudit('Login page', page, 1); // there are several contrast color issues.
+  await runA11yAudit(page, 1); // there are several contrast color issues.
 });
 
 test(
@@ -20,7 +20,7 @@ test(
     await page.getByTestId(selectors.pages.Login.submit).click();
     await expect(page.getByTestId(selectors.pages.Login.skip)).toBeVisible();
 
-    await runA11yAudit('Password change prompt', page);
+    await runA11yAudit(page);
   }
 );
 

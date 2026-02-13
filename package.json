@@ -29,6 +29,7 @@
     "e2e:playwright": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep-invert @cloud-plugins",
     "e2e:playwright:cloud-plugins": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep @cloud-plugins",
     "e2e:playwright:storybook": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test -c playwright.storybook.config.ts",
+    "e2e:playwright:a11y": "AXE_A11Y_REPORT_PATH=./axe-ci-report.json NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep \"@a11y\"",
     "e2e:acceptance": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep @acceptance",
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
     "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",

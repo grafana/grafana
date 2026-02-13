@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { runA11yAudit } from '../utils/a11y';
+import { runA11yAudit } from '../utils/axe-a11y';
 
 type TestFn = Parameters<typeof test>[2];
 type TestOptions = Parameters<TestFn>[0];
@@ -63,11 +63,10 @@ test.describe(
         { url: '/dashboards', threshold: 2 },
       ] satisfies A11yTestCase[]
     ).forEach(({ url, threshold = 0, ready = DEFAULT_READY }) =>
-      test(`a11y test for ${url}`, async ({ page, selectors }) => {
+      test(url, async ({ page, selectors }) => {
         await page.goto(url);
         await ready({ page, selectors });
-
-        await runA11yAudit(`${url} smoke test`, page, threshold);
+        await runA11yAudit(page, threshold);
       })
     );
   }
