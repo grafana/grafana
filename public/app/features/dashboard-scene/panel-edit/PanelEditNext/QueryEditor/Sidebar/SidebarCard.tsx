@@ -122,7 +122,7 @@ function getStyles(
   return {
     wrapper: css({
       position: 'relative',
-      marginInline: theme.spacing(2),
+      marginInlineStart: theme.spacing(2),
 
       // The hover-zone pseudo-elements and add-button visibility rules are
       // only needed when the card has an AddCardButton.
