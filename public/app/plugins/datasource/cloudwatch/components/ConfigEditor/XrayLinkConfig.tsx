@@ -27,18 +27,22 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
 
   return newFormStyling ? (
     <ConfigSection
-      title="X-ray trace link"
-      description="Grafana will automatically create a link to a trace in X-ray data source if logs contain @xrayTraceId field"
+      title="Application Signals trace link"
+      description="Grafana will automatically create a link to a trace in Application Signals data source if logs contain @xrayTraceId field"
     >
       {!hasXrayDatasource && (
         <Alert
           title={
-            'There is no X-ray datasource to link to. First add an X-ray data source and then link it to Cloud Watch. '
+            'There is no Application Signals datasource to link to. First add an Application Signals data source and then link it to Cloud Watch. '
           }
           severity="info"
         />
       )}
-      <Field htmlFor="data-source-picker" label="Data source" description="X-ray data source containing traces">
+      <Field
+        htmlFor="data-source-picker"
+        label="Data source"
+        description="Application Signals data source containing traces"
+      >
         <DataSourcePicker
           pluginId={xRayDsId}
           onChange={(ds: DataSourceInstanceSettings) => onChange(ds.uid)}
@@ -49,16 +53,17 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
     </ConfigSection>
   ) : (
     <>
-      <h3 className="page-heading">X-ray trace link</h3>
+      <h3 className="page-heading">Application Signals trace link</h3>
 
       <div className={styles.infoText}>
-        Grafana will automatically create a link to a trace in X-ray data source if logs contain @xrayTraceId field
+        Grafana will automatically create a link to a trace in Application Signals data source if logs contain
+        @xrayTraceId field
       </div>
 
       {!hasXrayDatasource && (
         <Alert
           title={
-            'There is no X-ray datasource to link to. First add an X-ray data source and then link it to Cloud Watch. '
+            'There is no Application Signals datasource to link to. First add an Application Signals data source and then link it to Cloud Watch. '
           }
           severity="info"
         />
@@ -69,7 +74,7 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
           htmlFor="data-source-picker"
           label="Data source"
           labelWidth={28}
-          tooltip="X-ray data source containing traces"
+          tooltip="Application Signals data source containing traces"
         >
           <DataSourcePicker
             pluginId={xRayDsId}
