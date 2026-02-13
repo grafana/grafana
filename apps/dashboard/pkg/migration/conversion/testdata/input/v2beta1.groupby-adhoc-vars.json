@@ -39,6 +39,10 @@
             "text": "text7",
             "value": "value7"
           },
+          "defaultValue": {
+            "text": "defaultText",
+            "value": "defaultValue"
+          },
           "options": null,
           "multi": false,
           "label": "Group By Variable",
@@ -60,7 +64,8 @@
               "key": "key1",
               "operator": "=",
               "value": "value1",
-              "condition": "AND"
+              "condition": "AND",
+              "origin": "dashboard"
             },
             {
               "key": "key2",
@@ -74,7 +79,8 @@
               "key": "key3",
               "operator": "=",
               "value": "value3",
-              "condition": "AND"
+              "condition": "AND",
+              "origin": "dashboard"
             }
           ],
           "defaultKeys": [
