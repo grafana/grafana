@@ -34,6 +34,8 @@ export interface DashboardSchemaEditorProps {
   showFormatToggle?: boolean;
   /** Initial format (default: 'json') */
   initialFormat?: EditorFormat;
+  /** Called when the editor format changes */
+  onFormatChange?: (format: EditorFormat) => void;
 }
 
 /**
@@ -51,6 +53,7 @@ export function DashboardSchemaEditor({
   showLineNumbers = true,
   showFormatToggle = false,
   initialFormat = 'json',
+  onFormatChange,
 }: DashboardSchemaEditorProps) {
   const styles = useStyles2(getStyles);
 
@@ -122,8 +125,9 @@ export function DashboardSchemaEditor({
       setHasValidationErrors(false);
       setLocalYamlContent(null);
       onValidationChange?.(false);
+      onFormatChange?.(newFormat);
     },
-    [localYamlContent, onChange, onValidationChange]
+    [localYamlContent, onChange, onValidationChange, onFormatChange]
   );
 
   // Fetch schema on mount

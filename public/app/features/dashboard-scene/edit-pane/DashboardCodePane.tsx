@@ -11,7 +11,7 @@ import { DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
-import { DashboardSchemaEditor } from '../v2schema/DashboardSchemaEditor';
+import { DashboardSchemaEditor, type EditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditActionEvent, DashboardStateChangedEvent } from './shared';
 
@@ -26,6 +26,7 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState(() => getJsonText(dashboard));
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editorFormat, setEditorFormat] = useState<EditorFormat>('json');
 
   // Update JSON when dashboard changes
   useEffect(() => {
@@ -51,15 +52,16 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
 
   const isApplyDisabled = hasValidationErrors;
 
+  const applyTooltip =
+    editorFormat === 'yaml'
+      ? t(
+          'dashboard.schema-editor.apply-button-disabled-tooltip-yaml',
+          'Document has validation errors. Switch to JSON to see inline error details.'
+        )
+      : t('dashboard.schema-editor.apply-button-disabled-tooltip', 'Fix validation errors before applying changes');
+
   const applyButton = (
-    <Tooltip
-      content={t(
-        'dashboard.schema-editor.apply-button-disabled-tooltip',
-        'Fix validation errors before applying changes'
-      )}
-      placement="top"
-      show={isApplyDisabled ? undefined : false}
-    >
+    <Tooltip content={applyTooltip} placement="top" show={isApplyDisabled ? undefined : false}>
       <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
         {t('dashboard.schema-editor.apply-button', 'Apply changes')}
       </Button>
@@ -88,6 +90,7 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
             value={jsonText}
             onChange={handleChange}
             onValidationChange={handleValidationChange}
+            onFormatChange={setEditorFormat}
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
             showMiniMap={false}
@@ -121,6 +124,7 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
               value={jsonText}
               onChange={handleChange}
               onValidationChange={handleValidationChange}
+              onFormatChange={setEditorFormat}
               showFormatToggle={true}
               showMiniMap={true}
             />

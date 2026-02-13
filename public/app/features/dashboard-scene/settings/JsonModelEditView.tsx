@@ -27,7 +27,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
-import { DashboardSchemaEditor } from '../v2schema/DashboardSchemaEditor';
+import { DashboardSchemaEditor, type EditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
@@ -107,6 +107,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
+  const [editorFormat, setEditorFormat] = useState<EditorFormat>('json');
 
   const dashboard = model.getDashboard();
   const isProvisionedNG = useIsProvisionedNG(dashboard);
@@ -153,12 +154,16 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     }
   };
 
+  const saveTooltip =
+    editorFormat === 'yaml'
+      ? t(
+          'dashboard-settings.json-editor.save-button-disabled-tooltip-yaml',
+          'Document has validation errors. Switch to JSON to see inline error details.'
+        )
+      : t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving');
+
   const saveButton = (overwrite: boolean, disabled = false) => (
-    <Tooltip
-      content={t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving')}
-      placement="top"
-      show={disabled ? undefined : false}
-    >
+    <Tooltip content={saveTooltip} placement="top" show={disabled ? undefined : false}>
       <Button
         type="submit"
         onClick={() => {
@@ -269,6 +274,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             value={jsonText}
             onChange={handleEditorChange}
             onValidationChange={handleValidationChange}
+            onFormatChange={setEditorFormat}
             containerStyles={styles.codeEditor}
             showFormatToggle={true}
           />
