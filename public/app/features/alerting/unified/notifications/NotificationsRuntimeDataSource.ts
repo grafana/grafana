@@ -29,23 +29,13 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
 import { DataSourceInformation } from '../home/Insights';
+import { matcherToOperator } from '../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 
 // Helper function to convert Matcher to API format
 export function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
-  let type: string;
-  if (matcher.isEqual && !matcher.isRegex) {
-    type = '=';
-  } else if (!matcher.isEqual && !matcher.isRegex) {
-    type = '!=';
-  } else if (matcher.isEqual && matcher.isRegex) {
-    type = '=~';
-  } else {
-    type = '!~';
-  }
-
   return {
-    type,
+    type: matcherToOperator(matcher),
     label: matcher.name,
     value: matcher.value,
   };

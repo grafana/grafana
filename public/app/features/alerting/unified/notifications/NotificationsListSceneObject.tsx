@@ -33,7 +33,6 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
@@ -41,28 +40,8 @@ import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 
-import { isNotificationOutcome, isNotificationStatus } from './NotificationsRuntimeDataSource';
+import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './NotificationsScene';
-
-// Helper function to convert Matcher to API format
-function matcherToAPIFormat(matcher: Matcher): CreateNotificationqueryMatcher {
-  let type: string;
-  if (matcher.isEqual && !matcher.isRegex) {
-    type = '=';
-  } else if (!matcher.isEqual && !matcher.isRegex) {
-    type = '!=';
-  } else if (matcher.isEqual && matcher.isRegex) {
-    type = '=~';
-  } else {
-    type = '!~';
-  }
-
-  return {
-    type,
-    label: matcher.name,
-    value: matcher.value,
-  };
-}
 
 const PAGE_SIZE = 100;
 
