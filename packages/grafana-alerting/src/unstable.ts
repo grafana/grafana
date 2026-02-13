@@ -12,7 +12,7 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { USER_DEFINED_TREE_NAME } from './grafana/notificationPolicies/consts';
+export { isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
