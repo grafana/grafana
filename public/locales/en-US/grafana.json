@@ -10464,7 +10464,7 @@
       "label-numbers": "Numbers",
       "label-signature": "Signature"
     },
-    "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-enable-infinite-scrolling": "Experimental. Show a component to manage the displayed fields from the logs.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
@@ -10756,6 +10756,7 @@
       "label-inline": "Inline",
       "label-sidebar": "Sidebar"
     },
+    "name-enable-field-selector": "Enable field selector",
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-logs-highlighting": "Enable logs highlighting",
