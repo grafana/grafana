@@ -109,3 +109,28 @@ TableFooterOptions: {
   // footer reducers to apply to this field
   reducers?: [...string]
 } @cuetsy(kind="interface")
+
+// Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+// Generally defines alignment, filtering capabilties, display options, etc.
+TableFieldOptions: {
+	width?:      number
+	minWidth?:   number
+	align: FieldTextAlignment & (*"auto" | _)
+	// This field is deprecated in favor of using cellOptions
+	displayMode?: TableCellDisplayMode
+	cellOptions: TableCellOptions
+	inspect: bool | *false
+	filterable?: bool
+	// Hides any header for a column, useful for columns that show some static content or buttons.
+	hideHeader?: bool
+  // if true, wrap the text content of the cell
+  wrapText?: bool
+  // Enables text wrapping for column headers
+  wrapHeaderText?: bool
+  // options for the footer for this field
+  footer?: TableFooterOptions
+  // Selecting or hovering this field will show a tooltip containing the content within the target field
+  tooltip?: TableCellTooltipOptions
+  // The name of the field which contains styling overrides for this cell
+  styleField?: string
+} & HideableFieldConfig @cuetsy(kind="interface")

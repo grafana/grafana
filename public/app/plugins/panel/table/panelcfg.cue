@@ -46,28 +46,7 @@ composableKinds: PanelCfg: {
 					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 					disableKeyboardEvents?: bool
 				} @cuetsy(kind="interface")
-				FieldConfig: {
-					width?:      number
-					minWidth?:   number
-					align: ui.FieldTextAlignment & (*"auto" | _)
-					// This field is deprecated in favor of using cellOptions
-					displayMode?: ui.TableCellDisplayMode
-					cellOptions: ui.TableCellOptions
-					inspect: bool | *false
-					filterable?: bool
-					// Hides any header for a column, useful for columns that show some static content or buttons.
-					hideHeader?: bool
-					// if true, wrap the text content of the cell
-					wrapText?: bool
-					// Enables text wrapping for column headers
-					wrapHeaderText?: bool
-					// options for the footer for this field
-					footer?: ui.TableFooterOptions
-					// Selecting or hovering this field will show a tooltip containing the content within the target field
-					tooltip?: ui.TableCellTooltipOptions
-					// The name of the field which contains styling overrides for this cell
-					styleField?: string
-				} & ui.HideableFieldConfig @cuetsy(kind="interface")
+				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []
