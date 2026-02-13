@@ -252,6 +252,7 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
 1. (Optional) To [generate an image of the panel as a PNG file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/), customize the image settings:
+
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
@@ -274,6 +275,10 @@ When you click **Generate image** in the panel link settings, Grafana generates 
 | tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                              |
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
+
+{{< admonition type="note" >}}
+The image renderer enforces minimum width and height requirements. You can customize these minimums in self-hosted Grafana installations through the [image renderer configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration). In Grafana Cloud, the configuration is managed by Grafana and can't be modified. If you encounter size-related errors when rendering images via the API, ensure your dimensions meet the minimum requirements.
+{{< /admonition >}}
 
 You can also update these parameters in the [image rendering configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration).
 
