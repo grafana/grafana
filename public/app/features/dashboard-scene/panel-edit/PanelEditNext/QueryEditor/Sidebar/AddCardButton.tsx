@@ -104,9 +104,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
       position: 'absolute',
-      top: '100%',
-      left: 0,
-      transform: 'translate(-100%, 0)',
+      top: `calc(100% + ${theme.spacing(0.25)})`,
+      left: theme.spacing(-2.5),
+      transform: 'translateY(-50%)',
       zIndex: 1,
       display: 'flex',
       alignItems: 'center',
