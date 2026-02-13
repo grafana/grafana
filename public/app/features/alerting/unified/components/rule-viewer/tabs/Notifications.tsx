@@ -25,9 +25,9 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { matcherToOperator } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
 import { StateTag } from '../../StateTag';
@@ -35,26 +35,6 @@ import { StateTag } from '../../StateTag';
 const DEFAULT_LOOKBACK_DAYS = 30;
 const DEFAULT_PAGE_SIZE = 100;
 const DEBOUNCE_MS = 300;
-
-// Helper function to convert Matcher to API format
-function matcherToAPIFormat(matcher: Matcher): { type: string; label: string; value: string } {
-  let type: string;
-  if (matcher.isEqual && !matcher.isRegex) {
-    type = '=';
-  } else if (!matcher.isEqual && !matcher.isRegex) {
-    type = '!=';
-  } else if (matcher.isEqual && matcher.isRegex) {
-    type = '=~';
-  } else {
-    type = '!~';
-  }
-
-  return {
-    type,
-    label: matcher.name,
-    value: matcher.value,
-  };
-}
 
 interface NotificationsProps {
   rule: RulerGrafanaRuleDTO;
@@ -96,7 +76,11 @@ const Notifications = ({ rule }: NotificationsProps) => {
 
     // Convert label filter to API matchers
     const matchers = parsePromQLStyleMatcherLooseSafe(debouncedLabelFilter);
-    const groupLabels = matchers.map(matcherToAPIFormat);
+    const groupLabels = matchers.map((matcher) => ({
+      type: matcherToOperator(matcher),
+      label: matcher.name,
+      value: matcher.value,
+    }));
 
     createNotificationQuery({
       createNotificationqueryRequestBody: {
