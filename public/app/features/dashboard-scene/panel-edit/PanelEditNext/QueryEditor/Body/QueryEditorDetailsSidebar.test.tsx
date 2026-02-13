@@ -56,6 +56,9 @@ describe('QueryEditorDetailsSidebar', () => {
           showingDatasourceHelp: false,
           toggleDatasourceHelp: jest.fn(),
           cardType: QueryEditorType.Query,
+          pendingExpression: null,
+          setPendingExpression: jest.fn(),
+          finalizePendingExpression: jest.fn(),
         }}
         actions={mockActions}
       >
