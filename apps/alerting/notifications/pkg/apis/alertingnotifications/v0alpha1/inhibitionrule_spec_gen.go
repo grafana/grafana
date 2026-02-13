@@ -39,6 +39,7 @@ const (
 	InhibitionRuleMatcherTypeEqualRegex    InhibitionRuleMatcherType = "=~"
 	InhibitionRuleMatcherTypeNotEqualRegex InhibitionRuleMatcherType = "!~"
 )
+
 func (InhibitionRuleMatcher) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.InhibitionRuleMatcher"
 }
