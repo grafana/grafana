@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
@@ -613,6 +618,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableSendAlertsExternal?: boolean;
+  /**
+  * Use the new k8s API for fetching integration type schemas
+  * @default false
+  */
+  alertingSyncNotifiersApiMigration?: boolean;
   /**
   * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
   * @default false
@@ -1482,4 +1492,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingIgnorePendingForNoDataAndError?: boolean;
+  /**
+  * Enables the notification history tab in the rule viewer
+  * @default false
+  */
+  alertingNotificationHistoryRuleViewer?: boolean;
 }

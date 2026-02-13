@@ -69,6 +69,7 @@
     "live-flakey-refresh": (import '../dev-dashboards/live/live-flakey-refresh.json'),
     "live-publish": (import '../dev-dashboards/live/live-publish.json'),
     "live-streams": (import '../dev-dashboards/live/live-streams.json'),
+    "logs-table": (import '../dev-dashboards/panel-logstable/logs-table.json'),
     "loki_fakedata": (import '../dev-dashboards/datasource-loki/loki_fakedata.json'),
     "loki_query_splitting": (import '../dev-dashboards/datasource-loki/loki_query_splitting.json'),
     "migrations": (import '../dev-dashboards/migrations/migrations.json'),
