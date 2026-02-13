@@ -15,12 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// ExportFolders will load the full folder tree into memory and update the repositoryResources tree
-func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	// Load and write all folders
-	// FIXME: we load the entire tree in memory
-	progress.SetMessage(ctx, "read folder tree from API server")
-
+// LoadExportableFolderTree builds a FolderTree containing only unmanaged folders
+func LoadExportableFolderTree(ctx context.Context, folderClient dynamic.ResourceInterface) (resources.FolderTree, error) {
 	tree := resources.NewEmptyFolderTree()
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
 		if tree.Count() >= resources.MaxNumberOfFolders {
@@ -39,9 +35,28 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 
 		return tree.AddUnstructured(item)
 	}); err != nil {
-		return fmt.Errorf("load folder tree: %w", err)
+		return nil, fmt.Errorf("load folder tree: %w", err)
+	}
+	return tree, nil
+}
+
+// ExportFolders will load the full folder tree into memory and update the repositoryResources tree
+func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	// Load and write all folders
+	// FIXME: we load the entire tree in memory
+	progress.SetMessage(ctx, "read folder tree from API server")
+
+	tree, err := LoadExportableFolderTree(ctx, folderClient)
+	if err != nil {
+		return err
 	}
 
+	return ExportFoldersFromTree(ctx, options, tree, repositoryResources, progress)
+}
+
+// ExportFoldersFromTree writes a pre-built folder tree to the repository.
+// Use this when the tree has already been loaded (e.g. after counting for quota checks).
+func ExportFoldersFromTree(ctx context.Context, options provisioning.ExportJobOptions, tree resources.FolderTree, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "write folders to repository")
 	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)

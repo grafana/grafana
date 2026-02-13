@@ -261,7 +261,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify all stage options including Ref (branch), Timeout, and PushOnWrites
@@ -343,7 +343,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 			mockExportFn := NewMockExportFn(t)
-			mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			mockStageFn := NewMockWrapWithStageFn(t)
 			// Verify that the stage options contain the correct branch reference and other parameters
@@ -391,7 +391,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -494,7 +494,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
@@ -543,7 +543,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -602,7 +602,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Mock the ReaderWriter interface that the export function expects
 	mockReaderWriter := repository.NewMockReaderWriter(t)
@@ -661,7 +661,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
 
@@ -718,7 +718,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
 

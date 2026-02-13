@@ -23,6 +23,43 @@ import (
 // The response status indicates the original stored version, so we can then request it in an un-converted form
 type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
+// CountExportableResources counts the number of unmanaged non-folder resources
+// that would be exported. It uses the same filtering logic as ExportResources
+// (iterating SupportedProvisioningResources, skipping folders, checking manager
+// properties) so the count exactly reflects what an export would process.
+func CountExportableResources(ctx context.Context, clients resources.ResourceClients) (int64, error) {
+	var count int64
+	for _, kind := range resources.SupportedProvisioningResources {
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		client, _, err := clients.ForResource(ctx, kind)
+		if err != nil {
+			return 0, fmt.Errorf("get client for %s: %w", kind.Resource, err)
+		}
+
+		if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				// Skip items we can't inspect, consistent with export behavior
+				return nil
+			}
+
+			manager, _ := meta.GetManagerProperties()
+			if manager.Identity != "" {
+				return nil
+			}
+
+			count++
+			return nil
+		}); err != nil {
+			return 0, fmt.Errorf("count %s: %w", kind.Resource, err)
+		}
+	}
+	return count, nil
+}
+
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, kind := range resources.SupportedProvisioningResources {
