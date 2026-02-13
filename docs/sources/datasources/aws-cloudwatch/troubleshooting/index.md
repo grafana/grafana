@@ -448,19 +448,19 @@ These issues don't produce specific error messages but are commonly encountered.
 1. Ensure the IAM policy grants access to the required services (EC2, Lambda, RDS, etc.).
 1. Verify resources exist and are emitting metrics in the selected region.
 
-### X-Ray trace links not appearing
+### Application Signals trace links not appearing
 
 **Symptoms:**
 
-- Log entries don't show X-Ray trace links
+- Log entries don't show Application Signals trace links
 - `@xrayTraceId` field not appearing
 
 **Solutions:**
 
-1. Verify an X-Ray data source is configured and linked in the CloudWatch data source settings.
+1. Verify an Application Signals data source is configured and linked in the CloudWatch data source settings.
 1. Ensure your logs contain the `@xrayTraceId` field.
 1. Update log queries to include `@xrayTraceId` in the fields, for example: `fields @message, @xrayTraceId`.
-1. Configure your application to log X-Ray trace IDs. Refer to the [AWS X-Ray documentation](https://docs.aws.amazon.com/xray/latest/devguide/xray-services.html).
+1. Configure your application to log Application Signals trace IDs. Refer to the [AWS Application Signals documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html).
 
 ## Enable debug logging
 

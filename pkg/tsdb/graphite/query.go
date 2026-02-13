@@ -110,11 +110,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 	}
 
 	for _, f := range frames {
-		if resp, ok := result.Responses[f.Name]; ok {
+		if resp, ok := result.Responses[f.RefID]; ok {
 			resp.Frames = append(resp.Frames, f)
-			result.Responses[f.Name] = resp
+			result.Responses[f.RefID] = resp
 		} else {
-			result.Responses[f.Name] = backend.DataResponse{
+			result.Responses[f.RefID] = backend.DataResponse{
 				Frames: data.Frames{f},
 			}
 		}
@@ -226,10 +226,12 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 			}
 		}
 
-		frames = append(frames, data.NewFrame("",
+		frame := data.NewFrame("",
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: series.Target})).SetMeta(
-			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}))
+			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		frame.RefID = refId
+		frames = append(frames, frame)
 
 		s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 	}

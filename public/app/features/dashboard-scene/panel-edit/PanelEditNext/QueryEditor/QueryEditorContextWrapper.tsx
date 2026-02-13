@@ -10,6 +10,7 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { usePendingExpression } from './hooks/usePendingExpression';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
@@ -109,6 +110,18 @@ export function QueryEditorContextWrapper({
     setTransformTogglesState((prev) => ({ ...prev, showDebug: !prev.showDebug }));
   }, []);
 
+  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
+    setSelectedQueryRefId(queryRefId);
+    setSelectedTransformationId(transformationId);
+    setShowingDatasourceHelp(false);
+  }, []);
+
+  const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
+    usePendingExpression({
+      addQuery: dataPane.addQuery,
+      onCardSelectionChange,
+    });
+
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -121,6 +134,8 @@ export function QueryEditorContextWrapper({
         setShowingDatasourceHelp(false);
         // Reset transformation-specific UI when switching to a query
         setTransformTogglesState({ showHelp: false, showDebug: false });
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
@@ -128,6 +143,8 @@ export function QueryEditorContextWrapper({
         setSelectedQueryRefId(null);
         // Reset transformation-specific UI when switching transformations
         setTransformTogglesState({ showHelp: false, showDebug: false });
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       queryOptions: {
         options: queryOptions,
@@ -145,7 +162,10 @@ export function QueryEditorContextWrapper({
         toggleHelp,
         toggleDebug,
       },
-      cardType: getEditorType(selectedQuery || selectedTransformation),
+      cardType: getEditorType(selectedQuery || selectedTransformation, pendingExpression),
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
     }),
     [
       selectedQuery,
@@ -161,6 +181,10 @@ export function QueryEditorContextWrapper({
       transformTogglesState,
       toggleHelp,
       toggleDebug,
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
+      clearPendingExpression,
     ]
   );
 

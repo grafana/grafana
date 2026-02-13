@@ -96,6 +96,9 @@ export const mockUIStateBase = {
   toggleDatasourceHelp: jest.fn(),
   cardType: QueryEditorType.Query,
   queryOptions: mockQueryOptionsState,
+  pendingExpression: null,
+  setPendingExpression: jest.fn(),
+  finalizePendingExpression: jest.fn(),
 };
 
 export const mockTransformToggles = {
