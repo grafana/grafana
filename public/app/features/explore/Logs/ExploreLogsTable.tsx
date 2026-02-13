@@ -37,7 +37,10 @@ export function ExploreLogsTable(props: {
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
-  externalOptions: Pick<Options, 'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex'>;
+  externalOptions: Pick<
+    Options,
+    'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex' | 'fieldSelectorWidth'
+  >;
 }) {
   const { onClickFilterLabel, onClickFilterOutLabel } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);

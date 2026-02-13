@@ -71,6 +71,7 @@ import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
+import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -219,6 +220,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     tableSortByDefaultStringFromStorage
       ? JSON.parse(tableSortByDefaultStringFromStorage)
       : getDefaultSortBy(props.logsFrames?.[tableFrameIndex], logsSortOrder)
+  );
+
+  const [fieldSelectorWidth, setFieldSelectorWidth] = useState(
+    store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth) ?? getDefaultFieldSelectorWidth()
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
@@ -1098,6 +1103,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 displayedFields: displayedFields,
                 permalinkedLogId: props.panelState?.logs?.id,
                 frameIndex: tableFrameIndex,
+                fieldSelectorWidth: fieldSelectorWidth,
               }}
               width={width}
               height={tableHeight}
@@ -1110,6 +1116,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 if (options.sortOrder && options.sortOrder !== logsSortOrder) {
                   onChangeLogsSortOrder(options.sortOrder);
                   onLogOptionsChange('sortOrder', options.sortOrder);
+                }
+                if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
+                  store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
+                  setFieldSelectorWidth(options.fieldSelectorWidth);
                 }
                 if (
                   options.sortBy &&
