@@ -5,10 +5,10 @@
   "items": [
     {
       "metadata": {
-        "name": "640a43850b49c58a",
+        "name": "test-imported-inhibition-rules-inhibit-0",
         "namespace": "default",
-        "uid": "ml9XcAPh2R5JYU4PSXiupOmdbWBZjVWXpUL4jmEqftwX",
-        "resourceVersion": "640a43850b49c58a",
+        "uid": "uyOuOzjpDxlyrBK550OHM2d7SdXBoSjOfW3UgSLXt14X",
+        "resourceVersion": "a4933bc1fe2f1063",
         "annotations": {
           "grafana.com/canUse": "false",
           "grafana.com/provenance": "converted_prometheus"
@@ -24,7 +24,7 @@
           {
             "type": "=",
             "label": "__grafana_managed_route__",
-            "value": "test-managed-route"
+            "value": "test-imported-inhibition-rules"
           }
         ],
         "target_matchers": [
@@ -36,7 +36,7 @@
           {
             "type": "=",
             "label": "__grafana_managed_route__",
-            "value": "test-managed-route"
+            "value": "test-imported-inhibition-rules"
           }
         ],
         "equal": [
@@ -46,10 +46,10 @@
     },
     {
       "metadata": {
-        "name": "0915a19664449b5c",
+        "name": "test-imported-inhibition-rules-inhibit-1",
         "namespace": "default",
-        "uid": "AZv96oujNJqsvqXa8pwcuQpioFeDar0aqX6dgAXxHG8X",
-        "resourceVersion": "0915a19664449b5c",
+        "uid": "3XDCdjxCvujfBXO8LxiqBI1eZoM1axi5WNtllx4RmSwX",
+        "resourceVersion": "1b7316331a7b163d",
         "annotations": {
           "grafana.com/canUse": "false",
           "grafana.com/provenance": "converted_prometheus"
@@ -65,7 +65,7 @@
           {
             "type": "=",
             "label": "__grafana_managed_route__",
-            "value": "test-managed-route"
+            "value": "test-imported-inhibition-rules"
           }
         ],
         "target_matchers": [
@@ -77,7 +77,7 @@
           {
             "type": "=",
             "label": "__grafana_managed_route__",
-            "value": "test-managed-route"
+            "value": "test-imported-inhibition-rules"
           }
         ],
         "equal": [

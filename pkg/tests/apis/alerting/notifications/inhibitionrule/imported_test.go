@@ -38,6 +38,9 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 
 	ctx := context.Background()
 
+	identifier := "test-imported-inhibition-rules"
+	mergeMatchers := "_imported=true"
+
 	// Create a managed route first
 	routingTreeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
@@ -46,7 +49,7 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	spec.Defaults.Receiver = "empty" // Use the default empty receiver
 	routingTree := &v0alpha1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "test-managed-route",
+			Name:      identifier,
 			Namespace: apis.DefaultNamespace,
 		},
 		Spec: *spec,
@@ -62,9 +65,6 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
 	require.NoError(t, err)
-
-	identifier := "test-imported-inhibition-rules"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
