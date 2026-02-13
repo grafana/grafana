@@ -28,6 +28,27 @@ func NewFakeMigrator() unifiedmigrations.UnifiedStorageMigrationService {
 	return &fakeMigrator{}
 }
 
+// fakeMigrationStatusReader is a configurable implementation of MigrationStatusReader for tests.
+type fakeMigrationStatusReader struct {
+	migrated map[string]bool
+}
+
+var _ unifiedmigrations.MigrationStatusReader = (*fakeMigrationStatusReader)(nil)
+
+func (f *fakeMigrationStatusReader) IsMigrated(_ context.Context, gr schema.GroupResource) (bool, error) {
+	return f.migrated[gr.String()], nil
+}
+
+// NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
+// Pass the GroupResource strings (e.g. "dashboards.dashboard.grafana.app") that should be considered migrated.
+func NewFakeMigrationStatusReader(migratedResources ...string) unifiedmigrations.MigrationStatusReader {
+	m := make(map[string]bool, len(migratedResources))
+	for _, r := range migratedResources {
+		m[r] = true
+	}
+	return &fakeMigrationStatusReader{migrated: m}
+}
+
 func NewFakeConfig() *setting.Cfg {
 	return &setting.Cfg{
 		UnifiedStorage: make(map[string]setting.UnifiedStorageConfig),
