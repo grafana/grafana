@@ -3079,6 +3079,11 @@
       "title-preview-not-available": "Preview not available",
       "valid-matcher-affected-alerts": "Add a valid matcher to see affected alerts"
     },
+    "silences": {
+      "affected-instances": "Affected alert instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Details about the silence",
       "label-comment": "Comment",
@@ -3100,11 +3105,6 @@
       "text-loading-silences": "Loading silences...",
       "title-error-loading-silences": "Error loading silences",
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
-    },
-    "silences": {
-      "affected-instances": "Affected alert instances",
-      "only-firing-instances": "Only alert instances in the firing state are displayed.",
-      "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simple-condition-editor": {
       "label-of-query": "OF QUERY",
@@ -5390,6 +5390,12 @@
       "provisioned": "Provisioned",
       "terraform": "Managed by: Terraform"
     },
+    "modal-editor": {
+      "apply": "Apply",
+      "discard": "Discard",
+      "label-static-options": "Static options ({{staticOptionsCount}})",
+      "run-query": "Run query"
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
@@ -5722,10 +5728,20 @@
     "use-modal-editor": {
       "description": {
         "change-variable-query": "Change variable query"
+      },
+      "on-click-apply": {
+        "description": {
+          "change-variable-query": "Change variable query"
+        }
       }
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variable-refreshs-category": {
+      "title": {
+        "refresh-options": "Refresh options"
+      }
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
@@ -6308,8 +6324,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom Variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6326,9 +6341,11 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "modal-title": "Query Variable",
-          "preview": "Preview"
+          "modal-title": "Query Variable: {{name}}",
+          "tabs": {
+            "preview": "Preview ({{optionsCount}})",
+            "query": "Query"
+          }
         },
         "selection-options": {
           "allow-custom-values": "Allow custom values",

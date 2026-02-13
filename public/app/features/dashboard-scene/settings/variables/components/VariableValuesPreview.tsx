@@ -12,6 +12,7 @@ import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
+  hideTitle?: boolean;
 }
 
 export const useGetAllVariableOptions = (
@@ -62,18 +63,20 @@ export const useGetPropertiesFromOptions = (
     return ['text', 'value', ...keys];
   }, [options, staticOptions]);
 
-export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ options, staticOptions, hideTitle }: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
   const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
 
   return (
-    <div className={styles.previewContainer} style={{ gap: '8px' }}>
+    <div className={styles.previewContainer}>
       <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
-          Preview of values ({'{{count}}'})
-        </Trans>
+        {!hideTitle && (
+          <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+            Preview of values ({'{{count}}'})
+          </Trans>
+        )}
         {hasOptions && displayMultiPropsPreview && (
           <VariableValuesWithPropsPreview options={options} properties={properties} />
         )}
@@ -116,7 +119,7 @@ function VariableValuesWithPropsPreview({
         columns={columns}
         data={data}
         getRowId={(r) => String(r.value)}
-        pageSize={8}
+        pageSize={10}
       />
     </div>
   );
@@ -166,7 +169,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      marginTop: theme.spacing(2),
     }),
     optionContainer: css({
       marginLeft: theme.spacing(0.5),
