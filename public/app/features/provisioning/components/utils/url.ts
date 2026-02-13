@@ -15,8 +15,6 @@ export const getBranchUrl = (baseUrl: string, branch: string, repoType?: string)
       return `${cleanBaseUrl}/-/tree/${branch}`;
     case 'bitbucket':
       return `${cleanBaseUrl}/src/${branch}`;
-    case 'git':
-      return `${cleanBaseUrl}/tree/${branch}`;
     default:
       return '';
   }
