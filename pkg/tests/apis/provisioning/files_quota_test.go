@@ -15,9 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationProvisioning_FilesQuotaEnforcement tests the quota enforcement
-// on the files endpoint (POST for create, PUT for update) across different quota states.
-// These tests mirror the unit-level checkQuota cases in pkg/registry/apis/provisioning/files_test.go.
 func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
