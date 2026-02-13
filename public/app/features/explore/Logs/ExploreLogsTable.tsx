@@ -33,14 +33,16 @@ export function ExploreLogsTable(props: {
   buildLinkToLogLine: BuildLinkToLogLine;
   displayedFields: string[];
   panelState: ExplorePanelsState | undefined;
+  // @todo move into options
   sortOrder: LogsSortOrder;
   width: number;
   height: number;
+  options: Options;
   onOptionsChange: (options: Options) => void;
   onFieldConfigChange: (config: FieldConfigSource) => void;
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
+  onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
 }) {
   const { onClickFilterLabel, onClickFilterOutLabel, tableFrameIndex } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
@@ -49,15 +51,12 @@ export function ExploreLogsTable(props: {
   const onCellFilterAdded = useCallback(
     (filter: AdHocFilterItem) => {
       const { value, key, operator } = filter;
-
       if (!onClickFilterLabel || !onClickFilterOutLabel) {
         return;
       }
-
       if (operator === FILTER_FOR_OPERATOR) {
         onClickFilterLabel(key, value, frame);
       }
-
       if (operator === FILTER_OUT_OPERATOR) {
         onClickFilterOutLabel(key, value, frame);
       }
@@ -80,14 +79,14 @@ export function ExploreLogsTable(props: {
         timeZone={props.timeZone}
         options={{
           ...logsTablePanelDefaultOptions,
-          showHeader: true,
-          showControls: true,
-          showCopyLogLink: true,
-          frameIndex: tableFrameIndex,
           buildLinkToLogLine: props.buildLinkToLogLine,
           displayedFields: props.displayedFields,
           permalinkedLogId: props.panelState?.logs?.id,
-          sortOrder: props.sortOrder,
+          ...props.options,
+          frameIndex: tableFrameIndex,
+          showHeader: true,
+          showControls: true,
+          showCopyLogLink: true,
         }}
         transparent={false}
         width={props.width}

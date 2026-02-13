@@ -69,7 +69,6 @@ import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
-
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -209,6 +208,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
+  
+  // const [logsTableOptions, setLogsTableOptions] = useState<Options>({
+  //   sortBy: logsSortOrder,
+  // });
+
+  // @todo
+  const logsTableOptions: Options = {
+    sortOrder: logsSortOrder,
+  }
+
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
@@ -1073,6 +1082,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           {enableNewLogsTable && visualisationType === 'table' && (
             <ExploreLogsTable
+              options={logsTableOptions}
               tableFrameIndex={tableFrameIndex}
               eventBus={eventBus}
               data={panelData}
@@ -1083,6 +1093,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               sortOrder={logsSortOrder}
               width={width}
               height={tableHeight}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
               onOptionsChange={(options: Options) => {
                 if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
                   setDisplayedFields(options.displayedFields);
@@ -1090,6 +1102,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 if (options.sortOrder && options.sortOrder !== logsSortOrder) {
                   onChangeLogsSortOrder(options.sortOrder);
                   onLogOptionsChange('sortOrder', options.sortOrder);
+                }
+                if (options.sortOrder) {
                 }
 
                 if (options.frameIndex !== tableFrameIndex) {
