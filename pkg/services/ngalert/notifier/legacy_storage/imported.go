@@ -167,10 +167,6 @@ func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) (d
 		return nil, nil
 	}
 
-	if managedRoutes := e.rev.Config.ManagedRoutes; len(managedRoutes) == 0 {
-		return nil, nil
-	}
-
 	scopedRules := definition.MergeInhibitRules(nil, importedRules, config.Matchers{managedRouteMatcher(e.identifier)})
 
 	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
