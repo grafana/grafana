@@ -52,20 +52,20 @@ The following Git Sync per-tier limits apply:
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
 
-| **Provider** | **Available in** | **Authentication** | 
-| ------------------ | ---------------- | ----------------- | 
-| Pure Git        | Cloud, OSS, Enterprise             | Personal Access Token          | 
-| GitHub        | Cloud, OSS, Enterprise              | Personal Access Token or GitHub App          | 
-| GitLab        | Cloud, Enterprise              | Personal Access Token          | 
-| Bitbucket      | Cloud, Enterprise            | Personal Access Token         | 
+| **Provider** | **Available in**       | **Authentication**                  |
+| ------------ | ---------------------- | ----------------------------------- |
+| Pure Git     | Cloud, OSS, Enterprise | Personal Access Token               |
+| GitHub       | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
+| GitLab       | Cloud, Enterprise      | Personal Access Token               |
+| Bitbucket    | Cloud, Enterprise      | Personal Access Token               |
 
 ### The Pure Git repository type
 
-The Pure Git repository type uses the standard Git over HTTP protocol, with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync. 
+The Pure Git repository type uses the standard Git over HTTP protocol, with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync.
 
-However, Pure Git doesn't include any features that require provider APIs, such as webhook-driven instant sync, automated PR comments, or deep links to source files. 
+However, Pure Git doesn't include any features that require provider APIs, such as webhook-driven instant sync, automated PR comments, or deep links to source files.
 
-### Enhanced integrations: GitHub, GitLab, Bitbucket 
+### Enhanced integrations: GitHub, GitLab, Bitbucket
 
 If your Git provider is GitHub, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
@@ -84,7 +84,7 @@ A resource can be:
 | Is the resource? | **Compatible**                                                             | **Incompatible**                                                                                |
 | ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
-| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.  
+| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
 
 ## Known limitations
 

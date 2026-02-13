@@ -38,7 +38,7 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-Git Sync in Grafana lets you synchronize your resources so you can store your dashboards as JSON files in any Git provider and manage them as code. You and your team can version control, collaborate, and automate deployments efficiently. 
+Git Sync in Grafana lets you synchronize your resources so you can store your dashboards as JSON files in any Git provider and manage them as code. You and your team can version control, collaborate, and automate deployments efficiently.
 
 ## How it works
 

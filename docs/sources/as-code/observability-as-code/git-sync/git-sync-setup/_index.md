@@ -55,7 +55,7 @@ TBC
 1. [Synchronize with external storage](#synchronize-with-external-storage)
 1. [Choose additional settings](#choose-additional-settings)
 
-## Select your provider 
+## Select your provider
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers) for more details.
 
@@ -110,7 +110,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitLab
 
-If you want to configure Git Sync for GitLab, TBC 
+If you want to configure Git Sync for GitLab, TBC
 
 ### Configure with Bitbucket
 
