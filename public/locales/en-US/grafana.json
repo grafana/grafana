@@ -11437,8 +11437,8 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add to Bookmarks",
-      "remove-bookmark": "Remove from Bookmarks"
+      "add-bookmark": "Add {{itemName}} to Bookmarks",
+      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
@@ -13105,6 +13105,8 @@
     },
     "header": {
       "expression": "Expression",
+      "pending-expression": "Select an Expression",
+      "pending-expression-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13121,7 +13123,6 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
-      "back": "Back",
       "card-click": "Select card {{id}}",
       "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",
