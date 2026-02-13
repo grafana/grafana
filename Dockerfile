@@ -140,6 +140,8 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
+RUN mkdir -p data/plugins-bundled
+
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
 
@@ -242,7 +244,7 @@ RUN apk add --no-cache bubblewrap
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
-COPY --from=go-src /tmp/grafana/plugins-external ./plugins-external
+COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
