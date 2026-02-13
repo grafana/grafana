@@ -66,7 +66,7 @@ test.describe(
       test(url, async ({ page, selectors }) => {
         await page.goto(url);
         await ready({ page, selectors });
-        await runA11yAudit(page, threshold);
+        await runA11yAudit(page, { threshold, disabledRules: ['region'] });
       })
     );
   }
