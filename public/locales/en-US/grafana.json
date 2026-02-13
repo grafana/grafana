@@ -2244,6 +2244,65 @@
       "add-notification-template-group": "Add notification template group",
       "create-notification-templates-customize-notifications": "Create notification templates to customize your notifications."
     },
+    "notifications-list": {
+      "error-fetching": "Error fetching notifications",
+      "no-error-details": "No error details available",
+      "notification-error": "Notification Error",
+      "outcome-failed": "Failed",
+      "status-firing": "Firing",
+      "status-resolved": "Resolved",
+      "unable-to-fetch": "Unable to fetch notification history"
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": "Data source is working"
+      },
+      "title": {
+        "success": "Success"
+      }
+    },
+    "notifications-scene": {
+      "annotations": "Annotations:",
+      "description": "Description:",
+      "filter": {
+        "clear": "Clear filters"
+      },
+      "filterBy": "Filter by:",
+      "firing-alerts_one": "Firing Alerts ({{count}})",
+      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "header": {
+        "contact-point": "Contact point",
+        "group-labels": "Group Labels",
+        "status": "Status",
+        "time": "Time"
+      },
+      "labels": "Labels:",
+      "labels-filter-variable": {
+        "label": {
+          "labels": "Labels"
+        }
+      },
+      "no-notifications": "No notifications found for the selected time range and filters",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": "Outcome:"
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": "Contact point:"
+        }
+      },
+      "resolved-alerts_one": "Resolved Alerts ({{count}})",
+      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "started": "Started: {{value}}",
+      "status-filter-variable": {
+        "label": {
+          "status": "Status:"
+        }
+      },
+      "summary": "Summary:"
+    },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Add labels to help you better manage your recording rules.",
       "recipient": "Recipient",
