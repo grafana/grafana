@@ -1,6 +1,10 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellHeight, TableOptions, defaultTableOptions } from '@grafana/schema';
+import { TableCellHeight } from '@grafana/schema';
+import {
+  defaultOptions as defaultTableOptions,
+  Options as TableOptions,
+} from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
 import { PaginationEditor } from './PaginationEditor';
 

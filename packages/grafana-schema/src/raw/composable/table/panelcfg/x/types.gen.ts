@@ -63,4 +63,53 @@ export const defaultOptions: Partial<Options> = {
   sortBy: [],
 };
 
-export interface FieldConfig extends ui.TableFieldOptions {}
+export interface FieldConfig extends ui.HideableFieldConfig {
+  align: ui.FieldTextAlignment;
+  cellOptions: ui.TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: ui.TableCellDisplayMode;
+  filterable?: boolean;
+  /**
+   * options for the footer for this field
+   */
+  footer?: ui.TableFooterOptions;
+  /**
+   * Hides any header for a column, useful for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
+  inspect: boolean;
+  minWidth?: number;
+  /**
+   * The name of the field which contains styling overrides for this cell
+   */
+  styleField?: string;
+  /**
+   * Selecting or hovering this field will show a tooltip containing the content within the target field
+   */
+  tooltip?: {
+    /**
+     * The name of the field to get the tooltip content from
+     */
+    field: string;
+    /**
+     * placement of the tooltip
+     */
+    placement?: TableCellTooltipPlacement;
+  };
+  width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
+export const defaultFieldConfig: Partial<FieldConfig> = {
+  align: 'auto',
+  inspect: false,
+};

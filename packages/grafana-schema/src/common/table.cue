@@ -16,7 +16,7 @@ TableSortByFieldState: {
 	// Sets the display name of the field to sort by
 	displayName: string
 	// Flag used to indicate descending sort order
-	desc?: bool
+	desc?:       bool
 } @cuetsy(kind="interface")
 
 // Auto mode table cell options
@@ -36,8 +36,8 @@ TableJsonViewCellOptions: {
 
 // Json view cell options
 TableImageCellOptions: {
-	type:   TableCellDisplayMode & "image"
-	alt?:   string
+	type: TableCellDisplayMode & "image"
+	alt?: string
 	title?: string
 } @cuetsy(kind="interface")
 
@@ -53,32 +53,32 @@ TableActionsCellOptions: {
 
 // Gauge cell options
 TableBarGaugeCellOptions: {
-	type:              TableCellDisplayMode & "gauge"
-	mode?:             BarGaugeDisplayMode
+	type: TableCellDisplayMode & "gauge"
+	mode?: BarGaugeDisplayMode
 	valueDisplayMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
 // Sparkline cell options
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:       TableCellDisplayMode & "sparkline"
-	hideValue?: bool
+	type: TableCellDisplayMode & "sparkline"
+  hideValue?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options
 TableColoredBackgroundCellOptions: {
-	type:        TableCellDisplayMode & "color-background"
-	mode?:       TableCellBackgroundDisplayMode
+	type: TableCellDisplayMode & "color-background"
+	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
 } @cuetsy(kind="interface")
 
 TablePillCellOptions: {
-	type: TableCellDisplayMode & "pill"
+  type: TableCellDisplayMode & "pill"
 } @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {
-	type:           TableCellDisplayMode & "markdown"
-	dynamicHeight?: bool
+	type: TableCellDisplayMode & "markdown"
+  dynamicHeight?: bool
 } @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {
@@ -86,7 +86,7 @@ TableMarkdownCellOptions: {
 } @cuetsy(kind="interface")
 
 TableGeoCellOptions: {
-	type: TableCellDisplayMode & "geo"
+  type: TableCellDisplayMode & "geo"
 }
 
 // Height of a table cell
@@ -99,38 +99,13 @@ TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGau
 TableCellTooltipPlacement: "top" | "bottom" | "left" | "right" | "auto" @cuetsy(kind="enum")
 
 TableCellTooltipOptions: {
-	// The name of the field to get the tooltip content from
-	field: string
-	// placement of the tooltip
-	placement?: TableCellTooltipPlacement
+  // The name of the field to get the tooltip content from
+  field: string
+  // placement of the tooltip
+  placement?: TableCellTooltipPlacement
 }
 
 TableFooterOptions: {
-	// footer reducers to apply to this field
-	reducers?: [...string]
+  // footer reducers to apply to this field
+  reducers?: [...string]
 } @cuetsy(kind="interface")
-
-// Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
-// Generally defines alignment, filtering capabilties, display options, etc.
-TableFieldOptions: {
-	width?:    number
-	minWidth?: number
-	align:     FieldTextAlignment & (*"auto" | _)
-	// This field is deprecated in favor of using cellOptions
-	displayMode?: TableCellDisplayMode
-	cellOptions:  TableCellOptions
-	inspect:      bool | *false
-	filterable?:  bool
-	// Hides any header for a column, useful for columns that show some static content or buttons.
-	hideHeader?: bool
-	// if true, wrap the text content of the cell
-	wrapText?: bool
-	// Enables text wrapping for column headers
-	wrapHeaderText?: bool
-	// options for the footer for this field
-	footer?: TableFooterOptions
-	// Selecting or hovering this field will show a tooltip containing the content within the target field
-	tooltip?: TableCellTooltipOptions
-	// The name of the field which contains styling overrides for this cell
-	styleField?: string
-} & HideableFieldConfig @cuetsy(kind="interface")
