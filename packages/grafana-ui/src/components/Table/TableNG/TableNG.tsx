@@ -979,9 +979,7 @@ const renderRowFactory =
 
     // Don't render non expanded child rows
     if (row.__depth === 1 && !isExpanded) {
-      a11yProps['aria-level'] = 1;
-      a11yProps['aria-expanded'] = isExpanded;
-      return <Row key={key} {...props} {...a11yProps} style={{ display: 'none' }} />;
+      return null;
     }
 
     // Add aria-expanded to parent rows that have nested data
