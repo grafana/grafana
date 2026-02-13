@@ -539,6 +539,7 @@ func (s *Service) buildSnapshot(
 	metadata []byte,
 	snapshotMeta cloudmigration.CloudMigrationSnapshot,
 	resourceTypes cloudmigration.ResourceTypes,
+	encryptionAlgo string,
 ) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.buildSnapshot")
 	defer span.End()
@@ -552,9 +553,12 @@ func (s *Service) buildSnapshot(
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	nacl := crypto.NewNacl()
+	encrypter := crypto.NewNacl()
+	if encryptionAlgo != string(cloudmigration.EncryptionAlgoNacl) {
+		return fmt.Errorf("unsupported encryption algo: %v. only 'nacl' is supported", s.cfg.CloudMigration.EncryptionAlgo)
+	}
 
-	keys, err := nacl.GenerateKeys()
+	keys, err := encrypter.GenerateKeys()
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
@@ -566,7 +570,7 @@ func (s *Service) buildSnapshot(
 		Public:  snapshotMeta.GMSPublicKey,
 		Private: keys.Private,
 	},
-		nacl,
+		encrypter,
 		snapshotMeta.LocalDir,
 	)
 	if err != nil {

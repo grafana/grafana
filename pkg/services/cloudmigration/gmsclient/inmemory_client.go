@@ -29,7 +29,8 @@ func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cl
 	return nil
 }
 
-func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession, _ cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error) {
+	// TODO: when we support another algorithm, use the function parameter to switch
 	keys, err := crypto.NewNacl().GenerateKeys()
 	if err != nil {
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
