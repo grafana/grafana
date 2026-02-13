@@ -213,17 +213,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	})
 
 	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
-		// Build unified storage config by enabling migrations by default
-		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
-		for _, tc := range testCases {
-			for _, gvr := range tc.Resources() {
-				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					EnableMigration: true,
-				}
-			}
-		}
-
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
@@ -233,7 +222,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				EnableFeatureToggles:  featureToggles,
-				UnifiedStorageConfig:  unifiedConfig,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -315,7 +303,7 @@ const (
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
-	shorturlsID:            true,
+	shorturlsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
