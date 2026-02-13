@@ -23,9 +23,9 @@ type CatalogPluginsManifest struct {
 	Plugins []CatalogPluginSpec `json:"plugins"`
 }
 
-var flagBundleCatalogPlugins = &cli.StringFlag{
+var flagBundleCatalogPlugins = &cli.StringSliceFlag{
 	Name:  "bundle-catalog-plugins",
-	Usage: "Comma-separated list of plugins to download from grafana.com catalog (format: id or id:version, version optional)",
+	Usage: "Plugins to download from grafana.com catalog (format: id or id:version, version optional). Supports comma-separated and repeated flags.",
 }
 
 var flagBundleCatalogPluginsFile = &cli.StringFlag{
@@ -47,15 +47,15 @@ var CatalogPlugins = pipeline.Argument{
 }
 
 func catalogPluginsValueFunc(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
-	// First check for CLI flag with comma-separated list
-	pluginsList := opts.CLIContext.String("bundle-catalog-plugins")
+	// StringSlice handles both comma-separated and repeated flags
+	pluginsList := opts.CLIContext.StringSlice("bundle-catalog-plugins")
 	manifestFile := opts.CLIContext.String("bundle-catalog-plugins-file")
 
 	var plugins []CatalogPluginSpec
 
-	// Parse comma-separated list if provided
-	if pluginsList != "" {
-		parsed, err := ParseCatalogPluginsList(pluginsList)
+	// Parse plugin specs from CLI flags
+	for _, item := range pluginsList {
+		parsed, err := ParseCatalogPluginsList(item)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse --bundle-catalog-plugins: %w", err)
 		}
@@ -135,9 +135,9 @@ func ParseCatalogPluginsFile(path string) ([]CatalogPluginSpec, error) {
 
 // HasCatalogPlugins returns true if any catalog plugins were specified via CLI flags.
 func HasCatalogPlugins(ctx context.Context, opts *pipeline.ArgumentOpts) bool {
-	pluginsList := opts.CLIContext.String("bundle-catalog-plugins")
+	pluginsList := opts.CLIContext.StringSlice("bundle-catalog-plugins")
 	manifestFile := opts.CLIContext.String("bundle-catalog-plugins-file")
-	return pluginsList != "" || manifestFile != ""
+	return len(pluginsList) > 0 || manifestFile != ""
 }
 
 // GetCatalogPlugins retrieves the catalog plugins from the argument state.

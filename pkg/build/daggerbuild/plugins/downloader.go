@@ -15,8 +15,8 @@ import (
 const (
 	// GrafanaComAPIURL is the base URL for grafana.com API (same as used in pkg/plugins/repo)
 	GrafanaComAPIURL = "https://grafana.com/api/plugins"
-	// AlpineImage is the Alpine image used for downloading plugins
-	AlpineImage = "alpine:3.23.2"
+	// AlpineImage is the Alpine image used for downloading plugins (includes curl and unzip)
+	AlpineImage = "alpine/curl"
 )
 
 // DownloadOpts contains options for downloading plugins.
@@ -105,7 +105,6 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts, resolvedPlugins 
 
 	container := client.Container().
 		From(AlpineImage).
-		WithExec([]string{"apk", "add", "--no-cache", "curl", "unzip"}).
 		WithWorkdir("/plugins")
 
 	for _, plugin := range resolvedPlugins {
