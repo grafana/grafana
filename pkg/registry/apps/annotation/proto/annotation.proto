@@ -1,0 +1,87 @@
+syntax = "proto3";
+package annotation;
+
+option go_package = "github.com/grafana/grafana/pkg/registry/apps/annotation/annotationpb";
+
+// Annotation represents the complete annotation object as JSON bytes
+message AnnotationWrapper {
+  // Full kubernetes json bytes (including metadata, spec, status)
+  bytes value = 1;
+}
+
+// ListOptions defines filtering and pagination options for listing annotations
+message ListOptions {
+  string dashboard_uid = 1;
+  int64 panel_id = 2;
+  int64 from = 3;
+  int64 to = 4;
+  int64 limit = 5;
+  string continue_token = 6;
+  repeated string tags = 7;
+  bool tags_match_any = 8;
+  repeated string scopes = 9;
+  bool scopes_match_any = 10;
+}
+
+// GetRequest retrieves a single annotation by namespace and name
+message GetRequest {
+  string namespace = 1;
+  string name = 2;
+}
+
+// GetResponse returns the requested annotation
+message GetResponse {
+  AnnotationWrapper annotation = 1;
+}
+
+// ListRequest retrieves multiple annotations with filtering
+message ListRequest {
+  string namespace = 1;
+  ListOptions options = 2;
+}
+
+// ListResponse returns a list of annotations with optional continuation token
+message ListResponse {
+  repeated AnnotationWrapper items = 1;
+  string continue_token = 2;
+}
+
+// CreateRequest creates a new annotation
+message CreateRequest {
+  AnnotationWrapper annotation = 1;
+}
+
+// CreateResponse returns the created annotation with assigned metadata
+message CreateResponse {
+  AnnotationWrapper annotation = 1;
+}
+
+// UpdateRequest updates an existing annotation
+message UpdateRequest {
+  AnnotationWrapper annotation = 1;
+}
+
+// UpdateResponse returns the updated annotation
+message UpdateResponse {
+  AnnotationWrapper annotation = 1;
+}
+
+// DeleteRequest deletes an annotation by namespace and name
+message DeleteRequest {
+  string namespace = 1;
+  string name = 2;
+}
+
+// DeleteResponse confirms deletion
+message DeleteResponse {
+  bool success = 1;
+}
+
+// AnnotationStore provides CRUD operations for annotations
+service AnnotationStore {
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
