@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/src/schema/dashboard/v2';
-import { Alert, Button, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -25,6 +25,7 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [jsonText, setJsonText] = useState(() => getJsonText(dashboard));
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Update JSON when dashboard changes
   useEffect(() => {
@@ -50,20 +51,37 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
 
   const isApplyDisabled = hasValidationErrors;
 
+  const applyButton = (
+    <Tooltip
+      content={t(
+        'dashboard.schema-editor.apply-button-disabled-tooltip',
+        'Fix validation errors before applying changes'
+      )}
+      placement="top"
+      show={isApplyDisabled ? undefined : false}
+    >
+      <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
+        {t('dashboard.schema-editor.apply-button', 'Apply changes')}
+      </Button>
+    </Tooltip>
+  );
+
+  const errorAlert = applyError ? (
+    <Alert
+      title={t('dashboard.schema-editor.apply-error-title', 'Failed to apply changes')}
+      severity="error"
+      topSpacing={0}
+      bottomSpacing={0}
+    >
+      {applyError}
+    </Alert>
+  ) : null;
+
   return (
     <div className={styles.wrapper}>
       <Sidebar.PaneHeader title={t('dashboard.code-pane.header', 'Edit as code')} />
       <div className={styles.content}>
-        {applyError && (
-          <Alert
-            title={t('dashboard.schema-editor.apply-error-title', 'Failed to apply changes')}
-            severity="error"
-            topSpacing={0}
-            bottomSpacing={0}
-          >
-            {applyError}
-          </Alert>
-        )}
+        {errorAlert}
 
         <div className={styles.editorContainer}>
           <DashboardSchemaEditor
@@ -76,21 +94,48 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
           />
         </div>
 
-        <div className={styles.buttonContainer}>
-          <Tooltip
-            content={t(
-              'dashboard.schema-editor.apply-button-disabled-tooltip',
-              'Fix validation errors before applying changes'
-            )}
-            placement="top"
-            show={isApplyDisabled ? undefined : false}
-          >
-            <Button onClick={handleApply} disabled={isApplyDisabled} size="sm">
-              {t('dashboard.schema-editor.apply-button', 'Apply changes')}
-            </Button>
-          </Tooltip>
+        <div className={styles.toolbar}>
+          {applyButton}
+          <IconButton
+            name="expand-arrows"
+            size="sm"
+            tooltip={t('dashboard.code-pane.expand', 'Expand editor')}
+            onClick={() => setIsExpanded(true)}
+          />
         </div>
       </div>
+
+      {isExpanded && (
+        <Modal
+          title={t('dashboard.code-pane.modal-title', 'Edit dashboard as code')}
+          isOpen
+          onDismiss={() => setIsExpanded(false)}
+          className={styles.modal}
+          contentClassName={styles.modalContent}
+          closeOnBackdropClick={false}
+          closeOnEscape={false}
+        >
+          <div className={styles.modalEditorWrapper}>
+            {errorAlert}
+            <DashboardSchemaEditor
+              value={jsonText}
+              onChange={handleChange}
+              onValidationChange={handleValidationChange}
+              showFormatToggle={true}
+              showMiniMap={true}
+            />
+            <div className={styles.toolbar}>
+              {applyButton}
+              <IconButton
+                name="compress-arrows"
+                size="sm"
+                tooltip={t('dashboard.code-pane.collapse', 'Collapse editor')}
+                onClick={() => setIsExpanded(false)}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -197,7 +242,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
   codeEditor: css({
     height: '100%',
   }),
-  buttonContainer: css({
+  toolbar: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     flex: '0 0 auto',
+  }),
+  modal: css({
+    width: '90vw',
+    height: '90vh',
+    maxWidth: '90vw',
+  }),
+  modalContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+  }),
+  modalEditorWrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+    gap: theme.spacing(1),
   }),
 });
