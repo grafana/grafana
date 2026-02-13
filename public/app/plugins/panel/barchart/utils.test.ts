@@ -2,6 +2,7 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   createTheme,
+  Field,
   FieldConfig,
   FieldType,
   MutableDataFrame,
