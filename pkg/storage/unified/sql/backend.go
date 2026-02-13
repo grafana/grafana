@@ -132,12 +132,13 @@ func newStorageBackend(
 	}
 
 	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:            sqlkv,
-		Tracer:             tracer,
-		Reg:                reg,
-		UseChannelNotifier: !isHA,
-		Log:                log.New("storage-backend"),
-		DBKeepAlive:        eDB,
+		KvStore:              sqlkv,
+		Tracer:               tracer,
+		Reg:                  reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {

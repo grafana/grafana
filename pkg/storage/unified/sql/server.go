@@ -12,14 +12,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -39,6 +37,7 @@ type ServerOptions struct {
 	SearchOptions    resource.SearchOptions
 	SearchClient     resourcepb.ResourceIndexClient
 	IndexMetrics     *resource.BleveIndexMetrics
+	StorageMetrics   *resource.StorageMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
