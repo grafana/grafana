@@ -285,4 +285,12 @@ describe('getFieldKeyLabel', () => {
     };
     expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
   });
+
+  it('should not use config.displayName (panel-level overrides are not datasource keys)', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayName: 'Panel Override Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
+  });
 });
