@@ -42,7 +42,7 @@ replace (
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.50.2
+	github.com/grafana/grafana-app-sdk v0.50.2-0.20260210144258-179229bcd6c7
 	github.com/grafana/grafana-app-sdk/logging v0.50.2
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
