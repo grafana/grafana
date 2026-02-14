@@ -14,7 +14,8 @@ import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { dashboard, optionsPane, containerRef, containerHeight, containerWidth, splitter } = usePanelEditorShell(model);
+  const { dashboard, optionsPane, containerRef, containerHeight, containerWidth, splitter } =
+    usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
