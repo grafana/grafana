@@ -95,6 +95,7 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     // This placeholder is only used when alert state is unknown
     color: '#6E6E6E',
     getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
+    deleteConfirmation: false,
   },
 } as const;
 
