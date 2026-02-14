@@ -142,11 +142,11 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
-		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		svc, ok := b.(services.Service)
 		require.True(t, ok)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), svc))
@@ -162,11 +162,11 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
-		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		svc, ok := b.(services.Service)
 		require.True(t, ok)
 		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
@@ -177,51 +177,36 @@ func TestBackend_Init(t *testing.T) {
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.TestDBProvider{
 			Err: errTest,
 		}
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		svc, ok := b.(services.Service)
-		require.True(t, ok)
-		require.ErrorContains(t, services.StartAndAwaitRunning(ctx, svc), "initialize resource DB")
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "initialize resource DB")
 	})
 
 	t.Run("no dialect for driver", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		mockDB, _, err := sqlmock.New()
 		require.NoError(t, err)
 		dbp := test.TestDBProvider{
 			DB: dbimpl.NewDB(mockDB, "juancarlo"),
 		}
 
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		svc, ok := b.(services.Service)
-		require.True(t, ok)
-		require.ErrorContains(t, services.StartAndAwaitRunning(ctx, svc), "no dialect for driver")
+		_, err = NewBackend(BackendOptions{DBProvider: dbp})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no dialect for driver")
 	})
 
 	t.Run("database unreachable", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, dbp.DB)
-
 		dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-		svc, ok := b.(services.Service)
-		require.True(t, ok)
-		require.ErrorIs(t, services.StartAndAwaitRunning(ctx, svc), errTest)
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errTest)
 	})
 }
 
@@ -230,13 +215,13 @@ func TestBackend_IsHealthy(t *testing.T) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderWithPing(t)
+	dbp.SQLMock.ExpectPing().WillReturnError(nil) // for Init
 	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, dbp.DB)
 	svc, ok := b.(services.Service)
 	require.True(t, ok)
 
-	dbp.SQLMock.ExpectPing().WillReturnError(nil)
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)

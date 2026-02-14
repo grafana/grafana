@@ -449,6 +449,7 @@ type server struct {
 
 	// init checking
 	once    sync.Once
+	started atomic.Bool
 	initErr error
 
 	stopping         atomic.Bool
@@ -484,6 +485,8 @@ func (s *server) Init(ctx context.Context) error {
 
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
+		} else {
+			s.started.Store(true)
 		}
 	})
 	return s.initErr
@@ -1492,7 +1495,7 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	if s.stopping.Load() {
+	if !s.started.Load() || s.stopping.Load() {
 		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_NOT_SERVING}, nil
 	}
 	return s.diagnostics.IsHealthy(ctx, req)

@@ -21,18 +21,17 @@ const (
 
 var dependencyMap = map[string][]string{
 	MemberlistKV:     {InstrumentationServer},
-	SearchServerRing: {InstrumentationServer, MemberlistKV},
+	SearchServerRing: {InstrumentationServer, GRPCServer, MemberlistKV},
 	GrafanaAPIServer: {InstrumentationServer},
 
-	GRPCServer: {UnifiedBackend}, // stops after StorageServer, before UnifiedBackend
 	// TODO: remove SearchServerRing once we only use sharding in SearchServer
-	StorageServer: {InstrumentationServer, GRPCServer, SearchServerRing}, // stops first
-	SearchServer:  {InstrumentationServer, GRPCServer, SearchServerRing},
-
-	ZanzanaServer:           {InstrumentationServer},
+	StorageServer:           {UnifiedBackend, InstrumentationServer, GRPCServer, SearchServerRing},
+	SearchServer:            {UnifiedBackend, InstrumentationServer, GRPCServer, SearchServerRing},
 	SearchServerDistributor: {InstrumentationServer, GRPCServer, MemberlistKV, SearchServerRing},
-	Core:                    {},
-	All:                     {Core},
-	FrontendServer:          {},
-	OperatorServer:          {InstrumentationServer},
+
+	ZanzanaServer:  {InstrumentationServer},
+	Core:           {},
+	All:            {Core},
+	FrontendServer: {},
+	OperatorServer: {InstrumentationServer},
 }

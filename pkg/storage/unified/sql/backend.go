@@ -222,7 +222,10 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
 	}
-	backend.Service = services.NewIdleService(backend.Init, func(_ error) error {
+	if err := backend.Init(ctx); err != nil {
+		return nil, err
+	}
+	backend.Service = services.NewIdleService(nil, func(_ error) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		return backend.Stop(ctx)

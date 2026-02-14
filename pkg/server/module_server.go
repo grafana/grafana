@@ -211,17 +211,10 @@ func (s *ModuleServer) Run() error {
 				return nil, err
 			}
 		}
-		// Dependent modules need the backend running before they start (at registering time)
-		var stopFunc func(error) error
 		if backendService, ok := s.storageBackend.(services.Service); ok {
-			if err := services.StartAndAwaitRunning(context.Background(), backendService); err != nil {
-				return nil, fmt.Errorf("failed to start storage backend: %w", err)
-			}
-			stopFunc = func(_ error) error {
-				return services.StopAndAwaitTerminated(context.Background(), backendService)
-			}
+			return backendService, nil
 		}
-		return services.NewIdleService(nil, stopFunc).WithName(modules.UnifiedBackend), nil
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)

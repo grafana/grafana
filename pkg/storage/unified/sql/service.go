@@ -93,11 +93,9 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		if err != nil {
 			return nil, err
 		}
-		if len(s.subservices) > 0 {
-			err := s.initializeSubservicesManager()
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
-			}
+		err = s.initializeSubservicesManager()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
 
