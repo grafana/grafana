@@ -37,10 +37,11 @@ import (
 type Scheme string
 
 const (
-	HTTPScheme   Scheme = "http"
-	HTTPSScheme  Scheme = "https"
-	HTTP2Scheme  Scheme = "h2"
-	SocketScheme Scheme = "socket"
+	HTTPScheme        Scheme = "http"
+	HTTPSScheme       Scheme = "https"
+	HTTP2Scheme       Scheme = "h2"
+	SocketScheme      Scheme = "socket"
+	SocketHTTP2Scheme Scheme = "socket_h2"
 )
 
 const (
@@ -1975,23 +1976,31 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
-	if protocolStr == "https" {
+	switch protocolStr {
+	case "https":
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "h2" {
+	case "h2":
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "socket" {
+	case "socket":
 		cfg.Protocol = SocketScheme
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	case "socket_h2":
+		cfg.Protocol = SocketHTTP2Scheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	default:
 	}
 
 	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
