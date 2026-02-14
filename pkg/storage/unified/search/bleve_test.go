@@ -697,7 +697,15 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 }
 
 func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		results[check.CorrelationID] = authlib.BatchCheckResult{
+			Allowed: nc.resourceResponses[check.Resource],
+		}
+	}
+	return authlib.BatchCheckResponse{
+		Results: results,
+	}, nil
 }
 
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
