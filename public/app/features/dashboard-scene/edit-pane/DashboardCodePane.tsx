@@ -1,36 +1,25 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { sceneUtils } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardWithAccessInfo } from '../../dashboard/api/types';
-import { DashboardScene } from '../scene/DashboardScene';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { DashboardEditActionEvent, DashboardStateChangedEvent } from './shared';
-
 export interface DashboardCodePaneProps {
-  dashboard: DashboardScene;
+  initialValue: string;
+  onApply: (jsonText: string) => { success: boolean; error?: string };
 }
 
-export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
+export function DashboardCodePane({ initialValue, onApply }: DashboardCodePaneProps) {
   const styles = useStyles2(getStyles);
 
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [jsonText, setJsonText] = useState(() => getJsonText(dashboard));
+  const [jsonText, setJsonText] = useState(initialValue);
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
-
-  useEffect(() => {
-    setJsonText(getJsonText(dashboard));
-  }, [dashboard]);
 
   const handleChange = useCallback((value: string) => {
     setJsonText(value);
@@ -39,11 +28,11 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
 
   const handleApply = useCallback(() => {
     setApplyError(null);
-    const result = applyJsonToDashboard(dashboard, jsonText);
+    const result = onApply(jsonText);
     if (!result.success) {
       setApplyError(result.error ?? 'Failed to apply changes');
     }
-  }, [dashboard, jsonText]);
+  }, [onApply, jsonText]);
 
   const applyTooltip =
     editorFormat === 'yaml'
@@ -126,65 +115,6 @@ export function DashboardCodePane({ dashboard }: DashboardCodePaneProps) {
       )}
     </div>
   );
-}
-
-function getJsonText(dashboard: DashboardScene): string {
-  return JSON.stringify(transformSceneToSaveModelSchemaV2(dashboard), null, 2);
-}
-
-function applyJsonToDashboard(dashboard: DashboardScene, jsonText: string): { success: boolean; error?: string } {
-  try {
-    const spec = JSON.parse(jsonText);
-    const { meta } = dashboard.state;
-
-    const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: 'v2beta1',
-      kind: 'DashboardWithAccessInfo',
-      metadata: {
-        name: dashboard.state.uid ?? '',
-        resourceVersion: '',
-        creationTimestamp: '',
-        ...dashboard.serializer.metadata,
-      },
-      spec,
-      access: {
-        canSave: meta.canSave,
-        canEdit: meta.canEdit,
-        canAdmin: meta.canAdmin,
-        canStar: meta.canStar,
-        canDelete: meta.canDelete,
-        canShare: meta.canShare,
-        annotationsPermissions: meta.annotationsPermissions,
-        url: meta.url,
-        slug: meta.slug,
-      },
-    };
-
-    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
-    const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
-
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
-    }
-
-    dashboard.setState({ ...newState, isDirty: true });
-
-    dashboard.publishEvent(
-      new DashboardEditActionEvent({
-        source: dashboard,
-        description: t('dashboard.schema-editor.undo-title', 'Schema edit'),
-        perform: () => dashboard.setState(newState),
-        undo: () => dashboard.setState(previousState),
-      }),
-      true
-    );
-    dashboard.publishEvent(new DashboardStateChangedEvent({ source: dashboard }), true);
-
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
