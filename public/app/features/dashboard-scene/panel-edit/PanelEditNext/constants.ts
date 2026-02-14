@@ -42,6 +42,7 @@ export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;
   getLabel: () => string;
+  deleteConfirmation: boolean;
 }
 
 export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
@@ -49,16 +50,19 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     icon: 'database',
     color: QUERY_EDITOR_COLORS.query,
     getLabel: () => t('query-editor-next.labels.query', 'Query'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Expression]: {
     icon: 'calculator-alt',
     color: QUERY_EDITOR_COLORS.expression,
     getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Transformation]: {
     icon: 'process',
     color: QUERY_EDITOR_COLORS.transformation,
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+    deleteConfirmation: true,
   },
 } as const;
 
