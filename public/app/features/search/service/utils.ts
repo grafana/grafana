@@ -88,6 +88,7 @@ export function queryResultToViewItem(
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
+  const managedByStr = typeof item.managedBy === 'string' ? item.managedBy : item.managedBy?.kind;
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -95,7 +96,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: item.managedBy,
+    managedBy: managedByStr,
   };
 
   // Set enterprise sort value property

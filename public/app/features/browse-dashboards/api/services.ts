@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
@@ -50,7 +51,7 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
       explain: {},
     });
   }
-
+  console.log('-------------------------------', folders);
   return folders.map<NestedFolderDTO>((item) => {
     return {
       uid: item.uid,
@@ -81,7 +82,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    managedBy: item.managedBy,
+    managedBy: typeof item.managedBy === 'string' ? item.managedBy : item.managedBy?.kind,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),

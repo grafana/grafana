@@ -15,6 +15,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
+import { ManagerKind } from '../../apiserver/types';
+
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
   DashboardQueryResult,
@@ -44,6 +46,7 @@ export type SearchHit = {
 
   // calculated in the frontend
   url: string;
+  managedBy?: { kind: ManagerKind; id: string };
 };
 
 export type SearchAPIResponse = {
@@ -151,6 +154,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     } else {
       rsp = await this.fetchResponse(uri);
     }
+    console.log('unified search response', rsp);
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
@@ -409,6 +413,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      managedBy: hit.managedBy,
       ...field,
     };
   });

@@ -58,7 +58,7 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
-  managedBy?: ManagerKind;
+  managedBy?: { kind: ManagerKind; id: number } | ManagerKind;
 
   // enterprise sends extra properties through for sorting (views, errors, etc)
   [key: string]: unknown;
@@ -105,5 +105,5 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
-  managedBy?: ManagerKind;
+  managedBy?: ManagerKind | { kind: ManagerKind; id: number };
 }
