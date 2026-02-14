@@ -1,8 +1,13 @@
-import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
-import { extractConfigFromQuery, ConfigFromQueryTransformOptions } from './configFromQuery';
+import {
+  extractConfigFromQuery,
+  getConfigFromDataTransformer,
+  ConfigFromQueryTransformOptions,
+} from './configFromQuery';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -184,6 +189,43 @@ describe('preserves frame properties', () => {
     expect(results.length).toBe(1);
     expect(results[0].name).toBe('request-rate');
     expect(results[0].meta?.executedQueryString).toBe('SELECT rate FROM requests');
+  });
+});
+
+describe('transformer operator pipeline', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([getConfigFromDataTransformer()]);
+  });
+
+  it('should apply config via the operator', async () => {
+    const config = toDataFrame({
+      fields: [{ name: 'Max', type: FieldType.number, values: [200] }],
+      refId: 'config',
+    });
+
+    const series = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+    series.name = 'throughput';
+    series.refId = 'A';
+
+    const cfg = {
+      id: DataTransformerID.configFromData,
+      options: {
+        configRefId: 'config',
+        mappings: [],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [config, series])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result.length).toBe(1);
+      expect(result[0].name).toBe('throughput');
+      expect(result[0].fields[1].config.max).toBe(200);
+    });
   });
 });
 
