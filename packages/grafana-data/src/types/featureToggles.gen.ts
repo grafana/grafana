@@ -1497,4 +1497,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables the notification history global menu item viewer
+  * @default false
+  */
+  alertingNotificationHistoryGlobal?: boolean;
 }
