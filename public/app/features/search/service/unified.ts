@@ -154,7 +154,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     } else {
       rsp = await this.fetchResponse(uri);
     }
-    console.log('unified search response', rsp);
+
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);

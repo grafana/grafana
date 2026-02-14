@@ -51,7 +51,7 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
       explain: {},
     });
   }
-  console.log('-------------------------------', folders);
+
   return folders.map<NestedFolderDTO>((item) => {
     return {
       uid: item.uid,
