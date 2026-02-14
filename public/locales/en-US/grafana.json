@@ -13183,6 +13183,7 @@
       "close-aria": "Close help panel"
     },
     "labels": {
+      "alert": "Alert",
       "expression": "Expression",
       "query": "Query",
       "transformation": "Transformation"
@@ -13192,6 +13193,10 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
+      "alert-indicator": {
+        "button-label": "View alert rules",
+        "tooltip": "View alert rules"
+      },
       "card-click": "Select card {{id}}",
       "data": "Data",
       "data-mode": "Data Mode",
