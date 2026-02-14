@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
@@ -11,15 +11,7 @@ import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-interface QueryActionsMenuProps {
-  app?: CoreApp;
-}
-
-/**
- * Actions menu for queries and expressions.
- * Contains duplicate, data source help, and inspector actions.
- */
-export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
+export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
   const { panel } = usePanelContext();
   const {

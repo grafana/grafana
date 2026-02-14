@@ -16,17 +16,25 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const isSelected = selectedQuery?.refId === query.refId;
+
   const isHidden = !!query.hide;
+
+  const item = {
+    name: query.refId,
+    type: editorType,
+    isHidden,
+  };
+
   return (
     <SidebarCard
       config={QUERY_EDITOR_TYPE_CONFIG[editorType]}
-      isSelected={isSelected}
       id={query.refId}
+      isSelected={isSelected}
+      item={item}
       onClick={() => setSelectedQuery(query)}
-      onDuplicate={() => duplicateQuery(query.refId)}
       onDelete={() => deleteQuery(query.refId)}
+      onDuplicate={() => duplicateQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
-      isHidden={isHidden}
       showAddButton={true}
     >
       {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
