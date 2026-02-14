@@ -1,12 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
 import { QueryEditorType, QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
-import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockQueryOptionsState, setup } from '../testUtils';
+import { renderWithQueryEditorProvider, ds1SettingsMock } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryCard } from './QueryCard';
@@ -43,57 +41,36 @@ function renderSidebarCard({
   config = queryConfig,
   showAddButton = true,
 }: RenderSidebarCardProps = {}) {
-  // The add button starts with pointer-events: none (visible only on hover).
-  // JSDOM can't simulate CSS :hover, so we skip the pointer-events check.
-  const user = userEvent.setup({ pointerEventsCheck: 0 });
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
-  const actions = { ...mockActions, addQuery };
+  const item = {
+    name: id,
+    type: QueryEditorType.Query,
+    isHidden: false,
+  };
 
-  render(
-    <QueryEditorProvider
-      dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-      qrState={{ queries, data: undefined, isLoading: false }}
-      alertingState={{ alertRules: [], loading: false }}
-      panelState={{
-        panel: new VizPanel({ key: 'panel-1' }),
-        transformations: [],
-      }}
-      uiState={{
-        selectedQuery: queries[0],
-        selectedTransformation: null,
-        setSelectedQuery,
-        setSelectedTransformation: jest.fn(),
-        queryOptions: mockQueryOptionsState,
-        selectedQueryDsData: null,
-        selectedQueryDsLoading: false,
-        showingDatasourceHelp: false,
-        toggleDatasourceHelp: jest.fn(),
-        cardType: QueryEditorType.Query,
-        selectedAlert: null,
-        setSelectedAlert: jest.fn(),
-        pendingExpression: null,
-        setPendingExpression,
-        finalizePendingExpression: jest.fn(),
-      }}
-      actions={actions}
+  const result = renderWithQueryEditorProvider(
+    <SidebarCard
+      config={config}
+      isSelected={isSelected}
+      id={id}
+      onClick={onClick}
+      onDelete={jest.fn()}
+      onToggleHide={jest.fn()}
+      onDuplicate={jest.fn()}
+      showAddButton={showAddButton}
+      item={item}
     >
-      <SidebarCard
-        config={config}
-        isSelected={isSelected}
-        id={id}
-        onClick={onClick}
-        onDelete={jest.fn()}
-        onToggleHide={jest.fn()}
-        isHidden={false}
-        onDuplicate={jest.fn()}
-        showAddButton={showAddButton}
-      >
-        <span>Card content</span>
-      </SidebarCard>
-    </QueryEditorProvider>
+      <span>Card content</span>
+    </SidebarCard>,
+    {
+      queries,
+      selectedQuery: queries[0],
+      uiStateOverrides: { setSelectedQuery, setPendingExpression },
+      actionsOverrides: { addQuery },
+    }
   );
 
-  return { user, addQuery, setSelectedQuery, setPendingExpression, onClick };
+  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onClick };
 }
 
 describe('SidebarCard', () => {
@@ -112,34 +89,14 @@ describe('SidebarCard', () => {
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
 
-    const { user } = setup(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries: [query], data: undefined, isLoading: false }}
-        alertingState={{ alertRules: [], loading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [transformation] }}
-        uiState={{
-          selectedQuery: null,
-          selectedTransformation: transformation,
-          setSelectedQuery,
-          setSelectedTransformation,
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
-          selectedAlert: null,
-          setSelectedAlert: jest.fn(),
-          pendingExpression: null,
-          setPendingExpression: jest.fn(),
-          finalizePendingExpression: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryCard query={query} />
-      </QueryEditorProvider>
-    );
+    const user = userEvent.setup();
+
+    renderWithQueryEditorProvider(<QueryCard query={query} />, {
+      queries: [query],
+      transformations: [transformation],
+      selectedTransformation: transformation,
+      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+    });
 
     const queryCard = screen.getByRole('button', { name: /select card A/i });
     await user.click(queryCard);
@@ -159,34 +116,14 @@ describe('SidebarCard', () => {
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
 
-    const { user } = setup(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries: [query], data: undefined, isLoading: false }}
-        alertingState={{ alertRules: [], loading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [transformation] }}
-        uiState={{
-          selectedQuery: query,
-          selectedTransformation: null,
-          setSelectedQuery,
-          setSelectedTransformation,
-          queryOptions: mockQueryOptionsState,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Transformation,
-          selectedAlert: null,
-          setSelectedAlert: jest.fn(),
-          pendingExpression: null,
-          setPendingExpression: jest.fn(),
-          finalizePendingExpression: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <TransformationCard transformation={transformation} />
-      </QueryEditorProvider>
-    );
+    const user = userEvent.setup();
+
+    renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
+      queries: [query],
+      transformations: [transformation],
+      selectedQuery: query,
+      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+    });
 
     const transformCard = screen.getByRole('button', { name: /select card organize/i });
     await user.click(transformCard);
