@@ -557,6 +557,48 @@
     "alert-warning": {
       "to-rule-list": "К списку правил"
     },
+    "alertVersionHistory": {
+      "alerting": "Оповещение",
+      "alerting-change-description": "Обновление было выполнено системой оповещения из-за других изменений. Например, при переименовании точки контакта, которая используется для упрощенной маршрутизации, будут обновлены затронутые правила.",
+      "annotations": "Аннотации",
+      "compare": "Сравнить",
+      "compare-with-latest": "Сравнить с последней версией",
+      "compareVersions": "Сравнить версии",
+      "comparing-versions": "Сравнение версий",
+      "condition": "Условие оповещения",
+      "contactPointRouting": "Маршрутизация к точке контакта",
+      "description": "Каждый раз, когда вы редактируете правило оповещения, создается новая версия. Выберите две версии ниже и сравните их различия.",
+      "errorloading": "Не удалось загрузить версии правил оповещения",
+      "execErrorState": "Состояние оповещения при ошибке выполнения",
+      "intervalSeconds": "Интервал оценки",
+      "labels": "Метки",
+      "latest": "Последние",
+      "name": "Имя",
+      "namespace_uid": "UID папки",
+      "noDataState": "Состояние оповещения при отсутствии данных",
+      "noVersionsFound": "Для этого правила версии не найдены",
+      "paused": "Состояние приостановки",
+      "pendingPeriod": "Период ожидания",
+      "provisioning": "Подготовка к работе",
+      "provisioning-change-description": "Обновление версии было выполнено посредством подготовки к работе",
+      "queryAndAlertCondition": "Условие запроса и оповещения",
+      "restore": "Восстановить",
+      "restore-manually": "Не удалось восстановить правило оповещения. Это может быть связано с изменениями в других объектах, таких как точки контакта, источники данных и т. д. Восстановите версию правила вручную",
+      "restore-modal": {
+        "body": "Действительно восстановить определение правила оповещения до этой версии? Все несохраненные изменения будут потеряны.",
+        "confirm": "Да, восстановить конфигурацию",
+        "error": "Не удалось восстановить версию правила оповещения ",
+        "summary": "Краткое описание изменений, которые необходимо применить:",
+        "title": "Восстановление версии"
+      },
+      "restore-version": "Восстановить до версии {{version}} ",
+      "rule_group": "Группа правил",
+      "unknown": "Неизвестно",
+      "unknown-change-description": "Обновление было выполнено до внедрения истории версий правил оповещения. Отслеживание пользователя, внесшего изменения, не осуществляется, но будущие изменения будут включать данные пользователя",
+      "user-id": "Идентификатор пользователя {{uid}}",
+      "warning-restore-manually": "Вы вручную восстанавливаете старую версию этого правила оповещения. Внимательно просмотрите изменения перед сохранением определения правила.",
+      "warning-restore-manually-title": "Восстановление правила вручную"
+    },
     "alertform": {
       "labels": {
         "alerting": "Добавьте к правилу метки для поиска и отключения оповещений или их маршрутизации к политике уведомления.",
@@ -611,48 +653,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Поиск правил оповещения по имени",
       "no-alert-rules-found": "Правила оповещения не найдены",
       "placeholder-sort-default-az": "Сортировать (по умолчанию: A–Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Оповещение",
-      "alerting-change-description": "Обновление было выполнено системой оповещения из-за других изменений. Например, при переименовании точки контакта, которая используется для упрощенной маршрутизации, будут обновлены затронутые правила.",
-      "annotations": "Аннотации",
-      "compare": "Сравнить",
-      "compare-with-latest": "Сравнить с последней версией",
-      "compareVersions": "Сравнить версии",
-      "comparing-versions": "Сравнение версий",
-      "condition": "Условие оповещения",
-      "contactPointRouting": "Маршрутизация к точке контакта",
-      "description": "Каждый раз, когда вы редактируете правило оповещения, создается новая версия. Выберите две версии ниже и сравните их различия.",
-      "errorloading": "Не удалось загрузить версии правил оповещения",
-      "execErrorState": "Состояние оповещения при ошибке выполнения",
-      "intervalSeconds": "Интервал оценки",
-      "labels": "Метки",
-      "latest": "Последние",
-      "name": "Имя",
-      "namespace_uid": "UID папки",
-      "noDataState": "Состояние оповещения при отсутствии данных",
-      "noVersionsFound": "Для этого правила версии не найдены",
-      "paused": "Состояние приостановки",
-      "pendingPeriod": "Период ожидания",
-      "provisioning": "Подготовка к работе",
-      "provisioning-change-description": "Обновление версии было выполнено посредством подготовки к работе",
-      "queryAndAlertCondition": "Условие запроса и оповещения",
-      "restore": "Восстановить",
-      "restore-manually": "Не удалось восстановить правило оповещения. Это может быть связано с изменениями в других объектах, таких как точки контакта, источники данных и т. д. Восстановите версию правила вручную",
-      "restore-modal": {
-        "body": "Действительно восстановить определение правила оповещения до этой версии? Все несохраненные изменения будут потеряны.",
-        "confirm": "Да, восстановить конфигурацию",
-        "error": "Не удалось восстановить версию правила оповещения ",
-        "summary": "Краткое описание изменений, которые необходимо применить:",
-        "title": "Восстановление версии"
-      },
-      "restore-version": "Восстановить до версии {{version}} ",
-      "rule_group": "Группа правил",
-      "unknown": "Неизвестно",
-      "unknown-change-description": "Обновление было выполнено до внедрения истории версий правил оповещения. Отслеживание пользователя, внесшего изменения, не осуществляется, но будущие изменения будут включать данные пользователя",
-      "user-id": "Идентификатор пользователя {{uid}}",
-      "warning-restore-manually": "Вы вручную восстанавливаете старую версию этого правила оповещения. Внимательно просмотрите изменения перед сохранением определения правила.",
-      "warning-restore-manually-title": "Восстановление правила вручную"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Эта политика сопоставляет все метки"
@@ -2162,6 +2162,50 @@
       "body-no-alertmanager-found": "Внешние обработчики оповещений не были найдены, поэтому у вас может не быть доступа к встроенному обработчику Grafana Alertmanager.",
       "title-no-alertmanager-found": "Не найден обработчик оповещений Alertmanager"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Поиск по точке контакта",
       "placeholder-search-by-contact-point": "Выбрать точку контакта",
@@ -2225,6 +2269,69 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Добавить группу шаблонов уведомлений",
       "create-notification-templates-customize-notifications": "Создавайте собственные шаблоны уведомлений."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Добавьте метки, чтобы улучшить управление правилами записи.",
@@ -3071,6 +3178,11 @@
       "title-preview-not-available": "Просмотр недоступен",
       "valid-matcher-affected-alerts": "Добавить действительное средство сопоставления, чтобы просмотреть затронутые оповещения"
     },
+    "silences": {
+      "affected-instances": "Затронутые экземпляры оповещения",
+      "only-firing-instances": "Отображаются только экземпляры оповещения в состоянии отправки.",
+      "preview-affected-instances": "Просмотрите экземпляры оповещения, на которые распространяется временное отключение."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Сведения о временном отключении",
       "label-comment": "Комментарий",
@@ -3092,11 +3204,6 @@
       "text-loading-silences": "Загрузка временных отключений...",
       "title-error-loading-silences": "Ошибка при загрузке временных отключений",
       "title-the-selected-alertmanager-has-no-configuration": "Выбранный обработчик оповещений Alertmanager не имеет конфигурации"
-    },
-    "silences": {
-      "affected-instances": "Затронутые экземпляры оповещения",
-      "only-firing-instances": "Отображаются только экземпляры оповещения в состоянии отправки.",
-      "preview-affected-instances": "Просмотрите экземпляры оповещения, на которые распространяется временное отключение."
     },
     "simple-condition-editor": {
       "label-of-query": "ЗАПРОСА",
@@ -3424,6 +3531,7 @@
           "enrichment": "Пополнение оповещений информацией",
           "history": "История",
           "instances": "Экземпляры",
+          "notifications": "",
           "query-and-conditions": "Запрос и условия",
           "versions": "Версии"
         }
@@ -5012,6 +5120,33 @@
         "new-panel": "Новая панель"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Назад к списку",
       "control-display-options": {
@@ -5165,6 +5300,9 @@
       "message": {
         "dashboard-not-found": "Дашборд не найден"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Параметры источника данных",
@@ -6225,7 +6363,46 @@
       "tab-title": "Измените заголовок вкладки"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Дашборд",
         "element": "Элемент",
         "local-variable": "Локальная переменная",
@@ -6604,8 +6781,8 @@
       "aria-label-expand": "Развернуть категорию «{{title}}»"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Поиск параметров",
       "Recent options-title-recent-options": "Последние параметры",
+      "placeholder-search-options": "Поиск параметров",
       "title-matched_one": "Совпадение: {{count}}/{{totalCount}} параметра",
       "title-matched_few": "Совпадение: {{count}}/{{totalCount}} параметров",
       "title-matched_many": "Совпадение: {{count}}/{{totalCount}} параметров",
@@ -10186,17 +10363,17 @@
       "description": "Ваша конфигурация LDAP не работает, поскольку базовая форма входа в настоящее время отключена. Включите форму входа, чтобы использовать аутентификацию LDAP. Вы можете включить ее на странице аутентификации в разделе «Параметры аутентификации».",
       "title": "Базовый вход отключен"
     },
-    "search_filter": {
-      "description": "LDAP-фильтр поиска используется, чтобы найти определенные записи в каталоге.",
-      "error": "Фильтр поиска является обязательным полем",
-      "label": "Фильтр поиска",
-      "placeholder": "пример: cn=%s"
-    },
     "search-base-dns": {
       "description": "Массив базовых DN для поиска.",
       "error": "Базовые DN для поиска являются обязательным полем",
       "label": "Базовые DN для поиска",
       "placeholder": "пример: dc=grafana, dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP-фильтр поиска используется, чтобы найти определенные записи в каталоге.",
+      "error": "Фильтр поиска является обязательным полем",
+      "label": "Фильтр поиска",
+      "placeholder": "пример: cn=%s"
     },
     "subtitle": "Интеграция LDAP в Grafana позволяет пользователям выполнять вход с помощью учетных данных LDAP. Подробнее — в <2><1>документации</1></2>.",
     "title": "Основные параметры"
@@ -11425,8 +11602,8 @@
       "upgrade-tooltip": "Повысьте уровень аккаунта, чтобы добавить больше пользователей"
     },
     "item": {
-      "add-bookmark": "Добавить в закладки",
-      "remove-bookmark": "Удалить из закладок"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Чтобы выйти из режима киоска, нажмите ESC"
@@ -11766,7 +11943,8 @@
       "tooltip-delete": "Удалить"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Применить визуализацию {{suggestionName}}",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Не удалось загрузить некоторые рекомендации"
       },
@@ -11776,8 +11954,7 @@
         "title": "Ошибка",
         "try-again-button": "Повторить попытку"
       },
-      "unknown-viz-type": "Неизвестный тип визуализации",
-      "use-this-suggestion": "Использовать этот вариант"
+      "unknown-viz-type": "Неизвестный тип визуализации"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
@@ -13113,6 +13290,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13129,10 +13308,10 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
       "card-click": "Выбрать карту {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Запросы и выражения",
-      "query-stack": "Стек запросов",
       "toggle-size": "Переключить размер боковой панели",
       "transformations": "Преобразования"
     },
@@ -13193,10 +13372,10 @@
       "title-data-source-help": "Справка по источнику данных"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Параметры запросов",
       "collapsed-interval": "Интервал = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Скрыть информацию о времени",
-      "Query options-title-query-options": "Параметры запросов",
       "relative-time": "Относительное время",
       "relative-time-tooltip": "Переопределяет относительный временной диапазон для отдельных панелей, поэтому они отличаются от выбранных в указателе времени в правом верхнем углу дашборда. Например, чтобы установить интервал «Последние 5 минут», относительное время должно быть от <1>{{relativeFrom}}</1> до <4>{{relativeTo}}</4> или переменной, например <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14222,9 +14401,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 часов",
     "1_day": "1 день",
     "1_hour": "1 час",
-    "12_hours": "12 часов",
     "30_days": "30 дней",
     "6_hours": "6 часов",
     "7_days": "7 дней"
@@ -15490,8 +15669,8 @@
       "title-dependencies": "Зависимости"
     },
     "variables-unknown-button": {
-      "usage-title": "Показаны варианты использования для: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Показать варианты использования"
+      "VariablesUnknownButton-tooltip-show-usages": "Показать варианты использования",
+      "usage-title": "Показаны варианты использования для: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Переименованные или отсутствующие переменные",
