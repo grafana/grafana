@@ -17,6 +17,7 @@ import {
   QueryOptionsState,
   QueryRunnerState,
   QueryEditorProvider,
+  AlertingState,
 } from './QueryEditorContext';
 import { Transformation } from './types';
 
@@ -179,12 +180,19 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
+    selectedAlert: null,
+    setSelectedAlert: jest.fn(),
     ...uiStateOverrides,
   };
 
   const defaultActions: QueryEditorActions = {
     ...mockActions,
     ...actionsOverrides,
+  };
+
+  const defaultAlertingState: AlertingState = {
+    alertRules: [],
+    loading: false,
   };
 
   return {
@@ -196,6 +204,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
         panelState={defaultPanelState}
         uiState={defaultUiState}
         actions={defaultActions}
+        alertingState={defaultAlertingState}
       >
         {children}
       </QueryEditorProvider>

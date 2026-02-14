@@ -8,6 +8,7 @@ import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/u
 import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { AlertIndicator } from './AlertIndicator';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
@@ -36,17 +37,20 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <IconButton
-            name={isMini ? 'maximize-left' : 'compress-alt-left'}
-            size="sm"
-            variant="secondary"
-            onClick={toggleSize}
-            aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
-          />
-          <Text weight="medium" variant="h6">
-            {t('query-editor-next.sidebar.data', 'Data')}
-          </Text>
+        <Stack direction="row" alignItems="center" gap={1} justifyContent="space-between">
+          <Stack direction="row" alignItems="center" gap={1}>
+            <IconButton
+              name={isMini ? 'maximize-left' : 'compress-alt-left'}
+              size="sm"
+              variant="secondary"
+              onClick={toggleSize}
+              aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
+            />
+            <Text weight="medium" variant="h6">
+              {t('query-editor-next.sidebar.data', 'Data')}
+            </Text>
+          </Stack>
+          <AlertIndicator />
         </Stack>
       </div>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
