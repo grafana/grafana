@@ -27,6 +27,16 @@ describe('config from data', () => {
     ],
   });
 
+  it('should return data unchanged when configRefId does not match any frame', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'missing',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results).toEqual([config, seriesA]);
+  });
+
   it('Select and apply with two frames and default mappings and reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
