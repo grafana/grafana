@@ -38,6 +38,10 @@ export function QueryEditorContextWrapper({
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
+  const [transformTogglesState, setTransformTogglesState] = useState({
+    showHelp: false,
+    showDebug: false,
+  });
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformations = useTransformations(dataTransformer);
@@ -97,6 +101,15 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
+  // Transformation UI toggles
+  const toggleHelp = useCallback(() => {
+    setTransformTogglesState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
+  }, []);
+
+  const toggleDebug = useCallback(() => {
+    setTransformTogglesState((prev) => ({ ...prev, showDebug: !prev.showDebug }));
+  }, []);
+
   const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
     setSelectedQueryRefId(queryRefId);
     setSelectedTransformationId(transformationId);
@@ -119,6 +132,8 @@ export function QueryEditorContextWrapper({
         setSelectedTransformationId(null);
         // Reset datasource help when switching queries
         setShowingDatasourceHelp(false);
+        // Reset transformation-specific UI when switching to a query
+        setTransformTogglesState({ showHelp: false, showDebug: false });
         // Abandon pending expression flow when selecting a card
         clearPendingExpression();
       },
@@ -126,6 +141,8 @@ export function QueryEditorContextWrapper({
         setSelectedTransformationId(transformation?.transformId ?? null);
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
+        // Reset transformation-specific UI when switching transformations
+        setTransformTogglesState({ showHelp: false, showDebug: false });
         // Abandon pending expression flow when selecting a card
         clearPendingExpression();
       },
@@ -140,6 +157,11 @@ export function QueryEditorContextWrapper({
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
+      transformToggles: {
+        ...transformTogglesState,
+        toggleHelp,
+        toggleDebug,
+      },
       cardType: getEditorType(selectedQuery || selectedTransformation, pendingExpression),
       pendingExpression,
       setPendingExpression,
@@ -156,6 +178,9 @@ export function QueryEditorContextWrapper({
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
+      transformTogglesState,
+      toggleHelp,
+      toggleDebug,
       pendingExpression,
       setPendingExpression,
       finalizePendingExpression,
