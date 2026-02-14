@@ -4,15 +4,17 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
 
+interface QuerySidebarCollapsableHeaderProps {
+  label: string;
+  children: React.ReactNode;
+  headerAction?: React.ReactNode;
+}
+
 export const QuerySidebarCollapsableHeader = ({
   label,
   children,
   headerAction,
-}: {
-  label: string;
-  children: React.ReactNode;
-  headerAction?: React.ReactNode;
-}) => {
+}: QuerySidebarCollapsableHeaderProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const styles = useStyles2(getStyles);
 
