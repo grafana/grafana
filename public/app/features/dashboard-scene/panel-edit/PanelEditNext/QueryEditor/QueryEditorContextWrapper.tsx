@@ -230,6 +230,10 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      addTransformation: (transformationId: string, afterTransformId?: string) => {
+        const index = afterTransformId ? findTransformationIndex(afterTransformId) : -1;
+        dataPane.addTransformation(transformationId, index !== -1 ? index : undefined);
+      },
       deleteTransformation: (transformId: string) => {
         const index = findTransformationIndex(transformId);
         if (index !== -1) {

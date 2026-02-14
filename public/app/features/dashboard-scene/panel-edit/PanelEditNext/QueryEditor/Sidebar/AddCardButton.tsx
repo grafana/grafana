@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -10,17 +10,24 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { QUERY_EDITOR_COLORS } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface AddCardButtonProps {
-  /** The refId of the card this button belongs to; new items are inserted after it. */
-  afterRefId: string;
+  /** What kind of item to add. Determines the menu contents. Default: 'query'. */
+  variant?: 'query' | 'transformation';
+  /** Insert position. For 'query' variant this is a refId; for 'transformation' it is a transformId.
+      When omitted, the new item appends to the end of its section. */
+  afterId?: string;
+  /** When true, renders as an always-visible inline button (for section headings).
+      When false/omitted, renders as the existing hover-to-show absolute-positioned button. */
+  alwaysVisible?: boolean;
 }
 
-export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
-  const styles = useStyles2(getStyles);
+export const AddCardButton = ({ variant = 'query', afterId, alwaysVisible = false }: AddCardButtonProps) => {
+  const styles = useStyles2(getStyles, { alwaysVisible, variant });
   const theme = useTheme2();
-  const { addQuery } = useActionsContext();
+  const { addQuery, addTransformation } = useActionsContext();
   const { setSelectedQuery, setPendingExpression } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
@@ -33,28 +40,28 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
 
-  const addAndSelect = useCallback(
+  const addAndSelectQuery = useCallback(
     (query?: Partial<DataQuery>) => {
-      const newRefId = addQuery(query, afterRefId);
+      const newRefId = addQuery(query, afterId);
       if (newRefId) {
         const selectTarget: DataQuery = { refId: newRefId, hide: false };
         setSelectedQuery(selectTarget);
       }
     },
-    [addQuery, afterRefId, setSelectedQuery]
+    [addQuery, afterId, setSelectedQuery]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
     setMenuOpen(visible);
   }, []);
 
-  const menu = useMemo(
+  const queryMenu = useMemo(
     () => (
       <Menu>
         <Menu.Item
           label={t('query-editor-next.sidebar.add-query', 'Add query')}
           icon="question-circle"
-          onClick={() => addAndSelect()}
+          onClick={() => addAndSelectQuery()}
         />
         {queryLibraryEnabled && canReadQueries && (
           <Menu.Item
@@ -62,7 +69,7 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
             icon="book-open"
             onClick={() =>
               openDrawer({
-                onSelectQuery: (query) => addAndSelect(query),
+                onSelectQuery: (query) => addAndSelectQuery(query),
                 options: { context: CoreApp.PanelEditor },
               })
             }
@@ -72,35 +79,92 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
-            setPendingExpression({ insertAfter: afterRefId });
+            setPendingExpression({ insertAfter: afterId ?? '' });
           }}
         />
       </Menu>
     ),
-    [addAndSelect, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterRefId]
+    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
   );
+
+  const transformationMenu = useMemo(() => {
+    const collator = new Intl.Collator();
+    const allTransformations = standardTransformersRegistry.list().sort((a, b) => collator.compare(a.name, b.name));
+
+    return (
+      <Menu>
+        {allTransformations.map((item) => (
+          <Menu.Item key={item.id} label={item.name} onClick={() => addTransformation(item.id, afterId)} />
+        ))}
+      </Menu>
+    );
+  }, [addTransformation, afterId]);
+
+  const menu = variant === 'transformation' ? transformationMenu : queryMenu;
+
+  const ariaLabel =
+    variant === 'transformation'
+      ? afterId
+        ? t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', { id: afterId })
+        : t('query-editor-next.sidebar.add-transformation', 'Add transformation')
+      : afterId
+        ? t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })
+        : t('query-editor-next.sidebar.add-query-or-expression', 'Add query or expression');
 
   return (
     <Dropdown
       overlay={menu}
-      placement="right-start"
-      offset={[theme.spacing.gridSize, 0]}
+      placement={alwaysVisible ? 'bottom-start' : 'right-start'}
+      offset={alwaysVisible ? [0, theme.spacing.gridSize * 0.5] : [theme.spacing.gridSize, 0]}
       onVisibleChange={handleMenuVisibleChange}
     >
       <button
         className={styles.button}
-        data-add-button
+        data-add-button={!alwaysVisible || undefined}
         data-menu-open={menuOpen || undefined}
         type="button"
-        aria-label={t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterRefId })}
+        aria-label={ariaLabel}
+        onClick={alwaysVisible ? (e) => e.stopPropagation() : undefined}
       >
-        <Icon name="plus" size="md" />
+        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
       </button>
     </Dropdown>
   );
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(
+  theme: GrafanaTheme2,
+  { alwaysVisible, variant }: { alwaysVisible: boolean; variant: 'query' | 'transformation' }
+) {
+  if (alwaysVisible) {
+    const bgColor = variant === 'transformation' ? QUERY_EDITOR_COLORS.transformation : QUERY_EDITOR_COLORS.query;
+
+    return {
+      button: css({
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: theme.spacing(2),
+        height: theme.spacing(2),
+        borderRadius: theme.shape.radius.sm,
+        border: 'none',
+        background: bgColor,
+        color: theme.colors.text.maxContrast,
+        cursor: 'pointer',
+        padding: 0,
+
+        '&:hover': {
+          filter: 'brightness(1.2)',
+        },
+
+        '&:focus-visible': {
+          outline: `2px solid ${theme.colors.primary.border}`,
+          outlineOffset: '2px',
+        },
+      }),
+    };
+  }
+
   return {
     button: css({
       position: 'absolute',
