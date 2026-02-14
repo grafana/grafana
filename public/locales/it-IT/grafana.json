@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "All'elenco delle regole"
     },
+    "alertVersionHistory": {
+      "alerting": "Avvisi",
+      "alerting-change-description": "Questo aggiornamento è stato effettuato dal sistema di allarme a causa di altre modifiche. Ad esempio, quando si rinomina un punto di contatto utilizzato per il routing semplificato, verranno aggiornate le regole interessate",
+      "annotations": "Annotazioni",
+      "compare": "Confronta",
+      "compare-with-latest": "Confronta con la versione più recente",
+      "compareVersions": "Confronta versioni",
+      "comparing-versions": "Confronto delle versioni",
+      "condition": "Condizione di avviso",
+      "contactPointRouting": "Routing del punto di contatto",
+      "description": "Ogni volta che modifichi la regola di avviso, viene creata una nuova versione. Seleziona due versioni qui sotto e confronta le differenze.",
+      "errorloading": "Impossibile caricare le versioni delle regole di avviso",
+      "execErrorState": "Stato di avviso in caso di errore di esecuzione",
+      "intervalSeconds": "Intervallo di valutazione",
+      "labels": "Etichette",
+      "latest": "Più recente",
+      "name": "Nome",
+      "namespace_uid": "Cartella UID",
+      "noDataState": "Stato di avviso in assenza di dati",
+      "noVersionsFound": "Nessuna versione trovata per questa regola",
+      "paused": "Stato in pausa",
+      "pendingPeriod": "Periodo di attesa",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "L'aggiornamento della versione è stato effettuato tramite provisioning",
+      "queryAndAlertCondition": "Query e condizione di avviso",
+      "restore": "Ripristina",
+      "restore-manually": "Non è stato possibile ripristinare la regola di avviso. Ciò potrebbe essere dovuto a modifiche ad altre entità come punti di contatto, origini dati, ecc. Ripristina manualmente la versione della regola",
+      "restore-modal": {
+        "body": "Vuoi davvero ripristinare la definizione della regola di avviso a questa versione? Tutte le modifiche non salvate andranno perse.",
+        "confirm": "Ripristina configurazione",
+        "error": "Impossibile ripristinare la versione della regola di avviso ",
+        "summary": "Riepilogo delle modifiche da applicare:",
+        "title": "Ripristina versione"
+      },
+      "restore-version": "Ripristina alla versione {{version}} ",
+      "rule_group": "Gruppo di regole",
+      "unknown": "Sconosciuto",
+      "unknown-change-description": "Questo aggiornamento è stato effettuato prima dell'implementazione della cronologia delle versioni delle regole di allarme. L'utente che ha apportato la modifica non viene tracciato, ma le modifiche future includeranno l'utente",
+      "user-id": "ID utente {{uid}}",
+      "warning-restore-manually": "Stai ripristinando manualmente una vecchia versione di questa regola di avviso. Rivedi attentamente le modifiche prima di salvare la definizione della regola.",
+      "warning-restore-manually-title": "Ripristino manuale della regola"
+    },
     "alertform": {
       "labels": {
         "alerting": "Aggiungi etichette alla regola per cercare, silenziare o instradare a una politica di notifica.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Cerca regole di avviso per nome",
       "no-alert-rules-found": "Nessuna regola di avviso trovata",
       "placeholder-sort-default-az": "Ordina (impostazione predefinita: A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Avvisi",
-      "alerting-change-description": "Questo aggiornamento è stato effettuato dal sistema di allarme a causa di altre modifiche. Ad esempio, quando si rinomina un punto di contatto utilizzato per il routing semplificato, verranno aggiornate le regole interessate",
-      "annotations": "Annotazioni",
-      "compare": "Confronta",
-      "compare-with-latest": "Confronta con la versione più recente",
-      "compareVersions": "Confronta versioni",
-      "comparing-versions": "Confronto delle versioni",
-      "condition": "Condizione di avviso",
-      "contactPointRouting": "Routing del punto di contatto",
-      "description": "Ogni volta che modifichi la regola di avviso, viene creata una nuova versione. Seleziona due versioni qui sotto e confronta le differenze.",
-      "errorloading": "Impossibile caricare le versioni delle regole di avviso",
-      "execErrorState": "Stato di avviso in caso di errore di esecuzione",
-      "intervalSeconds": "Intervallo di valutazione",
-      "labels": "Etichette",
-      "latest": "Più recente",
-      "name": "Nome",
-      "namespace_uid": "Cartella UID",
-      "noDataState": "Stato di avviso in assenza di dati",
-      "noVersionsFound": "Nessuna versione trovata per questa regola",
-      "paused": "Stato in pausa",
-      "pendingPeriod": "Periodo di attesa",
-      "provisioning": "Provisioning",
-      "provisioning-change-description": "L'aggiornamento della versione è stato effettuato tramite provisioning",
-      "queryAndAlertCondition": "Query e condizione di avviso",
-      "restore": "Ripristina",
-      "restore-manually": "Non è stato possibile ripristinare la regola di avviso. Ciò potrebbe essere dovuto a modifiche ad altre entità come punti di contatto, origini dati, ecc. Ripristina manualmente la versione della regola",
-      "restore-modal": {
-        "body": "Vuoi davvero ripristinare la definizione della regola di avviso a questa versione? Tutte le modifiche non salvate andranno perse.",
-        "confirm": "Ripristina configurazione",
-        "error": "Impossibile ripristinare la versione della regola di avviso ",
-        "summary": "Riepilogo delle modifiche da applicare:",
-        "title": "Ripristina versione"
-      },
-      "restore-version": "Ripristina alla versione {{version}} ",
-      "rule_group": "Gruppo di regole",
-      "unknown": "Sconosciuto",
-      "unknown-change-description": "Questo aggiornamento è stato effettuato prima dell'implementazione della cronologia delle versioni delle regole di allarme. L'utente che ha apportato la modifica non viene tracciato, ma le modifiche future includeranno l'utente",
-      "user-id": "ID utente {{uid}}",
-      "warning-restore-manually": "Stai ripristinando manualmente una vecchia versione di questa regola di avviso. Rivedi attentamente le modifiche prima di salvare la definizione della regola.",
-      "warning-restore-manually-title": "Ripristino manuale della regola"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Questo criterio corrisponde a tutte le etichette"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "Non è stato possibile trovare alcun Alertmanager esterno e potresti non avere accesso all'Alertmanager Grafana integrato.",
       "title-no-alertmanager-found": "Nessun Alertmanager trovato"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Cerca per punto di contatto",
       "placeholder-search-by-contact-point": "Scegli un punto di contatto",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Aggiungi il gruppo di modelli di notifica",
       "create-notification-templates-customize-notifications": "Crea modelli di notifica per personalizzare le notifiche."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Aggiungi etichette per aiutarti a gestire meglio le regole di registrazione.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Anteprima non disponibile",
       "valid-matcher-affected-alerts": "Aggiungi un elemento di corrispondenza valido per visualizzare gli avvisi interessati"
     },
+    "silences": {
+      "affected-instances": "Istanze di avviso interessate",
+      "only-firing-instances": "Vengono visualizzate solo le istanze di avviso in stato di attivazione.",
+      "preview-affected-instances": "Visualizza in anteprima le istanze di avviso interessate da questa disattivazione dell'audio."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Dettagli sulla disattivazione dell'audio",
       "label-comment": "Commento",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "Caricamento disattivazioni audio in corso...",
       "title-error-loading-silences": "Errore durante il caricamento delle disattivazioni audio",
       "title-the-selected-alertmanager-has-no-configuration": "L'Alertmanager selezionato non ha una configurazione"
-    },
-    "silences": {
-      "affected-instances": "Istanze di avviso interessate",
-      "only-firing-instances": "Vengono visualizzate solo le istanze di avviso in stato di attivazione.",
-      "preview-affected-instances": "Visualizza in anteprima le istanze di avviso interessate da questa disattivazione dell'audio."
     },
     "simple-condition-editor": {
       "label-of-query": "DELLA QUERY",
@@ -3392,6 +3491,7 @@
           "enrichment": "Arricchimento degli avvisi",
           "history": "Cronologia",
           "instances": "Istanze",
+          "notifications": "",
           "query-and-conditions": "Query e condizioni",
           "versions": "Versioni"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Nuovo pannello"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Torna all'elenco",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Dashboard non trovata"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Opzioni dell'origine dei dati",
@@ -6169,7 +6299,46 @@
       "tab-title": "Modifica il titolo della scheda"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Dashboard",
         "element": "Elemento",
         "local-variable": "Variabile locale",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": "Espandi categoria {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Opzioni di ricerca",
       "Recent options-title-recent-options": "Opzioni recenti",
+      "placeholder-search-options": "Opzioni di ricerca",
       "title-matched_one": "{{count}} corrispondente/{{totalCount}} opzioni",
       "title-matched_other": "{{count}} corrispondente/{{totalCount}} opzioni"
     },
@@ -10100,17 +10269,17 @@
       "description": "La configurazione LDAP non funziona perché il modulo di accesso di base è attualmente disabilitato. Abilita il modulo di accesso per utilizzare l'autenticazione LDAP. Puoi abilitarlo nella pagina Autenticazione in \"Impostazioni di autenticazione\".",
       "title": "Accesso di base disabilitato"
     },
-    "search_filter": {
-      "description": "Filtro di ricerca LDAP utilizzato per individuare voci specifiche all'interno della directory.",
-      "error": "Il filtro di ricerca è un campo obbligatorio",
-      "label": "Filtro di ricerca",
-      "placeholder": "esempio: cn=%s"
-    },
     "search-base-dns": {
       "description": "Un array di dns di base in cui cercare.",
       "error": "Il DNS di base per la ricerca è un campo obbligatorio",
       "label": "DNS di base per la ricerca",
       "placeholder": "esempio: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "Filtro di ricerca LDAP utilizzato per individuare voci specifiche all'interno della directory.",
+      "error": "Il filtro di ricerca è un campo obbligatorio",
+      "label": "Filtro di ricerca",
+      "placeholder": "esempio: cn=%s"
     },
     "subtitle": "L'integrazione LDAP in Grafana consente agli utenti di Grafana di accedere con le proprie credenziali LDAP. Scopri di più nella nostra <2><1>documentazione</1></2>.",
     "title": "Impostazioni di base"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Effettua l'upgrade per aggiungere altri utenti"
     },
     "item": {
-      "add-bookmark": "Aggiungi a Segnalibri",
-      "remove-bookmark": "Rimuovi da Segnalibri"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Premi ESC per uscire dalla modalità kiosk"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Elimina"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Applica la visualizzazione {{suggestionName}}",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Impossibile caricare alcuni suggerimenti"
       },
@@ -11672,8 +11842,7 @@
         "title": "Errore",
         "try-again-button": "Riprova"
       },
-      "unknown-viz-type": "Tipo di visualizzazione sconosciuto",
-      "use-this-suggestion": "Usa questo suggerimento"
+      "unknown-viz-type": "Tipo di visualizzazione sconosciuto"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
@@ -12995,6 +13164,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13011,10 +13182,10 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
       "card-click": "Seleziona scheda {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Query ed espressioni",
-      "query-stack": "Stack di query",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni"
     },
@@ -13075,10 +13246,10 @@
       "title-data-source-help": "Guida dell'origine dei dati"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Opzioni query",
       "collapsed-interval": "Intervallo = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Nascondi informazioni sull'ora",
-      "Query options-title-query-options": "Opzioni query",
       "relative-time": "Tempo relativo",
       "relative-time-tooltip": "Sostituisce l'intervallo di tempo relativo per i singoli pannelli, il che li rende diversi da quelli selezionati nel selettore dell'ora della dashboard nell'angolo in alto a destra della dashboard. Ad esempio, per configurare gli Ultimi 5 minuti, il tempo relativo deve essere <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, o con variabili come <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14096,9 +14267,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 ore",
     "1_day": "1 giorno",
     "1_hour": "1 ora",
-    "12_hours": "12 ore",
     "30_days": "30 giorni",
     "6_hours": "6 ore",
     "7_days": "7 giorni"
@@ -15364,8 +15535,8 @@
       "title-dependencies": "Dipendenze"
     },
     "variables-unknown-button": {
-      "usage-title": "Mostra utilizzi per: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Mostra utilizzi"
+      "VariablesUnknownButton-tooltip-show-usages": "Mostra utilizzi",
+      "usage-title": "Mostra utilizzi per: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Variabili rinominate o mancanti",

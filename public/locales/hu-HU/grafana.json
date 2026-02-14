@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "Szabálylistához"
     },
+    "alertVersionHistory": {
+      "alerting": "Riasztás",
+      "alerting-change-description": "Ezt a frissítést a riasztási rendszer más változások miatt végezte el. Ha például egy egyszerűsített irányításhoz használt kapcsolattartási pontot nevez át, az frissíti az érintett szabályokat",
+      "annotations": "Jegyzetek",
+      "compare": "Összehasonlítás",
+      "compare-with-latest": "Összehasonlítás a legújabb verzióval",
+      "compareVersions": "Verziók összehasonlítása",
+      "comparing-versions": "Verziók összehasonlítása",
+      "condition": "Riasztási feltétel",
+      "contactPointRouting": "Kapcsolattartási pont irányítása",
+      "description": "Minden alkalommal, amikor szerkeszti a riasztási szabályt, egy új verzió jön létre. Válasszon ki két verziót alább, és hasonlítsa össze a különbségeiket.",
+      "errorloading": "Riasztásiszabály-verziók betöltése sikertelen",
+      "execErrorState": "Riasztási állapot végrehajtási hiba esetén",
+      "intervalSeconds": "Értékelési intervallum",
+      "labels": "Címkék",
+      "latest": "Legújabb",
+      "name": "Név",
+      "namespace_uid": "Mappa-UID",
+      "noDataState": "Riasztási állapot, ha nincs adat",
+      "noVersionsFound": "Nem található verzió ehhez a szabályhoz",
+      "paused": "Szüneteltetett állapot",
+      "pendingPeriod": "Függőben lévő időszak",
+      "provisioning": "Kiépítés",
+      "provisioning-change-description": "A verziófrissítés a kiépítésen keresztül történt",
+      "queryAndAlertCondition": "Lekérdezési és riasztási feltétel",
+      "restore": "Visszaállítás",
+      "restore-manually": "A riasztási szabályt nem sikerült visszaállítani. Ennek oka lehet más entitások, például kapcsolattartási pontok, adatforrások stb. változása. Kérjük, manuálisan állítsa vissza a szabályverziót",
+      "restore-modal": {
+        "body": "Biztosan visszaállítja a riasztási szabály definícióját erre a verzióra? Az összes nem mentett módosítás elveszik.",
+        "confirm": "Igen, konfiguráció visszaállítása",
+        "error": "Nem sikerült visszaállítani a riasztási szabály verzióját ",
+        "summary": "Alkalmazandó változások összefoglalása:",
+        "title": "Verzió visszaállítása"
+      },
+      "restore-version": "Visszaállítás erre a verzióra: {{version}}",
+      "rule_group": "Szabálycsoport",
+      "unknown": "Ismeretlen",
+      "unknown-change-description": "Ezt a frissítést a riasztási szabály verzióelőzményeinek végrehajtása előtt végezték el. A módosítást végző felhasználót a rendszer nem követi nyomon, de a jövőbeli módosítások tartalmazni fogják a felhasználót",
+      "user-id": "Felhasználói azonosító: {{uid}}",
+      "warning-restore-manually": "Manuálisan állítja vissza ennek a riasztási szabálynak egy régi verzióját. Kérjük, figyelmesen tekintse át a módosításokat a szabálydefiníció mentése előtt.",
+      "warning-restore-manually-title": "Szabály manuális visszaállítása"
+    },
     "alertform": {
       "labels": {
         "alerting": "Adjon címkéket a szabályhoz a kereséshez, elnémításhoz vagy egy értesítési házirendhez irányításhoz.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Riasztási szabályok keresése név alapján",
       "no-alert-rules-found": "Nem találhatók riasztási szabályok",
       "placeholder-sort-default-az": "Rendezés (alapértelmezett A–Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Riasztás",
-      "alerting-change-description": "Ezt a frissítést a riasztási rendszer más változások miatt végezte el. Ha például egy egyszerűsített irányításhoz használt kapcsolattartási pontot nevez át, az frissíti az érintett szabályokat",
-      "annotations": "Jegyzetek",
-      "compare": "Összehasonlítás",
-      "compare-with-latest": "Összehasonlítás a legújabb verzióval",
-      "compareVersions": "Verziók összehasonlítása",
-      "comparing-versions": "Verziók összehasonlítása",
-      "condition": "Riasztási feltétel",
-      "contactPointRouting": "Kapcsolattartási pont irányítása",
-      "description": "Minden alkalommal, amikor szerkeszti a riasztási szabályt, egy új verzió jön létre. Válasszon ki két verziót alább, és hasonlítsa össze a különbségeiket.",
-      "errorloading": "Riasztásiszabály-verziók betöltése sikertelen",
-      "execErrorState": "Riasztási állapot végrehajtási hiba esetén",
-      "intervalSeconds": "Értékelési intervallum",
-      "labels": "Címkék",
-      "latest": "Legújabb",
-      "name": "Név",
-      "namespace_uid": "Mappa-UID",
-      "noDataState": "Riasztási állapot, ha nincs adat",
-      "noVersionsFound": "Nem található verzió ehhez a szabályhoz",
-      "paused": "Szüneteltetett állapot",
-      "pendingPeriod": "Függőben lévő időszak",
-      "provisioning": "Kiépítés",
-      "provisioning-change-description": "A verziófrissítés a kiépítésen keresztül történt",
-      "queryAndAlertCondition": "Lekérdezési és riasztási feltétel",
-      "restore": "Visszaállítás",
-      "restore-manually": "A riasztási szabályt nem sikerült visszaállítani. Ennek oka lehet más entitások, például kapcsolattartási pontok, adatforrások stb. változása. Kérjük, manuálisan állítsa vissza a szabályverziót",
-      "restore-modal": {
-        "body": "Biztosan visszaállítja a riasztási szabály definícióját erre a verzióra? Az összes nem mentett módosítás elveszik.",
-        "confirm": "Igen, konfiguráció visszaállítása",
-        "error": "Nem sikerült visszaállítani a riasztási szabály verzióját ",
-        "summary": "Alkalmazandó változások összefoglalása:",
-        "title": "Verzió visszaállítása"
-      },
-      "restore-version": "Visszaállítás erre a verzióra: {{version}}",
-      "rule_group": "Szabálycsoport",
-      "unknown": "Ismeretlen",
-      "unknown-change-description": "Ezt a frissítést a riasztási szabály verzióelőzményeinek végrehajtása előtt végezték el. A módosítást végző felhasználót a rendszer nem követi nyomon, de a jövőbeli módosítások tartalmazni fogják a felhasználót",
-      "user-id": "Felhasználói azonosító: {{uid}}",
-      "warning-restore-manually": "Manuálisan állítja vissza ennek a riasztási szabálynak egy régi verzióját. Kérjük, figyelmesen tekintse át a módosításokat a szabálydefiníció mentése előtt.",
-      "warning-restore-manually-title": "Szabály manuális visszaállítása"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Ez a házirend minden címkével egyezik"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "Nem találtunk külső riasztáskezelőket, és előfordulhat, hogy nincs hozzáférése a beépített Grafana riasztáskezelőhöz.",
       "title-no-alertmanager-found": "Nem található riasztáskezelő"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Keresés kapcsolattartási pont alapján",
       "placeholder-search-by-contact-point": "Válasszon egy kapcsolattartási pontot",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Értesítési sablonok csoportjának hozzáadása",
       "create-notification-templates-customize-notifications": "Értesítési sablonok létrehozása az értesítések testreszabásához."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Adjon hozzá címkéket a felvételkészítési szabályok jobb kezeléséhez.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Nincs előnézet",
       "valid-matcher-affected-alerts": "Adjon meg egy érvényes egyezést az érintett riasztások megtekintéséhez"
     },
+    "silences": {
+      "affected-instances": "Érintett riasztáspéldányok",
+      "only-firing-instances": "Csak az aktív állapotban lévő riasztáspéldányok jelennek meg.",
+      "preview-affected-instances": "Tekintse meg a némítás által érintett riasztáspéldányok előnézetét."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Részletek a némításról",
       "label-comment": "Megjegyzés",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "Némítások betöltése…",
       "title-error-loading-silences": "Hiba történt a némítások betöltésekor",
       "title-the-selected-alertmanager-has-no-configuration": "A kijelölt riasztáskezelőnek nincs konfigurációja"
-    },
-    "silences": {
-      "affected-instances": "Érintett riasztáspéldányok",
-      "only-firing-instances": "Csak az aktív állapotban lévő riasztáspéldányok jelennek meg.",
-      "preview-affected-instances": "Tekintse meg a némítás által érintett riasztáspéldányok előnézetét."
     },
     "simple-condition-editor": {
       "label-of-query": "OF LEKÉRDEZÉS",
@@ -3392,6 +3491,7 @@
           "enrichment": "Riasztásbővítés",
           "history": "Előzmények",
           "instances": "Példányok",
+          "notifications": "",
           "query-and-conditions": "Lekérdezés és feltételek",
           "versions": "Verziók"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Új panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Az irányítópult nem található"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Adatforrás beállításai",
@@ -6169,7 +6299,46 @@
       "tab-title": "Lap címének módosítása"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Irányítópult",
         "element": "Elem",
         "local-variable": "Helyi változó",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": "{{title}} kategória kibontása"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Keresési beállítások",
       "Recent options-title-recent-options": "Legutóbbi beállítások",
+      "placeholder-search-options": "Keresési beállítások",
       "title-matched_one": "{{totalCount}}/{{count}} egyező lehetőség",
       "title-matched_other": "{{totalCount}}/{{count}} egyező lehetőség"
     },
@@ -10100,17 +10269,17 @@
       "description": "Az LDAP-konfiguráció nem működik, mert az alapvető bejelentkezési űrlap jelenleg le van tiltva. Az LDAP-hitelesítés használatához engedélyezze a bejelentkezési űrlapot. Engedélyezheti a Hitelesítés oldalon a „Hitelesítési beállítások” részben.",
       "title": "Alapvető bejelentkezés letiltva"
     },
-    "search_filter": {
-      "description": "LDAP-keresési szűrő adott bejegyzések a címtárban történő keresésére.",
-      "error": "A keresési szűrő kitöltése kötelező",
-      "label": "Keresési szűrő",
-      "placeholder": "példa: cn=%s"
-    },
     "search-base-dns": {
       "description": "Az alap DNS-ek tömbje a kereséshez.",
       "error": "A Keresési alap DNS mező kitöltése kötelező",
       "label": "Keresési alap DNS",
       "placeholder": "példa: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP-keresési szűrő adott bejegyzések a címtárban történő keresésére.",
+      "error": "A keresési szűrő kitöltése kötelező",
+      "label": "Keresési szűrő",
+      "placeholder": "példa: cn=%s"
     },
     "subtitle": "A Grafana LDAP-integrációja lehetővé teszi a Grafana-felhasználók számára, hogy LDAP-hitelesítőadataikkal jelentkezzenek be. További információkat a <2><1>dokumentációnkban</1></2> talál.",
     "title": "Alapbeállítások"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Bővítés további felhasználók hozzáadásához"
     },
     "item": {
-      "add-bookmark": "Hozzáadás könyvjelzőkhöz",
-      "remove-bookmark": "Eltávolítás a könyvjelzők közül"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Nyomja le az ESC gombot a kioszk módból való kilépéshez"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Törlés"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "{{suggestionName}} vizualizáció alkalmazása",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Néhány javaslatot nem sikerült betölteni"
       },
@@ -11672,8 +11842,7 @@
         "title": "Hiba",
         "try-again-button": "Próbálja újra"
       },
-      "unknown-viz-type": "Ismeretlen vizualizációtípus",
-      "use-this-suggestion": "Használja ezt a javaslatot"
+      "unknown-viz-type": "Ismeretlen vizualizációtípus"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nincs találat a lekérdezésre"
@@ -12995,6 +13164,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13011,10 +13182,10 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
       "card-click": "{{id}} kártya kiválasztása",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Lekérdezések és kifejezések",
-      "query-stack": "Lekérdezési verem",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk"
     },
@@ -13075,10 +13246,10 @@
       "title-data-source-help": "Adatforrás súgója"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Lekérdezési beállítások",
       "collapsed-interval": "Intervallum = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Időadatok elrejtése",
-      "Query options-title-query-options": "Lekérdezési beállítások",
       "relative-time": "Relatív idő",
       "relative-time-tooltip": "Felülírja az egyes panelek relatív időtartományát, ami azt eredményezi, hogy azok eltérnek az irányítópult jobb felső sarkában található irányítópulti időválasztóban kiválasztottól. Például az utolsó 5 perc konfigurálásához a relatív időnek <1>{{relativeFrom}}</1> és <4>{{relativeTo}}</4> értéknek kell lennie, vagy olyan változóknak, mint a(z) <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14096,9 +14267,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 óra",
     "1_day": "1 nap",
     "1_hour": "1 óra",
-    "12_hours": "12 óra",
     "30_days": "30 nap",
     "6_hours": "6 óra",
     "7_days": "7 nap"
@@ -15364,8 +15535,8 @@
       "title-dependencies": "Függőségek"
     },
     "variables-unknown-button": {
-      "usage-title": "Használat megjelenítése a következőhöz: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Használatok megjelenítése"
+      "VariablesUnknownButton-tooltip-show-usages": "Használatok megjelenítése",
+      "usage-title": "Használat megjelenítése a következőhöz: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Átnevezett vagy hiányzó változók",
