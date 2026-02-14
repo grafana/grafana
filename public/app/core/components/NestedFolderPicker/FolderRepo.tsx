@@ -49,7 +49,6 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
 
 // Check conditions that don't require the useIsProvisionedInstance hook
 function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boolean {
-  console.log('folder', folder);
   if (!folder) {
     return true;
   }
