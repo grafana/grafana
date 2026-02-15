@@ -89,6 +89,7 @@ export const LogGroupsSelector = ({
       const possibleLogGroups = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
+        listAllLogGroups: true,
       });
       setSelectableLogGroups(
         possibleLogGroups.map((lg) => ({
