@@ -245,6 +245,30 @@ describe('QueryEditorRows', () => {
     }
   });
 
+  it('Should have proper keyboard navigation for expand/collapse buttons', async () => {
+    renderScenario();
+    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+
+    for (const childQuery of queryEditorRows) {
+      const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
+
+      expect(toggleExpandButton).toBeInTheDocument();
+      // Verify the button is focusable via keyboard navigation
+      expect(toggleExpandButton.getAttribute('tabIndex')).toBe('0');
+
+      // Verify the button has proper ARIA attributes
+      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('true');
+      expect(toggleExpandButton.getAttribute('aria-controls')).toBeTruthy();
+
+      // Verify clicking still works for mouse users
+      fireEvent.click(toggleExpandButton);
+      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('false');
+
+      fireEvent.click(toggleExpandButton);
+      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('true');
+    }
+  });
+
   it('Should be able to duplicate queries', async () => {
     const onAddQuery = jest.fn();
     const onQueryCopied = jest.fn();
