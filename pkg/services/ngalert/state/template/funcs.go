@@ -249,7 +249,7 @@ func less(v1, v2 reflect.Value) bool {
 	// We treat nil as less than any value.
 	isNil1 := (v1.Kind() == reflect.Ptr || v1.Kind() == reflect.Interface) && v1.IsNil()
 	isNil2 := (v2.Kind() == reflect.Ptr || v2.Kind() == reflect.Interface) && v2.IsNil()
-	
+
 	if isNil1 {
 		return !isNil2 // nil < non-nil, nil !< nil
 	}
@@ -291,9 +291,9 @@ func less(v1, v2 reflect.Value) bool {
 			return fmt.Sprint(v1.Interface()) < fmt.Sprint(v2.Interface())
 		}
 		return f1 < f2
+	default:
+		return fmt.Sprint(v1.Interface()) < fmt.Sprint(v2.Interface())
 	}
-
-	return fmt.Sprint(v1.Interface()) < fmt.Sprint(v2.Interface())
 }
 func indirect(v reflect.Value) reflect.Value {
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {

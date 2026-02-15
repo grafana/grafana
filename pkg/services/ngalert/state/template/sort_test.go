@@ -131,21 +131,21 @@ func TestSortByFunc(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:  "sort handles invalid field gracefully (returns unsorted or partial? implementation returns error)",
-			field: "NonExistent",
-			input: []TestStruct{{Name: "a"}},
+			name:      "sort handles invalid field gracefully (returns unsorted or partial? implementation returns error)",
+			field:     "NonExistent",
+			input:     []TestStruct{{Name: "a"}},
 			expectErr: true,
 		},
 		{
-			name:  "nil input returns nil",
-			field: "any",
-			input: nil,
+			name:     "nil input returns nil",
+			field:    "any",
+			input:    nil,
 			expected: nil,
 		},
 		{
-			name: "empty slice returns empty",
-			field: "any",
-			input: []TestStruct{},
+			name:     "empty slice returns empty",
+			field:    "any",
+			input:    []TestStruct{},
 			expected: []TestStruct{},
 		},
 	}
@@ -166,32 +166,32 @@ func TestSortByFunc(t *testing.T) {
 func TestSortByFunc_InTemplate(t *testing.T) {
 	// Verify it works within the Expand function (integration test)
 	// We need to Mock Data or use simple data structure
-	
+
 	type Alert struct {
 		Labels map[string]string
 		Value  float64
 	}
-	
+
 	alerts := []Alert{
 		{Labels: map[string]string{"foo": "c"}, Value: 1},
 		{Labels: map[string]string{"foo": "a"}, Value: 2},
 		{Labels: map[string]string{"foo": "b"}, Value: 3},
 	}
-	
-	// Data struct from template.go has Labels, Values (map), Value. 
+
+	// Data struct from template.go has Labels, Values (map), Value.
 	// Expand takes Data.
 	// We can cheat and pass our custom struct if usage allows, but Expand signature takes Data.
-	// However, Expand uses .Data as context. 
+	// However, Expand uses .Data as context.
 	// Wait, internal Expand expects Data.
 	// But we can test just the sorting of a list variable inside the template.
-	
+
 	tmpl := `{{ range $a := .Value | sortBy "Labels.foo" }}{{ .Labels.foo }},{{ end }}`
-	
+
 	// Create Data where .Value is our list of Alerts (Expand allows .Value to be any)
 	d := Data{
 		Value: alerts,
 	}
-	
+
 	res, err := Expand(context.Background(), "test", tmpl, d, nil, time.Now())
 	require.NoError(t, err)
 	assert.Equal(t, "a,b,c,", res)
