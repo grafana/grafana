@@ -40,6 +40,7 @@ const (
 	HTTPScheme   Scheme = "http"
 	HTTPSScheme  Scheme = "https"
 	HTTP2Scheme  Scheme = "h2"
+	HTTP3Scheme  Scheme = "h3"
 	SocketScheme Scheme = "socket"
 )
 
@@ -115,6 +116,12 @@ type Cfg struct {
 	EnableGzip        bool
 	EnforceDomain     bool
 	MinTLSVersion     string
+
+	// HTTP/3 (QUIC) settings
+	HTTP3Enabled            bool
+	HTTP3Port               string
+	HTTP3MaxIncomingStreams int64
+	HTTP3IdleTimeout        time.Duration
 
 	// Security settings
 	SecretKey             string
@@ -2002,6 +2009,24 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
+
+	// HTTP/3 (QUIC) settings
+	cfg.HTTP3Enabled = server.Key("http3_enabled").MustBool(false)
+	cfg.HTTP3Port = valueAsString(server, "http3_port", "")
+	if cfg.HTTP3Port == "" {
+		cfg.HTTP3Port = cfg.HTTPPort
+	}
+	cfg.HTTP3MaxIncomingStreams = server.Key("http3_max_incoming_streams").MustInt64(100)
+	cfg.HTTP3IdleTimeout = server.Key("http3_idle_timeout").MustDuration(30 * time.Second)
+
+	// HTTP/3 requires TLS 1.3 and HTTPS or H2 protocol
+	if cfg.HTTP3Enabled {
+		if cfg.Protocol != HTTPSScheme && cfg.Protocol != HTTP2Scheme {
+			return fmt.Errorf("HTTP/3 requires protocol 'https' or 'h2', got '%s'", cfg.Protocol)
+		}
+		cfg.MinTLSVersion = "TLS1.3" // Force TLS 1.3 for HTTP/3
+	}
+
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)

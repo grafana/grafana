@@ -2223,6 +2223,20 @@
     },
     {
       "metadata": {
+        "name": "http3Server",
+        "resourceVersion": "1770129807287",
+        "creationTimestamp": "2026-02-03T14:43:27Z"
+      },
+      "spec": {
+        "description": "Run HTTP/3 (QUIC) server alongside HTTP/1.1 and HTTP/2",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-group",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-09-17T10:54:39Z"
