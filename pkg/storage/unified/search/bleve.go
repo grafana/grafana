@@ -1346,9 +1346,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if access != nil {
-		verb := utils.VerbList
+		verb := utils.VerbList // TODO: Why list ? Should get get ?
 		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-			verb = utils.VerbPatch
+			verb = utils.VerbPatch // TODO: Why patch ?
 		}
 
 		// Build resource -> verb mapping for batch authorization
@@ -1358,7 +1358,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// Handle federation
 		for _, federated := range req.Federated {
-			resources[federated.Resource] = utils.VerbList
+			resources[federated.Resource] = utils.VerbList // TODO: Why list ? Should get get ?
 		}
 
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
@@ -1549,7 +1549,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 }
 
 func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
-	ctx, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
+	_, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
 	defer span.End()
 
 	sinceRV := b.resourceVersion.Load()
