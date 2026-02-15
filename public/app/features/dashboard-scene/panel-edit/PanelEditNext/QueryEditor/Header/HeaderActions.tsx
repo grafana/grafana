@@ -2,10 +2,11 @@ import { RefObject, useCallback } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
+import { ScenesNewRuleFromPanelButton } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/NewAlertRuleButton';
 
 import { Actions } from '../../Actions';
 import { QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { PluginActions } from './PluginActions';
 import { QueryActionsMenu } from './QueryActionsMenu';
@@ -29,6 +30,7 @@ interface HeaderActionsProps {
  */
 export function HeaderActions({ containerRef }: HeaderActionsProps) {
   const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { panel } = usePanelContext();
   const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
 
   const onToggleHide = useCallback(() => {
@@ -56,9 +58,13 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
   };
 
-  // Alerts don't have actions
+  // Alerts show "New alert rule" button
   if (cardType === QueryEditorType.Alert) {
-    return null;
+    return (
+      <Stack gap={1} alignItems="center">
+        <ScenesNewRuleFromPanelButton fill="text" panel={panel} variant="secondary" size="sm" compactAlert />
+      </Stack>
+    );
   }
 
   return (

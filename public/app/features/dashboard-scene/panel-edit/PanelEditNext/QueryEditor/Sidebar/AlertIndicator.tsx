@@ -3,6 +3,7 @@ import { Button } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { EMPTY_ALERT_SENTINEL } from '../types';
 
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();
@@ -12,28 +13,30 @@ export function AlertIndicator() {
     return null;
   }
 
-  if (alertRules.length === 0) {
-    return null;
-  }
-
   const isAlertView = cardType === QueryEditorType.Alert;
+  const hasAlerts = alertRules.length > 0;
 
   const handleClick = () => {
     if (isAlertView) {
       setSelectedAlert(null);
-    } else if (alertRules.length > 0) {
-      // Default alert view to the first alert
-      setSelectedAlert(alertRules[0]);
+    } else {
+      setSelectedAlert(hasAlerts ? alertRules[0] : EMPTY_ALERT_SENTINEL);
     }
   };
 
+  const buttonText = `(${alertRules.length})`;
+
   const tooltip = isAlertView
     ? t('query-editor-next.sidebar.alert-indicator.tooltip-hide', 'Hide alert rules')
-    : t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules');
+    : hasAlerts
+      ? t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules')
+      : t('query-editor-next.sidebar.alert-indicator.tooltip-create', 'Create alert rule');
 
   const ariaLabel = isAlertView
     ? t('query-editor-next.sidebar.alert-indicator.button-label-hide', 'Hide alert rules')
-    : t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules');
+    : hasAlerts
+      ? t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules')
+      : t('query-editor-next.sidebar.alert-indicator.button-label-create', 'Create alert rule');
 
   return (
     <Button
@@ -45,7 +48,7 @@ export function AlertIndicator() {
       onClick={handleClick}
       aria-label={ariaLabel}
     >
-      {isAlertView ? t('query-editor-next.sidebar.alert-indicator.close', 'Close') : `(${alertRules.length})`}
+      {isAlertView ? t('query-editor-next.sidebar.alert-indicator.close', 'Close') : buttonText}
     </Button>
   );
 }

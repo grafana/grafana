@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 
-import { AlertRule, Transformation } from '../types';
+import { AlertRule, EMPTY_ALERT_SENTINEL, Transformation } from '../types';
 
 /**
  * Hook to resolve the currently selected query, transformation, or alert.
@@ -52,6 +52,10 @@ export function useSelectedCard(
       const alert = alerts.find((a) => a.alertId === selectedAlertId);
       if (alert) {
         return alert;
+      }
+      // Handle sentinel case when viewing alerts with no alerts
+      if (selectedAlertId === EMPTY_ALERT_SENTINEL.alertId) {
+        return EMPTY_ALERT_SENTINEL;
       }
     }
 

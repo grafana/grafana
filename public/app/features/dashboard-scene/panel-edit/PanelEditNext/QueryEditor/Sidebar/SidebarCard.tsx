@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,6 +21,7 @@ interface SidebarCardProps {
   onToggleHide?: () => void;
   showAddButton: boolean;
   item: ActionItem;
+  variant?: 'default' | 'ghost';
 }
 
 export const SidebarCard = ({
@@ -33,6 +34,7 @@ export const SidebarCard = ({
   onToggleHide,
   showAddButton = true,
   item,
+  variant = 'default',
 }: SidebarCardProps) => {
   const hasAddButton = showAddButton;
   const hasActions = onDelete || onDuplicate || onToggleHide;
@@ -80,7 +82,16 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
+        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>
+          {variant === 'ghost' ? (
+            <>
+              <div className={styles.shimmerIcon} />
+              <div className={styles.shimmerTitle} />
+            </>
+          ) : (
+            children
+          )}
+        </div>
         {hasActions && (
           <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
             <Actions
@@ -98,6 +109,15 @@ export const SidebarCard = ({
   );
 };
 
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
 function getStyles(
   theme: GrafanaTheme2,
   {
@@ -111,6 +131,17 @@ function getStyles(
   }
 ) {
   const borderColor = getEditorBorderColor(theme, item.type, item.alertState);
+
+  const shimmerBase = {
+    borderRadius: theme.shape.radius.default,
+    background: `linear-gradient(
+      90deg,
+      ${theme.colors.background.secondary} 0%,
+      ${theme.colors.emphasize(theme.colors.background.secondary, 0.1)} 50%,
+      ${theme.colors.background.secondary} 100%
+    )`,
+    backgroundSize: '200% 100%',
+  };
   const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
@@ -230,6 +261,24 @@ function getStyles(
     }),
     hidden: css({
       opacity: 0.7,
+    }),
+    shimmerIcon: css({
+      ...shimmerBase,
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      flexShrink: 0,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${shimmer} 2s ease-in-out infinite`,
+      },
+    }),
+    shimmerTitle: css({
+      ...shimmerBase,
+      height: theme.spacing(2),
+      flex: 1,
+      maxWidth: '60%',
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${shimmer} 2s ease-in-out infinite`,
+      },
     }),
   };
 }
