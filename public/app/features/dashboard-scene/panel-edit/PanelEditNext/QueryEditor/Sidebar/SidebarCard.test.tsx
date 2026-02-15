@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType, QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
+import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider, ds1SettingsMock } from '../testUtils';
 import { Transformation } from '../types';
 
@@ -18,8 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const queryConfig = QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Query];
-
 interface RenderSidebarCardProps {
   id?: string;
   isSelected?: boolean;
@@ -27,7 +25,6 @@ interface RenderSidebarCardProps {
   addQuery?: jest.Mock;
   setSelectedQuery?: jest.Mock;
   setPendingExpression?: jest.Mock;
-  config?: typeof queryConfig;
   showAddButton?: boolean;
 }
 
@@ -38,7 +35,6 @@ function renderSidebarCard({
   addQuery = jest.fn().mockReturnValue('B'),
   setSelectedQuery = jest.fn(),
   setPendingExpression = jest.fn(),
-  config = queryConfig,
   showAddButton = true,
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
@@ -50,7 +46,6 @@ function renderSidebarCard({
 
   const result = renderWithQueryEditorProvider(
     <SidebarCard
-      config={config}
       isSelected={isSelected}
       id={id}
       onClick={onClick}

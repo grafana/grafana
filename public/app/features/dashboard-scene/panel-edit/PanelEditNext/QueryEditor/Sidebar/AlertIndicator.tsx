@@ -1,16 +1,12 @@
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { useAlertingContext } from '../QueryEditorContext';
+import { QueryEditorType } from '../../constants';
+import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-/**
- * Displays a clickable bell icon button showing the number of alert rules associated with this panel.
- * The button is always blue. Clicking it selects the first alert and shows alert cards in the sidebar.
- * Used in the QueryStack header to provide visibility of alerting configuration.
- */
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();
-  // const { setSelectedAlert } = useQueryEditorUIContext();
+  const { cardType, setSelectedAlert } = useQueryEditorUIContext();
 
   if (loading) {
     return null;
@@ -20,25 +16,36 @@ export function AlertIndicator() {
     return null;
   }
 
+  const isAlertView = cardType === QueryEditorType.Alert;
+
   const handleClick = () => {
-    // Select the first alert to show the alerts view
-    // if (alertRules.length > 0) {
-    //   setSelectedAlert(alertRules[0]);
-    // }
-    console.log('Alert indicator clicked');
+    if (isAlertView) {
+      setSelectedAlert(null);
+    } else if (alertRules.length > 0) {
+      // Default alert view to the first alert
+      setSelectedAlert(alertRules[0]);
+    }
   };
+
+  const tooltip = isAlertView
+    ? t('query-editor-next.sidebar.alert-indicator.tooltip-hide', 'Hide alert rules')
+    : t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules');
+
+  const ariaLabel = isAlertView
+    ? t('query-editor-next.sidebar.alert-indicator.button-label-hide', 'Hide alert rules')
+    : t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules');
 
   return (
     <Button
-      tooltip={t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules')}
+      tooltip={tooltip}
       fill="text"
       variant="primary"
-      icon="bell"
+      icon={isAlertView ? 'times' : 'bell'}
       size="sm"
       onClick={handleClick}
-      aria-label={t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules')}
+      aria-label={ariaLabel}
     >
-      ({alertRules.length})
+      {isAlertView ? t('query-editor-next.sidebar.alert-indicator.close', 'Close') : `(${alertRules.length})`}
     </Button>
   );
 }
