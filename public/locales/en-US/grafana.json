@@ -13173,6 +13173,7 @@
       "query-options": "Query Options"
     },
     "header": {
+      "alert": "Alert",
       "expression": "Expression",
       "pending-expression": "Select an Expression",
       "pending-expression-cancel": "Cancel",
@@ -13195,8 +13196,12 @@
       "add-saved-query": "Add saved query",
       "alert-indicator": {
         "button-label": "View alert rules",
-        "tooltip": "View alert rules"
+        "button-label-hide": "Hide alert rules",
+        "close": "Close",
+        "tooltip": "View alert rules",
+        "tooltip-hide": "Hide alert rules"
       },
+      "alerts": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "data-mode": "Data Mode",
