@@ -1211,7 +1211,7 @@ func (b *bleveIndex) getIndex(
 
 // nolint:gocyclo
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
-	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest")
+	_, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest")
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
@@ -1549,7 +1549,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 }
 
 func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int) (int64, error) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.updateIndexWithLatestModifications")
 	defer span.End()
 
 	sinceRV := b.resourceVersion.Load()
