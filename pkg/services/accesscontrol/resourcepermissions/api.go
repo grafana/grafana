@@ -229,6 +229,10 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
+			if dtos.IsHiddenUser(p.UserLogin, c.SignedInUser, a.cfg) {
+				continue
+			}
+
 			teamAvatarUrl := ""
 			if p.TeamID != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)
