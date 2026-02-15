@@ -204,4 +204,42 @@ describe('InfluxDB InfluxQL Editor tags section', () => {
 
     await assertSegmentSelect('t1_v1', 't1_v5', onChange, newTags);
   });
+  it('should handle changing the regex tag-value', async () => {
+    const onChange = jest.fn();
+    const regexTags: InfluxQueryTag[] = [
+      {
+        key: 'host',
+        value: '/prod.*/',
+        operator: '=~',
+      },
+    ];
+
+    render(
+      <TagsSection
+        tags={regexTags}
+        getTagKeyOptions={getTagKeys}
+        getTagValueOptions={getTagValuesForKey}
+        onChange={onChange}
+      />
+    );
+
+    const seg = screen.getByRole('button', { name: '/prod.*/' });
+    act(() => {
+      fireEvent.click(seg);
+    });
+
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue('/prod.*/');
+    fireEvent.change(input, { target: { value: '/staging.*/' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        key: 'host',
+        value: '/staging.*/',
+        operator: '=~',
+      },
+    ]);
+  });
 });
