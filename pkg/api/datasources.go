@@ -880,6 +880,32 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 	return response.JSON(http.StatusOK, payload)
 }
 
+// swagger:route POST /datasources/uid/{uid}/tables datasources tables getDatasourceTablesWithUID
+//
+// Sends a tables request to the plugin datasource identified by the UID.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) GetDatasourceTablesWithUID(c *contextmodel.ReqContext) response.Response {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		return response.Error(http.StatusBadRequest, "UID is invalid", nil)
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
+	}
+	return hs.getDatasourceTables(c, ds)
+}
+
 // swagger:parameters checkDatasourceHealthByID
 type CheckDatasourceHealthByIDParams struct {
 	// in:path

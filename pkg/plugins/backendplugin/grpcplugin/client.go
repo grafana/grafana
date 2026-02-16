@@ -42,6 +42,7 @@ var pluginSet = map[int]goplugin.PluginSet{
 		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
 		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+		"information": &grpcplugin.InformationGRPCPlugin{},
 	},
 }
 

@@ -298,6 +298,36 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	return plugin.ValidateAdmission(ctx, req)
 }
 
+func (s *Service) Tables(ctx context.Context, req *backend.TableInformationRequest) (*backend.TableInformationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	resp, err := p.Tables(ctx, req)
+	if err != nil {
+		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, plugins.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: tables request canceled: %w", err)
+		}
+
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to request tables: %w", err)
+	}
+
+	return resp, nil
+}
+
 func SetCSPHeader(header http.Header) {
 	header.Set("Content-Security-Policy", "sandbox")
 }

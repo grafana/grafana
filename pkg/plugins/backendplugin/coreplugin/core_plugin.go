@@ -22,6 +22,7 @@ type corePlugin struct {
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler
+	backend.InformationHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -161,5 +162,14 @@ func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) Tables(ctx context.Context, req *backend.TableInformationRequest) (*backend.TableInformationResponse, error) {
+	if cp.InformationHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.InformationHandler.Tables(ctx, req)
+	}
+
 	return nil, plugins.ErrMethodNotImplemented
 }

@@ -206,3 +206,11 @@ func (r *protoClient) ConvertObjects(ctx context.Context, in *pluginv2.Conversio
 	}
 	return c.ConversionClient.ConvertObjects(ctx, in, opts...)
 }
+
+func (r *protoClient) Tables(ctx context.Context, in *pluginv2.TableInformationRequest, opts ...grpc.CallOption) (*pluginv2.TableInformationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.InformationClient.Tables(ctx, in, opts...)
+}

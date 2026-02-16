@@ -27,6 +27,7 @@ type Plugin interface {
 	backend.AdmissionHandler
 	backend.ConversionHandler
 	backend.StreamHandler
+	backend.InformationHandler
 }
 
 type Target string

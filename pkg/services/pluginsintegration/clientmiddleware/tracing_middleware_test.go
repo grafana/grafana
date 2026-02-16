@@ -405,6 +405,10 @@ func (m *alwaysErrorFuncMiddleware) ConvertObjects(ctx context.Context, req *bac
 	return nil, m.f()
 }
 
+func (m *alwaysErrorFuncMiddleware) Tables(ctx context.Context, req *backend.TableInformationRequest) (*backend.TableInformationResponse, error) {
+	return nil, m.f()
+}
+
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
 func newAlwaysErrorMiddleware(err error) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
