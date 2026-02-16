@@ -19,31 +19,29 @@ func ExportAll(ctx context.Context, repoName string, options provisioning.Export
 	}
 
 	// Load the exportable folder tree (unmanaged folders only)
-	progress.SetMessage(ctx, "read folder tree from API server")
-	tree, err := LoadExportableFolderTree(ctx, folderClient)
+	tree, err := LoadExportableFolderTree(ctx, folderClient, progress)
 	if err != nil {
 		return err
 	}
 
-	// Count exportable non-folder resources (unmanaged only)
-	progress.SetMessage(ctx, "counting exportable resources")
-	resourceCount, err := CountExportableResources(ctx, clients)
+	// Load exportable non-folder resources (unmanaged only) in a single pass
+	loaded, err := LoadExportableResources(ctx, clients, progress)
 	if err != nil {
 		return err
 	}
 
 	// Check quota before proceeding with the actual export
-	netChange := int64(tree.Count()) + resourceCount
+	netChange := int64(tree.Count()) + loaded.Count()
 	if err := checkExportQuota(quotaStatus, repoStats, netChange); err != nil {
 		return err
 	}
 
-	// Quota OK -- proceed with the actual export using the pre-built tree
+	// Quota OK -- proceed with the actual export using pre-loaded data
 	if err := ExportFoldersFromTree(ctx, options, tree, repositoryResources, progress); err != nil {
 		return err
 	}
 
-	if err := ExportResources(ctx, options, clients, repositoryResources, progress); err != nil {
+	if err := ExportResourcesFromLoaded(ctx, options, loaded, repositoryResources, progress); err != nil {
 		return err
 	}
 

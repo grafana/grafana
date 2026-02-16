@@ -16,7 +16,8 @@ import (
 )
 
 // LoadExportableFolderTree builds a FolderTree containing only unmanaged folders
-func LoadExportableFolderTree(ctx context.Context, folderClient dynamic.ResourceInterface) (resources.FolderTree, error) {
+func LoadExportableFolderTree(ctx context.Context, folderClient dynamic.ResourceInterface, progress jobs.JobProgressRecorder) (resources.FolderTree, error) {
+	progress.SetMessage(ctx, "loading exportable folder tree")
 	tree := resources.NewEmptyFolderTree()
 	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
 		if tree.Count() >= resources.MaxNumberOfFolders {
@@ -38,20 +39,6 @@ func LoadExportableFolderTree(ctx context.Context, folderClient dynamic.Resource
 		return nil, fmt.Errorf("load folder tree: %w", err)
 	}
 	return tree, nil
-}
-
-// ExportFolders will load the full folder tree into memory and update the repositoryResources tree
-func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	// Load and write all folders
-	// FIXME: we load the entire tree in memory
-	progress.SetMessage(ctx, "read folder tree from API server")
-
-	tree, err := LoadExportableFolderTree(ctx, folderClient)
-	if err != nil {
-		return err
-	}
-
-	return ExportFoldersFromTree(ctx, options, tree, repositoryResources, progress)
 }
 
 // ExportFoldersFromTree writes a pre-built folder tree to the repository.
