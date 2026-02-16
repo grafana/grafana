@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -152,8 +151,6 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 
-	started      atomic.Bool
-	stopping     atomic.Bool
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
 
@@ -668,7 +665,6 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-	s.started.Store(true)
 	return nil
 }
 
@@ -685,7 +681,6 @@ func (s *searchServer) Init(ctx context.Context) error {
 
 // Stop stops the search server.
 func (s *searchServer) Stop(ctx context.Context) error {
-	s.stopping.Store(true)
 	s.stop()
 	return nil
 }
@@ -693,9 +688,6 @@ func (s *searchServer) Stop(ctx context.Context) error {
 // IsHealthy returns the health status of the search server.
 func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// add search-specific health checks here if needed
-	if !s.started.Load() || s.stopping.Load() {
-		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_NOT_SERVING}, nil
-	}
 	if s.backendDiagnostics == nil {
 		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
 	}
