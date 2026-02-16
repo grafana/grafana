@@ -36,24 +36,17 @@ To set up Git Sync and synchronize your Grafana dashboards and folders with a Gi
 1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana)
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/)
 
-{{< admonition type="note" >}}
-
-You can configure a local file system instead of using GitHub. Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/file-path-setup/) for more information.
-
-{{< /admonition >}}
+## Set up Git Sync using the UI
 
 To set up Git Sync from the Grafana UI, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Get started** tab.
-1. [Select your provider](#select-your-provider) to start a new Git Sync setup
-
-TBC
-
-1. [Configure the provisioning repository](#configure-repository)
-1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
-1. [Synchronize with external storage](#synchronize-with-external-storage)
-1. [Choose additional settings](#choose-additional-settings)
+1. [Select your provider](#select-your-provider) to start a new Git Sync setup: GitHub, GitLab, Bitbucket, or Pure Git.
+1. [Configure the provisioning repository](#configure-the-provisioning-repository).
+1. [Choose what content to sync with Grafana](#choose-what-to-synchronize).
+1. [Synchronize with external storage](#synchronize-with-external-storage).
+1. [Choose additional settings](#choose-additional-settings).
 
 ## Select your provider
 
@@ -71,7 +64,7 @@ If you want to configure Git Sync for GitHub, you can connect using a **Personal
 
 {{< admonition type="note" >}}
 
-Refer to [Create a GitHub access token](#create-a-github-access-token) for instructions for instructions on how to create a Personal Access Token.
+Refer to [Create a GitHub access token](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/set-up-before#create-a-github-access-token) for instructions on how to create a Personal Access Token.
 
 {{< /admonition >}}
 
@@ -110,11 +103,33 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitLab
 
-If you want to configure Git Sync for GitLab, TBC
+If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token. To create one, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
+
+- Repository: Read and write
+- User: Read only
+- API: Read and write
+
+Return to Grafana and fill in the following fields: 
+
+1. Paste the token into the **Project Access Token** text box.
+1. Paste the **Repository URL** for your GitLab repository into the text box.
+
+Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Bitbucket
 
-TBC
+If you want to configure Git Sync for Bitbucket, you need a Bitbucket Personal Access Token. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket), go to **Create App passwords** and create a token with these permissions:
+
+- Repositories: Read and write
+- Pull requests: Read and write
+- Webhooks: Read and write
+
+Return to Grafana and fill in the following fields: 
+
+1. Paste the token into the **Project Access Token** text box.
+1. Paste the **Repository URL** for your GitLab repository into the text box.
+
+Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Pure Git
 
@@ -126,7 +141,7 @@ If you're using another Git provider, you need to use the Pure Git option to con
 
 Select **Configure repository** to set up your provisioning folder.
 
-## Configure repository
+## Configure the provisioning repository
 
 After configuring your connection authentication, continue to enter the details of the repository you want to use for provisioning:
 
