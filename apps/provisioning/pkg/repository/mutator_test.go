@@ -183,6 +183,38 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			wantErr:         true,
 			wantErrContains: "failed to mutate repository",
 		},
+		{
+			name: "does not add finalizers when resource is marked for deletion",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+				Spec: provisioning.RepositorySpec{},
+			},
+			operation:       admission.Update,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  nil,
+			wantInterval:    60,
+			wantWorkflows:   []provisioning.Workflow{},
+			wantErr:         false,
+		},
+		{
+			name: "does not add finalizers when DeletionTimestamp is zero",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test",
+					DeletionTimestamp: &metav1.Time{},
+				},
+				Spec: provisioning.RepositorySpec{},
+			},
+			operation:       admission.Create,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  nil,
+			wantInterval:    60,
+			wantWorkflows:   []provisioning.Workflow{},
+			wantErr:         false,
+		},
 	}
 
 	for _, tt := range tests {
