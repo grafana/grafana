@@ -141,31 +141,41 @@ describe('DashboardPreviewBanner', () => {
       (config.featureToggles as { provisioning: boolean }).provisioning = false;
       setup();
 
-      expect(screen.queryByText(/Open pull request in|View pull request in/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
 
     it('returns null when kiosk is in query params', () => {
       setup({ queryParams: { kiosk: 'tv' } });
 
-      expect(screen.queryByText(/Open pull request in|View pull request in/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
 
     it('returns null when dashboard path is missing', () => {
       setup({ path: undefined });
 
-      expect(screen.queryByText(/Open pull request in|View pull request in/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
 
     it('returns null when route is not Provisioning', () => {
       setup({ route: DashboardRoutes.Normal });
 
-      expect(screen.queryByText(/Open pull request in|View pull request in/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
 
     it('returns null when slug is missing', () => {
       setup({ slug: undefined });
 
-      expect(screen.queryByText(/Open pull request in|View pull request in/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
   });
 
