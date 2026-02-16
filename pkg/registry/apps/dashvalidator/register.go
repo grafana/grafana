@@ -53,6 +53,7 @@ func RegisterAppInstaller(
 		HTTPClientProvider: httpClientProvider,
 		MetricsCache:       metricsCache,
 		Validators:         validators,
+		AC:                 ac,
 	}
 
 	// Create the app provider
@@ -101,8 +102,10 @@ func (a *DashValidatorAppInstaller) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			// POST /check maps to "create" verb.
-			// Require datasource read (config lookup), query (metric checks),
-			// and dashboard create (the end goal of the compatibility check flow).
+			// No scope is defined because we don't know which datasources the user needs
+			// before the validation request is processed. This checks that the user has
+			// access to at least one datasource. Per-datasource scoped checks are applied
+			// when we resolve datasource UIDs in the handler.
 			evaluator := accesscontrol.EvalAll(
 				accesscontrol.EvalPermission(datasources.ActionRead),
 				accesscontrol.EvalPermission(datasources.ActionQuery),

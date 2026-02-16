@@ -18,7 +18,9 @@ import (
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -28,6 +30,7 @@ type DashValidatorConfig struct {
 	HTTPClientProvider httpclient.Provider
 	MetricsCache       *cache.MetricsCache                      // Injected by register.go
 	Validators         map[string]validator.DatasourceValidator // Injected by register.go, keyed by datasource type
+	AC                 accesscontrol.AccessControl              // For per-datasource scoped permission checks
 }
 
 // checkRequest matches the CUE schema for POST /check request
@@ -101,7 +104,7 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "check",
 					Method:     "POST",
-				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.HTTPClientProvider, validators),
+				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.HTTPClientProvider, validators, specificConfig.AC),
 			},
 		},
 	}
@@ -123,6 +126,7 @@ func handleCheckRoute(
 	datasourceSvc datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 	validators map[string]validator.DatasourceValidator,
+	ac accesscontrol.AccessControl,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, r *app.CustomRouteRequest) error {
 		// Set a timeout for the entire request processing
@@ -212,8 +216,43 @@ func handleCheckRoute(
 		}
 		logger = logger.With("orgID", orgID, "namespace", namespace)
 
+		// Extract the requester once for per-datasource scoped permission checks
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			logger.Error("Failed to get requester from context", "error", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			return json.NewEncoder(w).Encode(map[string]string{
+				"error": "authentication required",
+				"code":  "auth_error",
+			})
+		}
+
 		for _, dsMapping := range req.DatasourceMappings {
 			dsLogger := logger.With("datasourceUID", dsMapping.UID, "datasourceType", dsMapping.Type)
+
+			// Verify user has read/query access to this specific datasource
+			dsScope := datasources.ScopeProvider.GetResourceScopeUID(dsMapping.UID)
+			dsEvaluator := accesscontrol.EvalAll(
+				accesscontrol.EvalPermission(datasources.ActionRead, dsScope),
+				accesscontrol.EvalPermission(datasources.ActionQuery, dsScope),
+			)
+			hasAccess, err := ac.Evaluate(ctx, user, dsEvaluator)
+			if err != nil {
+				dsLogger.Error("Failed to evaluate datasource permissions", "error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": "permission check failed",
+					"code":  "auth_error",
+				})
+			}
+			if !hasAccess {
+				dsLogger.Warn("User lacks permission for datasource")
+				w.WriteHeader(http.StatusForbidden)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": fmt.Sprintf("insufficient permissions for datasource: %s", dsMapping.UID),
+					"code":  "datasource_forbidden",
+				})
+			}
 
 			// Convert optional name pointer to string
 			name := ""

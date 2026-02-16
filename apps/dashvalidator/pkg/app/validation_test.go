@@ -15,6 +15,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,6 +176,7 @@ func TestHandleCheck_InvalidJSON(t *testing.T) {
 		logging.DefaultLogger,
 		nil, nil,
 		map[string]validator.DatasourceValidator{},
+		nil, // ac - not reached for invalid JSON
 	)
 
 	_ = handler(context.Background(), recorder, req)
@@ -215,6 +219,102 @@ func TestHandleCheck_ZeroDatasources(t *testing.T) {
 	var response map[string]string
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
 	assert.Contains(t, response["error"], "MVP only supports single datasource")
+}
+
+// ============================================================================
+// Datasource Scoped Permission Tests
+// ============================================================================
+
+func TestHandleCheck_DatasourcePermissions(t *testing.T) {
+	ac := acimpl.ProvideAccessControl(nil)
+
+	// Valid request body — passes input validation, reaches the permission check
+	body := checkRequest{
+		DashboardJSON: map[string]any{"title": "Test Dashboard"},
+		DatasourceMappings: []datasourceMapping{
+			{UID: "target-ds", Type: "prometheus"},
+		},
+	}
+	bodyBytes, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	// Helper to build the handler request with a fresh body reader
+	makeRequest := func(ctx context.Context) (*httptest.ResponseRecorder, *app.CustomRouteRequest) {
+		requestURL, _ := url.Parse("http://localhost:3000/apis/dashvalidator.grafana.app/v1alpha1/namespaces/org-1/check")
+		req := &app.CustomRouteRequest{
+			ResourceIdentifier: resource.FullIdentifier{Namespace: "org-1"},
+			Path:               "check",
+			URL:                requestURL,
+			Method:             "POST",
+			Headers:            http.Header{"Content-Type": []string{"application/json"}},
+			Body:               io.NopCloser(bytes.NewReader(bodyBytes)),
+		}
+		return httptest.NewRecorder(), req
+	}
+
+	t.Run("no identity in context returns 401", func(t *testing.T) {
+		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+		recorder, req := makeRequest(context.Background())
+
+		_ = handler(context.Background(), recorder, req)
+
+		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+		var resp map[string]string
+		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+		assert.Equal(t, "auth_error", resp["code"])
+	})
+
+	t.Run("user with scoped access passes permission check", func(t *testing.T) {
+		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
+			OrgRole: identity.RoleEditor,
+			UserID:  1,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					datasources.ActionRead:  {"datasources:uid:target-ds"},
+					datasources.ActionQuery: {"datasources:uid:target-ds"},
+				},
+			},
+		})
+
+		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+		recorder, req := makeRequest(ctx)
+
+		// Will panic on nil datasourceSvc AFTER passing the permission check
+		func() {
+			defer func() { _ = recover() }()
+			_ = handler(ctx, recorder, req)
+		}()
+
+		// Should NOT be 401 or 403 — permission check passed
+		assert.NotEqual(t, http.StatusUnauthorized, recorder.Code)
+		assert.NotEqual(t, http.StatusForbidden, recorder.Code)
+	})
+
+	// the "user lacks scoped access" test case
+	t.Run("user without scoped access returns 403", func(t *testing.T) {
+		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
+			OrgRole: identity.RoleEditor,
+			UserID:  1,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					datasources.ActionRead:  {"datasources:uid:not-target-ds"},
+					datasources.ActionQuery: {"datasources:uid:not-target-ds"},
+				},
+			},
+		})
+
+		handler := handleCheckRoute(logging.DefaultLogger, nil, nil, map[string]validator.DatasourceValidator{}, ac)
+
+		recorder, req := makeRequest(ctx)
+		_ = handler(ctx, recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+		var resp map[string]string
+		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+		assert.Equal(t, "datasource_forbidden", resp["code"])
+	})
 }
 
 // ============================================================================
@@ -373,6 +473,7 @@ func executeValidationRequest(t *testing.T, body checkRequest) *httptest.Respons
 		nil, // datasourceSvc - not reached during validation failures
 		nil, // httpClientProvider
 		map[string]validator.DatasourceValidator{},
+		nil, // ac - not reached during validation failures
 	)
 
 	// For validation tests, we only care about responses written before the panic.
