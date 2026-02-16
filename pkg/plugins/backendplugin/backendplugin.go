@@ -2,9 +2,8 @@
 package backendplugin
 
 import (
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // PluginFactoryFunc is a function type for creating a Plugin.

@@ -23,7 +23,6 @@ type Plugin interface {
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.QueryChunkedDataHandler
-	backend.QueryChunkedQueryRawClient
 	backend.CallResourceHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler

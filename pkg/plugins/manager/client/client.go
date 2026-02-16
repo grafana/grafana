@@ -110,23 +110,6 @@ func (s *Service) QueryChunkedData(ctx context.Context, req *backend.QueryChunke
 	return p.QueryChunkedData(ctx, req, w)
 }
 
-func (s *Service) QueryChunkedRaw(ctx context.Context, req *backend.QueryChunkedDataRequest, cb backend.ChunkedDataCallback) error {
-	if req == nil {
-		return errNilRequest
-	}
-
-	if cb == nil {
-		return errNilWriter
-	}
-
-	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
-	if !exists {
-		return plugins.ErrPluginNotRegistered
-	}
-
-	return p.QueryChunkedRaw(ctx, req, cb)
-}
-
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return errNilRequest

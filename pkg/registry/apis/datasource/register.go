@@ -125,12 +125,10 @@ func RegisterAPIService(
 // functions supported (yet) by the datasource API
 type PluginClient interface {
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.ConversionHandler
-
-	// raw event callbacks (avoid JSON/arrow marshal)
-	backend.QueryChunkedQueryRawClient
 }
 
 func NewDataSourceAPIBuilder(

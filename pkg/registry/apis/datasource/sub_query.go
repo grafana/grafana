@@ -92,7 +92,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		// Requesting chunked query response
 		if isRequestingChunkedResponse(req.Header.Get("accept")) {
-			if err = r.builder.client.QueryChunkedRaw(ctx, &backend.QueryChunkedDataRequest{
+			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
@@ -142,57 +142,58 @@ type chunkedWriter struct {
 	s jsoniter.Stream
 }
 
-func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataCallback {
+func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10)
-	return func(chunk *pluginv2.QueryChunkedDataResponse) error {
-		s.WriteRaw("data: ")
-		s.WriteObjectStart()
-		s.WriteObjectField("refId")
-		s.WriteString(chunk.RefId)
+	return backend.NewChunkedDataWriter(&backend.QueryChunkedDataRequest{},
+		func(chunk *pluginv2.QueryChunkedDataResponse) error {
+			s.WriteRaw("data: ")
+			s.WriteObjectStart()
+			s.WriteObjectField("refId")
+			s.WriteString(chunk.RefId)
 
-		if chunk.FrameId != "" {
-			s.WriteMore()
-			s.WriteObjectField("frameId")
-			s.WriteString(chunk.FrameId)
-		}
-
-		if chunk.Frame != nil {
-			// Make sure it is JSON (currently always Arrow so this raw client is just extra work!)
-			if chunk.Frame[0] != '{' {
-				frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-				if err != nil {
-					return err
-				}
-				chunk.Frame, err = frame.MarshalJSON()
-				if err != nil {
-					return err
-				}
+			if chunk.FrameId != "" {
+				s.WriteMore()
+				s.WriteObjectField("frameId")
+				s.WriteString(chunk.FrameId)
 			}
 
-			// Replace any newlines with a space
-			// NOTE: this should only happen if the frames were pretty printed
-			str := strings.ReplaceAll(string(chunk.Frame), "\n", " ")
+			if chunk.Frame != nil {
+				// Make sure it is JSON (currently always Arrow so this raw client is just extra work!)
+				if chunk.Frame[0] != '{' {
+					frame, err := data.UnmarshalArrowFrame(chunk.Frame)
+					if err != nil {
+						return err
+					}
+					chunk.Frame, err = frame.MarshalJSON()
+					if err != nil {
+						return err
+					}
+				}
 
-			s.WriteMore()
-			s.WriteObjectField("frame")
-			s.WriteRaw(str)
-		}
+				// Replace any newlines with a space
+				// NOTE: this should only happen if the frames were pretty printed
+				str := strings.ReplaceAll(string(chunk.Frame), "\n", " ")
 
-		if chunk.Error != "" {
-			s.WriteMore()
-			s.WriteObjectField("error")
-			s.WriteString(chunk.Error)
-		}
+				s.WriteMore()
+				s.WriteObjectField("frame")
+				s.WriteRaw(str)
+			}
 
-		if chunk.Error != "" {
-			s.WriteMore()
-			s.WriteObjectField("errorSource")
-			s.WriteString(chunk.ErrorSource)
-		}
+			if chunk.Error != "" {
+				s.WriteMore()
+				s.WriteObjectField("error")
+				s.WriteString(chunk.Error)
+			}
 
-		s.WriteObjectEnd()
-		s.WriteRaw("\n\n") // marks the end of a message in SSE
-		s.Flush()
-		return nil
-	}
+			if chunk.Error != "" {
+				s.WriteMore()
+				s.WriteObjectField("errorSource")
+				s.WriteString(chunk.ErrorSource)
+			}
+
+			s.WriteObjectEnd()
+			s.WriteRaw("\n\n") // marks the end of a message in SSE
+			s.Flush()
+			return nil
+		})
 }
