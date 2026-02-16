@@ -65,9 +65,6 @@ function DashboardCardComponent({
     [dashboard, kind]
   );
 
-  // Build the enhanced prompt with template details
-  const assistantPrompt = useMemo(() => buildAssistantPrompt(title), [title]);
-
   const onUseAssistantClick = () => {
     if (assistantAvailable) {
       onTrackAssistantButton?.();
@@ -76,7 +73,7 @@ function DashboardCardComponent({
         origin: 'dashboard-library/use-dashboard',
         // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions
         mode: 'dashboarding',
-        prompt: assistantPrompt,
+        prompt: buildAssistantPrompt(),
         context: [templateContext],
         autoSend: true,
       });

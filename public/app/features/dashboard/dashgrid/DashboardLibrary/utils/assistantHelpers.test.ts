@@ -1,4 +1,4 @@
-import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './assistantHelpers';
+import { buildTemplateContextData, buildTemplateContextTitle } from './assistantHelpers';
 import { isGnetDashboard } from './dashboardLibraryHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils';
 
@@ -49,13 +49,6 @@ describe('assistantHelpers', () => {
     });
   });
 
-  describe('buildAssistantPrompt', () => {
-    it('should include title in prompt', () => {
-      const prompt = buildAssistantPrompt(createMockGnetDashboard({ name: 'My Dashboard' }).name);
-      expect(prompt).toContain('My Dashboard');
-    });
-  });
-
   describe('buildTemplateContextData instructions', () => {
     it('should include datasource in instructions for suggested_dashboard but not for template_dashboard', () => {
       const gnetDashboard = createMockGnetDashboard({ datasource: 'prometheus' });
@@ -71,7 +64,9 @@ describe('assistantHelpers', () => {
       const withDescription = createMockGnetDashboard({ description: 'Monitors servers' });
       const withoutDescription = createMockGnetDashboard({ description: '' });
 
-      expect(buildTemplateContextData(withDescription, 'template_dashboard').instructions).toContain('Monitors servers');
+      expect(buildTemplateContextData(withDescription, 'template_dashboard').instructions).toContain(
+        'Monitors servers'
+      );
       expect(buildTemplateContextData(withoutDescription, 'template_dashboard').instructions).not.toContain(
         'Description:'
       );
