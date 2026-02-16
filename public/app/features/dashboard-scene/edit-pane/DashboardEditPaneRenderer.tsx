@@ -21,6 +21,8 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { DashboardRulesPane } from './DashboardRulesPane';
+import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
@@ -121,6 +123,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           />
         </Sidebar.OpenPane>
       )}
+      {openPane === 'rules' && (
+        <Sidebar.OpenPane>
+          <DashboardRulesPane dashboard={dashboard} isEditing={isEditing} />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -203,6 +210,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 active={openPane === 'filters'}
               />
             )}
+          {config.featureToggles.dashboardRules && (
+            <Sidebar.Button
+              icon="bolt"
+              onClick={() => editPane.openPane('rules')}
+              title="Rules"
+              tooltip="Dashboard rules"
+              active={openPane === 'rules'}
+            />
+          )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           {Boolean(meta.isSnapshot) && (
