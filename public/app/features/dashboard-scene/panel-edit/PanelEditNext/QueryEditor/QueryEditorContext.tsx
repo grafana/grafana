@@ -14,7 +14,7 @@ import { QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
-import { QueryOptionField, Transformation } from './types';
+import { AlertRule, QueryOptionField, Transformation } from './types';
 
 export interface PendingExpression {
   insertAfter: string;
@@ -33,6 +33,11 @@ export interface QueryRunnerState {
   queryError?: DataQueryError;
 }
 
+export interface AlertingState {
+  alertRules: AlertRule[];
+  loading: boolean;
+}
+
 export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
@@ -46,11 +51,20 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
+interface TransformationToggles {
+  showHelp: boolean;
+  toggleHelp: () => void;
+  showDebug: boolean;
+  toggleDebug: () => void;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
+  selectedAlert: AlertRule | null;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  setSelectedAlert: (alert: AlertRule | null) => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -59,6 +73,7 @@ export interface QueryEditorUIState {
   selectedQueryDsLoading: boolean;
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
+  transformToggles: TransformationToggles;
   cardType: QueryEditorType;
   pendingExpression: PendingExpression | null;
   setPendingExpression: (pending: PendingExpression | null) => void;
@@ -84,6 +99,7 @@ export interface QueryEditorActions {
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
 const PanelContext = createContext<PanelState | null>(null);
+const AlertingContext = createContext<AlertingState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
 
@@ -111,6 +127,14 @@ export function usePanelContext(): PanelState {
   return context;
 }
 
+export function useAlertingContext(): AlertingState {
+  const context = useContext(AlertingContext);
+  if (!context) {
+    throw new Error('useAlertingContext must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 export function useActionsContext(): QueryEditorActions {
   const context = useContext(ActionsContext);
   if (!context) {
@@ -132,6 +156,7 @@ interface QueryEditorProviderProps {
   dsState: DatasourceState;
   qrState: QueryRunnerState;
   panelState: PanelState;
+  alertingState: AlertingState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
 }
@@ -141,6 +166,7 @@ export function QueryEditorProvider({
   dsState,
   qrState,
   panelState,
+  alertingState,
   uiState,
   actions,
 }: QueryEditorProviderProps) {
@@ -149,7 +175,9 @@ export function QueryEditorProvider({
       <DatasourceContext.Provider value={dsState}>
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
-            <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+            <AlertingContext.Provider value={alertingState}>
+              <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+            </AlertingContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>
       </DatasourceContext.Provider>

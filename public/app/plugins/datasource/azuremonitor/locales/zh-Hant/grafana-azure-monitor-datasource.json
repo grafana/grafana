@@ -13,7 +13,7 @@
       "label-resource-group": "資源群組",
       "label-resource-name": "資源名稱",
       "label-resource-number": "資源 {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "資源 URI",
       "label-subscription": "訂閱",
       "placeholder-resource-name": "名稱",
       "tooltip-region": "資源的代碼區域。對於單一資源為選填，但選取多個資源時為必填。",
@@ -226,26 +226,26 @@
       "select-resource": "選取資源"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "瀏覽",
       "button-apply": "套用",
       "button-cancel": "取消",
       "header-location": "位置",
-      "header-resource-group": "",
+      "header-resource-group": "資源群組",
       "header-scope": "範圍",
       "header-type": "類型",
       "heading-selection": "選擇",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "位置",
+      "locations-filter-placeholder": "選取位置",
+      "recent-tab": "最近",
       "result-limit": "顯示前 {{numResults}} 個結果",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "訂閱",
+      "subscriptions-filter-placeholder": "選取訂閱",
       "text-loading": "正在載入…",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "沒有找到最近的資源",
       "text-no-resources": "沒有找到資源",
       "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "資源類型",
+      "types-filter-placeholder": "選取資源類型"
     },
     "scope-selector": {
       "label": "範圍"
@@ -274,7 +274,7 @@
       "label-time-column": "時間欄",
       "label-time-range": "Time-range",
       "tooltip-time-column": "<0>指定用於篩選的時間欄。預設為第一個表格 <1>timeSpan</1> 欄、第一個找到的 <3>datetime</3> 欄或 <5>TimeGenerated</5>。</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>指定用於查詢的時間範圍。<1>查詢</1>選項僅會使用查詢中指定的時間範圍。<3>儀表板</3>僅會使用 Grafana 時間範圍。</0>"
     },
     "top-field": {
       "label-top": "頂端"
