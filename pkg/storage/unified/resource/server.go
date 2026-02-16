@@ -486,7 +486,10 @@ func (s *server) Init(ctx context.Context) error {
 
 		// initialize the search index
 		if s.initErr == nil && s.search != nil {
-			s.initErr = s.search.init(ctx)
+			if err := s.search.init(ctx); err != nil {
+				s.log.Error("search index initialization failed, search will be unavailable", "error", err)
+				s.search = nil
+			}
 		}
 
 		// Start watching for changes

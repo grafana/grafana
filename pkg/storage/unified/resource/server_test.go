@@ -754,3 +754,57 @@ func TestCheckQuotas(t *testing.T) {
 		})
 	}
 }
+
+func TestServerInitNonFatalSearchFailure(t *testing.T) {
+	// Simulate a scenario where the search index build fails during startup
+	// (e.g., MySQL kills the connection due to a long-running transaction).
+	// The server should still start up successfully with search disabled.
+
+	storage := &failingListIteratorBackend{
+		mockStorageBackend: mockStorageBackend{
+			resourceStats: []ResourceStats{
+				{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 100},
+			},
+		},
+	}
+
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	searchSrv, err := newSearchServer(SearchOptions{
+		Backend:      &mockSearchBackend{},
+		Resources:    supplier,
+		InitMinCount: 1,
+	}, storage, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, searchSrv)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	s := &server{
+		log:            log.NewNopLogger(),
+		backend:        storage,
+		search:         searchSrv,
+		storageEnabled: false, // skip watcher init for this test
+		ctx:            ctx,
+		cancel:         cancel,
+	}
+
+	// Server Init should succeed even though search index building fails
+	err = s.Init(context.Background())
+	require.NoError(t, err, "server should start even when search init fails")
+
+	// Search should be nil (gracefully disabled)
+	require.Nil(t, s.search, "search should be nil after failed init")
+
+	// Verify that search-dependent operations return appropriate errors
+	_, err = s.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource"},
+		},
+	})
+	require.Error(t, err, "search should return error when disabled")
+	require.Contains(t, err.Error(), "search index not configured")
+}
