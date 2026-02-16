@@ -355,30 +355,6 @@ This document describes the architecture of [Plugin Name].
 [Security considerations and best practices]
 ```
 
-#### terminology.md
-
-```markdown
-# Terminology
-
-This document defines key terms used in [Plugin Name] documentation.
-
-## General terms
-
-**Term 1**
-: Definition of term 1.
-
-**Term 2**
-: Definition of term 2.
-
-## Plugin-specific terms
-
-**Term 3**
-: Definition of term 3.
-
-**Term 4**
-: Definition of term 4.
-```
-
 ### 4. Configuration Section
 
 This section contains detailed configuration documentation for all plugin options.
