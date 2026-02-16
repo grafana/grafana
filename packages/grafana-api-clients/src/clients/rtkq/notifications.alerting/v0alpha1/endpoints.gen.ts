@@ -1312,9 +1312,7 @@ export type ReceiverIntegration = {
     [key: string]: boolean;
   };
   settings: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   type: string;
   uid?: string;

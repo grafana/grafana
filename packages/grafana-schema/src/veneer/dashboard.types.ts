@@ -1,5 +1,5 @@
 import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
-import * as raw from '../raw/dashboard/x/dashboard_types.gen';
+import * as raw from '../raw/dashboard/x/types.gen';
 
 import { DataQuery } from './common.types';
 

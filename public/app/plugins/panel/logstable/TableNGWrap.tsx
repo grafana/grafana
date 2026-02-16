@@ -1,16 +1,33 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import { FieldConfigSource, GrafanaTheme2, PanelProps } from '@grafana/data';
+import {
+  FieldConfigSource,
+  GrafanaTheme2,
+  LogSortOrderChangeEvent,
+  LogsSortOrder,
+  PanelProps,
+  store,
+} from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+import { TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
+import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
+import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
+import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 
 import { TablePanel } from '../table/TablePanel';
-import type { Options as TableOptions } from '../table/panelcfg.gen';
 
-interface Props extends PanelProps<TableOptions> {
-  fieldSelectorWidth: number | undefined;
+import { Options } from './options/types';
+import { defaultOptions } from './panelcfg.gen';
+
+interface Props extends PanelProps<Options> {
   initialRowIndex?: number;
+  logOptionsStorageKey: string;
+  containerElement: HTMLDivElement;
+  fieldSelectorWidth: number;
 }
 
 export function TableNGWrap({
@@ -21,7 +38,7 @@ export function TableNGWrap({
   options,
   onOptionsChange,
   height,
-  width,
+  width: tableWidth,
   transparent,
   fieldConfig,
   renderCounter,
@@ -32,16 +49,37 @@ export function TableNGWrap({
   onChangeTimeRange,
   fieldSelectorWidth,
   initialRowIndex,
+  logOptionsStorageKey,
+  containerElement,
 }: Props) {
-  const sidebarWidth = fieldSelectorWidth ?? FIELD_SELECTOR_DEFAULT_WIDTH;
-  const styles = useStyles2(getStyles, sidebarWidth, height, width);
+  const showControls = options.showControls ?? defaultOptions.showControls ?? true;
+  const controlsExpandedFromStore = store.getBool(
+    `${logOptionsStorageKey}.controlsExpanded`,
+    getDefaultControlsExpandedMode(containerElement ?? null)
+  );
+
+  const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
+  const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
+  const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth);
 
   // Callbacks
   const onTableOptionsChange = useCallback(
     (options: TableOptions) => {
-      onOptionsChange?.(options);
+      onOptionsChange(options);
     },
     [onOptionsChange]
+  );
+
+  const handleSortOrderChange = useCallback(
+    (sortOrder: LogsSortOrder) => {
+      getAppEvents().publish(
+        new LogSortOrderChangeEvent({
+          order: sortOrder,
+        })
+      );
+      onOptionsChange({ ...options, sortOrder });
+    },
+    [onOptionsChange, options]
   );
 
   const handleTableOnFieldConfigChange = useCallback(
@@ -53,15 +91,28 @@ export function TableNGWrap({
 
   return (
     <div className={styles.tableWrapper}>
+      {showControls && (
+        <div className={styles.listControlsWrapper}>
+          <LogTableControls
+            logOptionsStorageKey={SETTING_KEY_ROOT}
+            controlsExpanded={controlsExpanded}
+            setControlsExpanded={setControlsExpanded}
+            sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
+            setSortOrder={handleSortOrderChange}
+          />
+        </div>
+      )}
+
       <TablePanel
+        sortByBehavior={'managed'}
         initialRowIndex={initialRowIndex}
         data={data}
-        width={width - sidebarWidth}
+        width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         id={id}
         timeRange={timeRange}
         timeZone={timeZone}
-        options={options}
+        options={{ ...options }}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}
@@ -76,17 +127,30 @@ export function TableNGWrap({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  fieldSelectorWidth: number,
+  height: number,
+  tableWidth: number,
+  controlsWidth: number
+) => {
+  const listControlsWrapperTableHeaderOffset = '-5px';
   return {
+    listControlsWrapper: css({
+      height: '100%',
+      width: controlsWidth,
+      label: 'listControlsWrapper',
+      marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px + ${listControlsWrapperTableHeaderOffset})`,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    }),
     tableWrapper: css({
-      paddingLeft: sidebarWidth,
+      position: 'relative',
+      paddingLeft: fieldSelectorWidth,
+      paddingRight: controlsWidth,
       height,
-      width,
-      // @todo better row selection UI
-      '[aria-selected=true]': {
-        backgroundColor: theme.colors.background.secondary,
-        outline: `solid 1px ${theme.colors.warning.border}`,
-      },
+      width: tableWidth,
     }),
   };
 };

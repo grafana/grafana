@@ -59,10 +59,16 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           scope: LiveChannelScope.Watch,
           stream: this.gvr.group,
           path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid}`,
+          data: params?.resourceVersion ? { resourceVersion: params.resourceVersion } : undefined,
         })
         .pipe(
           filter((event) => isLiveChannelMessageEvent(event)),
-          map((event) => event.message)
+          map((event) => event.message),
+          retry({ count: 3, delay: 1000 }),
+          catchError((error) => {
+            console.error('Live channel watch stream error:', error);
+            throw error;
+          })
         );
     }
 

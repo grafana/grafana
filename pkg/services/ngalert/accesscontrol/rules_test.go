@@ -85,7 +85,7 @@ func getReceiverScopesForRules(rules models.RulesGroup) []string {
 	scopesMap := map[string]struct{}{}
 	var result []string
 	for _, rule := range rules {
-		for _, ns := range rule.NotificationSettings {
+		if ns := rule.ContactPointRouting(); ns != nil {
 			scope := models.ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
 			if _, ok := scopesMap[scope]; ok {
 				continue
@@ -521,8 +521,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
-					for i := range cp.NotificationSettings {
-						cp.NotificationSettings[i].Receiver = "new-receiver"
+					if cpr := cp.ContactPointRouting(); cpr != nil {
+						cpr.Receiver = "new-receiver"
 					}
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
