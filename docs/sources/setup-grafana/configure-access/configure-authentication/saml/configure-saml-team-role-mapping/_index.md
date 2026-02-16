@@ -120,11 +120,11 @@ This section shows how to configure Okta to send group memberships in the SAML a
 1. Scroll to **GROUP ATTRIBUTE STATEMENTS**.
 1. Add a group attribute with the following settings:
 
-   | Field      | Value         |
-   | ---------- | ------------- |
-   | **Name**   | `Group`       |
+   | Field      | Value                      |
+   | ---------- | -------------------------- |
+   | **Name**   | `Group`                    |
    | **Filter** | Matches regular expression |
-   | **Value**  | `.*`          |
+   | **Value**  | `.*`                       |
 
 1. Click **Save**.
 
