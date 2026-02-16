@@ -332,7 +332,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 
 	originPatterns := g.Cfg.LiveAllowedOrigins
 	originGlobs, _ := setting.GetAllowedOriginGlobs(originPatterns) // error already checked on config load.
-	checkOrigin := getCheckOriginFunc(appURL, originPatterns, originGlobs)
+	checkOrigin := getCheckOriginFunc(appURL, originPatterns, originGlobs, g.Cfg.LiveCSRFAdditionalHeaders)
 
 	wsCfg := centrifuge.WebsocketConfig{
 		ReadBufferSize:   1024,
@@ -532,7 +532,7 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 	return eGroup.Wait()
 }
 
-func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
+func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob, csrfAdditionalHeaders []string) func(r *http.Request) bool {
 	return func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		if origin == "" {
@@ -547,9 +547,30 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 			logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
 			return false
 		}
+		originHostname := originURL.Hostname()
+
+		// Check if origin matches request host
 		if strings.EqualFold(originURL.Host, r.Host) {
 			return true
 		}
+
+		// Check additional headers for CSRF protection (e.g., X-Forwarded-Host)
+		// This mirrors the behavior of security.csrf_additional_headers
+		for _, headerName := range csrfAdditionalHeaders {
+			customHost := r.Header.Get(headerName)
+			if customHost != "" {
+				addr, err := util.SplitHostPortDefault(customHost, "", "0") // we ignore the port
+				if err != nil {
+					logger.Warn("Failed to parse additional header", "error", err, "header", headerName, "value", customHost)
+					continue
+				}
+				// Compare hostnames directly (both are normalized, matching CSRF middleware behavior)
+				if addr.Host == originHostname {
+					return true
+				}
+			}
+		}
+
 		ok, err := checkAllowedOrigin(origin, originURL, appURL, originGlobs)
 		if err != nil {
 			logger.Warn("Error parsing request origin", "error", err, "origin", origin)

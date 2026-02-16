@@ -490,6 +490,11 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+	// LiveCSRFAdditionalHeaders is a comma-separated list of additional headers
+	// to check when validating Origin header for CSRF protection. Useful for
+	// reverse proxy deployments where the original host is in headers like
+	// X-Forwarded-Host. Behavior mirrors security.csrf_additional_headers.
+	LiveCSRFAdditionalHeaders []string
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
@@ -2138,6 +2143,19 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 
 	cfg.LiveAllowedOrigins = originPatterns
+
+	// Parse csrf_additional_headers from [live] section
+	csrfAdditionalHeaders := section.Key("csrf_additional_headers").MustString("")
+	headers := strings.Split(csrfAdditionalHeaders, ",")
+	headerList := make([]string, 0, len(headers))
+	for _, header := range headers {
+		header = strings.TrimSpace(header)
+		if header != "" {
+			headerList = append(headerList, header)
+		}
+	}
+	cfg.LiveCSRFAdditionalHeaders = headerList
+
 	return nil
 }
 
