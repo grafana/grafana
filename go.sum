@@ -1640,6 +1640,18 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.287.0 h1:CEiNZidjZ0b711cYcwPK8+mbVUWVQYSEJTkizySNwD0=
 github.com/grafana/grafana-plugin-sdk-go v0.287.0/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216091442-ec8bd61a746e h1:ARK4tDIQVpLOHb4EezqG6bHNSyUwLw4PCCdlOc+PBWg=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216091442-ec8bd61a746e/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216133848-cefec675cda4 h1:7uxyRg0xD9vXs15hqgBzj3ygplCEwY9jJIVZPGXuYwY=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216133848-cefec675cda4/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216135746-0b59db525f24 h1:ro7kn5bQOru8G9nbZSpZ8OvMjpBoP1VDjqydFTRx9pU=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216135746-0b59db525f24/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216145647-ecccff7c6583 h1:FwEbIHW9SOXHQUQaS/4xaRoVD4KoXrUMt84YsRXXhLI=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216145647-ecccff7c6583/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216150814-c64ed2b6b52b h1:EEPDWdfoRnrzYhkjUop3pnJbyMPousseW5GFt+f0O9k=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216150814-c64ed2b6b52b/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216153207-c0e8af079208 h1:d/9BfAHJG+/Ij7bRXSheEpJnvPp2vgmbHscsaJbxTNU=
+github.com/grafana/grafana-plugin-sdk-go v0.288.1-0.20260216153207-c0e8af079208/go.mod h1:10MfWA2DykUXYmqu3jx0XislffEFjqAg/ODkRIzt+Ig=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
@@ -2954,6 +2966,8 @@ golang.org/x/oauth2 v0.21.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbht
 golang.org/x/oauth2 v0.23.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
 golang.org/x/oauth2 v0.34.0 h1:hqK/t4AKgbqWkdkcAeI8XLmbK+4m4G5YeQRrmiotGlw=
 golang.org/x/oauth2 v0.34.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
+golang.org/x/oauth2 v0.35.0 h1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=
+golang.org/x/oauth2 v0.35.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

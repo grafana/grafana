@@ -3,12 +3,17 @@ package coreplugin
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+)
+
+var (
+	// Convert the raw frames to chunks so we look like a grpc plugin
+	_ backend.QueryChunkedQueryRawClient = (*corePlugin)(nil)
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -102,6 +107,18 @@ func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryCh
 	if cp.QueryChunkedDataHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	return plugins.ErrMethodNotImplemented
+}
+
+// QueryChunkedRaw implements [backend.QueryChunkedQueryRawClient].
+func (cp *corePlugin) QueryChunkedRaw(ctx context.Context, req *backend.QueryChunkedDataRequest, cb backend.ChunkedDataCallback) error {
+	if cp.QueryChunkedDataHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req,
+			backend.NewChunkedDataCallback(req, cb), // converted to bytes in the writer
+		)
 	}
 
 	return plugins.ErrMethodNotImplemented

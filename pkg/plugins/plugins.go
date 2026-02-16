@@ -68,14 +68,15 @@ type Plugin struct {
 }
 
 var (
-	_ = backend.CollectMetricsHandler(&Plugin{})
-	_ = backend.CheckHealthHandler(&Plugin{})
-	_ = backend.QueryDataHandler(&Plugin{})
-	_ = backend.QueryChunkedDataHandler(&Plugin{})
-	_ = backend.CallResourceHandler(&Plugin{})
-	_ = backend.StreamHandler(&Plugin{})
-	_ = backend.AdmissionHandler(&Plugin{})
-	_ = backend.ConversionHandler(&Plugin{})
+	_ backend.CollectMetricsHandler      = (*Plugin)(nil)
+	_ backend.CheckHealthHandler         = (*Plugin)(nil)
+	_ backend.QueryDataHandler           = (*Plugin)(nil)
+	_ backend.QueryChunkedDataHandler    = (*Plugin)(nil)
+	_ backend.QueryChunkedQueryRawClient = (*Plugin)(nil)
+	_ backend.CallResourceHandler        = (*Plugin)(nil)
+	_ backend.StreamHandler              = (*Plugin)(nil)
+	_ backend.AdmissionHandler           = (*Plugin)(nil)
+	_ backend.ConversionHandler          = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
@@ -346,6 +347,14 @@ func (p *Plugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunked
 	return pluginClient.QueryChunkedData(ctx, req, w)
 }
 
+func (p *Plugin) QueryChunkedRaw(ctx context.Context, req *backend.QueryChunkedDataRequest, cb backend.ChunkedDataCallback) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.QueryChunkedRaw(ctx, req, cb)
+}
+
 func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -473,6 +482,7 @@ func (p *Plugin) executablePath(f string) string {
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.QueryChunkedDataHandler
+	backend.QueryChunkedQueryRawClient
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler

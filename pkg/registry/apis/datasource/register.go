@@ -128,6 +128,9 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.ConversionHandler
+
+	// raw event callbacks (avoid JSON/arrow marshal)
+	backend.QueryChunkedQueryRawClient
 }
 
 func NewDataSourceAPIBuilder(
@@ -151,19 +154,19 @@ func NewDataSourceAPIBuilder(
 	var err error
 	if cfg.LoadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(groupName)
+		builder.queryTypes, err = getHardcodedQueryTypes(plugin.ID)
 	}
 	return builder, err
 }
 
 // TODO -- somehow get the list from the plugin -- not hardcoded
-func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, error) {
+func getHardcodedQueryTypes(pluginId string) (*queryV0.QueryTypeDefinitionList, error) {
 	var err error
 	var raw json.RawMessage
-	switch group {
-	case "testdata.datasource.grafana.app", "grafana-testdata-datasource":
+	switch pluginId {
+	case "grafana-testdata-datasource":
 		raw, err = kinds.QueryTypeDefinitionListJSON()
-	case "prometheus.datasource.grafana.app", "prometheus":
+	case "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
 	}
 	if err != nil {

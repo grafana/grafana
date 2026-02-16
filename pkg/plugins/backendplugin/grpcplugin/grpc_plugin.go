@@ -5,13 +5,17 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+)
+
+var (
+	_ backend.QueryChunkedQueryRawClient = (*grpcPlugin)(nil)
 )
 
 type grpcPlugin struct {
@@ -204,6 +208,16 @@ func (p *grpcPlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChu
 	}
 
 	return pc.QueryChunkedData(ctx, req, w)
+}
+
+// QueryChunkedRaw implements [backend.QueryChunkedQueryRawClient].
+func (p *grpcPlugin) QueryChunkedRaw(ctx context.Context, req *backend.QueryChunkedDataRequest, cb backend.ChunkedDataCallback) error {
+	pc, ok := p.getPluginClient(ctx)
+	if !ok {
+		return plugins.ErrPluginUnavailable
+	}
+
+	return pc.QueryChunkedRaw(ctx, req, cb)
 }
 
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

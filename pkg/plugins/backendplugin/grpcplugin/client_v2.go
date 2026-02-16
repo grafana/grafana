@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/hashicorp/go-plugin"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -22,6 +22,10 @@ import (
 
 var (
 	logger = log.New("plugins.clientv2")
+)
+
+var (
+	_ backend.QueryChunkedQueryRawClient = (*ClientV2)(nil)
 )
 
 type ClientV2 struct {
@@ -191,6 +195,25 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 }
 
 func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return c.QueryChunkedRaw(ctx, req, func(chunk *pluginv2.QueryChunkedDataResponse) error {
+		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
+		if err != nil {
+			return err
+		}
+
+		if chunk.Error != "" {
+			chunkStatus := backend.Status(chunk.Status)
+			errorSource := backend.ErrorSource(chunk.ErrorSource)
+			chunkErr := backend.NewErrorWithSource(errors.New(chunk.Error), errorSource)
+			return w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr)
+		}
+
+		return w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame)
+	})
+}
+
+// QueryChunked implements [backend.QueryChunkedQueryRawClient].
+func (c *ClientV2) QueryChunkedRaw(ctx context.Context, req *backend.QueryChunkedDataRequest, cb func(evt *pluginv2.QueryChunkedDataResponse) error) error {
 	if c.DataClient == nil {
 		return plugins.ErrMethodNotImplemented
 	}
@@ -216,22 +239,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			return err
 		}
 
-		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-		if err != nil {
-			return err
-		}
-
-		if chunk.Error != "" {
-			chunkStatus := backend.Status(chunk.Status)
-			errorSource := backend.ErrorSource(chunk.ErrorSource)
-			chunkErr := backend.NewErrorWithSource(errors.New(chunk.Error), errorSource)
-			if err := w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr); err != nil {
-				return err
-			}
-			continue
-		}
-
-		if err := w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
+		if err = cb(chunk); err != nil {
 			return err
 		}
 	}
