@@ -138,6 +138,7 @@ export class GrafanaBootConfig {
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  liveNamespaced = false; // orgId vs namespace
   liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -162,7 +163,6 @@ export class GrafanaBootConfig {
     performanceInstrumentalizationEnabled: false,
     cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
-    webVitalsAttribution: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };
@@ -188,6 +188,7 @@ export class GrafanaBootConfig {
   caching = {
     enabled: false,
     cleanCacheEnabled: true,
+    defaultTTLMs: 300000,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;

@@ -12,3 +12,8 @@ type ExampleSpec struct {
 func NewExampleSpec() *ExampleSpec {
 	return &ExampleSpec{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for ExampleSpec.
+func (ExampleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleSpec"
+}

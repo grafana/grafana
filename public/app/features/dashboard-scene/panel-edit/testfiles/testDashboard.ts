@@ -1,4 +1,4 @@
-import { Spec as DashboardV2Spec, defaultDataQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec, defaultDataQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 export const panelWithQueriesOnly = {

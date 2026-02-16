@@ -5,7 +5,7 @@ import { RefObject, useRef } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Icon, Text } from '@grafana/ui';
+import { Button, useStyles2, Icon, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -41,6 +41,8 @@ export interface ContentHeaderProps {
   selectedTransformation: Transformation | null;
   queries: DataQuery[];
   cardType: QueryEditorType;
+  pendingExpression?: boolean;
+  onCancelPendingExpression?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
@@ -74,6 +76,8 @@ export function ContentHeader({
   selectedTransformation,
   queries,
   cardType,
+  pendingExpression,
+  onCancelPendingExpression,
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
@@ -84,6 +88,22 @@ export function ContentHeader({
   const containerRef = externalContainerRef || internalContainerRef;
 
   const styles = useStyles2(getStyles, { cardType });
+
+  if (pendingExpression) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.leftSection}>
+          <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon} size="sm" />
+          <Text weight="light" variant="body" color="secondary">
+            <Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>
+          </Text>
+        </div>
+        <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingExpression}>
+          <Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>
+        </Button>
+      </div>
+    );
+  }
 
   if (!selectedQuery && !selectedTransformation) {
     return null;
@@ -107,7 +127,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor.header.expression">Expression</Trans>
+              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
             <Separator />
           </>
@@ -116,7 +136,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Transformation && selectedTransformation && (
           <>
             <Text weight="light" variant="body" color="primary">
-              <Trans i18nKey="query-editor.header.transformation">Transformation</Trans>
+              <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <Separator />
             <Text weight="light" variant="code" color="primary">
@@ -132,7 +152,7 @@ export function ContentHeader({
           </>
         )}
       </div>
-      <HeaderActions queries={queries} containerRef={containerRef} />
+      <HeaderActions containerRef={containerRef} />
     </div>
   );
 }
@@ -150,7 +170,8 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  const { selectedQuery, selectedTransformation, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation, cardType, pendingExpression, setPendingExpression } =
+    useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
@@ -160,6 +181,8 @@ export function ContentHeaderSceneWrapper({
       selectedTransformation={selectedTransformation}
       queries={queries}
       cardType={cardType}
+      pendingExpression={!!pendingExpression}
+      onCancelPendingExpression={() => setPendingExpression(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}

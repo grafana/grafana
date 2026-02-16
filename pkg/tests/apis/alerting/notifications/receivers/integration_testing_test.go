@@ -10,12 +10,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -490,7 +490,7 @@ func TestIntegrationTesting(t *testing.T) {
 		adminClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
 
-		assertError := func(t *testing.T, predicate func(error) bool, resp *v0alpha1.CreateReceiverIntegrationTest, err error) {
+		assertError := func(t *testing.T, predicate func(error) bool, resp *v0alpha1.CreateReceiverIntegrationTestResponse, err error) {
 			t.Helper()
 			var d []byte
 			if resp != nil {

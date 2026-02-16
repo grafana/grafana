@@ -359,7 +359,7 @@
   },
   "packages/grafana-prometheus/src/components/PromQueryField.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts": {
@@ -407,11 +407,6 @@
   },
   "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -540,11 +535,6 @@
     }
   },
   "packages/grafana-ui/src/components/BarGauge/BarGauge.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -705,11 +695,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -771,11 +756,6 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/Table.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2148,11 +2128,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ThemePicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/SubMenu/AnnotationPicker.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2272,7 +2247,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 23
+      "count": 22
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {
@@ -2820,11 +2795,6 @@
   "public/app/features/plugins/importPanelPlugin.ts": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -3858,11 +3828,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryCodeEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/loki/querybuilder/state.ts": {
     "no-restricted-syntax": {
       "count": 2
@@ -4042,11 +4007,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/candlestick/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 8
     }
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
@@ -4269,39 +4229,6 @@
   "public/app/plugins/panel/state-timeline/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/TableCellOptionEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/table/cells/BarGaugeCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/ColorBackgroundCellOptionsEditor.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/ImageCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/MarkdownCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/table/migrations.ts": {

@@ -15,6 +15,7 @@ import (
 )
 
 func TestJobController_New(t *testing.T) {
+	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
 	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
@@ -27,6 +28,7 @@ func TestJobController_New(t *testing.T) {
 }
 
 func TestJobController_InsertNotifications(t *testing.T) {
+	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
 	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
@@ -49,6 +51,7 @@ func TestJobController_InsertNotifications(t *testing.T) {
 }
 
 func TestJobController_NotificationOnJobCreate(t *testing.T) {
+	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
 	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()

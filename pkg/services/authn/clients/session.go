@@ -60,7 +60,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		return nil, authn.NewTokenNeedsRotationError(token.UserId)
 	}
 
 	ident := &authn.Identity{

@@ -47,6 +47,10 @@ func (v InlineSecureValue) IsZero() bool {
 	return v.Create.IsZero() && v.Name == "" && !v.Remove
 }
 
+func (InlineSecureValue) OpenAPIModelName() string {
+	return OpenAPIPrefix + "InlineSecureValue"
+}
+
 // OpenAPIDefinition returns the JSONSchema that manually ensures oneOf(create | name | remove) is set.
 func (InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
