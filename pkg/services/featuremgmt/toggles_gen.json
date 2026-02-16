@@ -4236,6 +4236,20 @@
     },
     {
       "metadata": {
+        "name": "reportingV2Layouts",
+        "resourceVersion": "1771254621222",
+        "creationTimestamp": "2026-02-16T15:10:21Z"
+      },
+      "spec": {
+        "description": "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "restoreDashboards",
         "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-05-23T14:35:54Z",

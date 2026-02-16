@@ -81,6 +81,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-08,perPanelFiltering,experimental,@grafana/dashboards-squad,false,false,true
 2023-11-03,panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
+2026-02-16,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 2025-07-24,timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 2023-12-13,tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
