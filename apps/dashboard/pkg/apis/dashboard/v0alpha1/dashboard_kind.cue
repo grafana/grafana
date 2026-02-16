@@ -230,8 +230,6 @@ lineage: schemas: [{
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
 			staticOptionsOrder?: "before" | "after" | "sorted"
-			// The source that registered the variable (if any)
-			source?: #ControlSourceRef
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
@@ -283,16 +281,6 @@ lineage: schemas: [{
 			uid?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-		// Source information for controls (e.g. variables or links)
-		#DatasourceControlSourceRef: {
-			type: "datasource"
-			ref: #DataSourceRef
-		}
-
-		// Source information for controls (e.g. variables or links)
-		#ControlSourceRef: #DatasourceControlSourceRef
-
-
 		// Links with references to other dashboards or external resources
 		#DashboardLink: {
 			// Title to display with the link
@@ -317,8 +305,6 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
-			// The source that registered the link (if any)
-			source?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 
