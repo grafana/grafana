@@ -23,70 +23,59 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
     };
   }
 
-  const pullingDisabledTooltip = !repo.spec?.sync?.enabled
-    ? t(
-        'provisioning.status-badge.automatic-pulling-disabled-tooltip',
-        'Automatic pulling disabled. Review your connection configuration to enable pulling.'
-      )
-    : undefined;
+  let config: BadgeConfig;
 
   // Sync state takes precedence over disabled state
   if (repo.status?.sync?.state?.length) {
     switch (repo.status.sync.state) {
       case 'success':
-        return {
-          icon: 'check',
-          text: t('provisioning.status-badge.up-to-date', 'Up-to-date'),
-          color: 'green',
-          tooltip: pullingDisabledTooltip,
-        };
+        config = { icon: 'check', text: t('provisioning.status-badge.up-to-date', 'Up-to-date'), color: 'green' };
+        break;
       case 'warning':
-        return {
+        config = {
           color: 'orange',
           text: t('provisioning.status-badge.warning', 'Warning'),
           icon: 'exclamation-triangle',
-          tooltip: pullingDisabledTooltip,
         };
+        break;
       case 'working':
       case 'pending':
-        return {
-          color: 'darkgrey',
-          text: t('provisioning.status-badge.pulling', 'Pulling'),
-          icon: 'spinner',
-          tooltip: pullingDisabledTooltip,
-        };
+        config = { color: 'darkgrey', text: t('provisioning.status-badge.pulling', 'Pulling'), icon: 'spinner' };
+        break;
       case 'error':
-        return {
+        config = {
           color: 'red',
           text: t('provisioning.status-badge.error', 'Error'),
           icon: 'exclamation-triangle',
-          tooltip: pullingDisabledTooltip,
         };
+        break;
       default:
-        return {
+        config = {
           color: 'purple',
           text: t('provisioning.status-badge.unknown', 'Unknown'),
           icon: 'exclamation-triangle',
-          tooltip: pullingDisabledTooltip,
         };
+        break;
     }
-  }
-
-  if (pullingDisabledTooltip) {
-    return {
-      color: 'orange',
-      text: t('provisioning.status-badge.disabled', 'Disabled'),
-      icon: 'info-circle',
-      tooltip: pullingDisabledTooltip,
+  } else if (!repo.spec?.sync?.enabled) {
+    config = { color: 'orange', text: t('provisioning.status-badge.disabled', 'Disabled'), icon: 'info-circle' };
+  } else {
+    config = {
+      color: 'darkgrey',
+      text: t('provisioning.status-badge.pending', 'Pending'),
+      icon: 'spinner',
+      tooltip: t('provisioning.status-badge.waiting-for-health-check', 'Waiting for health check to run'),
     };
   }
 
-  return {
-    color: 'darkgrey',
-    text: t('provisioning.status-badge.pending', 'Pending'),
-    icon: 'spinner',
-    tooltip: t('provisioning.status-badge.waiting-for-health-check', 'Waiting for health check to run'),
-  };
+  if (!repo.spec?.sync?.enabled) {
+    config.tooltip = t(
+      'provisioning.status-badge.automatic-pulling-disabled-tooltip',
+      'Automatic pulling disabled. Review your connection configuration to enable pulling.'
+    );
+  }
+
+  return config;
 }
 
 interface StatusBadgeProps {
