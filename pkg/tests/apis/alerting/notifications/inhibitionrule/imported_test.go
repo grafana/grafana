@@ -46,7 +46,7 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
 	require.NoError(t, err)
 
-	identifier := "test-imported-inhibition-rules"
+	identifier := "integration-test"
 	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{

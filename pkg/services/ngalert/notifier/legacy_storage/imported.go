@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type ImportedConfigRevision struct {
@@ -167,7 +168,14 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 
 	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
 	for i, rule := range scopedRules {
-		name := fmt.Sprintf("%s-inhibit-%d", e.identifier, i)
+		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", e.identifier)
+
+		intFmt := "%d"
+		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength > 0 {
+			intFmt = fmt.Sprintf("%%0%dd", padLength)
+		}
+		name := fmt.Sprintf(namePrefix+intFmt, i)
+
 		ir, err := InhibitRuleToInhibitionRule(name, rule, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
 		if err != nil {
 			return nil, err

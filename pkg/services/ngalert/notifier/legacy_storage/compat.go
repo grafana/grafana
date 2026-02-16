@@ -227,7 +227,8 @@ func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenanc
 	}
 
 	uid := NameToUid(name)
-	if len(uid) > ualert.UIDMaxLength {
+	// imported inhibition rules have purposefully long names/uid's to ensure no conflict with non-imported ones
+	if origin != models.ResourceOriginImported && len(uid) > ualert.UIDMaxLength {
 		return nil, fmt.Errorf("inhibition rule name is too long (generated UID exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
