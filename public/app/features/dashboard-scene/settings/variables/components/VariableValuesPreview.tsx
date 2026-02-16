@@ -118,7 +118,7 @@ function VariableValuesWithPropsPreview({
         className={styles.table}
         columns={columns}
         data={data}
-        getRowId={(r) => String(r.value)}
+        getRowId={(r) => JSON.stringify(r)}
         pageSize={10}
       />
     </div>
