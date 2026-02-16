@@ -39,7 +39,9 @@ const baseLinkProps: ComponentProps<typeof DashboardLinksDashboard>['link'] = {
   type: 'dashboards',
 };
 
-const getDashboardLink = () => screen.findByRole('link', { name: new RegExp(dashbdD.item.title) });
+// Dropdown uses Menu.Item (role="menuitem"); list uses LinkButton (role="link")
+const getDashboardLink = (inDropdown: boolean) =>
+  screen.findByRole(inDropdown ? 'menuitem' : 'link', { name: new RegExp(dashbdD.item.title) });
 
 const renderComponent = (props: DeepPartial<ComponentProps<typeof DashboardLinksDashboard>> = {}) => {
   return render(
@@ -65,7 +67,7 @@ describe.each([
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
       expect(await screen.findByRole('menu')).toBeInTheDocument();
-      expect(await getDashboardLink()).toBeInTheDocument();
+      expect(await getDashboardLink(true)).toBeInTheDocument();
     });
 
     it('renders dropdown items with target _blank', async () => {
@@ -73,7 +75,7 @@ describe.each([
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
       expect(await screen.findByRole('menu')).toBeInTheDocument();
-      expect(await getDashboardLink()).toHaveAttribute('target', '_blank');
+      expect(await getDashboardLink(true)).toHaveAttribute('target', '_blank');
     });
 
     it('handles an empty list of links', async () => {
@@ -87,7 +89,7 @@ describe.each([
     it('renders a list of links', async () => {
       renderComponent({ link: { asDropdown: false } });
 
-      const dashboardLink = await getDashboardLink();
+      const dashboardLink = await getDashboardLink(false);
       expect(dashboardLink).toBeInTheDocument();
       expect(dashboardLink).not.toHaveAttribute('target', '_blank');
     });
@@ -95,7 +97,7 @@ describe.each([
     it('renders a list of links with target _blank', async () => {
       renderComponent({ link: { asDropdown: false, targetBlank: true } });
 
-      const dashboardLink = await getDashboardLink();
+      const dashboardLink = await getDashboardLink(false);
       expect(dashboardLink).toHaveAttribute('target', '_blank');
     });
 

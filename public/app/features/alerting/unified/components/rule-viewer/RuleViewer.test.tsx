@@ -68,7 +68,7 @@ const ELEMENTS = {
       },
       pluginActions: {
         sloDashboard: byRole('menuitem', { name: /SLO dashboard/i }),
-        declareIncident: byRole('link', { name: /Declare incident/i }),
+        declareIncident: byRole('menuitem', { name: /Declare incident/i }),
         assertsWorkbench: byRole('menuitem', { name: /Open workbench/i }),
       },
     },
