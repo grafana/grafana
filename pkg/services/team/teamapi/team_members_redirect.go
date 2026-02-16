@@ -83,9 +83,9 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 	updateRevertJobs, err := tapi.updateTeamBindings(ctx, bindingUpdates)
 	if err != nil {
+		revertJobs = append(revertJobs, updateRevertJobs...)
 		return response.Error(http.StatusInternalServerError, "Failed to update team bindings", err)
 	}
-	revertJobs = append(revertJobs, updateRevertJobs...)
 
 	adminRevertJobs, err := tapi.createTeamBindingsForUsers(
 		ctx,
@@ -95,9 +95,9 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		iamv0alpha1.TeamBindingTeamPermissionAdmin,
 	)
 	if err != nil {
+		revertJobs = append(revertJobs, adminRevertJobs...)
 		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for admins", err)
 	}
-	revertJobs = append(revertJobs, adminRevertJobs...)
 
 	memberRevertJobs, err := tapi.createTeamBindingsForUsers(
 		ctx,
@@ -107,15 +107,15 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		iamv0alpha1.TeamBindingTeamPermissionMember,
 	)
 	if err != nil {
+		revertJobs = append(revertJobs, memberRevertJobs...)
 		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for members", err)
 	}
-	revertJobs = append(revertJobs, memberRevertJobs...)
 
 	deleteRevertJobs, err := tapi.deleteTeamBindings(ctx, bindingsToDelete)
 	if err != nil {
+		revertJobs = append(revertJobs, deleteRevertJobs...)
 		return response.Error(http.StatusInternalServerError, "Failed to delete team bindings", err)
 	}
-	revertJobs = append(revertJobs, deleteRevertJobs...)
 
 	return response.Success("Team memberships have been updated")
 }
@@ -156,6 +156,38 @@ type bindingUpdate struct {
 	updated  *iamv0alpha1.TeamBinding
 }
 
+// checkAndCreateBindingUpdate checks if a binding needs to be updated to a target permission.
+// Returns: (wasFound, bindingUpdate, needsUpdate)
+// - wasFound: whether the email was in the map
+// - bindingUpdate: the update to apply (only valid if needsUpdate is true)
+// - needsUpdate: whether the permission needs to be changed
+func checkAndCreateBindingUpdate(
+	binding iamv0alpha1.TeamBinding,
+	userEmail string,
+	emailsMap map[string]struct{},
+	targetPermission iamv0alpha1.TeamBindingTeamPermission,
+) (bool, bindingUpdate, bool) {
+	if _, exists := emailsMap[userEmail]; !exists {
+		return false, bindingUpdate{}, false
+	}
+
+	delete(emailsMap, userEmail)
+
+	if binding.Spec.Permission == targetPermission {
+		return true, bindingUpdate{}, false
+	}
+
+	original := binding.DeepCopy()
+	updated := binding.DeepCopy()
+
+	updated.Spec.Permission = targetPermission
+
+	return true, bindingUpdate{
+		original: original,
+		updated:  updated,
+	}, true
+}
+
 // processExistingBindings iterates through existing TeamBindings and determines which ones
 // need to be updated or deleted based on the desired admin and member emails.
 // It modifies adminEmails and memberEmails maps by removing processed entries.
@@ -164,9 +196,11 @@ func (tapi *TeamAPI) processExistingBindings(
 	existingBindings *iamv0alpha1.TeamBindingList,
 	adminEmails map[string]struct{},
 	memberEmails map[string]struct{},
-) (bindingUpdates []bindingUpdate, bindingsToDelete []iamv0alpha1.TeamBinding) {
-	bindingUpdates = make([]bindingUpdate, 0)
-	bindingsToDelete = make([]iamv0alpha1.TeamBinding, 0)
+) ([]bindingUpdate, []iamv0alpha1.TeamBinding) {
+	var (
+		bindingUpdates   = make([]bindingUpdate, 0)
+		bindingsToDelete = make([]iamv0alpha1.TeamBinding, 0)
+	)
 
 	for _, binding := range existingBindings.Items {
 		userID, err := strconv.ParseInt(binding.Spec.Subject.Name, 10, 64)
@@ -181,41 +215,33 @@ func (tapi *TeamAPI) processExistingBindings(
 			continue
 		}
 
-		if _, isAdmin := adminEmails[user.Email]; isAdmin {
-			delete(adminEmails, user.Email)
-
-			if binding.Spec.Permission == iamv0alpha1.TeamBindingTeamPermissionAdmin {
-				continue
+		wasAdmin, adminUpdate, needsAdminUpdate := checkAndCreateBindingUpdate(
+			binding,
+			user.Email,
+			adminEmails,
+			iamv0alpha1.TeamBindingTeamPermissionAdmin,
+		)
+		if wasAdmin {
+			if needsAdminUpdate {
+				bindingUpdates = append(bindingUpdates, adminUpdate)
 			}
-
-			original := binding.DeepCopy()
-			updated := binding.DeepCopy()
-			updated.Spec.Permission = iamv0alpha1.TeamBindingTeamPermissionAdmin
-			bindingUpdates = append(bindingUpdates, bindingUpdate{
-				original: original,
-				updated:  updated,
-			})
 			continue
 		}
 
-		// Check if this user should be a member
-		if _, isMember := memberEmails[user.Email]; isMember {
-			delete(memberEmails, user.Email)
-
-			if binding.Spec.Permission == iamv0alpha1.TeamBindingTeamPermissionMember {
-				continue
+		wasMember, memberUpdate, needsMemberUpdate := checkAndCreateBindingUpdate(
+			binding,
+			user.Email,
+			memberEmails,
+			iamv0alpha1.TeamBindingTeamPermissionMember,
+		)
+		if wasMember {
+			if needsMemberUpdate {
+				bindingUpdates = append(bindingUpdates, memberUpdate)
 			}
-
-			original := binding.DeepCopy()
-
-			updated := binding.DeepCopy()
-			updated.Spec.Permission = iamv0alpha1.TeamBindingTeamPermissionMember
-			bindingUpdates = append(bindingUpdates, bindingUpdate{
-				original: original,
-				updated:  updated,
-			})
+			continue
 		}
 
+		// User is not in the new list, mark for deletion
 		bindingsToDelete = append(bindingsToDelete, binding)
 	}
 
@@ -230,16 +256,16 @@ func (tapi *TeamAPI) updateTeamBindings(
 	revertJobs := make([]revertJob, 0, len(bindingUpdates))
 
 	for _, update := range bindingUpdates {
-		_, err := tapi.teamBindingClient.Update(ctx, update.updated, resource.UpdateOptions{})
-		if err != nil {
-			return revertJobs, fmt.Errorf("failed to update team binding for user %s: %w", update.updated.Spec.Subject.Name, err)
+		if _, err := tapi.teamBindingClient.Update(ctx, update.updated, resource.UpdateOptions{}); err != nil {
+			return revertJobs, fmt.Errorf("update team binding for user %s: %w", update.updated.Spec.Subject.Name, err)
 		}
 
-		// Add revert job to restore original state
-		originalBinding := update.original
 		revertJobs = append(revertJobs, func() error {
-			_, err := tapi.teamBindingClient.Update(ctx, originalBinding, resource.UpdateOptions{})
-			return err
+			if _, err := tapi.teamBindingClient.Update(ctx, update.original, resource.UpdateOptions{}); err != nil {
+				return fmt.Errorf("restore original team binding for user %s: %w", update.original.Spec.Subject.Name, err)
+			}
+
+			return nil
 		})
 	}
 
@@ -291,6 +317,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 
 		bindingName := created.Name
 		bindingNamespace := created.Namespace
+
 		revertJobs = append(revertJobs, func() error {
 			return tapi.teamBindingClient.Delete(
 				ctx, resource.Identifier{
@@ -313,12 +340,11 @@ func (tapi *TeamAPI) deleteTeamBindings(
 	for _, binding := range bindingsToDelete {
 		bindingToRestore := binding.DeepCopy()
 
-		err := tapi.teamBindingClient.Delete(ctx, resource.Identifier{
+		if err := tapi.teamBindingClient.Delete(ctx, resource.Identifier{
 			Namespace: binding.Namespace,
 			Name:      binding.Name,
-		}, resource.DeleteOptions{})
-		if err != nil {
-			return revertJobs, fmt.Errorf("failed to delete team binding %s: %w", binding.Name, err)
+		}, resource.DeleteOptions{}); err != nil {
+			return revertJobs, fmt.Errorf("delete team binding %s: %w", binding.Name, err)
 		}
 
 		revertJobs = append(revertJobs, func() error {
