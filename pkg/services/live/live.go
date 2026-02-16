@@ -883,7 +883,7 @@ func subscribeStatusToCentrifugeError(status backend.SubscribeStreamStatus) *cen
 	case backend.SubscribeStreamStatusNotFound:
 		return centrifuge.ErrorUnknownChannel
 	case backend.SubscribeStreamStatusPermissionDenied:
-		return centrifuge.ErrorUnauthorized
+		return centrifuge.ErrorPermissionDenied
 	default:
 		return centrifuge.ErrorInternal
 	}

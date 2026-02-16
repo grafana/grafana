@@ -70,6 +70,9 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           }),
           filter((event) => isLiveChannelMessageEvent(event)),
           map((event) => event.message),
+          // No RxJS retry here — centrifuge handles transient reconnection
+          // at the protocol level. Non-temporary errors (e.g. permission denied)
+          // should surface immediately rather than being retried.
           catchError((error) => {
             console.error('Live channel watch stream error:', error);
             throw error;
