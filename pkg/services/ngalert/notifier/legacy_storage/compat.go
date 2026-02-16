@@ -5,14 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"strings"
 
 	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 var NameToUid = models.NameToUid
@@ -211,4 +215,30 @@ func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName
 		}
 	}
 	return false, groupBy
+}
+
+func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance models.Provenance, origin models.ResourceOrigin) (*models.InhibitionRule, error) {
+	if name = strings.TrimSpace(name); name == "" {
+		return nil, fmt.Errorf("inhibition rule name must not be empty")
+	}
+
+	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+
+	uid := NameToUid(name)
+	if len(uid) > ualert.UIDMaxLength {
+		return nil, fmt.Errorf("inhibition rule name is too long (generated UID exceeds %d characters)", ualert.UIDMaxLength)
+	}
+
+	ir := &models.InhibitionRule{
+		Name:        name,
+		InhibitRule: rule,
+		UID:         uid,
+		Provenance:  provenance,
+		Origin:      origin,
+	}
+	ir.Version = ir.Fingerprint()
+
+	return ir, nil
 }

@@ -24,26 +24,6 @@ type InhibitionRule struct {
 	Origin             ResourceOrigin `json:"origin,omitempty"`
 }
 
-// NewInhibitionRule creates a models.InhibitionRule
-func NewInhibitionRule(name string, rule config.InhibitRule, prov Provenance) *InhibitionRule {
-	origin := ResourceOriginGrafana
-	if prov == ProvenanceConvertedPrometheus {
-		origin = ResourceOriginImported
-	}
-
-	ir := &InhibitionRule{
-		Name:        name,
-		InhibitRule: rule,
-		UID:         NameToUid(name),
-		Provenance:  prov,
-		Origin:      origin,
-	}
-
-	ir.Version = ir.Hash()
-
-	return ir
-}
-
 func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First, manually unmarshal our own fields
 	var temp struct {
@@ -106,7 +86,7 @@ func (ir *InhibitionRule) Validate() error {
 	return nil
 }
 
-func (ir *InhibitionRule) Hash() string {
+func (ir *InhibitionRule) Fingerprint() string {
 	sum := fnv.New64a()
 	separator := []byte{255}
 

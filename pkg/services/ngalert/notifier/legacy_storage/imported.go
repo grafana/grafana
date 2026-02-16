@@ -168,7 +168,10 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
 	for i, rule := range scopedRules {
 		name := fmt.Sprintf("%s-inhibit-%d", e.identifier, i)
-		ir := models.NewInhibitionRule(name, rule, models.ProvenanceConvertedPrometheus)
+		ir, err := InhibitRuleToInhibitionRule(name, rule, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		if err != nil {
+			return nil, err
+		}
 		res[name] = ir
 	}
 

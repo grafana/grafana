@@ -101,7 +101,11 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.Inhibi
 		return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
-	created := models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
+	if err != nil {
+		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+	}
+
 	revision.Config.ManagedInhibitionRules[created.Name] = created
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -155,7 +159,11 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 	}
 
 	// Create the updated rule with all fields properly set
-	updated := models.NewInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
+	updated, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
+	if err != nil {
+		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+	}
+
 	revision.Config.ManagedInhibitionRules[updated.Name] = updated
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -243,7 +251,7 @@ func (svc *Service) checkOptimisticConcurrency(existing models.InhibitionRule, p
 		}
 		return nil
 	}
-	if currentVersion := existing.Hash(); currentVersion != desiredVersion {
+	if currentVersion := existing.Fingerprint(); currentVersion != desiredVersion {
 		return provisioning.ErrVersionConflict.Errorf("provided version %s of inhibition rule %s does not match current version %s", desiredVersion, existing.Name, currentVersion)
 	}
 	return nil

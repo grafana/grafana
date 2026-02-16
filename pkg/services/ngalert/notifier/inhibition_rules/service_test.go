@@ -212,8 +212,9 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() models.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
-				r = *models.NewInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
-				return r
+				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance, models.ResourceOriginGrafana)
+				require.Nil(t, err)
+				return *updated
 			}(),
 		},
 		{
@@ -228,8 +229,9 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() models.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
-				r = *models.NewInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
-				return r
+				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance, models.ResourceOriginGrafana)
+				require.Nil(t, err)
+				return *updated
 			}(),
 		},
 		{
