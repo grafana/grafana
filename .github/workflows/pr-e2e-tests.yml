@@ -122,6 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
@@ -227,6 +228,7 @@ jobs:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
@@ -274,6 +276,7 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
@@ -307,6 +310,7 @@ jobs:
     runs-on: ubuntu-x64-xlarge
     permissions:
       contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -419,6 +423,9 @@ jobs:
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
         if: github.event.pull_request.head.repo.fork == false
@@ -508,6 +515,7 @@ jobs:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
