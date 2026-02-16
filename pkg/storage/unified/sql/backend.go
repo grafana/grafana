@@ -86,7 +86,7 @@ func NewStorageBackend(
 		MustString(string(options.StorageTypeUnified)))
 	switch storageType {
 	case options.StorageTypeFile:
-		return newFileBackend(cfg)
+		return NewFileBackend(cfg)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
 	default: // fall back to SQL backend
@@ -159,7 +159,7 @@ func NewStorageBackend(
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
-func newFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	dataPath := apiserverCfg.Key("storage_path").
 		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
