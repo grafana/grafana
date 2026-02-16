@@ -8,12 +8,9 @@ import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 
-import { DASHBOARD_LIBRARY_ROUTES } from '../types';
-
 import { DashboardCard } from './DashboardCard';
 import {
   CONTENT_KINDS,
-  CREATION_ORIGINS,
   DashboardLibraryInteractions,
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,

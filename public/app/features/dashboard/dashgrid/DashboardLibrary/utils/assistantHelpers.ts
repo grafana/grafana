@@ -97,5 +97,5 @@ export function buildTemplateContextTitle(dashboard: PluginDashboard | GnetDashb
  * Builds the prompt for the Grafana Assistant when using a dashboard template.
  */
 export function buildAssistantPrompt(title: string): string {
-  return `Create a new dashboard based on the "${title}" template.`;
+  return `Create a new dashboard based on this dashboard template.`;
 }

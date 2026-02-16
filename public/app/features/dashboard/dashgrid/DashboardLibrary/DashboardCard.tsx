@@ -81,6 +81,7 @@ function DashboardCardComponent({
         autoSend: true,
       });
       onClose?.();
+      onClick?.();
     }
   };
 
