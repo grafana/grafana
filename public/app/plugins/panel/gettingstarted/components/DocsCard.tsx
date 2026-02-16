@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,7 +18,7 @@ export const DocsCard = ({ card }: Props) => {
 
   return (
     <div className={styles.card}>
-      <div className={cardContent}>
+      <div className={cx(cardContent, styles.content)}>
         <a
           href={`${card.href}?utm_source=grafana_gettingstarted`}
           className={styles.url}
@@ -49,10 +49,19 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
     card: css({
       ...cardStyle(theme, complete),
 
+      display: 'flex',
+      flexDirection: 'column',
       minWidth: '230px',
 
       [theme.breakpoints.down('md')]: {
         minWidth: '192px',
+      },
+    }),
+    content: css({
+      flexGrow: 1,
+
+      '&:has(> a:hover)': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
       },
     }),
     heading: css({
@@ -65,12 +74,12 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
     }),
     url: css({
       display: 'inline-block',
+      height: '100%',
     }),
     learnUrl: css({
       a: {
         borderTop: `1px solid ${theme.colors.border.weak}`,
-        position: 'absolute',
-        bottom: 0,
+        display: 'inline-block',
         padding: theme.spacing(1, 2),
         width: '100%',
       },
