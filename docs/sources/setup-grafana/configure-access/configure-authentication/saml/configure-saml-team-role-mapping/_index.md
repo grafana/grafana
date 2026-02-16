@@ -136,7 +136,7 @@ To send only specific groups, change the regular expression filter. For example,
 
 ### Step 2: Configure Grafana to map groups to roles
 
-Use the group attribute for role assignment by setting `assertion_attribute_role` to your groups attribute name:
+Use the group attribute for role assignment by setting `assertion_attribute_role` to your group attribute's name:
 
 ```ini
 [auth.saml]
