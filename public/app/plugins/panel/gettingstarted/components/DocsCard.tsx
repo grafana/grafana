@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 
 import { Card } from '../types';
 
@@ -30,16 +30,16 @@ export const DocsCard = ({ card }: Props) => {
           <h4 className={styles.title}>{card.title}</h4>
         </a>
       </div>
-      <a
-        href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
-        className={styles.learnUrl}
-        target="_blank"
-        rel="noreferrer"
-        onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.learnHref })}
-      >
-        <Trans i18nKey="gettingstarted.docs-card.learn-how">Learn how in the docs</Trans>{' '}
-        <Icon name="external-link-alt" />
-      </a>
+      <div className={styles.learnUrl}>
+        <TextLink
+          href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
+          external
+          inline={false}
+          onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.learnHref })}
+        >
+          <Trans i18nKey="gettingstarted.docs-card.learn-how">Learn how in the docs</Trans>
+        </TextLink>
+      </div>
     </div>
   );
 };
@@ -67,11 +67,13 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
       display: 'inline-block',
     }),
     learnUrl: css({
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      position: 'absolute',
-      bottom: 0,
-      padding: theme.spacing(1, 2),
-      width: '100%',
+      a: {
+        borderTop: `1px solid ${theme.colors.border.weak}`,
+        position: 'absolute',
+        bottom: 0,
+        padding: theme.spacing(1, 2),
+        width: '100%',
+      },
     }),
   };
 };
