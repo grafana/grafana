@@ -816,8 +816,11 @@ VariableOption: {
 
 // Source information for controls (e.g. variables or links)
 DatasourceControlSourceRef: {
-	type: "datasource"
-	ref: DataSourceRef
+  type: "datasource"
+  ref: {
+	// The plugin type-id
+	type?: string
+  }
 }
 
 ControlSourceRef: DatasourceControlSourceRef

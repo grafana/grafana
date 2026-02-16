@@ -131,8 +131,6 @@ DashboardLink: {
 	keepTime: bool | *false
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: DashboardLinkPlacement
-	// The source that registered the link (if any)
-	source?: ControlSourceRef
 }
 
 // Dashboard Link placement. Defines where the link should be displayed.
@@ -810,14 +808,6 @@ VariableOption: {
 	properties?: {[string]: string}
 }
 
-// Source information for controls (e.g. variables or links)
-DatasourceControlSourceRef: {
-	type: "datasource"
-	ref: DataSourceRef
-}
-
-ControlSourceRef: DatasourceControlSourceRef
-
 // Query variable specification
 QueryVariableSpec: {
 	name: string | *""
@@ -844,7 +834,6 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
-	source?: ControlSourceRef
 }
 
 // Query variable kind
@@ -865,7 +854,6 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	source?: ControlSourceRef
 }
 
 // Text variable kind
@@ -886,7 +874,6 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	source?: ControlSourceRef
 }
 
 // Constant variable kind
@@ -914,7 +901,6 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	source?: ControlSourceRef
 }
 
 // Datasource variable kind
@@ -940,7 +926,6 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	source?: ControlSourceRef
 }
 
 // Interval variable kind
@@ -964,7 +949,6 @@ CustomVariableSpec: {
 	description?: string
 	allowCustomValue: bool | *true
 	valuesFormat?: "csv" | "json"
-	source?: ControlSourceRef
 }
 
 // Custom variable kind
@@ -988,7 +972,6 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	source?: ControlSourceRef
 }
 
 // Group variable kind
@@ -1009,7 +992,6 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	source?: ControlSourceRef
 }
 
 // Define the MetricFindValue type
@@ -1050,7 +1032,6 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
-	source?: ControlSourceRef
 }
 
 SwitchVariableKind: {

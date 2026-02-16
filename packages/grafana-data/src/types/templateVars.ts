@@ -1,4 +1,5 @@
 import { DataSourceRef } from '@grafana/schema';
+import { ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { LoadingState } from './data';
 import { MetricFindValue } from './datasource';
@@ -199,13 +200,6 @@ export interface BaseVariableModel {
   description: string | null;
   usedInRepeat?: boolean;
   source?: ControlSourceRef;
-}
-
-export type ControlSourceRef = DatasourceControlSourceRef;
-
-export interface DatasourceControlSourceRef {
-  type: 'datasource';
-  ref: DataSourceRef;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {
