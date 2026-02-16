@@ -161,7 +161,13 @@ With this configuration:
 Group names are case-sensitive. Ensure the group names in Grafana configuration match exactly with the Okta group names.
 {{< /admonition >}}
 
-For Grafana Cloud users configuring SAML through the UI:
+### Grafana Cloud UI configuration
+
+{{< admonition type="note" >}}
+The following steps apply only to Grafana Cloud. For self-hosted Grafana, use the configuration file settings shown above.
+{{< /admonition >}}
+
+To configure role sync through the Grafana Cloud UI:
 
 1. Go to **Administration** > **Authentication** > **Configure SAML**.
 1. In the **User mapping** section, set:
