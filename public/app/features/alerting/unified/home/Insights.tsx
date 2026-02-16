@@ -15,7 +15,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { Icon, Text, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
 import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
