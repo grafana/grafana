@@ -84,10 +84,10 @@ export const NotificationsList = React.memo(function NotificationsList({
       const toDate = timeRange.to.toISOString();
 
       // Convert label filter to API matchers
-      let groupLabels: CreateNotificationqueryMatcher[] = [];
+      let labels: CreateNotificationqueryMatcher[] = [];
       if (labelFilter && labelFilter.trim()) {
         const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-        groupLabels = matchers.map(matcherToAPIFormat);
+        labels = matchers.map(matcherToAPIFormat);
       }
 
       createNotificationQuery({
@@ -98,7 +98,7 @@ export const NotificationsList = React.memo(function NotificationsList({
           status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
           outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
-          groupLabels,
+          labels,
         },
       });
     } catch {
@@ -258,7 +258,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
-          <NotificationDetails record={record} />
+          <NotificationDetails record={record} onLabelClick={onLabelClick} />
         </div>
       )}
     </Stack>
@@ -280,9 +280,10 @@ function NotificationState({ status }: NotificationStateProps) {
 
 interface NotificationDetailsProps {
   record: NotificationEntry;
+  onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
-function NotificationDetails({ record }: NotificationDetailsProps) {
+function NotificationDetails({ record, onLabelClick }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
   // Split alerts into firing and resolved
@@ -344,7 +345,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
                   <Trans i18nKey="alerting.notifications-scene.labels">Labels:</Trans>
                 </strong>
               </Text>
-              <AlertLabels labels={filteredLabels} size="sm" />
+              <AlertLabels labels={filteredLabels} size="sm" onClick={onLabelClick} />
             </Stack>
           )}
           {hasOtherAnnotations && (

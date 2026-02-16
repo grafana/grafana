@@ -74,7 +74,7 @@ const Notifications = ({ rule }: NotificationsProps) => {
 
     // Convert label filter to API matchers
     const matchers = parsePromQLStyleMatcherLooseSafe(debouncedLabelFilter);
-    const groupLabels = matchers.map((matcher) => ({
+    const labels = matchers.map((matcher) => ({
       type: matcherToOperator(matcher),
       label: matcher.name,
       value: matcher.value,
@@ -88,7 +88,7 @@ const Notifications = ({ rule }: NotificationsProps) => {
         limit: DEFAULT_PAGE_SIZE,
         status: statusFilter,
         outcome: outcomeFilter,
-        groupLabels,
+        labels,
       },
     });
   }, [createNotificationQuery, ruleUID, statusFilter, outcomeFilter, debouncedLabelFilter]);
@@ -231,7 +231,9 @@ const Notifications = ({ rule }: NotificationsProps) => {
         cols={columns}
         isExpandable={true}
         items={items}
-        renderExpandedContent={({ data }) => <NotificationExpandedContent entry={data} />}
+        renderExpandedContent={({ data }) => (
+          <NotificationExpandedContent entry={data} onLabelFilterChange={setLabelFilter} />
+        )}
       />
     );
   }
@@ -351,9 +353,10 @@ const NotificationFilters = ({
 
 interface NotificationExpandedContentProps {
   entry: NotificationEntry;
+  onLabelFilterChange: (value: string) => void;
 }
 
-const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps) => {
+const NotificationExpandedContent = ({ entry, onLabelFilterChange }: NotificationExpandedContentProps) => {
   const firingAlerts =
     entry.alerts?.filter((alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing') ?? [];
   const resolvedAlerts =
@@ -375,7 +378,12 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
               })}
             </Text>
             {firingAlerts.map((alert, index) => (
-              <AlertDetail key={index} alert={alert} groupLabels={entry.groupLabels} />
+              <AlertDetail
+                key={index}
+                alert={alert}
+                groupLabels={entry.groupLabels}
+                onLabelFilterChange={onLabelFilterChange}
+              />
             ))}
           </Stack>
         )}
@@ -387,7 +395,12 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
               })}
             </Text>
             {resolvedAlerts.map((alert, index) => (
-              <AlertDetail key={index} alert={alert} groupLabels={entry.groupLabels} />
+              <AlertDetail
+                key={index}
+                alert={alert}
+                groupLabels={entry.groupLabels}
+                onLabelFilterChange={onLabelFilterChange}
+              />
             ))}
           </Stack>
         )}
@@ -399,9 +412,10 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
 interface AlertDetailProps {
   alert: CreateNotificationqueryNotificationEntryAlert;
   groupLabels: Record<string, string>;
+  onLabelFilterChange: (value: string) => void;
 }
 
-const AlertDetail = ({ alert, groupLabels }: AlertDetailProps) => {
+const AlertDetail = ({ alert, groupLabels, onLabelFilterChange }: AlertDetailProps) => {
   // Filter out labels that are already in groupLabels
   // Also filter out grafana_folder as it's redundant and always the same for a single alert
   const uniqueLabels = Object.fromEntries(
@@ -413,6 +427,12 @@ const AlertDetail = ({ alert, groupLabels }: AlertDetailProps) => {
   const { summary, description, ...otherAnnotations } = alert.annotations;
   const hasOtherAnnotations = Object.keys(otherAnnotations).length > 0;
 
+  const onLabelClick = ([value, label]: [string | undefined, string | undefined]) => {
+    if (label && value) {
+      onLabelFilterChange(`{${label}="${value}"}`);
+    }
+  };
+
   return (
     <Box padding={1.5} backgroundColor="secondary" borderRadius="default" borderStyle="solid" borderColor="weak">
       <Stack direction="column" gap={1}>
@@ -421,7 +441,7 @@ const AlertDetail = ({ alert, groupLabels }: AlertDetailProps) => {
             <Text variant="bodySmall" color="secondary">
               <strong>{t('alerting.notification-history.labels', 'Labels:')}</strong>
             </Text>
-            <AlertLabels labels={uniqueLabels} size="sm" />
+            <AlertLabels labels={uniqueLabels} size="sm" onClick={onLabelClick} />
           </Stack>
         )}
         {hasOtherAnnotations && (
