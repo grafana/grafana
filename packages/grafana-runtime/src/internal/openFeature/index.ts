@@ -1,10 +1,9 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
 import { OpenFeature, ProviderEvents, NOOP_PROVIDER, EventDetails } from '@openfeature/react-sdk';
 
-import { AppEvents, FeatureToggles } from '@grafana/data';
+import { FeatureToggles } from '@grafana/data';
 
 import { config } from '../../config';
-import { getAppEvents } from '../../services';
 import { logError } from '../../utils/logging';
 
 function checkDefaultProvider(event?: EventDetails) {
@@ -21,11 +20,6 @@ function checkDefaultProvider(event?: EventDetails) {
     );
     console.error(err);
     logError(err);
-
-    getAppEvents().publish({
-      type: AppEvents.alertWarning.name,
-      payload: [err.message],
-    });
   }
 }
 
