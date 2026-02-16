@@ -43,7 +43,7 @@ describe('Range Utils', () => {
 
     it('should take timezone into account', () => {
       const deserializedTimeRange = convertRawToRange(defaultRawTimeRange, 'UTC');
-      expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
+      expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00+00:00');
     });
 
     it('should leave the raw part intact if it has calculations', () => {

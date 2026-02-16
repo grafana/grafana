@@ -12,7 +12,7 @@
     "@grafana/ui": "12.4.0-pre",
     "@reduxjs/toolkit": "2.10.1",
     "lodash": "^4.17.23",
-    "moment": "2.30.1",
+    "dayjs": "^1.11.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-use": "17.6.0",

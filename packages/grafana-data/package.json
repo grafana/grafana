@@ -60,7 +60,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "themes-schema": "tsx ./scripts/generateSchema.ts"
+    "themes-schema": "tsx ./scripts/generateSchema.ts",
+    "generate:country-zones": "node scripts/generate-country-zones.js"
   },
   "dependencies": {
     "@braintree/sanitize-url": "7.0.1",
@@ -80,8 +81,7 @@
     "lodash": "^4.17.23",
     "marked": "16.3.0",
     "marked-mangle": "1.1.12",
-    "moment": "2.30.1",
-    "moment-timezone": "0.5.47",
+    "dayjs": "^1.11.13",
     "ol": "10.7.0",
     "papaparse": "5.5.3",
     "react-use": "17.6.0",
