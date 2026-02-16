@@ -295,6 +295,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,queryEditorNext,experimental,@grafana/datapro,false,false,true
 2026-02-18,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-02-18,kubernetesTeamGroupSyncsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false

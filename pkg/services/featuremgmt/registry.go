@@ -2370,7 +2370,15 @@ var (
 		},
 		{
 			Name:         "kubernetesTeamsHandlerRedirect",
-			Description:  "Redirects the request to teams related endpoints to the app platform API",
+			Description:  "Redirects the request of the team endpoints to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamGroupSyncsHandlerRedirect",
+			Description:  "Redirects the request of the team group sync endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

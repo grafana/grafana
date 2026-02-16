@@ -811,8 +811,12 @@ const (
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
 	// FlagKubernetesTeamsHandlerRedirect
-	// Redirects the request to teams related endpoints to the app platform API
+	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+
+	// FlagKubernetesTeamGroupSyncsHandlerRedirect
+	// Redirects the request of the team group sync endpoints to the app platform APIs
+	FlagKubernetesTeamGroupSyncsHandlerRedirect = "kubernetesTeamGroupSyncsHandlerRedirect"
 
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams
