@@ -8,7 +8,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { appEvents } from '../../core/app_events';
 import { ShowModalReactEvent } from '../../types/events';
-import { MoveModal } from '../browse-dashboards/components/BrowseActions/MoveModal';
 
 import { TeamDeleteModal } from './TeamDeleteModal';
 import TeamList from './TeamList';
