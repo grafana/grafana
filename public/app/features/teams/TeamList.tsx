@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { SortingRule } from 'react-table';
 
-import { useListFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { Folder, useLazyListFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
@@ -65,8 +65,7 @@ const TeamList = () => {
   const [sort, setSort] = useState<string>();
   const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
-
-  const { data: folderData } = useListFolderQuery({});
+  const [fetchFolders] = useLazyListFolderQuery();
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
@@ -205,11 +204,16 @@ const TeamList = () => {
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
 
-          const ownedFolders = folderData?.items.filter((folder) =>
-            folder.metadata.ownerReferences?.some((ref) => ref.uid === original.uid)
-          );
+          const showDeleteModal = async () => {
+            let ownedFolders: Folder[] = [];
+            if (config.featureToggles.teamFolders) {
+              const { data: folderData } = await fetchFolders({});
+              ownedFolders =
+                folderData?.items.filter((folder) =>
+                  folder.metadata.ownerReferences?.some((ref) => ref.uid === original.uid)
+                ) || [];
+            }
 
-          const showDeleteModal = () => {
             reportInteraction('grafana_teams_list_delete_button_clicked', {
               ownedFolder: ownedFolders && ownedFolders.length > 0,
             });
@@ -260,7 +264,7 @@ const TeamList = () => {
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, folderData]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, fetchFolders]
   );
 
   return (
