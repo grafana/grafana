@@ -362,6 +362,16 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/css-in-js-validation-unified',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/app/features/alerting/unified/**/*.{ts,tsx}'],
+    rules: {
+      '@grafana/no-invalid-css-properties': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {
