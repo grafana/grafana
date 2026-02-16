@@ -120,7 +120,15 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
   const resolvedTargets = selectedTargetValues
     .map((v) => targets.find((t) => t.value === v))
     .filter((t): t is TargetOption => t !== undefined);
-  const canSubmit = resolvedTargets.length > 0 && outcomes.length > 0;
+
+  // Check whether targets are needed based on the selected outcomes.
+  // If every outcome is dashboard-global (targetKinds === []), targets are optional.
+  const requiresTargets = outcomes.length === 0 || outcomes.some((o) => {
+    const item = outcomeRegistry.getIfExists(o.type);
+    return item ? item.targetKinds.length > 0 : true;
+  });
+
+  const canSubmit = outcomes.length > 0 && (resolvedTargets.length > 0 || !requiresTargets);
 
   const handleAddCondition = useCallback(
     (option: SelectableValue<string>) => {
@@ -202,6 +210,7 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
       dashboardRules = new DashboardRules({
         rules: [rule],
         hiddenTargets: {},
+        collapsedTargets: {},
       });
       dashboard.setState({ dashboardRules });
     }
@@ -217,17 +226,6 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
             placeholder="e.g. Hide when no data"
             value={name}
             onChange={(e) => setName(e.currentTarget.value)}
-          />
-        </Field>
-
-        <Field label="Targets" description="The panels, rows, or tabs this rule applies to">
-          <MultiCombobox
-            options={targets}
-            value={selectedTargetValues}
-            onChange={(options) => setSelectedTargetValues(options.map((o) => String(o.value)))}
-            placeholder="Select targets..."
-            width="auto"
-            minWidth={32}
           />
         </Field>
 
@@ -312,6 +310,19 @@ export function AddRuleForm({ dashboard, onClose, editRuleIndex }: Props) {
             )}
           </Stack>
         </Field>
+
+        {requiresTargets && (
+          <Field label="Targets" description="The panels, rows, or tabs this rule applies to">
+            <MultiCombobox
+              options={targets}
+              value={selectedTargetValues}
+              onChange={(options) => setSelectedTargetValues(options.map((o) => String(o.value)))}
+              placeholder="Select targets..."
+              width="auto"
+              minWidth={32}
+            />
+          </Field>
+        )}
 
         <Stack direction="row" gap={1} justifyContent="flex-end">
           {isEditMode && (

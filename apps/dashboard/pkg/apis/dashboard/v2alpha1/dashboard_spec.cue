@@ -1132,7 +1132,7 @@ DashboardRuleSpec: {
 	conditions: DashboardRuleConditionsSpec
 	// Outcomes to apply when conditions are met. Automatically reversed when
 	// conditions stop being met.
-	outcomes: [...DashboardRuleOutcomeVisibilityKind] // union grows with new outcome types
+	outcomes: [...DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind]
 }
 
 // Refers to a layout item (row, tab) by its stable name field.
@@ -1155,4 +1155,24 @@ DashboardRuleOutcomeVisibilityKind: {
 
 DashboardRuleOutcomeVisibilitySpec: {
 	visibility: "show" | "hide"
+}
+
+// Collapse outcome: collapse or expand the target row.
+DashboardRuleOutcomeCollapseKind: {
+	kind: "DashboardRuleOutcomeCollapse"
+	spec: DashboardRuleOutcomeCollapseSpec
+}
+
+DashboardRuleOutcomeCollapseSpec: {
+	collapse: bool
+}
+
+// Refresh interval outcome: override the dashboard auto-refresh interval.
+DashboardRuleOutcomeRefreshIntervalKind: {
+	kind: "DashboardRuleOutcomeRefreshInterval"
+	spec: DashboardRuleOutcomeRefreshIntervalSpec
+}
+
+DashboardRuleOutcomeRefreshIntervalSpec: {
+	interval: string
 }

@@ -1,8 +1,18 @@
 import { Registry, RegistryItem } from '@grafana/data';
-import { DashboardRuleOutcomeVisibilityKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  DashboardRuleOutcomeCollapseKind,
+  DashboardRuleOutcomeRefreshIntervalKind,
+  DashboardRuleOutcomeVisibilityKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 /** Union of all outcome kind types from the dashboard schema. Grows with new outcome types. */
-export type DashboardRuleOutcomeKindTypes = DashboardRuleOutcomeVisibilityKind;
+export type DashboardRuleOutcomeKindTypes =
+  | DashboardRuleOutcomeVisibilityKind
+  | DashboardRuleOutcomeCollapseKind
+  | DashboardRuleOutcomeRefreshIntervalKind;
+
+/** Element kinds an outcome can target. Empty array means dashboard-global (no targets needed). */
+export type OutcomeTargetKind = 'panel' | 'row' | 'tab';
 
 /**
  * Defines an outcome type that can be registered in the outcome registry.
@@ -14,7 +24,13 @@ export type DashboardRuleOutcomeKindTypes = DashboardRuleOutcomeVisibilityKind;
  * New outcome types (e.g. "switch visualization", "alternate query") can be added
  * by registering an OutcomeRegistryItem without modifying core rules code.
  */
-export interface OutcomeRegistryItem<TSpec = unknown> extends RegistryItem {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface OutcomeRegistryItem<TSpec = any> extends RegistryItem {
+  /**
+   * Which element kinds this outcome can target.
+   * Empty array means dashboard-global -- no targets are required.
+   */
+  targetKinds: OutcomeTargetKind[];
   /** Extract the typed spec from a schema kind representation. */
   specFromKind(kind: DashboardRuleOutcomeKindTypes): TSpec;
   /** Serialize the typed spec back to its schema kind representation. */
@@ -25,7 +41,8 @@ export interface OutcomeRegistryItem<TSpec = unknown> extends RegistryItem {
   Editor?: React.ComponentType<OutcomeEditorProps<TSpec>>;
 }
 
-export interface OutcomeEditorProps<TSpec = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface OutcomeEditorProps<TSpec = any> {
   spec: TSpec;
   onChange: (spec: TSpec) => void;
 }

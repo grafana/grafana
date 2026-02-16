@@ -2052,8 +2052,7 @@ export interface DashboardRuleSpec {
 	conditions: DashboardRuleConditionsSpec;
 	// Outcomes to apply when conditions are met. Automatically reversed when
 	// conditions stop being met.
-	// union grows with new outcome types
-	outcomes: DashboardRuleOutcomeVisibilityKind[];
+	outcomes: (DashboardRuleOutcomeVisibilityKind | DashboardRuleOutcomeCollapseKind | DashboardRuleOutcomeRefreshIntervalKind)[];
 }
 
 export const defaultDashboardRuleSpec = (): DashboardRuleSpec => ({
@@ -2101,6 +2100,44 @@ export interface DashboardRuleOutcomeVisibilitySpec {
 
 export const defaultDashboardRuleOutcomeVisibilitySpec = (): DashboardRuleOutcomeVisibilitySpec => ({
 	visibility: "show",
+});
+
+// Collapse outcome: collapse or expand the target row.
+export interface DashboardRuleOutcomeCollapseKind {
+	kind: "DashboardRuleOutcomeCollapse";
+	spec: DashboardRuleOutcomeCollapseSpec;
+}
+
+export const defaultDashboardRuleOutcomeCollapseKind = (): DashboardRuleOutcomeCollapseKind => ({
+	kind: "DashboardRuleOutcomeCollapse",
+	spec: defaultDashboardRuleOutcomeCollapseSpec(),
+});
+
+export interface DashboardRuleOutcomeCollapseSpec {
+	collapse: boolean;
+}
+
+export const defaultDashboardRuleOutcomeCollapseSpec = (): DashboardRuleOutcomeCollapseSpec => ({
+	collapse: false,
+});
+
+// Refresh interval outcome: override the dashboard auto-refresh interval.
+export interface DashboardRuleOutcomeRefreshIntervalKind {
+	kind: "DashboardRuleOutcomeRefreshInterval";
+	spec: DashboardRuleOutcomeRefreshIntervalSpec;
+}
+
+export const defaultDashboardRuleOutcomeRefreshIntervalKind = (): DashboardRuleOutcomeRefreshIntervalKind => ({
+	kind: "DashboardRuleOutcomeRefreshInterval",
+	spec: defaultDashboardRuleOutcomeRefreshIntervalSpec(),
+});
+
+export interface DashboardRuleOutcomeRefreshIntervalSpec {
+	interval: string;
+}
+
+export const defaultDashboardRuleOutcomeRefreshIntervalSpec = (): DashboardRuleOutcomeRefreshIntervalSpec => ({
+	interval: "",
 });
 
 export interface Spec {

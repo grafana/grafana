@@ -1207,14 +1207,32 @@ func convertRuleConditions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDashboar
 	return out
 }
 
-func convertRuleOutcomes_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKind) []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind {
-	out := make([]dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind, len(in))
+func convertRuleOutcomes_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind) []dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind {
+	out := make([]dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind, len(in))
 	for i, outcome := range in {
-		out[i] = dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind{
-			Kind: outcome.Kind,
-			Spec: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpec{
-				Visibility: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpecVisibility(outcome.Spec.Visibility),
-			},
+		if outcome.DashboardRuleOutcomeVisibilityKind != nil {
+			out[i].DashboardRuleOutcomeVisibilityKind = &dashv2alpha1.DashboardDashboardRuleOutcomeVisibilityKind{
+				Kind: outcome.DashboardRuleOutcomeVisibilityKind.Kind,
+				Spec: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpec{
+					Visibility: dashv2alpha1.DashboardDashboardRuleOutcomeVisibilitySpecVisibility(outcome.DashboardRuleOutcomeVisibilityKind.Spec.Visibility),
+				},
+			}
+		}
+		if outcome.DashboardRuleOutcomeCollapseKind != nil {
+			out[i].DashboardRuleOutcomeCollapseKind = &dashv2alpha1.DashboardDashboardRuleOutcomeCollapseKind{
+				Kind: outcome.DashboardRuleOutcomeCollapseKind.Kind,
+				Spec: dashv2alpha1.DashboardDashboardRuleOutcomeCollapseSpec{
+					Collapse: outcome.DashboardRuleOutcomeCollapseKind.Spec.Collapse,
+				},
+			}
+		}
+		if outcome.DashboardRuleOutcomeRefreshIntervalKind != nil {
+			out[i].DashboardRuleOutcomeRefreshIntervalKind = &dashv2alpha1.DashboardDashboardRuleOutcomeRefreshIntervalKind{
+				Kind: outcome.DashboardRuleOutcomeRefreshIntervalKind.Kind,
+				Spec: dashv2alpha1.DashboardDashboardRuleOutcomeRefreshIntervalSpec{
+					Interval: outcome.DashboardRuleOutcomeRefreshIntervalKind.Spec.Interval,
+				},
+			}
 		}
 	}
 	return out

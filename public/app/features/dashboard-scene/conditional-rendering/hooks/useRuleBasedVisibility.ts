@@ -8,7 +8,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 let placeholderRules: DashboardRules | undefined;
 function getPlaceholderRules(): DashboardRules {
   if (!placeholderRules) {
-    placeholderRules = new DashboardRules({ rules: [], hiddenTargets: {} });
+    placeholderRules = new DashboardRules({ rules: [], hiddenTargets: {}, collapsedTargets: {} });
   }
   return placeholderRules;
 }

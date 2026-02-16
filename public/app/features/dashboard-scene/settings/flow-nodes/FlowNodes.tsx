@@ -3,7 +3,7 @@ import { Handle, NodeProps, Position } from '@xyflow/react';
 import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, IconName, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 // --- Rule node ---
 
@@ -256,9 +256,7 @@ export const OutcomeNode = memo(({ data }: NodeProps) => {
   const { kind, spec } = data as OutcomeNodeData;
 
   const outcomeLabel = getOutcomeLabel(kind, spec);
-  const iconName = kind === 'DashboardRuleOutcomeVisibility'
-    ? (spec.visibility === 'hide' ? 'eye-slash' : 'eye')
-    : 'cog';
+  const iconName = getOutcomeIcon(kind, spec);
 
   return (
     <div className={styles.node}>
@@ -280,10 +278,27 @@ export const OutcomeNode = memo(({ data }: NodeProps) => {
 
 OutcomeNode.displayName = 'OutcomeNode';
 
+function getOutcomeIcon(kind: string, spec: Record<string, unknown>): IconName {
+  switch (kind) {
+    case 'DashboardRuleOutcomeVisibility':
+      return spec.visibility === 'hide' ? 'eye-slash' : 'eye';
+    case 'DashboardRuleOutcomeCollapse':
+      return spec.collapse ? 'angle-double-down' : 'angle-double-up';
+    case 'DashboardRuleOutcomeRefreshInterval':
+      return 'sync';
+    default:
+      return 'cog';
+  }
+}
+
 function getOutcomeTypeName(kind: string): string {
   switch (kind) {
     case 'DashboardRuleOutcomeVisibility':
       return 'Visibility';
+    case 'DashboardRuleOutcomeCollapse':
+      return 'Collapse';
+    case 'DashboardRuleOutcomeRefreshInterval':
+      return 'Refresh interval';
     default:
       return kind;
   }
@@ -293,6 +308,10 @@ function getOutcomeLabel(kind: string, spec: Record<string, unknown>): string {
   switch (kind) {
     case 'DashboardRuleOutcomeVisibility':
       return spec.visibility === 'hide' ? 'Hide element' : 'Show element';
+    case 'DashboardRuleOutcomeCollapse':
+      return spec.collapse ? 'Collapse row' : 'Expand row';
+    case 'DashboardRuleOutcomeRefreshInterval':
+      return `Interval: ${spec.interval}`;
     default:
       return JSON.stringify(spec);
   }
