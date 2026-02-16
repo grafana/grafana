@@ -82,6 +82,17 @@ func IsQuotaExceeded(conditions []metav1.Condition) bool {
 	return false
 }
 
+// IsQuotaReached checks if the resource quota condition indicates the quota has been reached (at limit).
+func IsQuotaReached(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionTrue &&
+				conditions[i].Reason == provisioning.ReasonQuotaReached
+		}
+	}
+	return false
+}
+
 func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
 	if quota.MaxResourcesPerRepository == 0 {
 		return true
