@@ -1,11 +1,14 @@
 package conversion
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"k8s.io/apimachinery/pkg/conversion"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -15,6 +18,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func getLogger() logging.Logger {
@@ -76,6 +80,12 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 // It optionally runs a data loss check function after successful conversion
 func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
 	return func(a, b interface{}, scope conversion.Scope) error {
+		_, span := tracing.Start(context.Background(), "dashboard.conversion.metrics_wrapper",
+			attribute.String("source.api_version", sourceVersionAPI),
+			attribute.String("target.api_version", targetVersionAPI),
+		)
+		defer span.End()
+
 		// Extract dashboard UID and schema version from source
 		var dashboardUID string
 		var sourceSchemaVersion interface{}
@@ -102,6 +112,13 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			// Don't track schema version for v2+ (redundant with API version)
 		}
 
+		span.SetAttributes(attribute.String("dashboard.uid", dashboardUID))
+		if sourceSchemaVersion != nil {
+			if schemaVer, ok := sourceSchemaVersion.(float64); ok {
+				span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
+			}
+		}
+
 		// Determine target schema version based on target type
 		// Only for v0/v1 dashboards
 		switch b.(type) {
@@ -125,6 +142,13 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		// If conversion succeeded, run data loss check
 		if err == nil {
 			err = checkConversionDataLoss(sourceVersionAPI, targetVersionAPI, a, b)
+		}
+
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		} else {
+			span.SetStatus(codes.Ok, "conversion successful")
 		}
 
 		// Report conversion-level metrics and logs
