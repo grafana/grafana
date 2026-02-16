@@ -869,6 +869,8 @@ type VariableModel struct {
 	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
 	// Ordering of static options in relation to options returned from data source for query variable
 	StaticOptionsOrder *VariableModelStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
+	// The source that registered the variable (if any)
+	Source *ControlSourceRef `json:"source,omitempty"`
 }
 
 // NewVariableModel creates a new VariableModel object.

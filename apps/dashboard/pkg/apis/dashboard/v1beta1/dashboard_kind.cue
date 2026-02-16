@@ -230,6 +230,8 @@ lineage: schemas: [{
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
 			staticOptionsOrder?: "before" | "after" | "sorted"
+			// The source that registered the variable (if any)
+			source?: #ControlSourceRef
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 

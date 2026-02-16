@@ -42,9 +42,8 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
             // Putting under the dashbaord controls menu by default
             hide: VariableHide.inControlsMenu,
             source: {
-              uid: ds.uid,
-              sourceId: ds.type,
-              sourceType: 'datasource',
+              type: 'datasource' as const,
+              ref: ds.getRef(),
             },
           }))
         );
@@ -63,9 +62,8 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
             // Putting under the dashboard-controls menu by default
             placement: 'inControlsMenu' as const,
             source: {
-              uid: ds.uid,
-              sourceId: ds.type,
-              sourceType: 'datasource',
+              type: 'datasource' as const,
+              ref: ds.getRef(),
             },
           }))
         );

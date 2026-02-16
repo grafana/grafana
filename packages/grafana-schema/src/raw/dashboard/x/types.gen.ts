@@ -200,6 +200,13 @@ export interface VariableModel {
    */
   sort?: VariableSort;
   /**
+   * The source that registered the variable (if any)
+   */
+  source?: {
+    type: 'datasource';
+    ref: DataSourceRef;
+  };
+  /**
    * Additional static options for query variable
    */
   staticOptions?: Array<VariableOption>;

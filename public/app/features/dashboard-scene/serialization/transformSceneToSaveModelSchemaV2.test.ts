@@ -221,9 +221,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           tooltip: '',
           type: 'link',
           source: {
-            uid: '123456',
-            sourceId: 'prometheus',
-            sourceType: 'datasource',
+            type: 'datasource',
+            ref: {
+              uid: '123456',
+              type: 'datasource',
+            },
           },
         },
       ],

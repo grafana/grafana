@@ -1,6 +1,7 @@
+import { DataSourceRef } from '@grafana/schema';
+
 import { LoadingState } from './data';
 import { MetricFindValue } from './datasource';
-import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
 
@@ -200,10 +201,11 @@ export interface BaseVariableModel {
   source?: ControlSourceRef;
 }
 
-export interface ControlSourceRef {
-  uid: string;
-  sourceId: string;
-  sourceType: string;
+export type ControlSourceRef = DatasourceControlSourceRef;
+
+export interface DatasourceControlSourceRef {
+  type: 'datasource';
+  ref: DataSourceRef;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

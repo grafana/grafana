@@ -840,6 +840,7 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
+	source?: ControlSourceRef
 }
 
 // Query variable kind
@@ -860,6 +861,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	source?: ControlSourceRef
 }
 
 // Text variable kind
@@ -880,6 +882,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	source?: ControlSourceRef
 }
 
 // Constant variable kind
@@ -907,6 +910,7 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	source?: ControlSourceRef
 }
 
 // Datasource variable kind
@@ -932,6 +936,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	source?: ControlSourceRef
 }
 
 // Interval variable kind
@@ -955,6 +960,7 @@ CustomVariableSpec: {
 	description?: string
 	allowCustomValue: bool | *true
 	valuesFormat?: "csv" | "json"
+	source?: ControlSourceRef
 }
 
 // Custom variable kind
@@ -978,6 +984,7 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	source?: ControlSourceRef
 }
 
 // Group variable kind
@@ -998,6 +1005,7 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	source?: ControlSourceRef
 }
 
 // Define the MetricFindValue type
@@ -1038,6 +1046,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
+	source?: ControlSourceRef
 }
 
 SwitchVariableKind: {
