@@ -16,15 +16,16 @@ import (
 
 type instrumentationService struct {
 	*services.BasicService
-	cfg          *setting.Cfg
-	httpServ     *http.Server
-	log          log.Logger
-	errChan      chan error
-	promGatherer prometheus.Gatherer
+	cfg               *setting.Cfg
+	httpServ          *http.Server
+	log               log.Logger
+	errChan           chan error
+	promGatherer      prometheus.Gatherer
+	readinessNotifier *ReadinessNotifier
 }
 
 func (ms *ModuleServer) initInstrumentationServer() (*instrumentationService, error) {
-	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer}
+	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer, readinessNotifier: ms.readinessNotifier}
 	s.httpServ, ms.httpServerRouter = s.newInstrumentationServer()
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -60,6 +61,23 @@ func (s *instrumentationService) stop(failureReason error) error {
 func (s *instrumentationService) newInstrumentationServer() (*http.Server, *mux.Router) {
 	router := mux.NewRouter()
 	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
+
+	// Liveness probe: returns 200 OK if the process is alive and serving HTTP.
+	router.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	}).Methods("GET")
+
+	// Readiness probe: returns 200 OK only after the operator signals readiness.
+	router.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		if s.readinessNotifier != nil && s.readinessNotifier.IsReady() {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("OK"))
+			return
+		}
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte("not ready"))
+	}).Methods("GET")
 
 	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
 	srv := &http.Server{

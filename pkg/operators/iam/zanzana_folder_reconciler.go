@@ -53,6 +53,10 @@ func RunIAMFolderReconciler(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	if deps.ReadinessNotifier != nil {
+		deps.ReadinessNotifier.SetReady()
+	}
+
 	logger.Info("Starting IAM folder reconciler")
 	err = runner.Run(ctx, app.Provider(iamConfig.AppConfig))
 	if err != nil && !errors.Is(err, context.Canceled) {

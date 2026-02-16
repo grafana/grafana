@@ -171,6 +171,10 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
+	if deps.ReadinessNotifier != nil {
+		deps.ReadinessNotifier.SetReady()
+	}
+
 	<-ctx.Done()
 	return nil
 }
