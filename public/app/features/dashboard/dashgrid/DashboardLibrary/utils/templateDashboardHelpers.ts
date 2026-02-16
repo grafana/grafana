@@ -7,9 +7,12 @@ import { GnetDashboard } from '../types';
 
 import { isGnetDashboard } from './dashboardLibraryHelpers';
 
+export type AssistantSource = 'assistant_button' | 'assistant_chat';
+
 export function getTemplateDashboardUrl(
   dashboard: PluginDashboard | GnetDashboard,
-  sourceEntryPoint: SourceEntryPoint
+  sourceEntryPoint: SourceEntryPoint,
+  assistantSource?: AssistantSource
 ): string {
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
   const isGnet = isGnetDashboard(dashboard);
@@ -25,6 +28,10 @@ export function getTemplateDashboardUrl(
     creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD,
     contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
   });
+
+  if (assistantSource) {
+    params.set('assistantSource', assistantSource);
+  }
 
   return `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
 }

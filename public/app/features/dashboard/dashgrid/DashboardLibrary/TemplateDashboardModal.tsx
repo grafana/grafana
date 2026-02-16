@@ -40,20 +40,9 @@ export const TemplateDashboardModal = () => {
     setSearchParams(searchParams);
   };
 
-  const onTrackAssistantButton = (dashboard: GnetDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-      datasourceTypes: [],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint: TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON,
-      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
-  };
-
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard) => {
+  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
+
     DashboardLibraryInteractions.itemClicked({
       contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
       datasourceTypes: [String(testDataSource?.type)],
@@ -62,9 +51,14 @@ export const TemplateDashboardModal = () => {
       sourceEntryPoint,
       eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
       discoveryMethod: DISCOVERY_METHODS.BROWSE,
+      action: customizeWithAssistant ? 'assistant' : 'view_template',
     });
 
-    const templateUrl = getTemplateDashboardUrl(dashboard, sourceEntryPoint);
+    const templateUrl = getTemplateDashboardUrl(
+      dashboard,
+      sourceEntryPoint,
+      customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
+    );
     locationService.push(templateUrl);
   };
 
@@ -141,9 +135,10 @@ export const TemplateDashboardModal = () => {
                     key={dashboard.id}
                     title={dashboard.name}
                     imageUrl={thumbnailUrl}
-                    onClick={() => onPreviewDashboardClick(dashboard)}
+                    onClick={(customizeWithAssistant?: boolean) =>
+                      onPreviewDashboardClick(dashboard, customizeWithAssistant)
+                    }
                     onClose={onClose}
-                    onTrackAssistantButton={() => onTrackAssistantButton(dashboard)}
                     dashboard={dashboard}
                     kind="template_dashboard"
                     showAssistantButton

@@ -70,6 +70,7 @@ export function trackDashboardSceneCreatedOrSaved(
   // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
   const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
   const creationOrigin = urlParams.get('creationOrigin') || undefined;
+  const assistantSource = urlParams.get('assistantSource') || undefined;
 
   // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
   const datasourceTypes = getDatasourceTypes(dashboard);
@@ -95,6 +96,7 @@ export function trackDashboardSceneCreatedOrSaved(
           sourceEntryPoint,
           libraryItemId,
           creationOrigin,
+          ...(assistantSource && { assistantSource }),
         }
       : {};
 

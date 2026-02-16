@@ -26,9 +26,8 @@ interface Props {
   imageUrl?: string;
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
-  onClick: () => void;
+  onClick: (customizeWithAssistant?: boolean) => void;
   onClose?: () => void;
-  onTrackAssistantButton?: () => void; // Called before opening assistant, for analytics tracking
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
@@ -41,7 +40,6 @@ function DashboardCardComponent({
   imageUrl,
   onClick,
   onClose,
-  onTrackAssistantButton,
   dashboard,
   details,
   isLogo,
@@ -67,18 +65,15 @@ function DashboardCardComponent({
 
   const onUseAssistantClick = () => {
     if (assistantAvailable) {
-      onTrackAssistantButton?.();
-
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
-        // @ts-expect-error - 'dashboarding' mode is valid but not in current type definitions
         mode: 'dashboarding',
         prompt: buildAssistantPrompt(),
         context: [templateContext],
         autoSend: true,
       });
       onClose?.();
-      onClick?.();
+      onClick?.(true);
     }
   };
 
@@ -122,7 +117,7 @@ function DashboardCardComponent({
         )}
       </div>
       <Card.Actions className={styles.actionsContainer}>
-        <Button variant="secondary" onClick={onClick}>
+        <Button variant="secondary" onClick={() => onClick()}>
           {kind === 'template_dashboard' ? (
             <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
           ) : (

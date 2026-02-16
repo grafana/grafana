@@ -76,6 +76,8 @@ export const DashboardLibraryInteractions = {
     sourceEntryPoint: SourceEntryPoint;
     eventLocation: EventLocation;
     discoveryMethod: DiscoveryMethod;
+    /** Which button was clicked (template modal only): View template vs Customize with Assistant */
+    action?: 'view_template' | 'assistant';
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
   },

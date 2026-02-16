@@ -330,6 +330,8 @@ describe('DashboardCard', () => {
   });
 
   describe('Assistant button', () => {
+    const mockOnClose = jest.fn();
+
     beforeEach(() => {
       // Enable assistant for these tests
       useAssistantMock.mockReturnValue({
@@ -385,25 +387,6 @@ describe('DashboardCard', () => {
       expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
     });
 
-    it('should call onTrackAssistantButton callback when Assistant button is clicked', async () => {
-      const mockOnAssistantClick = jest.fn();
-
-      const { user } = render(
-        <DashboardCard
-          title="Test Dashboard"
-          dashboard={createMockGnetDashboard()}
-          onClick={mockOnClick}
-          onTrackAssistantButton={mockOnAssistantClick}
-          kind="template_dashboard"
-          showAssistantButton
-        />
-      );
-
-      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
-
-      expect(mockOnAssistantClick).toHaveBeenCalledTimes(1);
-    });
-
     it('should open assistant when Assistant button is clicked', async () => {
       const { user } = render(
         <DashboardCard
@@ -424,6 +407,39 @@ describe('DashboardCard', () => {
           autoSend: true,
         })
       );
+    });
+
+    it('should call onClick when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onClose when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onClose={mockOnClose}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 });
