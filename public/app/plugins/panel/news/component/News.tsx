@@ -41,7 +41,7 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
         </time>
 
         <h1 className={styles.title} id={titleId}>
-          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external icon={null} inline={false}>
+          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false}>
             {newsItem.title}
           </TextLink>
         </h1>

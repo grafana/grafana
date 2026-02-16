@@ -25,8 +25,8 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   variant?: TextLinkVariants;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
-  /** Set the icon to be shown. An external link will show the 'external-link-alt' icon as default but can be hidden with `null`.*/
-  icon?: IconName | null;
+  /** Set the icon to be shown. An external link will show the 'external-link-alt' icon as default.*/
+  icon?: IconName;
   children: React.ReactNode;
 }
 
@@ -57,13 +57,13 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
     const theme = useTheme2();
     const styles = getLinkStyles(theme, inline, variant, weight, color);
-    const externalIcon = icon === undefined ? 'external-link-alt' : icon;
+    const externalIcon = icon || 'external-link-alt';
 
     if (external) {
       return (
         <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles.wrapper}>
           {children}
-          {externalIcon && <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />}
+          <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>
       );
     }

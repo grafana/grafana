@@ -29,7 +29,6 @@ export const WelcomeBanner = () => {
               key={`${option.label}-${index}`}
               href={`${option.href}?utm_source=grafana_gettingstarted`}
               external
-              icon={null}
               inline={false}
             >
               {option.label}
