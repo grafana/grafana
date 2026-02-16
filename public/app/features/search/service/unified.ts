@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
+  ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
@@ -14,8 +15,6 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
-
-import { ManagerKind } from '../../apiserver/types';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
@@ -46,7 +45,7 @@ export type SearchHit = {
 
   // calculated in the frontend
   url: string;
-  managedBy?: { kind: ManagerKind; id: string };
+  managedBy?: ManagedBy;
 };
 
 export type SearchAPIResponse = {
