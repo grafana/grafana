@@ -73,6 +73,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
+import { linkGroupByToAdHocVariables } from '../utils/variables';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -292,6 +293,10 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
+
+  // Link GroupByVariable to AdHocFiltersVariable with matching datasource
+  // so the unified AdHoc UI can manage GroupBy selections
+  linkGroupByToAdHocVariables(variableObjects);
 
   return new SceneVariableSet({
     variables: variableObjects,
