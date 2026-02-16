@@ -14,6 +14,7 @@ export const visibilityOutcome: OutcomeRegistryItem<DashboardRuleOutcomeVisibili
   id: 'DashboardRuleOutcomeVisibility',
   name: 'Visibility',
   description: 'Show or hide the target element',
+  targetKinds: ['panel', 'row', 'tab'],
 
   createDefaultSpec(): DashboardRuleOutcomeVisibilitySpec {
     return { visibility: 'hide' };

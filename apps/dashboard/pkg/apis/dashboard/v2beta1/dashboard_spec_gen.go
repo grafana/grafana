@@ -2764,8 +2764,7 @@ type DashboardDashboardRuleSpec struct {
 	Conditions DashboardDashboardRuleConditionsSpec `json:"conditions"`
 	// Outcomes to apply when conditions are met. Automatically reversed when
 	// conditions stop being met.
-	// union grows with new outcome types
-	Outcomes []DashboardDashboardRuleOutcomeVisibilityKind `json:"outcomes"`
+	Outcomes []DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind `json:"outcomes"`
 }
 
 // NewDashboardDashboardRuleSpec creates a new DashboardDashboardRuleSpec object.
@@ -2773,7 +2772,7 @@ func NewDashboardDashboardRuleSpec() *DashboardDashboardRuleSpec {
 	return &DashboardDashboardRuleSpec{
 		Targets:    []DashboardElementReferenceOrLayoutItemReference{},
 		Conditions: *NewDashboardDashboardRuleConditionsSpec(),
-		Outcomes:   []DashboardDashboardRuleOutcomeVisibilityKind{},
+		Outcomes:   []DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind{},
 	}
 }
 
@@ -2828,6 +2827,56 @@ type DashboardDashboardRuleOutcomeVisibilitySpec struct {
 // NewDashboardDashboardRuleOutcomeVisibilitySpec creates a new DashboardDashboardRuleOutcomeVisibilitySpec object.
 func NewDashboardDashboardRuleOutcomeVisibilitySpec() *DashboardDashboardRuleOutcomeVisibilitySpec {
 	return &DashboardDashboardRuleOutcomeVisibilitySpec{}
+}
+
+// Collapse outcome: collapse or expand the target row.
+// +k8s:openapi-gen=true
+type DashboardDashboardRuleOutcomeCollapseKind struct {
+	Kind string                                    `json:"kind"`
+	Spec DashboardDashboardRuleOutcomeCollapseSpec `json:"spec"`
+}
+
+// NewDashboardDashboardRuleOutcomeCollapseKind creates a new DashboardDashboardRuleOutcomeCollapseKind object.
+func NewDashboardDashboardRuleOutcomeCollapseKind() *DashboardDashboardRuleOutcomeCollapseKind {
+	return &DashboardDashboardRuleOutcomeCollapseKind{
+		Kind: "DashboardRuleOutcomeCollapse",
+		Spec: *NewDashboardDashboardRuleOutcomeCollapseSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardDashboardRuleOutcomeCollapseSpec struct {
+	Collapse bool `json:"collapse"`
+}
+
+// NewDashboardDashboardRuleOutcomeCollapseSpec creates a new DashboardDashboardRuleOutcomeCollapseSpec object.
+func NewDashboardDashboardRuleOutcomeCollapseSpec() *DashboardDashboardRuleOutcomeCollapseSpec {
+	return &DashboardDashboardRuleOutcomeCollapseSpec{}
+}
+
+// Refresh interval outcome: override the dashboard auto-refresh interval.
+// +k8s:openapi-gen=true
+type DashboardDashboardRuleOutcomeRefreshIntervalKind struct {
+	Kind string                                           `json:"kind"`
+	Spec DashboardDashboardRuleOutcomeRefreshIntervalSpec `json:"spec"`
+}
+
+// NewDashboardDashboardRuleOutcomeRefreshIntervalKind creates a new DashboardDashboardRuleOutcomeRefreshIntervalKind object.
+func NewDashboardDashboardRuleOutcomeRefreshIntervalKind() *DashboardDashboardRuleOutcomeRefreshIntervalKind {
+	return &DashboardDashboardRuleOutcomeRefreshIntervalKind{
+		Kind: "DashboardRuleOutcomeRefreshInterval",
+		Spec: *NewDashboardDashboardRuleOutcomeRefreshIntervalSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardDashboardRuleOutcomeRefreshIntervalSpec struct {
+	Interval string `json:"interval"`
+}
+
+// NewDashboardDashboardRuleOutcomeRefreshIntervalSpec creates a new DashboardDashboardRuleOutcomeRefreshIntervalSpec object.
+func NewDashboardDashboardRuleOutcomeRefreshIntervalSpec() *DashboardDashboardRuleOutcomeRefreshIntervalSpec {
+	return &DashboardDashboardRuleOutcomeRefreshIntervalSpec{}
 }
 
 // +k8s:openapi-gen=true
@@ -3815,6 +3864,80 @@ func (resource *DashboardElementReferenceOrLayoutItemReference) UnmarshalJSON(ra
 
 	return nil
 }
+
+// +k8s:openapi-gen=true
+type DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind struct {
+	DashboardRuleOutcomeVisibilityKind      *DashboardDashboardRuleOutcomeVisibilityKind      `json:"DashboardRuleOutcomeVisibilityKind,omitempty"`
+	DashboardRuleOutcomeCollapseKind        *DashboardDashboardRuleOutcomeCollapseKind        `json:"DashboardRuleOutcomeCollapseKind,omitempty"`
+	DashboardRuleOutcomeRefreshIntervalKind *DashboardDashboardRuleOutcomeRefreshIntervalKind `json:"DashboardRuleOutcomeRefreshIntervalKind,omitempty"`
+}
+
+// NewDashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind creates a new DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind object.
+func NewDashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind() *DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind {
+	return &DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind` as JSON.
+func (resource DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind) MarshalJSON() ([]byte, error) {
+	if resource.DashboardRuleOutcomeVisibilityKind != nil {
+		return json.Marshal(resource.DashboardRuleOutcomeVisibilityKind)
+	}
+	if resource.DashboardRuleOutcomeCollapseKind != nil {
+		return json.Marshal(resource.DashboardRuleOutcomeCollapseKind)
+	}
+	if resource.DashboardRuleOutcomeRefreshIntervalKind != nil {
+		return json.Marshal(resource.DashboardRuleOutcomeRefreshIntervalKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind` from JSON.
+func (resource *DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "DashboardRuleOutcomeCollapse":
+		var dashboardDashboardRuleOutcomeCollapseKind DashboardDashboardRuleOutcomeCollapseKind
+		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeCollapseKind); err != nil {
+			return err
+		}
+
+		resource.DashboardRuleOutcomeCollapseKind = &dashboardDashboardRuleOutcomeCollapseKind
+		return nil
+	case "DashboardRuleOutcomeRefreshInterval":
+		var dashboardDashboardRuleOutcomeRefreshIntervalKind DashboardDashboardRuleOutcomeRefreshIntervalKind
+		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeRefreshIntervalKind); err != nil {
+			return err
+		}
+
+		resource.DashboardRuleOutcomeRefreshIntervalKind = &dashboardDashboardRuleOutcomeRefreshIntervalKind
+		return nil
+	case "DashboardRuleOutcomeVisibility":
+		var dashboardDashboardRuleOutcomeVisibilityKind DashboardDashboardRuleOutcomeVisibilityKind
+		if err := json.Unmarshal(raw, &dashboardDashboardRuleOutcomeVisibilityKind); err != nil {
+			return err
+		}
+
+		resource.DashboardRuleOutcomeVisibilityKind = &dashboardDashboardRuleOutcomeVisibilityKind
+		return nil
+	}
+
+	return nil
+}
 func (DashboardAnnotationQueryKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAnnotationQueryKind"
 }
@@ -4106,6 +4229,18 @@ func (DashboardDashboardRuleOutcomeVisibilityKind) OpenAPIModelName() string {
 func (DashboardDashboardRuleOutcomeVisibilitySpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilitySpec"
 }
+func (DashboardDashboardRuleOutcomeCollapseKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeCollapseKind"
+}
+func (DashboardDashboardRuleOutcomeCollapseSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeCollapseSpec"
+}
+func (DashboardDashboardRuleOutcomeRefreshIntervalKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeRefreshIntervalKind"
+}
+func (DashboardDashboardRuleOutcomeRefreshIntervalSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeRefreshIntervalSpec"
+}
 func (DashboardSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSpec"
 }
@@ -4159,4 +4294,7 @@ func (DashboardStringOrFloat64) OpenAPIModelName() string {
 }
 func (DashboardElementReferenceOrLayoutItemReference) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardElementReferenceOrLayoutItemReference"
+}
+func (DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardRuleOutcomeVisibilityKindOrDashboardRuleOutcomeCollapseKindOrDashboardRuleOutcomeRefreshIntervalKind"
 }

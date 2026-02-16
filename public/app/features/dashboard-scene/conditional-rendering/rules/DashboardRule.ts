@@ -2,6 +2,8 @@ import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import {
   DashboardRuleConditionsSpec,
   DashboardRuleKind,
+  DashboardRuleOutcomeCollapseKind,
+  DashboardRuleOutcomeRefreshIntervalKind,
   DashboardRuleOutcomeVisibilityKind,
   ElementReference,
   LayoutItemReference,
@@ -109,6 +111,20 @@ export class DashboardRule extends SceneObjectBase<DashboardRuleState> {
   public getVisibilityOutcome(): DashboardRuleOutcomeVisibilityKind | undefined {
     return this.state.outcomes.find(
       (o): o is DashboardRuleOutcomeVisibilityKind => o.kind === 'DashboardRuleOutcomeVisibility'
+    );
+  }
+
+  /** Check if this rule has a collapse outcome. */
+  public getCollapseOutcome(): DashboardRuleOutcomeCollapseKind | undefined {
+    return this.state.outcomes.find(
+      (o): o is DashboardRuleOutcomeCollapseKind => o.kind === 'DashboardRuleOutcomeCollapse'
+    );
+  }
+
+  /** Check if this rule has a refresh interval outcome. */
+  public getRefreshIntervalOutcome(): DashboardRuleOutcomeRefreshIntervalKind | undefined {
+    return this.state.outcomes.find(
+      (o): o is DashboardRuleOutcomeRefreshIntervalKind => o.kind === 'DashboardRuleOutcomeRefreshInterval'
     );
   }
 

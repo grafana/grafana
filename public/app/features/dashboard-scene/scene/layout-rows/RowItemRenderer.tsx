@@ -10,6 +10,7 @@ import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { ConditionalRenderingOverlay } from '../../conditional-rendering/hooks/ConditionalRenderingOverlay';
+import { useRuleBasedCollapse } from '../../conditional-rendering/hooks/useRuleBasedCollapse';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useRuleBasedVisibility } from '../../conditional-rendering/hooks/useRuleBasedVisibility';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -33,6 +34,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     repeatSourceKey,
   } = model.useState();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
+  const { layout, collapse, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, elementCrClass, elementCrOverlay] = useIsConditionallyHidden(
@@ -40,7 +42,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   );
   // Dashboard-level rule-based visibility (targets rows by layout item reference)
   const rowName = model.state.name;
-  const ruleHidden = useRuleBasedVisibility(model, rowName ? `layout:${rowName}` : '');
+  const targetKey = rowName ? `layout:${rowName}` : '';
+  const ruleHidden = useRuleBasedVisibility(model, targetKey);
+
+  // Dashboard-level rule-based collapse (overrides the row's own collapse state)
+  const ruleCollapse = useRuleBasedCollapse(model, targetKey);
+  const effectiveCollapse = ruleCollapse !== undefined ? ruleCollapse : collapse;
+  const isCollapsed = effectiveCollapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isHiddenByAnySource = isConditionallyHidden || ruleHidden === true;
 
   // Show overlay/class from either source
