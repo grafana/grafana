@@ -42,11 +42,16 @@ import (
 // the data model to consolidate datasource references into the DataQueryKind.
 
 func ConvertDashboard_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
-	ctx, span := tracing.Start(context.Background(), "dashboard.conversion.v2alpha1_to_v2beta1",
+	// if available, use parent context from scope so tracing works
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctx, span := tracing.Start(ctx, "dashboard.conversion.v2alpha1_to_v2beta1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
-		attribute.String("source.version", dashv2alpha1.APIVERSION),
-		attribute.String("target.version", dashv2beta1.APIVERSION),
 	)
 	defer span.End()
 

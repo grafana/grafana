@@ -125,20 +125,26 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	// Prepare context with namespace and service identity
-	// The datasource provider is already wrapped with caching at registration time
-	ctx, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
+	// get context with namespace and with tracing, merge them
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctxWithNamespace, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
 	if err != nil {
-		// If context preparation fails, return error to be handled by wrapper
-		// The wrapper will set status and handle gracefully
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
+	}
+	if ctxWithNamespace != nil {
+		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
+			ctx = request.WithNamespace(ctx, ns)
+		}
 	}
 
 	ctx, span := tracing.Start(ctx, "dashboard.conversion.v1beta1_to_v2alpha1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
-		attribute.String("source.version", dashv1.APIVERSION),
-		attribute.String("target.version", dashv2alpha1.APIVERSION),
 	)
 	defer span.End()
 

@@ -69,11 +69,25 @@ func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard,
 		},
 	}
 
-	ctx, _, err := prepareV0ConversionContext(in)
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+
+	ctxWithNamespace, _, err := prepareV0ConversionContext(in)
 	if err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
+	}
+
+	// merge contexts to have namespace and spans
+	if ctxWithNamespace != nil {
+		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
+			ctx = request.WithNamespace(ctx, ns)
+		}
 	}
 
 	sourceSchemaVersion := schemaversion.GetSchemaVersion(in.Spec.Object)

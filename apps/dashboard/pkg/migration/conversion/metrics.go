@@ -7,8 +7,10 @@ import (
 	"math"
 	"strings"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/conversion"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -18,7 +20,6 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func getLogger() logging.Logger {
@@ -201,13 +202,40 @@ func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashb
 	return logFields
 }
 
+// scopeWithContext wraps conversion.Scope to pass tracing context to child conversion functions to allow tracing to work properly
+type scopeWithContext struct {
+	conversion.Scope
+	ctx context.Context
+}
+
+// preserve everything but context
+func (s *scopeWithContext) Meta() *conversion.Meta {
+	if s.Scope != nil && s.Scope.Meta() != nil {
+		meta := *s.Scope.Meta()
+		meta.Context = s.ctx
+		return &meta
+	}
+	return &conversion.Meta{Context: s.ctx}
+}
+
 // withConversionMetrics wraps a conversion function with metrics and logging for the overall conversion process
 // it also runs a data loss check function after successful conversion
 func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
 	return func(a, b interface{}, scope conversion.Scope) error {
-		_, span := tracing.Start(context.Background(), "dashboard.conversion.metrics_wrapper",
-			attribute.String("source.api_version", sourceVersionAPI),
-			attribute.String("target.api_version", targetVersionAPI),
+		// if available, use parent scope so tracing works, otherwise use background
+		ctx := context.Background()
+		if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+			if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+				ctx = scopeCtx
+			}
+		}
+
+		tracer := otel.GetTracerProvider().Tracer("dashboard-converter")
+		ctx, span := tracer.Start(ctx, "dashboard.conversion",
+			trace.WithAttributes(
+				attribute.String("source.api_version", sourceVersionAPI),
+				attribute.String("target.api_version", targetVersionAPI),
+			),
 		)
 		defer span.End()
 
@@ -218,8 +246,14 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
 		}
 
+		// wrape scope so we can pass context with span to child conversion functions
+		wrappedScope := &scopeWithContext{
+			Scope: scope,
+			ctx:   ctx,
+		}
+
 		// execute the actual conversion
-		err := conversionFunc(a, b, scope)
+		err := conversionFunc(a, b, wrappedScope)
 
 		// if conversion succeeded, run data loss check
 		if err == nil {
