@@ -14,11 +14,13 @@ import { outcomeRegistry } from '../outcomes/outcomeRegistry';
 import '../outcomes/outcomeRegistryInit'; // side-effect: populates outcomeRegistry
 import { DashboardRuleOutcomeKindTypes } from '../outcomes/outcomeRegistry';
 
+export type RuleTarget = ElementReference | LayoutItemReference;
+
 export interface DashboardRuleState extends SceneObjectState {
   /** Optional human-readable name for this rule. */
   name?: string;
-  /** The element or layout item this rule targets. */
-  target: ElementReference | LayoutItemReference;
+  /** The elements or layout items this rule targets. */
+  targets: RuleTarget[];
   /** How to combine conditions: "and" requires all, "or" requires any. */
   match: 'and' | 'or';
   /** Condition SceneObjects that evaluate to boolean results. */
@@ -73,17 +75,34 @@ export class DashboardRule extends SceneObjectBase<DashboardRuleState> {
           : validConditions.some((c) => c.state.result);
     }
 
+    console.debug('[DashboardRule] _evaluate', {
+      name: this.state.name,
+      match: this.state.match,
+      conditionResults: this.state.conditions.map((c) => ({
+        kind: (c as any).constructor?.name,
+        result: c.state.result,
+      })),
+      validConditionCount: validConditions.length,
+      active,
+      prevActive: this.state.active,
+      targets: this.getTargetKeys(),
+    });
+
     if (active !== this.state.active) {
       this.setState({ active });
     }
   }
 
-  /** Returns the target reference key for indexing (element name or layout item name). */
-  public getTargetKey(): string {
-    if (this.state.target.kind === 'LayoutItemReference') {
-      return `layout:${this.state.target.name}`;
-    }
-    return `element:${this.state.target.name}`;
+  /** Returns target reference keys for indexing. */
+  public getTargetKeys(): string[] {
+    return this._getTargets().map((t) =>
+      t.kind === 'LayoutItemReference' ? `layout:${t.name}` : `element:${t.name}`
+    );
+  }
+
+  /** Backwards-compat accessor: older rules may still have singular `target`. */
+  private _getTargets(): RuleTarget[] {
+    return this.state.targets ?? ((this.state as any).target ? [(this.state as any).target] : []);
   }
 
   /** Check if this rule has a visibility outcome. */
@@ -93,31 +112,38 @@ export class DashboardRule extends SceneObjectBase<DashboardRuleState> {
     );
   }
 
+  /** Serialize this rule into a single schema DashboardRuleKind with a targets array. */
   public serialize(): DashboardRuleKind {
+    const conditionsSpec = {
+      match: this.state.match,
+      items: this.state.conditions.map((c) => c.serialize()),
+    };
+    const outcomesSpec = this.state.outcomes.map((o) => {
+      const item = outcomeRegistry.get(o.kind);
+      const spec = item.specFromKind(o);
+      return item.specToKind(spec);
+    });
+
     return {
-      kind: 'DashboardRule',
+      kind: 'DashboardRule' as const,
       spec: {
         name: this.state.name,
-        target: this.state.target,
-        conditions: {
-          match: this.state.match,
-          items: this.state.conditions.map((c) => c.serialize()),
-        },
-        outcomes: this.state.outcomes.map((o) => {
-          const item = outcomeRegistry.get(o.kind);
-          const spec = item.specFromKind(o);
-          return item.specToKind(spec);
-        }),
+        targets: this._getTargets(),
+        conditions: conditionsSpec,
+        outcomes: outcomesSpec,
       },
     };
   }
 
+  /** Deserialize a schema rule into a DashboardRule. */
   public static deserialize(model: DashboardRuleKind): DashboardRule {
     const conditions = deserializeConditions(model.spec.conditions);
+    // Support both new `targets` array and legacy singular `target`
+    const targets = (model.spec as any).targets ?? ((model.spec as any).target ? [(model.spec as any).target] : []);
 
     return new DashboardRule({
       name: model.spec.name,
-      target: model.spec.target,
+      targets,
       match: model.spec.conditions.match,
       conditions,
       outcomes: model.spec.outcomes,
