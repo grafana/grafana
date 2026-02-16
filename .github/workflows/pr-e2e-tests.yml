@@ -125,6 +125,10 @@ jobs:
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -225,6 +229,10 @@ jobs:
       contents: read
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -268,6 +276,11 @@ jobs:
       contents: read
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
@@ -302,6 +315,10 @@ jobs:
         shardTotal: [8]
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -331,6 +348,11 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -398,6 +420,11 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -483,6 +510,10 @@ jobs:
       contents: read
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
