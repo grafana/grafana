@@ -23,6 +23,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
 import { StoreState } from 'app/types/store';
 
+import { isOnPrem } from '../provisioning/utils/isOnPrem';
+
 import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import {
@@ -176,16 +178,30 @@ export const ServiceAccountsListPageUnconnected = ({
 
   const subTitle = (
     <span>
-      <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
-        Service accounts authenticate applications with the Grafana HTTP API to manage dashboards, users, and data sources. For sending or querying telemetry data (metrics, logs, traces), use{' '}
-        <TextLink href="https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/" external>
-          Cloud Access Policies
-        </TextLink>{' '}
-        instead. Find out more in our{' '}
-        <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
-          documentation.
-        </TextLink>
-      </Trans>
+      {isOnPrem() ? (
+        <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title-onprem">
+          Service accounts authenticate applications with the Grafana HTTP API to manage dashboards, users, and data
+          sources. Find out more in our{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
+            documentation.
+          </TextLink>
+        </Trans>
+      ) : (
+        <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
+          Service accounts authenticate applications with the Grafana HTTP API to manage dashboards, users, and data
+          sources. For sending or querying telemetry data (metrics, logs, traces), use{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/"
+            external
+          >
+            Cloud Access Policies
+          </TextLink>{' '}
+          instead. Find out more in our{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
+            documentation.
+          </TextLink>
+        </Trans>
+      )}
     </span>
   );
 
