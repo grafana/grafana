@@ -127,6 +127,6 @@ func convertMatcherType(k8sType string) (labels.MatchType, error) {
 	case "!~":
 		return labels.MatchNotRegexp, nil
 	default:
-		return labels.MatchEqual, fmt.Errorf("unknown matcher type: %s", k8sType)
+		return labels.MatchEqual, ngmodels.MakeErrInhibitionRuleInvalid(fmt.Errorf("unknown matcher type: %s", k8sType))
 	}
 }
