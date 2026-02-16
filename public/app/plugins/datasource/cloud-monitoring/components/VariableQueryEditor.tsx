@@ -104,7 +104,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
   }
 
   onPropsChange = () => {
-    const { metricDescriptors, labels, metricTypes, services, ...queryModel } = this.state;
+    const { metricDescriptors, labels, metricTypes, services, projects, ...queryModel } = this.state;
     this.props.onChange({ ...queryModel, refId: 'CloudMonitoringVariableQueryEditor-VariableQuery' });
   };
 

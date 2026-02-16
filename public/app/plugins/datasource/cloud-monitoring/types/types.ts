@@ -9,7 +9,6 @@ export interface CloudMonitoringVariableQuery extends DataQuery {
   selectedMetricType: string;
   selectedSLOService: string;
   labelKey: string;
-  projects: SelectableValue[];
   sloServices: SelectableValue[];
   projectName: string;
 }
