@@ -906,6 +906,29 @@ func (hs *HTTPServer) GetDatasourceTablesWithUID(c *contextmodel.ReqContext) res
 	return hs.getDatasourceTables(c, ds)
 }
 
+func (hs *HTTPServer) getDatasourceTables(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
+	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Unable to get plugin context", err)
+	}
+	req := &backend.TableInformationRequest{
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
+	}
+
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Access denied", err)
+	}
+
+	resp, err := hs.pluginClient.Tables(c.Req.Context(), req)
+	if err != nil {
+		return translatePluginRequestErrorToAPIError(err)
+	}
+
+	return response.JSON(http.StatusOK, resp)
+}
+
 // swagger:parameters checkDatasourceHealthByID
 type CheckDatasourceHealthByIDParams struct {
 	// in:path
