@@ -135,8 +135,8 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 
 	t.Run("Diagnostics/IsHealthy", func(t *testing.T) {
 		authCalled.Store(0)
-		client := resourcepb.NewDiagnosticsClient(conn)
-		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+		client := resourcepb.NewDiagnosticsClient(conn)                      //nolint:staticcheck
+		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err, "IsHealthy should pass per-service auth")
 		require.Equal(t, resourcepb.HealthCheckResponse_SERVING, resp.Status)
 		require.Greater(t, authCalled.Load(), int32(0))
@@ -156,8 +156,7 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	err := s.registerUnifiedResourceServer(provider, &mockResourceServer{})
-	require.NoError(t, err)
+	s.registerUnifiedResourceServer(provider, &mockResourceServer{})
 
 	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()
@@ -196,8 +195,8 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 
 	t.Run("Diagnostics/IsHealthy", func(t *testing.T) {
 		authCalled.Store(0)
-		client := resourcepb.NewDiagnosticsClient(conn)
-		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+		client := resourcepb.NewDiagnosticsClient(conn)                      //nolint:staticcheck
+		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err, "IsHealthy should pass per-service auth")
 		require.Equal(t, resourcepb.HealthCheckResponse_SERVING, resp.Status)
 		require.Greater(t, authCalled.Load(), int32(0))
