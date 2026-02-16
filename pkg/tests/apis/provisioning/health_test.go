@@ -103,6 +103,54 @@ func TestIntegrationHealth(t *testing.T) {
 		require.True(t, err != nil, "repository should not be created during test")
 	})
 
+	t.Run("test endpoint with new repository with empty finaliers", func(t *testing.T) {
+		newRepoConfig := map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			// No finalizers
+			"metadata": map[string]any{},
+			"spec": map[string]any{
+				"title": "Test New Configuration with empty finalizers",
+				"type":  "local",
+				"local": map[string]any{
+					"path": helper.ProvisioningPath,
+				},
+				"workflows": []string{"write"},
+				"sync": map[string]any{
+					"enabled":         true,
+					"target":          "folder",
+					"intervalSeconds": 10,
+				},
+			},
+		}
+
+		configBytes, err := json.Marshal(newRepoConfig)
+		require.NoError(t, err)
+
+		// Test the new configuration - this should work
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-new-config").
+			SubResource("test").
+			Body(configBytes).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error(), "test endpoint should work for new repository configurations")
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed for valid repository configuration")
+		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
+
+		// Verify the repository was not actually created (this was just a test)
+		_, err = helper.Repositories.Resource.Get(ctx, "test-new-config", metav1.GetOptions{})
+		require.True(t, err != nil, "repository should not be created during test")
+	})
+
 	t.Run("test endpoint with existing repository", func(t *testing.T) {
 		result := helper.AdminREST.Post().
 			Namespace("default").
