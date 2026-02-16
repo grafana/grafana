@@ -52,7 +52,7 @@ func TestWithExtractUpstreamTraceLink(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tc.headerValue != "" {
-				req.Header.Set("X-Grafana-Upstream-Traceparent", tc.headerValue)
+				req.Header.Set("Grafana-Upstream-Traceparent", tc.headerValue)
 			}
 
 			// Start a span to simulate WithTracing having already run.
