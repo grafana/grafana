@@ -551,48 +551,6 @@
     "alert-warning": {
       "to-rule-list": "To rule list"
     },
-    "alertVersionHistory": {
-      "alerting": "Alerting",
-      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
-      "annotations": "Annotations",
-      "compare": "Compare",
-      "compare-with-latest": "Compare with latest version",
-      "compareVersions": "Compare versions",
-      "comparing-versions": "Comparing versions",
-      "condition": "Alert condition",
-      "contactPointRouting": "Contact point routing",
-      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
-      "errorloading": "Failed to load alert rule versions",
-      "execErrorState": "Alert state when execution error",
-      "intervalSeconds": "Evaluation interval",
-      "labels": "Labels",
-      "latest": "Latest",
-      "name": "Name",
-      "namespace_uid": "Folder UID",
-      "noDataState": "Alert state when no data",
-      "noVersionsFound": "No versions found for this rule",
-      "paused": "Paused state",
-      "pendingPeriod": "Pending period",
-      "provisioning": "Provisioning",
-      "provisioning-change-description": "Version update was made via provisioning",
-      "queryAndAlertCondition": "Query and alert condition",
-      "restore": "Restore",
-      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
-      "restore-modal": {
-        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
-        "confirm": "Yes, restore configuration",
-        "error": "Could not restore alert rule version ",
-        "summary": "Summary of changes to be applied:",
-        "title": "Restore version"
-      },
-      "restore-version": "Restore to version {{version}}",
-      "rule_group": "Rule group",
-      "unknown": "Unknown",
-      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
-      "user-id": "User ID {{uid}}",
-      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
-      "warning-restore-manually-title": "Restoring rule manually"
-    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -647,6 +605,48 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Search alert rules by name",
       "no-alert-rules-found": "No alert rules found",
       "placeholder-sort-default-az": "Sort (Default A-Z)"
+    },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "This update was made by the alerting system due to other changes. For example, when renaming a contact point that is used for simplified routing, this will update affected rules",
+      "annotations": "Annotations",
+      "compare": "Compare",
+      "compare-with-latest": "Compare with latest version",
+      "compareVersions": "Compare versions",
+      "comparing-versions": "Comparing versions",
+      "condition": "Alert condition",
+      "contactPointRouting": "Contact point routing",
+      "description": "Each time you edit the alert rule, a new version is created. Select two versions below and compare their differences.",
+      "errorloading": "Failed to load alert rule versions",
+      "execErrorState": "Alert state when execution error",
+      "intervalSeconds": "Evaluation interval",
+      "labels": "Labels",
+      "latest": "Latest",
+      "name": "Name",
+      "namespace_uid": "Folder UID",
+      "noDataState": "Alert state when no data",
+      "noVersionsFound": "No versions found for this rule",
+      "paused": "Paused state",
+      "pendingPeriod": "Pending period",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Version update was made via provisioning",
+      "queryAndAlertCondition": "Query and alert condition",
+      "restore": "Restore",
+      "restore-manually": "Your alert rule could not be restored. This may be due to changes to other entities such as contact points, data sources etc. Please manually restore the rule version",
+      "restore-modal": {
+        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "confirm": "Yes, restore configuration",
+        "error": "Could not restore alert rule version ",
+        "summary": "Summary of changes to be applied:",
+        "title": "Restore version"
+      },
+      "restore-version": "Restore to version {{version}}",
+      "rule_group": "Rule group",
+      "unknown": "Unknown",
+      "unknown-change-description": "This update was made prior to the implementation of alert rule version history. The user who made the change is not tracked, but future changes will include the user",
+      "user-id": "User ID {{uid}}",
+      "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
+      "warning-restore-manually-title": "Restoring rule manually"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "This policy matches all labels"
@@ -3664,9 +3664,6 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
-  "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
-  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -3857,6 +3854,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "The .well-known/openid-configuration endpoint for your IdP",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4934,6 +4934,1276 @@
       "run-query": "Run query"
     }
   },
+  "dashboard": {
+    "actions": {
+      "open-settings": "Settings"
+    },
+    "add": {
+      "new-panel": {
+        "button": "Add new panel button",
+        "description": "Drag or click to add a panel",
+        "title": "Panel"
+      },
+      "pane-header": "Add"
+    },
+    "add-library-panel-widget": {
+      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
+      "tooltip-close-widget": "Close widget"
+    },
+    "add-menu": {
+      "import": "Import from library",
+      "paste-panel": "Paste panel",
+      "row": "Row",
+      "visualization": "Visualization"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "List in Grafana Alerting",
+      "subtitle": "Alert rules related to this dashboard"
+    },
+    "annotation-settings-edit": {
+      "apply": "Apply",
+      "delete": "Delete",
+      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
+      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "label-color": "Color",
+      "label-data-source": "Data source",
+      "label-enabled": "Enabled",
+      "label-hidden": "Hidden",
+      "label-name": "Name",
+      "label-show-in": "Show in",
+      "placeholder-choose-panels": "Choose panels",
+      "preview-in-dashboard": "Preview in dashboard",
+      "query": "Query",
+      "title-annotation-support-source": "No annotation support for this data source"
+    },
+    "annotation-settings-list": {
+      "aria-label-delete": "Delete query with title \"{{title}}\"",
+      "built-in": "{{name}} (Built-in)",
+      "data-source": "Data source",
+      "disabled": "(Disabled) {{name}}",
+      "new-query": "New query",
+      "query-name": "Query name",
+      "tooltip-move-down": "Move down",
+      "tooltip-move-up": "Move up"
+    },
+    "auto-grid": {
+      "description": "Panels resize to fit and form uniform grids",
+      "item-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
+      "name": "Auto grid",
+      "options": {
+        "custom-min-height": {
+          "clear": "Clear"
+        },
+        "custom-min-width": {
+          "clear": "Clear"
+        },
+        "height-fill": "Fill screen",
+        "max-columns": "Max columns",
+        "min-height": "Row height",
+        "min-height-custom": "Custom row height",
+        "min-height-error": "A number between 50 and 2000 is required",
+        "min-width": "Min column width",
+        "min-width-custom": "Custom min width",
+        "min-width-custom-clear": "Back to standard min column width",
+        "min-width-error": "A number between 50 and 2000 is required"
+      }
+    },
+    "canvas-actions": {
+      "add-panel": "Add panel",
+      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
+      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
+      "group-panels": "Group panels",
+      "new-row": "New row",
+      "new-tab": "New tab",
+      "paste-panel": "Paste panel",
+      "paste-row": "Paste row",
+      "paste-tab": "Paste tab",
+      "ungroup-rows": "Ungroup rows",
+      "ungroup-tabs": "Ungroup tabs"
+    },
+    "conditional-rendering": {
+      "conditions": {
+        "data": {
+          "disable": "No data",
+          "enable": "Has data",
+          "info": "Show or hide the {{type}} based on query results.",
+          "label": "Query result"
+        },
+        "group": {
+          "add": {
+            "button": "Add rule",
+            "data": "Query result",
+            "time-range-size": "Time range less than",
+            "variable": "Template variable"
+          },
+          "condition": {
+            "all": "Match all",
+            "any": "Match any",
+            "label": "Match rules"
+          },
+          "visibility": {
+            "hide": "Hide",
+            "label": "{{type}} visibility",
+            "show": "Show"
+          }
+        },
+        "time-range-size": {
+          "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
+          "invalid-message": "Invalid interval",
+          "label": "Time range less than",
+          "values": {
+            "days": "{{value}} days",
+            "hour": "{{value}} hour",
+            "hours": "{{value}} hours",
+            "minutes": "{{value}} minutes",
+            "months": "{{value}} months",
+            "year": "{{value}} year",
+            "years": "{{value}} years"
+          }
+        },
+        "variable": {
+          "error": {
+            "invalid-regex": "Invalid regex"
+          },
+          "info": "Show or hide the {{type}} dynamically based on the variable value.",
+          "label": "Template variable",
+          "name": "Name",
+          "operator": {
+            "equals": "Equals",
+            "matches": "Matches",
+            "not-equals": "Not equals",
+            "not-matches": "Not matches"
+          },
+          "value": "Value"
+        },
+        "wrapper": {
+          "delete-condition": "Delete Condition",
+          "unsupported-object-type": "This condition is not supported by the element, hence it will be ignored."
+        }
+      },
+      "editor": {
+        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
+        "learn-more": "Learn more",
+        "not-supported-for-custom-grid": "Show/hide rules aren't supported for panels in the Custom panel layout. Change the panel layout to Auto grid to enable this feature.",
+        "unsupported-object-type": "Conditional rendering not supported for this item type"
+      },
+      "overlay": {
+        "tooltip": "Element is hidden by show/hide rules."
+      },
+      "root": {
+        "title": "Show / hide rules"
+      }
+    },
+    "confirm-plugin-dashboard-save-modal": {
+      "body-plugin-dashboard": "Your changes will be lost when you update the plugin.<br /><2>Use <strong>Save As</strong> to create custom version.</2>",
+      "cancel": "Cancel",
+      "overwrite": "Overwrite",
+      "title-plugin-dashboard": "Plugin dashboard"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
+    "dash-nav": {
+      "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": "Proceed"
+        },
+        "title": {
+          "proceed-to-external-site": "Proceed to external site?"
+        }
+      },
+      "render-left-actions": {
+        "tooltip-view-as-scene": "View as Scene"
+      }
+    },
+    "dashboard-links-menu": {
+      "aria-label-dashboard-name": "{{dashboardName}} dashboard",
+      "label-no-dashboards-found": "No dashboards found"
+    },
+    "dashboard-loading": {
+      "cancel-loading-dashboard": "Cancel loading dashboard"
+    },
+    "dashboard-page-error": {
+      "text": {
+        "not-found": "Not found"
+      }
+    },
+    "dashboard-settings": {
+      "actions": {
+        "close": "Close"
+      }
+    },
+    "dashboard-slice": {
+      "title": {
+        "dashboard-init-failed": "Dashboard init failed"
+      }
+    },
+    "dashboard-srv": {
+      "message": {
+        "edit-dashboard-json": "Edit Dashboard JSON"
+      }
+    },
+    "default-layout": {
+      "description": "Position and size each panel individually",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "Horizontal",
+            "title": "Repeat direction",
+            "vertical": "Vertical"
+          },
+          "max": "Max per row",
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
+            "title": "Repeat by variable"
+          }
+        }
+      },
+      "name": "Custom",
+      "row-actions": {
+        "delete": "Delete row",
+        "modal": {
+          "alt-action": "Delete row only",
+          "text": "Are you sure you want to remove this row and all its panels?",
+          "title": "Delete row"
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "Row options"
+        },
+        "form": {
+          "cancel": "Cancel",
+          "repeat-for": {
+            "label": "Repeat for",
+            "learn-more": "Learn more",
+            "warning": {
+              "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+            }
+          },
+          "title": "Title",
+          "update": "Update"
+        },
+        "modal": {
+          "title": "Row options"
+        },
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "title": "Variable"
+          }
+        },
+        "title": "Row options"
+      }
+    },
+    "description": {
+      "action": "Change dashboard description"
+    },
+    "dynamic-config-value-editor": {
+      "render-label": {
+        "tooltip-remove-property": "Remove property"
+      }
+    },
+    "edit-actions": {
+      "add": "Add {{typeName}}",
+      "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "duplicate-panel": "Duplicate panel",
+      "edit-query-result-rule": "Change query result rule",
+      "edit-template-variable-rule": "Change template variable rule",
+      "edit-time-range-rule": "Change time range rule",
+      "move": "Move {{typeName}}",
+      "panel-background": "Change panel background",
+      "panel-description": "Change panel description",
+      "panel-edit": "Panel changes",
+      "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-repeat-direction": "Repeat direction",
+      "panel-repeat-variable": "Panel repeat by",
+      "panel-title": "Change panel title",
+      "paste-panel": "Paste panel",
+      "remove": "Remove {{typeName}}",
+      "row-title": "Change row title",
+      "switch-layout": "Switch layout",
+      "switch-layout-row": "Switch layout",
+      "switch-layout-tab": "Switch layout",
+      "tab-title": "Change tab title"
+    },
+    "edit-pane": {
+      "annotation": {
+        "change-data-source": "Change annotation data source",
+        "choose-panels": "Choose panels",
+        "color": "Color",
+        "color-description": "Color to use for the annotation event markers",
+        "data-source": "Data source",
+        "display": "Show annotation controls in",
+        "display-options": {
+          "above-dashboard": "Above dashboard",
+          "controls-menu": "Controls menu",
+          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "hidden": "Hidden",
+          "hidden-description": "Hides the toggle for turning this annotation on or off"
+        },
+        "enabled": "Enabled",
+        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
+        "name": "Name",
+        "open-query-editor": "Open query editor",
+        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
+        "panel-filter": {
+          "all-panels": "All panels",
+          "all-panels-description": "Send the annotation data to all panels that support annotations",
+          "all-panels-except": "All panels except",
+          "all-panels-except-description": "Do not send annotation data to the following panels",
+          "selected-panels": "Selected panels",
+          "selected-panels-description": "Send the annotations to the explicitly listed panels"
+        },
+        "query": "Query",
+        "query-editor-close": "Close",
+        "query-editor-modal-title": "Annotation Query",
+        "show-in": "Show in"
+      },
+      "annotations": {
+        "add-annotation": "Add annotation",
+        "reorder": "Drag to reorder",
+        "select-annotation": "Select"
+      },
+      "elements": {
+        "annotation": "Annotation",
+        "annotation-set": "Annotations & Alerts",
+        "dashboard": "Dashboard",
+        "element": "Element",
+        "local-variable": "Local variable",
+        "multiple-elements": "Multiple elements",
+        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
+        "multiple-panels": "Multiple panels",
+        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
+        "objects": "Objects",
+        "panel": "Panel",
+        "panels": "Panels",
+        "row": "Row",
+        "rows": "Rows",
+        "tab": "Tab",
+        "tabs": "Tabs",
+        "variable": "{{type}} variable",
+        "variable-set": "Variables"
+      },
+      "row": {
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        }
+      },
+      "variable": {
+        "custom-options": {
+          "apply": "Apply",
+          "change-value": "Change variable value",
+          "discard": "Discard",
+          "modal-title": "Custom options",
+          "values": "Values separated by comma"
+        },
+        "datasource-options": {
+          "name-filter": "Name filter",
+          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
+          "name-filter-placeholder": "Example: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choose data source type"
+        },
+        "description": "Description",
+        "description-placeholder": "Descriptive text",
+        "label": "Label",
+        "label-description": "Optional display name",
+        "name": "Name",
+        "open-editor": "Open variable editor",
+        "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "modal-title": "Query Variable",
+          "preview": "Preview"
+        },
+        "selection-options": {
+          "allow-custom-values": "Allow custom values",
+          "allow-custom-values-description": "Enables users to enter values",
+          "category": "Selection options",
+          "custom-all-value": "Custom all value",
+          "custom-all-value-description": "A wildcard regex or other value to represent All",
+          "include-all": "Include All value",
+          "include-all-description": "Enables a single option that represent all values",
+          "multi-value": "Multi-value"
+        },
+        "type-category": "{{type}} options"
+      },
+      "variables": {
+        "add-variable": "Add variable",
+        "reorder": "Drag to reorder",
+        "select-type": "Choose variable type",
+        "select-type-card-tooltip": "Click to select type",
+        "select-variable": "Select"
+      }
+    },
+    "empty": {
+      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
+      "add-library-panel-button": "Add library panel",
+      "add-library-panel-header": "Import panel",
+      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "add-visualization-button": "Add visualization",
+      "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "description": "Add a panel to visualize your data",
+      "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
+      "import-a-dashboard-header": "Import a dashboard",
+      "import-dashboard-button": "Import dashboard",
+      "show-less-dashboards": "Show less",
+      "show-more-dashboards": "Show more",
+      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "title": "New dashboard",
+      "use-template-button": "Use this dashboard"
+    },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
+    },
+    "export": {
+      "button": {
+        "label": "Export dashboard"
+      },
+      "menu": {
+        "label": "Export dashboard menu"
+      }
+    },
+    "fetch-dashboard": {
+      "message": {
+        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
+      }
+    },
+    "gen-aihistory": {
+      "aria-label-send-custom-feedback": "Send custom feedback",
+      "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
+      "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
+    },
+    "general-settings-unconnected": {
+      "editable-options": {
+        "label": {
+          "editable": "Editable",
+          "readonly": "Read-only"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Shared crosshair",
+          "shared-tooltip": "Shared tooltip"
+        }
+      }
+    },
+    "get-debug-dashboard": {
+      "title": {
+        "annotations": "Annotations"
+      }
+    },
+    "get-errors": {
+      "message": {
+        "error-loading-data": "Error loading data"
+      }
+    },
+    "get-field-override-categories": {
+      "label-add-field-override": "Add field override",
+      "label-add-override-property": "Add override property",
+      "override-name": "Override {{overrideNum}}",
+      "title": {
+        "add-button": "add button"
+      }
+    },
+    "get-library-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "Library panel options"
+        }
+      },
+      "title": {
+        "information": "Information",
+        "name": "Name"
+      }
+    },
+    "get-library-viz-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "Library panel options"
+        }
+      },
+      "title": {
+        "information": "Information",
+        "name": "Name"
+      }
+    },
+    "get-panel-editor-tabs": {
+      "text": {
+        "alert": "Alert",
+        "query": "Query",
+        "transform-data": "Transform data"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
+    "get-panel-frame-category": {
+      "descriptor": {
+        "title": {
+          "panel-options": "Panel options"
+        }
+      },
+      "direction-options": {
+        "label": {
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
+        }
+      },
+      "title": {
+        "description": "Description",
+        "max-per-row": "Max per row",
+        "panel-links": "Panel links",
+        "repeat-by-variable": "Repeat by variable",
+        "repeat-direction": "Repeat direction",
+        "repeat-options": "Repeat options",
+        "title": "Title",
+        "transparent-background": "Transparent background"
+      }
+    },
+    "get-panel-menu": {
+      "text": {
+        "extensions": "Extensions"
+      }
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Copy to clipboard",
+      "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
+      "description-support-snapshot": "Panel: {{panelTitle}}",
+      "download-snapshot": "Download ({{snapshotSize}})",
+      "label-obfuscate-data": "Obfuscate data",
+      "label-support-snapshot": "Support snapshot",
+      "label-template": "Template",
+      "randomize-field-names-label-field-names": "Field names",
+      "randomize-labels-label-labels": "Labels",
+      "randomize-string-values-label-string-values": "String values",
+      "tabs": {
+        "label": {
+          "data": "Data",
+          "snapshot": "Snapshot"
+        }
+      },
+      "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard",
+      "title-get-help-with-this-panel": "Get help with this panel",
+      "troubleshooting-docs": "Troubleshooting docs"
+    },
+    "init-dashboard": {
+      "message": {
+        "failed-create-dashboard-model": "Failed create dashboard model"
+      }
+    },
+    "inspect": {
+      "data-tab": "Data",
+      "error-tab": "Error",
+      "json-tab": "JSON",
+      "meta-tab": "Meta data",
+      "query-tab": "Query",
+      "stats-tab": "Stats",
+      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
+      "title": "Inspect: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Data options",
+      "dataframe-aria-label": "Select dataframe",
+      "dataframe-label": "Show data frame",
+      "download-csv": "Download CSV",
+      "download-logs": "Download logs",
+      "download-service": "Download service graph",
+      "download-traces": "Download traces",
+      "excel-compatibility-mode-description": "Generates a CSV file that's compatible with most Excel versions",
+      "excel-compatibility-mode-label": "Download for Excel",
+      "formatted": "Formatted data",
+      "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
+      "formatted-data-label": "Formatted data",
+      "panel-transforms": "Panel transforms",
+      "series-to-columns": "Series joined by time",
+      "transformation": "Series joined by time",
+      "transformations-description": "Table data is displayed with transformations defined in the panel Transform tab.",
+      "transformations-label": "Apply panel transformations"
+    },
+    "inspect-json": {
+      "dataframe-description": "Raw data without transformations and field config applied. ",
+      "dataframe-label": "DataFrame JSON (from Query)",
+      "panel-data-description": "The raw model passed to the panel visualization",
+      "panel-data-label": "Panel data",
+      "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
+      "panel-json-label": "Panel JSON",
+      "panel-layout-description": "The grid position and size of the panel in the dashboard.",
+      "panel-layout-label": "Panel Layout",
+      "panel-spec-label": "Panel Spec",
+      "select-source": "Select source",
+      "unknown": "Unknown Object: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "No Metadata Inspector"
+    },
+    "inspect-stats": {
+      "data-title": "Data source stats",
+      "data-traceids": "Trace IDs",
+      "processing-time": "Data processing time",
+      "queries": "Number of queries",
+      "request-time": "Total request time",
+      "rows": "Total number rows",
+      "table-title": "Stats"
+    },
+    "k8s-dashboard-api": {
+      "title": {
+        "deleted": "deleted"
+      }
+    },
+    "k8s-dashboard-v2api": {
+      "title": {
+        "deleted": "deleted"
+      }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
+    },
+    "layout": {
+      "cancel": "Cancel",
+      "common": {
+        "copy": "Copy",
+        "copy-or-duplicate": "Copy or Duplicate",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "layout": "Layout"
+      },
+      "continue": "Continue",
+      "panel": {
+        "modal": {
+          "body": "Changing the layout will reset all panel positions and sizes.",
+          "confirm": "Change layout",
+          "dismiss": "Cancel",
+          "title": "Change layout"
+        }
+      },
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
+    },
+    "legacy-dashboard-api": {
+      "fetch-error": {
+        "message": {
+          "dashboard-not-found": "Dashboard not found"
+        }
+      }
+    },
+    "make-editable": {
+      "dashboard-not-editable": "Dashboard not editable",
+      "make-editable": "Make editable"
+    },
+    "minimalistic-pagination": {
+      "page-count": "{{currentPage}} of {{numberOfPages}}",
+      "tooltip-next": "Next",
+      "tooltip-previous": "Previous"
+    },
+    "new-dashboard-with-ds": {
+      "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
+    },
+    "new-panel": {
+      "configure-button": "Configure",
+      "configure-button-menu": "Toggle menu",
+      "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
+      "menu-open-panel-editor": "Configure",
+      "menu-use-library-panel": "Use library panel",
+      "missing-config": "Missing panel configuration",
+      "suggestions": {
+        "empty-state-message": "Run a query to start seeing suggested visualizations"
+      }
+    },
+    "new-panel-title": "New panel",
+    "on-create-new-row": {
+      "new-row": {
+        "title": {
+          "row-title": "Row title"
+        }
+      }
+    },
+    "on-create-new-widget-panel": {
+      "new-panel": {
+        "title": {
+          "widget-title": "Widget title"
+        }
+      }
+    },
+    "options": {
+      "description": "Description",
+      "title-option": "Title"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "Collapse {{title}} category",
+      "aria-label-expand": "Expand {{title}} category"
+    },
+    "options-pane-options": {
+      "placeholder-search-options": "Search options",
+      "Recent options-title-recent-options": "Recent options",
+      "title-matched_one": "Matched {{count}}/{{totalCount}} options",
+      "title-matched_other": "Matched {{count}}/{{totalCount}} options"
+    },
+    "outline": {
+      "pane-header": "Content outline",
+      "repeated-item": "Repeat",
+      "tree-item": {
+        "empty": "(empty)",
+        "no-title": "<no title>"
+      }
+    },
+    "override-category-title": {
+      "aria-label-remove-override": "Remove override",
+      "tooltip-remove-override": "Remove override"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "Hide panel time range",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-shift": "Time shift",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-window-compare": "Time comparison",
+        "time-window-compare-description": "Compare data between two time ranges",
+        "title": "Panel time settings"
+      }
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
+        "no-rules": "There are no alert rules linked to this panel."
+      },
+      "only-overrides-button-tooltip": "Show only overrides",
+      "placeholder-search-options": "Search options",
+      "visualization-button-tooltip": "Search options"
+    },
+    "panel-editor-table-view": {
+      "title-raw-data": "Raw data"
+    },
+    "panel-editor-unconnected": {
+      "editor-actions": {
+        "apply": "Apply",
+        "discard": "Discard",
+        "save": "Save",
+        "save-library-panel": "Save library panel",
+        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
+        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
+        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
+        "title-undo-all-changes": "Undo all changes"
+      },
+      "table-view-label-table-view": "Table view",
+      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
+      "unlink": "Unlink"
+    },
+    "panel-links": {
+      "aria-label-panel-links": "Panel links"
+    },
+    "panel-not-supported": {
+      "go-back-to-queries": "Go back to Queries"
+    },
+    "public-dashboard-not-available": {
+      "does-not-exist": "The dashboard you are trying to access does not exist",
+      "paused": "This dashboard has been paused by the administrator",
+      "try-again-later": "Try again later"
+    },
+    "remove-panel": {
+      "text": {
+        "remove-panel": "Are you sure you want to remove this panel?"
+      },
+      "title": {
+        "remove-panel": "Remove panel"
+      }
+    },
+    "repeat-row-select": {
+      "variable-options": {
+        "label": {
+          "disable-repeating": "Disable repeating",
+          "no-template-variables-found": "No template variables found"
+        }
+      }
+    },
+    "repeat-row-select2": {
+      "placeholder": "Choose",
+      "variable-options": {
+        "label": {
+          "disable-repeating": "Disable repeating",
+          "no-template-variables-found": "No template variables found"
+        }
+      }
+    },
+    "revert-dashboard-modal": {
+      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
+      "confirmText-restore-version": "Yes, restore to version {{version}}",
+      "title-restore-version": "Restore version"
+    },
+    "row-options-button": {
+      "aria-label-row-options": "Row options"
+    },
+    "row-options-form": {
+      "cancel": "Cancel",
+      "label-repeat-for": "Repeat for",
+      "label-title": "Title",
+      "update": "Update"
+    },
+    "row-options-modal": {
+      "title-row-options": "Row options"
+    },
+    "rows-layout": {
+      "cancel": "Cancel",
+      "convert-to": "Convert to {{name}}",
+      "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
+      "delete-row-title": "Delete row?",
+      "delete-row-yes": "Delete",
+      "description": "Collapsable panel groups with headings",
+      "edit": {
+        "ungroup-rows": "Ungroup rows"
+      },
+      "header-hidden-tooltip": "Row header only visible in edit mode",
+      "name": "Rows",
+      "new-row-title": "New row",
+      "row": {
+        "collapse": "Collapse row",
+        "expand": "Expand row",
+        "new": "New row",
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+        }
+      },
+      "row-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this row for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
+        "row": {
+          "fill-screen": "Fill screen",
+          "hide-header": "Hide row header",
+          "title": "Title"
+        },
+        "title-not-unique": "Title should be unique",
+        "title-option": "Title"
+      },
+      "row-warning": {
+        "title-not-unique": "This title is not unique"
+      },
+      "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
+      "ungroup-convert-title": "Convert mixed grids?"
+    },
+    "save-dashboard": {
+      "message-dashboard-saved": "Dashboard saved"
+    },
+    "save-dashboard-as-button": {
+      "save-as": "Save as"
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-button": "Save dashboard button",
+      "aria-label-save-dashboard-description-field": "Save dashboard description field",
+      "aria-label-save-dashboard-title-field": "Save dashboard title field",
+      "cancel": "Cancel",
+      "description": "Description",
+      "label-copy-tags": "Copy tags",
+      "label-folder": "Folder",
+      "save": "Save",
+      "saving": "Saving...",
+      "title": "Title"
+    },
+    "save-dashboard-button": {
+      "save-dashboard": "Save dashboard"
+    },
+    "save-dashboard-diff": {
+      "full-json-diff": "Full JSON diff",
+      "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
+      "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
+      "title-folder": "folder"
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "Changes",
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
+    },
+    "save-dashboard-error-proxy": {
+      "body-name-exists": "A dashboard with the same name in selected folder already exists.<br /><2>Would you still like to save this dashboard?</2>",
+      "body-version-mismatch": "Someone else has updated this dashboard<br /><2>Would you still like to save this dashboard?</2>",
+      "confirmText-save-and-overwrite": "Save and overwrite",
+      "title-name-exists": "Conflict",
+      "title-version-mismatch": "Conflict"
+    },
+    "save-dashboard-form": {
+      "cancel": "Cancel",
+      "label-current-range-dashboard-default": "Save current time range as dashboard default",
+      "label-current-variable-values-dashboard-default": "Save current variable values as dashboard default",
+      "no-changes-to-save": "No changes to save",
+      "placeholder-describe-changes": "Add a note to describe your changes.",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "save-provisioned-dashboard-form": {
+      "cancel": "Cancel",
+      "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
+      "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "file-path": "<strong>File path:</strong> {{filePath}}",
+      "save-json-to-file": "Save JSON to file",
+      "see-docs": "See <2>documentation</2> for more information about provisioning."
+    },
+    "search-panel": {
+      "no-match": "No panels matching"
+    },
+    "share-public-dashboard-loader": {
+      "loading-configuration": "Loading configuration"
+    },
+    "sidebar": {
+      "add": {
+        "title": "Add",
+        "tooltip": "Add new element"
+      },
+      "dashboard-options": {
+        "title": "Options",
+        "tooltip": "Dashboard options"
+      },
+      "export": {
+        "title": "Export"
+      },
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      },
+      "redo": "Redo",
+      "snapshot": {
+        "tooltip": "Open original dashboard"
+      },
+      "undo": "Undo"
+    },
+    "solo-panel": {
+      "loading-initializing-dashboard": "Loading & initializing dashboard",
+      "title-not-found": "Panel with id {{panelId}} not found"
+    },
+    "source-link": {
+      "title": "Source ({{provider}})",
+      "tooltip": "View source file in repository"
+    },
+    "sub-menu-un-connected": {
+      "aria-label-template-variables": "Template variables"
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
+      },
+      "label": {
+        "git-hub-comment": "GitHub comment",
+        "panel-support-snapshot": "Panel support snapshot"
+      },
+      "title": {
+        "copy-to-clipboard-failed": "Copy to clipboard failed"
+      }
+    },
+    "tabs-layout": {
+      "delete-tab-text": "Deleting this tab will also remove all panels. Are you sure you want to continue?",
+      "delete-tab-title": "Delete tab?",
+      "delete-tab-yes": "Delete",
+      "description": "Organize panels into horizontal tabs",
+      "edit": {
+        "ungroup-tabs": "Ungroup tabs"
+      },
+      "name": "Tabs",
+      "tab": {
+        "new": "New tab",
+        "repeat": {
+          "learn-more": "Learn more",
+          "loading": "Loading tab repeats",
+          "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
+        }
+      },
+      "tab-options": {
+        "repeat": {
+          "title": "Repeat options",
+          "variable": {
+            "description": "Repeat this tab for each value in the selected variable.",
+            "title": "Repeat by variable"
+          }
+        },
+        "title-not-unique": "Title should be unique",
+        "title-option": "Title"
+      },
+      "tab-warning": {
+        "title-not-unique": "This title is not unique"
+      }
+    },
+    "title": {
+      "action": "Change dashboard title"
+    },
+    "toolbar": {
+      "add": "Add",
+      "alert-rules": "Alert rules",
+      "back-to-dashboard": "Back to dashboard",
+      "dashboard-settings": {
+        "label": "Settings",
+        "tooltip": "Dashboard settings"
+      },
+      "discard-library-panel-changes": "Discard library panel changes",
+      "discard-panel": "Discard panel changes",
+      "discard-panel-new": "Discard panel",
+      "edit": {
+        "label": "Edit",
+        "tooltip": "Enter edit mode"
+      },
+      "edit-button": {
+        "enter": "Edit",
+        "enter-tooltip": "Enter edit mode",
+        "exit": "Exit edit",
+        "exit-tooltip": "Exit edit mode"
+      },
+      "enter-edit-mode": {
+        "label": "Make editable",
+        "tooltip": "This dashboard was marked as read only"
+      },
+      "exit-edit-mode": {
+        "label": "Exit edit",
+        "tooltip": "Exits edit mode and discards unsaved changes"
+      },
+      "mark-favorite": "Mark as favorite",
+      "more-save-options": "More save options",
+      "new": {
+        "back-to-dashboard": "Back to dashboard",
+        "dashboard-settings": {
+          "tooltip": "Dashboard settings"
+        },
+        "discard-library-panel-changes": "Discard library panel changes",
+        "discard-panel": "Discard panel changes",
+        "discard-panel-new": "Discard panel",
+        "edit-dashboard-v2-schema": {
+          "tooltip": "Edit dashboard v2 schema"
+        },
+        "enter-edit-mode": {
+          "label": "Make editable",
+          "tooltip": "This dashboard was marked as read only"
+        },
+        "export": {
+          "tooltip": {
+            "as-code": "Export as code"
+          }
+        },
+        "more-save-options": "More save options",
+        "playlist-next": "Go to next dashboard",
+        "playlist-previous": "Go to previous dashboard",
+        "playlist-stop": "Stop playlist",
+        "public-dashboard": "Public",
+        "save-dashboard": {
+          "label": "Save",
+          "tooltip": "Save changes"
+        },
+        "save-dashboard-copy": {
+          "label": "Save as copy",
+          "tooltip": "Save as copy"
+        },
+        "save-dashboard-short": "Save",
+        "save-library-panel": "Save library panel",
+        "share": {
+          "arrow": "Share",
+          "title": "Share",
+          "tooltip": "Copy link"
+        },
+        "unlink-library-panel": "Unlink library panel"
+      },
+      "open-original": "Open original dashboard",
+      "playlist-next": "Go to next dashboard",
+      "playlist-previous": "Go to previous dashboard",
+      "playlist-stop": "Stop playlist",
+      "read-only": "Read only",
+      "refresh": "Refresh dashboard",
+      "save": "Save dashboard",
+      "save-dashboard": {
+        "label": "Save dashboard",
+        "tooltip": "Save changes"
+      },
+      "save-dashboard-copy": {
+        "label": "Save as copy",
+        "tooltip": "Save as copy"
+      },
+      "save-dashboard-short": "Save",
+      "save-library-panel": "Save library panel",
+      "settings": "Dashboard settings",
+      "share-button": "Share",
+      "snapshot": {
+        "title": "Source"
+      },
+      "star-add-error": "Failed to add to starred",
+      "star-added": "Added to starred",
+      "star-remove-error": "Failed to remove from starred",
+      "star-removed": "Removed from starred",
+      "unlink-library-panel": "Unlink library panel",
+      "unmark-favorite": "Unmark as favorite"
+    },
+    "transformation-editor": {
+      "input-data": "Input data",
+      "output-data": "Output data",
+      "title-debug-transformation": "Debug transformation"
+    },
+    "transformation-filter": {
+      "label-apply-transformation-to": "Apply transformation to"
+    },
+    "transformation-operation-row": {
+      "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
+      "render-actions": {
+        "confirmText-delete": "Delete",
+        "title-debug": "Debug",
+        "title-disable-transformation": "Disable transformation",
+        "title-filter": "Filter",
+        "title-remove": "Remove",
+        "title-show-transform-help": "Show transform help"
+      },
+      "title-delete": "Delete {{name}}?"
+    },
+    "transformation-picker": {
+      "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
+      "info-graph-not-suitable": "Many transforms are not suitable if you're using the Graph visualization, as it currently only supports time series data.",
+      "info-switch-to-table": "It can help to switch to the Table visualization to understand what a transformation is doing.",
+      "placeholder-search-for-transformation": "Search for transformation",
+      "read-more": "Read more",
+      "title-transformations": "Transformations"
+    },
+    "transformation-picker-ng": {
+      "placeholder-search-for-transformation": "Search for transformation",
+      "show-images": "Show images",
+      "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
+      "sql-expressions-message-link": "Learn more",
+      "sql-expressions-title": "SQL Expressions",
+      "title-add-another-transformation": "Add another transformation",
+      "view-all": "View all"
+    },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
+    },
+    "un-themed-transformations-editor": {
+      "actions": {
+        "add-another-transformation": "Add another transformation"
+      },
+      "confirmText-delete-all": "Delete all",
+      "delete-all-transformations": "Delete all transformations",
+      "title-delete-all-transformations": "Delete all transformations?",
+      "tooltip-clear-search": "Clear search",
+      "tooltip-close-picker": "Close picker"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Cancel",
+      "changes": "Do you want to save your changes?",
+      "discard": "Discard",
+      "title-unsaved-changes": "Unsaved changes"
+    },
+    "untheme-dashboard-row": {
+      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+    },
+    "unthemed-dashboard-row": {
+      "aria-label-delete-row": "Delete row",
+      "learn-more": "Learn more",
+      "title": {
+        "delete-row": "Delete row"
+      }
+    },
+    "validation": {
+      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
+      "invalid-json": "Not valid JSON",
+      "tag-too-long": "Dashboard tag too long, max 50 characters",
+      "tags-expected-array": "tags expected array",
+      "tags-expected-strings": "tags expected array of strings"
+    },
+    "variable": {
+      "description": {
+        "action": "Change variable description"
+      },
+      "hide": {
+        "action": "Change variable hide option"
+      },
+      "label": {
+        "action": "Change variable label"
+      },
+      "name": {
+        "action": "Change variable name"
+      }
+    },
+    "version-history-comparison": {
+      "button-restore": "Restore to version {{version}}",
+      "label-view-json-diff": "View JSON diff",
+      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
+    },
+    "version-history-table": {
+      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
+      "date": "Date",
+      "name-latest": "Latest",
+      "notes": "Notes",
+      "restore": "Restore",
+      "updated-by": "Updated by",
+      "version": "Version"
+    },
+    "view-json-modal": {
+      "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": "Panel not found"
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Change visualization",
+      "aria-label-close": "Close options pane",
+      "aria-label-show": "Show options pane",
+      "tooltip-click-to-change-visualization": "Click to change visualization",
+      "tooltip-close": "Close options pane",
+      "tooltip-show": "Show options pane"
+    },
+    "visualization-select-pane": {
+      "placeholder-search-for": "Search for...",
+      "radio-options": {
+        "description": {
+          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
+        },
+        "label": {
+          "library-panels": "Library panels",
+          "suggestions": "Suggestions",
+          "visualizations": "Visualizations"
+        }
+      },
+      "title-close": "Close"
+    },
+    "viz-panel": {
+      "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
+      "delete-panel-title": "Delete panel?",
+      "delete-panel-yes": "Delete",
+      "options": {
+        "configure-button-tooltip": "Edit queries and visualization options",
+        "description": "Description",
+        "title-option": "Title",
+        "transparent-background": "Transparent background"
+      }
+    }
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -5020,9 +6290,6 @@
       "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "title": "There are no dashboard links added yet"
     }
-  },
-  "dashboard-scene-help-wizard": {
-    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-scene": {
     "ad-hoc-variable-form": {
@@ -5921,6 +7188,9 @@
       "aria-label-panel-links": "Panel links"
     }
   },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
@@ -5987,1276 +7257,6 @@
     "versions": {
       "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
-    }
-  },
-  "dashboard": {
-    "actions": {
-      "open-settings": "Settings"
-    },
-    "add": {
-      "new-panel": {
-        "button": "Add new panel button",
-        "description": "Drag or click to add a panel",
-        "title": "Panel"
-      },
-      "pane-header": "Add"
-    },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
-    "add-menu": {
-      "import": "Import from library",
-      "paste-panel": "Paste panel",
-      "row": "Row",
-      "visualization": "Visualization"
-    },
-    "alert-rules-drawer": {
-      "redirect-link": "List in Grafana Alerting",
-      "subtitle": "Alert rules related to this dashboard"
-    },
-    "annotation-settings-edit": {
-      "apply": "Apply",
-      "delete": "Delete",
-      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
-      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
-      "label-color": "Color",
-      "label-data-source": "Data source",
-      "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
-      "label-name": "Name",
-      "label-show-in": "Show in",
-      "placeholder-choose-panels": "Choose panels",
-      "preview-in-dashboard": "Preview in dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "No annotation support for this data source"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Delete query with title \"{{title}}\"",
-      "built-in": "{{name}} (Built-in)",
-      "data-source": "Data source",
-      "disabled": "(Disabled) {{name}}",
-      "new-query": "New query",
-      "query-name": "Query name",
-      "tooltip-move-down": "Move down",
-      "tooltip-move-up": "Move up"
-    },
-    "auto-grid": {
-      "description": "Panels resize to fit and form uniform grids",
-      "item-options": {
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        }
-      },
-      "name": "Auto grid",
-      "options": {
-        "custom-min-height": {
-          "clear": "Clear"
-        },
-        "custom-min-width": {
-          "clear": "Clear"
-        },
-        "height-fill": "Fill screen",
-        "max-columns": "Max columns",
-        "min-height": "Row height",
-        "min-height-custom": "Custom row height",
-        "min-height-error": "A number between 50 and 2000 is required",
-        "min-width": "Min column width",
-        "min-width-custom": "Custom min width",
-        "min-width-custom-clear": "Back to standard min column width",
-        "min-width-error": "A number between 50 and 2000 is required"
-      }
-    },
-    "canvas-actions": {
-      "add-panel": "Add panel",
-      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
-      "disabled-nested-grouping": "Grouping is limited to 2 levels",
-      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
-      "group-into-row": "Group into row",
-      "group-into-tab": "Group into tab",
-      "group-panels": "Group panels",
-      "new-row": "New row",
-      "new-tab": "New tab",
-      "paste-panel": "Paste panel",
-      "paste-row": "Paste row",
-      "paste-tab": "Paste tab",
-      "ungroup-rows": "Ungroup rows",
-      "ungroup-tabs": "Ungroup tabs"
-    },
-    "conditional-rendering": {
-      "conditions": {
-        "data": {
-          "disable": "No data",
-          "enable": "Has data",
-          "info": "Show or hide the {{type}} based on query results.",
-          "label": "Query result"
-        },
-        "group": {
-          "add": {
-            "button": "Add rule",
-            "data": "Query result",
-            "time-range-size": "Time range less than",
-            "variable": "Template variable"
-          },
-          "condition": {
-            "all": "Match all",
-            "any": "Match any",
-            "label": "Match rules"
-          },
-          "visibility": {
-            "hide": "Hide",
-            "label": "{{type}} visibility",
-            "show": "Show"
-          }
-        },
-        "time-range-size": {
-          "info": "Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.",
-          "invalid-message": "Invalid interval",
-          "label": "Time range less than",
-          "values": {
-            "days": "{{value}} days",
-            "hour": "{{value}} hour",
-            "hours": "{{value}} hours",
-            "minutes": "{{value}} minutes",
-            "months": "{{value}} months",
-            "year": "{{value}} year",
-            "years": "{{value}} years"
-          }
-        },
-        "variable": {
-          "error": {
-            "invalid-regex": "Invalid regex"
-          },
-          "info": "Show or hide the {{type}} dynamically based on the variable value.",
-          "label": "Template variable",
-          "name": "Name",
-          "operator": {
-            "equals": "Equals",
-            "matches": "Matches",
-            "not-equals": "Not equals",
-            "not-matches": "Not matches"
-          },
-          "value": "Value"
-        },
-        "wrapper": {
-          "delete-condition": "Delete Condition",
-          "unsupported-object-type": "This condition is not supported by the element, hence it will be ignored."
-        }
-      },
-      "editor": {
-        "info": "Set rules to control {{type}} visibility by matching any or all rules.",
-        "learn-more": "Learn more",
-        "not-supported-for-custom-grid": "Show/hide rules aren't supported for panels in the Custom panel layout. Change the panel layout to Auto grid to enable this feature.",
-        "unsupported-object-type": "Conditional rendering not supported for this item type"
-      },
-      "overlay": {
-        "tooltip": "Element is hidden by show/hide rules."
-      },
-      "root": {
-        "title": "Show / hide rules"
-      }
-    },
-    "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Your changes will be lost when you update the plugin.<br /><2>Use <strong>Save As</strong> to create custom version.</2>",
-      "cancel": "Cancel",
-      "overwrite": "Overwrite",
-      "title-plugin-dashboard": "Plugin dashboard"
-    },
-    "controls": {
-      "menu": {
-        "aria-label": "",
-        "title": ""
-      }
-    },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Proceed"
-        },
-        "title": {
-          "proceed-to-external-site": "Proceed to external site?"
-        }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "View as Scene"
-      }
-    },
-    "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} dashboard",
-      "label-no-dashboards-found": "No dashboards found"
-    },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
-    },
-    "dashboard-page-error": {
-      "text": {
-        "not-found": "Not found"
-      }
-    },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Close"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
-      }
-    },
-    "dashboard-srv": {
-      "message": {
-        "edit-dashboard-json": "Edit Dashboard JSON"
-      }
-    },
-    "default-layout": {
-      "description": "Position and size each panel individually",
-      "item-options": {
-        "repeat": {
-          "direction": {
-            "horizontal": "Horizontal",
-            "title": "Repeat direction",
-            "vertical": "Vertical"
-          },
-          "max": "Max per row",
-          "title": "Repeat options",
-          "variable": {
-            "description": "Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.",
-            "title": "Repeat by variable"
-          }
-        }
-      },
-      "name": "Custom",
-      "row-actions": {
-        "delete": "Delete row",
-        "modal": {
-          "alt-action": "Delete row only",
-          "text": "Are you sure you want to remove this row and all its panels?",
-          "title": "Delete row"
-        }
-      },
-      "row-options": {
-        "button": {
-          "label": "Row options"
-        },
-        "form": {
-          "cancel": "Cancel",
-          "repeat-for": {
-            "label": "Repeat for",
-            "learn-more": "Learn more",
-            "warning": {
-              "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-            }
-          },
-          "title": "Title",
-          "update": "Update"
-        },
-        "modal": {
-          "title": "Row options"
-        },
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "title": "Variable"
-          }
-        },
-        "title": "Row options"
-      }
-    },
-    "description": {
-      "action": "Change dashboard description"
-    },
-    "dynamic-config-value-editor": {
-      "render-label": {
-        "tooltip-remove-property": "Remove property"
-      }
-    },
-    "edit-actions": {
-      "add": "Add {{typeName}}",
-      "add-conditional-rule": "Add {{ruleDescription}} rule",
-      "duplicate-panel": "Duplicate panel",
-      "edit-query-result-rule": "Change query result rule",
-      "edit-template-variable-rule": "Change template variable rule",
-      "edit-time-range-rule": "Change time range rule",
-      "move": "Move {{typeName}}",
-      "panel-background": "Change panel background",
-      "panel-description": "Change panel description",
-      "panel-edit": "Panel changes",
-      "panel-max-repeats-per-row": "Max repeats per row",
-      "panel-repeat-direction": "Repeat direction",
-      "panel-repeat-variable": "Panel repeat by",
-      "panel-title": "Change panel title",
-      "paste-panel": "Paste panel",
-      "remove": "Remove {{typeName}}",
-      "row-title": "Change row title",
-      "switch-layout": "Switch layout",
-      "switch-layout-row": "Switch layout",
-      "switch-layout-tab": "Switch layout",
-      "tab-title": "Change tab title"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Change annotation data source",
-        "choose-panels": "Choose panels",
-        "color": "Color",
-        "color-description": "Color to use for the annotation event markers",
-        "data-source": "Data source",
-        "display": "Show annotation controls in",
-        "display-options": {
-          "above-dashboard": "Above dashboard",
-          "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
-          "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
-        },
-        "enabled": "Enabled",
-        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
-        "name": "Name",
-        "open-query-editor": "Open query editor",
-        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
-        "panel-filter": {
-          "all-panels": "All panels",
-          "all-panels-description": "Send the annotation data to all panels that support annotations",
-          "all-panels-except": "All panels except",
-          "all-panels-except-description": "Do not send annotation data to the following panels",
-          "selected-panels": "Selected panels",
-          "selected-panels-description": "Send the annotations to the explicitly listed panels"
-        },
-        "query": "Query",
-        "query-editor-close": "Close",
-        "query-editor-modal-title": "Annotation Query",
-        "show-in": "Show in"
-      },
-      "annotations": {
-        "add-annotation": "Add annotation",
-        "reorder": "Drag to reorder",
-        "select-annotation": "Select"
-      },
-      "elements": {
-        "annotation": "Annotation",
-        "annotation-set": "Annotations & Alerts",
-        "dashboard": "Dashboard",
-        "element": "Element",
-        "local-variable": "Local variable",
-        "multiple-elements": "Multiple elements",
-        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
-        "multiple-panels": "Multiple panels",
-        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
-        "objects": "Objects",
-        "panel": "Panel",
-        "panels": "Panels",
-        "row": "Row",
-        "rows": "Rows",
-        "tab": "Tab",
-        "tabs": "Tabs",
-        "variable": "{{type}} variable",
-        "variable-set": "Variables"
-      },
-      "row": {
-        "header": {
-          "hide": "Hide",
-          "title": "Row header"
-        }
-      },
-      "variable": {
-        "custom-options": {
-          "apply": "Apply",
-          "change-value": "Change variable value",
-          "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
-        },
-        "datasource-options": {
-          "name-filter": "Name filter",
-          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
-          "name-filter-placeholder": "Example: /^prod/",
-          "type": "Type",
-          "type-placeholder": "Choose data source type"
-        },
-        "description": "Description",
-        "description-placeholder": "Descriptive text",
-        "label": "Label",
-        "label-description": "Optional display name",
-        "name": "Name",
-        "open-editor": "Open variable editor",
-        "open-editor-tooltip": "For more variable options open variable editor",
-        "query-options": {
-          "close": "Close",
-          "modal-title": "Query Variable",
-          "preview": "Preview"
-        },
-        "selection-options": {
-          "allow-custom-values": "Allow custom values",
-          "allow-custom-values-description": "Enables users to enter values",
-          "category": "Selection options",
-          "custom-all-value": "Custom all value",
-          "custom-all-value-description": "A wildcard regex or other value to represent All",
-          "include-all": "Include All value",
-          "include-all-description": "Enables a single option that represent all values",
-          "multi-value": "Multi-value"
-        },
-        "type-category": "{{type}} options"
-      },
-      "variables": {
-        "add-variable": "Add variable",
-        "reorder": "Drag to reorder",
-        "select-type": "Choose variable type",
-        "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select"
-      }
-    },
-    "empty": {
-      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
-      "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Import panel",
-      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
-      "add-visualization-button": "Add visualization",
-      "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "description": "Add a panel to visualize your data",
-      "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
-      "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard",
-      "show-less-dashboards": "Show less",
-      "show-more-dashboards": "Show more",
-      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
-      "title": "New dashboard",
-      "use-template-button": "Use this dashboard"
-    },
-    "errors": {
-      "failed-to-load": "Failed to load dashboard"
-    },
-    "export": {
-      "button": {
-        "label": "Export dashboard"
-      },
-      "menu": {
-        "label": "Export dashboard menu"
-      }
-    },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
-      }
-    },
-    "gen-aihistory": {
-      "aria-label-send-custom-feedback": "Send custom feedback",
-      "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
-      "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
-    },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Editable",
-          "readonly": "Read-only"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Default",
-          "shared-crosshair": "Shared crosshair",
-          "shared-tooltip": "Shared tooltip"
-        }
-      }
-    },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "Annotations"
-      }
-    },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "Error loading data"
-      }
-    },
-    "get-field-override-categories": {
-      "label-add-field-override": "Add field override",
-      "label-add-override-property": "Add override property",
-      "override-name": "Override {{overrideNum}}",
-      "title": {
-        "add-button": "add button"
-      }
-    },
-    "get-library-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "Library panel options"
-        }
-      },
-      "title": {
-        "information": "Information",
-        "name": "Name"
-      }
-    },
-    "get-library-viz-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "Library panel options"
-        }
-      },
-      "title": {
-        "information": "Information",
-        "name": "Name"
-      }
-    },
-    "get-panel-editor-tabs": {
-      "text": {
-        "alert": "Alert",
-        "query": "Query",
-        "transform-data": "Transform data"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Do not send annotation data to the following panels",
-        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
-        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
-      },
-      "label": {
-        "all-panels": "All panels",
-        "all-panels-except": "All panels except",
-        "selected-panels": "Selected panels"
-      }
-    },
-    "get-panel-frame-category": {
-      "descriptor": {
-        "title": {
-          "panel-options": "Panel options"
-        }
-      },
-      "direction-options": {
-        "label": {
-          "horizontal": "Horizontal",
-          "vertical": "Vertical"
-        }
-      },
-      "title": {
-        "description": "Description",
-        "max-per-row": "Max per row",
-        "panel-links": "Panel links",
-        "repeat-by-variable": "Repeat by variable",
-        "repeat-direction": "Repeat direction",
-        "repeat-options": "Repeat options",
-        "title": "Title",
-        "transparent-background": "Transparent background"
-      }
-    },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "Copy to clipboard",
-      "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
-      "description-support-snapshot": "Panel: {{panelTitle}}",
-      "download-snapshot": "Download ({{snapshotSize}})",
-      "label-obfuscate-data": "Obfuscate data",
-      "label-support-snapshot": "Support snapshot",
-      "label-template": "Template",
-      "randomize-field-names-label-field-names": "Field names",
-      "randomize-labels-label-labels": "Labels",
-      "randomize-string-values-label-string-values": "String values",
-      "tabs": {
-        "label": {
-          "data": "Data",
-          "snapshot": "Snapshot"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "Copy a complete GitHub comment to the clipboard",
-      "title-get-help-with-this-panel": "Get help with this panel",
-      "troubleshooting-docs": "Troubleshooting docs"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Failed create dashboard model"
-      }
-    },
-    "inspect": {
-      "data-tab": "Data",
-      "error-tab": "Error",
-      "json-tab": "JSON",
-      "meta-tab": "Meta data",
-      "query-tab": "Query",
-      "stats-tab": "Stats",
-      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
-      "title": "Inspect: {{panelTitle}}"
-    },
-    "inspect-data": {
-      "data-options": "Data options",
-      "dataframe-aria-label": "Select dataframe",
-      "dataframe-label": "Show data frame",
-      "download-csv": "Download CSV",
-      "download-logs": "Download logs",
-      "download-service": "Download service graph",
-      "download-traces": "Download traces",
-      "excel-compatibility-mode-description": "Generates a CSV file that's compatible with most Excel versions",
-      "excel-compatibility-mode-label": "Download for Excel",
-      "formatted": "Formatted data",
-      "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
-      "formatted-data-label": "Formatted data",
-      "panel-transforms": "Panel transforms",
-      "series-to-columns": "Series joined by time",
-      "transformation": "Series joined by time",
-      "transformations-description": "Table data is displayed with transformations defined in the panel Transform tab.",
-      "transformations-label": "Apply panel transformations"
-    },
-    "inspect-json": {
-      "dataframe-description": "Raw data without transformations and field config applied. ",
-      "dataframe-label": "DataFrame JSON (from Query)",
-      "panel-data-description": "The raw model passed to the panel visualization",
-      "panel-data-label": "Panel data",
-      "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
-      "panel-json-label": "Panel JSON",
-      "panel-layout-description": "The grid position and size of the panel in the dashboard.",
-      "panel-layout-label": "Panel Layout",
-      "panel-spec-label": "Panel Spec",
-      "select-source": "Select source",
-      "unknown": "Unknown Object: {{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
-    },
-    "inspect-stats": {
-      "data-title": "Data source stats",
-      "data-traceids": "Trace IDs",
-      "processing-time": "Data processing time",
-      "queries": "Number of queries",
-      "request-time": "Total request time",
-      "rows": "Total number rows",
-      "table-title": "Stats"
-    },
-    "k8s-dashboard-api": {
-      "title": {
-        "deleted": "deleted"
-      }
-    },
-    "k8s-dashboard-v2api": {
-      "title": {
-        "deleted": "deleted"
-      }
-    },
-    "kiosk": {
-      "footerPoweredBy": "Powered by"
-    },
-    "layout": {
-      "cancel": "Cancel",
-      "common": {
-        "copy": "Copy",
-        "copy-or-duplicate": "Copy or Duplicate",
-        "delete": "Delete",
-        "duplicate": "Duplicate",
-        "layout": "Layout"
-      },
-      "continue": "Continue",
-      "panel": {
-        "modal": {
-          "body": "Changing the layout will reset all panel positions and sizes.",
-          "confirm": "Change layout",
-          "dismiss": "Cancel",
-          "title": "Change layout"
-        }
-      },
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
-    },
-    "make-editable": {
-      "dashboard-not-editable": "Dashboard not editable",
-      "make-editable": "Make editable"
-    },
-    "minimalistic-pagination": {
-      "page-count": "{{currentPage}} of {{numberOfPages}}",
-      "tooltip-next": "Next",
-      "tooltip-previous": "Previous"
-    },
-    "new-dashboard-with-ds": {
-      "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
-    },
-    "new-panel": {
-      "configure-button": "Configure",
-      "configure-button-menu": "Toggle menu",
-      "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
-      "menu-open-panel-editor": "Configure",
-      "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration",
-      "suggestions": {
-        "empty-state-message": "Run a query to start seeing suggested visualizations"
-      }
-    },
-    "new-panel-title": "New panel",
-    "on-create-new-row": {
-      "new-row": {
-        "title": {
-          "row-title": "Row title"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget title"
-        }
-      }
-    },
-    "options": {
-      "description": "Description",
-      "title-option": "Title"
-    },
-    "options-pane-category": {
-      "aria-label-collapse": "Collapse {{title}} category",
-      "aria-label-expand": "Expand {{title}} category"
-    },
-    "options-pane-options": {
-      "Recent options-title-recent-options": "Recent options",
-      "placeholder-search-options": "Search options",
-      "title-matched_one": "Matched {{count}}/{{totalCount}} options",
-      "title-matched_other": "Matched {{count}}/{{totalCount}} options"
-    },
-    "outline": {
-      "pane-header": "Content outline",
-      "repeated-item": "Repeat",
-      "tree-item": {
-        "empty": "(empty)",
-        "no-title": "<no title>"
-      }
-    },
-    "override-category-title": {
-      "aria-label-remove-override": "Remove override",
-      "tooltip-remove-override": "Remove override"
-    },
-    "panel": {
-      "time-range-settings": {
-        "hide-time-info": "Hide panel time range",
-        "hide-time-info-description": "Do not show the panel time range in the panel header",
-        "time-from": "Panel time range",
-        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
-        "time-shift": "Time shift",
-        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
-        "time-window-compare": "Time comparison",
-        "time-window-compare-description": "Compare data between two time ranges",
-        "title": "Panel time settings"
-      }
-    },
-    "panel-edit": {
-      "alerting-tab": {
-        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
-        "no-rules": "There are no alert rules linked to this panel."
-      },
-      "only-overrides-button-tooltip": "Show only overrides",
-      "placeholder-search-options": "Search options",
-      "visualization-button-tooltip": "Search options"
-    },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Go back to Queries"
-    },
-    "public-dashboard-not-available": {
-      "does-not-exist": "The dashboard you are trying to access does not exist",
-      "paused": "This dashboard has been paused by the administrator",
-      "try-again-later": "Try again later"
-    },
-    "remove-panel": {
-      "text": {
-        "remove-panel": "Are you sure you want to remove this panel?"
-      },
-      "title": {
-        "remove-panel": "Remove panel"
-      }
-    },
-    "repeat-row-select": {
-      "variable-options": {
-        "label": {
-          "disable-repeating": "Disable repeating",
-          "no-template-variables-found": "No template variables found"
-        }
-      }
-    },
-    "repeat-row-select2": {
-      "placeholder": "Choose",
-      "variable-options": {
-        "label": {
-          "disable-repeating": "Disable repeating",
-          "no-template-variables-found": "No template variables found"
-        }
-      }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
-      "confirmText-restore-version": "Yes, restore to version {{version}}",
-      "title-restore-version": "Restore version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
-    },
-    "rows-layout": {
-      "cancel": "Cancel",
-      "convert-to": "Convert to {{name}}",
-      "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
-      "delete-row-title": "Delete row?",
-      "delete-row-yes": "Delete",
-      "description": "Collapsable panel groups with headings",
-      "edit": {
-        "ungroup-rows": "Ungroup rows"
-      },
-      "header-hidden-tooltip": "Row header only visible in edit mode",
-      "name": "Rows",
-      "new-row-title": "New row",
-      "row": {
-        "collapse": "Collapse row",
-        "expand": "Expand row",
-        "new": "New row",
-        "repeat": {
-          "learn-more": "Learn more",
-          "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-        }
-      },
-      "row-options": {
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "description": "Repeat this row for each value in the selected variable.",
-            "title": "Repeat by variable"
-          }
-        },
-        "row": {
-          "fill-screen": "Fill screen",
-          "hide-header": "Hide row header",
-          "title": "Title"
-        },
-        "title-not-unique": "Title should be unique",
-        "title-option": "Title"
-      },
-      "row-warning": {
-        "title-not-unique": "This title is not unique"
-      },
-      "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
-      "ungroup-convert-title": "Convert mixed grids?"
-    },
-    "save-dashboard": {
-      "message-dashboard-saved": "Dashboard saved"
-    },
-    "save-dashboard-as-button": {
-      "save-as": "Save as"
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-button": "Save dashboard button",
-      "aria-label-save-dashboard-description-field": "Save dashboard description field",
-      "aria-label-save-dashboard-title-field": "Save dashboard title field",
-      "cancel": "Cancel",
-      "description": "Description",
-      "label-copy-tags": "Copy tags",
-      "label-folder": "Folder",
-      "save": "Save",
-      "saving": "Saving...",
-      "title": "Title"
-    },
-    "save-dashboard-button": {
-      "save-dashboard": "Save dashboard"
-    },
-    "save-dashboard-diff": {
-      "full-json-diff": "Full JSON diff",
-      "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
-      "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
-      "title-folder": "folder"
-    },
-    "save-dashboard-drawer": {
-      "label-changes": "Changes",
-      "label-details": "Details",
-      "title": "Save dashboard",
-      "title-copy": "Save dashboard copy",
-      "title-provisioned": "Provisioned dashboard"
-    },
-    "save-dashboard-error-proxy": {
-      "body-name-exists": "A dashboard with the same name in selected folder already exists.<br /><2>Would you still like to save this dashboard?</2>",
-      "body-version-mismatch": "Someone else has updated this dashboard<br /><2>Would you still like to save this dashboard?</2>",
-      "confirmText-save-and-overwrite": "Save and overwrite",
-      "title-name-exists": "Conflict",
-      "title-version-mismatch": "Conflict"
-    },
-    "save-dashboard-form": {
-      "cancel": "Cancel",
-      "label-current-range-dashboard-default": "Save current time range as dashboard default",
-      "label-current-variable-values-dashboard-default": "Save current variable values as dashboard default",
-      "no-changes-to-save": "No changes to save",
-      "placeholder-describe-changes": "Add a note to describe your changes.",
-      "save": "Save",
-      "saving": "Saving..."
-    },
-    "save-provisioned-dashboard-form": {
-      "cancel": "Cancel",
-      "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
-      "copy-json-to-clipboard": "Copy JSON to clipboard",
-      "file-path": "<strong>File path:</strong> {{filePath}}",
-      "save-json-to-file": "Save JSON to file",
-      "see-docs": "See <2>documentation</2> for more information about provisioning."
-    },
-    "search-panel": {
-      "no-match": "No panels matching"
-    },
-    "share-public-dashboard-loader": {
-      "loading-configuration": "Loading configuration"
-    },
-    "sidebar": {
-      "add": {
-        "title": "Add",
-        "tooltip": "Add new element"
-      },
-      "dashboard-options": {
-        "title": "Options",
-        "tooltip": "Dashboard options"
-      },
-      "export": {
-        "title": "Export"
-      },
-      "outline": {
-        "title": "Outline",
-        "tooltip": "Content outline"
-      },
-      "redo": "Redo",
-      "snapshot": {
-        "tooltip": "Open original dashboard"
-      },
-      "undo": "Undo"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Loading & initializing dashboard",
-      "title-not-found": "Panel with id {{panelId}} not found"
-    },
-    "source-link": {
-      "title": "Source ({{provider}})",
-      "tooltip": "View source file in repository"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Template variables"
-    },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
-      },
-      "label": {
-        "git-hub-comment": "GitHub comment",
-        "panel-support-snapshot": "Panel support snapshot"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "Copy to clipboard failed"
-      }
-    },
-    "tabs-layout": {
-      "delete-tab-text": "Deleting this tab will also remove all panels. Are you sure you want to continue?",
-      "delete-tab-title": "Delete tab?",
-      "delete-tab-yes": "Delete",
-      "description": "Organize panels into horizontal tabs",
-      "edit": {
-        "ungroup-tabs": "Ungroup tabs"
-      },
-      "name": "Tabs",
-      "tab": {
-        "new": "New tab",
-        "repeat": {
-          "learn-more": "Learn more",
-          "loading": "Loading tab repeats",
-          "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
-        }
-      },
-      "tab-options": {
-        "repeat": {
-          "title": "Repeat options",
-          "variable": {
-            "description": "Repeat this tab for each value in the selected variable.",
-            "title": "Repeat by variable"
-          }
-        },
-        "title-not-unique": "Title should be unique",
-        "title-option": "Title"
-      },
-      "tab-warning": {
-        "title-not-unique": "This title is not unique"
-      }
-    },
-    "title": {
-      "action": "Change dashboard title"
-    },
-    "toolbar": {
-      "add": "Add",
-      "alert-rules": "Alert rules",
-      "back-to-dashboard": "Back to dashboard",
-      "dashboard-settings": {
-        "label": "Settings",
-        "tooltip": "Dashboard settings"
-      },
-      "discard-library-panel-changes": "Discard library panel changes",
-      "discard-panel": "Discard panel changes",
-      "discard-panel-new": "Discard panel",
-      "edit": {
-        "label": "Edit",
-        "tooltip": "Enter edit mode"
-      },
-      "edit-button": {
-        "enter": "Edit",
-        "enter-tooltip": "Enter edit mode",
-        "exit": "Exit edit",
-        "exit-tooltip": "Exit edit mode"
-      },
-      "enter-edit-mode": {
-        "label": "Make editable",
-        "tooltip": "This dashboard was marked as read only"
-      },
-      "exit-edit-mode": {
-        "label": "Exit edit",
-        "tooltip": "Exits edit mode and discards unsaved changes"
-      },
-      "mark-favorite": "Mark as favorite",
-      "more-save-options": "More save options",
-      "new": {
-        "back-to-dashboard": "Back to dashboard",
-        "dashboard-settings": {
-          "tooltip": "Dashboard settings"
-        },
-        "discard-library-panel-changes": "Discard library panel changes",
-        "discard-panel": "Discard panel changes",
-        "discard-panel-new": "Discard panel",
-        "edit-dashboard-v2-schema": {
-          "tooltip": "Edit dashboard v2 schema"
-        },
-        "enter-edit-mode": {
-          "label": "Make editable",
-          "tooltip": "This dashboard was marked as read only"
-        },
-        "export": {
-          "tooltip": {
-            "as-code": "Export as code"
-          }
-        },
-        "more-save-options": "More save options",
-        "playlist-next": "Go to next dashboard",
-        "playlist-previous": "Go to previous dashboard",
-        "playlist-stop": "Stop playlist",
-        "public-dashboard": "Public",
-        "save-dashboard": {
-          "label": "Save",
-          "tooltip": "Save changes"
-        },
-        "save-dashboard-copy": {
-          "label": "Save as copy",
-          "tooltip": "Save as copy"
-        },
-        "save-dashboard-short": "Save",
-        "save-library-panel": "Save library panel",
-        "share": {
-          "arrow": "Share",
-          "title": "Share",
-          "tooltip": "Copy link"
-        },
-        "unlink-library-panel": "Unlink library panel"
-      },
-      "open-original": "Open original dashboard",
-      "playlist-next": "Go to next dashboard",
-      "playlist-previous": "Go to previous dashboard",
-      "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
-      "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
-      "save-dashboard": {
-        "label": "Save dashboard",
-        "tooltip": "Save changes"
-      },
-      "save-dashboard-copy": {
-        "label": "Save as copy",
-        "tooltip": "Save as copy"
-      },
-      "save-dashboard-short": "Save",
-      "save-library-panel": "Save library panel",
-      "settings": "Dashboard settings",
-      "share-button": "Share",
-      "snapshot": {
-        "title": "Source"
-      },
-      "star-add-error": "Failed to add to starred",
-      "star-added": "Added to starred",
-      "star-remove-error": "Failed to remove from starred",
-      "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel",
-      "unmark-favorite": "Unmark as favorite"
-    },
-    "transformation-editor": {
-      "input-data": "Input data",
-      "output-data": "Output data",
-      "title-debug-transformation": "Debug transformation"
-    },
-    "transformation-filter": {
-      "label-apply-transformation-to": "Apply transformation to"
-    },
-    "transformation-operation-row": {
-      "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
-      "render-actions": {
-        "confirmText-delete": "Delete",
-        "title-debug": "Debug",
-        "title-disable-transformation": "Disable transformation",
-        "title-filter": "Filter",
-        "title-remove": "Remove",
-        "title-show-transform-help": "Show transform help"
-      },
-      "title-delete": "Delete {{name}}?"
-    },
-    "transformation-picker": {
-      "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
-      "info-graph-not-suitable": "Many transforms are not suitable if you're using the Graph visualization, as it currently only supports time series data.",
-      "info-switch-to-table": "It can help to switch to the Table visualization to understand what a transformation is doing.",
-      "placeholder-search-for-transformation": "Search for transformation",
-      "read-more": "Read more",
-      "title-transformations": "Transformations"
-    },
-    "transformation-picker-ng": {
-      "placeholder-search-for-transformation": "Search for transformation",
-      "show-images": "Show images",
-      "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
-      "sql-expressions-message-link": "Learn more",
-      "sql-expressions-title": "SQL Expressions",
-      "title-add-another-transformation": "Add another transformation",
-      "view-all": "View all"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Add another transformation"
-      },
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?",
-      "tooltip-clear-search": "Clear search",
-      "tooltip-close-picker": "Close picker"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "Cancel",
-      "changes": "Do you want to save your changes?",
-      "discard": "Discard",
-      "title-unsaved-changes": "Unsaved changes"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
-    },
-    "validation": {
-      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
-      "invalid-json": "Not valid JSON",
-      "tag-too-long": "Dashboard tag too long, max 50 characters",
-      "tags-expected-array": "tags expected array",
-      "tags-expected-strings": "tags expected array of strings"
-    },
-    "variable": {
-      "description": {
-        "action": "Change variable description"
-      },
-      "hide": {
-        "action": "Change variable hide option"
-      },
-      "label": {
-        "action": "Change variable label"
-      },
-      "name": {
-        "action": "Change variable name"
-      }
-    },
-    "version-history-comparison": {
-      "button-restore": "Restore to version {{version}}",
-      "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
-      "date": "Date",
-      "name-latest": "Latest",
-      "notes": "Notes",
-      "restore": "Restore",
-      "updated-by": "Updated by",
-      "version": "Version"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
-    "view-panel": {
-      "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
-    },
-    "viz-panel": {
-      "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
-      "delete-panel-title": "Delete panel?",
-      "delete-panel-yes": "Delete",
-      "options": {
-        "configure-button-tooltip": "Edit queries and visualization options",
-        "description": "Description",
-        "title-option": "Title",
-        "transparent-background": "Transparent background"
-      }
     }
   },
   "dashboards": {
@@ -10269,17 +10269,17 @@
       "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
       "title": "Basic login disabled"
     },
-    "search-base-dns": {
-      "description": "An array of base dns to search through.",
-      "error": "Search base DNS is a required field",
-      "label": "Search base DNS",
-      "placeholder": "example: dc=grafana,dc=org"
-    },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
       "error": "Search filter is a required field",
       "label": "Search filter",
       "placeholder": "example: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "An array of base dns to search through.",
+      "error": "Search base DNS is a required field",
+      "label": "Search base DNS",
+      "placeholder": "example: dc=grafana,dc=org"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
@@ -11679,10 +11679,6 @@
       "clear-tooltip": "Clear unit selection"
     }
   },
-  "org-picker": {
-    "noOptionsMessage-no-organizations-found": "No organizations found",
-    "select-placeholder": "Select organization"
-  },
   "org": {
     "new-org-page": {
       "create": "Create",
@@ -11720,22 +11716,14 @@
       }
     }
   },
+  "org-picker": {
+    "noOptionsMessage-no-organizations-found": "No organizations found",
+    "select-placeholder": "Select organization"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit title"
     }
-  },
-  "panel-group-by": {
-    "button": "Group by",
-    "loading": "Loading options",
-    "no-options": "No options found",
-    "search-placeholder": "Search"
-  },
-  "panel-type-filter": {
-    "clear-button": "Clear types",
-    "select-aria-label": "Panel type filter",
-    "select-no-options": "No panel types found",
-    "select-placeholder": "Filter by type"
   },
   "panel": {
     "dashlist": {
@@ -11848,6 +11836,18 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-group-by": {
+    "button": "Group by",
+    "loading": "Loading options",
+    "no-options": "No options found",
+    "search-placeholder": "Search"
+  },
+  "panel-type-filter": {
+    "clear-button": "Clear types",
+    "select-aria-label": "Panel type filter",
+    "select-no-options": "No panel types found",
+    "select-placeholder": "Filter by type"
+  },
   "piechart": {
     "category-legend": "Legend",
     "category-pie-chart": "Pie chart",
@@ -11872,6 +11872,39 @@
     "suggestions": {
       "donut": "Donut chart",
       "pie": "Pie chart"
+    }
+  },
+  "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "New playlist"
+        }
+      }
+    },
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "multiple-dashboards-found": "Multiple items found: {{items}}",
+      "no-dashboards-found": "No dashboards found",
+      "not-found": "Not found: {{items}}"
+    },
+    "start-modal": {
+      "button-start": "Start {{title}}",
+      "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
+      "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "label-autofit": "Autofit",
+      "label-dashboard-links": "Dashboard links",
+      "label-display-dashboard-controls": "Display dashboard controls",
+      "label-mode": "Mode",
+      "label-time-and-refresh": "Time and refresh",
+      "label-variables": "Variables",
+      "modes": {
+        "label": {
+          "kiosk": "Kiosk",
+          "normal": "Normal"
+        }
+      },
+      "title-start-playlist": "Start playlist"
     }
   },
   "playlist-edit": {
@@ -11915,39 +11948,6 @@
       "button": "Create playlist",
       "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
       "title": "There are no playlists created yet"
-    }
-  },
-  "playlist": {
-    "playlist-new-page": {
-      "page-nav": {
-        "text": {
-          "new-playlist": "New playlist"
-        }
-      }
-    },
-    "playlist-table-rows": {
-      "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
-      "multiple-dashboards-found": "Multiple items found: {{items}}",
-      "no-dashboards-found": "No dashboards found",
-      "not-found": "Not found: {{items}}"
-    },
-    "start-modal": {
-      "button-start": "Start {{title}}",
-      "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
-      "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
-      "label-autofit": "Autofit",
-      "label-dashboard-links": "Dashboard links",
-      "label-display-dashboard-controls": "Display dashboard controls",
-      "label-mode": "Mode",
-      "label-time-and-refresh": "Time and refresh",
-      "label-variables": "Variables",
-      "modes": {
-        "label": {
-          "kiosk": "Kiosk",
-          "normal": "Normal"
-        }
-      },
-      "title-start-playlist": "Start playlist"
     }
   },
   "playlists": {
@@ -12960,39 +12960,6 @@
       "error-save-repository-setting": "Failed to save repository setting"
     }
   },
-  "public-dashboard-users-access-list": {
-    "dashboard-modal": {
-      "external-link": "External link",
-      "loading-text": "Loading...",
-      "open-dashboard-list-text": "Open dashboards list",
-      "sharing-setting": "Sharing settings"
-    },
-    "delete-user-modal": {
-      "delete-user-button-text": "Delete user",
-      "delete-user-cancel-button": "Cancel",
-      "delete-user-revoke-access-button": "Revoke access",
-      "revoke-access-title": "Revoke access",
-      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?"
-    },
-    "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}'s access to all shared dashboards."
-    },
-    "modal": {
-      "shared-dashboard-modal-title": "Shared dashboards"
-    },
-    "table-body": {
-      "dashboard-count_one": "{{count}} dashboards",
-      "dashboard-count_other": "{{count}} dashboards"
-    },
-    "table-header": {
-      "activated-label": "Activated",
-      "activated-tooltip": "Earliest time user has been an active user to a dashboard",
-      "email-label": "Email",
-      "last-active-label": "Last active",
-      "origin-label": "Origin",
-      "role-label": "Role"
-    }
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Before you make the dashboard public, acknowledge the following:",
@@ -13114,6 +13081,90 @@
       "revoke-access-button": "Revoke access",
       "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
       "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for shared dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}."
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "external-link": "External link",
+      "loading-text": "Loading...",
+      "open-dashboard-list-text": "Open dashboards list",
+      "sharing-setting": "Sharing settings"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Delete user",
+      "delete-user-cancel-button": "Cancel",
+      "delete-user-revoke-access-button": "Revoke access",
+      "revoke-access-title": "Revoke access",
+      "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?"
+    },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}'s access to all shared dashboards."
+    },
+    "modal": {
+      "shared-dashboard-modal-title": "Shared dashboards"
+    },
+    "table-body": {
+      "dashboard-count_one": "{{count}} dashboards",
+      "dashboard-count_other": "{{count}} dashboards"
+    },
+    "table-header": {
+      "activated-label": "Activated",
+      "activated-tooltip": "Earliest time user has been an active user to a dashboard",
+      "email-label": "Email",
+      "last-active-label": "Last active",
+      "origin-label": "Origin",
+      "role-label": "Role"
+    }
+  },
+  "query": {
+    "query-editor-row-header": {
+      "hidden": "Hidden",
+      "query-name-div-title-edit-query-name": "Edit query name"
+    },
+    "query-error-alert": {
+      "error-details": "Query error details",
+      "fix-with-assistant": "Fix with Assistant",
+      "original-query": "Original query",
+      "trace-id": "(Trace ID: {{traceId}})"
+    },
+    "query-group": {
+      "add-query": "Add query",
+      "expression": "Expression",
+      "title-data-source-help": "Data source help"
+    },
+    "query-group-options-editor": {
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "hide-time-info": "Hide time info",
+      "Query options-title-query-options": "Query options",
+      "relative-time": "Relative time",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
+      "render-cache-timeout-option": {
+        "cache-timeout": "Cache timeout"
+      },
+      "render-interval-option": {
+        "interval": "Interval",
+        "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <4>$__interval_ms</4>. This value is not exactly equal to <6>Time range / max data points</6>, it will approximate a series of magic number.",
+        "min-interval": "Min interval",
+        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
+        "time-range-max-data-points": "Time range / max data points"
+      },
+      "render-max-data-points-option": {
+        "max-data-points": "Max data points",
+        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.",
+        "width-of-panel": "Width of panel"
+      },
+      "render-query-caching-ttloption": {
+        "cache-ttl": "Cache TTL"
+      },
+      "time-shift": "Time shift",
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>."
+    },
+    "query-group-top-section": {
+      "data-source": "Data source",
+      "query-inspector": "Query inspector",
+      "query-tab-help-button-title-open-data-source-help": "Open data source help",
+      "title-data-source-help": "Data source help"
     }
   },
   "query-editor-next": {
@@ -13254,57 +13305,6 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
-  "query": {
-    "query-editor-row-header": {
-      "hidden": "Hidden",
-      "query-name-div-title-edit-query-name": "Edit query name"
-    },
-    "query-error-alert": {
-      "error-details": "Query error details",
-      "fix-with-assistant": "Fix with Assistant",
-      "original-query": "Original query",
-      "trace-id": "(Trace ID: {{traceId}})"
-    },
-    "query-group": {
-      "add-query": "Add query",
-      "expression": "Expression",
-      "title-data-source-help": "Data source help"
-    },
-    "query-group-options-editor": {
-      "Query options-title-query-options": "Query options",
-      "collapsed-interval": "Interval = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
-      "hide-time-info": "Hide time info",
-      "relative-time": "Relative time",
-      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>.",
-      "render-cache-timeout-option": {
-        "cache-timeout": "Cache timeout"
-      },
-      "render-interval-option": {
-        "interval": "Interval",
-        "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <4>$__interval_ms</4>. This value is not exactly equal to <6>Time range / max data points</6>, it will approximate a series of magic number.",
-        "min-interval": "Min interval",
-        "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
-        "time-range-max-data-points": "Time range / max data points"
-      },
-      "render-max-data-points-option": {
-        "max-data-points": "Max data points",
-        "max-data-points-tooltip": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.",
-        "width-of-panel": "Width of panel"
-      },
-      "render-query-caching-ttloption": {
-        "cache-ttl": "Cache TTL"
-      },
-      "time-shift": "Time shift",
-      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <4>{{relativeTo}}</4>, or variables like <6>{{variable}}</6>."
-    },
-    "query-group-top-section": {
-      "data-source": "Data source",
-      "query-inspector": "Query inspector",
-      "query-tab-help-button-title-open-data-source-help": "Open data source help",
-      "title-data-source-help": "Data source help"
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "Restore"
@@ -13363,12 +13363,6 @@
     },
     "dismissable-button": "Close"
   },
-  "role-picker-drawer": {
-    "basic-roles": {
-      "label": "Basic Roles"
-    },
-    "user-count": "+{{numUsers}}"
-  },
   "role-picker": {
     "built-in": {
       "basic-roles": "Basic roles"
@@ -13391,6 +13385,12 @@
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana‘s features and resources. Find out more in our <2>documentation</2>."
     }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Basic Roles"
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana has likely been updated. Please try reloading the page.",
@@ -13610,9 +13610,9 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
-      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
       "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
       "body-delete_other": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
+      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
       "body-disable-service-account": "Are you sure you want to disable '{{accountToDisable}}'?",
       "confirmText-delete": "Delete",
       "confirmText-disable-service-account": "Disable service account",
@@ -13738,6 +13738,23 @@
       "copy-button": "Copy to Clipboard"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "New library panel",
+      "share-embed-title": "Share embed",
+      "share-link-title": "Link settings"
+    },
+    "menu": {
+      "new-library-panel-title": "New library panel",
+      "share-embed-title": "Share embed",
+      "share-link-title": "Share link",
+      "share-snapshot-title": "Share snapshot"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cancel",
+      "create-button": "Create library panel"
+    }
+  },
   "share-panel-image": {
     "disabled-help": "Save the dashboard to enable image generation",
     "download-disabled-help": "Generate an image first to enable download",
@@ -13765,23 +13782,6 @@
       "width-required": "Width is required"
     }
   },
-  "share-panel": {
-    "drawer": {
-      "new-library-panel-title": "New library panel",
-      "share-embed-title": "Share embed",
-      "share-link-title": "Link settings"
-    },
-    "menu": {
-      "new-library-panel-title": "New library panel",
-      "share-embed-title": "Share embed",
-      "share-link-title": "Share link",
-      "share-snapshot-title": "Share snapshot"
-    },
-    "new-library-panel": {
-      "cancel-button": "Cancel",
-      "create-button": "Create library panel"
-    }
-  },
   "share-playlist": {
     "checkbox-description": "Panel heights will be adjusted to fit screen size",
     "checkbox-label": "Autofit",
@@ -13791,6 +13791,24 @@
     "mode-kiosk": "Kiosk",
     "mode-normal": "Normal",
     "title": "Share playlist"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Dark",
+        "light-label": "Light",
+        "system-label": "System preference"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
+      "revoke-title": "Revoke access"
+    },
+    "fields": {
+      "timezone-label": "Timezone"
+    }
   },
   "shared-dashboard-list": {
     "button": {
@@ -13805,15 +13823,6 @@
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"
-    }
-  },
-  "shared-dashboard": {
-    "delete-modal": {
-      "revoke-body-text": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
-      "revoke-title": "Revoke access"
-    },
-    "fields": {
-      "timezone-label": "Timezone"
     }
   },
   "shared-preferences": {
@@ -13836,15 +13845,6 @@
     },
     "title": "Preferences"
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "Dark",
-        "light-label": "Light",
-        "system-label": "System preference"
-      }
-    }
-  },
   "sign-up": {
     "back-button": "Back to login",
     "confirm-password-label": "Confirm password",
@@ -13865,12 +13865,6 @@
       "send-button": "Send verification email"
     }
   },
-  "silences-table": {
-    "header": {
-      "alert-name": "Alert name",
-      "state": "State"
-    }
-  },
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -13884,6 +13878,12 @@
       "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
       "recreate-button": "Recreate",
       "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {
@@ -14292,9 +14292,9 @@
     }
   },
   "time-period": {
-    "12_hours": "12 hours",
     "1_day": "1 day",
     "1_hour": "1 hour",
+    "12_hours": "12 hours",
     "30_days": "30 days",
     "6_hours": "6 hours",
     "7_days": "7 days"
@@ -15356,11 +15356,6 @@
   "user-sessions": {
     "loading": "Loading sessions..."
   },
-  "users-access-list": {
-    "tabs": {
-      "shared-dashboard-users-tab-title": "Shared dashboard users"
-    }
-  },
   "users": {
     "empty-state": {
       "message": "No users found"
@@ -15379,6 +15374,11 @@
         }
       },
       "placeholder-search-login-email": "Search user by login, email or name"
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
   "variabels": {
@@ -15560,8 +15560,8 @@
       "title-dependencies": "Dependencies"
     },
     "variables-unknown-button": {
-      "VariablesUnknownButton-tooltip-show-usages": "Show usages",
-      "usage-title": "Showing usages for: {{variableId}}"
+      "usage-title": "Showing usages for: {{variableId}}",
+      "VariablesUnknownButton-tooltip-show-usages": "Show usages"
     },
     "variables-unknown-table": {
       "collapse-label": "Renamed or missing variables",
