@@ -26,11 +26,13 @@ import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
 import { ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions } from '../Wizard/constants';
 import { useRoutingTrees } from '../useRoutingTrees';
+import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { isStep2Valid } from './utils';
 
@@ -54,6 +56,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     register,
     watch,
     setValue,
+    getValues,
+    trigger,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
@@ -235,6 +239,9 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                         onChange={(ds: DataSourceInstanceSettings) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
+                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                            setValue('targetDatasourceUID', ds.uid);
+                          }
                         }}
                         noDefault
                         width={40}
@@ -303,33 +310,95 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
             )}
 
             {rulesSource === 'yaml' && (
-              <Field
-                label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
-                invalid={!!errors.rulesYamlFile}
-                error={errors.rulesYamlFile?.message}
-                noMargin
-              >
-                <Controller
-                  render={({ field: { ref, onChange, value, ...field } }) => (
-                    <FileUpload
-                      {...field}
-                      accept=".yaml,.yml"
-                      onFileUpload={(event) => {
-                        const file = event.currentTarget.files?.[0];
-                        if (file) {
-                          onChange(file);
+              <Stack direction="column" gap={2}>
+                <Field
+                  label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
+                  invalid={!!errors.rulesYamlFile}
+                  error={errors.rulesYamlFile?.message}
+                  noMargin
+                >
+                  <Controller
+                    render={({ field: { ref, onChange, value, ...field } }) => (
+                      <FileUpload
+                        {...field}
+                        accept=".yaml,.yml,.json"
+                        onFileUpload={(event) => {
+                          const file = event.currentTarget.files?.[0];
+                          if (file) {
+                            onChange(file);
+                            trigger('rulesYamlFile');
+                          }
+                          event.currentTarget.value = '';
+                        }}
+                      >
+                        {rulesYamlFile
+                          ? rulesYamlFile.name
+                          : t('alerting.import-to-gma.step2.upload', 'Upload YAML file')}
+                      </FileUpload>
+                    )}
+                    control={control}
+                    name="rulesYamlFile"
+                    rules={{
+                      validate: async (value) => {
+                        if (!value) {
+                          return true;
                         }
-                      }}
-                    >
-                      {rulesYamlFile
-                        ? rulesYamlFile.name
-                        : t('alerting.import-to-gma.step2.upload', 'Upload YAML file')}
-                    </FileUpload>
+                        try {
+                          await parseYamlFileToRulerRulesConfigDTO(value, value.name);
+                          return true;
+                        } catch (error) {
+                          return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
+                            error: stringifyErrorLike(error),
+                          });
+                        }
+                      },
+                    }}
+                  />
+                </Field>
+                <Field
+                  label={t('alerting.import-to-gma.step2.yaml-target-datasource', 'Target data source')}
+                  description={t(
+                    'alerting.import-to-gma.step2.yaml-target-datasource-desc',
+                    'Select the data source that will be queried by the imported rules'
                   )}
-                  control={control}
-                  name="rulesYamlFile"
-                />
-              </Field>
+                  invalid={!!errors.rulesDatasourceUID}
+                  error={errors.rulesDatasourceUID?.message}
+                  noMargin
+                >
+                  <Controller
+                    render={({ field: { ref, onChange, ...field } }) => (
+                      <DataSourcePicker
+                        {...field}
+                        current={field.value}
+                        noDefault
+                        inputId="yaml-rules-target-datasource"
+                        alerting
+                        filter={(ds: DataSourceInstanceSettings) =>
+                          isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)
+                        }
+                        onChange={(ds: DataSourceInstanceSettings) => {
+                          setValue('rulesDatasourceUID', ds.uid);
+                          setValue('rulesDatasourceName', ds.name);
+                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                            setValue('targetDatasourceUID', ds.uid);
+                          }
+                        }}
+                      />
+                    )}
+                    name="rulesDatasourceUID"
+                    control={control}
+                    rules={{
+                      required: {
+                        value: rulesSource === 'yaml',
+                        message: t(
+                          'alerting.import-to-gma.step2.yaml-target-datasource-required',
+                          'Please select a target data source'
+                        ),
+                      },
+                    }}
+                  />
+                </Field>
+              </Stack>
             )}
           </Box>
         </Box>
@@ -443,10 +512,14 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
 }
 
 /**
- * Hook to check if Step 2 form is valid
+ * Hook to check if Step 2 form is valid.
+ * Checks both that required fields are filled AND that there are no validation errors.
  */
 export function useStep2Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<ImportFormValues>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
   const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -455,7 +528,17 @@ export function useStep2Validation(canImport: boolean): boolean {
     'targetDatasourceUID',
   ]);
 
+  const hasStep2Errors =
+    !!errors.rulesSource ||
+    !!errors.rulesDatasourceUID ||
+    !!errors.rulesYamlFile ||
+    !!errors.selectedRoutingTree ||
+    !!errors.targetDatasourceUID;
+
   return useMemo(() => {
+    if (hasStep2Errors) {
+      return false;
+    }
     return isStep2Valid({
       canImport,
       rulesSource,
@@ -464,5 +547,13 @@ export function useStep2Validation(canImport: boolean): boolean {
       selectedRoutingTree,
       targetDatasourceUID,
     });
-  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
+  }, [
+    canImport,
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+    hasStep2Errors,
+  ]);
 }

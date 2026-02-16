@@ -34,6 +34,7 @@ import { DryRunValidationResult } from './types';
 import { useExtraConfigState } from './useExtraConfigState';
 import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
 import { getRoutingTreeLabel } from './useRoutingTrees';
+import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -256,22 +257,23 @@ function ImportWizardContent() {
       }
 
       // Then import rules (if step 2 was completed)
-      if (willImportRules && values.rulesDatasourceUID) {
-        // Get the filtered rules payload
+      if (willImportRules) {
         let rulesPayload: RulerRulesConfigDTO = {};
+        const dataSourceUID = values.rulesDatasourceUID ?? '';
 
         if (values.rulesSource === 'datasource' && rulesFromDatasource) {
           const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, values.namespace, values.ruleGroup);
           rulesPayload = filteredConfig;
+        } else if (values.rulesSource === 'yaml' && values.rulesYamlFile) {
+          rulesPayload = await parseYamlFileToRulerRulesConfigDTO(values.rulesYamlFile, values.rulesYamlFile.name);
         }
 
-        // Add routing tree label to all imported rules
         const extraLabels = values.selectedRoutingTree
           ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
           : undefined;
 
         await importRules({
-          dataSourceUID: values.rulesDatasourceUID,
+          dataSourceUID: dataSourceUID,
           targetFolderUID: values.targetFolder?.uid,
           pauseAlertingRules: values.pauseAlertingRules,
           pauseRecordingRules: values.pauseRecordingRules,
