@@ -1,8 +1,6 @@
 package v0alpha1
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/registry/generic"
 )
@@ -42,11 +40,4 @@ func (o *InhibitionRule) SetProvenanceStatus(status string) {
 		status = ProvenanceStatusNone
 	}
 	o.Annotations[ProvenanceStatusAnnotationKey] = status
-}
-
-func (o *InhibitionRule) SetCanUse(canUse bool) {
-	if o.Annotations == nil {
-		o.Annotations = make(map[string]string, 1)
-	}
-	o.Annotations[CanUseAnnotationKey] = fmt.Sprintf("%v", canUse)
 }

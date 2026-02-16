@@ -10,7 +10,6 @@
         "uid": "uyOuOzjpDxlyrBK550OHM2d7SdXBoSjOfW3UgSLXt14X",
         "resourceVersion": "a4933bc1fe2f1063",
         "annotations": {
-          "grafana.com/canUse": "false",
           "grafana.com/provenance": "converted_prometheus"
         }
       },
@@ -51,7 +50,6 @@
         "uid": "3XDCdjxCvujfBXO8LxiqBI1eZoM1axi5WNtllx4RmSwX",
         "resourceVersion": "1b7316331a7b163d",
         "annotations": {
-          "grafana.com/canUse": "false",
           "grafana.com/provenance": "converted_prometheus"
         }
       },

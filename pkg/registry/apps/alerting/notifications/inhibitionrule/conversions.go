@@ -40,7 +40,6 @@ func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer 
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
 	i.SetProvenanceStatus(string(rule.Provenance))
-	i.SetCanUse(rule.Provenance != ngmodels.ProvenanceConvertedPrometheus)
 
 	return &i
 }
