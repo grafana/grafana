@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 
 import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
@@ -17,6 +18,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   Spec as DashboardV2Spec,
@@ -358,7 +360,9 @@ export function getVizPanelQueries(
       const dataQuery: DataQueryKind = {
         kind: 'DataQuery',
         version: defaultDataQueryKind().version,
-        group: queryDatasource ? getDataQueryKind(query, queryRunner) : defaultDataQueryKind().group,
+        group: queryDatasource
+          ? queryDatasource.type || getDataQueryKind(query, queryRunner)
+          : defaultDataQueryKind().group,
         datasource: {
           name: queryDatasource?.uid,
         },
@@ -394,11 +398,6 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   if (typeof query === 'string') {
     const defaultDS = getDefaultDataSourceRef();
     return defaultDS?.type || '';
-  }
-
-  // Query has explicit datasource with type
-  if (query.datasource?.type) {
-    return query.datasource.type;
   }
 
   // If query has a datasource UID (even without type), check if it matches the queryRunner's datasource
@@ -889,40 +888,49 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
-  // Get the element identifier - refId for queries, name for variables
-  const elementId = getElementIdentifier(element, type);
+  let datasource: DataSourceRef | undefined;
 
-  // If the ds was autossigned, return the datasource initial ds value.
-  if (autoAssignedDsRef?.has(elementId)) {
-    const dsType = autoAssignedDsRef.get(elementId);
-    // If the ds type was not undefined means the datasource was autossigned, so return the datasource with only the type
-    return dsType ? { type: dsType } : undefined;
-  }
-
-  // Return appropriate datasource reference based on element type
+  // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
     if ('datasource' in element && element.datasource) {
-      // Check if datasource is empty object {} (no keys), treat it as missing
-      // and fall through to use panel datasource (matches backend behavior)
       const isEmptyDatasourceObject =
         typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
-
       if (!isEmptyDatasourceObject) {
-        // If element has its own datasource (and it's not empty), use that
-        return element.datasource;
+        datasource = element.datasource;
       }
     }
 
-    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
-    return context?.state?.datasource;
+    const panelDS = context?.state?.datasource;
+    if (panelDS?.uid) {
+      const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
+      const notExpr =
+        !datasource ||
+        (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+
+      if (notMixed && (!datasource || (panelDS?.uid !== datasource.uid && notExpr))) {
+        datasource = panelDS;
+      }
+    }
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    return element.state.datasource || undefined;
+    datasource = element.state.datasource || undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    return element.datasource || undefined;
+    datasource = element.datasource || undefined;
+  }
+
+  // If a datasource was resolved from the element, use it
+  if (datasource) {
+    return datasource;
+  }
+
+  const elementId = getElementIdentifier(element, type);
+  if (autoAssignedDsRef?.has(elementId)) {
+    const dsType = autoAssignedDsRef.get(elementId);
+    // If the ds type was defined, return datasource with only the type; otherwise undefined
+    return dsType ? { type: dsType } : undefined;
   }
 
   return undefined;

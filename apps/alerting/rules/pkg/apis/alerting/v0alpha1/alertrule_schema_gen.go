@@ -5,6 +5,7 @@
 package v0alpha1
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -12,14 +13,15 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaAlertRule = resource.NewSimpleSchema("rules.alerting.grafana.app", "v0alpha1", &AlertRule{}, &AlertRuleList{}, resource.WithKind("AlertRule"),
+	schemaAlertRule = resource.NewSimpleSchema("rules.alerting.grafana.app", "v0alpha1", NewAlertRule(), &AlertRuleList{}, resource.WithKind("AlertRule"),
 		resource.WithPlural("alertrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*AlertRule)
 				if !ok {
-					return "", fmt.Errorf("provided object must be of type *AlertRule")
+					return "", errors.New("provided object must be of type *AlertRule")
 				}
+
 				return cast.Spec.Title, nil
 			},
 		},
@@ -28,11 +30,12 @@ var (
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
-						return "", fmt.Errorf("provided object must be of type *AlertRule")
+						return "", errors.New("provided object must be of type *AlertRule")
 					}
 					if cast.Spec.Paused == nil {
 						return "", nil
 					}
+
 					return fmt.Sprintf("%v", *cast.Spec.Paused), nil
 				},
 			},
@@ -41,8 +44,12 @@ var (
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
-						return "", fmt.Errorf("provided object must be of type *AlertRule")
+						return "", errors.New("provided object must be of type *AlertRule")
 					}
+					if cast.Spec.PanelRef == nil {
+						return "", nil
+					}
+
 					return cast.Spec.PanelRef.DashboardUID, nil
 				},
 			},
@@ -51,8 +58,12 @@ var (
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
-						return "", fmt.Errorf("provided object must be of type *AlertRule")
+						return "", errors.New("provided object must be of type *AlertRule")
 					}
+					if cast.Spec.PanelRef == nil {
+						return "", nil
+					}
+
 					return fmt.Sprintf("%d", cast.Spec.PanelRef.PanelID), nil
 				},
 			},
@@ -61,8 +72,12 @@ var (
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
-						return "", fmt.Errorf("provided object must be of type *AlertRule")
+						return "", errors.New("provided object must be of type *AlertRule")
 					}
+					if cast.Spec.NotificationSettings == nil {
+						return "", nil
+					}
+
 					return cast.Spec.NotificationSettings.Receiver, nil
 				},
 			},

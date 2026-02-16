@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
@@ -47,6 +48,7 @@ func ProvideAppInstallers(
 	advisorAppInstaller *advisor.AppInstaller,
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
+	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
@@ -92,6 +94,11 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
 		installers = append(installers, liveAppInstaller)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
+		installers = append(installers, dashvalidatorAppInstaller)
 	}
 	return installers
 }

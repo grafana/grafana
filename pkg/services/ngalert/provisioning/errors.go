@@ -22,6 +22,10 @@ var (
 		"Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
+	ErrTimeIntervalOrigin = errutil.BadRequest("alerting.notifications.time-intervals.originInvalid").MustTemplate(
+		"Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
 	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
@@ -36,15 +40,6 @@ var (
 	contactPointUidExists     = "Receiver configuration with UID '{{ .Public.UID }}' already exists in contact point '{{ .Public.Name }}'. Please use unique identifiers for receivers across all contact points."
 	ErrContactPointUidExists  = errutil.Conflict("alerting.notifications.contact-points.uidInUse").MustTemplate(
 		contactPointUidExists, errutil.WithPublic(contactPointUidExists),
-	)
-
-	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
-		"Invalid format of the submitted route.",
-		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
-	)
-
-	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
-		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
 	)
 )
 
@@ -109,23 +104,6 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 	})
 }
 
-func MakeErrRouteInvalidFormat(err error) error {
-	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Error": err.Error(),
-		},
-		Error: err,
-	})
-}
-
-func MakeErrRouteConflictingMatchers(matchers string) error {
-	return ErrRouteConflictingMatchers.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Matchers": matchers,
-		},
-	})
-}
-
 func MakeErrContactPointUidExists(uid, name string) error {
 	return ErrContactPointUidExists.Build(errutil.TemplateData{
 		Public: map[string]any{
@@ -137,4 +115,10 @@ func MakeErrContactPointUidExists(uid, name string) error {
 
 func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) error {
 	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
+}
+
+func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
+	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
+		Public: map[string]interface{}{"Action": action, "Name": mt.Name},
+	})
 }

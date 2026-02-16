@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -18,7 +19,7 @@ import (
 func TestLegacyTeamSearchClient_Search(t *testing.T) {
 	t.Run("search by query", func(t *testing.T) {
 		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService)
+		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
 
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
 		req := &resourcepb.ResourceSearchRequest{
@@ -62,7 +63,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("returns error if page is negative", func(t *testing.T) {
 		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService)
+		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
 		req := &resourcepb.ResourceSearchRequest{
 			Limit: 10,
@@ -76,7 +77,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("returns error if page is greater than math.MaxInt32", func(t *testing.T) {
 		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService)
+		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
 		req := &resourcepb.ResourceSearchRequest{
 			Limit: 10,
@@ -90,7 +91,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("returns error if search teams fails", func(t *testing.T) {
 		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService)
+		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
 		req := &resourcepb.ResourceSearchRequest{
 			Limit: 10,

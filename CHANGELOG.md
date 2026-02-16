@@ -1,3 +1,211 @@
+<!-- 11.6.11 START -->
+
+# 11.6.11 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117713](https://github.com/grafana/grafana/pull/117713), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116936](https://github.com/grafana/grafana/pull/116936), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117476](https://github.com/grafana/grafana/pull/117476), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117865](https://github.com/grafana/grafana/pull/117865), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 11.6.11 END -->
+<!-- 12.0.10 START -->
+
+# 12.0.10 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117712](https://github.com/grafana/grafana/pull/117712), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117971](https://github.com/grafana/grafana/pull/117971), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.0.10 END -->
+<!-- 12.1.7 START -->
+
+# 12.1.7 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117711](https://github.com/grafana/grafana/pull/117711), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116957](https://github.com/grafana/grafana/pull/116957), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117474](https://github.com/grafana/grafana/pull/117474), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117863](https://github.com/grafana/grafana/pull/117863), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.1.7 END -->
+<!-- 12.2.5 START -->
+
+# 12.2.5 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117710](https://github.com/grafana/grafana/pull/117710), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116958](https://github.com/grafana/grafana/pull/116958), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117472](https://github.com/grafana/grafana/pull/117472), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117861](https://github.com/grafana/grafana/pull/117861), [@github-actions[bot]](https://github.com/github-actions[bot])
+- **Security(TraceView):** Sanitize html [#117867](https://github.com/grafana/grafana/pull/117867), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.2.5 END -->
+<!-- 12.3.3 START -->
+
+# 12.3.3 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117709](https://github.com/grafana/grafana/pull/117709), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116934](https://github.com/grafana/grafana/pull/116934), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117471](https://github.com/grafana/grafana/pull/117471), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117860](https://github.com/grafana/grafana/pull/117860), [@dana-axinte](https://github.com/dana-axinte)
+- **Security(TraceView):** Sanitize html [#117866](https://github.com/grafana/grafana/pull/117866), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.3.3 END -->
+<!-- 12.3.2+security-01 START -->
+
+# 12.3.2+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41117
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.3.2+security-01 END -->
+<!-- 12.2.4+security-01 START -->
+
+# 12.2.4+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2025-41117
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.2.4+security-01 END -->
+<!-- 12.1.6+security-01 START -->
+
+# 12.1.6+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2026-21722
+
+<!-- 12.1.6+security-01 END -->
+<!-- 11.6.10+security-01 START -->
+
+# 11.6.10+security-01 (2026-02-11)
+
+### Bug fixes
+
+- **Security:** fix for CVE-2026-21722
+
+<!-- 11.6.10+security-01 END -->
+<!-- 12.3.2 START -->
+
+# 12.3.2 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116888](https://github.com/grafana/grafana/pull/116888), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116893](https://github.com/grafana/grafana/pull/116893), [@macabu](https://github.com/macabu)
+- **ElasticSearch:** Update annotation time-range properties [#115566](https://github.com/grafana/grafana/pull/115566), [@aangelisc](https://github.com/aangelisc)
+- **Explore:** Reset legend when a new query is run [#116590](https://github.com/grafana/grafana/pull/116590), [@ifrost](https://github.com/ifrost)
+- **Go:** Update to 1.25.6 [#116396](https://github.com/grafana/grafana/pull/116396), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115680](https://github.com/grafana/grafana/pull/115680), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix data source recording rules editor [#116303](https://github.com/grafana/grafana/pull/116303), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 12.3.2 END -->
+<!-- 12.2.4 START -->
+
+# 12.2.4 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116889](https://github.com/grafana/grafana/pull/116889), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116895](https://github.com/grafana/grafana/pull/116895), [@macabu](https://github.com/macabu)
+- **Docs:** Clarify section title for repeating rows and tabs [#115345](https://github.com/grafana/grafana/pull/115345), [@imatwawana](https://github.com/imatwawana)
+- **ElasticSearch:** Update annotation time-range properties [#115565](https://github.com/grafana/grafana/pull/115565), [@aangelisc](https://github.com/aangelisc)
+- **Explore:** Reset legend when a new query is run [#116589](https://github.com/grafana/grafana/pull/116589), [@ifrost](https://github.com/ifrost)
+- **Go:** Update to 1.25.6 [#116399](https://github.com/grafana/grafana/pull/116399), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115694](https://github.com/grafana/grafana/pull/115694), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 12.2.4 END -->
+<!-- 12.1.6 START -->
+
+# 12.1.6 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116890](https://github.com/grafana/grafana/pull/116890), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116896](https://github.com/grafana/grafana/pull/116896), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.6 [#116400](https://github.com/grafana/grafana/pull/116400), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115693](https://github.com/grafana/grafana/pull/115693), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 12.1.6 END -->
+<!-- 12.0.9 START -->
+
+# 12.0.9 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116892](https://github.com/grafana/grafana/pull/116892), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116897](https://github.com/grafana/grafana/pull/116897), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.6 [#116401](https://github.com/grafana/grafana/pull/116401), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115692](https://github.com/grafana/grafana/pull/115692), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 12.0.9 END -->
+<!-- 11.6.10 START -->
+
+# 11.6.10 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116894](https://github.com/grafana/grafana/pull/116894), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116898](https://github.com/grafana/grafana/pull/116898), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.6 [#116402](https://github.com/grafana/grafana/pull/116402), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115691](https://github.com/grafana/grafana/pull/115691), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 11.6.10 END -->
+<!-- 12.3.1+security-01 START -->
+
+# 12.3.1+security-01 (2026-01-27)
+
+### Bug fixes
+
+- **Alerting:** Fix contact points issue [#115427](https://github.com/grafana/grafana/pull/115427), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 12.3.1+security-01 END -->
+<!-- 12.2.3+security-01 START -->
+
+# 12.2.3+security-01 (2026-01-27)
+
+<!-- 12.2.3+security-01 END -->
+<!-- 12.1.5+security-01 START -->
+
+# 12.1.5+security-01 (2026-01-27)
+
+<!-- 12.1.5+security-01 END -->
+<!-- 12.0.8+security-01 START -->
+
+# 12.0.8+security-01 (2026-01-27)
+
+<!-- 12.0.8+security-01 END -->
+<!-- 11.6.9+security-01 START -->
+
+# 11.6.9+security-01 (2026-01-27)
+
+<!-- 11.6.9+security-01 END -->
 <!-- 12.3.1 START -->
 
 # 12.3.1 (2025-12-16)

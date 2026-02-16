@@ -179,6 +179,7 @@ func TestQueryAPI(t *testing.T) {
 				tracer:                 tracing.InitializeTracerForTest(),
 				log:                    log.New("test"),
 				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
+				reportStatus:           func(context.Context, int) {},
 			}
 
 			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})

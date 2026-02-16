@@ -101,6 +101,7 @@ export const ConfigEditor = (props: Props) => {
       <Divider />
       <ConnectionConfig
         {...props}
+        showHttpProxySettings
         loadRegions={
           datasource &&
           (async () => {
@@ -182,6 +183,7 @@ export const ConfigEditor = (props: Props) => {
                 });
               }}
               maxNoOfVisibleLogGroups={2}
+              showQueryScopeSelector={false}
               //legacy props
               legacyOnChange={(logGroups) => {
                 updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);

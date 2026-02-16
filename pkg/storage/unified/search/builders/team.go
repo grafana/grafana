@@ -1,14 +1,11 @@
 package builders
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -60,19 +57,11 @@ type teamSearchBuilder struct{}
 
 func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	team := &v0alpha1.Team{}
-	err := json.NewDecoder(bytes.NewReader(value)).Decode(team)
+	doc, err := NewIndexableDocumentFromValue(key, rv, value, team, v0alpha1.TeamKind())
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := utils.MetaAccessor(team)
-	if err != nil {
-		return nil, err
-	}
-
-	doc := resource.NewIndexableDocument(key, rv, obj)
-
-	doc.Fields = make(map[string]any)
 	if team.Spec.Email != "" {
 		doc.Fields[TEAM_SEARCH_EMAIL] = team.Spec.Email
 	}

@@ -1672,10 +1672,6 @@ Enables the [Content Security Policy Violations instrumentation](https://grafana
 
 Enables the [Tracing instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/tracing-instrumentation/) for Grafana Faro, defaults to `true`.
 
-#### `web_vitals_attribution_enabled`
-
-Enables sending [attribution data for web vitals](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/web-vitals/#web-vitals-attribution-data) with the Performance instrumentation, defaults to `true`.
-
 #### `log_endpoint_requests_per_second_limit`
 
 Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `3`.

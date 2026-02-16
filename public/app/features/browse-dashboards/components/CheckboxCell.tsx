@@ -7,7 +7,7 @@ import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { useSelector } from 'app/types/store';
 
 import { canEditItemType } from '../permissions';
@@ -28,6 +28,7 @@ export default function CheckboxCell({
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
+  // If no isSelected fn passed in, return spacer
   if (!isSelected) {
     return <CheckboxSpacer />;
   }

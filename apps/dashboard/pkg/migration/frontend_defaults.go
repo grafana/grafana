@@ -151,8 +151,8 @@ func ensureAnnotationsExist(dashboard map[string]interface{}) {
 	}
 }
 
-// ensurePanelsHaveUniqueIds ensures all panels have unique IDs
-func ensurePanelsHaveUniqueIds(dashboard map[string]interface{}) {
+// EnsurePanelsHaveUniqueIds ensures all panels have unique IDs.
+func EnsurePanelsHaveUniqueIds(dashboard map[string]interface{}) {
 	panels := getPanels(dashboard)
 	if len(panels) == 0 {
 		return

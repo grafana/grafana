@@ -48,7 +48,7 @@ For an introduction to templating and template variables, refer to the [Templati
 ## Use query variables
 
 Variables of the type _Query_ help you query Google Cloud Monitoring for various types of data.
-The Google Cloud Monitoring data source plugin provides the following **Query Types**:
+The Google Cloud Monitoring data source provides the following **Query Types**:
 
 | Name                               | List returned                                                         |
 | ---------------------------------- | --------------------------------------------------------------------- |

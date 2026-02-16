@@ -2,7 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
-import { COMMON_FNS, DB, FuncParameter, MACRO_FUNCTIONS, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
+import {
+  COMMON_FNS,
+  DB,
+  FuncParameter,
+  MACRO_FUNCTIONS,
+  SQLQuery,
+  SQLVariableSupport,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
@@ -15,6 +24,7 @@ export class MySqlDatasource extends SqlDatasource {
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
+    this.variables = new SQLVariableSupport(this);
   }
 
   getQueryModel() {
@@ -109,7 +119,6 @@ export class MySqlDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, _range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsID: () => this.id,
       toRawSql,
       functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),

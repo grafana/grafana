@@ -30,7 +30,7 @@ func (s *updateStep) Description() string {
 }
 
 func (s *updateStep) Resolution() string {
-	return "Go to the plugin admin page and upgrade to the latest version."
+	return "There are newer versions available for the plugins listed below. We recommend going to the plugin admin page and upgrading to the latest version."
 }
 
 func (s *updateStep) ID() string {

@@ -13,7 +13,7 @@
       "label-resource-group": "Resursgrupp",
       "label-resource-name": "Rättigheter",
       "label-resource-number": "Resurs {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "Resurs-URI",
       "label-subscription": "Prenumeration",
       "placeholder-resource-name": "namn",
       "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",
@@ -226,26 +226,26 @@
       "select-resource": "Välj en resurs"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "Bläddra",
       "button-apply": "Tillämpa",
       "button-cancel": "Avbryt",
       "header-location": "Plats",
-      "header-resource-group": "",
+      "header-resource-group": "Resursgrupp",
       "header-scope": "Omfattning",
       "header-type": "Typ",
       "heading-selection": "Urval",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "Platser",
+      "locations-filter-placeholder": "Välj en plats",
+      "recent-tab": "Senaste",
       "result-limit": "Visar de första {{numResults}} resultaten",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "Prenumerationer",
+      "subscriptions-filter-placeholder": "Välj en prenumeration",
       "text-loading": "Laddar …",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "Inga senaste resurser hittades",
       "text-no-resources": "Inga resurser hittades",
       "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "Resurstyper",
+      "types-filter-placeholder": "Välj en resurstyp"
     },
     "scope-selector": {
       "label": "Omfattning"
@@ -274,7 +274,7 @@
       "label-time-column": "Tidskolumn",
       "label-time-range": "Tidsintervall",
       "tooltip-time-column": "<0>Anger tidskolumnen som används för filtrering. Standardinställningen är den första tabellens <1>timeSpan</1>-kolumn, den första <3>datetime</3>-kolumnen som hittas eller <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall.</0>"
     },
     "top-field": {
       "label-top": "Topp"

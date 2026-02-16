@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -54,4 +55,10 @@ type DataSourceGetter interface {
 	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+}
+
+// HealthChecker is a generic interface for checking data source health.
+// It receives minimal input (context and datasource) and returns the health check result.
+type HealthChecker interface {
+	CheckHealth(ctx context.Context, ds *datasources.DataSource) (*backend.CheckHealthResult, error)
 }

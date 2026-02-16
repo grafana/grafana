@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -13,12 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
-func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
+func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryV0.SQLSchemas, error) {
 	//TODO DEdupe code
 
 	parsedReq, err := s.parseMetricRequest(ctx, user, false, reqDTO, false)
 	if err != nil {
-		return expr.SQLSchemas{}, err
+		return queryV0.SQLSchemas{}, err
 	}
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
@@ -55,7 +56,7 @@ func (s *ServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester
 	return s.expressionService.GetSQLSchemas(ctx, exprReq)
 }
 
-func GetSQLSchemas(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (expr.SQLSchemas, error) {
+func GetSQLSchemas(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (queryV0.SQLSchemas, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -666,12 +665,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
-	require.NoError(t, err)
-	_, err = routeClient.Update(ctx, v1route, resource.UpdateOptions{})
-	require.NoError(t, err)
+	common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)

@@ -1,7 +1,6 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   AlertingRule,
@@ -269,17 +268,8 @@ export function getRulePluginOrigin(rule?: PromRuleCompact | RulerRuleDTO): Rule
   }
 
   const pluginId = match.groups.pluginId;
-  const pluginInstalled = isPluginInstalled(pluginId);
-
-  if (!pluginInstalled) {
-    return undefined;
-  }
 
   return { pluginId };
-}
-
-function isPluginInstalled(pluginId: string) {
-  return Boolean(config.apps[pluginId]);
 }
 
 export function isPluginProvidedRule(rule?: PromRuleCompact | RulerRuleDTO): boolean {

@@ -33,8 +33,8 @@ export default function SqlQueryEditor({
   const dialect = queryHeaderProps?.dialect ?? 'other';
   const { loading, error } = useAsync(async () => {
     return () => {
-      if (datasource.getDB(datasource.id).init !== undefined) {
-        datasource.getDB(datasource.id).init!();
+      if (datasource.getDB().init !== undefined) {
+        datasource.getDB().init!();
       }
     };
   }, [datasource]);
@@ -50,8 +50,8 @@ export default function SqlQueryEditor({
 
   useEffect(() => {
     return () => {
-      if (datasource.getDB(datasource.id).dispose !== undefined) {
-        datasource.getDB(datasource.id).dispose!();
+      if (datasource.getDB().dispose !== undefined) {
+        datasource.getDB().dispose!();
       }
     };
   }, [datasource]);

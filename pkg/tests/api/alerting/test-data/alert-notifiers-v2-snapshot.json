@@ -4,12 +4,12 @@
     "currentVersion": "v1",
     "name": "LINE",
     "heading": "LINE notify settings",
-    "description": "Send notifications to LINE notify",
+    "description": "Send notifications to LINE notify. This integration is deprecated and will be removed in a future release.",
     "versions": [
       {
         "typeAlias": "line",
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -67,7 +67,8 @@
           }
         ]
       }
-    ]
+    ],
+    "deprecated": true
   },
   {
     "type": "dingding",
@@ -3113,7 +3114,7 @@
     "versions": [
       {
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -3346,7 +3347,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       },
       {
         "version": "v0mimir1",
@@ -4205,7 +4207,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       }
     ]
   },

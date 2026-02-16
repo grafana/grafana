@@ -7,6 +7,7 @@ import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
+import { xychartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
   // .setPanelChangeHandler(xyChartChangeHandler)
@@ -38,4 +39,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
 
     commonOptionsBuilder.addTooltipOptions(builder, true);
     commonOptionsBuilder.addLegendOptions(builder);
-  });
+  })
+  .setSuggestionsSupplier(xychartSuggestionsSupplier);

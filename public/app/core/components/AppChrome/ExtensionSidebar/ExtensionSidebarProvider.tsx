@@ -18,6 +18,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   // Support both until that migration is complete.
   'grafana-grafanadocsplugin-app',
   'grafana-pathfinder-app',
+  'grafana-grotfood-app',
 ];
 
 export type ExtensionSidebarContextType = {

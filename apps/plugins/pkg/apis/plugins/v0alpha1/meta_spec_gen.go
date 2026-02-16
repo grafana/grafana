@@ -46,6 +46,8 @@ type MetaJSONData struct {
 	// +listType=atomic
 	Roles      []MetaRole      `json:"roles,omitempty"`
 	Extensions *MetaExtensions `json:"extensions,omitempty"`
+	// +listType=atomic
+	Languages []string `json:"languages,omitempty"`
 }
 
 // NewMetaJSONData creates a new MetaJSONData object.
@@ -54,6 +56,11 @@ func NewMetaJSONData() *MetaJSONData {
 		Info:         *NewMetaInfo(),
 		Dependencies: *NewMetaDependencies(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaJSONData.
+func (MetaJSONData) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONData"
 }
 
 // +k8s:openapi-gen=true
@@ -67,6 +74,7 @@ type MetaInfo struct {
 	// Optional fields
 	Author      *MetaV0alpha1InfoAuthor `json:"author,omitempty"`
 	Description *string                 `json:"description,omitempty"`
+	Build       *MetaV0alpha1InfoBuild  `json:"build,omitempty"`
 	// +listType=atomic
 	Links []MetaV0alpha1InfoLinks `json:"links,omitempty"`
 	// +listType=atomic
@@ -79,6 +87,11 @@ func NewMetaInfo() *MetaInfo {
 		Keywords: []string{},
 		Logos:    *NewMetaV0alpha1InfoLogos(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaInfo.
+func (MetaInfo) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaInfo"
 }
 
 // +k8s:openapi-gen=true
@@ -98,6 +111,11 @@ func NewMetaDependencies() *MetaDependencies {
 	return &MetaDependencies{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaDependencies.
+func (MetaDependencies) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaDependencies"
+}
+
 // +k8s:openapi-gen=true
 type MetaEnterpriseFeatures struct {
 	// Allow additional properties
@@ -109,6 +127,11 @@ func NewMetaEnterpriseFeatures() *MetaEnterpriseFeatures {
 	return &MetaEnterpriseFeatures{
 		HealthDiagnosticsErrors: (func(input bool) *bool { return &input })(false),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaEnterpriseFeatures.
+func (MetaEnterpriseFeatures) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaEnterpriseFeatures"
 }
 
 // +k8s:openapi-gen=true
@@ -130,6 +153,11 @@ func NewMetaInclude() *MetaInclude {
 	return &MetaInclude{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaInclude.
+func (MetaInclude) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaInclude"
+}
+
 // +k8s:openapi-gen=true
 type MetaQueryOptions struct {
 	MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
@@ -140,6 +168,11 @@ type MetaQueryOptions struct {
 // NewMetaQueryOptions creates a new MetaQueryOptions object.
 func NewMetaQueryOptions() *MetaQueryOptions {
 	return &MetaQueryOptions{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaQueryOptions.
+func (MetaQueryOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaQueryOptions"
 }
 
 // +k8s:openapi-gen=true
@@ -164,6 +197,11 @@ func NewMetaRoute() *MetaRoute {
 	return &MetaRoute{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaRoute.
+func (MetaRoute) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaRoute"
+}
+
 // +k8s:openapi-gen=true
 type MetaIAM struct {
 	// +listType=atomic
@@ -173,6 +211,11 @@ type MetaIAM struct {
 // NewMetaIAM creates a new MetaIAM object.
 func NewMetaIAM() *MetaIAM {
 	return &MetaIAM{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaIAM.
+func (MetaIAM) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaIAM"
 }
 
 // +k8s:openapi-gen=true
@@ -185,6 +228,11 @@ type MetaRole struct {
 // NewMetaRole creates a new MetaRole object.
 func NewMetaRole() *MetaRole {
 	return &MetaRole{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaRole.
+func (MetaRole) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaRole"
 }
 
 // +k8s:openapi-gen=true
@@ -208,14 +256,19 @@ func NewMetaExtensions() *MetaExtensions {
 	return &MetaExtensions{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaExtensions.
+func (MetaExtensions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaExtensions"
+}
+
 // +k8s:openapi-gen=true
 type MetaSpec struct {
-	PluginJson   MetaJSONData               `json:"pluginJson"`
-	Class        MetaSpecClass              `json:"class"`
-	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
-	BaseURL      *string                    `json:"baseURL,omitempty"`
-	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
-	Translations map[string]string          `json:"translations,omitempty"`
+	PluginJson   MetaJSONData              `json:"pluginJson"`
+	Class        MetaSpecClass             `json:"class"`
+	Module       MetaV0alpha1SpecModule    `json:"module"`
+	BaseURL      string                    `json:"baseURL"`
+	Signature    MetaV0alpha1SpecSignature `json:"signature"`
+	Translations map[string]string         `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
 }
@@ -224,7 +277,14 @@ type MetaSpec struct {
 func NewMetaSpec() *MetaSpec {
 	return &MetaSpec{
 		PluginJson: *NewMetaJSONData(),
+		Module:     *NewMetaV0alpha1SpecModule(),
+		Signature:  *NewMetaV0alpha1SpecSignature(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaSpec.
+func (MetaSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -236,6 +296,11 @@ type MetaV0alpha1InfoLogos struct {
 // NewMetaV0alpha1InfoLogos creates a new MetaV0alpha1InfoLogos object.
 func NewMetaV0alpha1InfoLogos() *MetaV0alpha1InfoLogos {
 	return &MetaV0alpha1InfoLogos{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoLogos.
+func (MetaV0alpha1InfoLogos) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoLogos"
 }
 
 // +k8s:openapi-gen=true
@@ -250,15 +315,48 @@ func NewMetaV0alpha1InfoAuthor() *MetaV0alpha1InfoAuthor {
 	return &MetaV0alpha1InfoAuthor{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoAuthor.
+func (MetaV0alpha1InfoAuthor) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoAuthor"
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1InfoBuild struct {
+	Time   *float64 `json:"time,omitempty"`
+	Repo   *string  `json:"repo,omitempty"`
+	Branch *string  `json:"branch,omitempty"`
+	Hash   *string  `json:"hash,omitempty"`
+	// Quoted to avoid conflict with CUE 'number' type
+	Number *float64 `json:"number,omitempty"`
+	Pr     *float64 `json:"pr,omitempty"`
+	Build  *float64 `json:"build,omitempty"`
+}
+
+// NewMetaV0alpha1InfoBuild creates a new MetaV0alpha1InfoBuild object.
+func NewMetaV0alpha1InfoBuild() *MetaV0alpha1InfoBuild {
+	return &MetaV0alpha1InfoBuild{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoBuild.
+func (MetaV0alpha1InfoBuild) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoBuild"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1InfoLinks struct {
-	Name *string `json:"name,omitempty"`
-	Url  *string `json:"url,omitempty"`
+	Name   *string                      `json:"name,omitempty"`
+	Url    *string                      `json:"url,omitempty"`
+	Target *MetaV0alpha1InfoLinksTarget `json:"target,omitempty"`
 }
 
 // NewMetaV0alpha1InfoLinks creates a new MetaV0alpha1InfoLinks object.
 func NewMetaV0alpha1InfoLinks() *MetaV0alpha1InfoLinks {
 	return &MetaV0alpha1InfoLinks{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoLinks.
+func (MetaV0alpha1InfoLinks) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoLinks"
 }
 
 // +k8s:openapi-gen=true
@@ -270,6 +368,11 @@ type MetaV0alpha1InfoScreenshots struct {
 // NewMetaV0alpha1InfoScreenshots creates a new MetaV0alpha1InfoScreenshots object.
 func NewMetaV0alpha1InfoScreenshots() *MetaV0alpha1InfoScreenshots {
 	return &MetaV0alpha1InfoScreenshots{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoScreenshots.
+func (MetaV0alpha1InfoScreenshots) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoScreenshots"
 }
 
 // +k8s:openapi-gen=true
@@ -284,6 +387,11 @@ func NewMetaV0alpha1DependenciesPlugins() *MetaV0alpha1DependenciesPlugins {
 	return &MetaV0alpha1DependenciesPlugins{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1DependenciesPlugins.
+func (MetaV0alpha1DependenciesPlugins) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1DependenciesPlugins"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1DependenciesExtensions struct {
 	// +listType=set
@@ -293,6 +401,11 @@ type MetaV0alpha1DependenciesExtensions struct {
 // NewMetaV0alpha1DependenciesExtensions creates a new MetaV0alpha1DependenciesExtensions object.
 func NewMetaV0alpha1DependenciesExtensions() *MetaV0alpha1DependenciesExtensions {
 	return &MetaV0alpha1DependenciesExtensions{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1DependenciesExtensions.
+func (MetaV0alpha1DependenciesExtensions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1DependenciesExtensions"
 }
 
 // +k8s:openapi-gen=true
@@ -306,12 +419,39 @@ func NewMetaV0alpha1RouteHeaders() *MetaV0alpha1RouteHeaders {
 	return &MetaV0alpha1RouteHeaders{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteHeaders.
+func (MetaV0alpha1RouteHeaders) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteHeaders"
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1RouteTokenAuthParams struct {
+	// Allow additional properties
+	GrantType *string `json:"grant_type,omitempty"`
+	// Allow additional properties
+	ClientId *string `json:"client_id,omitempty"`
+	// Allow additional properties
+	ClientSecret *string `json:"client_secret,omitempty"`
+	// Allow additional properties
+	Resource *string `json:"resource,omitempty"`
+}
+
+// NewMetaV0alpha1RouteTokenAuthParams creates a new MetaV0alpha1RouteTokenAuthParams object.
+func NewMetaV0alpha1RouteTokenAuthParams() *MetaV0alpha1RouteTokenAuthParams {
+	return &MetaV0alpha1RouteTokenAuthParams{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteTokenAuthParams.
+func (MetaV0alpha1RouteTokenAuthParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteTokenAuthParams"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1RouteTokenAuth struct {
 	Url *string `json:"url,omitempty"`
 	// +listType=set
-	Scopes []string               `json:"scopes,omitempty"`
-	Params map[string]interface{} `json:"params,omitempty"`
+	Scopes []string                          `json:"scopes,omitempty"`
+	Params *MetaV0alpha1RouteTokenAuthParams `json:"params,omitempty"`
 }
 
 // NewMetaV0alpha1RouteTokenAuth creates a new MetaV0alpha1RouteTokenAuth object.
@@ -319,17 +459,47 @@ func NewMetaV0alpha1RouteTokenAuth() *MetaV0alpha1RouteTokenAuth {
 	return &MetaV0alpha1RouteTokenAuth{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteTokenAuth.
+func (MetaV0alpha1RouteTokenAuth) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteTokenAuth"
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1RouteJwtTokenAuthParams struct {
+	// Allow additional properties
+	TokenUri *string `json:"token_uri,omitempty"`
+	// Allow additional properties
+	ClientEmail *string `json:"client_email,omitempty"`
+	// Allow additional properties
+	PrivateKey *string `json:"private_key,omitempty"`
+}
+
+// NewMetaV0alpha1RouteJwtTokenAuthParams creates a new MetaV0alpha1RouteJwtTokenAuthParams object.
+func NewMetaV0alpha1RouteJwtTokenAuthParams() *MetaV0alpha1RouteJwtTokenAuthParams {
+	return &MetaV0alpha1RouteJwtTokenAuthParams{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteJwtTokenAuthParams.
+func (MetaV0alpha1RouteJwtTokenAuthParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteJwtTokenAuthParams"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1RouteJwtTokenAuth struct {
 	Url *string `json:"url,omitempty"`
 	// +listType=set
-	Scopes []string               `json:"scopes,omitempty"`
-	Params map[string]interface{} `json:"params,omitempty"`
+	Scopes []string                             `json:"scopes,omitempty"`
+	Params *MetaV0alpha1RouteJwtTokenAuthParams `json:"params,omitempty"`
 }
 
 // NewMetaV0alpha1RouteJwtTokenAuth creates a new MetaV0alpha1RouteJwtTokenAuth object.
 func NewMetaV0alpha1RouteJwtTokenAuth() *MetaV0alpha1RouteJwtTokenAuth {
 	return &MetaV0alpha1RouteJwtTokenAuth{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteJwtTokenAuth.
+func (MetaV0alpha1RouteJwtTokenAuth) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteJwtTokenAuth"
 }
 
 // +k8s:openapi-gen=true
@@ -343,6 +513,11 @@ func NewMetaV0alpha1RouteUrlParams() *MetaV0alpha1RouteUrlParams {
 	return &MetaV0alpha1RouteUrlParams{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RouteUrlParams.
+func (MetaV0alpha1RouteUrlParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RouteUrlParams"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1IAMPermissions struct {
 	Action *string `json:"action,omitempty"`
@@ -352,6 +527,11 @@ type MetaV0alpha1IAMPermissions struct {
 // NewMetaV0alpha1IAMPermissions creates a new MetaV0alpha1IAMPermissions object.
 func NewMetaV0alpha1IAMPermissions() *MetaV0alpha1IAMPermissions {
 	return &MetaV0alpha1IAMPermissions{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1IAMPermissions.
+func (MetaV0alpha1IAMPermissions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1IAMPermissions"
 }
 
 // +k8s:openapi-gen=true
@@ -365,6 +545,11 @@ func NewMetaV0alpha1RoleRolePermissions() *MetaV0alpha1RoleRolePermissions {
 	return &MetaV0alpha1RoleRolePermissions{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RoleRolePermissions.
+func (MetaV0alpha1RoleRolePermissions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RoleRolePermissions"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1RoleRole struct {
 	Name        *string `json:"name,omitempty"`
@@ -376,6 +561,11 @@ type MetaV0alpha1RoleRole struct {
 // NewMetaV0alpha1RoleRole creates a new MetaV0alpha1RoleRole object.
 func NewMetaV0alpha1RoleRole() *MetaV0alpha1RoleRole {
 	return &MetaV0alpha1RoleRole{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RoleRole.
+func (MetaV0alpha1RoleRole) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RoleRole"
 }
 
 // +k8s:openapi-gen=true
@@ -393,6 +583,11 @@ func NewMetaV0alpha1ExtensionsAddedComponents() *MetaV0alpha1ExtensionsAddedComp
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsAddedComponents.
+func (MetaV0alpha1ExtensionsAddedComponents) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsAddedComponents"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1ExtensionsAddedLinks struct {
 	// +listType=set
@@ -406,6 +601,11 @@ func NewMetaV0alpha1ExtensionsAddedLinks() *MetaV0alpha1ExtensionsAddedLinks {
 	return &MetaV0alpha1ExtensionsAddedLinks{
 		Targets: []string{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsAddedLinks.
+func (MetaV0alpha1ExtensionsAddedLinks) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsAddedLinks"
 }
 
 // +k8s:openapi-gen=true
@@ -423,6 +623,11 @@ func NewMetaV0alpha1ExtensionsAddedFunctions() *MetaV0alpha1ExtensionsAddedFunct
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsAddedFunctions.
+func (MetaV0alpha1ExtensionsAddedFunctions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsAddedFunctions"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1ExtensionsExposedComponents struct {
 	Id          string  `json:"id"`
@@ -433,6 +638,11 @@ type MetaV0alpha1ExtensionsExposedComponents struct {
 // NewMetaV0alpha1ExtensionsExposedComponents creates a new MetaV0alpha1ExtensionsExposedComponents object.
 func NewMetaV0alpha1ExtensionsExposedComponents() *MetaV0alpha1ExtensionsExposedComponents {
 	return &MetaV0alpha1ExtensionsExposedComponents{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsExposedComponents.
+func (MetaV0alpha1ExtensionsExposedComponents) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsExposedComponents"
 }
 
 // +k8s:openapi-gen=true
@@ -447,16 +657,26 @@ func NewMetaV0alpha1ExtensionsExtensionPoints() *MetaV0alpha1ExtensionsExtension
 	return &MetaV0alpha1ExtensionsExtensionPoints{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsExtensionPoints.
+func (MetaV0alpha1ExtensionsExtensionPoints) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsExtensionPoints"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1SpecModule struct {
-	Path            string                                 `json:"path"`
-	Hash            *string                                `json:"hash,omitempty"`
-	LoadingStrategy *MetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy,omitempty"`
+	Path            string                                `json:"path"`
+	Hash            *string                               `json:"hash,omitempty"`
+	LoadingStrategy MetaV0alpha1SpecModuleLoadingStrategy `json:"loadingStrategy"`
 }
 
 // NewMetaV0alpha1SpecModule creates a new MetaV0alpha1SpecModule object.
 func NewMetaV0alpha1SpecModule() *MetaV0alpha1SpecModule {
 	return &MetaV0alpha1SpecModule{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecModule.
+func (MetaV0alpha1SpecModule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecModule"
 }
 
 // +k8s:openapi-gen=true
@@ -471,6 +691,11 @@ func NewMetaV0alpha1SpecSignature() *MetaV0alpha1SpecSignature {
 	return &MetaV0alpha1SpecSignature{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecSignature.
+func (MetaV0alpha1SpecSignature) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecSignature"
+}
+
 // +k8s:openapi-gen=true
 type MetaJSONDataType string
 
@@ -480,6 +705,11 @@ const (
 	MetaJSONDataTypePanel      MetaJSONDataType = "panel"
 	MetaJSONDataTypeRenderer   MetaJSONDataType = "renderer"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for MetaJSONDataType.
+func (MetaJSONDataType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONDataType"
+}
 
 // +k8s:openapi-gen=true
 type MetaJSONDataCategory string
@@ -496,13 +726,25 @@ const (
 	MetaJSONDataCategoryOther      MetaJSONDataCategory = "other"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for MetaJSONDataCategory.
+func (MetaJSONDataCategory) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONDataCategory"
+}
+
 // +k8s:openapi-gen=true
 type MetaJSONDataState string
 
 const (
-	MetaJSONDataStateAlpha MetaJSONDataState = "alpha"
-	MetaJSONDataStateBeta  MetaJSONDataState = "beta"
+	MetaJSONDataStateAlpha      MetaJSONDataState = "alpha"
+	MetaJSONDataStateBeta       MetaJSONDataState = "beta"
+	MetaJSONDataStateStable     MetaJSONDataState = "stable"
+	MetaJSONDataStateDeprecated MetaJSONDataState = "deprecated"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for MetaJSONDataState.
+func (MetaJSONDataState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONDataState"
+}
 
 // +k8s:openapi-gen=true
 type MetaIncludeType string
@@ -514,6 +756,11 @@ const (
 	MetaIncludeTypeDatasource MetaIncludeType = "datasource"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for MetaIncludeType.
+func (MetaIncludeType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaIncludeType"
+}
+
 // +k8s:openapi-gen=true
 type MetaIncludeRole string
 
@@ -524,6 +771,11 @@ const (
 	MetaIncludeRoleNone   MetaIncludeRole = "None"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for MetaIncludeRole.
+func (MetaIncludeRole) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaIncludeRole"
+}
+
 // +k8s:openapi-gen=true
 type MetaSpecClass string
 
@@ -531,6 +783,26 @@ const (
 	MetaSpecClassCore     MetaSpecClass = "core"
 	MetaSpecClassExternal MetaSpecClass = "external"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for MetaSpecClass.
+func (MetaSpecClass) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaSpecClass"
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1InfoLinksTarget string
+
+const (
+	MetaV0alpha1InfoLinksTargetBlank  MetaV0alpha1InfoLinksTarget = "_blank"
+	MetaV0alpha1InfoLinksTargetSelf   MetaV0alpha1InfoLinksTarget = "_self"
+	MetaV0alpha1InfoLinksTargetParent MetaV0alpha1InfoLinksTarget = "_parent"
+	MetaV0alpha1InfoLinksTargetTop    MetaV0alpha1InfoLinksTarget = "_top"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1InfoLinksTarget.
+func (MetaV0alpha1InfoLinksTarget) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1InfoLinksTarget"
+}
 
 // +k8s:openapi-gen=true
 type MetaV0alpha1DependenciesPluginsType string
@@ -541,6 +813,11 @@ const (
 	MetaV0alpha1DependenciesPluginsTypePanel      MetaV0alpha1DependenciesPluginsType = "panel"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1DependenciesPluginsType.
+func (MetaV0alpha1DependenciesPluginsType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1DependenciesPluginsType"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1SpecModuleLoadingStrategy string
 
@@ -548,6 +825,11 @@ const (
 	MetaV0alpha1SpecModuleLoadingStrategyFetch  MetaV0alpha1SpecModuleLoadingStrategy = "fetch"
 	MetaV0alpha1SpecModuleLoadingStrategyScript MetaV0alpha1SpecModuleLoadingStrategy = "script"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecModuleLoadingStrategy.
+func (MetaV0alpha1SpecModuleLoadingStrategy) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecModuleLoadingStrategy"
+}
 
 // +k8s:openapi-gen=true
 type MetaV0alpha1SpecSignatureStatus string
@@ -560,6 +842,11 @@ const (
 	MetaV0alpha1SpecSignatureStatusUnsigned MetaV0alpha1SpecSignatureStatus = "unsigned"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecSignatureStatus.
+func (MetaV0alpha1SpecSignatureStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecSignatureStatus"
+}
+
 // +k8s:openapi-gen=true
 type MetaV0alpha1SpecSignatureType string
 
@@ -570,3 +857,8 @@ const (
 	MetaV0alpha1SpecSignatureTypePrivate     MetaV0alpha1SpecSignatureType = "private"
 	MetaV0alpha1SpecSignatureTypePrivateGlob MetaV0alpha1SpecSignatureType = "private-glob"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecSignatureType.
+func (MetaV0alpha1SpecSignatureType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecSignatureType"
+}

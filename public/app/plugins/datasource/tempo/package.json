@@ -10,7 +10,7 @@
     "@grafana/lezer-traceql": "0.0.25",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.11.0",
+    "@grafana/plugin-ui": "^0.12.1",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -22,7 +22,7 @@
     "buffer": "6.0.3",
     "events": "3.3.0",
     "i18next": "^25.0.0",
-    "lodash": "4.17.21",
+    "lodash": "^4.17.23",
     "lru-cache": "11.2.2",
     "monaco-editor": "0.34.1",
     "prismjs": "1.30.0",
@@ -56,7 +56,7 @@
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.9.2",
-    "webpack": "5.101.0"
+    "webpack": "^5.105.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

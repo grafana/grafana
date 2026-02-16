@@ -15,11 +15,18 @@ type RepositoryViewList struct {
 	// Whether image rendering is allowed for dashboard previews
 	AllowImageRendering bool `json:"allowImageRendering"`
 
+	// MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)
+	MaxRepositories int64 `json:"maxRepositories"`
+
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
+}
+
+func (RepositoryViewList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "RepositoryViewList"
 }
 
 type RepositoryView struct {
@@ -46,4 +53,8 @@ type RepositoryView struct {
 
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
+}
+
+func (RepositoryView) OpenAPIModelName() string {
+	return OpenAPIPrefix + "RepositoryView"
 }

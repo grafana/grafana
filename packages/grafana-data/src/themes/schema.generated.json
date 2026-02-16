@@ -13,7 +13,10 @@
       "properties": {
         "mode": {
           "type": "string",
-          "enum": ["light", "dark"]
+          "enum": [
+            "light",
+            "dark"
+          ]
         },
         "primary": {
           "type": "object",
@@ -385,7 +388,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-red", "light-red", "red", "semi-dark-red", "dark-red"]
+                          "enum": [
+                            "super-light-red",
+                            "light-red",
+                            "red",
+                            "semi-dark-red",
+                            "dark-red"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -397,12 +406,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               },
               {
@@ -422,7 +437,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-orange", "light-orange", "orange", "semi-dark-orange", "dark-orange"]
+                          "enum": [
+                            "super-light-orange",
+                            "light-orange",
+                            "orange",
+                            "semi-dark-orange",
+                            "dark-orange"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -434,12 +455,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               },
               {
@@ -459,7 +486,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-yellow", "light-yellow", "yellow", "semi-dark-yellow", "dark-yellow"]
+                          "enum": [
+                            "super-light-yellow",
+                            "light-yellow",
+                            "yellow",
+                            "semi-dark-yellow",
+                            "dark-yellow"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -471,12 +504,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               },
               {
@@ -496,7 +535,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-green", "light-green", "green", "semi-dark-green", "dark-green"]
+                          "enum": [
+                            "super-light-green",
+                            "light-green",
+                            "green",
+                            "semi-dark-green",
+                            "dark-green"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -508,12 +553,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               },
               {
@@ -533,7 +584,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-blue", "light-blue", "blue", "semi-dark-blue", "dark-blue"]
+                          "enum": [
+                            "super-light-blue",
+                            "light-blue",
+                            "blue",
+                            "semi-dark-blue",
+                            "dark-blue"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -545,12 +602,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               },
               {
@@ -570,7 +633,13 @@
                         },
                         "name": {
                           "type": "string",
-                          "enum": ["super-light-purple", "light-purple", "purple", "semi-dark-purple", "dark-purple"]
+                          "enum": [
+                            "super-light-purple",
+                            "light-purple",
+                            "purple",
+                            "semi-dark-purple",
+                            "dark-purple"
+                          ]
                         },
                         "aliases": {
                           "type": "array",
@@ -582,12 +651,18 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["color", "name"],
+                      "required": [
+                        "color",
+                        "name"
+                      ],
                       "additionalProperties": false
                     }
                   }
                 },
-                "required": ["name", "shades"],
+                "required": [
+                  "name",
+                  "shades"
+                ],
                 "additionalProperties": false
               }
             ]
@@ -603,6 +678,9 @@
       "additionalProperties": false
     }
   },
-  "required": ["name", "id"],
+  "required": [
+    "name",
+    "id"
+  ],
   "additionalProperties": false
 }

@@ -100,29 +100,30 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 
-		// Step 3: Verify the job failed with ownership conflict error
+		// Step 3: Verify the job completed with warning due to ownership conflict
 		jobObj := &provisioning.Job{}
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		// The job completes with "warning" state instead of "error" state when it doesn't have too many errors
+		// The job completes with "warning" state for ownership conflicts (they are treated as warnings)
 		t.Logf("Job state: %s", jobObj.Status.State)
-		t.Logf("Job errors: %v", jobObj.Status.Errors)
+		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warnings due to ownership conflicts")
-		require.NotEmpty(t, jobObj.Status.Errors, "should have error details")
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warning due to ownership conflicts")
+		require.NotEmpty(t, jobObj.Status.Warnings, "should have warning details")
+		require.Empty(t, jobObj.Status.Errors, "ownership conflicts should be warnings, not errors")
 
-		// Check that error mentions ownership conflict
+		// Check that warning mentions ownership conflict
 		found := false
-		for _, errMsg := range jobObj.Status.Errors {
-			t.Logf("Error message: %s", errMsg)
-			if strings.Contains(errMsg, fmt.Sprintf("managed by repo '%s'", repo1)) &&
-				strings.Contains(errMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
+		for _, warningMsg := range jobObj.Status.Warnings {
+			t.Logf("Warning message: %s", warningMsg)
+			if strings.Contains(warningMsg, fmt.Sprintf("managed by repo '%s'", repo1)) &&
+				strings.Contains(warningMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
 				found = true
 				break
 			}
 		}
-		require.True(t, found, "should have ownership conflict error")
+		require.True(t, found, "should have ownership conflict warning")
 
 		// Step 4: Verify original resource is still owned by repo1 and unchanged
 		originalDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
