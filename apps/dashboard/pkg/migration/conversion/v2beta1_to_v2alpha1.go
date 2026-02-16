@@ -1023,13 +1023,13 @@ func convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(in *dashv2beta1.Da
 		Spec: dashv2alpha1.DashboardConditionalRenderingGroupSpec{
 			Visibility: dashv2alpha1.DashboardConditionalRenderingGroupSpecVisibility(in.Spec.Visibility),
 			Condition:  dashv2alpha1.DashboardConditionalRenderingGroupSpecCondition(in.Spec.Condition),
-			Items:      make([]dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind, len(in.Spec.Items)),
+			Items:      make([]dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind, len(in.Spec.Items)),
 		},
 	}
 
 	// Convert each item in the Items slice
 	for i, item := range in.Spec.Items {
-		out.Spec.Items[i] = dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+		out.Spec.Items[i] = dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}
 
 		if item.ConditionalRenderingVariableKind != nil {
 			out.Spec.Items[i].ConditionalRenderingVariableKind = &dashv2alpha1.DashboardConditionalRenderingVariableKind{
@@ -1056,6 +1056,16 @@ func convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(in *dashv2beta1.Da
 				Kind: item.ConditionalRenderingTimeRangeSizeKind.Kind,
 				Spec: dashv2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec{
 					Value: item.ConditionalRenderingTimeRangeSizeKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingUserTeamKind != nil {
+			out.Spec.Items[i].ConditionalRenderingUserTeamKind = &dashv2alpha1.DashboardConditionalRenderingUserTeamKind{
+				Kind: item.ConditionalRenderingUserTeamKind.Kind,
+				Spec: dashv2alpha1.DashboardConditionalRenderingUserTeamSpec{
+					Operator: dashv2alpha1.DashboardConditionalRenderingUserTeamSpecOperator(item.ConditionalRenderingUserTeamKind.Spec.Operator),
+					TeamUids: item.ConditionalRenderingUserTeamKind.Spec.TeamUids,
 				},
 			}
 		}
@@ -1114,7 +1124,7 @@ func convertRules_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleKin
 			Kind: rule.Kind,
 			Spec: dashv2alpha1.DashboardDashboardRuleSpec{
 				Name:       rule.Spec.Name,
-				Target:     convertRuleTarget_V2beta1_to_V2alpha1(&rule.Spec.Target),
+				Targets:    convertRuleTargets_V2beta1_to_V2alpha1(rule.Spec.Targets),
 				Conditions: convertRuleConditions_V2beta1_to_V2alpha1(&rule.Spec.Conditions),
 				Outcomes:   convertRuleOutcomes_V2beta1_to_V2alpha1(rule.Spec.Outcomes),
 			},
@@ -1123,18 +1133,23 @@ func convertRules_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardDashboardRuleKin
 	return out
 }
 
-func convertRuleTarget_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardElementReferenceOrLayoutItemReference) dashv2alpha1.DashboardElementReferenceOrLayoutItemReference {
-	out := dashv2alpha1.DashboardElementReferenceOrLayoutItemReference{}
-	if in.ElementReference != nil {
-		out.ElementReference = &dashv2alpha1.DashboardElementReference{
-			Kind: in.ElementReference.Kind,
-			Name: in.ElementReference.Name,
-		}
+func convertRuleTargets_V2beta1_to_V2alpha1(in []dashv2beta1.DashboardElementReferenceOrLayoutItemReference) []dashv2alpha1.DashboardElementReferenceOrLayoutItemReference {
+	if in == nil {
+		return nil
 	}
-	if in.LayoutItemReference != nil {
-		out.LayoutItemReference = &dashv2alpha1.DashboardLayoutItemReference{
-			Kind: in.LayoutItemReference.Kind,
-			Name: in.LayoutItemReference.Name,
+	out := make([]dashv2alpha1.DashboardElementReferenceOrLayoutItemReference, len(in))
+	for i, ref := range in {
+		if ref.ElementReference != nil {
+			out[i].ElementReference = &dashv2alpha1.DashboardElementReference{
+				Kind: ref.ElementReference.Kind,
+				Name: ref.ElementReference.Name,
+			}
+		}
+		if ref.LayoutItemReference != nil {
+			out[i].LayoutItemReference = &dashv2alpha1.DashboardLayoutItemReference{
+				Kind: ref.LayoutItemReference.Kind,
+				Name: ref.LayoutItemReference.Name,
+			}
 		}
 	}
 	return out
@@ -1143,11 +1158,11 @@ func convertRuleTarget_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardElementRefer
 func convertRuleConditions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDashboardRuleConditionsSpec) dashv2alpha1.DashboardDashboardRuleConditionsSpec {
 	out := dashv2alpha1.DashboardDashboardRuleConditionsSpec{
 		Match: dashv2alpha1.DashboardDashboardRuleConditionsSpecMatch(in.Match),
-		Items: make([]dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind, len(in.Items)),
+		Items: make([]dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind, len(in.Items)),
 	}
 
 	for i, item := range in.Items {
-		out.Items[i] = dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+		out.Items[i] = dashv2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingUserTeamKind{}
 
 		if item.ConditionalRenderingVariableKind != nil {
 			out.Items[i].ConditionalRenderingVariableKind = &dashv2alpha1.DashboardConditionalRenderingVariableKind{
@@ -1174,6 +1189,16 @@ func convertRuleConditions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDashboar
 				Kind: item.ConditionalRenderingTimeRangeSizeKind.Kind,
 				Spec: dashv2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec{
 					Value: item.ConditionalRenderingTimeRangeSizeKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingUserTeamKind != nil {
+			out.Items[i].ConditionalRenderingUserTeamKind = &dashv2alpha1.DashboardConditionalRenderingUserTeamKind{
+				Kind: item.ConditionalRenderingUserTeamKind.Kind,
+				Spec: dashv2alpha1.DashboardConditionalRenderingUserTeamSpec{
+					Operator: dashv2alpha1.DashboardConditionalRenderingUserTeamSpecOperator(item.ConditionalRenderingUserTeamKind.Spec.Operator),
+					TeamUids: item.ConditionalRenderingUserTeamKind.Spec.TeamUids,
 				},
 			}
 		}
