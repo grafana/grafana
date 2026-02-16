@@ -46,7 +46,7 @@
     "version": "%VERSION%"
   },
   "dependencies": {
-    "grafanaDependency": ">=11.6.11 <12 || >=12.0.10 <12.1 || >=12.1.7 <12.2 || >=12.2.5 <12.3 || >=12.3.0",
+    "grafanaDependency": ">=12.3.0",
     "plugins": []
   }
 }
