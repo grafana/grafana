@@ -12,6 +12,7 @@ import { AlertIndicator } from './AlertIndicator';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
+import { SidebarFooter } from './SidebarFooter';
 import { TransformationCard } from './TransformationCard';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
@@ -80,11 +81,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           )}
         </div>
       </ScrollContainer>
-      <div className={styles.footer}>
-        <Text weight="medium" variant="bodySmall">
-          {t('query-editor-next.sidebar.data-mode', 'Data Mode')}
-        </Text>
-      </div>
+      <SidebarFooter />
     </div>
   );
 });
@@ -106,11 +103,6 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
-    }),
-    footer: css({
-      marginTop: 'auto',
-      background: QUERY_EDITOR_COLORS.card.headerBg,
-      padding: theme.spacing(1, 1.5),
     }),
   };
 }

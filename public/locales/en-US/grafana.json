@@ -13199,7 +13199,8 @@
       },
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "data-mode": "Data Mode",
+      "footer-items_one": "{{count}} items",
+      "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"
