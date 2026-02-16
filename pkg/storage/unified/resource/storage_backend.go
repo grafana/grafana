@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,6 +37,15 @@ const (
 	defaultEventPruningInterval = 5 * time.Minute
 	clusterScopeNamespace       = "__cluster__"
 )
+
+type GarbageCollectionConfig struct {
+	Enabled          bool
+	DryRun           bool
+	Interval         time.Duration // how often the process runs
+	BatchSize        int           // max number of candidates to delete (unique NGR)
+	MaxAge           time.Duration // retention period
+	DashboardsMaxAge time.Duration // dashboard retention
+}
 
 // convertClusterNamespaceToEmpty converts the internal __cluster__ namespace back to empty string
 // for cluster-scoped resources when returning to users
@@ -68,6 +78,7 @@ type kvStorageBackend struct {
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
+	garbageCollection            GarbageCollectionConfig
 	withExperimentalClusterScope bool
 	lastImportStore              *lastImportStore
 	lastImportTimeMaxAge         time.Duration
@@ -96,6 +107,7 @@ type KVBackendOptions struct {
 	Tracer                       trace.Tracer          // TODO add tracing
 	Reg                          prometheus.Registerer // TODO add metrics
 	Log                          log.Logger
+	GarbageCollection            GarbageCollectionConfig
 
 	UseChannelNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
@@ -150,10 +162,16 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
+		garbageCollection:            opts.GarbageCollection,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
+	}
+	if backend.garbageCollection.Enabled {
+		if err := backend.initGarbageCollection(ctx); err != nil {
+			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
+		}
 	}
 
 	// Start the cleanup background job.
@@ -286,6 +304,192 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	k.historyPruner = pruner
 	k.historyPruner.Start(ctx)
 	return nil
+}
+
+func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
+	b.log.Info("starting garbage collection loop")
+
+	go func() {
+		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
+		if b.garbageCollection.Interval > 0 {
+			jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
+			select {
+			case <-time.After(jitter):
+			}
+		}
+
+		ticker := time.NewTicker(b.garbageCollection.Interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	defer span.End()
+	start := time.Now()
+
+	deletedByKey := map[string]int64{}
+
+	groupResources, err := b.dataStore.getGroupResources(ctx)
+	if err != nil {
+		b.log.Error("failed to list group resources for garbage collection", "error", err)
+		return deletedByKey
+	}
+
+	for _, gr := range groupResources {
+		resourceKey := gr.Group + "/" + gr.Resource
+		resourceCutoff := b.garbageCollectionCutoffTimestamp(gr.Group, gr.Resource, cutoffTimeStamp)
+		totalDeleted := int64(0)
+
+		key := ListRequestKey{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+		}
+
+		prefix := key.Prefix()
+		startKey := prefix
+		endKey := PrefixRangeEnd(prefix)
+
+		for {
+			deleted, nextKey, err := b.garbageCollectBatch(ctx, gr.Group, gr.Resource, resourceCutoff, b.garbageCollection.BatchSize, startKey, endKey)
+			if err != nil {
+				b.log.Error("garbage collection failed",
+					"group", gr.Group,
+					"resource", gr.Resource,
+					"error", err)
+				break
+			}
+			startKey = nextKey
+			totalDeleted += deleted
+			if deleted < int64(b.garbageCollection.BatchSize) {
+				break
+			}
+			select {
+			case <-time.After(time.Second):
+			}
+		}
+		if totalDeleted > 0 {
+			b.log.Info("garbage collection deleted history",
+				"group", gr.Group,
+				"resource", gr.Resource,
+				"rows", totalDeleted,
+				"seconds", time.Since(start).Seconds(),
+			)
+			deletedByKey[resourceKey] += totalDeleted
+		}
+	}
+
+	return deletedByKey
+}
+
+func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int, startKey, endKey string) (int64, string, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
+	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
+	defer span.End()
+
+	candidates := []string{}
+
+	nextStartKey := startKey
+
+	// traverse all keys in descending order of resource version,
+	// for deleted keys with resource version older than the cutoff,
+	// check if the resource is not present in the datastore
+	for dataKey, err := range b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
+		StartKey: startKey,
+		EndKey:   endKey,
+		Sort:     kv.SortOrderDesc}) {
+
+		if err != nil {
+			b.log.Error("failed to list collection before delete: %s", err)
+			return 0, "", err
+		}
+
+		dk, err := ParseKey(dataKey)
+		if err != nil {
+			b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
+			continue
+		}
+
+		resourceCutoffSnowflake := cutoffTimestamp
+		if !isSnowflake(cutoffTimestamp) {
+			resourceCutoffSnowflake = rvmanager.SnowflakeFromRV(cutoffTimestamp)
+		}
+
+		if dk.Action == DataActionDeleted && dk.ResourceVersion < resourceCutoffSnowflake {
+			// ensure that the resource is not present in the datastore
+			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+				Group:     dk.Group,
+				Resource:  dk.Resource,
+				Namespace: dk.Namespace,
+				Name:      dk.Name,
+			})
+			if err == nil {
+				// resource is still present, skip deletion
+				continue
+			}
+
+			if !errors.Is(err, ErrNotFound) {
+				b.log.Error("failed to get the latest resource key for datakey '%s': %s", dk, err)
+				continue
+			}
+
+			// if we get a not found, then we can delete resource history entries for this resource
+			candidates = append(candidates, dataKey)
+			if len(candidates) >= b.garbageCollection.BatchSize {
+				break
+			}
+		}
+	}
+
+	keysToDelete := []string{}
+	for _, dataKey := range candidates {
+		dk, err := ParseKey(dataKey)
+		if err != nil {
+			b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
+			continue
+		}
+
+		fmt.Printf("candidate dataKey: %+v\n", dataKey)
+		for currDK, _ := range b.dataStore.Keys(ctx, ListRequestKey{
+			Group:     dk.Group,
+			Resource:  dk.Resource,
+			Namespace: dk.Namespace,
+			Name:      dk.Name,
+		}, SortOrderAsc) {
+			keysToDelete = append(keysToDelete, currDK.String())
+			nextStartKey = currDK.String()
+		}
+
+		fmt.Printf("keysToDelete: %+v\n", keysToDelete)
+	}
+
+	if !b.garbageCollection.DryRun {
+		err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+		if err != nil {
+			b.log.Error("failed to batch delete keys: %s", err)
+			return 0, "", err
+		}
+
+		return int64(len(keysToDelete)), nextStartKey, nil
+	}
+
+	return 0, "", nil
+}
+
+func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
+	if group == "dashboard.grafana.app" && resourceName == "dashboards" {
+		return time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
+	}
+	return defaultCutoff
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
