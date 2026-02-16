@@ -11,6 +11,7 @@ import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { type ConditionalRenderingConditions } from './types';
 import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
+import { ConditionalRenderingUserTeam } from './ConditionalRenderingUserTeam';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { conditionRegistry } from './conditionRegistry';
 
@@ -23,4 +24,5 @@ conditionRegistry.setInit(() => [
   ConditionalRenderingVariable.registryItem,
   ConditionalRenderingData.registryItem,
   ConditionalRenderingTimeRangeSize.registryItem,
+  ConditionalRenderingUserTeam.registryItem,
 ]);

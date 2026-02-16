@@ -3,6 +3,7 @@ import { SceneObject } from '@grafana/scenes';
 import {
   ConditionalRenderingDataKind,
   ConditionalRenderingTimeRangeSizeKind,
+  ConditionalRenderingUserTeamKind,
   ConditionalRenderingVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -14,7 +15,8 @@ import { ConditionalRenderingConditions } from './types';
 export type ConditionalRenderingConditionsKindTypes =
   | ConditionalRenderingVariableKind
   | ConditionalRenderingDataKind
-  | ConditionalRenderingTimeRangeSizeKind;
+  | ConditionalRenderingTimeRangeSizeKind
+  | ConditionalRenderingUserTeamKind;
 
 /**
  * Defines a condition type that can be registered in the condition registry.

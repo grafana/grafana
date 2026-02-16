@@ -799,7 +799,7 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 export interface ConditionalRenderingGroupSpec {
 	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
@@ -864,6 +864,30 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
+});
+
+// Checks whether the current user belongs to (or does not belong to) the specified team(s).
+export interface ConditionalRenderingUserTeamKind {
+	kind: "ConditionalRenderingUserTeam";
+	spec: ConditionalRenderingUserTeamSpec;
+}
+
+export const defaultConditionalRenderingUserTeamKind = (): ConditionalRenderingUserTeamKind => ({
+	kind: "ConditionalRenderingUserTeam",
+	spec: defaultConditionalRenderingUserTeamSpec(),
+});
+
+export interface ConditionalRenderingUserTeamSpec {
+	// How to match: "is_member" means the user must belong to at least one team,
+	// "is_not_member" means the user must not belong to any of the teams.
+	operator: "is_member" | "is_not_member";
+	// Team UIDs to evaluate against.
+	teamUids: string[];
+}
+
+export const defaultConditionalRenderingUserTeamSpec = (): ConditionalRenderingUserTeamSpec => ({
+	operator: "is_member",
+	teamUids: [],
 });
 
 export interface RowRepeatOptions {
@@ -1547,8 +1571,8 @@ export const defaultDashboardRuleKind = (): DashboardRuleKind => ({
 export interface DashboardRuleSpec {
 	// Optional human-readable name for this rule.
 	name?: string;
-	// The element or layout item this rule targets.
-	target: ElementReference | LayoutItemReference;
+	// The elements or layout items this rule targets.
+	targets: (ElementReference | LayoutItemReference)[];
 	// Conditions that must be met for the outcomes to apply.
 	conditions: DashboardRuleConditionsSpec;
 	// Outcomes to apply when conditions are met. Automatically reversed when
@@ -1558,7 +1582,7 @@ export interface DashboardRuleSpec {
 }
 
 export const defaultDashboardRuleSpec = (): DashboardRuleSpec => ({
-	target: defaultElementReference(),
+	targets: [],
 	conditions: defaultDashboardRuleConditionsSpec(),
 	outcomes: [],
 });
@@ -1577,7 +1601,7 @@ export const defaultLayoutItemReference = (): LayoutItemReference => ({
 export interface DashboardRuleConditionsSpec {
 	// How to combine the conditions: "and" requires all to match, "or" requires any.
 	match: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind)[];
 }
 
 export const defaultDashboardRuleConditionsSpec = (): DashboardRuleConditionsSpec => ({

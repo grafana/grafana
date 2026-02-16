@@ -1094,6 +1094,8 @@ ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
 	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
+	condition: "and" | "or"
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -1125,6 +1127,20 @@ ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
 }
 
+// Checks whether the current user belongs to (or does not belong to) the specified team(s).
+ConditionalRenderingUserTeamKind: {
+	kind: "ConditionalRenderingUserTeam"
+	spec: ConditionalRenderingUserTeamSpec
+}
+
+ConditionalRenderingUserTeamSpec: {
+	// How to match: "is_member" means the user must belong to at least one team,
+	// "is_not_member" means the user must not belong to any of the teams.
+	operator: "is_member" | "is_not_member"
+	// Team UIDs to evaluate against.
+	teamUids: [...string]
+}
+
 // --- Dashboard rules ---
 
 // A rule defines a set of conditions and outcomes that apply to a target element
@@ -1138,8 +1154,8 @@ DashboardRuleKind: {
 DashboardRuleSpec: {
 	// Optional human-readable name for this rule.
 	name?: string
-	// The element or layout item this rule targets.
-	target: ElementReference | LayoutItemReference
+	// The elements or layout items this rule targets.
+	targets: [...ElementReference | LayoutItemReference]
 	// Conditions that must be met for the outcomes to apply.
 	conditions: DashboardRuleConditionsSpec
 	// Outcomes to apply when conditions are met. Automatically reversed when
@@ -1156,7 +1172,7 @@ LayoutItemReference: {
 DashboardRuleConditionsSpec: {
 	// How to combine the conditions: "and" requires all to match, "or" requires any.
 	match: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind]
 }
 
 // Visibility outcome: show or hide the target element/layout item.
