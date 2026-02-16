@@ -82,7 +82,8 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    managedBy: typeof item.managedBy === 'string' ? item.managedBy : item.managedBy?.kind,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    managedBy: typeof item.managedBy === 'string' ? item.managedBy : (item.managedBy?.kind as ManagerKind),
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
