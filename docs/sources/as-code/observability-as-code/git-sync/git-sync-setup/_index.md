@@ -109,7 +109,7 @@ If you want to configure Git Sync for GitLab, you need a GitLab Personal Access 
 - User: Read only
 - API: Read and write
 
-Return to Grafana and fill in the following fields: 
+Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **Project Access Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.
@@ -124,7 +124,7 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket Personal A
 - Pull requests: Read and write
 - Webhooks: Read and write
 
-Return to Grafana and fill in the following fields: 
+Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **Project Access Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.
