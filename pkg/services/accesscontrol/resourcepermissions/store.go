@@ -442,16 +442,21 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 
 	var teamFilter *accesscontrol.SQLFilter
 	if !query.ExcludeManaged {
-		filter, err := accesscontrol.Filter(
-			query.User,
-			"t.id",
-			"teams:id:",
-			accesscontrol.ActionTeamsRead,
-		)
-		if err != nil {
-			return nil, err
+		// Only apply team filtering if access control is enforced
+		// When EnforceAccessControl is false (e.g., redirect flag is on),
+		// we should show all teams regardless of user permissions
+		if query.EnforceAccessControl {
+			filter, err := accesscontrol.Filter(
+				query.User,
+				"t.id",
+				"teams:id:",
+				accesscontrol.ActionTeamsRead,
+			)
+			if err != nil {
+				return nil, err
+			}
+			teamFilter = &filter
 		}
-		teamFilter = &filter
 	}
 
 	team := teamSelect + teamFrom + where

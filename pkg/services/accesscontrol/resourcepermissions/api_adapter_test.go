@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -233,6 +234,10 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
 
+	testUser := &user.SignedInUser{
+		OrgID: 1,
+	}
+
 	api := &api{
 		cfg:    &setting.Cfg{},
 		logger: log.New("test"),
@@ -251,7 +256,7 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 		},
 	}
 
-	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(folderPermission, "stack-123-org-1", true)
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), testUser, folderPermission, "stack-123-org-1", true)
 
 	require.NoError(t, err)
 	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")
@@ -379,6 +384,10 @@ func TestGetFolderHierarchyPermissions(t *testing.T) {
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
 
+			testUser := &user.SignedInUser{
+				OrgID: 1,
+			}
+
 			api := &api{
 				cfg:    &setting.Cfg{},
 				logger: log.New("test"),
@@ -398,7 +407,7 @@ func TestGetFolderHierarchyPermissions(t *testing.T) {
 			}
 
 			fakeClient, fakeResourceInterface := setupFakeDynamicClient(t, tt.folderUID, tt.folderInfoList, tt.folderPermissions)
-			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stack-123-org-1", tt.folderUID, fakeClient, tt.skipSelf)
+			perms, err := api.getFolderHierarchyPermissions(context.Background(), testUser, "stack-123-org-1", tt.folderUID, fakeClient, tt.skipSelf)
 
 			require.NoError(t, err)
 			assert.Len(t, perms, tt.expectedCount, "expected %d permissions", tt.expectedCount)
@@ -615,7 +624,11 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			restConfigProvider: nil, // No rest config provider - will return empty permissions from K8s
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+		testUser := &user.SignedInUser{
+			OrgID: 1,
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(context.Background(), testUser, "stack-123-org-1", "dashboard-123")
 
 		// Should fail to get K8s permissions but still add Admin role
 		require.Error(t, err)
@@ -656,7 +669,11 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			restConfigProvider: nil,
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+		testUser := &user.SignedInUser{
+			OrgID: 1,
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(context.Background(), testUser, "stack-123-org-1", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)

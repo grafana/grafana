@@ -201,7 +201,8 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
+		a.logger.Debug("Using k8s API for resource permissions", "resourceID", resourceID, "resource", a.service.options.Resource)
+		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.SignedInUser, c.Namespace, resourceID)
 		if err == nil {
 			return response.JSON(http.StatusOK, k8sPermissions)
 		}
@@ -213,6 +214,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
+	a.logger.Debug("Using legacy API for resource permissions", "resourceID", resourceID, "resource", a.service.options.Resource)
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get permissions", err)
