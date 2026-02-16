@@ -4,7 +4,7 @@ import { isSharedWithMe } from 'app/features/browse-dashboards/utils/dashboards'
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
+import { AnnoKeyFolder, ManagerKind, ResourceList } from '../../apiserver/types';
 import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
@@ -88,7 +88,8 @@ export function queryResultToViewItem(
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
-  const managedByStr = typeof item.managedBy === 'string' ? item.managedBy : item.managedBy?.kind;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const managedByStr = typeof item.managedBy === 'string' ? item.managedBy : (item.managedBy?.kind as ManagerKind);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
