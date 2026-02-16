@@ -1314,6 +1314,14 @@
               }
             ]
           },
+          "labels": {
+            "description": "Labels optionally filters the entries by matching alert labels.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers"
+              }
+            ]
+          },
           "limit": {
             "description": "Limit is the maximum number of entries to return.",
             "type": "integer"
