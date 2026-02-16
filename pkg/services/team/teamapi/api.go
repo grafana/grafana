@@ -30,7 +30,6 @@ type TeamAPI struct {
 	teamBindingClient      *iamv0alpha1.TeamBindingClient
 }
 
-// dummy commit.
 func ProvideTeamBindingClient(clientGenerator resource.ClientGenerator) (*iamv0alpha1.TeamBindingClient, error) {
 	return iamv0alpha1.NewTeamBindingClientFromGenerator(clientGenerator)
 }
