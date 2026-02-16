@@ -13,7 +13,7 @@ import { FieldColorModeId } from '@grafana/schema';
 import { getFormattedThresholds } from '../Gauge/utils';
 
 import { DEFAULT_DECIMALS } from './constants';
-import { GradientStop, RadialShape } from './types';
+import { GradientStop } from './types';
 import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
@@ -25,16 +25,19 @@ export function buildGradientColors(
 
   // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {
-    return getFormattedThresholds(fieldDisplay.field.decimals ?? DEFAULT_DECIMALS, fieldDisplay.field, theme).map(
-      (threshold) => {
-        const percent = getThresholdPercentageValue(
-          threshold,
-          fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
-          fieldDisplay
-        );
-        return { color: theme.visualization.getColorByName(threshold.color), percent };
-      }
-    );
+    return getFormattedThresholds(
+      fieldDisplay.field.decimals ?? DEFAULT_DECIMALS,
+      fieldDisplay.field,
+      theme,
+      false
+    ).map((threshold) => {
+      const percent = getThresholdPercentageValue(
+        threshold,
+        fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
+        fieldDisplay
+      );
+      return { color: theme.visualization.getColorByName(threshold.color), percent };
+    });
   }
 
   // Handle continuous color modes before other by-value modes
@@ -164,12 +167,18 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
   return [startColor, endColor];
 }
 
-export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
-  const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
-  if (shape === 'circle') {
-    return `conic-gradient(from 0deg, ${colorStrings.join(', ')})`;
+export function getGradientCss(gradientStops: GradientStop[], startAngle: number, endAngle: number): string {
+  const range = (endAngle + 360 - startAngle) % 360 || 360;
+
+  const gradientSections = [
+    `from ${startAngle}deg`,
+    gradientStops.map((stop) => `${stop.color} ${(stop.percent * range).toFixed(2)}deg`).join(', '),
+  ];
+  if (range !== 360) {
+    gradientSections.push(`#0000 0 ${range.toFixed(2)}deg`);
   }
-  return `linear-gradient(90deg, ${colorStrings.join(', ')})`;
+
+  return `conic-gradient(${gradientSections.join(', ')})`;
 }
 
 // the theme does not make the full palette available to us, and we

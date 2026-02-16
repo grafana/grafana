@@ -14,7 +14,6 @@ import {
   FileUpload,
   InlineField,
   InlineSwitch,
-  Input,
   RadioButtonList,
   Stack,
   Text,
@@ -31,7 +30,8 @@ import {
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
 import { ImportFormValues } from '../ImportToGMA';
-import { getPolicyOptions, getRulesSourceOptions } from '../Wizard/constants';
+import { getRulesSourceOptions } from '../Wizard/constants';
+import { useRoutingTrees } from '../useRoutingTrees';
 
 import { isStep2Valid } from './utils';
 
@@ -66,10 +66,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
     rulesDatasourceUID,
     rulesDatasourceName,
     rulesYamlFile,
-    notificationPolicyOption,
+    selectedRoutingTree,
     policyTreeName,
-    manualLabelName,
-    manualLabelValue,
     namespace,
     targetDatasourceUID,
   ] = watch([
@@ -77,10 +75,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
     'rulesDatasourceUID',
     'rulesDatasourceName',
     'rulesYamlFile',
-    'notificationPolicyOption',
+    'selectedRoutingTree',
     'policyTreeName',
-    'manualLabelName',
-    'manualLabelValue',
     'namespace',
     'targetDatasourceUID',
   ]);
@@ -113,7 +109,35 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
   const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI ?? false;
 
   const rulesSourceOptions = getRulesSourceOptions(isImportYamlEnabled);
-  const policyOptions = getPolicyOptions({ step1Completed, policyTreeName });
+
+  // Fetch available routing trees from the k8s API
+  const { routingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
+
+  // Build routing tree dropdown options
+  // Only includes: routing trees from API + policyTreeName from Step 1 (if filled)
+  const routingTreeOptions: Array<ComboboxOption<string>> = useMemo(() => {
+    const options: Array<ComboboxOption<string>> = [];
+
+    // Add the policy tree name from Step 1 if it was filled and Step 1 was completed
+    // Put it first since it's the most relevant option
+    const existingNames = routingTrees.map((rt) => rt.name);
+    if (step1Completed && policyTreeName && !existingNames.includes(policyTreeName)) {
+      options.push({
+        label: policyTreeName,
+        value: policyTreeName,
+      });
+    }
+
+    // Add existing routing trees from the API
+    routingTrees.forEach((rt) => {
+      options.push({
+        label: rt.label,
+        value: rt.name,
+      });
+    });
+
+    return options;
+  }, [step1Completed, policyTreeName, routingTrees]);
 
   // Validation logic
   const isValid = useMemo(() => {
@@ -122,21 +146,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       rulesSource,
       rulesYamlFile,
       rulesDatasourceUID,
-      notificationPolicyOption,
-      manualLabelName,
-      manualLabelValue,
+      selectedRoutingTree,
       targetDatasourceUID,
     });
-  }, [
-    canImport,
-    rulesSource,
-    rulesYamlFile,
-    rulesDatasourceUID,
-    notificationPolicyOption,
-    manualLabelName,
-    manualLabelValue,
-    targetDatasourceUID,
-  ]);
+  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
 
   // Report validation changes to parent
   useEffect(() => {
@@ -181,53 +194,30 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
             </Trans>
           </Text>
           <Box marginTop={2}>
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <RadioButtonList
-                  {...field}
-                  onChange={(value) => setValue('notificationPolicyOption', value)}
-                  options={policyOptions}
-                />
+            <Field
+              label={t('alerting.import-to-gma.step2.policy-tree', 'Policy tree')}
+              description={t(
+                'alerting.import-to-gma.step2.policy-tree-desc',
+                'Select a notification policy tree to route alerts'
               )}
-              control={control}
-              name="notificationPolicyOption"
-            />
+              noMargin
+            >
+              <Controller
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <Combobox
+                    {...field}
+                    onChange={(option) => setValue('selectedRoutingTree', option?.value ?? 'default')}
+                    options={routingTreeOptions}
+                    placeholder={t('alerting.import-to-gma.step2.select-policy', 'Select a policy tree')}
+                    loading={isLoadingRoutingTrees}
+                    width={50}
+                  />
+                )}
+                control={control}
+                name="selectedRoutingTree"
+              />
+            </Field>
           </Box>
-
-          {notificationPolicyOption === 'manual' && (
-            <Box marginTop={2} paddingLeft={3}>
-              <Stack direction="row" gap={2}>
-                <Field
-                  label={t('alerting.import-to-gma.step2.manual-label-name', 'Label name')}
-                  invalid={!!errors.manualLabelName}
-                  error={errors.manualLabelName?.message}
-                  noMargin
-                >
-                  <Input
-                    {...register('manualLabelName', {
-                      required: notificationPolicyOption === 'manual' ? 'Label name is required' : false,
-                    })}
-                    placeholder={t('alerting.import-to-gma.step2.manual-label-name-placeholder', 'team')}
-                    width={20}
-                  />
-                </Field>
-                <Field
-                  label={t('alerting.import-to-gma.step2.manual-label-value', 'Label value')}
-                  invalid={!!errors.manualLabelValue}
-                  error={errors.manualLabelValue?.message}
-                  noMargin
-                >
-                  <Input
-                    {...register('manualLabelValue', {
-                      required: notificationPolicyOption === 'manual' ? 'Label value is required' : false,
-                    })}
-                    placeholder={t('alerting.import-to-gma.step2.manual-label-value-placeholder', 'backend')}
-                    width={20}
-                  />
-                </Field>
-              </Stack>
-            </Box>
-          )}
         </div>
       </div>
 
@@ -486,21 +476,11 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
  */
 export function useStep2Validation(canImport: boolean): boolean {
   const { watch } = useFormContext<ImportFormValues>();
-  const [
-    rulesSource,
-    rulesDatasourceUID,
-    rulesYamlFile,
-    notificationPolicyOption,
-    manualLabelName,
-    manualLabelValue,
-    targetDatasourceUID,
-  ] = watch([
+  const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
     'rulesSource',
     'rulesDatasourceUID',
     'rulesYamlFile',
-    'notificationPolicyOption',
-    'manualLabelName',
-    'manualLabelValue',
+    'selectedRoutingTree',
     'targetDatasourceUID',
   ]);
 
@@ -510,21 +490,10 @@ export function useStep2Validation(canImport: boolean): boolean {
       rulesSource,
       rulesYamlFile,
       rulesDatasourceUID,
-      notificationPolicyOption,
-      manualLabelName,
-      manualLabelValue,
+      selectedRoutingTree,
       targetDatasourceUID,
     });
-  }, [
-    canImport,
-    rulesSource,
-    rulesYamlFile,
-    rulesDatasourceUID,
-    notificationPolicyOption,
-    manualLabelName,
-    manualLabelValue,
-    targetDatasourceUID,
-  ]);
+  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

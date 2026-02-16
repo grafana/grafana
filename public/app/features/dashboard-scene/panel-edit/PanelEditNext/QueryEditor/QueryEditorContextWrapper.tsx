@@ -1,24 +1,23 @@
-import { ReactNode, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
-import { v4 } from 'uuid';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import {
-  DataSourceInstanceSettings,
-  getDataSourceRef,
-  LoadingState,
-  standardTransformersRegistry,
-} from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery } from 'app/features/expressions/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { Transformation } from './types';
-import { getEditorType, isDataTransformerConfig } from './utils';
+import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
+import { usePendingExpression } from './hooks/usePendingExpression';
+import { useSelectedCard } from './hooks/useSelectedCard';
+import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
+import { useTransformations } from './hooks/useTransformations';
+import { AlertRule, QueryOptionField, Transformation } from './types';
+import { useQueryOptions } from './useQueryOptions';
+import { getEditorType } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -37,27 +36,18 @@ export function QueryEditorContextWrapper({
   const queryRunnerState = queryRunner?.useState();
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
+  const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
+  const [transformTogglesState, setTransformTogglesState] = useState({
+    showHelp: false,
+    showDebug: false,
+  });
 
-  const transformations: Transformation[] = useMemo(() => {
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
-        isDataTransformerConfig(t)
-      );
-
-      const transformationsList: Transformation[] = transformationList.map((t) => {
-        return {
-          transformConfig: t,
-          registryItem: standardTransformersRegistry.getIfExists(t.id),
-          transformId: v4(),
-        };
-      });
-
-      return transformationsList;
-    }
-    return [];
-  }, [panel]);
+  const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
+  const transformations = useTransformations(dataTransformer);
+  const alertingState = useAlertRulesForPanel(dataPane, panel);
 
   // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
@@ -90,76 +80,139 @@ export function QueryEditorContextWrapper({
     };
   }, [panel, transformations]);
 
-  const selectedQuery = useMemo(() => {
-    const queries = queryRunnerState?.queries ?? [];
+  const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
 
-    // If we have a selected query refId, try to find that query
-    if (selectedQueryRefId) {
-      const query = queries.find((q) => q.refId === selectedQueryRefId);
-      if (query) {
-        return query;
-      }
+  // Callbacks to open/close sidebar with optional focus
+  const openSidebar = useCallback((focusField?: QueryOptionField) => {
+    setIsQueryOptionsOpen(true);
+    if (focusField) {
+      setFocusedField(focusField);
     }
+  }, []);
 
-    // If a transformation is selected, don't select any query
-    if (selectedTransformationId) {
-      return null;
-    }
+  const closeSidebar = useCallback(() => {
+    setIsQueryOptionsOpen(false);
+    setFocusedField(null);
+  }, []);
 
-    // Otherwise, default to the first query if available
-    return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedQueryRefId, selectedTransformationId]);
+  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
+    selectedQueryRefId,
+    selectedTransformationId,
+    selectedAlertId,
+    queryRunnerState?.queries ?? [],
+    transformations,
+    alertingState.alertRules
+  );
 
-  const selectedTransformation = useMemo(() => {
-    // If we have a selected transformation id, try to find that transformation
-    if (selectedTransformationId) {
-      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
-      if (transformation) {
-        return transformation;
-      }
-    }
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
-    return null;
-  }, [transformations, selectedTransformationId]);
+  // Transformation UI toggles
+  const toggleHelp = useCallback(() => {
+    setTransformTogglesState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
+  }, []);
 
-  const { value: selectedQueryDsData, loading: selectedQueryDsLoading } = useAsync(async () => {
-    if (!selectedQuery?.datasource) {
-      return undefined;
-    }
+  const toggleDebug = useCallback(() => {
+    setTransformTogglesState((prev) => ({ ...prev, showDebug: !prev.showDebug }));
+  }, []);
 
-    try {
-      const dsSettings = getDataSourceSrv().getInstanceSettings(selectedQuery.datasource);
-      const datasource = await getDataSourceSrv().get(selectedQuery.datasource);
-      return { datasource, dsSettings };
-    } catch (err) {
-      console.error('Failed to load datasource for selected query:', err);
-      return undefined;
-    }
-  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type]);
+  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
+    setSelectedQueryRefId(queryRefId);
+    setSelectedTransformationId(transformationId);
+    setShowingDatasourceHelp(false);
+  }, []);
+
+  const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
+    usePendingExpression({
+      addQuery: dataPane.addQuery,
+      onCardSelectionChange,
+    });
 
   const uiState = useMemo(
     () => ({
       selectedQuery,
       selectedTransformation,
+      selectedAlert,
       setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         setSelectedQueryRefId(query?.refId ?? null);
-        // Clear transformation selection when selecting a query
+        // Clear transformation and alert selection when selecting a query
         setSelectedTransformationId(null);
+        setSelectedAlertId(null);
         // Reset datasource help when switching queries
         setShowingDatasourceHelp(false);
+        // Reset transformation-specific UI when switching to a query
+        setTransformTogglesState({ showHelp: false, showDebug: false });
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
-        // Clear query selection when selecting a transformation
+        // Clear query and alert selection when selecting a transformation
         setSelectedQueryRefId(null);
+        setSelectedAlertId(null);
+        // Reset transformation-specific UI when switching transformations
+        setTransformTogglesState({ showHelp: false, showDebug: false });
+
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
       },
-      selectedQueryDsData: selectedQueryDsData ?? null,
+      setSelectedAlert: (alert: AlertRule | null) => {
+        setSelectedAlertId(alert?.alertId ?? null);
+        // Clear query and transformation selection when selecting an alert
+        setSelectedQueryRefId(null);
+        setSelectedTransformationId(null);
+        // Reset transformation-specific UI when switching transformations
+        setTransformTogglesState({ showHelp: false, showDebug: false });
+        // Abandon pending expression flow when selecting a card
+        clearPendingExpression();
+      },
+      queryOptions: {
+        options: queryOptions,
+        isQueryOptionsOpen,
+        openSidebar,
+        closeSidebar,
+        focusedField,
+      },
+      selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
       toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
-      cardType: getEditorType(selectedQuery || selectedTransformation),
+      cardType: getEditorType(selectedQuery || selectedTransformation || selectedAlert, pendingExpression),
+      transformToggles: {
+        ...transformTogglesState,
+        toggleHelp,
+        toggleDebug,
+      },
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
     }),
-    [selectedQuery, selectedTransformation, selectedQueryDsData, selectedQueryDsLoading, showingDatasourceHelp]
+    [
+      selectedQuery,
+      selectedTransformation,
+      selectedAlert,
+      queryOptions,
+      isQueryOptionsOpen,
+      openSidebar,
+      closeSidebar,
+      focusedField,
+      selectedQueryDsData,
+      selectedQueryDsLoading,
+      showingDatasourceHelp,
+      transformTogglesState,
+      toggleHelp,
+      toggleDebug,
+      pendingExpression,
+      setPendingExpression,
+      finalizePendingExpression,
+      clearPendingExpression,
+    ]
+  );
+
+  const findTransformationIndex = useCallback(
+    (transformId: string) => {
+      return transformations.findIndex((t) => t.transformId === transformId);
+    },
+    [transformations]
   );
 
   const actions = useMemo(
@@ -176,8 +229,23 @@ export function QueryEditorContextWrapper({
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
+      onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      deleteTransformation: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.deleteTransformation(index);
+        }
+      },
+      toggleTransformationDisabled: (transformId: string) => {
+        const index = findTransformationIndex(transformId);
+        if (index !== -1) {
+          dataPane.toggleTransformationDisabled(index);
+        }
+      },
+      updateTransformation: dataPane.updateTransformation,
+      reorderTransformations: dataPane.reorderTransformations,
     }),
-    [dataPane]
+    [dataPane, findTransformationIndex]
   );
 
   return (
@@ -185,6 +253,7 @@ export function QueryEditorContextWrapper({
       dsState={dsState}
       qrState={qrState}
       panelState={panelState}
+      alertingState={alertingState}
       uiState={uiState}
       actions={actions}
     >

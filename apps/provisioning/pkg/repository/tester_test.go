@@ -27,6 +27,9 @@ func TestTester_Test_Cases(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						// Missing required title
 					},
@@ -45,6 +48,9 @@ func TestTester_Test_Cases(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
@@ -63,6 +69,9 @@ func TestTester_Test_Cases(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
@@ -77,6 +86,9 @@ func TestTester_Test_Cases(t *testing.T) {
 			repository: func() *MockRepository {
 				m := NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
@@ -132,6 +144,9 @@ func TestTester_Test_Cases(t *testing.T) {
 func TestTester_Test(t *testing.T) {
 	repository := NewMockRepository(t)
 	repository.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{CleanFinalizer},
+		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 		},

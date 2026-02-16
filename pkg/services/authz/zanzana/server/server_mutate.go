@@ -29,7 +29,7 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 	defer span.End()
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Mutate", req.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Mutate").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.mutate(ctx, req)
@@ -150,6 +150,13 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 	}
 
 	return deduplicatedWriteTuples, deduplicatedDeleteTuples
+}
+
+// WriteTuples writes tuples directly to OpenFGA for a given store.
+// This is used internally by mutate operations and the reconciler.
+// Tuples are automatically deduplicated before writing.
+func (s *Server) WriteTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
 }
 
 func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {

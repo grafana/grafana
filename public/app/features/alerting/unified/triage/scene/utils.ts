@@ -32,7 +32,7 @@ export function stringifyGroupFilter(groupBy: string[]) {
 }
 
 export const defaultTimeRange = {
-  from: 'now-4h',
+  from: 'now-15m',
   to: 'now',
 } as const;
 

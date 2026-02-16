@@ -49,7 +49,6 @@ func main() {
 	coreKindsGen.Append(
 		&codegen.GoSpecJenny{},
 		&codegen.K8ResourcesJenny{},
-		&codegen.CoreRegistryJenny{},
 		codegen.LatestMajorsOrXJenny(TSCoreKindParentPath),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)

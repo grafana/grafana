@@ -289,6 +289,8 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
+//
+//nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)

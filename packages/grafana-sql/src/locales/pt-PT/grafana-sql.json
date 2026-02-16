@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Ralenti máximo automático",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Se ativado, defina automaticamente o número de <i>Ligações de ralenti máximas</i> para o mesmo valor que <i> Ligações abertas máximas</i>. Se o número de ligações abertas máximas não estiver definido, será definido para a predefinição ({{defaultMaxIdle}}).",
+        "content-max-idle": "O número máximo de ligações no conjunto de ligações inativas. Se o numero de <i>Ligações abertas máximas</i> for superior a 0, mas inferior ao número de <i>Ligações inativas máximas</i>, então o número de <i>Ligações inativas máximas</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, nenhuma ligação de ralenti será retida.",
         "content-max-lifetime": "A quantidade máxima de tempo em segundos que uma ligação pode ser reutilizada. Se definido para 0, as ligações serão reutilizadas para sempre.",
-        "content-max-open": "",
+        "content-max-open": "O número máximo de ligações abertas à base de dados. Se o número de <i>Ligações inativas máximas</i> for superior a 0 e <i>Ligações abertas máximas</i> for inferior ao número de <i>Ligações inativas máximas</i>, então o número de <i>Ligações inativas máximas</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, não há limite para o número de ligações abertas.",
         "max-idle": "Ralenti máx.",
         "max-lifetime": "Tempo de vida máximo",
         "max-open": "Aberturas máx.",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "A sua consulta é inválida. Verifique abaixo para obter detalhes. <br />No entanto, ainda pode executar esta consulta.",
         "editor-modes": {
           "label-builder": "Construtor",
           "label-code": "Cód."
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Campo de texto",
+          "valueField": "Campo de valor"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatar consulta"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Esta consulta processará <strong>{{bytes}}</strong> quando for executada.",
         "validating-query": "A validar consulta..."
       },
       "raw-editor": {

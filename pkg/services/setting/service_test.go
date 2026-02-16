@@ -12,6 +12,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -255,6 +258,159 @@ func TestRemoteSettingService_List(t *testing.T) {
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
 	})
+
+	t.Run("should set user-agent header on requests", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Contains(t, capturedUserAgent, "settings-client")
+		assert.Contains(t, capturedUserAgent, apiVersion)
+	})
+
+	t.Run("should include custom service name in user-agent", func(t *testing.T) {
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			ServiceName:   "my-custom-service",
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (my-custom-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should use OTEL_SERVICE_NAME env var when ServiceName is not set", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "otel-test-service")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (otel-test-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should prefer Config.ServiceName over OTEL_SERVICE_NAME env var", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "otel-test-service")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			ServiceName:   "explicit-service",
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (explicit-service)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should fall back to default when neither ServiceName nor env var is set", func(t *testing.T) {
+		t.Setenv(otelServiceNameEnvVar, "")
+
+		var capturedUserAgent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedUserAgent = r.Header.Get("User-Agent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		_, err = client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("settings-client %s (grafana)", apiVersion), capturedUserAgent)
+	})
+
+	t.Run("should propagate trace context in requests", func(t *testing.T) {
+		// Set up OpenTelemetry with W3C trace context propagator
+		tp := sdktrace.NewTracerProvider()
+		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+		t.Cleanup(func() {
+			_ = tp.Shutdown(context.Background())
+		})
+
+		var capturedTraceparent string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedTraceparent = r.Header.Get("Traceparent")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{}, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+
+		// Create a context with a span
+		tracer := otel.Tracer("test")
+		ctx, span := tracer.Start(context.Background(), "test-list-operation")
+		defer span.End()
+
+		traceID := span.SpanContext().TraceID().String()
+		ctx = request.WithNamespace(ctx, "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.NotEmpty(t, capturedTraceparent, "Traceparent header should be set")
+		assert.Contains(t, capturedTraceparent, traceID, "Traceparent should contain the trace ID")
+	})
 }
 
 func TestParseSettingList(t *testing.T) {
@@ -269,7 +425,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		settings, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -287,7 +443,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		_, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		_, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Equal(t, "next-page-token", continueToken)
@@ -301,7 +457,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 0)
@@ -332,7 +488,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -359,7 +515,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 1)
@@ -375,7 +531,7 @@ func TestToIni(t *testing.T) {
 			{Section: "server", Key: "http_port", Value: "3000"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -389,7 +545,7 @@ func TestToIni(t *testing.T) {
 	t.Run("should handle empty settings list", func(t *testing.T) {
 		var settings []*Setting
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -403,7 +559,7 @@ func TestToIni(t *testing.T) {
 			{Section: "auth", Key: "disable_signout_menu", Value: "true"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.True(t, result.HasSection("auth"))
@@ -558,7 +714,7 @@ func BenchmarkParseSettingList(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 
@@ -570,7 +726,7 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 

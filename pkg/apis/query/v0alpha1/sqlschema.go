@@ -23,6 +23,10 @@ type QueryResponseSQLSchemas struct {
 	SQLSchemas SQLSchemas `json:"sqlSchemas"`
 }
 
+func (QueryResponseSQLSchemas) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QueryResponseSQLSchemas"
+}
+
 type SQLSchemas = map[string]SchemaInfo
 
 // BasicColumn represents the column type for data that is input to a SQL expression.
@@ -37,6 +41,10 @@ type BasicColumn struct {
 	DataFrameFieldType data.FieldType `json:"dataFrameFieldType"`
 }
 
+func (BasicColumn) OpenAPIModelName() string {
+	return OpenAPIPrefix + "BasicColumn"
+}
+
 // SchemaInfo provides information and some sample data for data that could be an input
 // to a SQL expression.
 type SchemaInfo struct {
@@ -46,12 +54,20 @@ type SchemaInfo struct {
 	Error      string        `json:"error,omitempty"`
 }
 
+func (SchemaInfo) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SchemaInfo"
+}
+
 // There is a a manual DeepCopy at the end of this file that will need to be updated when this our the
 // underlying structs are change. The hack script will also need to be run to update the Query service API
 // generated types.
 type SampleRows struct {
 	// +listType=atomic
 	values [][]any
+}
+
+func (SampleRows) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SampleRows"
 }
 
 func NewSampleRows(values [][]any) SampleRows {

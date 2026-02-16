@@ -67,9 +67,7 @@ export interface ScopeMeta {
 }
 
 export class DashboardModel implements TimeModel {
-  /** @deprecated use UID */
-  id: any;
-  // TODO: use propert type and fix all the places where uid is set to null
+  // TODO: use proper type and fix all the places where uid is set to null
   uid: any;
   title: string;
   description: any;
@@ -145,7 +143,6 @@ export class DashboardModel implements TimeModel {
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
-    this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || meta?.uid || null;
     this.revision = data.revision ?? undefined;

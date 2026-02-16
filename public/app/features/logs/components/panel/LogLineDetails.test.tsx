@@ -16,8 +16,8 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { setPluginLinksHook } from '@grafana/runtime';
-import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
@@ -45,28 +45,12 @@ jest.mock('@grafana/assistant', () => {
   };
 });
 
-const FIELDS_LABEL = 'TestLabelType';
-const tempoDS: TempoDatasource & {
-  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
-} = createTempoDatasource(undefined, { uid: 'abc-123' });
-const getMockTempoDS = jest.fn().mockImplementation((getLabelDisplayTypeFromFrame) => {
-  tempoDS.getLabelDisplayTypeFromFrame = jest
-    .fn()
-    .mockImplementation((key: string, frame: DataFrame | undefined, index: number | null) => {
-      return getLabelDisplayTypeFromFrame(key, frame, index) ?? FIELDS_LABEL;
-    });
-  return tempoDS;
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+  usePluginLinks: jest.fn(),
+}));
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
-    getDataSourceSrv: () => ({
-      get: (uid: string) => Promise.resolve(getMockTempoDS(() => FIELDS_LABEL)),
-    }),
-  };
-});
 jest.mock('./LogListContext');
 jest.mock('app/features/explore/TraceView/TraceView', () => ({
   TraceView: () => <div>Trace view</div>,
@@ -76,18 +60,21 @@ afterAll(() => {
   jest.unmock('app/features/explore/TraceView/TraceView');
 });
 
+let lokiDS = createLokiDatasource(undefined, { uid: 'loki-ds' });
+let tempoDS = createTempoDatasource(undefined, { uid: 'tempo-ds' });
+
 const setup = async (
   propOverrides?: Partial<Props>,
   rowOverrides?: Partial<LogRowModel>,
   logListcontextOverrides?: Partial<LogListContextData>,
   logDetailsContextOverrides?: Partial<LogDetailsContextData>,
-  renderCompleteText = FIELDS_LABEL
+  renderCompleteText: string | RegExp = 'Log line'
 ) => {
   const logs = [
     createLogLine({
       logLevel: LogLevel.error,
       timeEpochMs: 1546297200000,
-      datasourceUid: tempoDS.uid,
+      datasourceUid: lokiDS.uid,
       ...rowOverrides,
     }),
   ];
@@ -142,8 +129,29 @@ const setup = async (
 };
 
 describe('LogLineDetails', () => {
+  beforeEach(() => {
+    lokiDS = createLokiDatasource(undefined, { uid: 'loki-ds' });
+    tempoDS = createTempoDatasource(undefined, { uid: 'tempo-ds' });
+    jest.mocked(usePluginLinks).mockReturnValue({
+      links: [],
+      isLoading: false,
+    });
+    jest.mocked(getDataSourceSrv).mockImplementation(
+      () =>
+        ({
+          get: (uid: string) => {
+            if (uid === 'loki-ds') {
+              return Promise.resolve(lokiDS);
+            } else if (uid === 'tempo-ds') {
+              return Promise.resolve(tempoDS);
+            }
+            return Promise.resolve(null);
+          },
+        }) as unknown as DataSourceSrv
+    );
+  });
+
   describe('Toggleable filters', () => {
-    // @todo leaking - this test will fail if ran at the end.
     test('should pass the log row to Explore filter functions', async () => {
       const onClickFilterLabelMock = jest.fn();
       const onClickFilterOutLabelMock = jest.fn();
@@ -152,6 +160,7 @@ describe('LogLineDetails', () => {
         logLevel: LogLevel.error,
         timeEpochMs: 1546297200000,
         labels: { key1: 'label1' },
+        datasourceUid: lokiDS.uid,
       });
 
       await setup(
@@ -208,7 +217,7 @@ describe('LogLineDetails', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
       expect(screen.getByText('Log line')).toBeInTheDocument();
-      expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
     });
 
     test('fields should be visible by default', async () => {
@@ -280,8 +289,8 @@ describe('LogLineDetails', () => {
     });
   });
   describe('when the log has no fields to display', () => {
-    test('should render no details available message', () => {
-      setup(undefined, { entry: '' });
+    test('should render no details available message', async () => {
+      await setup(undefined, { entry: '' });
       expect(screen.getByText('No fields to display.')).toBeInTheDocument();
     });
     test('should not render headings', () => {
@@ -332,7 +341,7 @@ describe('LogLineDetails', () => {
       }
     );
 
-    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
@@ -404,7 +413,7 @@ describe('LogLineDetails', () => {
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
-    expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
+    expect(screen.getByText('Fields')).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
 
     // Don't show additional fields for DataFrameType.LogLines
@@ -481,39 +490,29 @@ describe('LogLineDetails', () => {
         },
       });
 
-      beforeAll(() => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) =>
-            Promise.resolve(
-              getMockTempoDS((key: string) => {
-                if (key === 'label1') {
-                  return 'Indexed label';
-                }
-                if (key === 'label2') {
-                  return 'Structured metadata';
-                }
-                if (key === 'label3') {
-                  return 'Parsed field';
-                }
-                return null;
-              })
-            ),
-        }));
-      });
+      test('should show label types if they are available and supported by the data source', async () => {
+        lokiDS.getLabelDisplayTypeFromFrame = jest
+          .fn()
+          .mockImplementation((key: string, frame: DataFrame | undefined, index: number | null) => {
+            if (key === 'label1') {
+              return 'Indexed label';
+            }
+            if (key === 'label2') {
+              return 'Structured metadata';
+            }
+            if (key === 'label3') {
+              return 'Parsed field';
+            }
+            return null;
+          });
 
-      afterAll(() => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.resolve(getMockTempoDS(() => FIELDS_LABEL)),
-        }));
-      });
-
-      test('should show label types if they are available and supported', async () => {
         await setup(
           undefined,
           {
             entry,
             dataFrame,
             entryFieldIndex: 0,
+            datasourceUid: 'loki-ds',
             rowIndex: 0,
             labels,
             rowId: '1',
@@ -534,6 +533,71 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
         expect(screen.getByText('Structured metadata')).toBeInTheDocument();
       });
+
+      test('should fall back to the data plane labelType field if present', async () => {
+        await setup(
+          undefined,
+          {
+            entry,
+            dataFrame,
+            datasourceUid: 'tempo-ds',
+            datasourceType: 'loki',
+            entryFieldIndex: 0,
+            rowIndex: 0,
+            labels,
+            rowId: '1',
+          },
+          undefined,
+          undefined,
+          /Indexed label/
+        );
+
+        // Show labels and links
+        expect(screen.getByText('label1')).toBeInTheDocument();
+        expect(screen.getByText('value1')).toBeInTheDocument();
+        expect(screen.getByText('label2')).toBeInTheDocument();
+        expect(screen.getByText('value2')).toBeInTheDocument();
+        expect(screen.getByText('label3')).toBeInTheDocument();
+        expect(screen.getByText('value3')).toBeInTheDocument();
+        expect(screen.getByText(/Indexed label/)).toBeInTheDocument();
+        expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
+        expect(screen.getByText('Structured metadata')).toBeInTheDocument();
+      });
+
+      test('should fallback to a single group of Fields if not supported', async () => {
+        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
+          get: (uid: string) => Promise.reject(null),
+        }));
+
+        await setup(
+          undefined,
+          {
+            entry,
+            dataFrame,
+            datasourceUid: 'loki-ds',
+            entryFieldIndex: 0,
+            rowIndex: 0,
+            labels,
+            rowId: '1',
+          },
+          undefined,
+          undefined,
+          'Fields'
+        );
+
+        // Show labels and links
+        expect(screen.getByText('label1')).toBeInTheDocument();
+        expect(screen.getByText('value1')).toBeInTheDocument();
+        expect(screen.getByText('label2')).toBeInTheDocument();
+        expect(screen.getByText('value2')).toBeInTheDocument();
+        expect(screen.getByText('label3')).toBeInTheDocument();
+        expect(screen.getByText('value3')).toBeInTheDocument();
+        expect(screen.queryByText('Fields')).toBeInTheDocument();
+        expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Structured metadata/)).not.toBeInTheDocument();
+      });
+
       test('Should allow to search within fields', async () => {
         await setup(
           undefined,
@@ -543,12 +607,13 @@ describe('LogLineDetails', () => {
             entryFieldIndex: 0,
             rowIndex: 0,
             labels,
+            datasourceUid: 'loki-ds',
             datasourceType: 'loki',
             rowId: '1',
           },
           undefined,
           undefined,
-          'Indexed label'
+          /Indexed label/
         );
 
         expect(screen.getByText('label1')).toBeInTheDocument();
@@ -694,7 +759,7 @@ describe('LogLineDetails', () => {
       ],
     });
     const log = createLogLine(
-      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 },
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, datasourceUid: lokiDS.uid },
       {
         escape: false,
         order: LogsSortOrder.Descending,
@@ -708,6 +773,9 @@ describe('LogLineDetails', () => {
                 href: '/explore',
                 interpolatedParams: {
                   query: {
+                    datasource: {
+                      uid: tempoDS.uid,
+                    },
                     refId: 'A',
                     query: 'abcd1234',
                     queryType: 'traceql',
@@ -737,14 +805,14 @@ describe('LogLineDetails', () => {
       })
     );
 
-    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Trace'));
 
-    expect(screen.getByText('Trace view')).toBeInTheDocument();
+    expect(await screen.findByText('Trace view')).toBeInTheDocument();
   });
 
   test('Shows a message if the trace cannot be retrieved', async () => {
@@ -777,6 +845,9 @@ describe('LogLineDetails', () => {
                 href: '/explore',
                 interpolatedParams: {
                   query: {
+                    datasource: {
+                      uid: tempoDS.uid,
+                    },
                     refId: 'A',
                     query: 'abcd1234',
                     queryType: 'traceql',
@@ -799,7 +870,7 @@ describe('LogLineDetails', () => {
       })
     );
 
-    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();

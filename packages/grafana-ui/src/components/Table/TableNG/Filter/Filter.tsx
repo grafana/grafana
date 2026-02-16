@@ -1,7 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import { memo, useRef, useState } from 'react';
 
-import { Field, getFieldDisplayName, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -9,6 +10,7 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
 import { FilterOperator, FilterType, TableRow } from '../types';
+import { getDisplayName } from '../utils';
 
 import { FilterPopup } from './FilterPopup';
 import { operatorSelectableValues } from './utils';
@@ -58,7 +60,7 @@ export const Filter = memo(
         ref={ref}
         type="button"
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {
-          name: field ? getFieldDisplayName(field) : '',
+          name: field ? getDisplayName(field) : '',
         })}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
         tabIndex={0}
@@ -77,7 +79,7 @@ export const Filter = memo(
           }
         }}
       >
-        <Icon name="filter" className={cx(iconClassName, { [styles.filterIconEnabled]: filterEnabled })} />
+        <Icon name="filter" className={clsx(iconClassName, filterEnabled ? styles.filterIconEnabled : undefined)} />
         {isPopoverVisible && ref.current && (
           <Popover
             content={

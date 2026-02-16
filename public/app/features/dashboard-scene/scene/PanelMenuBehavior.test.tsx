@@ -854,7 +854,7 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('Panel styles menu', () => {
-    async function buildTimeseriesTestScene() {
+    async function buildTimeseriesTestScene(isEditing = true) {
       const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({
         title: 'Timeseries Panel',
@@ -869,6 +869,7 @@ describe('panelMenuBehavior', () => {
         title: 'My dashboard',
         uid: 'dash-1',
         meta: { canEdit: true },
+        isEditing,
         body: DefaultGridLayoutManager.fromVizPanels([panel]),
       });
 
@@ -917,6 +918,18 @@ describe('panelMenuBehavior', () => {
 
     it('should not show styles menu for non-timeseries panels', async () => {
       const { menu } = await buildTestScene({});
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
+    });
+
+    it('should show styles menu when in edit mode', async () => {
+      const { menu } = await buildTimeseriesTestScene();
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
+    });
+
+    it('should not show styles menu when not in edit mode', async () => {
+      const { menu } = await buildTimeseriesTestScene(false);
 
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
