@@ -13116,15 +13116,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "Transformation actions coming soon",
+      "add-transformation-filter": "Add filter",
       "duplicate": "Duplicate {{type}}",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
+      "hide-transformation-help": "Hide transformation help",
       "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
+      "remove-transformation-filter": "Remove filter",
       "show": "Show {{type}}",
-      "show-help": "Show data source help"
+      "show-help": "Show data source help",
+      "show-transformation-help": "Show transformation help",
+      "transformation-debug": "Debug"
+    },
+    "delete-modal": {
+      "body-query": "Are you sure you want to delete this query?",
+      "body-transformation": "Removing one transformation may break others.",
+      "confirm": "Delete",
+      "title": "Delete {{name}}?"
     },
     "details-sidebar": {
       "cache-timeout": "Cache timeout",
@@ -13171,6 +13181,7 @@
       "close-aria": "Close help panel"
     },
     "labels": {
+      "alert": "Alert",
       "expression": "Expression",
       "query": "Query",
       "transformation": "Transformation"
@@ -13180,11 +13191,26 @@
       "add-expression": "Add expression",
       "add-query": "Add query",
       "add-saved-query": "Add saved query",
+      "alert-indicator": {
+        "button-label": "View alert rules",
+        "tooltip": "View alert rules"
+      },
       "card-click": "Select card {{id}}",
+      "data": "Data",
+      "data-mode": "Data Mode",
       "queries-expressions": "Queries & Expressions",
-      "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"
+    },
+    "transformation-debug": {
+      "input-data": "Input data",
+      "output-data": "Output data",
+      "title": "Debug transformation"
+    },
+    "transformation-filter": {
+      "annotations": "Annotation data",
+      "label": "Apply transformation to",
+      "series": "Query and Transformation results"
     },
     "validation": {
       "duplicate-name": "Query name already exists",

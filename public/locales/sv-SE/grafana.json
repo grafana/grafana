@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "Till regellista"
     },
+    "alertVersionHistory": {
+      "alerting": "Varnar",
+      "alerting-change-description": "Denna uppdatering gjordes av varningssystemet på grund av andra ändringar. När du till exempel byter namn på en kontaktpunkt som används för förenklad dirigering kommer det att uppdatera berörda regler",
+      "annotations": "Kommentarer",
+      "compare": "Jämför",
+      "compare-with-latest": "Jämför med senaste versionen",
+      "compareVersions": "Jämför versioner",
+      "comparing-versions": "Jämför versioner",
+      "condition": "Varningstillstånd",
+      "contactPointRouting": "Dirigering av kontaktpunkt",
+      "description": "Varje gång du redigerar varningsregeln skapas en ny version. Välj två versioner nedan och jämför skillnaderna.",
+      "errorloading": "Det gick inte att ladda varningsregelversioner",
+      "execErrorState": "Varningstillstånd vid exekveringsfel",
+      "intervalSeconds": "Utvärderingsintervall",
+      "labels": "Etiketter",
+      "latest": "Senaste",
+      "name": "Namn",
+      "namespace_uid": "Mapp-UID",
+      "noDataState": "Varningstillstånd vid inga data",
+      "noVersionsFound": "Inga versioner hittades för den här regeln",
+      "paused": "Pausat tillstånd",
+      "pendingPeriod": "Väntande period",
+      "provisioning": "Provisionering",
+      "provisioning-change-description": "Versionsuppdatering gjordes via provisionering",
+      "queryAndAlertCondition": "Frågnings- och varningstillstånd",
+      "restore": "Återställ",
+      "restore-manually": "Din varningsregel kunde inte återställas. Det kan bero på ändringar av andra enheter, som till exempel kontaktpunkter, datakällor etc. Återställ regelversionen manuellt",
+      "restore-modal": {
+        "body": "Är du säker på att du vill återställa definitionen av varningsregeln till denna version? Alla ändringar som inte sparats kommer att gå förlorade.",
+        "confirm": "Ja, återställ konfiguration",
+        "error": "Kunde inte återställa varningsregelns version ",
+        "summary": "Sammanfattning av ändringar som ska tillämpas:",
+        "title": "Återställ versionen"
+      },
+      "restore-version": "Återställ till version {{version}}",
+      "rule_group": "Regelgrupp",
+      "unknown": "Okänt",
+      "unknown-change-description": "Denna uppdatering gjordes före implementeringen av versionshistorik för varningsregler. Användaren som gjorde ändringen spåras inte, men framtida ändringar kommer att inkludera användaren",
+      "user-id": "Användar-ID {{uid}}",
+      "warning-restore-manually": "Du återställer manuellt en gammal version av den här varningsregeln. Granska ändringarna noggrant innan du sparar regeldefinitionen.",
+      "warning-restore-manually-title": "Återställ regel manuellt"
+    },
     "alertform": {
       "labels": {
         "alerting": "Lägg till etiketter i din regel för sökning, tystnad eller dirigering till en aviseringspolicy.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Sök larmregler efter namn",
       "no-alert-rules-found": "Inga larmregler hittades",
       "placeholder-sort-default-az": "Sortera (standard A-Ö)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Varnar",
-      "alerting-change-description": "Denna uppdatering gjordes av varningssystemet på grund av andra ändringar. När du till exempel byter namn på en kontaktpunkt som används för förenklad dirigering kommer det att uppdatera berörda regler",
-      "annotations": "Kommentarer",
-      "compare": "Jämför",
-      "compare-with-latest": "Jämför med senaste versionen",
-      "compareVersions": "Jämför versioner",
-      "comparing-versions": "Jämför versioner",
-      "condition": "Varningstillstånd",
-      "contactPointRouting": "Dirigering av kontaktpunkt",
-      "description": "Varje gång du redigerar varningsregeln skapas en ny version. Välj två versioner nedan och jämför skillnaderna.",
-      "errorloading": "Det gick inte att ladda varningsregelversioner",
-      "execErrorState": "Varningstillstånd vid exekveringsfel",
-      "intervalSeconds": "Utvärderingsintervall",
-      "labels": "Etiketter",
-      "latest": "Senaste",
-      "name": "Namn",
-      "namespace_uid": "Mapp-UID",
-      "noDataState": "Varningstillstånd vid inga data",
-      "noVersionsFound": "Inga versioner hittades för den här regeln",
-      "paused": "Pausat tillstånd",
-      "pendingPeriod": "Väntande period",
-      "provisioning": "Provisionering",
-      "provisioning-change-description": "Versionsuppdatering gjordes via provisionering",
-      "queryAndAlertCondition": "Frågnings- och varningstillstånd",
-      "restore": "Återställ",
-      "restore-manually": "Din varningsregel kunde inte återställas. Det kan bero på ändringar av andra enheter, som till exempel kontaktpunkter, datakällor etc. Återställ regelversionen manuellt",
-      "restore-modal": {
-        "body": "Är du säker på att du vill återställa definitionen av varningsregeln till denna version? Alla ändringar som inte sparats kommer att gå förlorade.",
-        "confirm": "Ja, återställ konfiguration",
-        "error": "Kunde inte återställa varningsregelns version ",
-        "summary": "Sammanfattning av ändringar som ska tillämpas:",
-        "title": "Återställ versionen"
-      },
-      "restore-version": "Återställ till version {{version}}",
-      "rule_group": "Regelgrupp",
-      "unknown": "Okänt",
-      "unknown-change-description": "Denna uppdatering gjordes före implementeringen av versionshistorik för varningsregler. Användaren som gjorde ändringen spåras inte, men framtida ändringar kommer att inkludera användaren",
-      "user-id": "Användar-ID {{uid}}",
-      "warning-restore-manually": "Du återställer manuellt en gammal version av den här varningsregeln. Granska ändringarna noggrant innan du sparar regeldefinitionen.",
-      "warning-restore-manually-title": "Återställ regel manuellt"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Denna policy matchar alla etiketter"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "Vi kunde inte hitta några externa Alertmanager och du kanske inte har åtkomst till den inbyggda Grafana Alertmanager.",
       "title-no-alertmanager-found": "Ingen Alertmanager hittades"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Sök efter kontaktpunkt",
       "placeholder-search-by-contact-point": "Välj en kontaktpunkt",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Lägg till aviseringsmallgrupp",
       "create-notification-templates-customize-notifications": "Skapa aviseringsmallar för att anpassa dina aviseringar."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Lägg till etiketter för att hjälpa dig att bättre hantera inspelningsregler.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Förhandsgranskning inte tillgänglig",
       "valid-matcher-affected-alerts": "Lägg till en giltig matchare för att se berörda larm"
     },
+    "silences": {
+      "affected-instances": "Berörda varningsinstanser",
+      "only-firing-instances": "Endast varningsinstanser i aktiveringstillståndet visas.",
+      "preview-affected-instances": "Förhandsgranska de varningsinstanser som påverkas av denna tystnad."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Detaljer om tystnad",
       "label-comment": "Kommentar",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "Laddar tystnader …",
       "title-error-loading-silences": "Fel vid laddning av tystnader",
       "title-the-selected-alertmanager-has-no-configuration": "Vald Alertmanager saknar konfiguration"
-    },
-    "silences": {
-      "affected-instances": "Berörda varningsinstanser",
-      "only-firing-instances": "Endast varningsinstanser i aktiveringstillståndet visas.",
-      "preview-affected-instances": "Förhandsgranska de varningsinstanser som påverkas av denna tystnad."
     },
     "simple-condition-editor": {
       "label-of-query": "AV-FRÅGA",
@@ -3392,6 +3491,7 @@
           "enrichment": "Larmberikning",
           "history": "Historik",
           "instances": "Instanser",
+          "notifications": "",
           "query-and-conditions": "Fråga och villkor",
           "versions": "Versioner"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Ny panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Tillbaka till listan",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Instrumentpanelen hittades inte"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Alternativ för datakälla",
@@ -6169,7 +6299,46 @@
       "tab-title": "Ändra fliktitel"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Instrumentpanel",
         "element": "Element",
         "local-variable": "Lokal variabel",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": "Expandera kategorin {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Sökalternativ",
       "Recent options-title-recent-options": "Senaste alternativen",
+      "placeholder-search-options": "Sökalternativ",
       "title-matched_one": "Matchade {{count}}/{{totalCount}} alternativ",
       "title-matched_other": "Matchade {{count}}/{{totalCount}} alternativ"
     },
@@ -10100,17 +10269,17 @@
       "description": "Din LDAP-konfiguration fungerar inte eftersom det grundläggande inloggningsformuläret för närvarande är inaktiverat. Aktivera inloggningsformuläret för att använda LDAP-autentisering. Du kan aktivera det på autentiseringssidan under ”Autentiseringsinställningar”.",
       "title": "Grundläggande inloggning inaktiverad"
     },
-    "search_filter": {
-      "description": "LDAP-sökfilter som används för att hitta specifika poster inom katalogen.",
-      "error": "Sökfilter är ett obligatoriskt fält",
-      "label": "Sökfilter",
-      "placeholder": "exempel: cn=%s"
-    },
     "search-base-dns": {
       "description": "En matris av bas-DNS att söka igenom.",
       "error": "Sök bas-DNS är ett obligatoriskt fält",
       "label": "Sök bas-DNS",
       "placeholder": "exempel: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP-sökfilter som används för att hitta specifika poster inom katalogen.",
+      "error": "Sökfilter är ett obligatoriskt fält",
+      "label": "Sökfilter",
+      "placeholder": "exempel: cn=%s"
     },
     "subtitle": "LDAP-integrationen i Grafana gör det möjligt för dina Grafana-användare att logga in med sina LDAP-inloggningsuppgifter. Läs mer i vår <2><1>dokumentation</1></2>.",
     "title": "Grundinställningar"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Uppgradera för att lägga till fler användare"
     },
     "item": {
-      "add-bookmark": "Lägg till bokmärken",
-      "remove-bookmark": "Ta bort från bokmärken"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Tryck på ESC för att avsluta kioskläget"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Ta bort"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Tillämpa {{suggestionName}}-visualisering",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Vissa förslag kunde inte laddas"
       },
@@ -11672,8 +11842,7 @@
         "title": "Fel",
         "try-again-button": "Försök igen"
       },
-      "unknown-viz-type": "Okänd visualiseringstyp",
-      "use-this-suggestion": "Använd detta förslag"
+      "unknown-viz-type": "Okänd visualiseringstyp"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
@@ -12949,15 +13118,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12995,6 +13174,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13002,6 +13183,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Uttryck",
       "query": "Fråga",
       "transformation": "Omvandling"
@@ -13011,12 +13193,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Välj kort {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Frågor och uttryck",
-      "query-stack": "Frågestack",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13075,10 +13271,10 @@
       "title-data-source-help": "Hjälp med datakälla"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Frågealternativ",
       "collapsed-interval": "Intervall = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Dölj tidsinfo",
-      "Query options-title-query-options": "Frågealternativ",
       "relative-time": "Relativ tid",
       "relative-time-tooltip": "Åsidosätter det relativa tidsintervallet för enskilda paneler, vilket gör att de skiljer sig från vad som är valt i instrumentpanelens tidsväljare i det övre högra hörnet av instrumentpanelen. För att till exempel konfigurera de senaste 5 minuterna ska den relativa tiden vara <1>{{relativeFrom}}</1> och <4>{{relativeTo}}</4>, eller variabler som <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14096,9 +14292,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 timmar",
     "1_day": "1 dag",
     "1_hour": "1 timme",
-    "12_hours": "12 timmar",
     "30_days": "30 dagar",
     "6_hours": "6 timmar",
     "7_days": "7 dagar"
@@ -15364,8 +15560,8 @@
       "title-dependencies": "Beroenden"
     },
     "variables-unknown-button": {
-      "usage-title": "Visar användningar för: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Visa användningar"
+      "VariablesUnknownButton-tooltip-show-usages": "Visa användningar",
+      "usage-title": "Visar användningar för: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Omdöpta eller saknade variabler",

@@ -548,6 +548,48 @@
     "alert-warning": {
       "to-rule-list": "Ke daftar aturan"
     },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "Pembaruan ini dilakukan oleh sistem alerting karena perubahan lain. Misalnya, saat mengganti nama titik kontak yang digunakan untuk perutean yang disederhanakan, ini akan memperbarui aturan yang terpengaruh",
+      "annotations": "Anotasi",
+      "compare": "Bandingkan",
+      "compare-with-latest": "Bandingkan dengan versi terbaru",
+      "compareVersions": "Bandingkan versi",
+      "comparing-versions": "Membandingkan versi",
+      "condition": "Kondisi peringatan",
+      "contactPointRouting": "Perutean titik kontak",
+      "description": "Setiap kali Anda mengedit aturan peringatan, versi baru akan dibuat. Pilih dua versi di bawah ini dan bandingkan perbedaannya.",
+      "errorloading": "Gagal memuat versi aturan peringatan",
+      "execErrorState": "Status peringatan saat kesalahan eksekusi",
+      "intervalSeconds": "Interval evaluasi",
+      "labels": "Label",
+      "latest": "Terkini",
+      "name": "Nama",
+      "namespace_uid": "UID Folder",
+      "noDataState": "Status peringatan saat tidak ada data",
+      "noVersionsFound": "Versi untuk aturan ini tidak ditemukan",
+      "paused": "Status dijeda",
+      "pendingPeriod": "Periode tertunda",
+      "provisioning": "Penyediaan",
+      "provisioning-change-description": "Pembaruan versi dilakukan melalui penyediaan",
+      "queryAndAlertCondition": "Kueri dan kondisi peringatan",
+      "restore": "Pulihkan",
+      "restore-manually": "Aturan peringatan Anda tidak dapat dipulihkan. Ini mungkin disebabkan oleh perubahan pada entitas lain seperti titik kontak, sumber data, dll. Pulihkan versi aturan secara manual",
+      "restore-modal": {
+        "body": "Apa Anda yakin ingin memulihkan definisi aturan peringatan ke versi ini? Semua perubahan yang belum disimpan akan hilang.",
+        "confirm": "Ya, pulihkan konfigurasi",
+        "error": "Tidak dapat memulihkan versi aturan peringatan ",
+        "summary": "Ringkasan perubahan yang akan diterapkan:",
+        "title": "Pulihkan versi"
+      },
+      "restore-version": "Pulihkan ke versi {{version}}",
+      "rule_group": "Grup aturan",
+      "unknown": "Tidak diketahui",
+      "unknown-change-description": "Pembaruan ini dilakukan sebelum penerapan riwayat versi aturan peringatan. Pengguna yang membuat perubahan tidak dilacak, tetapi perubahan mendatang akan mencakup pengguna",
+      "user-id": "ID Pengguna {{uid}} ",
+      "warning-restore-manually": "Anda secara manual memulihkan versi lama dari aturan peringatan ini. Tinjau perubahan dengan saksama sebelum menyimpan definisi aturan.",
+      "warning-restore-manually-title": "Memulihkan aturan secara manual"
+    },
     "alertform": {
       "labels": {
         "alerting": "Tambahkan label ke aturan Anda untuk mencari, membisukan, atau merutekan ke kebijakan pemberitahuan.",
@@ -602,48 +644,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Cari aturan peringatan berdasarkan nama",
       "no-alert-rules-found": "Tidak ada aturan peringatan yang ditemukan",
       "placeholder-sort-default-az": "Urutkan (Default A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Alerting",
-      "alerting-change-description": "Pembaruan ini dilakukan oleh sistem alerting karena perubahan lain. Misalnya, saat mengganti nama titik kontak yang digunakan untuk perutean yang disederhanakan, ini akan memperbarui aturan yang terpengaruh",
-      "annotations": "Anotasi",
-      "compare": "Bandingkan",
-      "compare-with-latest": "Bandingkan dengan versi terbaru",
-      "compareVersions": "Bandingkan versi",
-      "comparing-versions": "Membandingkan versi",
-      "condition": "Kondisi peringatan",
-      "contactPointRouting": "Perutean titik kontak",
-      "description": "Setiap kali Anda mengedit aturan peringatan, versi baru akan dibuat. Pilih dua versi di bawah ini dan bandingkan perbedaannya.",
-      "errorloading": "Gagal memuat versi aturan peringatan",
-      "execErrorState": "Status peringatan saat kesalahan eksekusi",
-      "intervalSeconds": "Interval evaluasi",
-      "labels": "Label",
-      "latest": "Terkini",
-      "name": "Nama",
-      "namespace_uid": "UID Folder",
-      "noDataState": "Status peringatan saat tidak ada data",
-      "noVersionsFound": "Versi untuk aturan ini tidak ditemukan",
-      "paused": "Status dijeda",
-      "pendingPeriod": "Periode tertunda",
-      "provisioning": "Penyediaan",
-      "provisioning-change-description": "Pembaruan versi dilakukan melalui penyediaan",
-      "queryAndAlertCondition": "Kueri dan kondisi peringatan",
-      "restore": "Pulihkan",
-      "restore-manually": "Aturan peringatan Anda tidak dapat dipulihkan. Ini mungkin disebabkan oleh perubahan pada entitas lain seperti titik kontak, sumber data, dll. Pulihkan versi aturan secara manual",
-      "restore-modal": {
-        "body": "Apa Anda yakin ingin memulihkan definisi aturan peringatan ke versi ini? Semua perubahan yang belum disimpan akan hilang.",
-        "confirm": "Ya, pulihkan konfigurasi",
-        "error": "Tidak dapat memulihkan versi aturan peringatan ",
-        "summary": "Ringkasan perubahan yang akan diterapkan:",
-        "title": "Pulihkan versi"
-      },
-      "restore-version": "Pulihkan ke versi {{version}}",
-      "rule_group": "Grup aturan",
-      "unknown": "Tidak diketahui",
-      "unknown-change-description": "Pembaruan ini dilakukan sebelum penerapan riwayat versi aturan peringatan. Pengguna yang membuat perubahan tidak dilacak, tetapi perubahan mendatang akan mencakup pengguna",
-      "user-id": "ID Pengguna {{uid}} ",
-      "warning-restore-manually": "Anda secara manual memulihkan versi lama dari aturan peringatan ini. Tinjau perubahan dengan saksama sebelum menyimpan definisi aturan.",
-      "warning-restore-manually-title": "Memulihkan aturan secara manual"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Kebijakan ini cocok dengan semua label"
@@ -2129,6 +2129,44 @@
       "body-no-alertmanager-found": "Kami tidak dapat menemukan Alertmanager eksternal dan Anda mungkin tidak memiliki akses ke Grafana Alertmanager bawaan.",
       "title-no-alertmanager-found": "Tidak ada Alertmanager yang ditemukan"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Cari berdasarkan titik kontak",
       "placeholder-search-by-contact-point": "Pilih titik kontak",
@@ -2192,6 +2230,63 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Tambah grup templat pemberitahuan",
       "create-notification-templates-customize-notifications": "Buat templat pemberitahuan untuk menyesuaikan pemberitahuan Anda."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Tambahkan label untuk membantu Anda mengelola aturan perekaman dengan lebih baik.",
@@ -3023,6 +3118,11 @@
       "title-preview-not-available": "Pratinjau tidak tersedia",
       "valid-matcher-affected-alerts": "Tambahkan pencocok yang valid untuk melihat peringatan yang terpengaruh"
     },
+    "silences": {
+      "affected-instances": "Instans peringatan terdampak",
+      "only-firing-instances": "Hanya instans peringatan dalam keadaan menyala yang ditampilkan.",
+      "preview-affected-instances": "Pratinjau instans peringatan yang terdampak oleh kesenyapan ini."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Detail tentang kesenyapan",
       "label-comment": "Komentar",
@@ -3044,11 +3144,6 @@
       "text-loading-silences": "Memuat kesenyapan...",
       "title-error-loading-silences": "Kesalahan saat memuat kesenyapan",
       "title-the-selected-alertmanager-has-no-configuration": "Alertmanager yang dipilih tidak memiliki konfigurasi"
-    },
-    "silences": {
-      "affected-instances": "Instans peringatan terdampak",
-      "only-firing-instances": "Hanya instans peringatan dalam keadaan menyala yang ditampilkan.",
-      "preview-affected-instances": "Pratinjau instans peringatan yang terdampak oleh kesenyapan ini."
     },
     "simple-condition-editor": {
       "label-of-query": "DARI KUERI",
@@ -3376,6 +3471,7 @@
           "enrichment": "Pengayaan peringatan",
           "history": "Sejarah",
           "instances": "Instans",
+          "notifications": "",
           "query-and-conditions": "Kueri dan syarat",
           "versions": "Versi"
         }
@@ -4937,6 +5033,33 @@
         "new-panel": "Panel baru"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Kembali ke daftar",
       "control-display-options": {
@@ -5090,6 +5213,9 @@
       "message": {
         "dashboard-not-found": "Dasbor tidak ditemukan"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Opsi sumber data",
@@ -6141,7 +6267,46 @@
       "tab-title": "Ubah judul tab"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Dasbor",
         "element": "Elemen",
         "local-variable": "Variabel lokal",
@@ -6520,8 +6685,8 @@
       "aria-label-expand": "Perluas kategori {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Opsi pencarian",
       "Recent options-title-recent-options": "Opsi terbaru",
+      "placeholder-search-options": "Opsi pencarian",
       "title-matched_other": "Cocok {{count}}/{{totalCount}} opsi"
     },
     "outline": {
@@ -10057,17 +10222,17 @@
       "description": "Konfigurasi LDAP Anda tidak berfungsi karena formulir login dasar saat ini dinonaktifkan. Aktifkan formulir login untuk menggunakan autentikasi LDAP. Anda dapat mengaktifkannya di halaman Autentikasi di bagian \"Pengaturan autentikasi\".",
       "title": "Login dasar dinonaktifkan"
     },
-    "search_filter": {
-      "description": "Filter pencarian LDAP digunakan untuk menemukan entri tertentu dalam direktori.",
-      "error": "Filter pencarian wajib diisi",
-      "label": "Filter pencarian",
-      "placeholder": "contoh: cn=%s"
-    },
     "search-base-dns": {
       "description": "Berbagai basis dns untuk dicari.",
       "error": "Bidang DNS dasar pencarian wajib diisi",
       "label": "Basis pencarian DNS",
       "placeholder": "contoh: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "Filter pencarian LDAP digunakan untuk menemukan entri tertentu dalam direktori.",
+      "error": "Filter pencarian wajib diisi",
+      "label": "Filter pencarian",
+      "placeholder": "contoh: cn=%s"
     },
     "subtitle": "Integrasi LDAP di Grafana memungkinkan pengguna Grafana Anda untuk login dengan kredensial LDAP mereka. Cari tahu selengkapnya di <2><1>dokumentasi</1></2> kami.",
     "title": "Pengaturan Dasar"
@@ -11278,8 +11443,8 @@
       "upgrade-tooltip": "Tingkatkan untuk menambahkan lebih banyak pengguna"
     },
     "item": {
-      "add-bookmark": "Tambahkan ke Bookmark",
-      "remove-bookmark": "Hapus dari Bookmark"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Tekan Esc untuk keluar dari mode kios"
@@ -11610,7 +11775,8 @@
       "tooltip-delete": "Hapus"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Terapkan {{suggestionName}} visualisasi",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Beberapa saran tidak dapat dimuat"
       },
@@ -11620,8 +11786,7 @@
         "title": "Kesalahan",
         "try-again-button": "Coba lagi"
       },
-      "unknown-viz-type": "Jenis visualisasi tidak diketahui",
-      "use-this-suggestion": "Gunakan saran ini"
+      "unknown-viz-type": "Jenis visualisasi tidak diketahui"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
@@ -12890,15 +13055,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12936,6 +13111,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -12943,6 +13120,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Ekspresi",
       "query": "Kueri",
       "transformation": "Transformasi"
@@ -12952,12 +13130,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Pilih kartu {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Kueri & Ekspresi",
-      "query-stack": "Tumpukan Kueri",
       "toggle-size": "Alihkan ukuran bilah sisi",
       "transformations": "Transformasi"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13016,10 +13208,10 @@
       "title-data-source-help": "Bantuan sumber data"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Opsi kueri",
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Sembunyikan info waktu",
-      "Query options-title-query-options": "Opsi kueri",
       "relative-time": "Waktu relatif",
       "relative-time-tooltip": "Mengganti rentang waktu yang relevan untuk masing-masing panel, yang menyebabkannya berbeda dengan yang dipilih di pemilih waktu dasbor di sudut kanan atas dasbor. Misalnya, untuk mengonfigurasi 5 menit Terakhir, Waktu relevan harus <1>{{relativeFrom}}</1> dan <4>{{relativeTo}}</4>, atau variabel seperti <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14033,9 +14225,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 jam",
     "1_day": "1 hari",
     "1_hour": "1 jam",
-    "12_hours": "12 jam",
     "30_days": "30 hari",
     "6_hours": "6 Jam",
     "7_days": "7 hari"
@@ -15301,8 +15493,8 @@
       "title-dependencies": "Dependensi"
     },
     "variables-unknown-button": {
-      "usage-title": "Menampilkan penggunaan untuk: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Tampilkan penggunaan"
+      "VariablesUnknownButton-tooltip-show-usages": "Tampilkan penggunaan",
+      "usage-title": "Menampilkan penggunaan untuk: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Variabel yang diganti namanya atau hilang",

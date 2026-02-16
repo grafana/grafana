@@ -6,10 +6,10 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorType } from '../constants';
 
 import { PendingExpression } from './QueryEditorContext';
-import { Transformation } from './types';
+import { AlertRule, Transformation } from './types';
 
 export function getEditorType(
-  card: DataQuery | Transformation | null,
+  card: DataQuery | Transformation | AlertRule | null,
   pendingExpression?: PendingExpression | null
 ): QueryEditorType {
   if (pendingExpression) {
@@ -19,6 +19,10 @@ export function getEditorType(
   if (!card) {
     // Default to query type if no card is provided
     return QueryEditorType.Query;
+  }
+
+  if ('alertId' in card) {
+    return QueryEditorType.Alert;
   }
 
   if ('transformId' in card) {

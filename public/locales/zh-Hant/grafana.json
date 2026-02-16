@@ -548,6 +548,48 @@
     "alert-warning": {
       "to-rule-list": "傳送至規則清單"
     },
+    "alertVersionHistory": {
+      "alerting": "警報",
+      "alerting-change-description": "此更新是由於發生其他變更，而由警報系統進行的。例如，重新命名用於簡化路由的聯絡點時，這將更新受影響的規則",
+      "annotations": "註釋",
+      "compare": "比較",
+      "compare-with-latest": "與最新版本比較",
+      "compareVersions": "比較版本",
+      "comparing-versions": "比較版本",
+      "condition": "警報條件",
+      "contactPointRouting": "聯絡點路由",
+      "description": "每次編輯警報規則時，都會建立新版本。選擇下面的兩個版本，並比較它們的差異。",
+      "errorloading": "無法載入警報規則版本",
+      "execErrorState": "執行錯誤時的警報狀態",
+      "intervalSeconds": "評估間隔",
+      "labels": "標籤",
+      "latest": "最新",
+      "name": "名稱",
+      "namespace_uid": "資料夾 UID",
+      "noDataState": "無資料時的警報狀態",
+      "noVersionsFound": "沒有找到此規則的版本",
+      "paused": "暫停狀態",
+      "pendingPeriod": "待處理期間",
+      "provisioning": "佈建",
+      "provisioning-change-description": "版本更新是透過佈建進行的",
+      "queryAndAlertCondition": "查詢和警報條件",
+      "restore": "還原",
+      "restore-manually": "您的警報規則無法還原。這可能是由於其他實體（如聯絡點、資料來源等）發生變更。請手動還原規則版本",
+      "restore-modal": {
+        "body": "您確定要將警報規則定義還原到此版本嗎？所有未儲存變更將會遺失。",
+        "confirm": "是的，還原設定",
+        "error": "無法還原警報規則版本",
+        "summary": "待套用的變更摘要：",
+        "title": "還原版本"
+      },
+      "restore-version": "還原至版本 {{version}}",
+      "rule_group": "規則群組",
+      "unknown": "未知",
+      "unknown-change-description": "此更新是在實施警報規則版本歷史記錄之前進行的。未追蹤進行變更的使用者，但未來的變更將包括使用者",
+      "user-id": "使用者 ID {{uid}}",
+      "warning-restore-manually": "您正在手動還原此警報規則的舊版本。在儲存規則定義之前，請仔細檢查變更。",
+      "warning-restore-manually-title": "手動還原規則"
+    },
     "alertform": {
       "labels": {
         "alerting": "將標籤新增至您的規則，以便搜尋、靜音或路由到通知政策。",
@@ -602,48 +644,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "按名稱搜尋警報規則",
       "no-alert-rules-found": "找不到警報規則",
       "placeholder-sort-default-az": "排序（預設 A 到 Z）"
-    },
-    "alertVersionHistory": {
-      "alerting": "警報",
-      "alerting-change-description": "此更新是由於發生其他變更，而由警報系統進行的。例如，重新命名用於簡化路由的聯絡點時，這將更新受影響的規則",
-      "annotations": "註釋",
-      "compare": "比較",
-      "compare-with-latest": "與最新版本比較",
-      "compareVersions": "比較版本",
-      "comparing-versions": "比較版本",
-      "condition": "警報條件",
-      "contactPointRouting": "聯絡點路由",
-      "description": "每次編輯警報規則時，都會建立新版本。選擇下面的兩個版本，並比較它們的差異。",
-      "errorloading": "無法載入警報規則版本",
-      "execErrorState": "執行錯誤時的警報狀態",
-      "intervalSeconds": "評估間隔",
-      "labels": "標籤",
-      "latest": "最新",
-      "name": "名稱",
-      "namespace_uid": "資料夾 UID",
-      "noDataState": "無資料時的警報狀態",
-      "noVersionsFound": "沒有找到此規則的版本",
-      "paused": "暫停狀態",
-      "pendingPeriod": "待處理期間",
-      "provisioning": "佈建",
-      "provisioning-change-description": "版本更新是透過佈建進行的",
-      "queryAndAlertCondition": "查詢和警報條件",
-      "restore": "還原",
-      "restore-manually": "您的警報規則無法還原。這可能是由於其他實體（如聯絡點、資料來源等）發生變更。請手動還原規則版本",
-      "restore-modal": {
-        "body": "您確定要將警報規則定義還原到此版本嗎？所有未儲存變更將會遺失。",
-        "confirm": "是的，還原設定",
-        "error": "無法還原警報規則版本",
-        "summary": "待套用的變更摘要：",
-        "title": "還原版本"
-      },
-      "restore-version": "還原至版本 {{version}}",
-      "rule_group": "規則群組",
-      "unknown": "未知",
-      "unknown-change-description": "此更新是在實施警報規則版本歷史記錄之前進行的。未追蹤進行變更的使用者，但未來的變更將包括使用者",
-      "user-id": "使用者 ID {{uid}}",
-      "warning-restore-manually": "您正在手動還原此警報規則的舊版本。在儲存規則定義之前，請仔細檢查變更。",
-      "warning-restore-manually-title": "手動還原規則"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "此原則與所有標籤相符"
@@ -2129,6 +2129,44 @@
       "body-no-alertmanager-found": "我們找不到任何外部的 Alertmanager，您可能沒有內建 Grafana Alertmanager 的存取權限。",
       "title-no-alertmanager-found": "找不到 Alertmanager"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按聯絡點搜尋",
       "placeholder-search-by-contact-point": "選擇聯絡點",
@@ -2192,6 +2230,63 @@
     "notification-templates-tab": {
       "add-notification-template-group": "新增通知範本群組",
       "create-notification-templates-customize-notifications": "建立通知範本以自訂您的通知。"
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "新增標籤，以協助您妥善管理紀錄規則。",
@@ -3023,6 +3118,11 @@
       "title-preview-not-available": "無可用的預覽",
       "valid-matcher-affected-alerts": "新增有效的匹配器以查看受影響的警報"
     },
+    "silences": {
+      "affected-instances": "受影響的警報執行個體",
+      "only-firing-instances": "僅顯示處於觸發狀態的警報執行個體。",
+      "preview-affected-instances": "預覽受此靜音影響的警報執行個體。"
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "靜音詳細資訊",
       "label-comment": "評論",
@@ -3044,11 +3144,6 @@
       "text-loading-silences": "正在載入靜音…",
       "title-error-loading-silences": "載入靜音時發生錯誤",
       "title-the-selected-alertmanager-has-no-configuration": "所選的 Alertmanager 沒有設定"
-    },
-    "silences": {
-      "affected-instances": "受影響的警報執行個體",
-      "only-firing-instances": "僅顯示處於觸發狀態的警報執行個體。",
-      "preview-affected-instances": "預覽受此靜音影響的警報執行個體。"
     },
     "simple-condition-editor": {
       "label-of-query": "查詢",
@@ -3376,6 +3471,7 @@
           "enrichment": "警報增強功能",
           "history": "歷史紀錄",
           "instances": "執行個體",
+          "notifications": "",
           "query-and-conditions": "查詢和條件",
           "versions": "版本"
         }
@@ -4937,6 +5033,33 @@
         "new-panel": "新的面板"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "返回清單",
       "control-display-options": {
@@ -5090,6 +5213,9 @@
       "message": {
         "dashboard-not-found": "找不到儀表板"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "資料來源選項",
@@ -6141,7 +6267,46 @@
       "tab-title": "變更分頁標題"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "儀表板",
         "element": "元件",
         "local-variable": "本機變數",
@@ -6520,8 +6685,8 @@
       "aria-label-expand": "展開 {{title}} 類別"
     },
     "options-pane-options": {
-      "placeholder-search-options": "搜尋選項",
       "Recent options-title-recent-options": "近期選項",
+      "placeholder-search-options": "搜尋選項",
       "title-matched_other": "匹配的 {{count}}/{{totalCount}} 個選項"
     },
     "outline": {
@@ -10057,17 +10222,17 @@
       "description": "您的 LDAP 設定無法正常運作，因為基本登入表單目前已被停用。請啟用登入表單以使用 LDAP 身分驗證。您可以在「驗證設定」下的「驗證」頁面上啟用它。",
       "title": "基本登入已停用"
     },
-    "search_filter": {
-      "description": "LDAP 搜尋篩選器用於在目錄中定位特定條目。",
-      "error": "搜尋篩選條件是必填欄位",
-      "label": "搜尋篩選器",
-      "placeholder": "範例：cn=%s"
-    },
     "search-base-dns": {
       "description": "要搜尋的基礎 dns 陣列。",
       "error": "搜尋基本 DNS 是必填欄位",
       "label": "搜尋基礎 DNS",
       "placeholder": "範例：dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP 搜尋篩選器用於在目錄中定位特定條目。",
+      "error": "搜尋篩選條件是必填欄位",
+      "label": "搜尋篩選器",
+      "placeholder": "範例：cn=%s"
     },
     "subtitle": "Grafana 中的 LDAP 整合，允許您的 Grafana 使用者使用其 LDAP 憑證登入。請在我們的<2><1>文件</1></2>中閱讀更多資訊。",
     "title": "基本設定"
@@ -11278,8 +11443,8 @@
       "upgrade-tooltip": "升級以新增更多使用者"
     },
     "item": {
-      "add-bookmark": "新增至書籤",
-      "remove-bookmark": "從書籤中移除"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "按 ESC 結束資訊站模式"
@@ -11610,7 +11775,8 @@
       "tooltip-delete": "刪除"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "套用 {{suggestionName}} 視覺化呈現",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "無法載入部分建議"
       },
@@ -11620,8 +11786,7 @@
         "title": "錯誤",
         "try-again-button": "再試一次"
       },
-      "unknown-viz-type": "未知的視覺化類型",
-      "use-this-suggestion": "使用此建議"
+      "unknown-viz-type": "未知的視覺化類型"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
@@ -12890,15 +13055,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12936,6 +13111,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -12943,6 +13120,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "表達式",
       "query": "查詢",
       "transformation": "轉換"
@@ -12952,12 +13130,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "選取卡片 {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "查詢和運算式",
-      "query-stack": "查詢堆疊",
       "toggle-size": "切換側邊欄大小",
       "transformations": "轉換"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13016,10 +13208,10 @@
       "title-data-source-help": "資料來源說明"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "查詢選項",
       "collapsed-interval": "間隔 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "隱藏時間資訊",
-      "Query options-title-query-options": "查詢選項",
       "relative-time": "相對時間",
       "relative-time-tooltip": "覆寫單個面板的相對時間範圍，使其與儀表板右上角的儀表板時間選擇器中選擇的時間範圍不同。例如，要設定最近 5 分鐘，相對時間應該是 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 這樣的變數。",
       "render-cache-timeout-option": {
@@ -14033,9 +14225,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 小時",
     "1_day": "1 天",
     "1_hour": "1 小時",
-    "12_hours": "12 小時",
     "30_days": "30 天",
     "6_hours": "6 小時",
     "7_days": "7 天"
@@ -15301,8 +15493,8 @@
       "title-dependencies": "依存關係"
     },
     "variables-unknown-button": {
-      "usage-title": "顯示以下項目的使用情況：{{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "顯示使用情況"
+      "VariablesUnknownButton-tooltip-show-usages": "顯示使用情況",
+      "usage-title": "顯示以下項目的使用情況：{{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "重新命名或遺失的變數",
