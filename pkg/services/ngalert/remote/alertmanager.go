@@ -369,7 +369,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 
 	amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
 		amConfig.InhibitRules,
-		c.ManagedInhibitionRules,
+		managedInhibitionRules,
 	)
 
 	var templates []definition.PostableApiTemplate
