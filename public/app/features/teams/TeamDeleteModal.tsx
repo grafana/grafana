@@ -36,7 +36,7 @@ export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss, teamName, ownedF
               title={t('teams.team-list.columns.delete-modal-invalid-title', 'Cannot delete team')}
             >
               <Trans i18nKey="teams.team-list.columns.delete-modal-invalid-text">
-                This team is owner of one or more folders. Remove ownership first in order to proceed.
+                This team is the owner of one or more folders. Remove ownership first in order to proceed.
               </Trans>
             </Alert>
           ) : null}
