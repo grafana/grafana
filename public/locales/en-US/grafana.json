@@ -6474,8 +6474,6 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "The value is not saved in the Grafana database",
-      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
