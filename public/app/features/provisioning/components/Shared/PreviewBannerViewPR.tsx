@@ -5,6 +5,7 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
+import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
 interface Props {
@@ -27,7 +28,7 @@ const commonAlertProps = {
   style: { flex: 0 } as const,
 };
 
-function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch: string; repoType: string }) {
+function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch: string; repoType?: string }) {
   const link = getBranchUrl(baseUrl, branch, repoType);
 
   if (link.length) {
@@ -128,9 +129,10 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       {showBranchInfo(repoType, branchInfo) && (
         <Box marginTop={1}>
           <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>{' '}
-          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType!} />
-          {'\u2192'}{' '}
-          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType!} />
+          {/* branch that changes pushed to */}
+          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
+          {'\u2192'} {/* Target branch (configured branch) */}
+          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
         </Box>
       )}
     </Alert>
@@ -142,5 +144,10 @@ function showBranchInfo(
   branchInfo?: PreviewBranchInfo
 ): branchInfo is Required<PreviewBranchInfo> {
   const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
-  return repoType !== 'local' && !!targetBranch && !!configuredBranch && !!repoBaseUrl;
+
+  if (isValidRepoType(repoType) && isGitProvider(repoType)) {
+    return !!targetBranch && !!configuredBranch && !!repoBaseUrl;
+  }
+
+  return false;
 }
