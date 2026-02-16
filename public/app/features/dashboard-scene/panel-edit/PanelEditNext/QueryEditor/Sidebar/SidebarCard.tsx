@@ -72,7 +72,7 @@ export const SidebarCard = ({
   return (
     <div className={styles.wrapper}>
       <div
-        className={styles.card}
+        className={cx(styles.card, { [styles.ghostCard]: variant === 'ghost' })}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -109,12 +109,12 @@ export const SidebarCard = ({
   );
 };
 
-const shimmer = keyframes`
-  0% {
-    background-position: -200% 0;
+const skeletonPulse = keyframes`
+  0%, 100% {
+    opacity: 0.3;
   }
-  100% {
-    background-position: 200% 0;
+  50% {
+    opacity: 0.5;
   }
 `;
 
@@ -132,16 +132,6 @@ function getStyles(
 ) {
   const borderColor = getEditorBorderColor(theme, item.type, item.alertState);
 
-  const shimmerBase = {
-    borderRadius: theme.shape.radius.default,
-    background: `linear-gradient(
-      90deg,
-      ${theme.colors.background.secondary} 0%,
-      ${theme.colors.emphasize(theme.colors.background.secondary, 0.1)} 50%,
-      ${theme.colors.background.secondary} 100%
-    )`,
-    backgroundSize: '200% 100%',
-  };
   const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
@@ -235,6 +225,21 @@ function getStyles(
         pointerEvents: 'auto',
       },
     }),
+    ghostCard: css({
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderLeft: `2px dashed ${borderColor}`,
+      background: 'transparent',
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        borderColor: theme.colors.border.strong,
+        borderLeftColor: borderColor,
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color'], {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
 
     hoverActions,
     hoverActionsVisible: css({
@@ -263,21 +268,23 @@ function getStyles(
       opacity: 0.7,
     }),
     shimmerIcon: css({
-      ...shimmerBase,
       width: theme.spacing(2),
       height: theme.spacing(2),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.border.weak,
       flexShrink: 0,
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${shimmer} 2s ease-in-out infinite`,
+        animation: `${skeletonPulse} 3s ease-in-out infinite`,
       },
     }),
     shimmerTitle: css({
-      ...shimmerBase,
-      height: theme.spacing(2),
+      height: theme.spacing(1.5),
       flex: 1,
-      maxWidth: '60%',
+      maxWidth: '70%',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.border.weak,
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${shimmer} 2s ease-in-out infinite`,
+        animation: `${skeletonPulse} 3s ease-in-out infinite`,
       },
     }),
   };
