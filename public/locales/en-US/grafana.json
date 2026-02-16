@@ -2308,6 +2308,9 @@
       "recipient": "Recipient",
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
+    "open-drawer-icon-button": {
+      "details": "Details"
+    },
     "option-customfield": {
       "label-custom-template": "Custom template",
       "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
@@ -6487,8 +6490,6 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "The value is not saved in the Grafana database",
-      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
@@ -10477,6 +10478,7 @@
       "label-numbers": "Numbers",
       "label-signature": "Signature"
     },
+    "description-enable-field-selector": "Experimental. Show a component to manage the displayed fields from the logs.",
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
@@ -10769,6 +10771,7 @@
       "label-inline": "Inline",
       "label-sidebar": "Sidebar"
     },
+    "name-enable-field-selector": "Enable field selector",
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-logs-highlighting": "Enable logs highlighting",
@@ -11517,6 +11520,7 @@
     },
     "megamenu": {
       "close": "Close menu",
+      "dialog-label": "Navigation",
       "dock": "Dock menu",
       "list-label": "Navigation",
       "open": "Open menu",
