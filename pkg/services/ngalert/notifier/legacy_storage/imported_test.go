@@ -308,7 +308,7 @@ receivers:
 				Version:    "8ea121175ec5f716",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",
-				InhibitRule: config.InhibitRule{
+				InhibitRule: definitions.InhibitRule{
 					SourceMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,
@@ -342,7 +342,7 @@ receivers:
 				Version:    "74cb0d8b8dcff9f0",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",
-				InhibitRule: config.InhibitRule{
+				InhibitRule: definitions.InhibitRule{
 					SourceMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,

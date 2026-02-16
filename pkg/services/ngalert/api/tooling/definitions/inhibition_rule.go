@@ -1,37 +1,39 @@
-package models
+package definitions
 
 import (
 	"fmt"
 	"hash/fnv"
 	"slices"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const ResourceTypeInhibitionRule = "inhibition-rule"
 
+type ManagedInhibitionRules map[string]*InhibitionRule
+
 // InhibitionRule is the domain model for inhibition rules with metadata.
 // It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.
 type InhibitionRule struct {
-	Name               string `json:"name" yaml:"name"`
-	UID                string `json:"uid" yaml:"uid"`
-	config.InhibitRule `json:",inline" yaml:",inline"`
-	Version            string         `json:"version,omitempty"`
-	Provenance         Provenance     `json:"provenance,omitempty"`
-	Origin             ResourceOrigin `json:"origin,omitempty"`
+	Name        string `json:"name" yaml:"name"`
+	UID         string `json:"uid" yaml:"uid"`
+	InhibitRule `json:",inline" yaml:",inline"`
+	Version     string                `json:"version,omitempty"`
+	Provenance  Provenance            `json:"provenance,omitempty"`
+	Origin      models.ResourceOrigin `json:"origin,omitempty"`
 }
 
 func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First, manually unmarshal our own fields
 	var temp struct {
-		Name       string         `yaml:"name"`
-		UID        string         `yaml:"uid"`
-		Provenance Provenance     `yaml:"provenance,omitempty"`
-		Origin     ResourceOrigin `yaml:"origin,omitempty"`
-		Version    string         `yaml:"version,omitempty"`
+		Name       string                `yaml:"name"`
+		UID        string                `yaml:"uid"`
+		Provenance Provenance            `yaml:"provenance,omitempty"`
+		Origin     models.ResourceOrigin `yaml:"origin,omitempty"`
+		Version    string                `yaml:"version,omitempty"`
 	}
 	if err := unmarshal(&temp); err != nil {
 		return err

@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -776,8 +775,6 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 
 	return config
 }
-
-type ManagedInhibitionRules map[string]*models.InhibitionRule
 
 // ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
 // GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to

@@ -14,6 +14,7 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -23,10 +24,10 @@ var (
 
 // InhibitionRuleService defines the interface for inhibition rule operations
 type InhibitionRuleService interface {
-	GetInhibitionRules(ctx context.Context, orgID int64) ([]ngmodels.InhibitionRule, error)
-	GetInhibitionRule(ctx context.Context, name string, orgID int64) (ngmodels.InhibitionRule, error)
-	CreateInhibitionRule(ctx context.Context, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
-	UpdateInhibitionRule(ctx context.Context, name string, rule ngmodels.InhibitionRule, orgID int64) (ngmodels.InhibitionRule, error)
+	GetInhibitionRules(ctx context.Context, orgID int64) ([]definitions.InhibitionRule, error)
+	GetInhibitionRule(ctx context.Context, name string, orgID int64) (definitions.InhibitionRule, error)
+	CreateInhibitionRule(ctx context.Context, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error)
+	UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error)
 	DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 

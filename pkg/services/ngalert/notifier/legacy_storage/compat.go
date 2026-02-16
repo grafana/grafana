@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
@@ -217,7 +216,7 @@ func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName
 	return false, groupBy
 }
 
-func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance models.Provenance, origin models.ResourceOrigin) (*models.InhibitionRule, error) {
+func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, provenance apimodels.Provenance, origin models.ResourceOrigin) (*apimodels.InhibitionRule, error) {
 	if name = strings.TrimSpace(name); name == "" {
 		return nil, fmt.Errorf("inhibition rule name must not be empty")
 	}
@@ -232,7 +231,7 @@ func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenanc
 		return nil, fmt.Errorf("inhibition rule name is too long (generated UID exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
-	ir := &models.InhibitionRule{
+	ir := &apimodels.InhibitionRule{
 		Name:        name,
 		InhibitRule: rule,
 		UID:         uid,

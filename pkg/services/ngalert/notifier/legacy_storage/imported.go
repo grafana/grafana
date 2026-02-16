@@ -176,7 +176,7 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := InhibitRuleToInhibitionRule(name, rule, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		ir, err := InhibitRuleToInhibitionRule(name, rule, definitions.Provenance(models.ProvenanceConvertedPrometheus), models.ResourceOriginImported)
 		if err != nil {
 			return nil, err
 		}

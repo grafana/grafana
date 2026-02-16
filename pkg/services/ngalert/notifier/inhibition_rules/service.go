@@ -38,7 +38,7 @@ func NewService(
 }
 
 // GetInhibitionRules returns all inhibition rules for the specified org.
-func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]models.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]definitions.InhibitionRule, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -48,10 +48,10 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]mode
 	importedRules := svc.getImportedInhibitRules(rev)
 
 	if len(managedRules) == 0 && len(importedRules) == 0 {
-		return []models.InhibitionRule{}, nil
+		return []definitions.InhibitionRule{}, nil
 	}
 
-	result := make([]models.InhibitionRule, 0, len(managedRules)+len(importedRules))
+	result := make([]definitions.InhibitionRule, 0, len(managedRules)+len(importedRules))
 	for _, r := range managedRules {
 		result = append(result, *r)
 	}
@@ -65,32 +65,32 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]mode
 
 // GetInhibitionRule returns a single inhibition rule by UID.
 // Includes both Grafana-managed and imported rules.
-func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) GetInhibitionRule(ctx context.Context, name string, orgID int64) (definitions.InhibitionRule, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	result, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	} else if !found {
-		return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
+		return definitions.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 	}
 
 	return result, nil
 }
 
 // CreateInhibitionRule adds a new inhibition rule
-func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) CreateInhibitionRule(ctx context.Context, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error) {
 	// Validate the rule
 	if err := rule.Validate(); err != nil {
-		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	if revision.Config.ManagedInhibitionRules == nil {
@@ -98,60 +98,62 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule models.Inhibi
 	}
 
 	if _, ok := revision.Config.ManagedInhibitionRules[rule.Name]; ok {
-		return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
+		return definitions.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
 	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
 	if err != nil {
-		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision.Config.ManagedInhibitionRules[created.Name] = created
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	return *created, nil
 }
 
-func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule models.InhibitionRule, orgID int64) (models.InhibitionRule, error) {
+func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
-		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	existing, found, err := svc.getInhibitionRuleByName(ctx, revision, name)
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	} else if !found {
-		return models.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
+		return definitions.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 	}
 
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
-		return models.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(existing, "update")
+	existingProv := models.Provenance(existing.Provenance)
+	if existingProv == models.ProvenanceConvertedPrometheus {
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(existing.UID, "update")
 	}
 
-	if err := svc.validator(existing.Provenance, rule.Provenance); err != nil {
-		return models.InhibitionRule{}, err
+	prov := models.Provenance(rule.Provenance)
+	if err := svc.validator(existingProv, prov); err != nil {
+		return definitions.InhibitionRule{}, err
 	}
 
 	var renamed bool
 	if existing.Name != rule.Name {
 		// check if new name already exists
 		if _, ok := revision.Config.ManagedInhibitionRules[rule.Name]; ok {
-			return models.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
+			return definitions.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 		}
 		renamed = true
 	}
 
-	err = svc.checkOptimisticConcurrency(existing, rule.Provenance, rule.Version, "update")
+	err = svc.checkOptimisticConcurrency(existing, prov, rule.Version, "update")
 	if err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	if renamed {
@@ -161,13 +163,13 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 	// Create the updated rule with all fields properly set
 	updated, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
 	if err != nil {
-		return models.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
 
 	revision.Config.ManagedInhibitionRules[updated.Name] = updated
 
 	if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
-		return models.InhibitionRule{}, err
+		return definitions.InhibitionRule{}, err
 	}
 
 	return *updated, nil
@@ -187,11 +189,12 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 		return nil
 	}
 
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
-		return models.MakeErrInhibitionRuleOrigin(existing, "delete")
+	existingProv := models.Provenance(existing.Provenance)
+	if existingProv == models.ProvenanceConvertedPrometheus {
+		return models.MakeErrInhibitionRuleOrigin(existing.UID, "delete")
 	}
 
-	if err := svc.validator(existing.Provenance, provenance); err != nil {
+	if err := svc.validator(existingProv, provenance); err != nil {
 		return err
 	}
 
@@ -207,7 +210,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 
 // Helper functions
 
-func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) (models.InhibitionRule, bool, error) {
+func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) (definitions.InhibitionRule, bool, error) {
 	// Check Grafana-managed rules first
 	managedInhibitionRules := rev.Config.ManagedInhibitionRules
 	if r, ok := managedInhibitionRules[name]; ok {
@@ -220,7 +223,7 @@ func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_sto
 		return *r, true, nil
 	}
 
-	return models.InhibitionRule{}, false, nil
+	return definitions.InhibitionRule{}, false, nil
 }
 
 func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) definitions.ManagedInhibitionRules {
@@ -243,7 +246,7 @@ func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) 
 	return inhibitRules
 }
 
-func (svc *Service) checkOptimisticConcurrency(existing models.InhibitionRule, provenance models.Provenance, desiredVersion string, action string) error {
+func (svc *Service) checkOptimisticConcurrency(existing definitions.InhibitionRule, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request

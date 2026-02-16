@@ -11,10 +11,11 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func ConvertToK8sResources(orgID int64, rules []ngmodels.InhibitionRule, namespacer request.NamespaceMapper, selector fields.Selector) *model.InhibitionRuleList {
+func ConvertToK8sResources(orgID int64, rules []definitions.InhibitionRule, namespacer request.NamespaceMapper, selector fields.Selector) *model.InhibitionRuleList {
 	result := &model.InhibitionRuleList{}
 
 	for _, rule := range rules {
@@ -28,7 +29,7 @@ func ConvertToK8sResources(orgID int64, rules []ngmodels.InhibitionRule, namespa
 	return result
 }
 
-func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
+func ConvertToK8sResource(orgID int64, rule definitions.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
 	i := model.InhibitionRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.Name,
@@ -44,7 +45,7 @@ func ConvertToK8sResource(orgID int64, rule ngmodels.InhibitionRule, namespacer 
 	return &i
 }
 
-func convertDomainToK8sSpec(rule ngmodels.InhibitionRule) model.InhibitionRuleSpec {
+func convertDomainToK8sSpec(rule definitions.InhibitionRule) model.InhibitionRuleSpec {
 	return model.InhibitionRuleSpec{
 		SourceMatchers: convertLabelsMatchersToK8s(rule.SourceMatchers),
 		TargetMatchers: convertLabelsMatchersToK8s(rule.TargetMatchers),
@@ -68,25 +69,25 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 	return result
 }
 
-func convertToDomainModel(rule *model.InhibitionRule) (ngmodels.InhibitionRule, error) {
-	result := ngmodels.InhibitionRule{
+func convertToDomainModel(rule *model.InhibitionRule) (definitions.InhibitionRule, error) {
+	result := definitions.InhibitionRule{
 		Version:    rule.ResourceVersion,
 		Name:       rule.Name,
-		Provenance: ngmodels.ProvenanceNone,
+		Provenance: definitions.Provenance(ngmodels.ProvenanceNone),
 		Origin:     ngmodels.ResourceOriginGrafana,
 	}
 
 	// Convert source matchers from K8s format to prometheus format
 	sourceMatchers, err := convertK8sMatchersToLabels(rule.Spec.SourceMatchers)
 	if err != nil {
-		return ngmodels.InhibitionRule{}, fmt.Errorf("invalid source matchers: %w", err)
+		return definitions.InhibitionRule{}, fmt.Errorf("invalid source matchers: %w", err)
 	}
 	result.SourceMatchers = config.Matchers(sourceMatchers)
 
 	// Convert target matchers from K8s format to prometheus format
 	targetMatchers, err := convertK8sMatchersToLabels(rule.Spec.TargetMatchers)
 	if err != nil {
-		return ngmodels.InhibitionRule{}, fmt.Errorf("invalid target matchers: %w", err)
+		return definitions.InhibitionRule{}, fmt.Errorf("invalid target matchers: %w", err)
 	}
 	result.TargetMatchers = config.Matchers(targetMatchers)
 

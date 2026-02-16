@@ -161,8 +161,8 @@ func MakeErrInhibitionRuleInvalid(err error) error {
 	return ErrInhibitionRuleInvalid.Build(data)
 }
 
-func MakeErrInhibitionRuleOrigin(ir InhibitionRule, action string) error {
+func MakeErrInhibitionRuleOrigin(uid, action string) error {
 	return ErrInhibitionRuleOrigin.Build(errutil.TemplateData{
-		Public: map[string]interface{}{"Action": action, "Name": ir.UID},
+		Public: map[string]interface{}{"Action": action, "Name": uid},
 	})
 }

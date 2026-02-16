@@ -4,17 +4,16 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func WithManagedInhibitionRules(inhibitionRules []config.InhibitRule, managedInhibitionRules map[string]*models.InhibitionRule) []config.InhibitRule {
+func WithManagedInhibitionRules(inhibitionRules []definitions.InhibitRule, managedInhibitionRules map[string]*definitions.InhibitionRule) []definitions.InhibitRule {
 	if len(managedInhibitionRules) == 0 {
 		// If there are no managed routes, we just return the original root.
 		return inhibitionRules
 	}
 
-	res := make([]config.InhibitRule, 0, len(inhibitionRules)+len(managedInhibitionRules))
+	res := make([]definitions.InhibitRule, 0, len(inhibitionRules)+len(managedInhibitionRules))
 	for _, k := range slices.Sorted(maps.Keys(managedInhibitionRules)) {
 		mir := managedInhibitionRules[k]
 		if mir == nil {
