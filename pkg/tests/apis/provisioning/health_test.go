@@ -55,6 +55,12 @@ func TestIntegrationHealth(t *testing.T) {
 		newRepoConfig := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
+			"metadata": map[string]any{
+				"finalizers": []string{
+					"remove-orphan-resources",
+					"cleanup",
+				},
+			},
 			"spec": map[string]any{
 				"title": "Test New Configuration",
 				"type":  "local",

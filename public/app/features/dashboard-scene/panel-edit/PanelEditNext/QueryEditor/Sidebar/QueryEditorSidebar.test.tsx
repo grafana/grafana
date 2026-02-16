@@ -1,11 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 
-import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
 import { SidebarSize } from '../../constants';
-import { QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockUIStateBase } from '../testUtils';
+import { renderWithQueryEditorProvider, ds1SettingsMock } from '../testUtils';
 import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
@@ -25,45 +23,16 @@ describe('QueryEditorSidebar', () => {
   it('should not render transformations section when no transformations exist', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
-    render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries, data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
-        uiState={{
-          ...mockUIStateBase,
-          selectedQuery: queries[0],
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
-      </QueryEditorProvider>
-    );
+    renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
+      queries,
+      selectedQuery: queries[0],
+    });
 
     expect(screen.queryByText(/transformations/i)).not.toBeInTheDocument();
   });
 
   it('should render queries section even when no queries exist', () => {
-    render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries: [], data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
-        uiState={{
-          ...mockUIStateBase,
-          selectedQuery: null,
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
-      </QueryEditorProvider>
-    );
+    renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
 
     // Should still render the queries section header
     expect(screen.getByText(/queries & expressions/i)).toBeInTheDocument();
@@ -77,23 +46,11 @@ describe('QueryEditorSidebar', () => {
       { transformId: 'reduce', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
     ];
 
-    render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries, data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
-        uiState={{
-          ...mockUIStateBase,
-          selectedQuery: queries[0],
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
-      </QueryEditorProvider>
-    );
+    renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
+      queries,
+      transformations,
+      selectedQuery: queries[0],
+    });
 
     // Should render both transformation cards
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
@@ -118,23 +75,11 @@ describe('QueryEditorSidebar', () => {
       { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
     ];
 
-    render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries, data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
-        uiState={{
-          ...mockUIStateBase,
-          selectedQuery: queries[0],
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
-      </QueryEditorProvider>
-    );
+    renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
+      queries,
+      transformations,
+      selectedQuery: queries[0],
+    });
 
     // Should render both query cards
     expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
@@ -154,23 +99,11 @@ describe('QueryEditorSidebar', () => {
       { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
     ];
 
-    render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries, data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations }}
-        uiState={{
-          ...mockUIStateBase,
-          selectedQuery: queries[0],
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />
-      </QueryEditorProvider>
-    );
+    renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
+      queries,
+      transformations,
+      selectedQuery: queries[0],
+    });
 
     // Query cards should have an "Add below" button
     expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
