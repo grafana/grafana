@@ -224,20 +224,22 @@ const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorTy
 };
 
 // TODO: This is a hacky solution to create an inline datasource picker.
+// We override internal Input component styles to make it appear borderless and compact.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
-    // Target the Input component inside the picker
-    input: {
-      border: 'none',
-      backgroundColor: theme.colors.background.secondary,
-    },
-    // Remove borders from all nested divs
     '& > div, & div': {
       border: 'none',
     },
-    // Remove left padding from the prefix icon
+    input: {
+      border: 'none',
+      backgroundColor: theme.colors.background.secondary,
+      // Override the inline paddingLeft set by the Input component's prefix measurement logic
+      paddingLeft: `${theme.spacing(3.5)} !important`,
+    },
     '[class*="input-prefix"]': {
       paddingLeft: 0,
+      paddingRight: 0,
+      minWidth: 'auto',
     },
   }),
 });
