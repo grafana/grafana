@@ -38,6 +38,10 @@ func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) conte
 				if val, exists := t.Headers[ngalertmodels.FromAlertHeaderName]; exists {
 					req.Header.Set(ngalertmodels.FromAlertHeaderName, val)
 				}
+			case *backend.QueryChunkedDataRequest:
+				if val, exists := t.Headers[ngalertmodels.FromAlertHeaderName]; exists {
+					req.Header.Set(ngalertmodels.FromAlertHeaderName, val)
+				}
 			case *backend.CallResourceRequest:
 				if val, exists := t.Headers[ngalertmodels.FromAlertHeaderName]; exists {
 					req.Header.Set(ngalertmodels.FromAlertHeaderName, val[0])
@@ -72,6 +76,16 @@ func (m *HTTPClientMiddleware) QueryData(ctx context.Context, req *backend.Query
 	ctx = m.applyHeaders(ctx, req)
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *HTTPClientMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	ctx = m.applyHeaders(ctx, req)
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *HTTPClientMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

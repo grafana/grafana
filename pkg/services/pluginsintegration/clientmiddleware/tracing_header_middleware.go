@@ -71,6 +71,15 @@ func (m *TracingHeaderMiddleware) QueryData(ctx context.Context, req *backend.Qu
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *TracingHeaderMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	m.applyHeaders(ctx, req)
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *TracingHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return m.BaseHandler.CallResource(ctx, req, sender)
 }

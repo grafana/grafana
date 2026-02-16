@@ -179,6 +179,22 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	return resp, err
 }
 
+func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	var requestSize float64
+	for _, v := range req.Queries {
+		requestSize += float64(len(v.JSON))
+	}
+
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
+		return err
+	}
+
+	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, w)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+}
+
 func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err
