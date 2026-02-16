@@ -139,11 +139,8 @@ interface LogsPanelProps extends PanelProps<Options> {
 }
 const noCommonLabels: Labels = {};
 
-export const LogsPanel = ({
-  data,
-  timeZone,
-  fieldConfig,
-  options: {
+export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
+  const {
     showControls,
     showFieldSelector,
     controlsStorageKey,
@@ -174,11 +171,7 @@ export const LogsPanel = ({
     timestampResolution,
     showLogAttributes,
     unwrappedColumns,
-    ...options
-  },
-  height,
-  id,
-}: LogsPanelProps) => {
+  } = options;
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
   const logsContainerRef = useRef<HTMLDivElement>(null);
@@ -413,20 +406,30 @@ export const LogsPanel = ({
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index === -1) {
-        setDisplayedFields(displayedFields?.concat(key));
+        const newDisplayedFields = displayedFields?.concat(key);
+        setDisplayedFields(newDisplayedFields);
+        onOptionsChange({
+          ...options,
+          displayedFields: newDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, onOptionsChange, options]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index !== undefined && index > -1) {
-        setDisplayedFields(displayedFields?.filter((k) => key !== k));
+        const newDisplayedFields = displayedFields?.filter((k) => key !== k);
+        setDisplayedFields(newDisplayedFields);
+        onOptionsChange({
+          ...options,
+          displayedFields: newDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, onOptionsChange, options]
   );
 
   useEffect(() => {

@@ -15,6 +15,11 @@ func NewRolespecPermission() *RolespecPermission {
 	return &RolespecPermission{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RolespecPermission.
+func (RolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission"
+}
+
 // +k8s:openapi-gen=true
 type RolespecRoleRef struct {
 	// Kind of role being referenced (for now only GlobalRole is supported)
@@ -53,12 +58,13 @@ func NewRoleSpec() *RoleSpec {
 		PermissionsOmitted: []RolespecPermission{},
 	}
 }
-func (RolespecPermission) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for RolespecRoleRef.
 func (RolespecRoleRef) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecRoleRef"
 }
+
+// OpenAPIModelName returns the OpenAPI model name for RoleSpec.
 func (RoleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleSpec"
 }

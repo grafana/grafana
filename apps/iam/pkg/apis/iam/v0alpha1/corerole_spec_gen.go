@@ -15,6 +15,11 @@ func NewCoreRolespecPermission() *CoreRolespecPermission {
 	return &CoreRolespecPermission{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CoreRolespecPermission.
+func (CoreRolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecPermission"
+}
+
 // +k8s:openapi-gen=true
 type CoreRolespecRoleRef struct {
 	// Kind of role being referenced (for now only GlobalRole is supported)
@@ -53,12 +58,13 @@ func NewCoreRoleSpec() *CoreRoleSpec {
 		PermissionsOmitted: []CoreRolespecPermission{},
 	}
 }
-func (CoreRolespecPermission) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecPermission"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for CoreRolespecRoleRef.
 func (CoreRolespecRoleRef) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecRoleRef"
 }
+
+// OpenAPIModelName returns the OpenAPI model name for CoreRoleSpec.
 func (CoreRoleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleSpec"
 }

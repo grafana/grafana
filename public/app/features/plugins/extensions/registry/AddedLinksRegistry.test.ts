@@ -1,22 +1,14 @@
 import { firstValueFrom, take } from 'rxjs';
 
 import { AppPluginConfig } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
 import { basicApp } from '../test-fixtures/config.apps';
-import { isGrafanaDevMode } from '../utils';
 
 import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
-
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scneario)
-  isGrafanaDevMode: jest.fn().mockReturnValue(false),
-}));
 
 jest.mock('../logs/log', () => {
   const { createLogMock } = jest.requireActual('../logs/testUtils');
@@ -35,7 +27,7 @@ describe('AddedLinksRegistry', () => {
 
   beforeEach(async () => {
     resetLogMock(log);
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+    config.buildInfo.env = 'production';
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -583,7 +575,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should not register a link added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
     const registry = await createRegistry();
     const linkConfig = {
@@ -607,7 +599,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should register a link added by core Grafana in dev-mode even if the meta-info is missing', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
     const registry = await createRegistry();
     const linkConfig = {
@@ -630,9 +622,6 @@ describe('AddedLinksRegistry', () => {
   });
 
   it('should register a link added by a plugin in production mode even if the meta-info is missing', async () => {
-    // Production mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-
     const registry = await createRegistry();
     const linkConfig = {
       title: 'Link 1',
@@ -655,7 +644,7 @@ describe('AddedLinksRegistry', () => {
 
   it('should register a link added by a plugin in dev-mode if the meta-info is present', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
     const linkConfig = {
       title: 'Link 1',
