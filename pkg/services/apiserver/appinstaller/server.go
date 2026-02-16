@@ -160,11 +160,11 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
 	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
-		isNamespaced := statusStore.Store.CreateStrategy != nil && statusStore.Store.CreateStrategy.NamespaceScoped()
-		if isNamespaced {
-			statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-			statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-		} else {
+		isClusterScoped := statusStore.Store.CreateStrategy != nil && !statusStore.Store.CreateStrategy.NamespaceScoped()
+
+		statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+		statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		if isClusterScoped {
 			statusStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			statusStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 			// Note: StatusREST for cluster-scoped resources relies on API-level authorization.
@@ -182,11 +182,11 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 	// if the storage is a subresource store, we need to extract the underlying generic registry store
 	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
-		isNamespaced := subresourceStore.Store.CreateStrategy != nil && subresourceStore.Store.CreateStrategy.NamespaceScoped()
-		if isNamespaced {
-			subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-			subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-		} else {
+		isClusterScoped := subresourceStore.Store.CreateStrategy != nil && !subresourceStore.Store.CreateStrategy.NamespaceScoped()
+
+		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		if isClusterScoped {
 			subresourceStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			subresourceStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 			// Note: SubresourceREST for cluster-scoped resources relies on API-level authorization.
