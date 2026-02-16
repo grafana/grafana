@@ -149,6 +149,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		tracingService := tracing.NewNoopTracerService()
 		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
 		require.NoError(t, err)
+		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
 		require.NotNil(t, backendService)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
