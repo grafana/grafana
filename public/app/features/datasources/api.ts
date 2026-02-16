@@ -176,7 +176,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (config.featureToggles.queryServiceWithConnections) {
+  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 

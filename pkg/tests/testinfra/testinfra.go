@@ -489,6 +489,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		}
 		_, err = quotaSection.NewKey("org_dashboard", strconv.FormatInt(dashboardQuota, 10))
 		require.NoError(t, err)
+		if opts.GlobalUserQuota != nil {
+			_, err = quotaSection.NewKey("global_user", strconv.FormatInt(*opts.GlobalUserQuota, 10))
+			require.NoError(t, err)
+		}
 	}
 	if opts.DisableAnonymous {
 		anonSect, err := cfg.GetSection("auth.anonymous")
@@ -736,6 +740,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
+	// Use a short conn_max_lifetime to avoid leaking database connections.
+	_, err = dbSection.NewKey("conn_max_lifetime", "5")
+	require.NoError(t, err)
 	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
@@ -768,6 +775,7 @@ type GrafanaOpts struct {
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
+	GlobalUserQuota                       *int64
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
