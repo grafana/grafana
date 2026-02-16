@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// revertJob is a function that reverts a single operation as part of rollback
 type revertJob func() error
 
 // setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
