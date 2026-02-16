@@ -122,7 +122,6 @@
             },
             "points": {
               "items": {
-                "items": null,
                 "type": "array"
               },
               "type": "array"
