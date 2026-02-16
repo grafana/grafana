@@ -40,7 +40,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{Id: "id1", Value: 3, Timestamp: 1000}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{Id: "id2", Value: 1, Timestamp: 2000}}}}},
+				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{Id: "id1", Value: 3, Timestamp: 1000, Labels: make([]*LabelPair, 0)}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{Id: "id2", Value: 1, Timestamp: 2000, Labels: make([]*LabelPair, 0)}}}}},
 			},
 			Units: "short",
 			Label: "alloc_objects",
@@ -50,7 +50,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 	t.Run("GetProfile", func(t *testing.T) {
 		maxNodes := int64(-1)
-		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes, nil)
 		require.Nil(t, err)
 
 		series := &ProfileResponse{
@@ -72,7 +72,7 @@ func Test_PyroscopeClient(t *testing.T) {
 	t.Run("GetProfile with empty response", func(t *testing.T) {
 		connectClient.SendEmptyProfileResponse = true
 		maxNodes := int64(-1)
-		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes, nil)
 		require.Nil(t, err)
 		// Mainly ensuring this does not panic like before
 		require.Nil(t, resp)

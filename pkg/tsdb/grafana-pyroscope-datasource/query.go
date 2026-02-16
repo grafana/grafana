@@ -137,7 +137,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				profileResp = prof
 			} else {
 				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes, qm.ProfileIdSelector)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -553,10 +553,16 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 				}
 			}
 			for _, e := range point.Exemplars {
+				// Convert exemplar labels from slice to map
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
 				exemplars = append(exemplars, &exemplar.Exemplar{
 					Id:        e.Id,
 					Value:     transformation(float64(e.Value)),
 					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
 				})
 			}
 		}
@@ -565,7 +571,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 		frames = append(frames, frame)
 
 		if len(exemplars) > 0 {
-			frame := exemplar.CreateExemplarFrame(labels, exemplars)
+			frame := exemplar.CreateExemplarFrame(labels, exemplars, resp.Units)
 			frames = append(frames, frame)
 		}
 	}

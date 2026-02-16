@@ -58,6 +58,7 @@ type Exemplar struct {
 	Id        string
 	Value     uint64
 	Timestamp int64
+	Labels    []*LabelPair
 }
 
 type ProfileResponse struct {
@@ -150,10 +151,19 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 			if len(p.Exemplars) > 0 {
 				points[i].Exemplars = make([]*Exemplar, len(p.Exemplars))
 				for j, e := range p.Exemplars {
+					// Convert API labels to our LabelPair type
+					exemplarLabels := make([]*LabelPair, len(e.Labels))
+					for k, l := range e.Labels {
+						exemplarLabels[k] = &LabelPair{
+							Name:  l.Name,
+							Value: l.Value,
+						}
+					}
 					points[i].Exemplars[j] = &Exemplar{
 						Id:        e.ProfileId,
 						Value:     e.Value,
 						Timestamp: e.Timestamp,
+						Labels:    exemplarLabels,
 					}
 				}
 			}
@@ -174,16 +184,17 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 	}, nil
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64, profileIdSelector []string) (*ProfileResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetProfile", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: profileTypeID,
-			LabelSelector: labelSelector,
-			Start:         start,
-			End:           end,
-			MaxNodes:      maxNodes,
+			ProfileTypeID:     profileTypeID,
+			LabelSelector:     labelSelector,
+			Start:             start,
+			End:               end,
+			MaxNodes:          maxNodes,
+			ProfileIdSelector: profileIdSelector,
 		},
 	}
 
