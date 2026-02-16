@@ -112,7 +112,7 @@ export function ContentHeader({
   return (
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        {cardType !== QueryEditorType.Query && <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />}
 
         {cardType === QueryEditorType.Query && selectedQuery && (
           <>
@@ -234,6 +234,10 @@ const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
     // Remove borders from all nested divs
     '& > div, & div': {
       border: 'none',
+    },
+    // Remove left padding from the prefix icon
+    '[class*="input-prefix"]': {
+      paddingLeft: 0,
     },
   }),
 });
