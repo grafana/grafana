@@ -307,7 +307,7 @@ jobs:
     needs:
       - build-grafana
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
-    runs-on: ubuntu-x64-xlarge
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
