@@ -151,7 +151,12 @@ export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel
 
   // find active page
   for (const child of main.children!) {
-    if (child.id!.indexOf(pageName) > 0) {
+    const childId = child.id ?? '';
+    const isConfigPage = childId.startsWith('datasource-page-');
+    const isMatchingConfigPage = isConfigPage && childId === `datasource-page-${pageName}`;
+    const isMatchingBuiltInPage = !isConfigPage && childId.startsWith(`datasource-${pageName}-`);
+
+    if (isMatchingConfigPage || isMatchingBuiltInPage) {
       child.active = true;
       node = child;
       break;
