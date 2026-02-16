@@ -1,10 +1,10 @@
-import { locationUtil, TypedVariableModel, UrlQueryMap } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -96,7 +96,7 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
-  defaultVariables?: TypedVariableModel[];
+  defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
 }
 
@@ -155,9 +155,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
-  abstract getDefaultControls(
-    rsp: T
-  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }>;
+  abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -693,7 +691,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
   public getDefaultControls(
     rsp: DashboardDTO
-  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
     const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
 
     return loadDefaultControlsFromDatasources(datasourceRefs);
@@ -932,7 +930,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
   public async getDefaultControls(
     rsp: DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
     const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
 
     return loadDefaultControlsFromDatasources(datasourceRefs);
@@ -1237,7 +1235,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async getDefaultControls(
     rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: TypedVariableModel[]; defaultLinks: DashboardLink[] }> {
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
     if (isDashboardV2Resource(rsp)) {
       return this.v2Manager.getDefaultControls(rsp);
     }

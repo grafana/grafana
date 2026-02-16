@@ -1,8 +1,7 @@
-import { TypedVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { DashboardLink, DataSourceRef, VariableHide } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -28,7 +27,7 @@ export const deduplicateDatasourceRefsByType = (refs: Array<DataSourceRef | null
 
 export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) => {
   const datasources = await loadDatasources(refs);
-  const defaultVariables: TypedVariableModel[] = [];
+  const defaultVariables: VariableKind[] = [];
   const defaultLinks: DashboardLink[] = [];
 
   // Default variables

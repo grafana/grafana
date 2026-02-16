@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, DataSourceJsonData, LoadingState, QueryVariableModel } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DashboardLink, DataSourceRef, VariableHide } from '@grafana/schema';
 import {
@@ -6,6 +6,7 @@ import {
   defaultDataQueryKind,
   defaultVizConfigSpec,
   defaultSpec as defaultDashboardV2Spec,
+  QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -65,56 +66,44 @@ const createMockDatasource = (
   }) as DataSourceApi<DataQuery, DataSourceJsonData>;
 
 // Sample mock variables for reuse across tests
-const mockVariable1: QueryVariableModel = {
-  name: 'var1',
-  type: 'query',
-  id: 'var1',
-  rootStateKey: 'key',
-  global: false,
-  index: 0,
-  state: LoadingState.Done,
-  error: null,
-  description: null,
-  hide: 0,
-  label: 'Variable 1',
-  skipUrlSync: false,
-  current: { selected: false, text: 'value1', value: 'value1' },
-  options: [],
-  query: '',
-  datasource: { uid: 'ds-1', type: 'prometheus' },
-  definition: '',
-  sort: 0,
-  regex: '',
-  refresh: 1,
-  multi: false,
-  includeAll: false,
-  allValue: null,
+const mockVariable1: QueryVariableKind = {
+  kind: 'QueryVariable',
+  spec: {
+    name: 'var1',
+    hide: 'dontHide',
+    label: 'Variable 1',
+    skipUrlSync: false,
+    current: { selected: false, text: 'value1', value: 'value1' },
+    options: [],
+    query: defaultDataQueryKind(),
+    definition: '',
+    sort: 'disabled',
+    regex: '',
+    refresh: 'onTimeRangeChanged',
+    multi: false,
+    includeAll: false,
+    allowCustomValue: false,
+  },
 };
 
-const mockVariable2: QueryVariableModel = {
-  name: 'var2',
-  type: 'query',
-  id: 'var2',
-  rootStateKey: 'key',
-  global: false,
-  index: 1,
-  state: LoadingState.Done,
-  error: null,
-  description: null,
-  hide: 0,
-  label: 'Variable 2',
-  skipUrlSync: false,
-  current: { selected: false, text: 'value2', value: 'value2' },
-  options: [],
-  query: '',
-  datasource: { uid: 'ds-2', type: 'loki' },
-  definition: '',
-  sort: 0,
-  regex: '',
-  refresh: 1,
-  multi: false,
-  includeAll: false,
-  allValue: null,
+const mockVariable2: QueryVariableKind = {
+  kind: 'QueryVariable',
+  spec: {
+    name: 'var2',
+    hide: 'dontHide',
+    label: 'Variable 2',
+    skipUrlSync: false,
+    current: { selected: false, text: 'value2', value: 'value2' },
+    options: [],
+    query: defaultDataQueryKind(),
+    definition: '',
+    sort: 'disabled',
+    regex: '',
+    refresh: 'onTimeRangeChanged',
+    multi: false,
+    includeAll: false,
+    allowCustomValue: false,
+  },
 };
 
 // Sample mock links for reuse across tests

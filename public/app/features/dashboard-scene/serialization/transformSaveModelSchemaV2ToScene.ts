@@ -1,6 +1,5 @@
 import { uniqueId } from 'lodash';
 
-import { TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -45,6 +44,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
+  VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
@@ -75,7 +75,6 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
-import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV1 } from '../utils/variables';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -269,7 +268,7 @@ export function transformSaveModelSchemaV2ToScene(
 function getVariables(
   dashboard: DashboardV2Spec,
   isSnapshot: boolean,
-  defaultVariables?: TypedVariableModel[]
+  defaultVariables?: VariableKind[]
 ): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
@@ -282,7 +281,7 @@ function getVariables(
   return variables;
 }
 
-function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: TypedVariableModel[] = []) {
+function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
   const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
   const variableObjects = dashboard.variables
     .map((v) => {
@@ -297,12 +296,11 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     // Added temporarily to allow skipping non-compatible variables
     .filter(isDefined);
 
-  // Default variables are defined using the `TypedVariableModel` type, so we are still using the V1 transformer to create a scene variable from them.
   const defaultVariableObjects = defaultVariables
     ? defaultVariables
         .map((v) => {
           try {
-            return createSceneVariableFromVariableModelV1(v);
+            return createSceneVariableFromVariableModel(v);
           } catch (err) {
             console.error(err);
             return null;

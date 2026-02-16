@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
 import { DashboardLink, DataSourceRef } from '@grafana/schema';
+import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
@@ -17,7 +18,7 @@ import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { Scope } from './scopes';
-import { AdHocVariableFilter, TypedVariableModel } from './templateVars';
+import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
 import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
@@ -344,7 +345,7 @@ abstract class DataSourceApi<
   /**
    * Get default variables that will be added to the dashboard
    */
-  getDefaultVariables?(): TypedVariableModel[];
+  getDefaultVariables?(): VariableKind[];
 
   /**
    * Get default dashboard links that should be added when this datasource is used.
