@@ -1640,10 +1640,6 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.287.0 h1:CEiNZidjZ0b711cYcwPK8+mbVUWVQYSEJTkizySNwD0=
 github.com/grafana/grafana-plugin-sdk-go v0.287.0/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
-github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5 h1:TzLUoJylS/aqfCRyJUsrZE6VZVGTQd2PdhA60bOA0hM=
-github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5/go.mod h1:NbjkuzchbQyNeGZ6lKRs4YNHh7JVdXO3UvBKTAl8u2Y=
-github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2 h1:rDPMdshj3QMvpXn+wK4T8awF9n2sd8i4YRiGqX2xTvg=
-github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
@@ -1654,8 +1650,8 @@ github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
-github.com/grafana/nanogit v0.3.0 h1:XNEef+4Vi+465ZITJs/g/xgnDRJbWhhJ7iQrAnWZ0oQ=
-github.com/grafana/nanogit v0.3.0/go.mod h1:6s6CCTpyMOHPpcUZaLGI+rgBEKdmxVbhqSGgCK13j7Y=
+github.com/grafana/nanogit v0.3.1 h1:my0aAyAHahRCsOzgiUNFfhBPC+26JmN15JJ6aS+0Jvs=
+github.com/grafana/nanogit v0.3.1/go.mod h1:5Me3Q9R0xP801Dtm4OHL+mUhLsKBbFznSK5GKpnyfPc=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f h1:9tRhudagkQO2s61SLFLSziIdCm7XlkfypVKDxpcHokg=
