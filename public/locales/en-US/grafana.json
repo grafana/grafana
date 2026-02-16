@@ -2308,6 +2308,9 @@
       "recipient": "Recipient",
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
+    "open-drawer-icon-button": {
+      "details": "Details"
+    },
     "option-customfield": {
       "label-custom-template": "Custom template",
       "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
@@ -6474,8 +6477,6 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "The value is not saved in the Grafana database",
-      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
