@@ -12,6 +12,11 @@ const (
 	ServiceAccountOrgRoleAdmin  ServiceAccountOrgRole = "Admin"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for ServiceAccountOrgRole.
+func (ServiceAccountOrgRole) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountOrgRole"
+}
+
 // +k8s:openapi-gen=true
 type ServiceAccountSpec struct {
 	Disabled bool                  `json:"disabled"`
@@ -26,6 +31,8 @@ func NewServiceAccountSpec() *ServiceAccountSpec {
 		Disabled: false,
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for ServiceAccountSpec.
 func (ServiceAccountSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountSpec"
 }

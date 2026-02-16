@@ -13,7 +13,7 @@
       "label-resource-group": "Группа ресурсов",
       "label-resource-name": "Имя ресурса",
       "label-resource-number": "Ресурс {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "URI ресурса",
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
@@ -226,26 +226,26 @@
       "select-resource": "Выбрать ресурс"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "Поиск",
       "button-apply": "Применить",
       "button-cancel": "Отмена",
       "header-location": "Расположение",
-      "header-resource-group": "",
+      "header-resource-group": "Группа ресурсов",
       "header-scope": "Область применения",
       "header-type": "Тип",
       "heading-selection": "Выбор",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "Местоположения",
+      "locations-filter-placeholder": "Выбрать местоположение",
+      "recent-tab": "Последние",
       "result-limit": "Показано первых результатов: {{numResults}}",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "Подписки",
+      "subscriptions-filter-placeholder": "Выбрать подписку",
       "text-loading": "Загрузка…",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "Последние ресурсы не найдены",
       "text-no-resources": "Ресурсы не найдены",
       "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "Типы ресурсов",
+      "types-filter-placeholder": "Выбрать тип ресурса"
     },
     "scope-selector": {
       "label": "Область"
@@ -274,7 +274,7 @@
       "label-time-column": "Столбец времени",
       "label-time-range": "Временной диапазон",
       "tooltip-time-column": "<0>Указывает столбец времени, используемый для фильтрации. По умолчанию используется первый столбец таблиц (<1>Временной диапазон</1>), первый найденный столбец (<3>дата и время</3>) или <5>время создания</5>.</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>Указывает временной интервал, используемый для запроса. При выборе параметра <1>Запрос</1> будут использованы только временные интервалы, указанные в запросе. При выборе параметра <3>Дашборд</3> будет использован только временной интервал Grafana.</0>"
     },
     "top-field": {
       "label-top": "Верх"

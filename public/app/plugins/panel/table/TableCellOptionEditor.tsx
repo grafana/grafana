@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import { merge } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
-import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
@@ -29,7 +27,6 @@ interface Props {
 
 export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   const cellType = value.type;
-  const styles = useStyles2(getStyles);
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
     { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
@@ -77,8 +74,8 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
 
   // Setup and inject editor
   return (
-    <div className={styles.fixBottomMargin}>
-      <Field>
+    <Stack direction="column" gap={2}>
+      <Field noMargin>
         <Combobox id={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {cellType === TableCellDisplayMode.Gauge && (
@@ -96,13 +93,6 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
       {cellType === TableCellDisplayMode.Markdown && (
         <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
-    </div>
+    </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  fixBottomMargin: css({
-    position: 'relative',
-    marginBottom: theme.spacing(-2),
-  }),
-});
