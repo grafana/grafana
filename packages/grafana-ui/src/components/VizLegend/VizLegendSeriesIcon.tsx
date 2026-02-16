@@ -40,6 +40,7 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
           return (
             <SeriesIcon
               tabIndex={0}
+              role="button"
               color={color}
               className="pointer"
               ref={ref}
