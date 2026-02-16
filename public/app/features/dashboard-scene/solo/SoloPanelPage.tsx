@@ -1,6 +1,6 @@
 // Libraries
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
@@ -66,10 +66,12 @@ export function SoloPanelRenderer({
   dashboard,
   panelId,
   hideLogo,
+  children,
 }: {
   dashboard: DashboardScene;
   panelId: string;
   hideLogo?: UrlQueryValue;
+  children?: ReactNode;
 }) {
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
@@ -100,6 +102,7 @@ export function SoloPanelRenderer({
       <div className={styles.panelWrapper}>
         <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
           <body.Component model={body} />
+          {children}
         </SoloPanelContextProvider>
       </div>
     </div>

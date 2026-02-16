@@ -9,10 +9,12 @@ import { DashboardScene } from './DashboardScene';
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
   matchFound: boolean;
+  matchedPanels?: VizPanel[];
 }
 
 export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public matchFound = false;
+  public matchedPanels: VizPanel[] = [];
 
   public constructor(public keyPath: string) {}
 
@@ -21,6 +23,7 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
     if (/^\d+$/.test(this.keyPath)) {
       if (`panel-${this.keyPath}` === panel.state.key!) {
         this.matchFound = true;
+        this.matchedPanels.push(panel);
         return true;
       }
 
@@ -29,6 +32,7 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
 
     if (this.keyPath === panel.getPathId()) {
       this.matchFound = true;
+      this.matchedPanels.push(panel);
       return true;
     }
 
