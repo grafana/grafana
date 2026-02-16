@@ -650,10 +650,15 @@ type Cfg struct {
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool
+	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+
+	EventRetentionPeriod time.Duration
+	EventPruningInterval time.Duration
+
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
 	TenantApiServerAddress        string

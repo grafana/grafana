@@ -143,7 +143,20 @@ func NewStorageBackend(
 		Log:                  log.New("storage-backend"),
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+<<<<<<< HEAD
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+=======
+		GarbageCollection: resource.GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+		EventRetentionPeriod: cfg.EventRetentionPeriod,
+		EventPruningInterval: cfg.EventPruningInterval,
+>>>>>>> 440a3d2b9e4 (wip)
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {

@@ -163,6 +163,7 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
 		resourceOpts.Diagnostics = diagnostics
 	}
+
 	return nil
 }
 
