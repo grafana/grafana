@@ -7,13 +7,13 @@ import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/u
 
 import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { useSidebarDragAndDrop } from '../hooks/useSidebarDragAndDrop';
 
 import { AlertIndicator } from './AlertIndicator';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
 import { TransformationCard } from './TransformationCard';
-import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;

@@ -12,11 +12,11 @@ import { PanelDataPaneNext } from '../PanelDataPaneNext';
 import { QueryEditorProvider } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
+import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
 import { AlertRule, QueryOptionField, Transformation } from './types';
-import { useQueryOptions } from './useQueryOptions';
 import { getEditorType } from './utils';
 
 /**
