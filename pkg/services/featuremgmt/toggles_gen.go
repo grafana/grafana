@@ -813,4 +813,16 @@ const (
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAlertingIgnorePendingForNoDataAndError
+	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
+
+	// FlagAlertingNotificationHistoryRuleViewer
+	// Enables the notification history tab in the rule viewer
+	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagAlertingNotificationHistoryGlobal
+	// Enables the notification history global menu item viewer
+	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
 )

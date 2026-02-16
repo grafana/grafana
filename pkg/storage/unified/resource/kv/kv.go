@@ -90,10 +90,12 @@ type KV interface {
 	// The order of the keys is retained in the result.
 	BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error]
 
-	// Save a new value - returns a WriteCloser to write the value to
+	// Save a new value - returns a WriteCloser to write the value to.
+	// Existent keys will be overwritten with the new value.
 	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
 
-	// Delete a value
+	// Delete a value.
+	// Non-existent keys will not return an error.
 	Delete(ctx context.Context, section string, key string) error
 
 	// BatchDelete removes multiple keys from the store.

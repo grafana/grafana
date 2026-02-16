@@ -17,6 +17,7 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/alerting/definition"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -66,6 +67,10 @@ const (
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
 	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
 	defaultConfigIdentifier = "imported"
+	// configForceReplaceHeader if specified, will forcibly replace existing configuration ignoring same identifier restriction
+	configForceReplaceHeader = "X-Grafana-Alerting-Config-Force-Replace"
+	// dryRunHeader if specified, will validate the configuration without saving it
+	dryRunHeader = "X-Grafana-Alerting-Dry-Run"
 
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
@@ -140,7 +145,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
 }
 
@@ -595,6 +600,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
+	dryRun, err := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader)
+	if err != nil {
+		logger.Error("Failed to parse dry run header", "error", err)
+		return errorToResponse(err)
+	}
+
 	identifier, err := parseConfigIdentifierHeader(c)
 	if err != nil {
 		logger.Error("Failed to parse config identifier header", "error", err)
@@ -619,14 +630,40 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec)
+	replace, err := parseBooleanHeader(c.Req.Header.Get(configForceReplaceHeader), configForceReplaceHeader)
+	if err != nil {
+		logger.Error("Failed to parse boolean header", "error", err, "header", configForceReplaceHeader)
+		return errorToResponse(err)
+	}
+
+	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec, replace, dryRun)
 	if err != nil {
 		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier)
-	return successfulResponse()
+	// Convert definition.RenameResources to API RenameResources type
+	var apiRenamed *apimodels.RenameResources
+	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
+		apiRenamed = &apimodels.RenameResources{
+			Receivers:     renamed.Receivers,
+			TimeIntervals: renamed.TimeIntervals,
+		}
+	}
+
+	if dryRun {
+		logger.Info("Dry run: alertmanager configuration validated successfully", "identifier", identifier, "replace", replace)
+		return response.JSON(http.StatusOK, apimodels.ConvertAlertmanagerResponse{
+			Status:          "success",
+			RenameResources: apiRenamed,
+		})
+	}
+
+	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier, "replace", replace)
+	return response.JSON(http.StatusAccepted, apimodels.ConvertAlertmanagerResponse{
+		Status:          "success",
+		RenameResources: apiRenamed,
+	})
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
