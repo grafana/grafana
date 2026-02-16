@@ -134,7 +134,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 
 						// Copying previous finalizers
 						if len(cfg.GetFinalizers()) == 0 {
-							cfg.Finalizers = oldCfg.GetFinalizers()
+							cfg.SetFinalizers(oldCfg.GetFinalizers())
 						}
 					}
 				}
@@ -147,10 +147,10 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				// In case the given repo has no finalizers, set the default ones.
 				// This is because we now enforce their existence at validation time.
 				if len(cfg.GetFinalizers()) == 0 {
-					cfg.Finalizers = []string{
+					cfg.SetFinalizers([]string{
 						repository.RemoveOrphanResourcesFinalizer,
 						repository.CleanFinalizer,
-					}
+					})
 				}
 
 				// In case a connection is specified, we should try creating a new token with given info
