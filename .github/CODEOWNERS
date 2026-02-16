@@ -234,6 +234,7 @@
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
+/devenv/secrets/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
@@ -948,6 +949,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
+/public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad

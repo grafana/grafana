@@ -609,15 +609,11 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.ReceiverStatus
-
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
 	Body []alertingmodels.ReceiverStatus
 }
-
-type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
