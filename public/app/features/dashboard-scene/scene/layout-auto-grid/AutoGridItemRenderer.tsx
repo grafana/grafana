@@ -6,8 +6,12 @@ import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from 
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { ConditionalRenderingOverlay } from '../../conditional-rendering/hooks/ConditionalRenderingOverlay';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useRuleBasedVisibility } from '../../conditional-rendering/hooks/useRuleBasedVisibility';
 import { useDashboardState } from '../../utils/utils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
@@ -50,20 +54,32 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat?: boolean;
           isSelected?: boolean;
         }) => {
-          const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
+          const [isConditionallyHidden, elementCrClass, elementCrOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
 
-          return isConditionallyHidden && !isEditing && !renderHidden ? null : (
+          // Dashboard-level rule-based visibility (targets panels by element reference)
+          const elementId = dashboardSceneGraph.getElementIdentifierForVizPanel(item);
+          const ruleHidden = useRuleBasedVisibility(item, `element:${elementId}`);
+          const isHiddenByRules = ruleHidden === true;
+          const isHidden = isConditionallyHidden || isHiddenByRules;
+
+          // Show overlay/class from either source
+          const conditionalRenderingClass = isHidden ? 'dashboard-visible-hidden-element' : elementCrClass;
+          const conditionalRenderingOverlay = isHidden
+            ? elementCrOverlay ?? <ConditionalRenderingOverlay />
+            : elementCrOverlay;
+
+          return isHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              className={cx(isHidden && !isEditing && styles.hidden)}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
                 // The lazy loader causes issues when used with conditional rendering
-                isLazy && (!isConditionallyHidden || !renderHidden) ? (
+                isLazy && (!isHidden || !renderHidden) ? (
                   <LazyLoader
                     key={item.state.key!}
                     className={cx(

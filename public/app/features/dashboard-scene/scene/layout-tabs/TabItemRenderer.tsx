@@ -9,7 +9,9 @@ import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
+import { ConditionalRenderingOverlay } from '../../conditional-rendering/hooks/ConditionalRenderingOverlay';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useRuleBasedVisibility } from '../../conditional-rendering/hooks/useRuleBasedVisibility';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -36,12 +38,17 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model.state.conditionalRendering);
+  // Dashboard-level rule-based visibility (targets tabs by layout item reference)
+  const tabName = model.state.name;
+  const ruleHidden = useRuleBasedVisibility(model, tabName ? `layout:${tabName}` : '');
+  const isHiddenByAnySource = isConditionallyHidden || ruleHidden === true;
+
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
 
-  if (isConditionallyHidden && !isEditing && !isActive) {
+  if (isHiddenByAnySource && !isEditing && !isActive) {
     return null;
   }
 
@@ -79,11 +86,14 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
               (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
               (isSelected || isSourceSelected) && styles.selectedTab,
+              isHiddenByAnySource && styles.hidden,
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
               isDropTarget && 'dashboard-drop-target'
             )}
             active={isActive}
             title={titleInterpolated}
-            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
+            suffix={isHiddenByAnySource ? IsHiddenSuffix : undefined}
             href={href}
             aria-selected={isActive}
             onChangeTab={(evt) => {
@@ -147,11 +157,22 @@ interface TabItemLayoutRendererProps {
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
   const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+  const [isConditionallyHidden, elementCrClass, elementCrOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
   const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
   const tabVariablesSet = tab.state.$variables;
+
+  // Dashboard-level rule-based visibility (targets tabs by layout item reference)
+  const tabName = tab.state.name;
+  const ruleHidden = useRuleBasedVisibility(tab, tabName ? `layout:${tabName}` : '');
+  const isHiddenByAnySource = isConditionallyHidden || ruleHidden === true;
+
+  // Show overlay/class from either source
+  const conditionalRenderingClass = isHiddenByAnySource ? 'dashboard-visible-hidden-element' : elementCrClass;
+  const conditionalRenderingOverlay = isHiddenByAnySource
+    ? elementCrOverlay ?? <ConditionalRenderingOverlay />
+    : elementCrOverlay;
 
   return (
     <TabContent

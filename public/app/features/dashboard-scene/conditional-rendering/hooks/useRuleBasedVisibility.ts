@@ -1,6 +1,17 @@
 import { SceneObject, useSceneObjectState } from '@grafana/scenes';
 
+import { DashboardRules } from '../rules/DashboardRules';
+
 import { getDashboardSceneFor } from '../../utils/utils';
+
+/** Singleton placeholder so the hook always calls useSceneObjectState (React rules). */
+let placeholderRules: DashboardRules | undefined;
+function getPlaceholderRules(): DashboardRules {
+  if (!placeholderRules) {
+    placeholderRules = new DashboardRules({ rules: [], hiddenTargets: {} });
+  }
+  return placeholderRules;
+}
 
 /**
  * Hook to check if a target element or layout item should be hidden
@@ -14,12 +25,14 @@ export function useRuleBasedVisibility(sceneObject: SceneObject, targetKey: stri
   const dashboard = getDashboardSceneFor(sceneObject);
   const { dashboardRules } = dashboard.useState();
 
+  // Always call useSceneObjectState to satisfy React hooks rules (stable call order).
+  // When dashboardRules is undefined, use a static placeholder so the hook is still invoked.
+  const rules = dashboardRules ?? getPlaceholderRules();
+  const { hiddenTargets } = useSceneObjectState(rules, { shouldActivateOrKeepAlive: true });
+
   if (!dashboardRules) {
     return undefined;
   }
-
-  // Subscribe to the hiddenTargets map so the component re-renders when rules change
-  const { hiddenTargets } = useSceneObjectState(dashboardRules, { shouldActivateOrKeepAlive: true });
 
   return hiddenTargets[targetKey];
 }

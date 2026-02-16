@@ -9,7 +9,9 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
+import { ConditionalRenderingOverlay } from '../../conditional-rendering/hooks/ConditionalRenderingOverlay';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useRuleBasedVisibility } from '../../conditional-rendering/hooks/useRuleBasedVisibility';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
@@ -33,9 +35,20 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
-  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+  const [isConditionallyHidden, elementCrClass, elementCrOverlay] = useIsConditionallyHidden(
     model.state.conditionalRendering
   );
+  // Dashboard-level rule-based visibility (targets rows by layout item reference)
+  const rowName = model.state.name;
+  const ruleHidden = useRuleBasedVisibility(model, rowName ? `layout:${rowName}` : '');
+  const isHiddenByAnySource = isConditionallyHidden || ruleHidden === true;
+
+  // Show overlay/class from either source
+  const conditionalRenderingClass = isHiddenByAnySource ? 'dashboard-visible-hidden-element' : elementCrClass;
+  const conditionalRenderingOverlay = isHiddenByAnySource
+    ? elementCrOverlay ?? <ConditionalRenderingOverlay />
+    : elementCrOverlay;
+
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);
@@ -51,7 +64,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const myIndex = rows.findIndex((row) => row === model);
 
   const shouldGrow = !isCollapsed && fillScreen;
-  const isHidden = isConditionallyHidden && !isEditing;
+  const isHidden = isHiddenByAnySource && !isEditing;
 
   // Highlight the full row when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
