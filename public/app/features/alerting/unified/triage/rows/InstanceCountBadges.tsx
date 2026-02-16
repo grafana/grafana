@@ -21,7 +21,7 @@ export function RowActions({ counts, actionButton }: RowActionsProps) {
         {pending > 0 && (
           <Text color="warning">
             <span className={styles.badge}>
-              <Icon name="circle" size="sm" />
+              <Icon name="circle" size="xs" />
               <CountText value={pending} />
             </span>
           </Text>
@@ -31,7 +31,7 @@ export function RowActions({ counts, actionButton }: RowActionsProps) {
         {firing > 0 && (
           <Text color="error">
             <span className={styles.badge}>
-              <Icon name="exclamation-circle" size="sm" />
+              <Icon name="exclamation-circle" size="xs" />
               <CountText value={firing} />
             </span>
           </Text>
@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   grid: css({
     display: 'grid',
     gridTemplateColumns: '1fr 1fr 2fr',
-    gap: theme.spacing(1),
+    gap: theme.spacing(0.5),
     alignItems: 'center',
     flexShrink: 0,
     whiteSpace: 'nowrap',
@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(0.25),
   }),
   countText: css({
+    ...theme.typography.bodySmall,
     display: 'inline-block',
     minWidth: '1.5em',
     textAlign: 'center',
