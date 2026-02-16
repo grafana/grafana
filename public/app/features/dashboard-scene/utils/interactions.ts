@@ -105,10 +105,21 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variables_reordered', properties);
   },
 
+  // dashboards_add_annotation_button_clicked
+  // when a user clicks on 'Add annotation'
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_annotation_button_clicked', properties);
+  },
+  // dashboards_annotations_reordered
+  // when a user drags and drops an annotation in the content outline
+  annotationsReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('annotations_reordered', properties);
+  },
+
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
-    source: 'panel' | 'edit_pane'
+    source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
   },
