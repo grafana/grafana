@@ -8,11 +8,11 @@ import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { Box } from '@grafana/ui';
 
 import { useWorkbenchContext } from '../WorkbenchContext';
-import { METRIC_NAME } from '../constants';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
-import { getDataQuery, useQueryFilter } from './utils';
+import { alertRuleInstancesQuery } from './queries';
+import { useQueryFilter } from './utils';
 
 function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
@@ -49,13 +49,7 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
   const [timeRange] = useTimeRange();
   const queryFilter = useQueryFilter();
 
-  const filters = queryFilter ? `grafana_rule_uid="${ruleUID}",${queryFilter}` : `grafana_rule_uid="${ruleUID}"`;
-  const query = getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{${filters}})`,
-    { format: 'timeseries', legendFormat: '{{alertstate}}' }
-  );
-
-  const queryRunner = useQueryRunner({ queries: [query] });
+  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter)] });
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const { data } = queryRunner.useState();

@@ -59,14 +59,14 @@ func TestSetRequestContext(t *testing.T) {
 		assert.Equal(t, "tenant-456", namespace, "Namespace should match baggage value")
 	})
 
-	t.Run("defaults to empty namespace when baggage header is missing", func(t *testing.T) {
+	t.Run("does not set a namespace when baggage header is missing", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 
 		ctx := setRequestContext(req.Context(), rec, req)
 
 		namespace, ok := request.NamespaceFrom(ctx)
-		assert.True(t, ok, "Namespace should be present in context")
+		assert.False(t, ok, "Namespace should not be present in context")
 		assert.Empty(t, namespace, "Namespace should be empty when not provided")
 	})
 
@@ -78,7 +78,7 @@ func TestSetRequestContext(t *testing.T) {
 		ctx := setRequestContext(req.Context(), rec, req)
 
 		namespace, ok := request.NamespaceFrom(ctx)
-		assert.True(t, ok, "Namespace should be present in context")
+		assert.False(t, ok, "Namespace should not be present in context")
 		assert.Empty(t, namespace, "Namespace should be empty when baggage is invalid")
 	})
 
@@ -90,7 +90,7 @@ func TestSetRequestContext(t *testing.T) {
 		ctx := setRequestContext(req.Context(), rec, req)
 
 		namespace, ok := request.NamespaceFrom(ctx)
-		assert.True(t, ok, "Namespace should be present in context")
+		assert.False(t, ok, "Namespace should not be present in context")
 		assert.Empty(t, namespace, "Namespace should be empty when namespace member not in baggage")
 	})
 }
