@@ -13199,7 +13199,7 @@
       },
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "footer-items_one": "{{count}} items",
+      "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
