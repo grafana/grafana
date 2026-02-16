@@ -15,7 +15,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { Icon, Text, Tooltip } from '@grafana/ui';
+import { Icon, Text, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -77,8 +77,9 @@ const SERIES_COLORS = {
   active: 'red',
   missed: 'red',
   failed: 'red',
-  pending: 'yellow',
-  recovering: 'yellow',
+  // we'll use a specific "yellow" that works for both dark and light theme with sufficient contrast
+  pending: 'rgb(255, 153, 0)',
+  recovering: 'rgb(255, 153, 0)',
   nodata: 'blue',
   'active evaluation': 'blue',
   normal: 'green',
