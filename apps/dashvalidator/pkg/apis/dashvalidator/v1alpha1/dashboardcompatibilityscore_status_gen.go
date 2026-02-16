@@ -47,6 +47,11 @@ func NewDashboardCompatibilityScoreDataSourceResult() *DashboardCompatibilitySco
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreDataSourceResult.
+func (DashboardCompatibilityScoreDataSourceResult) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceResult"
+}
+
 // QueryBreakdown provides compatibility details for a single query within a panel.
 // Granular per-query results allow users to identify exactly which queries need fixing.
 //
@@ -91,6 +96,11 @@ func NewDashboardCompatibilityScoreQueryBreakdown() *DashboardCompatibilityScore
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreQueryBreakdown.
+func (DashboardCompatibilityScoreQueryBreakdown) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreQueryBreakdown"
+}
+
 // +k8s:openapi-gen=true
 type DashboardCompatibilityScorestatusOperatorState struct {
 	// lastEvaluation is the ResourceVersion last evaluated
@@ -107,6 +117,11 @@ type DashboardCompatibilityScorestatusOperatorState struct {
 // NewDashboardCompatibilityScorestatusOperatorState creates a new DashboardCompatibilityScorestatusOperatorState object.
 func NewDashboardCompatibilityScorestatusOperatorState() *DashboardCompatibilityScorestatusOperatorState {
 	return &DashboardCompatibilityScorestatusOperatorState{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScorestatusOperatorState.
+func (DashboardCompatibilityScorestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScorestatusOperatorState"
 }
 
 // +k8s:openapi-gen=true
@@ -144,6 +159,11 @@ func NewDashboardCompatibilityScoreStatus() *DashboardCompatibilityScoreStatus {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreStatus.
+func (DashboardCompatibilityScoreStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreStatus"
+}
+
 // +k8s:openapi-gen=true
 type DashboardCompatibilityScoreStatusOperatorStateState string
 
@@ -153,15 +173,7 @@ const (
 	DashboardCompatibilityScoreStatusOperatorStateStateFailed     DashboardCompatibilityScoreStatusOperatorStateState = "failed"
 )
 
-func (DashboardCompatibilityScoreDataSourceResult) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceResult"
-}
-func (DashboardCompatibilityScoreQueryBreakdown) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreQueryBreakdown"
-}
-func (DashboardCompatibilityScorestatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScorestatusOperatorState"
-}
-func (DashboardCompatibilityScoreStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreStatus"
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreStatusOperatorStateState.
+func (DashboardCompatibilityScoreStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreStatusOperatorStateState"
 }

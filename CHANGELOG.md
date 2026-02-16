@@ -1,3 +1,63 @@
+<!-- 11.6.11 START -->
+
+# 11.6.11 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117713](https://github.com/grafana/grafana/pull/117713), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116936](https://github.com/grafana/grafana/pull/116936), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117476](https://github.com/grafana/grafana/pull/117476), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117865](https://github.com/grafana/grafana/pull/117865), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 11.6.11 END -->
+<!-- 12.0.10 START -->
+
+# 12.0.10 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117712](https://github.com/grafana/grafana/pull/117712), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117971](https://github.com/grafana/grafana/pull/117971), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.0.10 END -->
+<!-- 12.1.7 START -->
+
+# 12.1.7 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117711](https://github.com/grafana/grafana/pull/117711), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116957](https://github.com/grafana/grafana/pull/116957), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117474](https://github.com/grafana/grafana/pull/117474), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117863](https://github.com/grafana/grafana/pull/117863), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.1.7 END -->
+<!-- 12.2.5 START -->
+
+# 12.2.5 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117710](https://github.com/grafana/grafana/pull/117710), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116958](https://github.com/grafana/grafana/pull/116958), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117472](https://github.com/grafana/grafana/pull/117472), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117861](https://github.com/grafana/grafana/pull/117861), [@github-actions[bot]](https://github.com/github-actions[bot])
+- **Security(TraceView):** Sanitize html [#117867](https://github.com/grafana/grafana/pull/117867), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.2.5 END -->
+<!-- 12.3.3 START -->
+
+# 12.3.3 (2026-02-12)
+
+### Features and enhancements
+
+- **Alerting:** Add limits for the size of expanded notification templates [#117709](https://github.com/grafana/grafana/pull/117709), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Correlations:** Remove support for org_id=0 [#116934](https://github.com/grafana/grafana/pull/116934), [@gelicia](https://github.com/gelicia)
+- **Go:** Update to 1.25.7 [#117471](https://github.com/grafana/grafana/pull/117471), [@macabu](https://github.com/macabu)
+- **Security(Public dashboards annotations):** use dashboard timerange if time selection disabled [#117860](https://github.com/grafana/grafana/pull/117860), [@dana-axinte](https://github.com/dana-axinte)
+- **Security(TraceView):** Sanitize html [#117866](https://github.com/grafana/grafana/pull/117866), [@github-actions[bot]](https://github.com/github-actions[bot])
+
+<!-- 12.3.3 END -->
 <!-- 12.3.2+security-01 START -->
 
 # 12.3.2+security-01 (2026-02-11)

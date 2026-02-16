@@ -50,16 +50,7 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 																		Type: []string{"object"},
 																		AdditionalProperties: &spec.SchemaOrBool{
-																			Schema: &spec.Schema{
-																				SchemaProps: spec.SchemaProps{
-																					Type: []string{"object"},
-																					AdditionalProperties: &spec.SchemaOrBool{
-																						Schema: &spec.Schema{
-																							SchemaProps: spec.SchemaProps{},
-																						},
-																					},
-																				},
-																			},
+																			Allows: true,
 																		},
 																	},
 																},
