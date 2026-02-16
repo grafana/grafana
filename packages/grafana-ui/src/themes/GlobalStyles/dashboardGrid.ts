@@ -91,6 +91,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    '.dashboard-rule-highlight': {
+      outline: `2px dashed ${theme.colors.warning.border}`,
+      outlineOffset: '0px',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.03),
+    },
+
     '.dashboard-canvas-controls': {
       opacity: 0,
 

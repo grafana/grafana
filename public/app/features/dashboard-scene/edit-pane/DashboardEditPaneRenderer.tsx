@@ -21,6 +21,7 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { DashboardRulesPane } from './DashboardRulesPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { type DashboardSidebarPane } from './types';
 
@@ -137,6 +138,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               config.featureToggles.dashboardUnifiedDrilldownControls) && (
               <FiltersOverviewButton editPane={editPane} openPane={openPane} />
             )}
+          {config.featureToggles.dashboardRules && (
+            <Sidebar.Button
+              icon="bolt"
+              onClick={() => editPane.openPane(new DashboardRulesPane({}))}
+              title="Rules"
+              tooltip="Dashboard rules"
+              active={openPane instanceof DashboardRulesPane}
+            />
+          )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           {Boolean(meta.isSnapshot) && (
