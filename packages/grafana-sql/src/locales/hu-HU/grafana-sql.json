@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inaktív automatikus maximális száma",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Ha engedélyezve van, automatikusan beállítja az <i>Inaktív kapcsolatok maximális</i> száma értéket a <i>Megnyitott kapcsolatok maximális száma</i> értékére. Ha a nyitott kapcsolatok maximális száma nincs beállítva, akkor az alapértelmezett értékre lesz beállítva ({{defaultMaxIdle}}).",
+        "content-max-idle": "Az inaktív kapcsolatok készletében lévő kapcsolatok maximális száma. Ha a <i>Megnyitott kapcsolatok maximális száma</i> nagyobb, mint 0, de kisebb, mint az <i>Inaktív kapcsolatok maximális száma</i>, akkor az <i>Inaktív kapcsolatok maximális száma</i> csökken, hogy megfeleljen a <i>Megnyitott kapcsolatok maximális száma</i> határértékének. Ha 0-ra van állítva, akkor egyetlen inaktív kapcsolat sem marad meg.",
         "content-max-lifetime": "A csatlakozás újrafelhasználásának maximális időtartama másodpercben. Ha 0-ra van állítva, a kapcsolatok újrafelhasználása végtelen.",
-        "content-max-open": "",
+        "content-max-open": "Az adatbázisra irányuló nyitott kapcsolatok maximális száma. Ha az <i>Inaktív kapcsolatok maximális száma</i> nagyobb, mint 0, és a <i>Megnyitott kapcsolatok maximális száma</i> kisebb, mint az <i>Inaktív kapcsolatok maximális száma</i>, akkor az <i>Inaktív kapcsolatok maximális száma</i> csökken, hogy megfeleljen a <i>Megnyitott kapcsolatok maximális száma</i> határértékének. Ha 0-ra van állítva, akkor nincs korlátozva a nyitott kapcsolatok száma.",
         "max-idle": "Max. inaktív",
         "max-lifetime": "Max. élettartam",
         "max-open": "Max. nyitott",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "A lekérdezés érvénytelen. A részleteket tekintse meg alább. <br />Ezt a lekérdezést azonban továbbra is futtathatja.",
         "editor-modes": {
           "label-builder": "Építő",
           "label-code": "Kód"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Szöveges mező",
+          "valueField": "Értékmező"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Lekérdezés formázása"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Ez a lekérdezés <strong>{{bytes}}</strong> feldolgozását végzi futtatáskor.",
         "validating-query": "Lekérdezés érvényesítése…"
       },
       "raw-editor": {
