@@ -11,6 +11,7 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
