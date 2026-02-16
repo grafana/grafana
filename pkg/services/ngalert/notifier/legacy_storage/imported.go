@@ -153,17 +153,13 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	return mr, nil
 }
 
-func (e ImportedConfigRevision) GetInhibitRules(multiplePoliciesEnabled bool) (definitions.ManagedInhibitionRules, error) {
+func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibitionRules, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
 
 	importedRules := e.importedConfig.InhibitRules
 	if len(importedRules) == 0 {
-		return nil, nil
-	}
-
-	if !multiplePoliciesEnabled {
 		return nil, nil
 	}
 

@@ -218,8 +218,32 @@ func TestIntegrationAccessControl(t *testing.T) {
 	adminClient, err := v0alpha1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	// Note: Rules are created via alertmanager config, not directly via K8s API
-	// This test assumes rules exist from config
+	testRule := &v0alpha1.InhibitionRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: apis.DefaultNamespace,
+			Name:      "test-permission-rule",
+		},
+		Spec: v0alpha1.InhibitionRuleSpec{
+			SourceMatchers: []v0alpha1.InhibitionRuleMatcher{
+				{
+					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Label: "alertname",
+					Value: "SourceAlert",
+				},
+			},
+			TargetMatchers: []v0alpha1.InhibitionRuleMatcher{
+				{
+					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Label: "alertname",
+					Value: "TargetAlert",
+				},
+			},
+			Equal: []string{"instance"},
+		},
+	}
+	_, err = adminClient.Create(ctx, testRule, resource.CreateOptions{})
+	require.NoError(t, err)
+
 	adminList, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 

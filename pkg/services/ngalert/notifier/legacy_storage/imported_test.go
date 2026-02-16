@@ -277,32 +277,17 @@ receivers:
 		require.NoError(t, err)
 		assert.Nil(t, imported.importedConfig)
 
-		result, err := imported.GetInhibitRules(true)
+		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
-
-	// NOTE: requires https://github.com/grafana/alerting/pull/475
-	// otherwise we get `invalid merge options: matchers must not be empty` error
-	//t.Run("should return empty list if no subtree matcher", func(t *testing.T) {
-	//	extraCfg := extraConfig(configWithoutRules)
-	//	extraCfg.MergeMatchers = nil
-	//	rev := getConfigRevisionForTest(withExtraConfig(extraCfg))
-	//	imported, err := rev.Imported()
-	//	require.NoError(t, err)
-	//	assert.Nil(t, imported.importedConfig)
-
-	//	result, err := imported.GetInhibitRules()
-	//	require.NoError(t, err)
-	//	require.Empty(t, result)
-	//})
 
 	t.Run("should return empty list if no inhibition rules in imported config", func(t *testing.T) {
 		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(configWithoutRules)))
 		imported, err := rev.Imported()
 		require.NoError(t, err)
 
-		result, err := imported.GetInhibitRules(true)
+		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
@@ -314,7 +299,7 @@ receivers:
 		imported, err := rev.Imported()
 		require.NoError(t, err)
 
-		result, err := imported.GetInhibitRules(true)
+		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
 		require.Equal(t, definitions.ManagedInhibitionRules{
 			"test-inhibit-0": {

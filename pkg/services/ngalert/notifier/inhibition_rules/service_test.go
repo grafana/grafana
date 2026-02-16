@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -85,36 +86,48 @@ func TestService_GetInhibitionRules(t *testing.T) {
 	grafanaRules, importedRules := getTestRules()
 
 	tt := []struct {
-		name          string
-		grafanaRules  []models.InhibitionRule
-		importedRules []models.InhibitionRule
-		expErr        error
-		expRules      []models.InhibitionRule
+		name           string
+		enableImported bool
+		grafanaRules   []models.InhibitionRule
+		importedRules  []models.InhibitionRule
+		expErr         error
+		expRules       []models.InhibitionRule
 	}{
 		{
-			name:          "returns both Grafana and imported inhibition rules",
-			grafanaRules:  grafanaRules,
-			importedRules: importedRules,
-			expErr:        nil,
-			expRules:      append(grafanaRules, importedRules...),
+			name:           "returns both Grafana and imported inhibition rules",
+			enableImported: true,
+			grafanaRules:   grafanaRules,
+			importedRules:  importedRules,
+			expErr:         nil,
+			expRules:       append(grafanaRules, importedRules...),
 		},
 		{
-			name:         "returns only Grafana rules when no imported config",
-			grafanaRules: grafanaRules,
-			expErr:       nil,
-			expRules:     grafanaRules,
+			name:           "returns only Grafana rules when no imported config",
+			enableImported: true,
+			grafanaRules:   grafanaRules,
+			expErr:         nil,
+			expRules:       grafanaRules,
 		},
 		{
-			name:          "returns only imported rules when no grafana rules",
-			importedRules: importedRules,
-			expErr:        nil,
-			expRules:      importedRules,
+			name:           "returns only imported rules when no grafana rules",
+			enableImported: true,
+			importedRules:  importedRules,
+			expErr:         nil,
+			expRules:       importedRules,
+		},
+		{
+			name:           "returns only grafana rules when flags are disabled",
+			enableImported: false,
+			grafanaRules:   grafanaRules,
+			importedRules:  importedRules,
+			expErr:         nil,
+			expRules:       grafanaRules,
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			sut, store := createInhibitionRuleSvcSut()
+			sut, store := createInhibitionRuleSvcSut(tc.enableImported)
 			revision := createTestConfig(t, tc.grafanaRules, tc.importedRules)
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return revision, nil
@@ -160,7 +173,7 @@ func TestService_GetInhibitionRule(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			sut, store := createInhibitionRuleSvcSut()
+			sut, store := createInhibitionRuleSvcSut(true)
 			revision := createTestConfig(t, tc.grafanaRules, tc.importedRules)
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return revision, nil
@@ -230,7 +243,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			sut, store := createInhibitionRuleSvcSut()
+			sut, store := createInhibitionRuleSvcSut(true)
 			revision := createTestConfig(t, tc.grafanaRules, tc.importedRules)
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return revision, nil
@@ -280,7 +293,7 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			sut, store := createInhibitionRuleSvcSut()
+			sut, store := createInhibitionRuleSvcSut(true)
 			revision := createTestConfig(t, tc.grafanaRules, tc.importedRules)
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return revision, nil
@@ -307,10 +320,17 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 
 // Test helpers
 
-func createInhibitionRuleSvcSut() (*Service, *legacy_storage.AlertmanagerConfigStoreFake) {
+func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.AlertmanagerConfigStoreFake) {
 	store := &legacy_storage.AlertmanagerConfigStoreFake{}
 	logger := log.NewNopLogger()
-	return NewService(store, logger, true), store
+	var ff featuremgmt.FeatureToggles
+	if enableImported {
+		ff = featuremgmt.WithFeatures(
+			featuremgmt.FlagAlertingMultiplePolicies,
+			featuremgmt.FlagAlertingImportAlertmanagerAPI,
+		)
+	}
+	return NewService(store, logger, ff), store
 }
 
 func createTestConfig(t *testing.T, grafanaRules, importedRules []models.InhibitionRule) *legacy_storage.ConfigRevision {

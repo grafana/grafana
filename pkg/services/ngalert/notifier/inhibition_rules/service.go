@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -17,22 +18,22 @@ type alertmanagerConfigStore interface {
 }
 
 type Service struct {
-	configStore             alertmanagerConfigStore
-	log                     log.Logger
-	validator               validation.ProvenanceStatusTransitionValidator
-	multiplePoliciesEnabled bool
+	configStore    alertmanagerConfigStore
+	log            log.Logger
+	validator      validation.ProvenanceStatusTransitionValidator
+	featureToggles featuremgmt.FeatureToggles
 }
 
 func NewService(
 	config alertmanagerConfigStore,
 	log log.Logger,
-	multiplePoliciesEnabled bool,
+	featureToggles featuremgmt.FeatureToggles,
 ) *Service {
 	return &Service{
-		configStore:             config,
-		log:                     log,
-		validator:               validation.ValidateProvenanceRelaxed,
-		multiplePoliciesEnabled: multiplePoliciesEnabled,
+		configStore:    config,
+		log:            log,
+		validator:      validation.ValidateProvenanceRelaxed,
+		featureToggles: featureToggles,
 	}
 }
 
@@ -55,7 +56,6 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]mode
 		result = append(result, *r)
 	}
 
-	// Add imported rules with ProvenanceConvertedPrometheus
 	for _, r := range importedRules {
 		result = append(result, *r)
 	}
@@ -216,13 +216,17 @@ func (svc *Service) getInhibitionRuleByName(ctx context.Context, rev *legacy_sto
 }
 
 func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) definitions.ManagedInhibitionRules {
+	if !svc.includeImported() || !svc.multiplePoliciesEnabled() {
+		return nil
+	}
+
 	imported, err := rev.Imported()
 	if err != nil {
 		svc.log.Warn("failed to get imported config revision for inhibition rules", "error", err)
 		return nil
 	}
 
-	inhibitRules, err := imported.GetInhibitRules(svc.multiplePoliciesEnabled)
+	inhibitRules, err := imported.GetInhibitRules()
 	if err != nil {
 		svc.log.Warn("failed to get imported inhibition rules", "error", err)
 		return nil
@@ -243,4 +247,20 @@ func (svc *Service) checkOptimisticConcurrency(existing models.InhibitionRule, p
 		return provisioning.ErrVersionConflict.Errorf("provided version %s of inhibition rule %s does not match current version %s", desiredVersion, existing.Name, currentVersion)
 	}
 	return nil
+}
+
+func (svc *Service) isFeatureEnabled(flag string) bool {
+	if svc.featureToggles == nil {
+		return false
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	return svc.featureToggles.IsEnabledGlobally(flag)
+}
+
+func (svc *Service) multiplePoliciesEnabled() bool {
+	return svc.isFeatureEnabled(featuremgmt.FlagAlertingMultiplePolicies)
+}
+
+func (svc *Service) includeImported() bool {
+	return svc.isFeatureEnabled(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }
