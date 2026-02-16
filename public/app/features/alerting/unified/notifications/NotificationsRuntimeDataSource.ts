@@ -2,11 +2,11 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import {
-  CreateNotificationqueryBody,
   CreateNotificationqueryMatcher,
   CreateNotificationqueryNotificationEntry,
   CreateNotificationqueryNotificationOutcome,
   CreateNotificationqueryNotificationStatus,
+  CreateNotificationqueryResponse,
   generatedAPI as notificationsApi,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import {
@@ -193,7 +193,7 @@ export const getNotifications = async (
   outcome?: CreateNotificationqueryNotificationOutcome,
   receiver?: string,
   groupLabels?: CreateNotificationqueryMatcher[]
-): Promise<CreateNotificationqueryBody> => {
+): Promise<CreateNotificationqueryResponse> => {
   const result = await dispatch(
     notificationsApi.endpoints.createNotificationquery.initiate(
       {
