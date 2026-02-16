@@ -57,7 +57,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         // cached job to update — activeJob is already undefined, so the existing
         // FinishedJobStatus fallback handles it. We only need to set the error
         // status when there IS a cached job that would otherwise appear stuck.
-        onError: (error, { updateCachedData }) => {
+        onError: (error, updateCachedData) => {
           updateCachedData((draft) => {
             if (draft.items?.[0]) {
               draft.items[0].status = {

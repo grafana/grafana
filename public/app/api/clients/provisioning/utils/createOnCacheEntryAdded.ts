@@ -1,18 +1,10 @@
 import { Subscription } from 'rxjs';
 
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
-interface WatchErrorHelpers<List> {
-  updateCachedData: (fn: (draft: List) => void) => void;
-  dispatch: (action: unknown) => void;
-}
-
 interface OnCacheEntryAddedOptions<List = unknown> {
-  showErrorNotification?: boolean;
-  onError?: (error: unknown, helpers: WatchErrorHelpers<List>) => void;
+  onError?: (error: unknown, updateCachedData: (fn: (draft: List) => void) => void) => void;
 }
 
 /**
@@ -23,20 +15,16 @@ export function createOnCacheEntryAdded<Spec, Status>(
   resourceName: string,
   options: OnCacheEntryAddedOptions<ResourceList<Spec, Status>> = {}
 ) {
-  const { showErrorNotification = true } = options;
-
   return async function onCacheEntryAdded<List extends ResourceList<Spec, Status>>(
     arg: ListOptions | undefined,
     {
       updateCachedData,
       cacheDataLoaded,
       cacheEntryRemoved,
-      dispatch,
     }: {
       updateCachedData: (fn: (draft: List) => void) => void;
       cacheDataLoaded: Promise<{ data: List }>;
       cacheEntryRemoved: Promise<void>;
-      dispatch: (action: unknown) => void;
     }
   ) {
     if (!arg?.watch) {
@@ -77,10 +65,7 @@ export function createOnCacheEntryAdded<Spec, Status>(
           });
         },
         error: (error) => {
-          if (showErrorNotification) {
-            dispatch(notifyApp(createErrorNotification('Error watching for resource updates', error)));
-          }
-          options.onError?.(error, { updateCachedData, dispatch });
+          options.onError?.(error, updateCachedData);
         },
       });
     } catch (error) {
