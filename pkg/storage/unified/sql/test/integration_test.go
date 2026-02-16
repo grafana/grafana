@@ -215,7 +215,7 @@ func TestClientServer(t *testing.T) {
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

@@ -60,9 +60,10 @@ type service struct {
 	tracing       trace.Tracer
 
 	// -- Storage Services
-	queue        QOSEnqueueDequeuer
-	scheduler    *scheduler.Scheduler
-	searchClient resourcepb.ResourceIndexClient
+	queue          QOSEnqueueDequeuer
+	storageMetrics *resource.StorageMetrics
+	scheduler      *scheduler.Scheduler
+	searchClient   resourcepb.ResourceIndexClient
 
 	// -- Search Services
 	docBuilders      resource.DocumentBuilderSupplier
@@ -86,7 +87,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
@@ -112,6 +113,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
@@ -120,7 +122,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -169,6 +171,7 @@ func newService(
 	reg prometheus.Registerer,
 	tracer trace.Tracer,
 	docBuilders resource.DocumentBuilderSupplier,
+	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
@@ -190,6 +193,7 @@ func newService(
 		log:                log,
 		reg:                reg,
 		docBuilders:        docBuilders,
+		storageMetrics:     storageMetrics,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
 		searchClient:       searchClient,
@@ -335,17 +339,18 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	serverOptions := ServerOptions{
-		Backend:       s.backend,
-		Cfg:           s.cfg,
-		Tracer:        s.tracing,
-		Reg:           s.reg,
-		AccessClient:  authzClient,
-		SearchOptions: searchOptions,
-		SearchClient:  s.searchClient,
-		IndexMetrics:  s.indexMetrics,
-		Features:      s.features,
-		QOSQueue:      s.queue,
-		OwnsIndexFn:   s.OwnsIndex,
+		Backend:        s.backend,
+		Cfg:            s.cfg,
+		Tracer:         s.tracing,
+		Reg:            s.reg,
+		AccessClient:   authzClient,
+		SearchOptions:  searchOptions,
+		SearchClient:   s.searchClient,
+		StorageMetrics: s.storageMetrics,
+		IndexMetrics:   s.indexMetrics,
+		Features:       s.features,
+		QOSQueue:       s.queue,
+		OwnsIndexFn:    s.OwnsIndex,
 	}
 
 	if !s.searchStandalone && s.cfg.OverridesFilePath != "" {
