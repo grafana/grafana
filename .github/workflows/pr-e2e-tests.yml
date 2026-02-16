@@ -44,7 +44,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Build & Package Grafana
-    runs-on: ubuntu-latest-16-cores
+    runs-on: ubuntu-x64-xlarge
     permissions:
       contents: read
       id-token: write
@@ -220,7 +220,7 @@ jobs:
             path: e2e/old-arch/panels-suite
             flags: --flags="--env dashboardScene=false"
     name: ${{ matrix.suite }}
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
 
@@ -291,7 +291,7 @@ jobs:
     needs:
       - build-grafana
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
 
@@ -478,7 +478,7 @@ jobs:
     needs:
       - build-grafana
     name: A11y test
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
 
