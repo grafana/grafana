@@ -3760,17 +3760,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.2.0":
-  version: 3.2.0
-  resolution: "@grafana/plugin-e2e@npm:3.2.0"
+"@grafana/plugin-e2e@npm:3.3.0":
+  version: 3.3.0
+  resolution: "@grafana/plugin-e2e@npm:3.3.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:12.4.0-21205677807"
+    "@grafana/e2e-selectors": "npm:12.4.0-21636304584"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/16bad2ac140624119f35b31857115b17164b672316a7855617ce8507badcf0f1f056132e560fb7300be8430b773d0a6bf21d74e53e1dc54359960faf06347694
+  checksum: 10/5f041d633aabe085c84e5be51121f383a7a010bdc2b314c0a984b008f5604e167a6c918bcf924c709a28ee4e7809c1f3522a5e770ce188edca71a529b7c7edb5
   languageName: node
   linkType: hard
 
@@ -3913,7 +3913,7 @@ __metadata:
     "@grafana/ui": "npm:12.4.0-pre"
     "@openfeature/core": "npm:^1.9.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.3"
-    "@openfeature/web-sdk": "npm:^1.6.1"
+    "@openfeature/react-sdk": "npm:^1.2.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rollup/plugin-terser": "npm:0.4.4"
     "@testing-library/dom": "npm:10.4.1"
@@ -4084,6 +4084,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
+    "@openfeature/react-sdk": "npm:^1.2.0"
     "@swc/core": "npm:1.13.3"
     "@swc/jest": "npm:^0.2.26"
     "@types/chance": "npm:^1.1.7"
@@ -6566,6 +6567,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openfeature/react-sdk@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@openfeature/react-sdk@npm:1.2.0"
+  peerDependencies:
+    "@openfeature/web-sdk": ^1.5.0
+    react: ">=16.8.0"
+  checksum: 10/56411b9e6fbf79e13b2cbe2f45a632ba933127cad9b0e59bc714646d95516b51173e9aadd51fb829f27aba1f29383f2a5cd4d3cd97ae49a673e3175453e30c6e
+  languageName: node
+  linkType: hard
+
 "@openfeature/web-sdk@npm:^1.6.1":
   version: 1.7.2
   resolution: "@openfeature/web-sdk@npm:1.7.2"
@@ -7893,13 +7904,6 @@ __metadata:
     react-redux:
       optional: true
   checksum: 10/0d444d749d2261103bc1ad8a3eb43700aef5fd0417c21e758005d5c2e67f567248cc18708a336a8d407245642b863cb14a8db90aaa5bc18fd13ca53fe7fb0ab7
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.19.1":
-  version: 1.19.1
-  resolution: "@remix-run/router@npm:1.19.1"
-  checksum: 10/2800c2f6567a982fe942aacc4cb5b170e7cc89bd455960e3bea2424161ff7dac32d01886322d88dd19b88d1bea711f39566d17f02b73eeb74999affb471f8f52
   languageName: node
   linkType: hard
 
@@ -10240,7 +10244,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-router-dom: "npm:^6.22.0"
+    react-router-dom: "npm:^6.26.1"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
@@ -10274,7 +10278,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-router-dom: "npm:^6.22.0"
+    react-router-dom: "npm:^6.26.1"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
@@ -10308,7 +10312,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-router-dom: "npm:^6.22.0"
+    react-router-dom: "npm:^6.26.1"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
@@ -13628,13 +13632,13 @@ __metadata:
   linkType: hard
 
 "axios@npm:^1, axios@npm:^1.10.0, axios@npm:^1.12.0, axios@npm:^1.12.2, axios@npm:^1.6.1, axios@npm:^1.8.3":
-  version: 1.13.2
-  resolution: "axios@npm:1.13.2"
+  version: 1.13.5
+  resolution: "axios@npm:1.13.5"
   dependencies:
-    follow-redirects: "npm:^1.15.6"
-    form-data: "npm:^4.0.4"
+    follow-redirects: "npm:^1.15.11"
+    form-data: "npm:^4.0.5"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/ae4e06dcd18289f2fd18179256d550d27f9a53ecb2f9c59f2ccc4efd1d7151839ba8c3e0fb533dac793e4a59a576ca8689a19244dce5c396680837674a47a867
+  checksum: 10/db726d09902565ef9a0632893530028310e2ec2b95b727114eca1b101450b00014133dfc3871cffc87983fb922bca7e4874d7e2826d1550a377a157cdf3f05b6
   languageName: node
   linkType: hard
 
@@ -19585,13 +19589,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.15.6":
-  version: 1.15.6
-  resolution: "follow-redirects@npm:1.15.6"
+"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.15.11":
+  version: 1.15.11
+  resolution: "follow-redirects@npm:1.15.11"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: 10/70c7612c4cab18e546e36b991bbf8009a1a41cf85354afe04b113d1117569abf760269409cb3eb842d9f7b03d62826687086b081c566ea7b1e6613cf29030bf7
+  checksum: 10/07372fd74b98c78cf4d417d68d41fdaa0be4dcacafffb9e67b1e3cf090bc4771515e65020651528faab238f10f9b9c0d9707d6c1574a6c0387c5de1042cde9ba
   languageName: node
   linkType: hard
 
@@ -19693,16 +19697,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^4.0.0, form-data@npm:^4.0.4, form-data@npm:~4.0.0":
-  version: 4.0.4
-  resolution: "form-data@npm:4.0.4"
+"form-data@npm:^4.0.0, form-data@npm:^4.0.5, form-data@npm:~4.0.0":
+  version: 4.0.5
+  resolution: "form-data@npm:4.0.5"
   dependencies:
     asynckit: "npm:^0.4.0"
     combined-stream: "npm:^1.0.8"
     es-set-tostringtag: "npm:^2.1.0"
     hasown: "npm:^2.0.2"
     mime-types: "npm:^2.1.12"
-  checksum: 10/a4b62e21932f48702bc468cc26fb276d186e6b07b557e3dd7cc455872bdbb82db7db066844a64ad3cf40eaf3a753c830538183570462d3649fdfd705601cbcfb
+  checksum: 10/52ecd6e927c8c4e215e68a7ad5e0f7c1031397439672fd9741654b4a94722c4182e74cc815b225dcb5be3f4180f36428f67c6dd39eaa98af0dcfdd26c00c19cd
   languageName: node
   linkType: hard
 
@@ -20661,7 +20665,7 @@ __metadata:
     "@grafana/llm": "npm:1.0.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.2.0"
+    "@grafana/plugin-e2e": "npm:3.3.0"
     "@grafana/plugin-ui": "npm:^0.12.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -20685,6 +20689,7 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.3"
+    "@openfeature/react-sdk": "npm:^1.2.0"
     "@openfeature/web-sdk": "npm:^1.6.1"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -30349,16 +30354,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.22.0":
-  version: 6.26.1
-  resolution: "react-router-dom@npm:6.26.1"
+"react-router-dom@npm:^6.26.1":
+  version: 6.30.3
+  resolution: "react-router-dom@npm:6.30.3"
   dependencies:
-    "@remix-run/router": "npm:1.19.1"
-    react-router: "npm:6.26.1"
+    "@remix-run/router": "npm:1.23.2"
+    react-router: "npm:6.30.3"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
-  checksum: 10/1bd255d1ff88f477699c72656e7c07702a907e644388a1bea1c648f2df0c3c86db2e90bea945b1d43eaf84ebab194f3868f3788502965ad5f20c508c6874f1fe
+  checksum: 10/db974d801070e9967a076b31edca902e127793e02dc79f364461b94e81846a588c241d72e069f5b586b4a90ffd99798f5cb97753ac9d22fe90afa6dc008ab520
   languageName: node
   linkType: hard
 
@@ -30378,17 +30383,6 @@ __metadata:
   peerDependencies:
     react: ">=15"
   checksum: 10/99d54a99af6bc6d7cad2e5ea7eee9485b62a8b8e16a1182b18daa7fad7dafa5e526850eaeebff629848b297ae055a9cb5b4aba8760e81af8b903efc049d48f5c
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.26.1":
-  version: 6.26.1
-  resolution: "react-router@npm:6.26.1"
-  dependencies:
-    "@remix-run/router": "npm:1.19.1"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10/b3761515c75da65a1678f005d08a6285ceccd9df7237ae6fdd9ab2ab816ef328435b75610f705ecd9ecd41c6878fd22eb9b44c5391cdef2e1ed99ddbc78de8a4
   languageName: node
   linkType: hard
 
