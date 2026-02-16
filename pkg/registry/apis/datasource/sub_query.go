@@ -137,14 +137,9 @@ func isRequestingChunkedResponse(accept string) bool {
 	return accept == "text/event-stream"
 }
 
-type chunkedWriter struct {
-	w http.ResponseWriter
-	s jsoniter.Stream
-}
-
 func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10)
-	return backend.NewChunkedDataWriter(&backend.QueryChunkedDataRequest{},
+	return backend.NewChunkedDataWriter(true, // force JSON
 		func(chunk *pluginv2.QueryChunkedDataResponse) error {
 			s.WriteRaw("data: ")
 			s.WriteObjectStart()
