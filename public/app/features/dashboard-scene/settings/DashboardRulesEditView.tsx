@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -34,20 +36,21 @@ function DashboardRulesEditViewRenderer({ model }: SceneComponentProps<Dashboard
 
   const isFeatureEnabled = config.featureToggles.dashboardRules;
 
-  if (!isFeatureEnabled) {
-    return (
-      <Box padding={2}>
-        <Alert severity="info" title="Dashboard rules">
-          Dashboard rules are not enabled. Enable the dashboardRules feature toggle to use this feature.
-        </Alert>
-      </Box>
-    );
-  }
-
   return (
-    <div className={styles.container}>
-      <DashboardRulesFlowEditor dashboard={dashboard} />
-    </div>
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      {!isFeatureEnabled ? (
+        <Box padding={2}>
+          <Alert severity="info" title="Dashboard rules">
+            Dashboard rules are not enabled. Enable the dashboardRules feature toggle to use this feature.
+          </Alert>
+        </Box>
+      ) : (
+        <div className={styles.container}>
+          <DashboardRulesFlowEditor dashboard={dashboard} />
+        </div>
+      )}
+    </Page>
   );
 }
 
