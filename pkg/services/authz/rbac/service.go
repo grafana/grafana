@@ -826,6 +826,10 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		if t.Scope("") == "*" {
 			return scopeMap["*"], nil
 		}
+		// If checking wildcard folder permissions, require the user has wildcard permissions
+		if req.ParentFolder == "*" {
+			return scopeMap["*"], nil
+		}
 		// Otherwise, only check action if the request doesn't specify scope
 		return len(scopeMap) > 0, nil
 	}
