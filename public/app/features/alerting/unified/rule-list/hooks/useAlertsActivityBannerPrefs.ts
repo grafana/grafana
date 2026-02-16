@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+import { useCallback, useMemo, useState } from 'react';
+
+import { store } from '@grafana/data';
 
 const STORAGE_KEY_DISMISSED_UNTIL = 'grafana.alerting.alerts_activity_banner.dismissed_until';
 
@@ -18,7 +19,9 @@ export interface AlertsActivityBannerPrefs {
  * preview toggle mechanism in RuleListPageTitle, not by this banner.
  */
 export function useAlertsActivityBannerPrefs(): AlertsActivityBannerPrefs {
-  const [dismissedUntilRaw, setDismissedUntil] = useLocalStorage<string | null>(STORAGE_KEY_DISMISSED_UNTIL, null);
+  const [dismissedUntilRaw, setDismissedUntilRaw] = useState<string | undefined>(() =>
+    store.get(STORAGE_KEY_DISMISSED_UNTIL)
+  );
 
   const isDismissed = useMemo(() => {
     if (!dismissedUntilRaw) {
@@ -34,9 +37,10 @@ export function useAlertsActivityBannerPrefs(): AlertsActivityBannerPrefs {
 
   const dismissBanner = useCallback(() => {
     const dismissedUntil = new Date(Date.now() + DISMISSAL_DURATION_MS).toISOString();
-    setDismissedUntil(dismissedUntil);
+    store.set(STORAGE_KEY_DISMISSED_UNTIL, dismissedUntil);
+    setDismissedUntilRaw(dismissedUntil);
     return dismissedUntil;
-  }, [setDismissedUntil]);
+  }, []);
 
   return {
     isDismissed,

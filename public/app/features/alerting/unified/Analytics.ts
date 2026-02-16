@@ -379,19 +379,7 @@ export type AlertRuleTrackingProps = {
 // Alerts Activity Banner & View Experience Telemetry
 // ============================================================================
 
-export type StackType = 'DMA' | 'GMA' | 'Unknown';
 export type UserPlan = 'Enterprise' | 'Advanced' | 'Free' | 'Unknown';
-
-/**
- * Determine the stack type based on feature toggles
- */
-export function getStackType(): StackType {
-  // alertingDisableDMAinUI === false means DMA is enabled
-  if (config.featureToggles.alertingDisableDMAinUI === false) {
-    return 'DMA';
-  }
-  return 'GMA';
-}
 
 /**
  * Determine the user's plan from license info
@@ -448,8 +436,8 @@ export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
 
 export interface ViewExperienceToggleEventPayload {
   source: 'titleControl';
-  currentView: 'new' | 'old';
-  targetView: 'new' | 'old';
+  currentView: 'v1' | 'v2';
+  targetView: 'v1' | 'v2';
 }
 
 /**

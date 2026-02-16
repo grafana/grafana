@@ -7,7 +7,6 @@ import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import {
-  getStackType,
   trackAlertsActivityBannerClickTry,
   trackAlertsActivityBannerDismiss,
   trackAlertsActivityBannerImpression,
@@ -25,17 +24,12 @@ import { useAlertsActivityBannerPrefs } from './hooks/useAlertsActivityBannerPre
  *
  * Features:
  * - Dismissible for 30 days
- * - DMA stack detection with limited functionality note
  * - Telemetry tracking for impressions, clicks, dismissals
  */
 export function AlertsActivityBanner() {
   const styles = useStyles2(getStyles);
   const { isDismissed, dismissBanner } = useAlertsActivityBannerPrefs();
   const impressionTracked = useRef(false);
-
-  // Determine stack type for UI (DMA has limited functionality)
-  const stackType = getStackType();
-  const isDMAStack = stackType === 'DMA';
 
   // Check if Alerts Activity feature is available
   const isAlertsActivityEnabled = config.featureToggles.alertingTriage ?? false;
@@ -82,14 +76,6 @@ export function AlertsActivityBanner() {
             cause analysis.
           </Trans>
         </Text>
-
-        {isDMAStack && (
-          <Text color="secondary" italic>
-            <Trans i18nKey="alerting.alerts-activity-banner.dma-note">
-              Some triage features may be limited on your stack.
-            </Trans>
-          </Text>
-        )}
 
         <div>
           <LinkButton

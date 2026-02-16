@@ -1,13 +1,10 @@
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import * as Analytics from '../Analytics';
-
 import { AlertsActivityBanner } from './AlertsActivityBanner';
 
-// Mock Analytics to control getStackType and prevent tracking side effects
+// Mock Analytics to prevent tracking side effects
 jest.mock('../Analytics', () => ({
-  getStackType: jest.fn(() => 'GMA'),
   trackAlertsActivityBannerImpression: jest.fn(),
   trackAlertsActivityBannerClickTry: jest.fn(),
   trackAlertsActivityBannerDismiss: jest.fn(),
@@ -17,7 +14,6 @@ const ui = {
   banner: byRole('region'),
   title: byText(/alert activity is now available/i),
   description: byText(/a brand new page is now available/i),
-  dmaNote: byText(/some triage features may be limited/i),
   openButton: byRole('link', { name: /open alerts activity/i }),
 };
 
@@ -27,7 +23,6 @@ describe('AlertsActivityBanner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    (Analytics.getStackType as jest.Mock).mockReturnValue('GMA');
   });
 
   describe('when feature toggle is disabled', () => {
@@ -69,7 +64,7 @@ describe('AlertsActivityBanner', () => {
         expect(dismissedUntil).toBeTruthy();
 
         // Verify the dismissal date is ~30 days in the future
-        const dismissedDate = new Date(JSON.parse(dismissedUntil!));
+        const dismissedDate = new Date(dismissedUntil!);
         const expectedDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         expect(Math.abs(dismissedDate.getTime() - expectedDate.getTime())).toBeLessThan(5000);
       });
@@ -78,7 +73,7 @@ describe('AlertsActivityBanner', () => {
     describe('persistence', () => {
       it('should not render when banner was recently dismissed', () => {
         const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        localStorage.setItem(STORAGE_KEY_DISMISSED_UNTIL, JSON.stringify(futureDate));
+        localStorage.setItem(STORAGE_KEY_DISMISSED_UNTIL, futureDate);
 
         render(<AlertsActivityBanner />);
 
@@ -87,32 +82,12 @@ describe('AlertsActivityBanner', () => {
 
       it('should render when dismissal has expired', () => {
         const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        localStorage.setItem(STORAGE_KEY_DISMISSED_UNTIL, JSON.stringify(pastDate));
+        localStorage.setItem(STORAGE_KEY_DISMISSED_UNTIL, pastDate);
 
         render(<AlertsActivityBanner />);
 
         expect(ui.banner.query()).toBeInTheDocument();
       });
-    });
-  });
-
-  describe('DMA stack detection', () => {
-    testWithFeatureToggles({ enable: ['alertingTriage'] });
-
-    it('should not show DMA note for GMA stack', () => {
-      (Analytics.getStackType as jest.Mock).mockReturnValue('GMA');
-
-      render(<AlertsActivityBanner />);
-
-      expect(ui.dmaNote.query()).not.toBeInTheDocument();
-    });
-
-    it('should show DMA note when stack type is DMA', () => {
-      (Analytics.getStackType as jest.Mock).mockReturnValue('DMA');
-
-      render(<AlertsActivityBanner />);
-
-      expect(ui.dmaNote.get()).toBeInTheDocument();
     });
   });
 });

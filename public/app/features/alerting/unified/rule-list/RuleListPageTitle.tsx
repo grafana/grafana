@@ -23,8 +23,8 @@ export function RuleListPageTitle({ title }: { title: string }) {
 
   const getEventPayload = (): ViewExperienceToggleEventPayload => ({
     source: 'titleControl',
-    currentView: listViewV2Enabled ? 'new' : 'old',
-    targetView: listViewV2Enabled ? 'old' : 'new',
+    currentView: listViewV2Enabled ? 'v2' : 'v1',
+    targetView: listViewV2Enabled ? 'v1' : 'v2',
   });
 
   const handleToggleClick = () => {
