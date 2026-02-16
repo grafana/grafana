@@ -345,9 +345,8 @@ export interface DashboardLink {
    * The source that registered the link (if any)
    */
   source?: {
-    uid: string;
-    sourceId: string; // E.g. "prometheus"
-    sourceType: string; // E.g. "datasource"
+    type: 'datasource';
+    ref: DataSourceRef;
   };
   /**
    * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards

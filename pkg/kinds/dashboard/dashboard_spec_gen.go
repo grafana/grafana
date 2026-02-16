@@ -316,17 +316,25 @@ const (
 const DashboardLinkPlacement = "inControlsMenu"
 
 // Source information for controls (e.g. variables or links)
-type ControlSourceRef struct {
-	Uid string `json:"uid"`
-	// E.g. "prometheus"
-	SourceId string `json:"sourceId"`
-	// E.g. "datasource"
-	SourceType string `json:"sourceType"`
-}
+type ControlSourceRef = DatasourceControlSourceRef
 
 // NewControlSourceRef creates a new ControlSourceRef object.
 func NewControlSourceRef() *ControlSourceRef {
-	return &ControlSourceRef{}
+	return NewDatasourceControlSourceRef()
+}
+
+// Source information for controls (e.g. variables or links)
+type DatasourceControlSourceRef struct {
+	Type string        `json:"type"`
+	Ref  DataSourceRef `json:"ref"`
+}
+
+// NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
+func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
+	return &DatasourceControlSourceRef{
+		Type: "datasource",
+		Ref:  *NewDataSourceRef(),
+	}
 }
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.

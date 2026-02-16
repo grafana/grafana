@@ -811,11 +811,12 @@ VariableOption: {
 }
 
 // Source information for controls (e.g. variables or links)
-ControlSourceRef: {
-  uid: string
-  sourceId: string // E.g. "prometheus"
-  sourceType: string // E.g. "datasource"
+DatasourceControlSourceRef: {
+  type: "datasource"
+  ref: DataSourceRef
 }
+
+ControlSourceRef: DatasourceControlSourceRef
 
 
 // Query variable specification

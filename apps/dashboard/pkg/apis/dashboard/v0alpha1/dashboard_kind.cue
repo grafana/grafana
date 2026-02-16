@@ -282,11 +282,13 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// Source information for controls (e.g. variables or links)
-		#ControlSourceRef: {
-			uid: string
-			sourceId: string // E.g. "prometheus"
-			sourceType: string // E.g. "datasource"
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			ref: #DataSourceRef
 		}
+
+		// Source information for controls (e.g. variables or links)
+		#ControlSourceRef: #DatasourceControlSourceRef
 
 
 		// Links with references to other dashboards or external resources
