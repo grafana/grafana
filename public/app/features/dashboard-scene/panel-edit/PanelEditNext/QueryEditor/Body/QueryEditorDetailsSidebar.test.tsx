@@ -1,12 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 
 import { PanelData } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
 import { QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../../constants';
-import { QueryOptionsState, QueryEditorProvider } from '../QueryEditorContext';
-import { ds1SettingsMock, mockActions, mockOptions } from '../testUtils';
+import { renderWithQueryEditorProvider, mockOptions, mockActions } from '../testUtils';
 
 import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 
@@ -32,36 +29,18 @@ describe('QueryEditorDetailsSidebar', () => {
     options: QueryGroupOptions = mockOptions,
     qrState: { queries: never[]; data: PanelData | undefined; isLoading: boolean } = defaultQrState
   ) => {
-    const queryOptions: QueryOptionsState = {
-      options,
-      isQueryOptionsOpen: true,
-      openSidebar: jest.fn(),
-      closeSidebar: mockCloseSidebar,
-      focusedField: null,
-    };
-
-    return render(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: ds1SettingsMock, dsError: undefined }}
-        qrState={qrState}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
-        uiState={{
-          selectedQuery: null,
-          selectedTransformation: null,
-          setSelectedQuery: jest.fn(),
-          setSelectedTransformation: jest.fn(),
-          queryOptions,
-          selectedQueryDsData: null,
-          selectedQueryDsLoading: false,
-          showingDatasourceHelp: false,
-          toggleDatasourceHelp: jest.fn(),
-          cardType: QueryEditorType.Query,
-        }}
-        actions={mockActions}
-      >
-        <QueryEditorDetailsSidebar />
-      </QueryEditorProvider>
-    );
+    return renderWithQueryEditorProvider(<QueryEditorDetailsSidebar />, {
+      qrState,
+      uiStateOverrides: {
+        queryOptions: {
+          options,
+          isQueryOptionsOpen: true,
+          openSidebar: jest.fn(),
+          closeSidebar: mockCloseSidebar,
+          focusedField: null,
+        },
+      },
+    });
   };
 
   it('should render all query options fields', () => {
