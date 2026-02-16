@@ -161,7 +161,7 @@ With this configuration:
 Group names are case-sensitive. Ensure the group names in Grafana configuration match exactly with the Okta group names.
 {{< /admonition >}}
 
-For Grafana Cloud users configuring SAML through the UI:
+If you're a Grafana Cloud user and want to configure SAML through the UI:
 
 1. Go to **Administration** > **Authentication** > **Configure SAML**.
 1. In the **User mapping** section, set:
