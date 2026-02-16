@@ -59,12 +59,6 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("path must end with user uid (%s)", userID)
 	}
 
-	// TODO: This is only for testing and needs to be removed later.
-	// While testing with provisioning repositories, we will limit this to admin only
-	if !u.HasRole(identity.RoleAdmin) {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("only admin users for now")
-	}
-
 	b.watchingMu.Lock()
 	defer b.watchingMu.Unlock()
 
