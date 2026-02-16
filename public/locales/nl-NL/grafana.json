@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "Naar regellijst"
     },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "Deze update is gemaakt door het waarschuwingssysteem als gevolg van andere veranderingen. Wanneer je bijvoorbeeld de naam van een contactpunt wijzigt dat wordt gebruikt voor vereenvoudigde routering, worden de betreffende regels bijgewerkt",
+      "annotations": "Annotaties",
+      "compare": "Vergelijken",
+      "compare-with-latest": "Vergelijken met nieuwste versie",
+      "compareVersions": "Versies vergelijken",
+      "comparing-versions": "Versies vergelijken",
+      "condition": "Waarschuwingsvoorwaarde",
+      "contactPointRouting": "Contactpuntroutering",
+      "description": "Elke keer dat je de waarschuwingsregel bewerkt, wordt er een nieuwe versie gemaakt. Selecteer hieronder twee versies en vergelijk hun verschillen.",
+      "errorloading": "Kan versies van waarschuwingsregels niet laden",
+      "execErrorState": "Waarschuwingsstatus wanneer uitvoeringsfout",
+      "intervalSeconds": "Evaluatie-interval",
+      "labels": "Labels",
+      "latest": "Nieuwste",
+      "name": "Naam",
+      "namespace_uid": "Map-UID",
+      "noDataState": "Waarschuwingsstatus wanneer er geen gegevens zijn",
+      "noVersionsFound": "Geen versies gevonden voor deze regel",
+      "paused": "Gepauzeerde status",
+      "pendingPeriod": "Wachttijd",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "Versie-update is gemaakt via provisioning",
+      "queryAndAlertCondition": "Query- en waarschuwingsvoorwaarde",
+      "restore": "Herstellen",
+      "restore-manually": "Je waarschuwingsregel kon niet worden hersteld. Dit kan te wijten zijn aan wijzigingen in andere entiteiten zoals contactpunten, gegevensbronnen enz. Herstel de regelversie handmatig",
+      "restore-modal": {
+        "body": "Weet je zeker dat je de definitie van de waarschuwingsregels naar deze versie wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
+        "confirm": "Ja, configuratie herstellen",
+        "error": "Kon waarschuwingsregelversie niet herstellen ",
+        "summary": "Samenvatting van toe te passen wijzigingen:",
+        "title": "Versie herstellen"
+      },
+      "restore-version": "Herstellen naar versie {{version}}",
+      "rule_group": "Regelgroep",
+      "unknown": "Onbekend",
+      "unknown-change-description": "Deze update is gemaakt voorafgaand aan de implementatie van de versiegeschiedenis van waarschuwingsregels. De gebruiker die de wijziging heeft doorgevoerd wordt niet bijgehouden, maar toekomstige wijzigingen zullen wel de gebruiker vermelden",
+      "user-id": "Gebruikers-ID {{uid}}",
+      "warning-restore-manually": "Je herstelt handmatig een oude versie van deze waarschuwingsregel. Controleer de wijzigingen zorgvuldig voordat je de regeldefinitie opslaat.",
+      "warning-restore-manually-title": "Regel handmatig herstellen"
+    },
     "alertform": {
       "labels": {
         "alerting": "Voeg labels toe aan je regel voor het zoeken, uitschakelen of routeren naar een meldingsbeleid.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Waarschuwingsregels zoeken op naam",
       "no-alert-rules-found": "Geen waarschuwingsregels gevonden",
       "placeholder-sort-default-az": "Sorteren (standaard A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Alerting",
-      "alerting-change-description": "Deze update is gemaakt door het waarschuwingssysteem als gevolg van andere veranderingen. Wanneer je bijvoorbeeld de naam van een contactpunt wijzigt dat wordt gebruikt voor vereenvoudigde routering, worden de betreffende regels bijgewerkt",
-      "annotations": "Annotaties",
-      "compare": "Vergelijken",
-      "compare-with-latest": "Vergelijken met nieuwste versie",
-      "compareVersions": "Versies vergelijken",
-      "comparing-versions": "Versies vergelijken",
-      "condition": "Waarschuwingsvoorwaarde",
-      "contactPointRouting": "Contactpuntroutering",
-      "description": "Elke keer dat je de waarschuwingsregel bewerkt, wordt er een nieuwe versie gemaakt. Selecteer hieronder twee versies en vergelijk hun verschillen.",
-      "errorloading": "Kan versies van waarschuwingsregels niet laden",
-      "execErrorState": "Waarschuwingsstatus wanneer uitvoeringsfout",
-      "intervalSeconds": "Evaluatie-interval",
-      "labels": "Labels",
-      "latest": "Nieuwste",
-      "name": "Naam",
-      "namespace_uid": "Map-UID",
-      "noDataState": "Waarschuwingsstatus wanneer er geen gegevens zijn",
-      "noVersionsFound": "Geen versies gevonden voor deze regel",
-      "paused": "Gepauzeerde status",
-      "pendingPeriod": "Wachttijd",
-      "provisioning": "Provisioning",
-      "provisioning-change-description": "Versie-update is gemaakt via provisioning",
-      "queryAndAlertCondition": "Query- en waarschuwingsvoorwaarde",
-      "restore": "Herstellen",
-      "restore-manually": "Je waarschuwingsregel kon niet worden hersteld. Dit kan te wijten zijn aan wijzigingen in andere entiteiten zoals contactpunten, gegevensbronnen enz. Herstel de regelversie handmatig",
-      "restore-modal": {
-        "body": "Weet je zeker dat je de definitie van de waarschuwingsregels naar deze versie wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
-        "confirm": "Ja, configuratie herstellen",
-        "error": "Kon waarschuwingsregelversie niet herstellen ",
-        "summary": "Samenvatting van toe te passen wijzigingen:",
-        "title": "Versie herstellen"
-      },
-      "restore-version": "Herstellen naar versie {{version}}",
-      "rule_group": "Regelgroep",
-      "unknown": "Onbekend",
-      "unknown-change-description": "Deze update is gemaakt voorafgaand aan de implementatie van de versiegeschiedenis van waarschuwingsregels. De gebruiker die de wijziging heeft doorgevoerd wordt niet bijgehouden, maar toekomstige wijzigingen zullen wel de gebruiker vermelden",
-      "user-id": "Gebruikers-ID {{uid}}",
-      "warning-restore-manually": "Je herstelt handmatig een oude versie van deze waarschuwingsregel. Controleer de wijzigingen zorgvuldig voordat je de regeldefinitie opslaat.",
-      "warning-restore-manually-title": "Regel handmatig herstellen"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Dit beleid komt overeen met alle labels"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "We konden geen externe waarschuwingsmanagers vinden en je hebt mogelijk geen toegang tot de ingebouwde Grafana Alertmanager.",
       "title-no-alertmanager-found": "Geen Alertmanager gevonden"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Zoeken op contactpunt",
       "placeholder-search-by-contact-point": "Kies een contactpunt",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Meldingssjablonengroep toevoegen",
       "create-notification-templates-customize-notifications": "Maak meldingsjablonen om je meldingen aan te passen."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Voeg labels toe om je opnameregels beter te beheren.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Voorbeeldweergave is niet beschikbaar",
       "valid-matcher-affected-alerts": "Voeg een geldige matcher toe om betrokken waarschuwingen te zien"
     },
+    "silences": {
+      "affected-instances": "Betrokken waarschuwingsinstanties",
+      "only-firing-instances": "Alleen waarschuwingsinstanties in de actieve status worden weergegeven.",
+      "preview-affected-instances": "Bekijk een voorbeeld van de waarschuwingsinstanties die door deze demping worden beïnvloed."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Details over de stilte",
       "label-comment": "Opmerking",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "Stiltes laden...",
       "title-error-loading-silences": "Er is een fout opgetreden bij het laden van de stiltes",
       "title-the-selected-alertmanager-has-no-configuration": "De geselecteerde Alertmanager heeft geen configuratie"
-    },
-    "silences": {
-      "affected-instances": "Betrokken waarschuwingsinstanties",
-      "only-firing-instances": "Alleen waarschuwingsinstanties in de actieve status worden weergegeven.",
-      "preview-affected-instances": "Bekijk een voorbeeld van de waarschuwingsinstanties die door deze demping worden beïnvloed."
     },
     "simple-condition-editor": {
       "label-of-query": "VAN QUERY",
@@ -3392,6 +3491,7 @@
           "enrichment": "Waarschuwingsverrijking",
           "history": "Geschiedenis",
           "instances": "Instanties",
+          "notifications": "",
           "query-and-conditions": "Query en voorwaarden",
           "versions": "Versies"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Nieuw paneel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Terug naar lijst",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Dashboard niet gevonden"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Opties voor gegevensbronnen",
@@ -6169,7 +6299,46 @@
       "tab-title": "Tabbladtitel wijzigen"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Dashboard",
         "element": "Element",
         "local-variable": "Lokale variabele",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": "Categorie {{title}} uitvouwen"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Zoekopties",
       "Recent options-title-recent-options": "Recente opties",
+      "placeholder-search-options": "Zoekopties",
       "title-matched_one": "{{count}} overeenkomende/{{totalCount}} opties",
       "title-matched_other": "{{count}} overeenkomende/{{totalCount}} opties"
     },
@@ -10100,17 +10269,17 @@
       "description": "Je LDAP-configuratie werkt niet omdat het basisinlogformulier momenteel is uitgeschakeld. Schakel het inlogformulier in om LDAP-authenticatie te gebruiken. Je kunt dit inschakelen op de authenticatiepagina onder 'Auth-instellingen'.",
       "title": "Basislogin uitgeschakeld"
     },
-    "search_filter": {
-      "description": "LDAP-zoekfilter gebruikt om specifieke vermeldingen binnen de directory te lokaliseren.",
-      "error": "Zoekfilter is een verplicht veld",
-      "label": "Zoekfilter",
-      "placeholder": "voorbeeld: cn=%s"
-    },
     "search-base-dns": {
       "description": "Een array van base dns om te doorzoeken.",
       "error": "Base dns doorzoeken is een verplicht veld",
       "label": "Base dns doorzoeken",
       "placeholder": "voorbeeld: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP-zoekfilter gebruikt om specifieke vermeldingen binnen de directory te lokaliseren.",
+      "error": "Zoekfilter is een verplicht veld",
+      "label": "Zoekfilter",
+      "placeholder": "voorbeeld: cn=%s"
     },
     "subtitle": "Met de LDAP-integratie in Grafana kunnen uw Grafana-gebruikers inloggen met hun LDAP-inloggegevens. Lees meer in onze <2><1>documentatie</1></2>.",
     "title": "Basisinstellingen"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Upgrade om meer gebruikers toe te voegen"
     },
     "item": {
-      "add-bookmark": "Toevoegen aan bladwijzers",
-      "remove-bookmark": "Verwijderen uit bladwijzers"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Druk op ESC om de kioskmodus te verlaten"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Verwijderen"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": " {{suggestionName}} visualisatie toepassen",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Sommige suggesties konden niet worden geladen"
       },
@@ -11672,8 +11842,7 @@
         "title": "Fout",
         "try-again-button": "Probeer het opnieuw"
       },
-      "unknown-viz-type": "Onbekend visualisatietype",
-      "use-this-suggestion": "Gebruik deze suggestie"
+      "unknown-viz-type": "Onbekend visualisatietype"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"
@@ -12949,15 +13118,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12995,6 +13174,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13002,6 +13183,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Expressie",
       "query": "Query",
       "transformation": "Transformatie"
@@ -13011,12 +13193,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Kaart {{id}} selecteren",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Queries en expressies",
-      "query-stack": "Query-stack",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13075,10 +13271,10 @@
       "title-data-source-help": "Hulp bij gegevensbron"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Opties voor query's",
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Tijdsinfo verbergen",
-      "Query options-title-query-options": "Opties voor query's",
       "relative-time": "Relatieve tijd",
       "relative-time-tooltip": "Overschrijft het relatieve tijdsbereik voor individuele panelen, waardoor ze anders zijn dan wat is geselecteerd in de tijdkiezer van het dashboard in de rechterbovenhoek van het dashboard. Om bijvoorbeeld de laatste 5 minuten te configureren, moet de relatieve tijd <1>{{relativeFrom}}</1> en <4>{{relativeTo}}</4> zijn, of variabelen zoals <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14096,9 +14292,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 uur",
     "1_day": "1 dag",
     "1_hour": "1 uur",
-    "12_hours": "12 uur",
     "30_days": "30 dagen",
     "6_hours": "6 uur",
     "7_days": "7 dagen"
@@ -15364,8 +15560,8 @@
       "title-dependencies": "Afhankelijkheden"
     },
     "variables-unknown-button": {
-      "usage-title": "Gebruik weergeven voor: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Gebruik weergeven"
+      "VariablesUnknownButton-tooltip-show-usages": "Gebruik weergeven",
+      "usage-title": "Gebruik weergeven voor: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Hernoemde of ontbrekende variabelen",

@@ -557,6 +557,48 @@
     "alert-warning": {
       "to-rule-list": "Na listę reguł"
     },
+    "alertVersionHistory": {
+      "alerting": "Alerty",
+      "alerting-change-description": "Ta aktualizacja została dokonana przez system alertów ze względu na inne zmiany. Na przykład zmiana nazwy punktu kontaktowego używanego do uproszczonego przekierowania spowoduje zaktualizowanie odpowiednich reguł",
+      "annotations": "Komentarze",
+      "compare": "Porównaj",
+      "compare-with-latest": "Porównaj z najnowszą wersją",
+      "compareVersions": "Porównaj wersje",
+      "comparing-versions": "Porównywanie wersji",
+      "condition": "Stan alertu",
+      "contactPointRouting": "Przekierowanie punktów kontaktowych",
+      "description": "Za każdym razem, gdy edytujesz regułę alertu, tworzona jest nowa wersja. Wybierz dwie z poniższych wersji i porównaj różnice między nimi.",
+      "errorloading": "Nie udało się załadować wersji reguły alertu",
+      "execErrorState": "Stan alertu, gdy wystąpił błąd wykonania",
+      "intervalSeconds": "Interwał oceny",
+      "labels": "Etykiety",
+      "latest": "Najnowsze",
+      "name": "Nazwa",
+      "namespace_uid": "Identyfikator UID folderu",
+      "noDataState": "Stan alertu, gdy wystąpi brak danych",
+      "noVersionsFound": "Nie znaleziono wersji dla tej reguły",
+      "paused": "Stan wstrzymania",
+      "pendingPeriod": "Okres oczekiwania",
+      "provisioning": "Konfiguracja",
+      "provisioning-change-description": "Aktualizacja wersji została dokonana przez konfigurację",
+      "queryAndAlertCondition": "Warunki zapytania i alertu",
+      "restore": "Przywróć",
+      "restore-manually": "Nie można przywrócić reguły alertu. Może to wynikać ze zmian w innych podmiotach, takich jak punkty kontaktowe, źródła danych itp. Przywróć wersję reguły ręcznie",
+      "restore-modal": {
+        "body": "Czy na pewno chcesz przywrócić definicję reguły alertu do tej wersji? Wszystkie niezapisane zmiany zostaną utracone.",
+        "confirm": "Przywróć konfigurację",
+        "error": "Nie udało się przywrócić wersji reguły alertu ",
+        "summary": "Podsumowanie zmian, które należy zastosować:",
+        "title": "Przywróć wersję"
+      },
+      "restore-version": "Przywróć do wersji {{version}}",
+      "rule_group": "Grupa reguł",
+      "unknown": "Nieznany",
+      "unknown-change-description": "Ta aktualizacja została dokonana przed wdrożeniem historii wersji reguł alertów. Nie zapisano danych użytkownika, który dokonał zmiany, ale przyszłe zmiany będą obejmowały użytkownika",
+      "user-id": "ID użytkownika {{uid}}",
+      "warning-restore-manually": "Ręcznie przywracasz starą wersję tej reguły alertu. Przed zapisaniem definicji reguły dokładnie zapoznaj się ze zmianami.",
+      "warning-restore-manually-title": "Ręczne przywracanie reguły"
+    },
     "alertform": {
       "labels": {
         "alerting": "Dodaj etykiety do reguły wyszukiwania, wyciszania lub wyznaczania tras do zasad powiadomień.",
@@ -611,48 +653,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Szukaj reguł alertów według nazwy",
       "no-alert-rules-found": "Nie znaleziono reguł alertów",
       "placeholder-sort-default-az": "Sortuj (domyślnie A–Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Alerty",
-      "alerting-change-description": "Ta aktualizacja została dokonana przez system alertów ze względu na inne zmiany. Na przykład zmiana nazwy punktu kontaktowego używanego do uproszczonego przekierowania spowoduje zaktualizowanie odpowiednich reguł",
-      "annotations": "Komentarze",
-      "compare": "Porównaj",
-      "compare-with-latest": "Porównaj z najnowszą wersją",
-      "compareVersions": "Porównaj wersje",
-      "comparing-versions": "Porównywanie wersji",
-      "condition": "Stan alertu",
-      "contactPointRouting": "Przekierowanie punktów kontaktowych",
-      "description": "Za każdym razem, gdy edytujesz regułę alertu, tworzona jest nowa wersja. Wybierz dwie z poniższych wersji i porównaj różnice między nimi.",
-      "errorloading": "Nie udało się załadować wersji reguły alertu",
-      "execErrorState": "Stan alertu, gdy wystąpił błąd wykonania",
-      "intervalSeconds": "Interwał oceny",
-      "labels": "Etykiety",
-      "latest": "Najnowsze",
-      "name": "Nazwa",
-      "namespace_uid": "Identyfikator UID folderu",
-      "noDataState": "Stan alertu, gdy wystąpi brak danych",
-      "noVersionsFound": "Nie znaleziono wersji dla tej reguły",
-      "paused": "Stan wstrzymania",
-      "pendingPeriod": "Okres oczekiwania",
-      "provisioning": "Konfiguracja",
-      "provisioning-change-description": "Aktualizacja wersji została dokonana przez konfigurację",
-      "queryAndAlertCondition": "Warunki zapytania i alertu",
-      "restore": "Przywróć",
-      "restore-manually": "Nie można przywrócić reguły alertu. Może to wynikać ze zmian w innych podmiotach, takich jak punkty kontaktowe, źródła danych itp. Przywróć wersję reguły ręcznie",
-      "restore-modal": {
-        "body": "Czy na pewno chcesz przywrócić definicję reguły alertu do tej wersji? Wszystkie niezapisane zmiany zostaną utracone.",
-        "confirm": "Przywróć konfigurację",
-        "error": "Nie udało się przywrócić wersji reguły alertu ",
-        "summary": "Podsumowanie zmian, które należy zastosować:",
-        "title": "Przywróć wersję"
-      },
-      "restore-version": "Przywróć do wersji {{version}}",
-      "rule_group": "Grupa reguł",
-      "unknown": "Nieznany",
-      "unknown-change-description": "Ta aktualizacja została dokonana przed wdrożeniem historii wersji reguł alertów. Nie zapisano danych użytkownika, który dokonał zmiany, ale przyszłe zmiany będą obejmowały użytkownika",
-      "user-id": "ID użytkownika {{uid}}",
-      "warning-restore-manually": "Ręcznie przywracasz starą wersję tej reguły alertu. Przed zapisaniem definicji reguły dokładnie zapoznaj się ze zmianami.",
-      "warning-restore-manually-title": "Ręczne przywracanie reguły"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Ta zasada pasuje do wszystkich etykiet"
@@ -2162,6 +2162,50 @@
       "body-no-alertmanager-found": "Nie udało się znaleźć zewnętrznych menedżerów alertów i możesz nie mieć dostępu do wbudowanego menedżera alertów Grafany.",
       "title-no-alertmanager-found": "Nie znaleziono menedżera alertów"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Szukaj według punktu kontaktu",
       "placeholder-search-by-contact-point": "Wybierz punkt kontaktowy",
@@ -2225,6 +2269,69 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Dodaj grupę szablonów powiadomień",
       "create-notification-templates-customize-notifications": "Utwórz szablony powiadomień, aby dostosować wysyłane powiadomienia."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Dodaj etykiety, aby lepiej zarządzać regułami rejestrowania.",
@@ -3071,6 +3178,11 @@
       "title-preview-not-available": "Podgląd niedostępny",
       "valid-matcher-affected-alerts": "Dodaj prawidłowe kryterium dopasowania, aby zobaczyć alerty, których dotyczy problem"
     },
+    "silences": {
+      "affected-instances": "Instancje alertu pozostające pod wpływem",
+      "only-firing-instances": "Wyświetlane są tylko uruchomione instancje alertów.",
+      "preview-affected-instances": "Podejrzyj wyciszone alerty."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Szczegóły wyciszenia",
       "label-comment": "Uwagi",
@@ -3092,11 +3204,6 @@
       "text-loading-silences": "Ładowanie okresów wyciszenia…",
       "title-error-loading-silences": "Błąd podczas wczytywania okresów wyciszenia",
       "title-the-selected-alertmanager-has-no-configuration": "Wybrany menedżer alertów nie ma konfiguracji"
-    },
-    "silences": {
-      "affected-instances": "Instancje alertu pozostające pod wpływem",
-      "only-firing-instances": "Wyświetlane są tylko uruchomione instancje alertów.",
-      "preview-affected-instances": "Podejrzyj wyciszone alerty."
     },
     "simple-condition-editor": {
       "label-of-query": "ZAPYTANIE OF",
@@ -3424,6 +3531,7 @@
           "enrichment": "Wzbogacenie alertów",
           "history": "Historia",
           "instances": "Instancje",
+          "notifications": "",
           "query-and-conditions": "Zapytanie i warunki",
           "versions": "Wersje"
         }
@@ -5012,6 +5120,33 @@
         "new-panel": "Nowy panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Powrót do listy",
       "control-display-options": {
@@ -5165,6 +5300,9 @@
       "message": {
         "dashboard-not-found": "Nie znaleziono pulpitu"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Opcje źródła danych",
@@ -6225,7 +6363,46 @@
       "tab-title": "Zmień tytuł karty"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Pulpit",
         "element": "Element",
         "local-variable": "Zmienna lokalna",
@@ -6604,8 +6781,8 @@
       "aria-label-expand": "Rozwiń kategorię {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Opcje wyszukiwania",
       "Recent options-title-recent-options": "Ostatnie opcje",
+      "placeholder-search-options": "Opcje wyszukiwania",
       "title-matched_one": "Dopasowano {{count}}/{{totalCount}} opcji",
       "title-matched_few": "Dopasowano {{count}}/{{totalCount}} opcji",
       "title-matched_many": "Dopasowano {{count}}/{{totalCount}} opcji",
@@ -10186,17 +10363,17 @@
       "description": "Twoja konfiguracja LDAP nie działa, ponieważ podstawowy formularz logowania jest obecnie wyłączony. Włącz formularz logowania, aby korzystać z uwierzytelniania LDAP. Możesz go włączyć na stronie Uwierzytelnianie w sekcji „Ustawienia uwierzytelniania”.",
       "title": "Podstawowe logowanie jest wyłączone"
     },
-    "search_filter": {
-      "description": "Filtr wyszukiwania LDAP służący do lokalizowania określonych wpisów w katalogu.",
-      "error": "Filtr wyszukiwania jest polem wymaganym",
-      "label": "Filtr wyszukiwania",
-      "placeholder": "przykład: cn=%s"
-    },
     "search-base-dns": {
       "description": "Tablica podstawowych adresów DNS do przeszukania.",
       "error": "Baza wyszukiwania adresów DNS jest polem wymaganym",
       "label": "Baza wyszukiwania adresów DNS",
       "placeholder": "przykład: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "Filtr wyszukiwania LDAP służący do lokalizowania określonych wpisów w katalogu.",
+      "error": "Filtr wyszukiwania jest polem wymaganym",
+      "label": "Filtr wyszukiwania",
+      "placeholder": "przykład: cn=%s"
     },
     "subtitle": "Integracja LDAP w usłudze Grafana umożliwia jej użytkownikom logowanie się przy użyciu poświadczeń LDAP. Więcej informacji znajdziesz w naszej <2><1>dokumentacji</1></2>.",
     "title": "Podstawowe ustawienia"
@@ -11425,8 +11602,8 @@
       "upgrade-tooltip": "Przejdź na wyższą wersję, aby dodać więcej użytkowników"
     },
     "item": {
-      "add-bookmark": "Dodaj do zakładek",
-      "remove-bookmark": "Usuń z zakładek"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Naciśnij ESC, aby wyjść z trybu kiosku"
@@ -11766,7 +11943,8 @@
       "tooltip-delete": "Usuń"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Zastosuj wizualizację {{suggestionName}}",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Nie udało się wczytać niektórych sugestii"
       },
@@ -11776,8 +11954,7 @@
         "title": "Błąd",
         "try-again-button": "Spróbuj ponownie"
       },
-      "unknown-viz-type": "Nieznany typ wizualizacji",
-      "use-this-suggestion": "Użyj tej sugestii"
+      "unknown-viz-type": "Nieznany typ wizualizacji"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
@@ -13067,15 +13244,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -13113,6 +13300,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13120,6 +13309,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Wyrażenie",
       "query": "Zapytanie",
       "transformation": "Transformacja"
@@ -13129,12 +13319,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Wybierz kartę {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Zapytania i wyrażenia",
-      "query-stack": "Stos zapytań",
       "toggle-size": "Przełącz rozmiar paska bocznego",
       "transformations": "Transformacje"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13193,10 +13397,10 @@
       "title-data-source-help": "Pomoc dotycząca źródła danych"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Opcje zapytania",
       "collapsed-interval": "Odstęp czasu = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Ukryj informacje o czasie",
-      "Query options-title-query-options": "Opcje zapytania",
       "relative-time": "Czas względny",
       "relative-time-tooltip": "Zastępuje względny zakres czasu dla poszczególnych paneli, co powoduje, że są one inne niż wybrane w selektorze czasu w prawym górnym rogu pulpitu. Aby na przykład skonfigurować „ostatnie 5 minut”, czas względny powinien wynosić <1>{{relativeFrom}}</1> i <4>{{relativeTo}}</4> lub być określony przez zmienne takie jak <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14222,9 +14426,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 godzin",
     "1_day": "1 dzień",
     "1_hour": "1 godzina",
-    "12_hours": "12 godzin",
     "30_days": "30 dni",
     "6_hours": "6 godzin",
     "7_days": "7 dni"
@@ -15490,8 +15694,8 @@
       "title-dependencies": "Zależności"
     },
     "variables-unknown-button": {
-      "usage-title": "Pokazuje użycie dla: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Wyświetl użycie"
+      "VariablesUnknownButton-tooltip-show-usages": "Wyświetl użycie",
+      "usage-title": "Pokazuje użycie dla: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Przemianowane lub brakujące zmienne",

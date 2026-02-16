@@ -548,6 +548,48 @@
     "alert-warning": {
       "to-rule-list": "到规则列表"
     },
+    "alertVersionHistory": {
+      "alerting": "警报",
+      "alerting-change-description": "此更新由提醒系统根据其他更改进行。例如，当重命名用于简化路由的联络点时，将更新受影响的规则",
+      "annotations": "注释",
+      "compare": "比较",
+      "compare-with-latest": "与最新版本比较",
+      "compareVersions": "比较版本",
+      "comparing-versions": "比较版本",
+      "condition": "提醒条件",
+      "contactPointRouting": "联络点路由",
+      "description": "每次编辑提醒规则时，都会创建一个新版本。在下方选择两个版本，并比较它们的差异。",
+      "errorloading": "加载提醒规则版本失败",
+      "execErrorState": "执行错误时的提醒状态",
+      "intervalSeconds": "评估间隔",
+      "labels": "标签",
+      "latest": "最近",
+      "name": "名称",
+      "namespace_uid": "文件夹 UID",
+      "noDataState": "无数据时的提醒状态",
+      "noVersionsFound": "未找到此规则的版本",
+      "paused": "暂停状态",
+      "pendingPeriod": "待处理时段",
+      "provisioning": "配置",
+      "provisioning-change-description": "版本更新是通过配置进行的",
+      "queryAndAlertCondition": "查询和提醒条件",
+      "restore": "还原",
+      "restore-manually": "您的提醒规则无法还原。这可能是由于其他实体（如联络点、数据源等）的更改。请手动还原规则版本",
+      "restore-modal": {
+        "body": "您确定要将提醒规则定义还原到此版本吗？所有未保存的更改都将丢失。",
+        "confirm": "是，还原配置",
+        "error": "无法还原提醒规则版本",
+        "summary": "要应用的更改摘要：",
+        "title": "恢复版本"
+      },
+      "restore-version": "恢复到版本 {{version}}",
+      "rule_group": "规则组",
+      "unknown": "未知",
+      "unknown-change-description": "此更新是在实施提醒规则版本历史记录之前进行的。系统未跟踪进行更改的用户，但将来的更改将包括用户",
+      "user-id": "用户 ID {{uid}}",
+      "warning-restore-manually": "您正在手动恢复此提醒规则的旧版本。在保存规则定义之前，请仔细查看更改。",
+      "warning-restore-manually-title": "手动恢复规则"
+    },
     "alertform": {
       "labels": {
         "alerting": "向您的规则添加标签，以用于搜索、静音或路由到通知策略。",
@@ -602,48 +644,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "按名称搜索警报规则",
       "no-alert-rules-found": "找不到警报规则",
       "placeholder-sort-default-az": "排序（默认 A-Z）"
-    },
-    "alertVersionHistory": {
-      "alerting": "警报",
-      "alerting-change-description": "此更新由提醒系统根据其他更改进行。例如，当重命名用于简化路由的联络点时，将更新受影响的规则",
-      "annotations": "注释",
-      "compare": "比较",
-      "compare-with-latest": "与最新版本比较",
-      "compareVersions": "比较版本",
-      "comparing-versions": "比较版本",
-      "condition": "提醒条件",
-      "contactPointRouting": "联络点路由",
-      "description": "每次编辑提醒规则时，都会创建一个新版本。在下方选择两个版本，并比较它们的差异。",
-      "errorloading": "加载提醒规则版本失败",
-      "execErrorState": "执行错误时的提醒状态",
-      "intervalSeconds": "评估间隔",
-      "labels": "标签",
-      "latest": "最近",
-      "name": "名称",
-      "namespace_uid": "文件夹 UID",
-      "noDataState": "无数据时的提醒状态",
-      "noVersionsFound": "未找到此规则的版本",
-      "paused": "暂停状态",
-      "pendingPeriod": "待处理时段",
-      "provisioning": "配置",
-      "provisioning-change-description": "版本更新是通过配置进行的",
-      "queryAndAlertCondition": "查询和提醒条件",
-      "restore": "还原",
-      "restore-manually": "您的提醒规则无法还原。这可能是由于其他实体（如联络点、数据源等）的更改。请手动还原规则版本",
-      "restore-modal": {
-        "body": "您确定要将提醒规则定义还原到此版本吗？所有未保存的更改都将丢失。",
-        "confirm": "是，还原配置",
-        "error": "无法还原提醒规则版本",
-        "summary": "要应用的更改摘要：",
-        "title": "恢复版本"
-      },
-      "restore-version": "恢复到版本 {{version}}",
-      "rule_group": "规则组",
-      "unknown": "未知",
-      "unknown-change-description": "此更新是在实施提醒规则版本历史记录之前进行的。系统未跟踪进行更改的用户，但将来的更改将包括用户",
-      "user-id": "用户 ID {{uid}}",
-      "warning-restore-manually": "您正在手动恢复此提醒规则的旧版本。在保存规则定义之前，请仔细查看更改。",
-      "warning-restore-manually-title": "手动恢复规则"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "此策略匹配所有标签"
@@ -2129,6 +2129,44 @@
       "body-no-alertmanager-found": "我们找不到任何外部的 Alertmanager，您可能无权访问内置的 Grafana Alertmanager。",
       "title-no-alertmanager-found": "未找到 Alertmanager"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按联络点搜索",
       "placeholder-search-by-contact-point": "选择一个联络点",
@@ -2192,6 +2230,63 @@
     "notification-templates-tab": {
       "add-notification-template-group": "添加通知模板组",
       "create-notification-templates-customize-notifications": "创建通知模板以自定义您的通知。"
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "添加标签，以帮助您更好地管理录制规则。",
@@ -3023,6 +3118,11 @@
       "title-preview-not-available": "预览不可用",
       "valid-matcher-affected-alerts": "添加有效的匹配器以查看受影响的警报"
     },
+    "silences": {
+      "affected-instances": "受影响的提醒实例",
+      "only-firing-instances": "仅显示处于触发状态的提醒实例。",
+      "preview-affected-instances": "预览受此静默影响的提醒实例。"
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "有关静默的详情",
       "label-comment": "评论",
@@ -3044,11 +3144,6 @@
       "text-loading-silences": "正在加载静默...",
       "title-error-loading-silences": "加载静默时出错",
       "title-the-selected-alertmanager-has-no-configuration": "所选 Alertmanager 没有配置"
-    },
-    "silences": {
-      "affected-instances": "受影响的提醒实例",
-      "only-firing-instances": "仅显示处于触发状态的提醒实例。",
-      "preview-affected-instances": "预览受此静默影响的提醒实例。"
     },
     "simple-condition-editor": {
       "label-of-query": "查询",
@@ -3376,6 +3471,7 @@
           "enrichment": "警报扩充",
           "history": "历史记录",
           "instances": "实例",
+          "notifications": "",
           "query-and-conditions": "查询和条件",
           "versions": "版本"
         }
@@ -4937,6 +5033,33 @@
         "new-panel": "新面板"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "回到列表",
       "control-display-options": {
@@ -5090,6 +5213,9 @@
       "message": {
         "dashboard-not-found": "找不到数据面板"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "数据源选项",
@@ -6141,7 +6267,46 @@
       "tab-title": "更改选项卡标题"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "仪表板",
         "element": "元素",
         "local-variable": "局部变量",
@@ -6520,8 +6685,8 @@
       "aria-label-expand": "展开 {{title}} 类别"
     },
     "options-pane-options": {
-      "placeholder-search-options": "搜索选项",
       "Recent options-title-recent-options": "最近的选项",
+      "placeholder-search-options": "搜索选项",
       "title-matched_other": "匹配了 {{count}}/{{totalCount}} 个选项"
     },
     "outline": {
@@ -10057,17 +10222,17 @@
       "description": "您的 LDAP 配置无效，因为基本登录表单当前已禁用。请启用登录表单以使用 LDAP 身份验证。您可以在“身份验证”页面上的“身份验证设置”下启用此选项。",
       "title": "基本登录已禁用"
     },
-    "search_filter": {
-      "description": "LDAP 搜索筛选器用于在目录中定位特定条目。",
-      "error": "搜索筛选器是必填字段",
-      "label": "搜索筛选器",
-      "placeholder": "示例：cn=%s"
-    },
     "search-base-dns": {
       "description": "要搜索的基本专有名称数组。",
       "error": "搜索基本专有名称是必填字段",
       "label": "搜索基本专有名称",
       "placeholder": "示例：dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "LDAP 搜索筛选器用于在目录中定位特定条目。",
+      "error": "搜索筛选器是必填字段",
+      "label": "搜索筛选器",
+      "placeholder": "示例：cn=%s"
     },
     "subtitle": "Grafana 中的 LDAP 集成允许您的 Grafana 用户使用其 LDAP 凭证登录。在我们的<2><1>文档</1></2>中了解更多信息。",
     "title": "基本设置"
@@ -11278,8 +11443,8 @@
       "upgrade-tooltip": "升级以添加更多用户"
     },
     "item": {
-      "add-bookmark": "添加到书签",
-      "remove-bookmark": "从书签中移除"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
@@ -11610,7 +11775,8 @@
       "tooltip-delete": "删除"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "应用 {{suggestionName}} 可视化",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "无法加载某些建议"
       },
@@ -11620,8 +11786,7 @@
         "title": "错误",
         "try-again-button": "重试"
       },
-      "unknown-viz-type": "未知可视化类型",
-      "use-this-suggestion": "使用此建议"
+      "unknown-viz-type": "未知可视化类型"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
@@ -12890,15 +13055,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12936,6 +13111,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -12943,6 +13120,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "表达式",
       "query": "查询",
       "transformation": "转换"
@@ -12952,12 +13130,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "选择卡片 {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "查询和表达式",
-      "query-stack": "查询堆栈",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13016,10 +13208,10 @@
       "title-data-source-help": "数据源帮助"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "查询选项",
       "collapsed-interval": "间隔 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "隐藏时间信息",
-      "Query options-title-query-options": "查询选项",
       "relative-time": "相对时间",
       "relative-time-tooltip": "覆盖单个面板的相对时间范围，这会导致它们与数据面板右上角的数据面板时间选择器中选择的时间范围不同。例如，要配置最近 5 分钟，相对时间应为 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 这样的变量。",
       "render-cache-timeout-option": {
@@ -14033,9 +14225,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 小时",
     "1_day": "1 天",
     "1_hour": "1 小时",
-    "12_hours": "12 小时",
     "30_days": "30 天",
     "6_hours": "6 小时",
     "7_days": "7 天"
@@ -15301,8 +15493,8 @@
       "title-dependencies": "依赖关系"
     },
     "variables-unknown-button": {
-      "usage-title": "显示使用情况：{{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "显示使用情况"
+      "VariablesUnknownButton-tooltip-show-usages": "显示使用情况",
+      "usage-title": "显示使用情况：{{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "重命名或缺失的变量",

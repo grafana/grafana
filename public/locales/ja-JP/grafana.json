@@ -548,6 +548,48 @@
     "alert-warning": {
       "to-rule-list": "ルール一覧へ"
     },
+    "alertVersionHistory": {
+      "alerting": "アラート",
+      "alerting-change-description": "この更新は、他の変更の際、アラートシステムによって行われました。たとえば、簡易ルーティングに使用されるコンタクトポイントの名前を変更すると、影響を受けるルールが更新されます。",
+      "annotations": "注釈",
+      "compare": "比較",
+      "compare-with-latest": "最新バージョンと比較する",
+      "compareVersions": "バージョンを比較",
+      "comparing-versions": "バージョンを比較しています",
+      "condition": "アラート条件",
+      "contactPointRouting": "コンタクトポイントのルーティング",
+      "description": "アラートルールを編集するたびに、新しいバージョンが作成されます。以下から2つのバージョンを選択し、それらの違いを比較してください。",
+      "errorloading": "アラートルールのバージョンの読み込みに失敗しました",
+      "execErrorState": "実行エラー時のアラートステート",
+      "intervalSeconds": "評価間隔",
+      "labels": "ラベル",
+      "latest": "最新",
+      "name": "名前",
+      "namespace_uid": "フォルダUID",
+      "noDataState": "データがない場合のアラートステート",
+      "noVersionsFound": "このルールのバージョンが見つかりません",
+      "paused": "一時停止ステート",
+      "pendingPeriod": "保留期間",
+      "provisioning": "プロビジョニング",
+      "provisioning-change-description": "バージョンの更新はプロビジョニングを通じて行われました",
+      "queryAndAlertCondition": "クエリとアラート条件",
+      "restore": "復元",
+      "restore-manually": "アラートルールを復元できませんでした。これは、コンタクトポイント、データソースなどの他のエンティティの変更が原因である可能性があります。ルールのバージョンを手動で復元してください",
+      "restore-modal": {
+        "body": "アラートルールの定義をこのバージョンに復元してもよろしいですか？変更内容はすべて失われます。",
+        "confirm": "はい、構成を復元します",
+        "error": "アラートルールのバージョンを復元できませんでした ",
+        "summary": "適用される変更の概要：",
+        "title": "バージョンの復元"
+      },
+      "restore-version": "バージョン、{{version}}に復元",
+      "rule_group": "ルールグループ",
+      "unknown": "不明な",
+      "unknown-change-description": "この更新は、アラートルールのバージョン履歴の実装前に行われました。変更を行ったユーザーは追跡されませんが、今後の変更にはユーザーが含まれます",
+      "user-id": "ユーザーID、{{uid}}",
+      "warning-restore-manually": "このアラートルールの古いバージョンを手動で復元しています。ルール定義を保存する前に、変更を注意深く確認してください。",
+      "warning-restore-manually-title": "手動でルールを復元する"
+    },
     "alertform": {
       "labels": {
         "alerting": "ルールにラベルを追加して、検索、サイレント、または通知ポリシーへのルーティングを行います。",
@@ -602,48 +644,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "名前でアラートルールを検索",
       "no-alert-rules-found": "アラートルールが見つかりません",
       "placeholder-sort-default-az": "並べ替え（デフォルトはA-Z順）"
-    },
-    "alertVersionHistory": {
-      "alerting": "アラート",
-      "alerting-change-description": "この更新は、他の変更の際、アラートシステムによって行われました。たとえば、簡易ルーティングに使用されるコンタクトポイントの名前を変更すると、影響を受けるルールが更新されます。",
-      "annotations": "注釈",
-      "compare": "比較",
-      "compare-with-latest": "最新バージョンと比較する",
-      "compareVersions": "バージョンを比較",
-      "comparing-versions": "バージョンを比較しています",
-      "condition": "アラート条件",
-      "contactPointRouting": "コンタクトポイントのルーティング",
-      "description": "アラートルールを編集するたびに、新しいバージョンが作成されます。以下から2つのバージョンを選択し、それらの違いを比較してください。",
-      "errorloading": "アラートルールのバージョンの読み込みに失敗しました",
-      "execErrorState": "実行エラー時のアラートステート",
-      "intervalSeconds": "評価間隔",
-      "labels": "ラベル",
-      "latest": "最新",
-      "name": "名前",
-      "namespace_uid": "フォルダUID",
-      "noDataState": "データがない場合のアラートステート",
-      "noVersionsFound": "このルールのバージョンが見つかりません",
-      "paused": "一時停止ステート",
-      "pendingPeriod": "保留期間",
-      "provisioning": "プロビジョニング",
-      "provisioning-change-description": "バージョンの更新はプロビジョニングを通じて行われました",
-      "queryAndAlertCondition": "クエリとアラート条件",
-      "restore": "復元",
-      "restore-manually": "アラートルールを復元できませんでした。これは、コンタクトポイント、データソースなどの他のエンティティの変更が原因である可能性があります。ルールのバージョンを手動で復元してください",
-      "restore-modal": {
-        "body": "アラートルールの定義をこのバージョンに復元してもよろしいですか？変更内容はすべて失われます。",
-        "confirm": "はい、構成を復元します",
-        "error": "アラートルールのバージョンを復元できませんでした ",
-        "summary": "適用される変更の概要：",
-        "title": "バージョンの復元"
-      },
-      "restore-version": "バージョン、{{version}}に復元",
-      "rule_group": "ルールグループ",
-      "unknown": "不明な",
-      "unknown-change-description": "この更新は、アラートルールのバージョン履歴の実装前に行われました。変更を行ったユーザーは追跡されませんが、今後の変更にはユーザーが含まれます",
-      "user-id": "ユーザーID、{{uid}}",
-      "warning-restore-manually": "このアラートルールの古いバージョンを手動で復元しています。ルール定義を保存する前に、変更を注意深く確認してください。",
-      "warning-restore-manually-title": "手動でルールを復元する"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "このポリシーはすべてのラベルに一致します"
@@ -2129,6 +2129,44 @@
       "body-no-alertmanager-found": "外部のAlertmanagerが見つかりません。また、内蔵のGrafana Alertmanagerにアクセスできない可能性があります。",
       "title-no-alertmanager-found": "Alertmanagerが見つかりません"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "連絡先で検索",
       "placeholder-search-by-contact-point": "コンタクトポイントを選択",
@@ -2192,6 +2230,63 @@
     "notification-templates-tab": {
       "add-notification-template-group": "通知テンプレートグループを追加",
       "create-notification-templates-customize-notifications": "通知テンプレートを作成して通知をカスタマイズできます。"
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "ラベルを追加すると、記録ルールをより適切に管理できます。",
@@ -3023,6 +3118,11 @@
       "title-preview-not-available": "プレビューは利用できません",
       "valid-matcher-affected-alerts": "影響を受けるアラートを表示するには、有効なマッチャーを追加してください"
     },
+    "silences": {
+      "affected-instances": "影響を受けるアラートインスタンス",
+      "only-firing-instances": "発生ステートのアラートインスタンスのみが表示されます。",
+      "preview-affected-instances": "このサイレントに影響を受けるアラートインスタンスをプレビューします。"
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "サイレンスに関する詳細",
       "label-comment": "コメント",
@@ -3044,11 +3144,6 @@
       "text-loading-silences": "サイレンス読み込み中...",
       "title-error-loading-silences": "サイレンスの読み込みエラー",
       "title-the-selected-alertmanager-has-no-configuration": "選択したAlertmanagerには設定がありません"
-    },
-    "silences": {
-      "affected-instances": "影響を受けるアラートインスタンス",
-      "only-firing-instances": "発生ステートのアラートインスタンスのみが表示されます。",
-      "preview-affected-instances": "このサイレントに影響を受けるアラートインスタンスをプレビューします。"
     },
     "simple-condition-editor": {
       "label-of-query": "クエリの",
@@ -3376,6 +3471,7 @@
           "enrichment": "アラートのエンリッチメント",
           "history": "履歴",
           "instances": "インスタンス",
+          "notifications": "",
           "query-and-conditions": "クエリと条件",
           "versions": "バージョン"
         }
@@ -4937,6 +5033,33 @@
         "new-panel": "新規パネル"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "一覧に戻る",
       "control-display-options": {
@@ -5090,6 +5213,9 @@
       "message": {
         "dashboard-not-found": "ダッシュボードが見つかりません"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "データソースオプション",
@@ -6141,7 +6267,46 @@
       "tab-title": "タブのタイトルを変更"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "ダッシュボード",
         "element": "要素",
         "local-variable": "ローカル変数",
@@ -6520,8 +6685,8 @@
       "aria-label-expand": "{{title}}カテゴリを展開"
     },
     "options-pane-options": {
-      "placeholder-search-options": "検索オプション",
       "Recent options-title-recent-options": "最近のオプション",
+      "placeholder-search-options": "検索オプション",
       "title-matched_other": "{{count}}/{{totalCount}}件のオプションが一致"
     },
     "outline": {
@@ -10057,17 +10222,17 @@
       "description": "基本的なログインフォームが現在無効になっているため、LDAP構成が機能していません。LDAP認証を使用するには、ログインフォームを有効にしてください。「認証設定」の下の「認証」ページで有効にできます。",
       "title": "基本ログインが無効になっています"
     },
-    "search_filter": {
-      "description": "ディレクトリ内の特定のエントリを見つけるために使用されるLDAP検索フィルタ。",
-      "error": "検索フィルタは必須フィールドです",
-      "label": "検索フィルタ",
-      "placeholder": "例：cn=%s"
-    },
     "search-base-dns": {
       "description": "検索するベースdnsの配列。",
       "error": "検索ベースDNSは必須フィールドです",
       "label": "検索ベースDNS",
       "placeholder": "例：dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "ディレクトリ内の特定のエントリを見つけるために使用されるLDAP検索フィルタ。",
+      "error": "検索フィルタは必須フィールドです",
+      "label": "検索フィルタ",
+      "placeholder": "例：cn=%s"
     },
     "subtitle": "GrafanaのLDAP統合により、GrafanaユーザーはLDAP認証情報を使用してログインできます。詳細については、<2><1>ドキュメント</1></2>をご覧ください。",
     "title": "基本設定"
@@ -11278,8 +11443,8 @@
       "upgrade-tooltip": "ユーザーを追加するにはアップグレードしてください"
     },
     "item": {
-      "add-bookmark": "ブックマークに追加",
-      "remove-bookmark": "ブックマークから削除"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "ESCを押してキオスクモードを終了します"
@@ -11610,7 +11775,8 @@
       "tooltip-delete": "削除"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "{{suggestionName}}視覚化を適用",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "一部の提案を読み込めませんでした"
       },
@@ -11620,8 +11786,7 @@
         "title": "エラー",
         "try-again-button": "もう一度試す"
       },
-      "unknown-viz-type": "不明な視覚化タイプ",
-      "use-this-suggestion": "この提案を使用する"
+      "unknown-viz-type": "不明な視覚化タイプ"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
@@ -12890,15 +13055,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12936,6 +13111,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -12943,6 +13120,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "式",
       "query": "クエリ",
       "transformation": "変換"
@@ -12952,12 +13130,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "カード{{id}}を選択",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "クエリと式",
-      "query-stack": "クエリスタック",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13016,10 +13208,10 @@
       "title-data-source-help": "データソースヘルプ"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "クエリオプション",
       "collapsed-interval": "間隔 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "時間情報を非表示",
-      "Query options-title-query-options": "クエリオプション",
       "relative-time": "相対時間",
       "relative-time-tooltip": "個々のパネルの相対時間範囲を上書きします。これにより、ダッシュボード右上の時間選択ツールで指定した時間と異なる設定になります。例えば、過去5分に設定するには、相対時間を<1>{{relativeFrom}}</1>と<4>{{relativeTo}}</4>、または<6>{{variable}}</6>のような変数に設定する必要があります。",
       "render-cache-timeout-option": {
@@ -14033,9 +14225,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12時間",
     "1_day": "1日",
     "1_hour": "1時間",
-    "12_hours": "12時間",
     "30_days": "30日",
     "6_hours": "6時間",
     "7_days": "7日"
@@ -15301,8 +15493,8 @@
       "title-dependencies": "依存関係"
     },
     "variables-unknown-button": {
-      "usage-title": "{{variableId}}の使用状況の表示",
-      "VariablesUnknownButton-tooltip-show-usages": "使用状況を表示"
+      "VariablesUnknownButton-tooltip-show-usages": "使用状況を表示",
+      "usage-title": "{{variableId}}の使用状況の表示"
     },
     "variables-unknown-table": {
       "collapse-label": "名前が変更された、または欠落している変数",

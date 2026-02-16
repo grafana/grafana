@@ -557,6 +557,48 @@
     "alert-warning": {
       "to-rule-list": "Na seznam pravidel"
     },
+    "alertVersionHistory": {
+      "alerting": "Výstrahy",
+      "alerting-change-description": "Tuto aktualizaci provedl výstražný systém kvůli jiným změnám. Například při přejmenování kontaktního bodu, který se používá pro zjednodušené směrování, dojde k aktualizaci dotčených pravidel",
+      "annotations": "Vysvětlivky",
+      "compare": "Porovnat",
+      "compare-with-latest": "Porovnat s nejnovější verzí",
+      "compareVersions": "Porovnat verze",
+      "comparing-versions": "Porovnávání verzí",
+      "condition": "Podmínka výstrahy",
+      "contactPointRouting": "Směrování kontaktního bodu",
+      "description": "Při každé úpravě pravidla výstrahy se vytvoří nová verze. Vyberte dvě verze níže a porovnejte jejich rozdíly.",
+      "errorloading": "Verze pravidel výstrahy se nepodařilo načíst",
+      "execErrorState": "Stav výstrahy při chybě provádění",
+      "intervalSeconds": "Interval hodnocení",
+      "labels": "Štítky",
+      "latest": "Nejnovější",
+      "name": "Název",
+      "namespace_uid": "UID složky",
+      "noDataState": "Stav výstrahy, když nejsou k dispozici žádná data",
+      "noVersionsFound": "Nebyly nalezeny žádné verze pro toto pravidlo",
+      "paused": "Pozastavený stav",
+      "pendingPeriod": "Čekající období",
+      "provisioning": "Zajišťování",
+      "provisioning-change-description": "Aktualizace verze byla provedena prostřednictvím zajištění",
+      "queryAndAlertCondition": "Stav dotazu a výstrahy",
+      "restore": "Obnovit",
+      "restore-manually": "Vaše pravidlo výstrahy se nepodařilo obnovit. To může být způsobeno změnami jiných subjektů, jako jsou kontaktní body, zdroje dat atd. Obnovte ručně verzi pravidla",
+      "restore-modal": {
+        "body": "Opravdu chcete obnovit definici pravidla výstrahy na tuto verzi? Veškeré neuložené změny budou ztraceny.",
+        "confirm": "Ano, obnovit konfiguraci",
+        "error": "Nelze obnovit verzi pravidla výstrahy ",
+        "summary": "Shrnutí změn, které mají být použity:",
+        "title": "Obnovit verzi"
+      },
+      "restore-version": "Obnovit na verzi {{version}}",
+      "rule_group": "Skupina pravidel",
+      "unknown": "Neznámý",
+      "unknown-change-description": "Tato aktualizace byla provedena před implementací historie verzí pravidla výstrahy. Uživatel, který provedl změnu, není sledován, ale budoucí změny budou zahrnovat uživatele",
+      "user-id": "ID uživatele {{uid}}",
+      "warning-restore-manually": "Ručně obnovujete starou verzi tohoto pravidla výstrahy. Před uložením definice pravidla si pečlivě přečtěte změny.",
+      "warning-restore-manually-title": "Ruční obnovení pravidla"
+    },
     "alertform": {
       "labels": {
         "alerting": "Přidejte štítky do pravidla pro vyhledávání, potlačení nebo přesměrování na zásadu oznamování.",
@@ -611,48 +653,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Hledat pravidla výstrah podle názvu",
       "no-alert-rules-found": "Nebyla nalezena žádná pravidla výstrah",
       "placeholder-sort-default-az": "Třídit (výchozí A–Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Výstrahy",
-      "alerting-change-description": "Tuto aktualizaci provedl výstražný systém kvůli jiným změnám. Například při přejmenování kontaktního bodu, který se používá pro zjednodušené směrování, dojde k aktualizaci dotčených pravidel",
-      "annotations": "Vysvětlivky",
-      "compare": "Porovnat",
-      "compare-with-latest": "Porovnat s nejnovější verzí",
-      "compareVersions": "Porovnat verze",
-      "comparing-versions": "Porovnávání verzí",
-      "condition": "Podmínka výstrahy",
-      "contactPointRouting": "Směrování kontaktního bodu",
-      "description": "Při každé úpravě pravidla výstrahy se vytvoří nová verze. Vyberte dvě verze níže a porovnejte jejich rozdíly.",
-      "errorloading": "Verze pravidel výstrahy se nepodařilo načíst",
-      "execErrorState": "Stav výstrahy při chybě provádění",
-      "intervalSeconds": "Interval hodnocení",
-      "labels": "Štítky",
-      "latest": "Nejnovější",
-      "name": "Název",
-      "namespace_uid": "UID složky",
-      "noDataState": "Stav výstrahy, když nejsou k dispozici žádná data",
-      "noVersionsFound": "Nebyly nalezeny žádné verze pro toto pravidlo",
-      "paused": "Pozastavený stav",
-      "pendingPeriod": "Čekající období",
-      "provisioning": "Zajišťování",
-      "provisioning-change-description": "Aktualizace verze byla provedena prostřednictvím zajištění",
-      "queryAndAlertCondition": "Stav dotazu a výstrahy",
-      "restore": "Obnovit",
-      "restore-manually": "Vaše pravidlo výstrahy se nepodařilo obnovit. To může být způsobeno změnami jiných subjektů, jako jsou kontaktní body, zdroje dat atd. Obnovte ručně verzi pravidla",
-      "restore-modal": {
-        "body": "Opravdu chcete obnovit definici pravidla výstrahy na tuto verzi? Veškeré neuložené změny budou ztraceny.",
-        "confirm": "Ano, obnovit konfiguraci",
-        "error": "Nelze obnovit verzi pravidla výstrahy ",
-        "summary": "Shrnutí změn, které mají být použity:",
-        "title": "Obnovit verzi"
-      },
-      "restore-version": "Obnovit na verzi {{version}}",
-      "rule_group": "Skupina pravidel",
-      "unknown": "Neznámý",
-      "unknown-change-description": "Tato aktualizace byla provedena před implementací historie verzí pravidla výstrahy. Uživatel, který provedl změnu, není sledován, ale budoucí změny budou zahrnovat uživatele",
-      "user-id": "ID uživatele {{uid}}",
-      "warning-restore-manually": "Ručně obnovujete starou verzi tohoto pravidla výstrahy. Před uložením definice pravidla si pečlivě přečtěte změny.",
-      "warning-restore-manually-title": "Ruční obnovení pravidla"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Tato zásada odpovídá všem štítkům"
@@ -2162,6 +2162,50 @@
       "body-no-alertmanager-found": "Nenašli jsme žádné externí správce výstrah a možná nemáte přístup k vestavěnému správci výstrah Grafana.",
       "title-no-alertmanager-found": "Nebyl nalezen žádný správce výstrah"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Hledat podle kontaktního bodu",
       "placeholder-search-by-contact-point": "Vyberte kontaktní bod",
@@ -2225,6 +2269,69 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Přidat skupinu šablon oznámení",
       "create-notification-templates-customize-notifications": "Vytvořte šablony oznámení pro přizpůsobení oznámení."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_few": "",
+      "firing-alerts_many": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_few": "",
+      "resolved-alerts_many": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Přidejte štítky, které vám pomohou lépe spravovat pravidla nahrávání.",
@@ -3071,6 +3178,11 @@
       "title-preview-not-available": "Náhled není dostupný",
       "valid-matcher-affected-alerts": "Přidat platnou shodu pro zobrazení dotčených výstrah"
     },
+    "silences": {
+      "affected-instances": "Dotčené instance výstrah",
+      "only-firing-instances": "Zobrazují se pouze instance výstrah v aktivním stavu.",
+      "preview-affected-instances": "Náhled instancí výstrah ovlivněných tímto potlačením."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Podrobnosti o potlačení",
       "label-comment": "Komentář",
@@ -3092,11 +3204,6 @@
       "text-loading-silences": "Načítání potlačení…",
       "title-error-loading-silences": "Chyba při načítání potlačení",
       "title-the-selected-alertmanager-has-no-configuration": "Vybraný správce výstrah nemá žádnou konfiguraci"
-    },
-    "silences": {
-      "affected-instances": "Dotčené instance výstrah",
-      "only-firing-instances": "Zobrazují se pouze instance výstrah v aktivním stavu.",
-      "preview-affected-instances": "Náhled instancí výstrah ovlivněných tímto potlačením."
     },
     "simple-condition-editor": {
       "label-of-query": "DOTAZU",
@@ -3424,6 +3531,7 @@
           "enrichment": "Rozšiřující modul výstrah",
           "history": "Historie",
           "instances": "Instance",
+          "notifications": "",
           "query-and-conditions": "Dotaz a podmínky",
           "versions": "Verze"
         }
@@ -5012,6 +5120,33 @@
         "new-panel": "Nový panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Zpět na seznam",
       "control-display-options": {
@@ -5165,6 +5300,9 @@
       "message": {
         "dashboard-not-found": "Nástěnka nebyla nalezena"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Možnosti zdroje dat",
@@ -6225,7 +6363,46 @@
       "tab-title": "Změnit název karty"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Nástěnka",
         "element": "Prvek",
         "local-variable": "Lokální proměnná",
@@ -6604,8 +6781,8 @@
       "aria-label-expand": "Rozbalit kategorii {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Možnosti hledání",
       "Recent options-title-recent-options": "Nedávné možnosti",
+      "placeholder-search-options": "Možnosti hledání",
       "title-matched_one": "Shoda možností: {{count}}/{{totalCount}}",
       "title-matched_few": "Shoda možností: {{count}}/{{totalCount}}",
       "title-matched_many": "Shoda možností: {{count}}/{{totalCount}}",
@@ -10186,17 +10363,17 @@
       "description": "Vaše konfigurace LDAP nefunguje, protože základní přihlašovací formulář je momentálně zakázán. Chcete-li použít ověření LDAP, povolte přihlašovací formulář. Můžete ho povolit na stránce Ověření v části Nastavení ověření.",
       "title": "Základní přihlášení zakázáno"
     },
-    "search_filter": {
-      "description": "Vyhledávací filtr LDAP používaný k vyhledání konkrétních záznamů v adresáři.",
-      "error": "Filtr vyhledávání je povinné pole",
-      "label": "Filtr vyhledávání",
-      "placeholder": "příklad: cn = %s"
-    },
     "search-base-dns": {
       "description": "Pole základních DNS k prohledávání.",
       "error": "Zásada vyhledávání DNS je povinné pole",
       "label": "Zásada vyhledávání DNS",
       "placeholder": "příklad: dc = grafana, dc = organizace"
+    },
+    "search_filter": {
+      "description": "Vyhledávací filtr LDAP používaný k vyhledání konkrétních záznamů v adresáři.",
+      "error": "Filtr vyhledávání je povinné pole",
+      "label": "Filtr vyhledávání",
+      "placeholder": "příklad: cn = %s"
     },
     "subtitle": "Integrace LDAP v Grafaně umožňuje uživatelům Grafany přihlásit se pomocí svých přihlašovacích údajů LDAP. Další informace najdete v naší <2><1>dokumentaci</1></2>.",
     "title": "Základní nastavení"
@@ -11425,8 +11602,8 @@
       "upgrade-tooltip": "Upgradujte a přidejte další uživatele"
     },
     "item": {
-      "add-bookmark": "Přidat do záložek",
-      "remove-bookmark": "Odebrat ze záložek"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Stisknutím klávesy ESC ukončíte režim kiosku"
@@ -11766,7 +11943,8 @@
       "tooltip-delete": "Odstranit"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Použít vizualizaci {{suggestionName}}",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Některé návrhy se nepodařilo načíst"
       },
@@ -11776,8 +11954,7 @@
         "title": "Chyba",
         "try-again-button": "Zkusit znovu"
       },
-      "unknown-viz-type": "Neznámý typ vizualizace",
-      "use-this-suggestion": "Použít tento návrh"
+      "unknown-viz-type": "Neznámý typ vizualizace"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
@@ -13067,15 +13244,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -13113,6 +13300,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13120,6 +13309,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Výraz",
       "query": "Dotaz",
       "transformation": "Transformace"
@@ -13129,12 +13319,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Vybrat kartu {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Dotazy a výrazy",
-      "query-stack": "Zásobník dotazů",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13193,10 +13397,10 @@
       "title-data-source-help": "Nápověda pro zdroj dat"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Možnosti dotazu",
       "collapsed-interval": "Interval = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Skrýt informace o čase",
-      "Query options-title-query-options": "Možnosti dotazu",
       "relative-time": "Relativní čas",
       "relative-time-tooltip": "Přepíše relativní časový rozsah pro jednotlivé panely, což způsobí, že se budou lišit od výběru ve voliči času nástěnky v pravém horním rohu nástěnky. Například pro konfiguraci „Last 5 minutes“ (Posledních 5 minut) by měl být časový posun <1>{{relativeFrom}}</1> a <4>{{relativeTo}}</4> nebo proměnné jako <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14222,9 +14426,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 hodin",
     "1_day": "1 den",
     "1_hour": "1 hodina",
-    "12_hours": "12 hodin",
     "30_days": "30 dnů",
     "6_hours": "6 hodin",
     "7_days": "7 dnů"
@@ -15490,8 +15694,8 @@
       "title-dependencies": "Závislosti"
     },
     "variables-unknown-button": {
-      "usage-title": "Zobrazuje se použití pro: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Zobrazit použití"
+      "VariablesUnknownButton-tooltip-show-usages": "Zobrazit použití",
+      "usage-title": "Zobrazuje se použití pro: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Přejmenované nebo chybějící proměnné",

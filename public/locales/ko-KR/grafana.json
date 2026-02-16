@@ -548,6 +548,48 @@
     "alert-warning": {
       "to-rule-list": "규칙 목록으로"
     },
+    "alertVersionHistory": {
+      "alerting": "경고",
+      "alerting-change-description": "이 업데이트는 다른 변경 사항으로 인해 경고 시스템에 의해 수행되었습니다. 예를 들어, 단순화된 라우팅에 사용되는 연락처 이름을 변경하면 영향을 받는 규칙이 업데이트됩니다.",
+      "annotations": "주석",
+      "compare": "비교",
+      "compare-with-latest": "최신 버전과 비교",
+      "compareVersions": "버전 비교",
+      "comparing-versions": "버전 비교 중",
+      "condition": "경고 조건",
+      "contactPointRouting": "연락처 라우팅",
+      "description": "경고 규칙을 편집할 때마다 새 버전이 생성됩니다. 아래에서 두 버전을 선택하고 차이점을 비교하세요.",
+      "errorloading": "경고 규칙 버전 로딩 실패",
+      "execErrorState": "실행 오류 시 경고 상태",
+      "intervalSeconds": "평가 간격",
+      "labels": "라벨",
+      "latest": "최근",
+      "name": "이름",
+      "namespace_uid": "폴더 UID",
+      "noDataState": "데이터가 없을 때 경고 상태",
+      "noVersionsFound": "이 규칙에 대해 찾은 버전 없음",
+      "paused": "일시 중지 상태",
+      "pendingPeriod": "보류 기간",
+      "provisioning": "프로비저닝",
+      "provisioning-change-description": "프로비저닝을 통해 버전 업데이트가 수행되었습니다.",
+      "queryAndAlertCondition": "쿼리 및 경고 조건",
+      "restore": "복구",
+      "restore-manually": "경고 규칙을 복구할 수 없습니다. 이는 연락처, 데이터 소스 등과 같은 다른 엔티티의 변경으로 인한 것일 수 있습니다. 규칙 버전을 수동으로 복구해 주세요.",
+      "restore-modal": {
+        "body": "정말 경고 규칙 정의를 이 버전으로 복구하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
+        "confirm": "구성 복구 확인",
+        "error": "경고 규칙 버전을 복구할 수 없습니다. ",
+        "summary": "적용할 변경 사항 요약:",
+        "title": "버전 복구"
+      },
+      "restore-version": "{{version}} 버전으로 복구",
+      "rule_group": "규칙 그룹",
+      "unknown": "알 수 없음",
+      "unknown-change-description": "이 업데이트는 경고 규칙 버전 이력을 구현하기 전에 수행되었습니다. 변경한 사용자는 추적되지 않지만 향후 변경 사항에는 사용자가 포함됩니다.",
+      "user-id": "사용자 ID {{uid}}",
+      "warning-restore-manually": "이 경고 규칙의 이전 버전을 수동으로 복구하고 있습니다. 규칙 정의를 저장하기 전에 변경 사항을 주의 깊게 검토해 주세요.",
+      "warning-restore-manually-title": "수동으로 규칙 복구"
+    },
     "alertform": {
       "labels": {
         "alerting": "검색이나 알림 끄기, 알림 정책 라우팅 관련 규칙에 라벨을 추가하세요.",
@@ -602,48 +644,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "이름으로 경고 규칙 검색",
       "no-alert-rules-found": "경고 규칙을 찾을 수 없습니다",
       "placeholder-sort-default-az": "정렬(기본값 A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "경고",
-      "alerting-change-description": "이 업데이트는 다른 변경 사항으로 인해 경고 시스템에 의해 수행되었습니다. 예를 들어, 단순화된 라우팅에 사용되는 연락처 이름을 변경하면 영향을 받는 규칙이 업데이트됩니다.",
-      "annotations": "주석",
-      "compare": "비교",
-      "compare-with-latest": "최신 버전과 비교",
-      "compareVersions": "버전 비교",
-      "comparing-versions": "버전 비교 중",
-      "condition": "경고 조건",
-      "contactPointRouting": "연락처 라우팅",
-      "description": "경고 규칙을 편집할 때마다 새 버전이 생성됩니다. 아래에서 두 버전을 선택하고 차이점을 비교하세요.",
-      "errorloading": "경고 규칙 버전 로딩 실패",
-      "execErrorState": "실행 오류 시 경고 상태",
-      "intervalSeconds": "평가 간격",
-      "labels": "라벨",
-      "latest": "최근",
-      "name": "이름",
-      "namespace_uid": "폴더 UID",
-      "noDataState": "데이터가 없을 때 경고 상태",
-      "noVersionsFound": "이 규칙에 대해 찾은 버전 없음",
-      "paused": "일시 중지 상태",
-      "pendingPeriod": "보류 기간",
-      "provisioning": "프로비저닝",
-      "provisioning-change-description": "프로비저닝을 통해 버전 업데이트가 수행되었습니다.",
-      "queryAndAlertCondition": "쿼리 및 경고 조건",
-      "restore": "복구",
-      "restore-manually": "경고 규칙을 복구할 수 없습니다. 이는 연락처, 데이터 소스 등과 같은 다른 엔티티의 변경으로 인한 것일 수 있습니다. 규칙 버전을 수동으로 복구해 주세요.",
-      "restore-modal": {
-        "body": "정말 경고 규칙 정의를 이 버전으로 복구하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
-        "confirm": "구성 복구 확인",
-        "error": "경고 규칙 버전을 복구할 수 없습니다. ",
-        "summary": "적용할 변경 사항 요약:",
-        "title": "버전 복구"
-      },
-      "restore-version": "{{version}} 버전으로 복구",
-      "rule_group": "규칙 그룹",
-      "unknown": "알 수 없음",
-      "unknown-change-description": "이 업데이트는 경고 규칙 버전 이력을 구현하기 전에 수행되었습니다. 변경한 사용자는 추적되지 않지만 향후 변경 사항에는 사용자가 포함됩니다.",
-      "user-id": "사용자 ID {{uid}}",
-      "warning-restore-manually": "이 경고 규칙의 이전 버전을 수동으로 복구하고 있습니다. 규칙 정의를 저장하기 전에 변경 사항을 주의 깊게 검토해 주세요.",
-      "warning-restore-manually-title": "수동으로 규칙 복구"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "이 정책은 모든 라벨과 일치합니다"
@@ -2129,6 +2129,44 @@
       "body-no-alertmanager-found": "외부 Alertmanager를 찾을 수 없으며 내장된 Grafana Alertmanager에 액세스할 수 없습니다.",
       "title-no-alertmanager-found": "Alertmanager를 찾을 수 없습니다"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "연락처로 검색",
       "placeholder-search-by-contact-point": "연락처 선택",
@@ -2192,6 +2230,63 @@
     "notification-templates-tab": {
       "add-notification-template-group": "알림 템플릿 그룹 추가",
       "create-notification-templates-customize-notifications": "알림 템플릿을 만들어 알림을 사용자 정의하세요."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "기록 규칙을 더 잘 관리할 수 있도록 라벨을 추가하세요.",
@@ -3023,6 +3118,11 @@
       "title-preview-not-available": "미리 보기를 사용할 수 없음",
       "valid-matcher-affected-alerts": "영향을 받는 경고를 보려면 유효한 일치 조건을 추가하세요"
     },
+    "silences": {
+      "affected-instances": "영향을 받는 경고 인스턴스",
+      "only-firing-instances": "발생 상태의 경고 인스턴스만 표시됩니다.",
+      "preview-affected-instances": "이 알림 끄기의 영향을 받는 경고 인스턴스를 미리보기합니다."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "알림 끄기에 대한 세부 정보",
       "label-comment": "코멘트",
@@ -3044,11 +3144,6 @@
       "text-loading-silences": "알림 끄기 로딩 중...",
       "title-error-loading-silences": "알림 끄기 로딩 중 오류 발생",
       "title-the-selected-alertmanager-has-no-configuration": "선택한 Alertmanager에 대한 구성이 없습니다"
-    },
-    "silences": {
-      "affected-instances": "영향을 받는 경고 인스턴스",
-      "only-firing-instances": "발생 상태의 경고 인스턴스만 표시됩니다.",
-      "preview-affected-instances": "이 알림 끄기의 영향을 받는 경고 인스턴스를 미리보기합니다."
     },
     "simple-condition-editor": {
       "label-of-query": "쿼리의",
@@ -3376,6 +3471,7 @@
           "enrichment": "알림 강화 기능",
           "history": "이력",
           "instances": "인스턴스",
+          "notifications": "",
           "query-and-conditions": "쿼리 및 조건",
           "versions": "버전"
         }
@@ -4937,6 +5033,33 @@
         "new-panel": "새 패널"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "목록으로 돌아가기",
       "control-display-options": {
@@ -5090,6 +5213,9 @@
       "message": {
         "dashboard-not-found": "대시보드를 찾을 수 없습니다."
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "데이터 소스 옵션",
@@ -6141,7 +6267,46 @@
       "tab-title": "탭 제목 변경"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "대시보드",
         "element": "요소",
         "local-variable": "로컬 변수",
@@ -6520,8 +6685,8 @@
       "aria-label-expand": "{{title}} 카테고리 펼치기"
     },
     "options-pane-options": {
-      "placeholder-search-options": "검색 옵션",
       "Recent options-title-recent-options": "최근 옵션",
+      "placeholder-search-options": "검색 옵션",
       "title-matched_other": "{{totalCount}}개 옵션 중 {{count}}개 일치함"
     },
     "outline": {
@@ -10057,17 +10222,17 @@
       "description": "현재 기본 로그인 양식이 비활성화되어 있어 LDAP 구성이 작동하지 않습니다. LDAP 인증을 사용하려면 로그인 양식을 활성화하세요. '인증 설정'의 인증 페이지에서 활성화할 수 있습니다.",
       "title": "기본 로그인 비활성화됨"
     },
-    "search_filter": {
-      "description": "디렉토리 내의 특정 항목을 찾는 데 사용되는 LDAP 검색 필터입니다.",
-      "error": "검색 필터는 필수 항목입니다.",
-      "label": "검색 필터",
-      "placeholder": "예: cn=%s"
-    },
     "search-base-dns": {
       "description": "검색할 기본 DNS 배열입니다.",
       "error": "검색 기본 DNS는 필수 항목입니다.",
       "label": "검색 기본 DNS",
       "placeholder": "예: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "디렉토리 내의 특정 항목을 찾는 데 사용되는 LDAP 검색 필터입니다.",
+      "error": "검색 필터는 필수 항목입니다.",
+      "label": "검색 필터",
+      "placeholder": "예: cn=%s"
     },
     "subtitle": "Grafana에서 LDAP 통합을 사용하면 Grafana 사용자가 본인의 LDAP 자격 증명으로 로그인할 수 있습니다. 자세한 내용은 <2><1>문서</1></2>를 참조하세요.",
     "title": "기본 설정"
@@ -11278,8 +11443,8 @@
       "upgrade-tooltip": "업그레이드하여 더 많은 사용자 추가"
     },
     "item": {
-      "add-bookmark": "북마크에 추가",
-      "remove-bookmark": "북마크에서 제거"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "키오스크 모드를 종료하려면 ESC 키를 누르세요."
@@ -11610,7 +11775,8 @@
       "tooltip-delete": "삭제"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "{{suggestionName}} 시각화 적용",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "일부 제안을 불러올 수 없습니다"
       },
@@ -11620,8 +11786,7 @@
         "title": "오류",
         "try-again-button": "다시 시도"
       },
-      "unknown-viz-type": "알 수 없는 시각화 유형",
-      "use-this-suggestion": "이 제안 사용"
+      "unknown-viz-type": "알 수 없는 시각화 유형"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
@@ -12890,15 +13055,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12936,6 +13111,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -12943,6 +13120,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "표현식",
       "query": "쿼리",
       "transformation": "변환"
@@ -12952,12 +13130,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "{{id}} 카드 선택",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "쿼리 및 표현식",
-      "query-stack": "쿼리 스택",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13016,10 +13208,10 @@
       "title-data-source-help": "데이터 소스 도움말"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "쿼리 옵션",
       "collapsed-interval": "간격 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "시간 정보 숨기기",
-      "Query options-title-query-options": "쿼리 옵션",
       "relative-time": "상대 시간",
       "relative-time-tooltip": "개별 패널에 대한 상대 시간 범위를 재정의하면 대시보드 오른쪽 상단의 대시보드 시간 선택기에서 선택한 시간과 다르게 표시됩니다. 예를 들어 '지난 5분'을 설정하려면 '상대 시간'을 <1>{{relativeFrom}}</1> 및 <4>{{relativeTo}}</4>(으)로 지정하거나, <6>{{variable}}</6>와(과) 같은 변수를 사용해야 합니다.",
       "render-cache-timeout-option": {
@@ -14033,9 +14225,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12시간",
     "1_day": "1일",
     "1_hour": "1시간",
-    "12_hours": "12시간",
     "30_days": "30일",
     "6_hours": "6시간",
     "7_days": "7일"
@@ -15301,8 +15493,8 @@
       "title-dependencies": "종속 관계"
     },
     "variables-unknown-button": {
-      "usage-title": "다음 변수의 사용처 표시 중: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "사용처 표시"
+      "VariablesUnknownButton-tooltip-show-usages": "사용처 표시",
+      "usage-title": "다음 변수의 사용처 표시 중: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "이름이 변경되었거나 누락된 변수",

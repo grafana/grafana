@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "Kural listesine"
     },
+    "alertVersionHistory": {
+      "alerting": "Uyarı sistemi",
+      "alerting-change-description": "Bu güncelleme, diğer değişiklikler nedeniyle uyarı sistemi tarafından yapıldı. Örneğin basitleştirilmiş yönlendirme için kullanılan bir iletişim noktası yeniden adlandırıldığında, etkilenen kurallar güncellenir.",
+      "annotations": "Ek açıklamalar",
+      "compare": "Karşılaştır",
+      "compare-with-latest": "En son sürümle karşılaştır",
+      "compareVersions": "Sürümleri karşılaştır",
+      "comparing-versions": "Sürümler karşılaştırılıyor",
+      "condition": "Uyarı koşulu",
+      "contactPointRouting": "İletişim noktası yönlendirmesi",
+      "description": "Uyarı kuralını her düzenleyişinizde yeni bir sürüm oluşturulur. Aşağıdan iki sürüm seçin ve aralarındaki farkları görün.",
+      "errorloading": "Uyarı kuralı sürümleri yüklenemedi",
+      "execErrorState": "Yürütme hatası olduğunda uyarı durumu",
+      "intervalSeconds": "Değerlendirme aralığı",
+      "labels": "Etiketler",
+      "latest": "En son",
+      "name": "Ad",
+      "namespace_uid": "Klasör UID'si",
+      "noDataState": "Veri olmadığında uyarı durumu",
+      "noVersionsFound": "Bu kural için sürüm bulunamadı",
+      "paused": "Duraklatılmış durum",
+      "pendingPeriod": "Bekleme süresi",
+      "provisioning": "Sağlama",
+      "provisioning-change-description": "Sürüm güncellemesi sağlama yoluyla yapıldı",
+      "queryAndAlertCondition": "Sorgu ve uyarı koşulu",
+      "restore": "Geri yükle",
+      "restore-manually": "Uyarı kuralınız geri yüklenemedi. Bu durum iletişim noktaları, veri kaynakları gibi diğer varlıklardaki değişikliklerden kaynaklanıyor olabilir. Lütfen kural sürümünü manuel olarak geri yükleyin.",
+      "restore-modal": {
+        "body": "Uyarı kuralı tanımını bu sürüme geri yüklemek istediğinizden emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
+        "confirm": "Evet, yapılandırmayı geri yükle",
+        "error": "Uyarı kuralı sürümü geri yüklenemedi ",
+        "summary": "Uygulanacak değişikliklerin özeti:",
+        "title": "Sürümü geri yükle"
+      },
+      "restore-version": "{{version}} sürümüne geri yükle",
+      "rule_group": "Kural grubu",
+      "unknown": "Bilinmeyen",
+      "unknown-change-description": "Bu güncelleme, uyarı kuralı sürüm geçmişi uygulanmadan önce yapıldı. Değişikliği yapan kullanıcı izlenmiyor ancak gelecekteki değişiklikler kullanıcı bilgilerini içerecektir.",
+      "user-id": "Kullanıcı Kimliği {{uid}}",
+      "warning-restore-manually": "Bu uyarı kuralının eski bir sürümünü manuel olarak geri yüklüyorsunuz. Kural tanımını kaydetmeden önce değişiklikleri dikkatlice inceleyin.",
+      "warning-restore-manually-title": "Kural manuel olarak geri yükleniyor"
+    },
     "alertform": {
       "labels": {
         "alerting": "Arama, sessize alma veya bildirim politikasına yönlendirme için kuralınıza etiketler ekleyin.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Ada göre uyarı kuralı ara",
       "no-alert-rules-found": "Uyarı kuralı bulunamadı",
       "placeholder-sort-default-az": "Sırala (Varsayılan A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Uyarı sistemi",
-      "alerting-change-description": "Bu güncelleme, diğer değişiklikler nedeniyle uyarı sistemi tarafından yapıldı. Örneğin basitleştirilmiş yönlendirme için kullanılan bir iletişim noktası yeniden adlandırıldığında, etkilenen kurallar güncellenir.",
-      "annotations": "Ek açıklamalar",
-      "compare": "Karşılaştır",
-      "compare-with-latest": "En son sürümle karşılaştır",
-      "compareVersions": "Sürümleri karşılaştır",
-      "comparing-versions": "Sürümler karşılaştırılıyor",
-      "condition": "Uyarı koşulu",
-      "contactPointRouting": "İletişim noktası yönlendirmesi",
-      "description": "Uyarı kuralını her düzenleyişinizde yeni bir sürüm oluşturulur. Aşağıdan iki sürüm seçin ve aralarındaki farkları görün.",
-      "errorloading": "Uyarı kuralı sürümleri yüklenemedi",
-      "execErrorState": "Yürütme hatası olduğunda uyarı durumu",
-      "intervalSeconds": "Değerlendirme aralığı",
-      "labels": "Etiketler",
-      "latest": "En son",
-      "name": "Ad",
-      "namespace_uid": "Klasör UID'si",
-      "noDataState": "Veri olmadığında uyarı durumu",
-      "noVersionsFound": "Bu kural için sürüm bulunamadı",
-      "paused": "Duraklatılmış durum",
-      "pendingPeriod": "Bekleme süresi",
-      "provisioning": "Sağlama",
-      "provisioning-change-description": "Sürüm güncellemesi sağlama yoluyla yapıldı",
-      "queryAndAlertCondition": "Sorgu ve uyarı koşulu",
-      "restore": "Geri yükle",
-      "restore-manually": "Uyarı kuralınız geri yüklenemedi. Bu durum iletişim noktaları, veri kaynakları gibi diğer varlıklardaki değişikliklerden kaynaklanıyor olabilir. Lütfen kural sürümünü manuel olarak geri yükleyin.",
-      "restore-modal": {
-        "body": "Uyarı kuralı tanımını bu sürüme geri yüklemek istediğinizden emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
-        "confirm": "Evet, yapılandırmayı geri yükle",
-        "error": "Uyarı kuralı sürümü geri yüklenemedi ",
-        "summary": "Uygulanacak değişikliklerin özeti:",
-        "title": "Sürümü geri yükle"
-      },
-      "restore-version": "{{version}} sürümüne geri yükle",
-      "rule_group": "Kural grubu",
-      "unknown": "Bilinmeyen",
-      "unknown-change-description": "Bu güncelleme, uyarı kuralı sürüm geçmişi uygulanmadan önce yapıldı. Değişikliği yapan kullanıcı izlenmiyor ancak gelecekteki değişiklikler kullanıcı bilgilerini içerecektir.",
-      "user-id": "Kullanıcı Kimliği {{uid}}",
-      "warning-restore-manually": "Bu uyarı kuralının eski bir sürümünü manuel olarak geri yüklüyorsunuz. Kural tanımını kaydetmeden önce değişiklikleri dikkatlice inceleyin.",
-      "warning-restore-manually-title": "Kural manuel olarak geri yükleniyor"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Bu politika tüm etiketlerle eşleşiyor"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "Harici bir Alertmanager bulunamadı ve yerleşik Grafana Alertmanager'a erişiminiz olmayabilir.",
       "title-no-alertmanager-found": "Alertmanager bulunamadı"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "İletişim noktasına göre ara",
       "placeholder-search-by-contact-point": "Bir iletişim noktası seçin",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Bildirim şablon grubu ekle",
       "create-notification-templates-customize-notifications": "Bildirimlerinizi özelleştirmek için bildirim şablonları oluşturun."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Kayıt kurallarınızı daha iyi yönetebilmeniz için etiketler ekleyin.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Ön izleme kullanılamıyor",
       "valid-matcher-affected-alerts": "Etkilenen uyarıları görmek için geçerli bir eşleşme ekleyin"
     },
+    "silences": {
+      "affected-instances": "Etkilenen uyarı örnekleri",
+      "only-firing-instances": "Yalnızca tetikleme durumundaki uyarı örnekleri görüntülenir.",
+      "preview-affected-instances": "Bu sessize alma işleminden etkilenen uyarı örneklerini ön izleyin."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Sessize alma ile ilgili ayrıntılar",
       "label-comment": "Yorum",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "Sessize almalar yükleniyor...",
       "title-error-loading-silences": "Sessize almalar yüklenirken hata oluştu",
       "title-the-selected-alertmanager-has-no-configuration": "Seçilen Alertmanager'ın yapılandırması yok"
-    },
-    "silences": {
-      "affected-instances": "Etkilenen uyarı örnekleri",
-      "only-firing-instances": "Yalnızca tetikleme durumundaki uyarı örnekleri görüntülenir.",
-      "preview-affected-instances": "Bu sessize alma işleminden etkilenen uyarı örneklerini ön izleyin."
     },
     "simple-condition-editor": {
       "label-of-query": "SORGUNUN",
@@ -3392,6 +3491,7 @@
           "enrichment": "Uyarı zenginleştirme",
           "history": "Geçmiş",
           "instances": "Örnekler",
+          "notifications": "",
           "query-and-conditions": "Sorgu ve koşullar",
           "versions": "Sürümler"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Yeni panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Listeye geri dön",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Pano bulunamadı"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Veri kaynağı seçenekleri",
@@ -6169,7 +6299,46 @@
       "tab-title": "Sekme başlığını değiştir"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Pano",
         "element": "Bileşen",
         "local-variable": "Yerel değişken",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": ""
     },
     "options-pane-options": {
-      "placeholder-search-options": "Arama seçenekleri",
       "Recent options-title-recent-options": "Son seçenekler",
+      "placeholder-search-options": "Arama seçenekleri",
       "title-matched_one": "{{totalCount}} seçenekten {{count}} tanesi eşleşti",
       "title-matched_other": "{{totalCount}} seçenekten {{count}} tanesi eşleşti"
     },
@@ -10100,17 +10269,17 @@
       "description": "Temel giriş formu şu anda devre dışı olduğundan LDAP yapılandırmanız çalışmıyor. LDAP kimlik doğrulamasını kullanmak için giriş formunu etkinleştirin. Bunu, \"Kimlik Doğrulama Ayarları\" bölümünde Kimlik Doğrulama sayfasında etkinleştirebilirsiniz.",
       "title": "Temel giriş devre dışı bırakıldı"
     },
-    "search_filter": {
-      "description": "Dizin içinde belirli girişleri bulmak için kullanılan LDAP arama filtresi.",
-      "error": "Arama filtresi gerekli bir alandır.",
-      "label": "Arama filtresi",
-      "placeholder": "örnek: cn=%s"
-    },
     "search-base-dns": {
       "description": "Arama yapılacak temel DN'lerin dizisi.",
       "error": "Arama temel DN gerekli bir alandır.",
       "label": "Arama temel DN",
       "placeholder": "örnek: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "Dizin içinde belirli girişleri bulmak için kullanılan LDAP arama filtresi.",
+      "error": "Arama filtresi gerekli bir alandır.",
+      "label": "Arama filtresi",
+      "placeholder": "örnek: cn=%s"
     },
     "subtitle": "Grafana'daki LDAP entegrasyonu, Grafana kullanıcılarınızın LDAP kimlik bilgileriyle giriş yapmasına olanak tanır. Daha fazla bilgi için <2><1>belgelerimize</1></2> bakın.",
     "title": "Temel Ayarlar"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Daha fazla kullanıcı eklemek için yükseltin"
     },
     "item": {
-      "add-bookmark": "Yer imlerine ekle",
-      "remove-bookmark": "Yer imlerinden kaldır"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Kiosk modundan çıkmak için ESC tuşuna basın"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Sil"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "{{suggestionName}} görselleştirmesini uygula",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Bazı öneriler yüklenemedi"
       },
@@ -11672,8 +11842,7 @@
         "title": "Hata",
         "try-again-button": "Tekrar deneyin"
       },
-      "unknown-viz-type": "Bilinmeyen görselleştirme türü",
-      "use-this-suggestion": "Bu öneriyi kullan"
+      "unknown-viz-type": "Bilinmeyen görselleştirme türü"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
@@ -12949,15 +13118,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12995,6 +13174,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13002,6 +13183,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "İfade",
       "query": "Sorgu",
       "transformation": "Dönüştürme"
@@ -13011,12 +13193,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "{{id}} kartını seçin",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Sorgular ve İfadeler",
-      "query-stack": "Sorgu Yığını",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
       "transformations": "Dönüşümler"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13075,10 +13271,10 @@
       "title-data-source-help": "Veri kaynağı yardımı"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Sorgu seçenekleri",
       "collapsed-interval": "Aralık = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Zaman bilgilerini gizle",
-      "Query options-title-query-options": "Sorgu seçenekleri",
       "relative-time": "Göreceli zaman",
       "relative-time-tooltip": "Bireysel paneller için göreli zaman aralığını geçersiz kılar ve bu panellerin, panodaki sağ üst köşesindeki zaman seçiciden seçilen zaman aralığından farklı olmasına neden olur. Örneğin Son 5 dakikayı yapılandırmak için Göreceli zaman ayarı <1>{{relativeFrom}}</1> ve <4>{{relativeTo}}</4> olmalı veya <6>{{variable}}</6> gibi değişkenler kullanılmalıdır.",
       "render-cache-timeout-option": {
@@ -14096,9 +14292,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 saat",
     "1_day": "1 gün",
     "1_hour": "1 saat",
-    "12_hours": "12 saat",
     "30_days": "30 gün",
     "6_hours": "6 saat",
     "7_days": "7 gün"
@@ -15364,8 +15560,8 @@
       "title-dependencies": "Bağımlılıklar"
     },
     "variables-unknown-button": {
-      "usage-title": "{{variableId}} için kullanım yerleri gösteriliyor",
-      "VariablesUnknownButton-tooltip-show-usages": "Kullanımları göster"
+      "VariablesUnknownButton-tooltip-show-usages": "Kullanımları göster",
+      "usage-title": "{{variableId}} için kullanım yerleri gösteriliyor"
     },
     "variables-unknown-table": {
       "collapse-label": "Yeniden adlandırılmış veya eksik değişkenler",

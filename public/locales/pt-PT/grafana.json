@@ -551,6 +551,48 @@
     "alert-warning": {
       "to-rule-list": "Para a lista de regras"
     },
+    "alertVersionHistory": {
+      "alerting": "Alerta",
+      "alerting-change-description": "Esta atualização foi feita pelo sistema de alerta devido a outras alterações. Por exemplo, ao renomear um ponto de contacto que é utilizado para encaminhamento simplificado, isto atualizará as regras afetadas",
+      "annotations": "Anotações",
+      "compare": "Comparar",
+      "compare-with-latest": "Comparar com a versão mais recente",
+      "compareVersions": "Comparar as versões",
+      "comparing-versions": "A comparar as versões",
+      "condition": "Condição de alerta",
+      "contactPointRouting": "Encaminhamento do ponto de contacto",
+      "description": "Sempre que editar a regra de alerta, é criada uma nova versão. Selecione duas versões abaixo e compare as suas diferenças.",
+      "errorloading": "Falha ao carregar versões de regras de alerta",
+      "execErrorState": "Estado de alerta em caso de erro de execução",
+      "intervalSeconds": "Intervalo de avaliação",
+      "labels": "Etiquetas",
+      "latest": "Mais recentes",
+      "name": "Nome",
+      "namespace_uid": "UID da pasta",
+      "noDataState": "Estado de alerta quando não há dados",
+      "noVersionsFound": "Não foram encontradas versões para esta regra",
+      "paused": "Estado em pausa",
+      "pendingPeriod": "Período pendente",
+      "provisioning": "Provisionamento",
+      "provisioning-change-description": "A atualização da versão foi feita através de provisionamento",
+      "queryAndAlertCondition": "Consulta e condição de alerta",
+      "restore": "Restaurar",
+      "restore-manually": "Não foi possível restaurar a sua regra de alerta. Isto pode ser devido a alterações noutras entidades, como pontos de contacto, origens de dados, etc. Restaure manualmente a versão da regra",
+      "restore-modal": {
+        "body": "Tem a certeza de que pretende restaurar a definição da regra de alerta para esta versão? Todas as alterações não guardadas serão perdidas.",
+        "confirm": "Sim, restaurar configuração",
+        "error": "Não foi possível restaurar a versão da regra de alerta ",
+        "summary": "Resumo das alterações a serem aplicadas:",
+        "title": "Restaurar versão"
+      },
+      "restore-version": "Restaurar para a versão {{version}}",
+      "rule_group": "Grupo de regras",
+      "unknown": "Desconhecido",
+      "unknown-change-description": "Esta atualização foi feita antes da implementação do histórico de versões da regra de alerta. O utilizador que fez a alteração não é rastreado, mas as alterações futuras incluirão o utilizador",
+      "user-id": "ID do utilizador {{uid}} ",
+      "warning-restore-manually": "Está a restaurar manualmente uma versão antiga desta regra de alerta. Reveja as alterações cuidadosamente antes de guardar a definição da regra.",
+      "warning-restore-manually-title": "Restaurar a regra manualmente"
+    },
     "alertform": {
       "labels": {
         "alerting": "Adicione etiquetas à sua regra para pesquisar, silenciar ou encaminhar para uma política de notificação.",
@@ -605,48 +647,6 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Pesquisar regras de alerta por nome",
       "no-alert-rules-found": "Nenhuma regra de alerta encontrada",
       "placeholder-sort-default-az": "Ordenar (Predefinição A-Z)"
-    },
-    "alertVersionHistory": {
-      "alerting": "Alerta",
-      "alerting-change-description": "Esta atualização foi feita pelo sistema de alerta devido a outras alterações. Por exemplo, ao renomear um ponto de contacto que é utilizado para encaminhamento simplificado, isto atualizará as regras afetadas",
-      "annotations": "Anotações",
-      "compare": "Comparar",
-      "compare-with-latest": "Comparar com a versão mais recente",
-      "compareVersions": "Comparar as versões",
-      "comparing-versions": "A comparar as versões",
-      "condition": "Condição de alerta",
-      "contactPointRouting": "Encaminhamento do ponto de contacto",
-      "description": "Sempre que editar a regra de alerta, é criada uma nova versão. Selecione duas versões abaixo e compare as suas diferenças.",
-      "errorloading": "Falha ao carregar versões de regras de alerta",
-      "execErrorState": "Estado de alerta em caso de erro de execução",
-      "intervalSeconds": "Intervalo de avaliação",
-      "labels": "Etiquetas",
-      "latest": "Mais recentes",
-      "name": "Nome",
-      "namespace_uid": "UID da pasta",
-      "noDataState": "Estado de alerta quando não há dados",
-      "noVersionsFound": "Não foram encontradas versões para esta regra",
-      "paused": "Estado em pausa",
-      "pendingPeriod": "Período pendente",
-      "provisioning": "Provisionamento",
-      "provisioning-change-description": "A atualização da versão foi feita através de provisionamento",
-      "queryAndAlertCondition": "Consulta e condição de alerta",
-      "restore": "Restaurar",
-      "restore-manually": "Não foi possível restaurar a sua regra de alerta. Isto pode ser devido a alterações noutras entidades, como pontos de contacto, origens de dados, etc. Restaure manualmente a versão da regra",
-      "restore-modal": {
-        "body": "Tem a certeza de que pretende restaurar a definição da regra de alerta para esta versão? Todas as alterações não guardadas serão perdidas.",
-        "confirm": "Sim, restaurar configuração",
-        "error": "Não foi possível restaurar a versão da regra de alerta ",
-        "summary": "Resumo das alterações a serem aplicadas:",
-        "title": "Restaurar versão"
-      },
-      "restore-version": "Restaurar para a versão {{version}}",
-      "rule_group": "Grupo de regras",
-      "unknown": "Desconhecido",
-      "unknown-change-description": "Esta atualização foi feita antes da implementação do histórico de versões da regra de alerta. O utilizador que fez a alteração não é rastreado, mas as alterações futuras incluirão o utilizador",
-      "user-id": "ID do utilizador {{uid}} ",
-      "warning-restore-manually": "Está a restaurar manualmente uma versão antiga desta regra de alerta. Reveja as alterações cuidadosamente antes de guardar a definição da regra.",
-      "warning-restore-manually-title": "Restaurar a regra manualmente"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Esta política corresponde a todas as etiquetas"
@@ -2140,6 +2140,46 @@
       "body-no-alertmanager-found": "Não foi possível encontrar nenhum Alertmanager externo e poderá não ter acesso ao Grafana Alertmanager integrado.",
       "title-no-alertmanager-found": "Nenhum Alertmanager encontrado"
     },
+    "notification-history": {
+      "annotations": "",
+      "column": {
+        "contact-point": "",
+        "group-labels": "",
+        "state": "",
+        "time": ""
+      },
+      "description": "",
+      "empty": "",
+      "empty-filtered": "",
+      "error": {
+        "default": "",
+        "title": ""
+      },
+      "filter": {
+        "label": "",
+        "outcome": "",
+        "placeholder": "",
+        "status": "",
+        "tooltip": ""
+      },
+      "labels": "",
+      "loading": "",
+      "notification-error": "",
+      "outcome": {
+        "failed": "",
+        "success": ""
+      },
+      "started": "",
+      "status": {
+        "firing": "",
+        "resolved": ""
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Pesquisar por ponto de contacto",
       "placeholder-search-by-contact-point": "Escolher um ponto de contacto",
@@ -2203,6 +2243,65 @@
     "notification-templates-tab": {
       "add-notification-template-group": "Adicionar grupo de modelos de notificação",
       "create-notification-templates-customize-notifications": "Crie modelos de notificação para personalizar as suas notificações."
+    },
+    "notifications-list": {
+      "error-fetching": "",
+      "no-error-details": "",
+      "notification-error": "",
+      "outcome-failed": "",
+      "status-firing": "",
+      "status-resolved": "",
+      "unable-to-fetch": ""
+    },
+    "notifications-runtime-datasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": ""
+      }
+    },
+    "notifications-scene": {
+      "annotations": "",
+      "description": "",
+      "filter": {
+        "clear": ""
+      },
+      "filterBy": "",
+      "header": {
+        "contact-point": "",
+        "group-labels": "",
+        "status": "",
+        "time": ""
+      },
+      "labels": "",
+      "labels-filter-variable": {
+        "label": {
+          "labels": ""
+        }
+      },
+      "no-notifications": "",
+      "outcome-filter-variable": {
+        "label": {
+          "outcome": ""
+        }
+      },
+      "receiver-filter-variable": {
+        "label": {
+          "receiver": ""
+        }
+      },
+      "started": "",
+      "status-filter-variable": {
+        "label": {
+          "status": ""
+        }
+      },
+      "summary": "",
+      "firing-alerts_one": "",
+      "firing-alerts_other": "",
+      "resolved-alerts_one": "",
+      "resolved-alerts_other": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Adicione etiquetas para o ajudar a gerir melhor as suas regras de gravação.",
@@ -3039,6 +3138,11 @@
       "title-preview-not-available": "Pré-visualização indisponível",
       "valid-matcher-affected-alerts": "Adicionar um elemento de correspondência válido para ver os alertas afetados"
     },
+    "silences": {
+      "affected-instances": "Instâncias de alerta afetadas",
+      "only-firing-instances": "Apenas são exibidas as instâncias de alerta no estado de disparo.",
+      "preview-affected-instances": "Pré-visualizar as instâncias de alerta afetadas por este silêncio."
+    },
     "silences-editor": {
       "comment-placeholder-details-about-the-silence": "Detalhes sobre o silêncio",
       "label-comment": "Comentário",
@@ -3060,11 +3164,6 @@
       "text-loading-silences": "A carregar silêncios...",
       "title-error-loading-silences": "Erro ao carregar silêncios",
       "title-the-selected-alertmanager-has-no-configuration": "O Alertmanager selecionado não tem configuração"
-    },
-    "silences": {
-      "affected-instances": "Instâncias de alerta afetadas",
-      "only-firing-instances": "Apenas são exibidas as instâncias de alerta no estado de disparo.",
-      "preview-affected-instances": "Pré-visualizar as instâncias de alerta afetadas por este silêncio."
     },
     "simple-condition-editor": {
       "label-of-query": "CONSULTA DE",
@@ -3392,6 +3491,7 @@
           "enrichment": "Enriquecimento de alerta",
           "history": "Histórico",
           "instances": "Instâncias",
+          "notifications": "",
           "query-and-conditions": "Consulta e condições",
           "versions": "Versões"
         }
@@ -4962,6 +5062,33 @@
         "new-panel": "Novo painel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
     "annotation-settings-edit": {
       "back-to-list": "Voltar à lista",
       "control-display-options": {
@@ -5115,6 +5242,9 @@
       "message": {
         "dashboard-not-found": "Painel de controlo não encontrado"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Opções de origem de dados",
@@ -6169,7 +6299,46 @@
       "tab-title": "Alterar título do separador"
     },
     "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
       "elements": {
+        "annotation": "",
+        "annotation-set": "",
         "dashboard": "Painel de controlo",
         "element": "Elemento",
         "local-variable": "Variável local",
@@ -6548,8 +6717,8 @@
       "aria-label-expand": "Expandir a categoria {{title}}"
     },
     "options-pane-options": {
-      "placeholder-search-options": "Opções de pesquisa",
       "Recent options-title-recent-options": "Opções recentes",
+      "placeholder-search-options": "Opções de pesquisa",
       "title-matched_one": "Correspondente a {{count}}/{{totalCount}} opções",
       "title-matched_other": "Correspondente a {{count}}/{{totalCount}} opções"
     },
@@ -10100,17 +10269,17 @@
       "description": "A sua configuração LDAP não está a funcionar porque o formulário básico de início de sessão está atualmente desativado. Ative o formulário de início de sessão para utilizar a autenticação LDAP. Pode ativá-lo na página de Autenticação em \"Definições de autenticação\".",
       "title": "Início de sessão básico desativado"
     },
-    "search_filter": {
-      "description": "Filtro de pesquisa LDAP utilizado para localizar entradas específicas dentro do diretório.",
-      "error": "O filtro de pesquisa é um campo obrigatório",
-      "label": "Filtro de pesquisa",
-      "placeholder": "exemplo: cn=%s"
-    },
     "search-base-dns": {
       "description": "Uma matriz de dns de base para pesquisar.",
       "error": "O DNS de base de pesquisa é um campo obrigatório",
       "label": "DNS de base de pesquisa",
       "placeholder": "exemplo: dc=grafana,dc=org"
+    },
+    "search_filter": {
+      "description": "Filtro de pesquisa LDAP utilizado para localizar entradas específicas dentro do diretório.",
+      "error": "O filtro de pesquisa é um campo obrigatório",
+      "label": "Filtro de pesquisa",
+      "placeholder": "exemplo: cn=%s"
     },
     "subtitle": "A integração LDAP na Grafana permite que os seus utilizadores da Grafana iniciem sessão com as suas credenciais LDAP. Saiba mais na nossa <2><1>documentação</1></2>.",
     "title": "Definições básicas"
@@ -11327,8 +11496,8 @@
       "upgrade-tooltip": "Atualize para adicionar mais utilizadores"
     },
     "item": {
-      "add-bookmark": "Adicionar aos Marcadores",
-      "remove-bookmark": "Remover dos Marcadores"
+      "add-bookmark": "",
+      "remove-bookmark": ""
     },
     "kiosk": {
       "tv-alert": "Pressione ESC para sair do modo de quiosque"
@@ -11662,7 +11831,8 @@
       "tooltip-delete": "Eliminar"
     },
     "visualization-suggestions": {
-      "apply-suggestion-aria-label": "Aplicar visualização {{suggestionName}}",
+      "edit": "",
+      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Não foi possível carregar algumas sugestões"
       },
@@ -11672,8 +11842,7 @@
         "title": "Erro",
         "try-again-button": "Tente novamente"
       },
-      "unknown-viz-type": "Tipo de visualização desconhecido",
-      "use-this-suggestion": "Utilizar esta sugestão"
+      "unknown-viz-type": "Tipo de visualização desconhecido"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
@@ -12949,15 +13118,25 @@
   },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -12995,6 +13174,8 @@
     },
     "header": {
       "expression": "",
+      "pending-expression": "",
+      "pending-expression-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13002,6 +13183,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Expressão",
       "query": "Consulta",
       "transformation": "Transformação"
@@ -13011,12 +13193,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
-      "back": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Selecionar cartão {{id}}",
+      "data": "",
+      "data-mode": "",
       "queries-expressions": "Consultas e expressões",
-      "query-stack": "Pilha de consultas",
       "toggle-size": "Alternar tamanho da barra lateral",
       "transformations": "Transformações"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13075,10 +13271,10 @@
       "title-data-source-help": "Ajuda da origem de dados"
     },
     "query-group-options-editor": {
+      "Query options-title-query-options": "Opções de consulta",
       "collapsed-interval": "Intervalo = {{intervalDesc}} ",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Ocultar informações de tempo",
-      "Query options-title-query-options": "Opções de consulta",
       "relative-time": "Tempo relativo",
       "relative-time-tooltip": "Substitui o intervalo de tempo relativo para painéis individuais, o que faz com que sejam diferentes do que está selecionado no seletor de hora do painel de controlo no canto superior direito do painel de controlo. Por exemplo, para configurar os últimos 5 minutos, o tempo relativo deve ser <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, ou variáveis como <6>{{variable}}</6>.",
       "render-cache-timeout-option": {
@@ -14096,9 +14292,9 @@
     }
   },
   "time-period": {
+    "12_hours": "12 horas",
     "1_day": "1 dia",
     "1_hour": "1 hora",
-    "12_hours": "12 horas",
     "30_days": "30 dias",
     "6_hours": "6 horas",
     "7_days": "7 dias"
@@ -15364,8 +15560,8 @@
       "title-dependencies": "Dependências"
     },
     "variables-unknown-button": {
-      "usage-title": "A mostrar as utilizações para: {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Mostrar utilizações"
+      "VariablesUnknownButton-tooltip-show-usages": "Mostrar utilizações",
+      "usage-title": "A mostrar as utilizações para: {{variableId}}"
     },
     "variables-unknown-table": {
       "collapse-label": "Variáveis renomeadas ou em falta",
