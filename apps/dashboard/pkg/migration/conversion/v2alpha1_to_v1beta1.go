@@ -50,7 +50,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 }
 
 func convertDashboardSpec_V2alpha1_to_V1beta1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
+	_, span := tracing.Start(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
 	defer span.End()
 
 	dashboard := make(map[string]interface{})

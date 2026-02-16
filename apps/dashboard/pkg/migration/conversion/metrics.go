@@ -76,8 +76,133 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 	}
 }
 
+// dashboardInfo holds extracted dashboard metadata for metrics
+type dashboardInfo struct {
+	uid             string
+	sourceSchema    interface{}
+	targetSchema    interface{}
+	sourceSchemaStr string
+	targetSchemaStr string
+}
+
+// extractDashboardInfo extracts UID and schema versions from source and target dashboards
+func extractDashboardInfo(a, b interface{}) dashboardInfo {
+	info := dashboardInfo{}
+
+	// get uid and schema version from source
+	switch source := a.(type) {
+	case *dashv0.Dashboard:
+		info.uid = source.Name
+		if source.Spec.Object != nil {
+			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
+		}
+	case *dashv1.Dashboard:
+		info.uid = source.Name
+		if source.Spec.Object != nil {
+			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
+		}
+	case *dashv2alpha1.Dashboard:
+		info.uid = source.Name
+	case *dashv2beta1.Dashboard:
+		info.uid = source.Name
+	}
+
+	// determine target schema version
+	switch b.(type) {
+	case *dashv0.Dashboard:
+		if info.sourceSchema != nil {
+			info.targetSchema = info.sourceSchema // V0 keeps source schema version
+		}
+	case *dashv1.Dashboard:
+		if info.sourceSchema != nil {
+			info.targetSchema = schemaversion.LATEST_VERSION // V1 migrates to latest
+		}
+	}
+
+	if info.sourceSchema != nil {
+		info.sourceSchemaStr = fmt.Sprintf("%v", info.sourceSchema)
+	}
+	if info.targetSchema != nil {
+		info.targetSchemaStr = fmt.Sprintf("%v", info.targetSchema)
+	}
+
+	return info
+}
+
+// classifyConversionError determines the error type for metrics
+func classifyConversionError(err error) string {
+	var migrationErr *schemaversion.MigrationError
+	var minVersionErr *schemaversion.MinimumVersionError
+	var dataLossErr *ConversionDataLossError
+
+	switch {
+	case errors.As(err, &migrationErr):
+		return "schema_version_migration_error"
+	case errors.As(err, &minVersionErr):
+		return "schema_minimum_version_error"
+	case errors.As(err, &dataLossErr):
+		return "conversion_data_loss_error"
+	default:
+		return "conversion_error"
+	}
+}
+
+// buildErrorLogFields builds log fields for conversion errors
+func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, err error, info dashboardInfo, a, b interface{}) []interface{} {
+	logFields := []interface{}{
+		"sourceVersionAPI", sourceVersionAPI,
+		"targetVersionAPI", targetVersionAPI,
+		"erroredConversionFunc", getErroredConversionFunc(err),
+		"dashboardUID", info.uid,
+	}
+
+	// add schema version fields only if we have them (v0/v1 dashboards)
+	if info.sourceSchema != nil && info.targetSchema != nil {
+		logFields = append(logFields,
+			"sourceSchemaVersion", info.sourceSchema,
+			"targetSchemaVersion", info.targetSchema,
+			"erroredSchemaVersionFunc", getErroredSchemaVersionFunc(err),
+		)
+	}
+
+	// add data loss specific fields if this is a data loss error
+	if errorType == "conversion_data_loss_error" {
+		sourceStats := collectDashboardStats(a)
+		targetStats := collectDashboardStats(b)
+		logFields = append(logFields,
+			"panelsLost", math.Max(0, float64(sourceStats.panelCount-targetStats.panelCount)),
+			"queriesLost", math.Max(0, float64(sourceStats.queryCount-targetStats.queryCount)),
+			"annotationsLost", math.Max(0, float64(sourceStats.annotationCount-targetStats.annotationCount)),
+			"linksLost", math.Max(0, float64(sourceStats.linkCount-targetStats.linkCount)),
+			"variablesLost", math.Max(0, float64(sourceStats.variableCount-targetStats.variableCount)),
+		)
+	}
+
+	logFields = append(logFields, "errorType", errorType, "error", err)
+	return logFields
+}
+
+// buildSuccessLogFields builds log fields for successful conversions
+func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) []interface{} {
+	logFields := []interface{}{
+		"sourceVersionAPI", sourceVersionAPI,
+		"targetVersionAPI", targetVersionAPI,
+		"dashboardUID", info.uid,
+	}
+
+	// add schema version fields only if we have them (v0/v1 dashboards)
+	if info.sourceSchema != nil && info.targetSchema != nil {
+		logFields = append(logFields,
+			"sourceSchemaVersion", info.sourceSchema,
+			"targetSchemaVersion", info.targetSchema,
+		)
+	}
+
+	return logFields
+}
+
 // withConversionMetrics wraps a conversion function with metrics and logging for the overall conversion process
-// It optionally runs a data loss check function after successful conversion
+// it also runs a data loss check function after successful conversion
 func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
 	return func(a, b interface{}, scope conversion.Scope) error {
 		_, span := tracing.Start(context.Background(), "dashboard.conversion.metrics_wrapper",
@@ -86,60 +211,17 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		)
 		defer span.End()
 
-		// Extract dashboard UID and schema version from source
-		var dashboardUID string
-		var sourceSchemaVersion interface{}
-		var targetSchemaVersion interface{}
+		info := extractDashboardInfo(a, b)
 
-		// Try to extract UID and schema version from source dashboard
-		// Only track schema versions for v0/v1 dashboards (v2+ info is redundant with API version)
-		switch source := a.(type) {
-		case *dashv0.Dashboard:
-			dashboardUID = source.Name
-			if source.Spec.Object != nil {
-				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
-			}
-		case *dashv1.Dashboard:
-			dashboardUID = source.Name
-			if source.Spec.Object != nil {
-				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
-			}
-		case *dashv2alpha1.Dashboard:
-			dashboardUID = source.Name
-			// Don't track schema version for v2+ (redundant with API version)
-		case *dashv2beta1.Dashboard:
-			dashboardUID = source.Name
-			// Don't track schema version for v2+ (redundant with API version)
+		span.SetAttributes(attribute.String("dashboard.uid", info.uid))
+		if schemaVer, ok := info.sourceSchema.(float64); ok {
+			span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
 		}
 
-		span.SetAttributes(attribute.String("dashboard.uid", dashboardUID))
-		if sourceSchemaVersion != nil {
-			if schemaVer, ok := sourceSchemaVersion.(float64); ok {
-				span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
-			}
-		}
-
-		// Determine target schema version based on target type
-		// Only for v0/v1 dashboards
-		switch b.(type) {
-		case *dashv0.Dashboard:
-			if sourceSchemaVersion != nil {
-				targetSchemaVersion = sourceSchemaVersion // V0 keeps source schema version
-			}
-		case *dashv1.Dashboard:
-			if sourceSchemaVersion != nil {
-				targetSchemaVersion = schemaversion.LATEST_VERSION // V1 migrates to latest
-			}
-		case *dashv2alpha1.Dashboard:
-			// Don't track schema version for v2+ (redundant with API version)
-		case *dashv2beta1.Dashboard:
-			// Don't track schema version for v2+ (redundant with API version)
-		}
-
-		// Execute the actual conversion
+		// execute the actual conversion
 		err := conversionFunc(a, b, scope)
 
-		// If conversion succeeded, run data loss check
+		// if conversion succeeded, run data loss check
 		if err == nil {
 			err = checkConversionDataLoss(sourceVersionAPI, targetVersionAPI, a, b)
 		}
@@ -151,119 +233,45 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			span.SetStatus(codes.Ok, "conversion successful")
 		}
 
-		// Report conversion-level metrics and logs
 		if err != nil {
-			// Classify error type for metrics
-			errorType := "conversion_error"
-			var migrationErr *schemaversion.MigrationError
-			var minVersionErr *schemaversion.MinimumVersionError
-			var dataLossErr *ConversionDataLossError
-			if errors.As(err, &migrationErr) {
-				errorType = "schema_version_migration_error"
-			} else if errors.As(err, &minVersionErr) {
-				errorType = "schema_minimum_version_error"
-			} else if errors.As(err, &dataLossErr) {
-				errorType = "conversion_data_loss_error"
-			}
-
-			// Record failure metrics
-			sourceSchemaStr := ""
-			targetSchemaStr := ""
-			if sourceSchemaVersion != nil {
-				sourceSchemaStr = fmt.Sprintf("%v", sourceSchemaVersion)
-			}
-			if targetSchemaVersion != nil {
-				targetSchemaStr = fmt.Sprintf("%v", targetSchemaVersion)
-			}
-
-			migration.MDashboardConversionFailureTotal.WithLabelValues(
-				sourceVersionAPI,
-				targetVersionAPI,
-				sourceSchemaStr,
-				targetSchemaStr,
-				errorType,
-			).Inc()
-
-			// Log failure - use warning for schema_minimum_version_error, error for others
-			// Build base log fields
-			logFields := []interface{}{
-				"sourceVersionAPI", sourceVersionAPI,
-				"targetVersionAPI", targetVersionAPI,
-				"erroredConversionFunc", getErroredConversionFunc(err),
-				"dashboardUID", dashboardUID,
-			}
-
-			// Add schema version fields only if we have them (v0/v1 dashboards)
-			if sourceSchemaVersion != nil && targetSchemaVersion != nil {
-				logFields = append(logFields,
-					"sourceSchemaVersion", sourceSchemaVersion,
-					"targetSchemaVersion", targetSchemaVersion,
-					"erroredSchemaVersionFunc", getErroredSchemaVersionFunc(err),
-				)
-			}
-
-			// Add data loss specific fields if this is a data loss error
-			if errorType == "conversion_data_loss_error" {
-				sourceStats := collectDashboardStats(a)
-				targetStats := collectDashboardStats(b)
-				// We consider losing data when the target is less than the source
-				logFields = append(logFields,
-					"panelsLost", math.Max(0, float64(sourceStats.panelCount-targetStats.panelCount)),
-					"queriesLost", math.Max(0, float64(sourceStats.queryCount-targetStats.queryCount)),
-					"annotationsLost", math.Max(0, float64(sourceStats.annotationCount-targetStats.annotationCount)),
-					"linksLost", math.Max(0, float64(sourceStats.linkCount-targetStats.linkCount)),
-					"variablesLost", math.Max(0, float64(sourceStats.variableCount-targetStats.variableCount)),
-				)
-			}
-
-			// Add remaining fields
-			logFields = append(logFields,
-				"errorType", errorType,
-				"error", err,
-			)
-
-			if errorType == "schema_minimum_version_error" {
-				getLogger().Warn("Dashboard conversion failed", logFields...)
-			} else {
-				getLogger().Error("Dashboard conversion failed", logFields...)
-			}
+			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b)
 		} else {
-			// Record success metrics
-			sourceSchemaStr := ""
-			targetSchemaStr := ""
-			if sourceSchemaVersion != nil {
-				sourceSchemaStr = fmt.Sprintf("%v", sourceSchemaVersion)
-			}
-			if targetSchemaVersion != nil {
-				targetSchemaStr = fmt.Sprintf("%v", targetSchemaVersion)
-			}
-
-			migration.MDashboardConversionSuccessTotal.WithLabelValues(
-				sourceVersionAPI,
-				targetVersionAPI,
-				sourceSchemaStr,
-				targetSchemaStr,
-			).Inc()
-
-			// Log success (debug level to avoid spam)
-			// Build base log fields for success
-			successLogFields := []interface{}{
-				"sourceVersionAPI", sourceVersionAPI,
-				"targetVersionAPI", targetVersionAPI,
-				"dashboardUID", dashboardUID,
-			}
-
-			// Add schema version fields only if we have them (v0/v1 dashboards)
-			if sourceSchemaVersion != nil && targetSchemaVersion != nil {
-				successLogFields = append(successLogFields,
-					"sourceSchemaVersion", sourceSchemaVersion,
-					"targetSchemaVersion", targetSchemaVersion,
-				)
-			}
-
-			getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
+			recordConversionSuccess(sourceVersionAPI, targetVersionAPI, info)
 		}
 
 		return nil
 	}
+}
+
+// recordConversionFailure records metrics and logs for failed conversions
+func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}) {
+	errorType := classifyConversionError(err)
+
+	migration.MDashboardConversionFailureTotal.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		info.sourceSchemaStr,
+		info.targetSchemaStr,
+		errorType,
+	).Inc()
+
+	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b)
+	if errorType == "schema_minimum_version_error" {
+		getLogger().Warn("Dashboard conversion failed", logFields...)
+	} else {
+		getLogger().Error("Dashboard conversion failed", logFields...)
+	}
+}
+
+// recordConversionSuccess records metrics and logs for successful conversions
+func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) {
+	migration.MDashboardConversionSuccessTotal.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		info.sourceSchemaStr,
+		info.targetSchemaStr,
+	).Inc()
+
+	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info)
+	getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
 }

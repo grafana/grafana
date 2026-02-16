@@ -70,7 +70,7 @@ func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2
 }
 
 func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
+	_, span := tracing.Start(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
 	defer span.End()
 
 	// Convert annotations
