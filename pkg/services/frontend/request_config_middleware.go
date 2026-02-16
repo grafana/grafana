@@ -54,9 +54,11 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 
 					settings, err := settingsService.ListAsIni(ctx, selector)
 					if err != nil {
+						settingsFetchMetric.WithLabelValues("error").Inc()
 						logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
 						// Fall back to base config
 					} else {
+						settingsFetchMetric.WithLabelValues("success").Inc()
 						// Merge tenant overrides with base config
 						requestConfig.ApplyOverrides(settings, logger)
 					}
