@@ -206,7 +206,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
 		var err error
 		if s.storageBackend == nil {
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil, !m.IsModuleEnabled(modules.StorageServer))
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), !m.IsModuleEnabled(modules.StorageServer))
 			if err != nil {
 				return nil, err
 			}

@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -68,7 +69,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 		dbSection.Key("high_availability").SetValue("false")
 	}
 	if maxOpenConn > 0 {
-		dbSection.Key("max_open_conn").MustInt(maxOpenConn)
+		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
 	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService, false)
 	require.NoError(t, err)
