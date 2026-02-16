@@ -243,6 +243,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 				} else {
 					return nil, fmt.Errorf("unsupported operator %s for spec.scopesMatchAny (only = and == supported)", r.Operator)
 				}
+			case "spec.createdBy":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					opts.CreatedBy = r.Value
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.createdBy (only = and == supported)", r.Operator)
+				}
 			default:
 				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
 			}

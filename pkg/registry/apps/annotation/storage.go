@@ -25,6 +25,7 @@ type ListOptions struct {
 	TagsMatchAny   bool
 	Scopes         []string
 	ScopesMatchAny bool
+	CreatedBy      string
 }
 
 type AnnotationList struct {

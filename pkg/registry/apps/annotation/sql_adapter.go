@@ -106,6 +106,14 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		MatchAny:     opts.TagsMatchAny,
 	}
 
+	if opts.CreatedBy != "" {
+		userID, err := strconv.ParseInt(opts.CreatedBy, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid createdBy value %q: must be a numeric user ID for legacy storage", opts.CreatedBy)
+		}
+		query.UserID = userID
+	}
+
 	items, err := a.repo.Find(ctx, query)
 	if err != nil {
 		return nil, err
