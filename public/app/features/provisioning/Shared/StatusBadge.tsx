@@ -23,57 +23,70 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
     };
   }
 
-  if (!repo.spec?.sync?.enabled) {
+  const pullingDisabledTooltip = !repo.spec?.sync?.enabled
+    ? t(
+        'provisioning.status-badge.automatic-pulling-disabled-tooltip',
+        'Automatic pulling disabled. Review your connection configuration to enable pulling.'
+      )
+    : undefined;
+
+  // Sync state takes precedence over disabled state
+  if (repo.status?.sync?.state?.length) {
+    switch (repo.status.sync.state) {
+      case 'success':
+        return {
+          icon: 'check',
+          text: t('provisioning.status-badge.up-to-date', 'Up-to-date'),
+          color: 'green',
+          tooltip: pullingDisabledTooltip,
+        };
+      case 'warning':
+        return {
+          color: 'orange',
+          text: t('provisioning.status-badge.warning', 'Warning'),
+          icon: 'exclamation-triangle',
+          tooltip: pullingDisabledTooltip,
+        };
+      case 'working':
+      case 'pending':
+        return {
+          color: 'darkgrey',
+          text: t('provisioning.status-badge.pulling', 'Pulling'),
+          icon: 'spinner',
+          tooltip: pullingDisabledTooltip,
+        };
+      case 'error':
+        return {
+          color: 'red',
+          text: t('provisioning.status-badge.error', 'Error'),
+          icon: 'exclamation-triangle',
+          tooltip: pullingDisabledTooltip,
+        };
+      default:
+        return {
+          color: 'purple',
+          text: t('provisioning.status-badge.unknown', 'Unknown'),
+          icon: 'exclamation-triangle',
+          tooltip: pullingDisabledTooltip,
+        };
+    }
+  }
+
+  if (pullingDisabledTooltip) {
     return {
       color: 'orange',
-      text: t('provisioning.status-badge.automatic-pulling-disabled', 'Automatic pulling disabled'),
+      text: t('provisioning.status-badge.disabled', 'Disabled'),
       icon: 'info-circle',
+      tooltip: pullingDisabledTooltip,
     };
   }
 
-  if (!repo.status?.sync?.state?.length) {
-    return {
-      color: 'darkgrey',
-      text: t('provisioning.status-badge.pending', 'Pending'),
-      icon: 'spinner',
-      tooltip: t('provisioning.status-badge.waiting-for-health-check', 'Waiting for health check to run'),
-    };
-  }
-
-  // Sync state
-  switch (repo.status?.sync?.state) {
-    case 'success':
-      return {
-        icon: 'check',
-        text: t('provisioning.status-badge.up-to-date', 'Up-to-date'),
-        color: 'green',
-      };
-    case 'warning':
-      return {
-        color: 'orange',
-        text: t('provisioning.status-badge.warning', 'Warning'),
-        icon: 'exclamation-triangle',
-      };
-    case 'working':
-    case 'pending':
-      return {
-        color: 'darkgrey',
-        text: t('provisioning.status-badge.pulling', 'Pulling'),
-        icon: 'spinner',
-      };
-    case 'error':
-      return {
-        color: 'red',
-        text: t('provisioning.status-badge.error', 'Error'),
-        icon: 'exclamation-triangle',
-      };
-    default:
-      return {
-        color: 'purple',
-        text: t('provisioning.status-badge.unknown', 'Unknown'),
-        icon: 'exclamation-triangle',
-      };
-  }
+  return {
+    color: 'darkgrey',
+    text: t('provisioning.status-badge.pending', 'Pending'),
+    icon: 'spinner',
+    tooltip: t('provisioning.status-badge.waiting-for-health-check', 'Waiting for health check to run'),
+  };
 }
 
 interface StatusBadgeProps {

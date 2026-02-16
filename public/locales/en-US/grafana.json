@@ -12852,7 +12852,9 @@
     },
     "status-badge": {
       "automatic-pulling-disabled": "Automatic pulling disabled",
+      "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
+      "disabled": "Disabled",
       "error": "Error",
       "pending": "Pending",
       "pulling": "Pulling",
