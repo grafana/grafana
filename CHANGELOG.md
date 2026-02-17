@@ -2395,7 +2395,7 @@
 
 ### Bug fixes
 
-- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97528](https://github.com/grafana/grafana/pull/97528), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97528](https://github.com/grafana/grafana/pull/97528), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Allow notification policy filters to match quoted matchers [#98525](https://github.com/grafana/grafana/pull/98525), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Fix alert rule list view summaries [#98433](https://github.com/grafana/grafana/pull/98433), [@yincongcyincong](https://github.com/yincongcyincong)
 - **Alerting:** Fix alert rules unpausing after moving rule to different folder [#97580](https://github.com/grafana/grafana/pull/97580), [@santihernandezc](https://github.com/santihernandezc)
@@ -2467,7 +2467,7 @@
 
 ### Bug fixes
 
-- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97830](https://github.com/grafana/grafana/pull/97830), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97830](https://github.com/grafana/grafana/pull/97830), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Fix alert rules unpausing after moving rule to different folder [#97583](https://github.com/grafana/grafana/pull/97583), [@santihernandezc](https://github.com/santihernandezc)
 - **Alerting:** Fix label escaping in rule export [#98649](https://github.com/grafana/grafana/pull/98649), [@moustafab](https://github.com/moustafab)
 - **Alerting:** Fix slack image uploading to use new api [#98066](https://github.com/grafana/grafana/pull/98066), [@moustafab](https://github.com/moustafab)
@@ -2498,7 +2498,7 @@
 
 ### Bug fixes
 
-- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97829](https://github.com/grafana/grafana/pull/97829), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97829](https://github.com/grafana/grafana/pull/97829), [@gillesdemey](https://github.com/gillesdemey)
 - **Azure/GCM:** Improve error display [#97593](https://github.com/grafana/grafana/pull/97593), [@aangelisc](https://github.com/aangelisc)
 - **Dashboard:** Fixes issue with compatability of old DashboardModel.annotations [#97467](https://github.com/grafana/grafana/pull/97467), [@torkelo](https://github.com/torkelo)
 - **Dashboards:** Fix issue where filtered panels would not react to variable changes [#98733](https://github.com/grafana/grafana/pull/98733), [@oscarkilhed](https://github.com/oscarkilhed)
