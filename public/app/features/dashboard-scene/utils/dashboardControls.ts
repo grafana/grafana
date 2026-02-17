@@ -42,7 +42,7 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
             hide: VariableHide.inControlsMenu,
             source: {
               type: 'datasource' as const,
-              ref: ds.getRef(),
+              ref: { group: ds.getRef().type },
             },
           }))
         );
@@ -54,17 +54,21 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
       const dsLinks = ds.getDefaultLinks();
       if (dsLinks && dsLinks.length) {
         defaultLinks.push(
-          ...dsLinks.map((l) => ({
-            ...l,
-            isDefault: true,
-            parentDatasourceRef: ds.getRef(),
-            // Putting under the dashboard-controls menu by default
-            placement: 'inControlsMenu' as const,
-            source: {
-              type: 'datasource' as const,
-              ref: ds.getRef(),
-            },
-          }))
+          ...dsLinks.map((l) => {
+            const ref = ds.getRef();
+
+            return {
+              ...l,
+              isDefault: true,
+              parentDatasourceRef: ref,
+              // Putting under the dashboard-controls menu by default
+              placement: 'inControlsMenu' as const,
+              source: {
+                type: 'datasource' as const,
+                ref: { group: ref.type },
+              },
+            };
+          })
         );
       }
     }

@@ -2656,7 +2656,7 @@ func (DashboardV2beta1ActionStyle) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardV2beta1DatasourceControlSourceRefRef struct {
 	// The plugin type-id
-	Type *string `json:"type,omitempty"`
+	Group *string `json:"group,omitempty"`
 }
 
 // NewDashboardV2beta1DatasourceControlSourceRefRef creates a new DashboardV2beta1DatasourceControlSourceRefRef object.

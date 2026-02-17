@@ -315,7 +315,6 @@ const (
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 const DashboardLinkPlacement = "inControlsMenu"
 
-// Source information for controls (e.g. variables or links)
 type ControlSourceRef = DatasourceControlSourceRef
 
 // NewControlSourceRef creates a new ControlSourceRef object.
@@ -323,17 +322,16 @@ func NewControlSourceRef() *ControlSourceRef {
 	return NewDatasourceControlSourceRef()
 }
 
-// Source information for controls (e.g. variables or links)
 type DatasourceControlSourceRef struct {
-	Type string        `json:"type"`
-	Ref  DataSourceRef `json:"ref"`
+	Type string                                 `json:"type"`
+	Ref  DashboardDatasourceControlSourceRefRef `json:"ref"`
 }
 
 // NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
 func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
 	return &DatasourceControlSourceRef{
 		Type: "datasource",
-		Ref:  *NewDataSourceRef(),
+		Ref:  *NewDashboardDatasourceControlSourceRefRef(),
 	}
 }
 
@@ -869,8 +867,6 @@ type VariableModel struct {
 	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
 	// Ordering of static options in relation to options returned from data source for query variable
 	StaticOptionsOrder *VariableModelStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
-	// The source that registered the variable (if any)
-	Source *ControlSourceRef `json:"source,omitempty"`
 }
 
 // NewVariableModel creates a new VariableModel object.
@@ -1139,6 +1135,15 @@ type DashboardSpecTemplating struct {
 // NewDashboardSpecTemplating creates a new DashboardSpecTemplating object.
 func NewDashboardSpecTemplating() *DashboardSpecTemplating {
 	return &DashboardSpecTemplating{}
+}
+
+type DashboardDatasourceControlSourceRefRef struct {
+	Group *string `json:"group,omitempty"`
+}
+
+// NewDashboardDatasourceControlSourceRefRef creates a new DashboardDatasourceControlSourceRefRef object.
+func NewDashboardDatasourceControlSourceRefRef() *DashboardDatasourceControlSourceRefRef {
+	return &DashboardDatasourceControlSourceRefRef{}
 }
 
 type DashboardFieldConfigSourceOverrides struct {

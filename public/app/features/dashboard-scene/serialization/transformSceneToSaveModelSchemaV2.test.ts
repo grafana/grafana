@@ -223,8 +223,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           source: {
             type: 'datasource',
             ref: {
-              uid: '123456',
-              type: 'datasource',
+              group: 'datasource',
             },
           },
         },

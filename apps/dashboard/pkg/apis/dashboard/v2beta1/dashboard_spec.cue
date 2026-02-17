@@ -819,7 +819,7 @@ DatasourceControlSourceRef: {
   type: "datasource"
   ref: {
 	// The plugin type-id
-	type?: string
+	group?: string
   }
 }
 

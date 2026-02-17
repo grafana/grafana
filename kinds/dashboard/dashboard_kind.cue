@@ -226,8 +226,6 @@ lineage: schemas: [{
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
 			staticOptionsOrder?: "before" | "after" | "sorted"
-			// The source that registered the variable (if any)
-			source?: #ControlSourceRef
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
@@ -278,16 +276,6 @@ lineage: schemas: [{
 			// Specific datasource instance
 			uid?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
-
-		// Source information for controls (e.g. variables or links)
-		#DatasourceControlSourceRef: {
-			type: "datasource"
-			ref: #DataSourceRef
-		}
-
-		// Source information for controls (e.g. variables or links)
-		#ControlSourceRef: #DatasourceControlSourceRef
-
 
 		// Links with references to other dashboards or external resources
 		#DashboardLink: {
@@ -862,6 +850,15 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			ref: {
+				group?: string
+			}
+		}
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]
