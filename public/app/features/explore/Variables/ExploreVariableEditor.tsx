@@ -21,18 +21,23 @@ type DrawerView = 'list' | 'typeSelection' | 'editor';
 interface Props {
   exploreId: string;
   variableSet: SceneVariableSet;
-  initialVariable?: SceneVariable | null;
+  initialView?: 'list' | 'editor';
   onClose: () => void;
 }
 
-export function ExploreVariableEditor({ exploreId, variableSet, initialVariable, onClose }: Props) {
+export function ExploreVariableEditor({ exploreId, variableSet, initialView: initialViewProp, onClose }: Props) {
   const dispatch = useDispatch();
   const variables = variableSet.state.variables;
   const hasVariables = variables.length > 0;
 
-  const initialView: DrawerView = initialVariable ? 'editor' : hasVariables ? 'list' : 'typeSelection';
-  const [view, setView] = useState<DrawerView>(initialView);
-  const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(initialVariable ?? null);
+  const computedInitialView: DrawerView =
+    initialViewProp === 'list' && hasVariables
+      ? 'list'
+      : initialViewProp === 'editor' || !hasVariables
+        ? 'typeSelection'
+        : 'list';
+  const [view, setView] = useState<DrawerView>(computedInitialView);
+  const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SceneVariable | null>(null);
 
   const onSelectType = useCallback(

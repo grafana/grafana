@@ -8243,6 +8243,7 @@
     "toolbar": {
       "add-to-extensions": "Add",
       "add-to-queryless-extensions": "Go queryless",
+      "add-variable": "Add variable",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
@@ -8252,6 +8253,7 @@
       "copy-shortened-link-abs-time": "Copy absolute shortened URL",
       "copy-shortened-link-label": "Share",
       "copy-shortened-link-menu": "Open copy link options",
+      "manage-variables": "Manage variables",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
       "split-close": "Close",
@@ -8338,6 +8340,27 @@
           }
         }
       }
+    },
+    "variable-editor": {
+      "delete-body": "Are you sure you want to delete the variable \"{{name}}\"?",
+      "delete-confirm": "Delete",
+      "delete-title": "Delete variable",
+      "title-edit-variable": "Edit variable",
+      "title-select-type": "Select variable type",
+      "title-variables": "Variables"
+    },
+    "variable-list": {
+      "add-variable": "Add variable",
+      "delete": "Delete",
+      "edit": "Edit",
+      "empty": "No variables defined yet.",
+      "header-definition": "Definition",
+      "header-variable": "Variable",
+      "new-variable": "New variable"
+    },
+    "variable-type-selection": {
+      "cancel": "Cancel",
+      "constant-description": "A hidden constant variable, useful for metric prefixes in shared queries"
     }
   },
   "export": {

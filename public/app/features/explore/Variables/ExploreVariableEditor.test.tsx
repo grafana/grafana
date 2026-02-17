@@ -40,7 +40,7 @@ function createStoreWithPane(variableSet?: SceneVariableSet) {
 
 function renderEditor(props: {
   variableSet?: SceneVariableSet;
-  initialVariable?: CustomVariable | QueryVariable | null;
+  initialView?: 'list' | 'editor';
   onClose?: () => void;
 }) {
   const variableSet = props.variableSet ?? new SceneVariableSet({ variables: [] });
@@ -54,7 +54,7 @@ function renderEditor(props: {
         <ExploreVariableEditor
           exploreId="left"
           variableSet={variableSet}
-          initialVariable={props.initialVariable ?? undefined}
+          initialView={props.initialView}
           onClose={onClose}
         />
       </TestProvider>
@@ -120,7 +120,11 @@ describe('ExploreVariableEditor', () => {
     it('renders VariableEditorForm for a QueryVariable', async () => {
       const queryVar = new QueryVariable({ name: 'query0' });
       const variableSet = new SceneVariableSet({ variables: [queryVar] });
-      renderEditor({ variableSet, initialVariable: queryVar });
+      renderEditor({ variableSet, initialView: 'list' });
+
+      const user = userEvent.setup();
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[0]);
 
       const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
       expect(editorForm).toBeInTheDocument();
@@ -137,7 +141,7 @@ describe('ExploreVariableEditor', () => {
 
     it('shows list view with existing variables', () => {
       const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet });
+      renderEditor({ variableSet, initialView: 'list' });
 
       expect(screen.getByText('myvar')).toBeInTheDocument();
       expect(screen.getByText('othervar')).toBeInTheDocument();
@@ -145,7 +149,7 @@ describe('ExploreVariableEditor', () => {
 
     it('shows variable type in list', () => {
       const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet });
+      renderEditor({ variableSet, initialView: 'list' });
 
       expect(screen.getAllByText('custom').length).toBeGreaterThanOrEqual(2);
     });
@@ -153,7 +157,7 @@ describe('ExploreVariableEditor', () => {
     it('opens editor form when clicking edit on a variable', async () => {
       const user = userEvent.setup();
       const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet });
+      renderEditor({ variableSet, initialView: 'list' });
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
       await user.click(editButtons[0]);
@@ -165,7 +169,7 @@ describe('ExploreVariableEditor', () => {
     it('shows delete confirmation modal when clicking delete', async () => {
       const user = userEvent.setup();
       const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet });
+      renderEditor({ variableSet, initialView: 'list' });
 
       const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
       await user.click(deleteButtons[0]);
@@ -176,23 +180,12 @@ describe('ExploreVariableEditor', () => {
     it('opens type selection when clicking New variable', async () => {
       const user = userEvent.setup();
       const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet });
+      renderEditor({ variableSet, initialView: 'list' });
 
       await user.click(screen.getByText('New variable'));
 
       expect(screen.getByText('Custom')).toBeInTheDocument();
       expect(screen.getByText('Query')).toBeInTheDocument();
-    });
-  });
-
-  describe('when opened with an initialVariable', () => {
-    it('shows editor form directly', () => {
-      const variable = new CustomVariable({ name: 'editme', query: 'x,y' });
-      const variableSet = new SceneVariableSet({ variables: [variable] });
-      renderEditor({ variableSet, initialVariable: variable });
-
-      const editorForm = screen.getByRole('form', { name: /variable editor form/i });
-      expect(editorForm).toBeInTheDocument();
     });
   });
 
@@ -210,9 +203,12 @@ describe('ExploreVariableEditor', () => {
       const user = userEvent.setup();
       const customVar = new CustomVariable({ name: 'myvar', query: 'a,b,c' });
       const variableSet = new SceneVariableSet({ variables: [customVar] });
-      renderEditor({ variableSet, initialVariable: customVar });
+      renderEditor({ variableSet, initialView: 'list' });
 
-      const backButton = screen.getByTestId(
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[0]);
+
+      const backButton = await screen.findByTestId(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton
       );
       await user.click(backButton);
@@ -228,7 +224,10 @@ describe('ExploreVariableEditor', () => {
       const user = userEvent.setup();
       const variable = new CustomVariable({ name: 'custom0', query: '' });
       const variableSet = new SceneVariableSet({ variables: [variable] });
-      renderEditor({ variableSet, initialVariable: variable });
+      renderEditor({ variableSet, initialView: 'list' });
+
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[0]);
 
       const nameInput = await screen.findByTestId(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2
@@ -249,7 +248,10 @@ describe('ExploreVariableEditor', () => {
       const existingVar = new CustomVariable({ name: 'existing', query: 'a' });
       const newVar = new CustomVariable({ name: 'custom0', query: '' });
       const variableSet = new SceneVariableSet({ variables: [existingVar, newVar] });
-      renderEditor({ variableSet, initialVariable: newVar });
+      renderEditor({ variableSet, initialView: 'list' });
+
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[1]);
 
       const nameInput = await screen.findByTestId(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2

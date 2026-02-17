@@ -309,7 +309,7 @@ describe('Explore: variables integration', () => {
       expect(String(addedVar.getValue())).toBe('staging');
     });
 
-    it('gear icon on toolbar dropdown opens editor for that variable', async () => {
+    it('Manage variables button opens Drawer to list view when variables exist', async () => {
       const { store } = setupExplore();
 
       await waitForExplore();
@@ -324,12 +324,33 @@ describe('Explore: variables integration', () => {
         expect(screen.getByText('$testVar')).toBeInTheDocument();
       });
 
-      const gearButton = screen.getByRole('button', { name: /edit variable/i });
-      await userEvent.click(gearButton);
+      await waitFor(() => {
+        expect(screen.getByText('Manage variables')).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText('Manage variables'));
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
+    });
+
+    it('no per-variable gear icons in toolbar', async () => {
+      const { store } = setupExplore();
+
+      await waitForExplore();
+
+      const exploreId = getFirstPaneId(store);
+      const variable = new CustomVariable({ name: 'testVar', query: 'a,b', value: 'a', text: 'a' });
+      await act(async () => {
+        store.dispatch(addSceneVariableAction({ exploreId, variable }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('$testVar')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('button', { name: /edit variable/i })).not.toBeInTheDocument();
     });
 
     it('variable with empty custom values renders dropdown without crashing', async () => {

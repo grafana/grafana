@@ -10,12 +10,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { ConstantVariable, CustomVariable, SceneVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import {
   defaultIntervals,
-  IconButton,
   PageToolbar,
   RefreshPicker,
   Select,
   SetInterval,
-  Stack,
   ToolbarButton,
   ButtonGroup,
   useStyles2,
@@ -68,63 +66,35 @@ interface Props {
   isContentOutlineOpen: boolean;
 }
 
-function ExploreVariableSelectCustom({
-  variable,
-  onEdit,
-}: {
-  variable: CustomVariable;
-  onEdit: (variable: SceneVariable) => void;
-}) {
+function ExploreVariableSelectCustom({ variable }: { variable: CustomVariable }) {
   const { value, options, name } = variable.useState();
   return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <Select
-        prefix={`$${name}`}
-        value={String(value)}
-        options={options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }))}
-        onChange={(selected) => {
-          if (selected.value !== undefined) {
-            variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
-          }
-        }}
-        width="auto"
-      />
-      <IconButton
-        name="cog"
-        tooltip={t('explore.toolbar.edit-variable', 'Edit variable')}
-        onClick={() => onEdit(variable)}
-        size="md"
-      />
-    </Stack>
+    <Select
+      prefix={`$${name}`}
+      value={String(value)}
+      options={options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }))}
+      onChange={(selected) => {
+        if (selected.value !== undefined) {
+          variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
+        }
+      }}
+      width="auto"
+    />
   );
 }
 
-function ExploreVariableSelectGeneric({
-  variable,
-  onEdit,
-}: {
-  variable: SceneVariable;
-  onEdit: (variable: SceneVariable) => void;
-}) {
+function ExploreVariableSelectGeneric({ variable }: { variable: SceneVariable }) {
   const { name } = variable.useState();
   const currentValue = String(variable.getValue());
   const currentText = variable.getValueText?.() ?? currentValue;
   return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <Select
-        prefix={`$${name}`}
-        value={currentValue}
-        options={[{ label: currentText || '(empty)', value: currentValue }]}
-        onChange={() => {}}
-        width="auto"
-      />
-      <IconButton
-        name="cog"
-        tooltip={t('explore.toolbar.edit-variable', 'Edit variable')}
-        onClick={() => onEdit(variable)}
-        size="md"
-      />
-    </Stack>
+    <Select
+      prefix={`$${name}`}
+      value={currentValue}
+      options={[{ label: currentText || '(empty)', value: currentValue }]}
+      onChange={() => {}}
+      width="auto"
+    />
   );
 }
 
@@ -178,12 +148,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   );
 
   const [isVariableEditorOpen, setIsVariableEditorOpen] = useState(false);
-  const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(null);
-
-  const onEditVariable = (variable: SceneVariable) => {
-    setEditingVariable(variable);
-    setIsVariableEditorOpen(true);
-  };
+  const [variableEditorInitialView, setVariableEditorInitialView] = useState<'list' | 'editor'>('editor');
 
   const refreshPickerLabel = loading
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
@@ -326,27 +291,36 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="queryless"
           />,
-          <ToolbarButton
-            key="add-variable"
-            icon="plus"
-            variant="canvas"
-            onClick={() => setIsVariableEditorOpen(true)}
-          >
-            <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
-          </ToolbarButton>,
+          variables.length > 0 ? (
+            <ToolbarButton
+              key="manage-variables"
+              icon="cog"
+              variant="canvas"
+              onClick={() => {
+                setVariableEditorInitialView('list');
+                setIsVariableEditorOpen(true);
+              }}
+            >
+              <Trans i18nKey="explore.toolbar.manage-variables">Manage variables</Trans>
+            </ToolbarButton>
+          ) : (
+            <ToolbarButton
+              key="add-variable"
+              icon="plus"
+              variant="canvas"
+              onClick={() => {
+                setVariableEditorInitialView('editor');
+                setIsVariableEditorOpen(true);
+              }}
+            >
+              <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
+            </ToolbarButton>
+          ),
           ...variables.map((variable) =>
             variable instanceof CustomVariable ? (
-              <ExploreVariableSelectCustom
-                key={`var-${variable.state.name}`}
-                variable={variable}
-                onEdit={onEditVariable}
-              />
+              <ExploreVariableSelectCustom key={`var-${variable.state.name}`} variable={variable} />
             ) : (
-              <ExploreVariableSelectGeneric
-                key={`var-${variable.state.name}`}
-                variable={variable}
-                onEdit={onEditVariable}
-              />
+              <ExploreVariableSelectGeneric key={`var-${variable.state.name}`} variable={variable} />
             )
           ),
         ].filter(Boolean)}
@@ -459,10 +433,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         <ExploreVariableEditor
           exploreId={exploreId}
           variableSet={variableSet}
-          initialVariable={editingVariable}
+          initialView={variableEditorInitialView}
           onClose={() => {
             setIsVariableEditorOpen(false);
-            setEditingVariable(null);
           }}
         />
       )}
