@@ -267,6 +267,13 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
+	Receiver                  = config.Receiver
+	Regexp                    = config.Regexp
+	Matchers                  = config.Matchers
+	MatchRegexps              = config.MatchRegexps
+	AmMuteTimeInterval        = config.MuteTimeInterval
+	TimeInterval              = config.TimeInterval
+	InhibitRule               = config.InhibitRule
 )
 
 type MergeResult struct {
