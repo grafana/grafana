@@ -13271,7 +13271,8 @@
         "button-label-hide": "Hide alert rules",
         "close": "Close"
       },
-      "alerts": "Alerts",
+      "alerts_one": "Alerts ({{count}})",
+      "alerts_other": "Alerts ({{count}})",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "data-mode": "Data Mode",
