@@ -2,6 +2,7 @@ package storewrapper
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/authlib/types"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -396,4 +398,246 @@ func (f *fakeUpdatedObjectInfo) Preconditions() *metaV1.Preconditions {
 
 func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
 	return f.obj, nil
+}
+
+func TestWrapper_List_PaginationWithFiltering(t *testing.T) {
+	t.Run("fetches multiple pages until limit is satisfied", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		// Create a list of 10 items for first page
+		firstPageItems := make([]runtime.RawExtension, 10)
+		for i := 0; i < 10; i++ {
+			firstPageItems[i] = runtime.RawExtension{
+				Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: fmt.Sprintf("item%d", i)}},
+			}
+		}
+		firstPageList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: "token1"},
+			Items:    firstPageItems,
+		}
+
+		// Create a list of 10 items for second page
+		secondPageItems := make([]runtime.RawExtension, 10)
+		for i := 10; i < 20; i++ {
+			secondPageItems[i-10] = runtime.RawExtension{
+				Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: fmt.Sprintf("item%d", i)}},
+			}
+		}
+		secondPageList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    secondPageItems,
+		}
+
+		// First fetch - returns 10 items with continue token
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()),
+			mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+				return opts.Limit == 30 && opts.Continue == "" // 10 * 3 multiplier
+			})).Return(firstPageList, nil).Once()
+
+		// Filter first page down to only 3 items (simulating heavy filtering)
+		filteredFirstPage := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: "token1"},
+			Items: []runtime.RawExtension{
+				firstPageItems[0], firstPageItems[1], firstPageItems[2],
+			},
+		}
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), firstPageList).
+			Return(filteredFirstPage, nil).Once()
+
+		// Second fetch - to get more items since we only have 3 so far
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()),
+			mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+				return opts.Limit == 21 && opts.Continue == "token1" // (10-3) * 3 multiplier
+			})).Return(secondPageList, nil).Once()
+
+		// Filter second page down to 8 items
+		filteredSecondPage := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    secondPageItems[:8],
+		}
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), secondPageList).
+			Return(filteredSecondPage, nil).Once()
+
+		// Request 10 items
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 10})
+
+		require.NoError(t, err)
+		resultList, ok := result.(*metaV1.List)
+		require.True(t, ok, "result should be a *metaV1.List")
+
+		// Should have exactly 10 items (3 from first page + 7 from second page, truncated to limit)
+		assert.Equal(t, 10, len(resultList.Items))
+		assert.Equal(t, "", resultList.Continue) // No more items available
+
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("returns early when no continue token", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		// Single page with no continue token
+		singlePageItems := make([]runtime.RawExtension, 5)
+		for i := 0; i < 5; i++ {
+			singlePageItems[i] = runtime.RawExtension{
+				Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: fmt.Sprintf("item%d", i)}},
+			}
+		}
+		singlePageList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    singlePageItems,
+		}
+
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).
+			Return(singlePageList, nil).Once()
+
+		filteredList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    singlePageItems[:3], // Filter down to 3
+		}
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), singlePageList).
+			Return(filteredList, nil).Once()
+
+		// Request 10 items but only 3 available after filtering
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 10})
+
+		require.NoError(t, err)
+		resultList, ok := result.(*metaV1.List)
+		require.True(t, ok)
+
+		// Should only have 3 items since that's all that's available
+		assert.Equal(t, 3, len(resultList.Items))
+		assert.Equal(t, "", resultList.Continue)
+
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("handles limit of zero by fetching all without pagination loop", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		items := make([]runtime.RawExtension, 100)
+		for i := 0; i < 100; i++ {
+			items[i] = runtime.RawExtension{
+				Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: fmt.Sprintf("item%d", i)}},
+			}
+		}
+		allItemsList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    items,
+		}
+
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()),
+			mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+				return opts.Limit == 0 // Should pass limit 0 through
+			})).Return(allItemsList, nil).Once()
+
+		filteredList := &metaV1.List{
+			ListMeta: metaV1.ListMeta{Continue: ""},
+			Items:    items[:50], // Filter to 50
+		}
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), allItemsList).
+			Return(filteredList, nil).Once()
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 0})
+
+		require.NoError(t, err)
+		resultList, ok := result.(*metaV1.List)
+		require.True(t, ok)
+		assert.Equal(t, 50, len(resultList.Items))
+
+		// Should only call List once (no pagination loop)
+		setup.mockStore.AssertNumberOfCalls(t, "List", 1)
+		setup.mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("respects max iterations limit", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		// Mock storage to always return items with continue token (infinite pagination scenario)
+		// This tests the maxIterations safety limit
+
+		// We'll create unique items for each call to distinguish them
+		for i := 0; i < 10; i++ {
+			pageItems := make([]runtime.RawExtension, 5)
+			for j := 0; j < 5; j++ {
+				pageItems[j] = runtime.RawExtension{
+					Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: fmt.Sprintf("item%d-%d", i, j)}},
+				}
+			}
+
+			pageList := &metaV1.List{
+				ListMeta: metaV1.ListMeta{Continue: fmt.Sprintf("token%d", i+1)},
+				Items:    pageItems,
+			}
+
+			setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).
+				Return(pageList, nil).Once()
+
+			filteredPage := &metaV1.List{
+				ListMeta: metaV1.ListMeta{Continue: fmt.Sprintf("token%d", i+1)},
+				Items:    pageItems[:1], // Only 1 item passes filter per call
+			}
+			setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), pageList).
+				Return(filteredPage, nil).Once()
+		}
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 100})
+
+		require.NoError(t, err)
+		resultList, ok := result.(*metaV1.List)
+		require.True(t, ok)
+
+		// Should have 10 items (1 per iteration * 10 maxIterations)
+		// Even though we requested 100, we stop at 10 due to maxIterations
+		assert.Equal(t, 10, len(resultList.Items))
+		// Continue token should be empty because we collected fewer items than requested
+		// (This indicates we exhausted iterations, not that we reached the limit)
+		assert.Empty(t, resultList.Continue)
+
+		setup.mockStore.AssertExpectations(t)
+		setup.mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("propagates storage errors", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		storageErr := errors.NewInternalError(fmt.Errorf("storage error"))
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).
+			Return(nil, storageErr).Once()
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 10})
+
+		require.Error(t, err)
+		assert.Equal(t, storageErr, err)
+		assert.Nil(t, result)
+
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("propagates filter errors", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		pageList := &metaV1.List{
+			Items: []runtime.RawExtension{
+				{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
+			},
+		}
+
+		setup.mockStore.On("List", mock.MatchedBy(matchesServiceIdentity()), mock.Anything).
+			Return(pageList, nil).Once()
+
+		filterErr := ErrUnauthorized
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), pageList).
+			Return(nil, filterErr).Once()
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{Limit: 10})
+
+		require.Error(t, err)
+		assert.Equal(t, filterErr, err)
+		assert.Nil(t, result)
+
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
 }
