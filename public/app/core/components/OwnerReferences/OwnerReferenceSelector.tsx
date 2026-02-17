@@ -53,19 +53,16 @@ export const OwnerReferenceSelector = ({
 
     return mappedResults;
   };
-  if (Boolean(selectedTeamError)) {
-    return (
-      <Alert
-        severity="error"
-        title={t('manage-owner-references.error-load-team-details', 'Could not load team details')}
-      >
-        {extractErrorMessage(selectedTeamError)}
-      </Alert>
-    );
-  }
-
   return (
     <Box>
+      {Boolean(selectedTeamError) && (
+        <Alert
+          severity="error"
+          title={t('manage-owner-references.error-load-team-details', 'Could not load team details')}
+        >
+          {extractErrorMessage(selectedTeamError)}
+        </Alert>
+      )}
       <Label htmlFor="owner-reference-selector">
         <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team</Trans>
       </Label>
