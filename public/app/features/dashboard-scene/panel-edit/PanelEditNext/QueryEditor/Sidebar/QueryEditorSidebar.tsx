@@ -8,6 +8,7 @@ import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/u
 import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { AddCardButton } from './AddCardButton';
 import { AlertIndicator } from './AlertIndicator';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
@@ -58,6 +59,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
         <div className={styles.content}>
           <QuerySidebarCollapsableHeader
             label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
+            headerAction={<AddCardButton variant="query" alwaysVisible />}
           >
             <DraggableList
               droppableId="query-sidebar-queries"
@@ -67,8 +69,11 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
               onDragEnd={onQueryDragEnd}
             />
           </QuerySidebarCollapsableHeader>
-          {transformations.length > 0 && (
-            <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
+          <QuerySidebarCollapsableHeader
+            label={t('query-editor-next.sidebar.transformations', 'Transformations')}
+            headerAction={<AddCardButton variant="transformation" alwaysVisible />}
+          >
+            {transformations.length > 0 && (
               <DraggableList
                 droppableId="query-sidebar-transformations"
                 items={transformations}
@@ -76,8 +81,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
                 renderItem={(t) => <TransformationCard transformation={t} />}
                 onDragEnd={onTransformationDragEnd}
               />
-            </QuerySidebarCollapsableHeader>
-          )}
+            )}
+          </QuerySidebarCollapsableHeader>
         </div>
       </ScrollContainer>
       <div className={styles.footer}>

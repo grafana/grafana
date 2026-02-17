@@ -28,7 +28,6 @@ interface RenderSidebarCardProps {
   setSelectedQuery?: jest.Mock;
   setPendingExpression?: jest.Mock;
   config?: typeof queryConfig;
-  showAddButton?: boolean;
 }
 
 function renderSidebarCard({
@@ -39,7 +38,6 @@ function renderSidebarCard({
   setSelectedQuery = jest.fn(),
   setPendingExpression = jest.fn(),
   config = queryConfig,
-  showAddButton = true,
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
   const item = {
@@ -57,7 +55,6 @@ function renderSidebarCard({
       onDelete={jest.fn()}
       onToggleHide={jest.fn()}
       onDuplicate={jest.fn()}
-      showAddButton={showAddButton}
       item={item}
     >
       <span>Card content</span>
@@ -139,13 +136,6 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
       expect(screen.getByText('Card content')).toBeInTheDocument();
-    });
-
-    it('does not render the add button when showAddButton is false', () => {
-      renderSidebarCard({ showAddButton: false });
-
-      expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /add below A/i })).not.toBeInTheDocument();
     });
 
     it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
