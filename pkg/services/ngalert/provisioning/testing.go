@@ -181,7 +181,7 @@ type fakeAlertRuleNotificationStore struct {
 
 	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutingsFn                 func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
@@ -214,15 +214,15 @@ func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSetting
 	return nil, nil, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	call := call{
-		Method: "ListNotificationSettings",
+		Method: "ListContactPointRoutings",
 		Args:   []interface{}{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
-	if f.ListNotificationSettingsFn != nil {
-		return f.ListNotificationSettingsFn(ctx, q)
+	if f.ListContactPointRoutingsFn != nil {
+		return f.ListContactPointRoutingsFn(ctx, q)
 	}
 
 	// Default values when no function hook is provided
@@ -233,6 +233,7 @@ type fakeReceiverService struct {
 	Calls                                  []call
 	GetReceiversFunc                       func(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 	RenameReceiverInDependentResourcesFunc func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
+	ReceiverNameUsedByRoutesFunc           func(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool
 }
 
 func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
@@ -249,4 +250,12 @@ func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Con
 		return f.RenameReceiverInDependentResourcesFunc(ctx, orgID, revision, oldName, newName, receiverProvenance)
 	}
 	return nil
+}
+
+func (f *fakeReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool {
+	f.Calls = append(f.Calls, call{Method: "ReceiverNameUsedByRoutes", Args: []interface{}{ctx, revision, name}})
+	if f.ReceiverNameUsedByRoutesFunc != nil {
+		return f.ReceiverNameUsedByRoutesFunc(ctx, revision, name)
+	}
+	return false
 }

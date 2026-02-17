@@ -24,6 +24,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				// @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
 				Options: {
 					// Represents the index of the selected frame
 					frameIndex: number | *0
@@ -43,12 +44,10 @@ composableKinds: PanelCfg: {
 					frozenColumns?: {
 						left?: number | *0
 					}
-          // If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
-          disableKeyboardEvents?: bool
+					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+					disableKeyboardEvents?: bool
 				} @cuetsy(kind="interface")
-				FieldConfig: {
-					ui.TableFieldOptions
-				} @cuetsy(kind="interface")
+				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []

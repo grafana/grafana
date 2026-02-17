@@ -225,6 +225,14 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("resource_history key_path backfill", &ResourceHistoryKeyPathBackfillMigration{})
 
+	mg.AddMigration("Add index to resource_history for garbage collection", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"group", "resource", "action", "resource_version", "name"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_resource_action_version_name",
+	}))
+
+	mg.AddMigration("Fix small resource versions", &SmallRVFixMigration{})
+
 	return marker
 }
 

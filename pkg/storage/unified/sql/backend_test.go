@@ -114,6 +114,15 @@ func TestNewBackend(t *testing.T) {
 		require.NotNil(t, b)
 	})
 
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
@@ -144,6 +153,23 @@ func TestBackend_Init(t *testing.T) {
 		// expectation will fail
 		err = b.Init(ctx)
 		require.NoError(t, err, "should be idempotent")
+
+		err = b.Stop(ctx)
+		require.NoError(t, err)
+	})
+
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.NewDBProviderWithPing(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
+		err = b.Init(ctx)
+		require.NoError(t, err)
 
 		err = b.Stop(ctx)
 		require.NoError(t, err)
@@ -874,4 +900,71 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	}
 
 	return historyRows
+}
+
+func TestBackend_StorageDisabled(t *testing.T) {
+	t.Parallel()
+
+	t.Run("WriteEvent returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+			Object: map[string]any{},
+		})
+		require.NoError(t, err)
+		event := resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    resKey,
+			Object: meta,
+		}
+
+		rv, err := b.WriteEvent(ctx, event)
+		require.Zero(t, rv)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+	})
+
+	t.Run("ProcessBulk returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error)
+		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+	})
+
+	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		ch, err := b.WatchWriteEvents(ctx)
+		require.Nil(t, ch)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "watcher is not enabled")
+	})
+}
+
+// setupBackendTestStorageDisabled creates a test backend with storage disabled (search-only/read-only mode)
+func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context) {
+	t.Helper()
+
+	ctx := testutil.NewDefaultTestContext(t)
+	dbp := test.NewDBProviderMatchWords(t)
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
+	require.NoError(t, err)
+	require.NotNil(t, b)
+
+	err = b.Init(ctx)
+	require.NoError(t, err)
+
+	bb, ok := b.(*backend)
+	require.True(t, ok)
+	require.NotNil(t, bb)
+
+	return testBackend{
+		backend:        bb,
+		TestDBProvider: dbp,
+	}, ctx
 }

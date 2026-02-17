@@ -7,8 +7,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/expr"
 )
+
+const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.query.v0alpha1."
 
 // Generic query request with shared time across all values
 // Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62
@@ -20,6 +21,10 @@ type QueryDataRequest struct {
 	data.QueryDataRequest `json:",inline"`
 }
 
+func (QueryDataRequest) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QueryDataRequest"
+}
+
 // Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type QueryDataResponse struct {
@@ -29,12 +34,8 @@ type QueryDataResponse struct {
 	backend.QueryDataResponse `json:",inline"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type SQLSchemas struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// Backend wrapper (external dependency)
-	expr.SQLSchemas `json:"sqlSchemas,inline"`
+func (QueryDataResponse) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QueryDataResponse"
 }
 
 // GetResponseCode return the right status code for the response by checking the responses.
@@ -64,10 +65,18 @@ type QueryTypeDefinition struct {
 	Spec data.QueryTypeDefinitionSpec `json:"spec,omitempty"`
 }
 
+func (QueryTypeDefinition) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QueryTypeDefinition"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type QueryTypeDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []QueryTypeDefinition `json:"items"`
+}
+
+func (QueryTypeDefinitionList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "QueryTypeDefinitionList"
 }

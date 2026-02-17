@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
@@ -63,6 +63,46 @@ describe('dashboard tracking', () => {
           cloudwatch: 5,
           datasource: 1,
         },
+        variable_type_custom_count: 3,
+        variable_type_custom_csv_count: 2,
+        variable_type_custom_json_count: 1,
+        variable_type_query_count: 1,
+        variable_type_datasource_count: 1,
+        variable_type_adhoc_count: 1,
+      });
+    });
+
+    it('should include transformation and expression counts when provided', async () => {
+      const scene = buildTestScene();
+      trackDashboardSceneCreatedOrSaved(true, scene, {
+        name: 'new dashboard',
+        url: 'new-url',
+        transformation_counts: { organize: 2, reduce: 1 },
+        expression_counts: { sql: 3, math: 1 },
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
+        isDynamicDashboard: true,
+        uid: 'dashboard-test',
+        name: 'new dashboard',
+        url: 'new-url',
+        numPanels: 6,
+        numRows: 6,
+        numTabs: 4,
+        conditionalRenderRules: 3,
+        autoLayoutCount: 3,
+        customGridLayoutCount: 2,
+        panelsByDatasourceType: {
+          cloudwatch: 5,
+          datasource: 1,
+        },
+        variable_type_custom_count: 3,
+        variable_type_custom_csv_count: 2,
+        variable_type_custom_json_count: 1,
+        variable_type_query_count: 1,
+        variable_type_datasource_count: 1,
+        variable_type_adhoc_count: 1,
+        transformation_counts: { organize: 2, reduce: 1 },
+        expression_counts: { sql: 3, math: 1 },
       });
     });
   });

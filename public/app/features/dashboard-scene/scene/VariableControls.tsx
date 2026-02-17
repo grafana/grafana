@@ -35,17 +35,12 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   );
 
   //  Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
+  // Only filter out inControlsMenu - VariableValueSelectWrapper handles rendering logic:
+  // - UNSAFE_renderAsHidden variables render invisibly (for ScopesVariable)
+  // - Regular hidden variables render greyed out in edit mode, or not at all otherwise
   const variablesToRender = hasDrilldownControls
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-    : isEditingNewLayouts
-      ? variables.filter(
-          (v) =>
-            v.state.hide !== VariableHide.inControlsMenu &&
-            // UNSAFE_renderAsHidden used for scopes variables, should always be hidden
-            // if we're editing in dynamic dashboards, still shows hidden variable but greyed out
-            (v.state.hide !== VariableHide.hideVariable || !v.UNSAFE_renderAsHidden)
-        )
-      : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+    : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   return (
     <>
@@ -76,11 +71,12 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const shouldShowHiddenVariables = isEditingNewLayouts && isHidden;
   const styles = useStyles2(getStyles);
 
-  if (isHidden && !isEditingNewLayouts) {
-    if (variable.UNSAFE_renderAsHidden) {
-      return <variable.Component model={variable} />;
-    }
+  // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
+  if (isHidden && variable.UNSAFE_renderAsHidden) {
+    return <variable.Component model={variable} />;
+  }
 
+  if (isHidden && !isEditingNewLayouts) {
     return null;
   }
 

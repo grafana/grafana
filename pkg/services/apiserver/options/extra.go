@@ -3,6 +3,7 @@ package options
 import (
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/spf13/pflag"
 	genericfeatures "k8s.io/apiserver/pkg/features"
@@ -20,12 +21,14 @@ type ExtraOptions struct {
 	ExternalAddress string
 	APIURL          string
 	Verbosity       int
+	RequestTimeout  time.Duration
 }
 
 func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
-		DevMode:   false,
-		Verbosity: 0,
+		DevMode:        false,
+		Verbosity:      0,
+		RequestTimeout: 10 * time.Minute,
 	}
 }
 

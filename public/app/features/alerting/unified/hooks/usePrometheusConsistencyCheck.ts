@@ -155,8 +155,8 @@ export function useRuleGroupConsistencyCheck() {
   const { isGroupInSync } = useRuleGroupIsInSync();
   const [groupConsistent, setGroupConsistent] = useState<boolean | undefined>();
 
-  const apiCheckInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
-  const timeoutInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const apiCheckInterval = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timeoutInterval = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -245,8 +245,8 @@ export function useRuleGroupConsistencyCheck() {
 export function usePrometheusConsistencyCheck() {
   const { matchingPromRuleExists } = useMatchingPromRuleExists();
 
-  const removalConsistencyInterval = useRef<number | undefined>();
-  const creationConsistencyInterval = useRef<number | undefined>();
+  const removalConsistencyInterval = useRef<number | undefined>(undefined);
+  const creationConsistencyInterval = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     return () => {

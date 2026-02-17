@@ -65,7 +65,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"url"},
 		},
 		{
-			name: "invalid URL format",
+			name: "invalid URL format - non-HTTPS",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -73,16 +73,16 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://gitlab.com/grafana/grafana",
+						URL:    "http://github.com/grafana/grafana",
 						Branch: "main",
 					},
 				},
 			},
 			expectedError: true,
-			errorContains: []string{"URL must start with https://github.com/"},
+			errorContains: []string{"URL must start with https://"},
 		},
 		{
-			name: "valid github repository",
+			name: "valid github.com repository",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -93,6 +93,27 @@ func TestValidate(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 						Path:   "grafana",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+		},
+		{
+			name: "valid GitHub Enterprise repository",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo-enterprise",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.mycompany.com/engineering/backend",
+						Branch: "main",
+						Path:   "configs",
 					},
 				},
 				Secure: provisioning.SecureValues{

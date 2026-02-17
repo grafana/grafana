@@ -1843,7 +1843,7 @@ func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := copyMap(tt.input)
 
-			ensurePanelsHaveUniqueIds(dashboard)
+			EnsurePanelsHaveUniqueIds(dashboard)
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)

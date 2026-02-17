@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -46,6 +47,7 @@ func TestFrontendService_ServerCreation(t *testing.T) {
 	t.Run("should create HTTP server with correct configuration", func(t *testing.T) {
 		publicDir := setupTestWebAssets(t)
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "1234",
 			StaticRootPath: publicDir,
 		}
@@ -64,6 +66,7 @@ func TestFrontendService_ServerCreation(t *testing.T) {
 func TestFrontendService_Routes(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
@@ -139,6 +142,7 @@ func TestFrontendService_Routes(t *testing.T) {
 func TestFrontendService_Middleware(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
@@ -190,6 +194,7 @@ func TestFrontendService_Middleware(t *testing.T) {
 func TestFrontendService_LoginErrorCookie(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:                    ini.Empty(),
 		HTTPPort:               "3000",
 		StaticRootPath:         publicDir,
 		BuildVersion:           "10.3.0",
@@ -262,6 +267,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 
 	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
 		customCfg := &setting.Cfg{
+			Raw:                    ini.Empty(),
 			HTTPPort:               "3000",
 			StaticRootPath:         publicDir,
 			BuildVersion:           "10.3.0",
@@ -296,6 +302,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 func TestFrontendService_IndexHooks(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
+		Raw:            ini.Empty(),
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 		BuildVersion:   "10.3.0",
@@ -343,5 +350,188 @@ func TestFrontendService_IndexHooks(t *testing.T) {
 		// The build version comes from setting.BuildVersion (global), not cfg.BuildVersion
 		// So we just check that the page renders successfully
 		assert.Contains(t, body, "window.grafanaBootData")
+	})
+}
+
+func TestFrontendService_CSP(t *testing.T) {
+	publicDir := setupTestWebAssets(t)
+
+	t.Run("should set CSP headers when enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com/grafana",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; style-src 'self' $ROOT_PATH",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP header is set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.NotEmpty(t, cspHeader, "CSP header should be set")
+		assert.Contains(t, cspHeader, "script-src 'self' 'nonce-", "CSP should contain nonce")
+		assert.Contains(t, cspHeader, "style-src 'self' grafana.example.com/grafana", "CSP should contain root path")
+	})
+
+	t.Run("should set CSP-Report-Only header when enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:                   ini.Empty(),
+			HTTPPort:              "3000",
+			StaticRootPath:        publicDir,
+			BuildVersion:          "10.3.0",
+			AppURL:                "https://grafana.example.com",
+			CSPReportOnlyEnabled:  true,
+			CSPReportOnlyTemplate: "default-src 'self' $NONCE",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP-Report-Only header is set
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.NotEmpty(t, cspReportOnlyHeader, "CSP-Report-Only header should be set")
+		assert.Contains(t, cspReportOnlyHeader, "default-src 'self' 'nonce-", "CSP-Report-Only should contain nonce")
+	})
+
+	t.Run("should set both CSP headers when both enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:                   ini.Empty(),
+			HTTPPort:              "3000",
+			StaticRootPath:        publicDir,
+			BuildVersion:          "10.3.0",
+			AppURL:                "https://grafana.example.com",
+			CSPEnabled:            true,
+			CSPTemplate:           "script-src 'self' $NONCE",
+			CSPReportOnlyEnabled:  true,
+			CSPReportOnlyTemplate: "default-src 'self'",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify both headers are set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.NotEmpty(t, cspHeader, "CSP header should be set")
+		assert.NotEmpty(t, cspReportOnlyHeader, "CSP-Report-Only header should be set")
+	})
+
+	t.Run("should not set CSP headers when disabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     false,
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP headers are not set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.Empty(t, cspHeader, "CSP header should not be set when disabled")
+		assert.Empty(t, cspReportOnlyHeader, "CSP-Report-Only header should not be set when disabled")
+	})
+
+	t.Run("should store nonce in request context", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+
+		var capturedNonce string
+		mux.Get("/test-nonce", func(w http.ResponseWriter, r *http.Request) {
+			ctx := contexthandler.FromContext(r.Context())
+			capturedNonce = ctx.RequestNonce
+			w.WriteHeader(200)
+		})
+
+		req := httptest.NewRequest("GET", "/test-nonce", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		assert.NotEmpty(t, capturedNonce, "Nonce should be stored in request context")
+
+		// Verify the nonce in context matches the one in the CSP header
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "'nonce-"+capturedNonce+"'", "Nonce in header should match context nonce")
+	})
+
+	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "default-src 'self'", // Base CSP policy
+		}
+
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Tenant-ID", "tenant-123") // Simulate tenant request
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Currently should still use base config (tenant overrides not yet implemented)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "default-src 'self'", "Should use base CSP for now")
 	})
 }

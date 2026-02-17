@@ -175,14 +175,15 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -196,7 +197,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -204,20 +205,21 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "target",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -240,7 +242,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -269,7 +271,7 @@ func TestConvertResponses(t *testing.T) {
 		refId := "A"
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -278,10 +280,11 @@ func TestConvertResponses(t *testing.T) {
 				"float":  "3.14",
 			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -295,7 +298,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -303,20 +306,21 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("A",
+		expectedFrame := data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "aliasedTarget(target)",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, true)
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -369,6 +373,7 @@ func TestRunQueryE2E(t *testing.T) {
 		serverResponse  string
 		serverStatus    int
 		queries         []backend.DataQuery
+		refIdTargetMap  map[string]string
 		expectError     bool
 		errorContains   string
 		multipleTargets map[string]string
@@ -455,18 +460,22 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "successful multiple queries",
 			serverStatus: 200,
 			multipleTargets: map[string]string{
-				"stats.counters.web.hits": `[
+				"A": `[
 					{
 						"target": "stats.counters.web.hits",
 						"datapoints": [[100, 1609459200], [150, 1609459260]]
 					}
 				]`,
-				"stats.counters.api.calls": `[
+				"B": `[
 					{
 						"target": "stats.counters.api.calls",
 						"datapoints": [[50, 1609459200], [75, 1609459260]]
 					}
 				]`,
+			},
+			refIdTargetMap: map[string]string{
+				"stats.counters.web.hits":  "A",
+				"stats.counters.api.calls": "B",
 			},
 			queries: []backend.DataQuery{
 				{
@@ -507,8 +516,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": ""
-					}`),
+								"target": ""
+							}`),
 				},
 			},
 			expectError:   true,
@@ -518,11 +527,11 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "mixed queries - some empty, some valid",
 			serverStatus: 200,
 			serverResponse: `[
-				{
-					"target": "stats.counters.web.hits",
-					"datapoints": [[100, 1609459200], [150, 1609459260]]
-				}
-			]`,
+						{
+							"target": "stats.counters.web.hits",
+							"datapoints": [[100, 1609459200], [150, 1609459260]]
+						}
+					]`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -532,8 +541,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": ""
-					}`),
+								"target": ""
+							}`),
 				},
 				{
 					RefID: "B",
@@ -543,8 +552,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": "stats.counters.web.hits"
-					}`),
+								"target": "stats.counters.web.hits"
+							}`),
 				},
 			},
 			expectError: false,
@@ -562,8 +571,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": "stats.counters.web.hits"
-					}`),
+								"target": "stats.counters.web.hits"
+							}`),
 				},
 			},
 			expectError:   true,
@@ -573,11 +582,11 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "server error response with HTML content",
 			serverStatus: 500,
 			serverResponse: `<body>
-<h1>Internal Server Error</h1>
-<p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>
-<div>Error: Invalid metric path &#39;stats.invalid.metric&#39;</div>
-Error: Target not found
-</body>`,
+		<h1>Internal Server Error</h1>
+		<p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>
+		<div>Error: Invalid metric path &#39;stats.invalid.metric&#39;</div>
+		Error: Target not found
+		</body>`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -587,8 +596,8 @@ Error: Target not found
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": "stats.invalid.metric"
-					}`),
+								"target": "stats.invalid.metric"
+							}`),
 				},
 			},
 			expectError:   true,
@@ -607,8 +616,8 @@ Error: Target not found
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": "stats.counters.web.hits"
-					}`),
+								"target": "stats.counters.web.hits"
+							}`),
 				},
 			},
 			expectError: true,
@@ -635,11 +644,11 @@ Error: Target not found
 			name:         "interval format transformation",
 			serverStatus: 200,
 			serverResponse: `[
-				{
-					"target": "hitcount(stats.counters.web.hits, '1min')",
-					"datapoints": [[100, 1609459200], [150, 1609459260]]
-				}
-			]`,
+						{
+							"target": "hitcount(stats.counters.web.hits, '1min')",
+							"datapoints": [[100, 1609459200], [150, 1609459260]]
+						}
+					]`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -649,8 +658,8 @@ Error: Target not found
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-						"target": "hitcount(stats.counters.web.hits, '1m')"
-					}`),
+								"target": "hitcount(stats.counters.web.hits, '1m')"
+							}`),
 				},
 			},
 			expectError: false,
@@ -669,7 +678,7 @@ Error: Target not found
 				response := tt.serverResponse
 				if tt.multipleTargets != nil {
 					target := r.FormValue("target")
-					if targetResponse, ok := tt.multipleTargets[target]; ok {
+					if targetResponse, ok := tt.multipleTargets[tt.refIdTargetMap[target]]; ok {
 						response = targetResponse
 					}
 				}
@@ -730,10 +739,123 @@ Error: Target not found
 				assert.NoError(t, err)
 				require.NotNil(t, result)
 
-				for refID, resp := range result.Responses {
-					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-RefID-%s.golden", testName, refID), &resp, false)
+				for refId, resp := range result.Responses {
+					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-%s.golden", testName, refId), &resp, false)
 				}
 			}
+		})
+	}
+}
+
+func TestAliasMatching(t *testing.T) {
+	service := &Service{
+		logger: backend.Logger,
+	}
+
+	testCases := []struct {
+		name              string
+		target            string
+		tagsName          string
+		fromAlert         bool
+		expectedLabelName string
+	}{
+		{
+			name:              "alias() function sets name tag to target",
+			target:            "alias(stats.counters.web.hits, 'Web Hits')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "alias(stats.counters.web.hits, 'Web Hits')",
+		},
+		{
+			name:              "aliasByNode() function sets name tag to target",
+			target:            "aliasByNode(stats.counters.web.hits, 2)",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByNode(stats.counters.web.hits, 2)",
+		},
+		{
+			name:              "aliasByMetric() function sets name tag to target",
+			target:            "aliasByMetric(stats.counters.web.hits)",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByMetric(stats.counters.web.hits)",
+		},
+		{
+			name:              "aliasByTags() function sets name tag to target",
+			target:            "aliasByTags(stats.counters.web.hits, 'host')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByTags(stats.counters.web.hits, 'host')",
+		},
+		{
+			name:              "aliasSub() function sets name tag to target",
+			target:            "aliasSub(stats.counters.web.hits, 'stats', 'metrics')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasSub(stats.counters.web.hits, 'stats', 'metrics')",
+		},
+		{
+			name:              "aliasQuery() function sets name tag to target",
+			target:            "aliasQuery(stats.counters.web.hits, 'SELECT name FROM hosts')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasQuery(stats.counters.web.hits, 'SELECT name FROM hosts')",
+		},
+		{
+			name:              "no alias function keeps original name tag",
+			target:            "stats.counters.web.hits",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "stats.counters.web.hits",
+		},
+		{
+			name:              "fromAlert overrides name tag even without alias",
+			target:            "stats.counters.web.hits",
+			tagsName:          "original.name",
+			fromAlert:         true,
+			expectedLabelName: "stats.counters.web.hits",
+		},
+		{
+			name:              "nested alias function matches",
+			target:            "sumSeries(alias(stats.counters.*.hits, 'Hits'))",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "sumSeries(alias(stats.counters.*.hits, 'Hits'))",
+		},
+		{
+			name:              "alias in metric path should not match",
+			target:            "stats.alias.web.hits",
+			tagsName:          "stats.alias.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "stats.alias.web.hits",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			body := fmt.Sprintf(`[
+				{
+					"target": %q,
+					"tags": { "name": %q, "host": "server1" },
+					"datapoints": [[100, 1609459200]]
+				}
+			]`, tc.target, tc.tagsName)
+
+			httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+			dataFrames, err := service.toDataFrames(httpResponse, "A")
+
+			require.NoError(t, err)
+			require.Len(t, dataFrames, 1)
+
+			frame := dataFrames[0]
+			require.GreaterOrEqual(t, len(frame.Fields), 2)
+
+			valueField := frame.Fields[1]
+			require.NotNil(t, valueField.Labels)
+
+			actualName, ok := valueField.Labels["name"]
+			require.True(t, ok, "name label should exist")
+			assert.Equal(t, tc.expectedLabelName, actualName, "name label should match expected value")
 		})
 	}
 }

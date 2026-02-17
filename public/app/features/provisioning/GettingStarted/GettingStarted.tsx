@@ -8,7 +8,9 @@ import { config } from '@grafana/runtime';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { FREE_TIER_CONNECTION_LIMIT } from '../constants';
 import provisioningSvg from '../img/provisioning.svg';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -127,7 +129,9 @@ export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
     refetchOnMountOrArgChange: true,
   });
-  const hasItems = Boolean(settingsQuery.data?.items?.length);
+  const connectionCount = settingsQuery.data?.items?.length ?? 0;
+  const hasItems = connectionCount > 0;
+  const isConnectionLimitExceeded = isFreeTierLicense() && connectionCount >= FREE_TIER_CONNECTION_LIMIT;
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
@@ -142,6 +146,7 @@ export default function GettingStarted({ items }: Props) {
           </div>
           <FeaturesList
             hasRequiredFeatures={hasRequiredFeatures}
+            isConnectionLimitExceeded={isConnectionLimitExceeded}
             onSetupFeatures={() => {
               setSetupType('required-features');
               setShowModal(true);

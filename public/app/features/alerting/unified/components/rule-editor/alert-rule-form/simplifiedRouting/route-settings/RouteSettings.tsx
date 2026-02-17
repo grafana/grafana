@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import * as React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
-import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/internal';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -45,14 +43,16 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
-  const groupByCount = watch(`contactPoints.${alertManager}.groupBy`)?.length ?? 0;
+  const groupBy = watch(`contactPoints.${alertManager}.groupBy`);
 
   const styles = useStyles2(getStyles);
+
+  // Set default groupBy values when override grouping is enabled and field is empty
   useEffect(() => {
-    if (overrideGrouping && groupByCount === 0) {
+    if (overrideGrouping && (!groupBy || groupBy.length === 0)) {
       setValue(`contactPoints.${alertManager}.groupBy`, REQUIRED_FIELDS_IN_GROUPBY);
     }
-  }, [overrideGrouping, setValue, alertManager, groupByCount]);
+  }, [overrideGrouping, groupBy, setValue, alertManager]);
 
   const separator = <span>, </span>;
 
@@ -79,73 +79,89 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
       </Stack>
       {overrideGrouping && (
         <Field
+          noMargin
           label={t('alerting.routing-settings.label-group-by', 'Group by')}
           description={t(
             'alerting.routing-settings.description-group-by',
-            'Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.'
+            'Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select "Disable (...)" to send each alert as a separate notification.'
           )}
           {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
         >
           <Controller
-            rules={{
-              validate: (value: string[]) => {
-                if (!value || value.length === 0) {
-                  return 'At least one group by option is required.';
-                }
-                if (value.length === 1 && value[0] === DISABLE_GROUPING) {
-                  return true;
-                }
-                // we need to make sure that the required fields are included
-                const requiredFieldsIncluded = REQUIRED_FIELDS_IN_GROUPBY.every((field) => value.includes(field));
-                if (!requiredFieldsIncluded) {
-                  return `Group by must include ${REQUIRED_FIELDS_IN_GROUPBY.join(', ')}`;
-                }
-                return true;
-              },
-            }}
-            render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
-              <>
-                <MultiSelect
-                  aria-label={t('alerting.routing-settings.aria-label-group-by', 'Group by')}
-                  {...field}
-                  allowCustomValue
-                  className={formStyles.input}
-                  onCreateOption={(opt: string) => {
-                    setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+            render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => {
+              const currentValues = field.value || [];
 
-                    // @ts-ignore-check: react-hook-form made me do this
-                    setValue(`contactPoints.${alertManager}.groupBy`, [...field.value, opt]);
-                  }}
-                  onChange={(value) => {
-                    return onChange(mapMultiSelectValueToStrings(value));
-                  }}
-                  options={[...commonGroupByOptions, ...groupByOptions]}
-                  components={{
-                    MultiValueRemove(
-                      props: React.PropsWithChildren<
-                        MultiValueRemoveProps &
-                          Array<SelectableValue<string>> & {
-                            data: {
-                              label: string;
-                              value: string;
-                              isFixed: boolean;
-                            };
-                          }
-                      >
-                    ) {
-                      const { data } = props;
-                      if (data.isFixed) {
-                        return null;
+              return (
+                <>
+                  <MultiSelect
+                    aria-label={t('alerting.routing-settings.aria-label-group-by', 'Group by')}
+                    {...field}
+                    allowCustomValue
+                    className={formStyles.input}
+                    onCreateOption={(opt: string) => {
+                      setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+
+                      // If '...' is selected, remove it and add required fields + new option
+                      if (currentValues.includes(DISABLE_GROUPING)) {
+                        setValue(`contactPoints.${alertManager}.groupBy`, [...REQUIRED_FIELDS_IN_GROUPBY, opt]);
+                      } else {
+                        // @ts-ignore-check: react-hook-form made me do this
+                        setValue(`contactPoints.${alertManager}.groupBy`, [...field.value, opt]);
                       }
-                      return MultiValueRemove(props);
-                    },
-                  }}
-                />
-                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
-              </>
-            )}
+                    }}
+                    onChange={(value) => {
+                      const newValues = mapMultiSelectValueToStrings(value);
+                      const hadDisableGrouping = currentValues.includes(DISABLE_GROUPING);
+                      const nowHasDisableGrouping = newValues.includes(DISABLE_GROUPING);
+
+                      // If user just selected '...', clear all other values
+                      if (nowHasDisableGrouping && !hadDisableGrouping) {
+                        return onChange([DISABLE_GROUPING]);
+                      }
+
+                      // If user added a label while '...' was selected, remove '...' and add required fields
+                      if (hadDisableGrouping && nowHasDisableGrouping && newValues.length > 1) {
+                        const withoutDisable = newValues.filter((v) => v !== DISABLE_GROUPING);
+                        const withRequiredFields = [...REQUIRED_FIELDS_IN_GROUPBY];
+                        for (const val of withoutDisable) {
+                          if (!withRequiredFields.includes(val)) {
+                            withRequiredFields.push(val);
+                          }
+                        }
+                        return onChange(withRequiredFields);
+                      }
+
+                      // If user removed '...', restore the required fields
+                      if (hadDisableGrouping && !nowHasDisableGrouping) {
+                        return onChange(REQUIRED_FIELDS_IN_GROUPBY);
+                      }
+
+                      // If not using '...', ensure required fields are always included
+                      if (!nowHasDisableGrouping) {
+                        const withRequiredFields = [...newValues];
+                        for (const field of REQUIRED_FIELDS_IN_GROUPBY) {
+                          if (!withRequiredFields.includes(field)) {
+                            withRequiredFields.unshift(field);
+                          }
+                        }
+                        return onChange(withRequiredFields);
+                      }
+
+                      return onChange(newValues);
+                    }}
+                    options={[...commonGroupByOptions, ...groupByOptions]}
+                  />
+                  <Text variant="bodySmall" color="secondary">
+                    <Trans i18nKey="alerting.routing-settings.group-by-hint">
+                      grafana_folder and alertname are always included unless you select Disable (...).
+                    </Trans>
+                  </Text>
+                  {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
+                </>
+              );
+            }}
             name={`contactPoints.${alertManager}.groupBy`}
             control={control}
           />

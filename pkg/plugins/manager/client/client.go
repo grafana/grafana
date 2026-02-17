@@ -27,6 +27,7 @@ var _ plugins.Client = (*Service)(nil)
 var (
 	errNilRequest = errors.New("req cannot be nil")
 	errNilSender  = errors.New("sender cannot be nil")
+	errNilWriter  = errors.New("writer cannot be nil")
 )
 
 // passthroughErrors contains a list of errors that should be returned directly to the caller without wrapping
@@ -91,6 +92,23 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return resp, err
+}
+
+func (s *Service) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return errNilRequest
+	}
+
+	if w == nil {
+		return errNilWriter
+	}
+
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return plugins.ErrPluginNotRegistered
+	}
+
+	return p.QueryChunkedData(ctx, req, w)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

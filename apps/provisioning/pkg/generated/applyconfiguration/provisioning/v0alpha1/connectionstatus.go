@@ -5,15 +5,24 @@
 package v0alpha1
 
 import (
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
+//
+// The status of a Connection.
+// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatusApplyConfiguration struct {
-	ObservedGeneration *int64                                `json:"observedGeneration,omitempty"`
-	State              *provisioningv0alpha1.ConnectionState `json:"state,omitempty"`
-	Health             *HealthStatusApplyConfiguration       `json:"health,omitempty"`
+	// The generation of the spec last time reconciliation ran
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+	// FieldErrors are errors that occurred during validation of the connection spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	// Conditions represent the latest available observations of the connection's state.
+	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// The connection health status
+	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
 }
 
 // ConnectionStatusApplyConfiguration constructs a declarative configuration of the ConnectionStatus type for use with
@@ -30,11 +39,29 @@ func (b *ConnectionStatusApplyConfiguration) WithObservedGeneration(value int64)
 	return b
 }
 
-// WithState sets the State field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the State field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithState(value provisioningv0alpha1.ConnectionState) *ConnectionStatusApplyConfiguration {
-	b.State = &value
+// WithFieldErrors adds the given value to the FieldErrors field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the FieldErrors field.
+func (b *ConnectionStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDetailsApplyConfiguration) *ConnectionStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithFieldErrors")
+		}
+		b.FieldErrors = append(b.FieldErrors, *values[i])
+	}
+	return b
+}
+
+// WithConditions adds the given value to the Conditions field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Conditions field.
+func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *ConnectionStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithConditions")
+		}
+		b.Conditions = append(b.Conditions, *values[i])
+	}
 	return b
 }
 

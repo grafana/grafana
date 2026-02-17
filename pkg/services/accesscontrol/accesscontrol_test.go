@@ -130,28 +130,106 @@ func TestReduce(t *testing.T) {
 }
 
 func TestGroupScopesByActionContext(t *testing.T) {
-	// test data = 3 actions with 2+i scopes each, including a duplicate
-	permissions := []Permission{}
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 2+i; j++ {
-			permissions = append(permissions, Permission{
-				Action: fmt.Sprintf("action:%d", i),
-				Scope:  fmt.Sprintf("scope:%d_%d", i, j),
-			})
-		}
+	tests := []struct {
+		name        string
+		permissions []Permission
+		expected    map[string][]string
+	}{
+		{
+			name:        "empty permissions",
+			permissions: []Permission{},
+			expected:    map[string][]string{},
+		},
+		{
+			name:        "single action single scope",
+			permissions: []Permission{{Action: "read", Scope: "dashboards:1"}},
+			expected:    map[string][]string{"read": {"dashboards:1"}},
+		},
+		{
+			name: "single action multiple scopes preserves order",
+			permissions: []Permission{
+				{Action: "read", Scope: "a"},
+				{Action: "read", Scope: "b"},
+				{Action: "read", Scope: "c"},
+			},
+			expected: map[string][]string{"read": {"a", "b", "c"}},
+		},
+		{
+			name: "multiple actions interleaved preserves order per action",
+			permissions: []Permission{
+				{Action: "read", Scope: "r1"},
+				{Action: "write", Scope: "w1"},
+				{Action: "read", Scope: "r2"},
+				{Action: "write", Scope: "w2"},
+			},
+			expected: map[string][]string{
+				"read":  {"r1", "r2"},
+				"write": {"w1", "w2"},
+			},
+		},
+		{
+			name: "duplicate scopes preserved",
+			permissions: []Permission{
+				{Action: "read", Scope: "same"},
+				{Action: "read", Scope: "same"},
+			},
+			expected: map[string][]string{"read": {"same", "same"}},
+		},
+		{
+			name:        "empty scope string",
+			permissions: []Permission{{Action: "admin", Scope: ""}},
+			expected:    map[string][]string{"admin": {""}},
+		},
+		{
+			name: "many actions one scope each",
+			permissions: []Permission{
+				{Action: "a1", Scope: "s1"},
+				{Action: "a2", Scope: "s2"},
+				{Action: "a3", Scope: "s3"},
+				{Action: "a4", Scope: "s4"},
+				{Action: "a5", Scope: "s5"},
+			},
+			expected: map[string][]string{
+				"a1": {"s1"},
+				"a2": {"s2"},
+				"a3": {"s3"},
+				"a4": {"s4"},
+				"a5": {"s5"},
+			},
+		},
+		{
+			name: "multiple actions with varying scope counts",
+			permissions: func() []Permission {
+				var perms []Permission
+				for i := 0; i < 3; i++ {
+					for j := 0; j < 2+i; j++ {
+						perms = append(perms, Permission{
+							Action: fmt.Sprintf("action:%d", i),
+							Scope:  fmt.Sprintf("scope:%d_%d", i, j),
+						})
+					}
+				}
+				return perms
+			}(),
+			expected: map[string][]string{
+				"action:0": {"scope:0_0", "scope:0_1"},
+				"action:1": {"scope:1_0", "scope:1_1", "scope:1_2"},
+				"action:2": {"scope:2_0", "scope:2_1", "scope:2_2", "scope:2_3"},
+			},
+		},
 	}
 
-	expected := map[string][]string{}
-	for i := 0; i < 3; i++ {
-		action := fmt.Sprintf("action:%d", i)
-		scopes := []string{}
-		for j := 0; j < 2+i; j++ {
-			scopes = append(scopes, fmt.Sprintf("scope:%d_%d", i, j))
-		}
-		expected[action] = scopes
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GroupScopesByActionContext(context.Background(), tt.permissions)
+			assert.Equal(t, len(tt.expected), len(result), "map length mismatch")
+			for action, expectedScopes := range tt.expected {
+				actualScopes, ok := result[action]
+				assert.True(t, ok, "missing action: %s", action)
+				assert.Equal(t, expectedScopes, actualScopes, "scopes mismatch for action: %s", action)
+			}
+		})
 	}
-
-	assert.EqualValues(t, expected, GroupScopesByActionContext(context.Background(), permissions))
 }
 
 func BenchmarkGroupScopesByAction(b *testing.B) {
@@ -198,4 +276,80 @@ func BenchmarkGroupScopesByAction(b *testing.B) {
 			}
 		})
 	}
+}
+
+// BenchmarkGroupScopesByActionMemory benchmarks memory allocations for GroupScopesByActionContext.
+// Run with: go test -bench=BenchmarkGroupScopesByActionMemory -benchmem -run=^$ ./pkg/services/accesscontrol/
+func BenchmarkGroupScopesByActionMemory(b *testing.B) {
+	testCases := []struct {
+		name       string
+		numActions int
+		totalPerms int
+	}{
+		// Small: typical single user
+		{"small_10actions_1k", 10, 1_000},
+		// Medium: power user with many dashboards
+		{"medium_50actions_10k", 50, 10_000},
+		// Large: enterprise user with extensive permissions
+		{"large_100actions_70k", 100, 70_000},
+		// XLarge: simulates large instance scenarios (closer to production profiles)
+		{"xlarge_200actions_500k", 200, 500_000},
+		// XXLarge: stress test for very large permission sets
+		{"xxlarge_500actions_1m", 500, 1_000_000},
+	}
+
+	for _, tc := range testCases {
+		b.Run(tc.name, func(b *testing.B) {
+			permissions := generateTestPermissions(tc.numActions, tc.totalPerms)
+
+			b.ReportAllocs()
+			b.ReportMetric(float64(len(permissions)), "permissions")
+			b.ReportMetric(float64(tc.numActions), "actions")
+			b.ResetTimer()
+
+			for b.Loop() {
+				GroupScopesByActionContext(context.Background(), permissions)
+			}
+		})
+	}
+}
+
+// generateTestPermissions creates a slice of permissions with realistic distribution.
+// Some actions have more scopes than others to simulate real-world usage patterns.
+func generateTestPermissions(numActions, totalPerms int) []Permission {
+	permissions := make([]Permission, 0, totalPerms)
+
+	// Calculate base scopes per action
+	basePerAction := totalPerms / numActions
+	if basePerAction < 1 {
+		basePerAction = 1
+	}
+
+	for i := 0; i < numActions && len(permissions) < totalPerms; i++ {
+		// Add variance: some actions get 2x scopes, some get 0.5x
+		scopeCount := basePerAction
+		if i%3 == 0 {
+			scopeCount = scopeCount * 2
+		} else if i%5 == 0 {
+			scopeCount = scopeCount / 2
+		}
+
+		for j := 0; j < scopeCount && len(permissions) < totalPerms; j++ {
+			permissions = append(permissions, Permission{
+				Action: fmt.Sprintf("action:%d", i),
+				Scope:  fmt.Sprintf("dashboards:uid:%d_%d", i, j),
+			})
+		}
+	}
+
+	// Fill remaining if distribution didn't cover all
+	for len(permissions) < totalPerms {
+		idx := len(permissions) % numActions
+		permissions = append(permissions, Permission{
+			Action: fmt.Sprintf("action:%d", idx),
+			Scope:  fmt.Sprintf("dashboards:uid:extra_%d", len(permissions)),
+		})
+	}
+
+	return permissions
 }

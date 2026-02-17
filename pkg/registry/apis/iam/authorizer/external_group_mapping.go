@@ -134,6 +134,7 @@ func (r *ExternalGroupMappingAuthorizer) FilterList(ctx context.Context, list ru
 		Resource:  iamv0.TeamResourceInfo.GetName(),
 		Verb:      utils.VerbGetPermissions,
 	}
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	canView, _, err := r.accessClient.Compile(ctx, authInfo, listReq)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)

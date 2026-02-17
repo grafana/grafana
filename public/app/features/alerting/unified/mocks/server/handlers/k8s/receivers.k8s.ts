@@ -25,12 +25,15 @@ const getReceiversList = () => {
         contactPoint.grafana_managed_receiver_configs?.find((integration) => {
           return integration.provenance;
         })?.provenance || KnownProvenance.None;
+      // Only receivers from Grafana configuration can be used (not imported ones)
+      const canUse = provenance !== KnownProvenance.ConvertedPrometheus;
       return {
         metadata: {
           // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
           uid: contactPoint.name,
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
+            [K8sAnnotations.CanUse]: canUse ? 'true' : 'false',
             [K8sAnnotations.AccessAdmin]: 'true',
             [K8sAnnotations.AccessDelete]: cannotBeDeleted.includes(contactPoint.name) ? 'false' : 'true',
             [K8sAnnotations.AccessWrite]: cannotBeEdited.includes(contactPoint.name) ? 'false' : 'true',

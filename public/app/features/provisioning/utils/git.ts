@@ -17,6 +17,21 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
+export function buildCleanBaseUrl(url: string) {
+  return stripSlashes(url.trim()).replace(/\.git\/?$/i, '');
+}
+
+/**
+ * Formats a repository URL for display by extracting the path portion.
+ * e.g., "https://github.com/owner/repo/tree/main/path" -> "owner/repo/tree/main/path"
+ */
+export function formatRepoUrl(url?: string): string {
+  if (!url) {
+    return '';
+  }
+  return url.split('/').slice(3).join('/');
+}
+
 // Remove leading and trailing slashes from a string.
 const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
@@ -36,8 +51,9 @@ const buildRepoUrl = ({ baseUrl, branch, providerSegments, path }: BuildRepoUrlP
     return undefined;
   }
 
-  // Normalize base URL: trim whitespace + remove trailing slashes.
-  const cleanBase = stripSlashes(baseUrl.trim());
+  // Normalize base URL: trim whitespace + remove trailing slashes + remove .git suffix if present
+  const cleanBase = buildCleanBaseUrl(baseUrl);
+
   const cleanBranch = branch?.trim() || undefined;
 
   // Start composing URL parts:

@@ -21,7 +21,7 @@ import {
   toDataQueryResponse,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
@@ -106,7 +106,6 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 }
 
 export const instanceSettings: DataSourceInstanceSettings = {
-  id: -100,
   uid: ExpressionDatasourceUID,
   name: ExpressionDatasourceRef.name,
   type: ExpressionDatasourceRef.type,

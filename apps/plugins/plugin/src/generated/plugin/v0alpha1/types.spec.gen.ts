@@ -4,6 +4,7 @@ export interface Spec {
 	id: string;
 	version: string;
 	url?: string;
+	parentId?: string;
 }
 
 export const defaultSpec = (): Spec => ({

@@ -1,6 +1,6 @@
 {
   "apiVersion": "dashboard.grafana.app/v2beta1",
-  "kind": "Dashboard",
+  "kind": "DashboardWithAccessInfo",
   "metadata": {
     "name": "fa400625-2a44-4add-a369-e6c972eb4bd6",
     "generation": 1,

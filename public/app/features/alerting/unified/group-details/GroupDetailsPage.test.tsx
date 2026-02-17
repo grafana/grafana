@@ -47,7 +47,7 @@ const ui = {
   exportButton: byRole('button', { name: 'Export' }),
   ruleItem: byRole('treeitem'),
   export: {
-    dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
+    dialog: byRole('dialog', { name: /Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
     editor: byTestId('code-editor'),

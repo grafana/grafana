@@ -9,9 +9,9 @@ import {
   IoK8SApimachineryPkgApisMetaV1ObjectMeta,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import {
   isK8sEntityProvisioned,
+  isProvisionedResource,
   shouldUseK8sApi,
   stringifyFieldSelector,
 } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -62,7 +62,7 @@ const parseAmTimeInterval: (interval: MuteTimeInterval, provenance: string) => M
   return {
     ...interval,
     id: interval.name,
-    provisioned: Boolean(provenance && provenance !== KnownProvenance.None),
+    provisioned: isProvisionedResource(provenance),
   };
 };
 

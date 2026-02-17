@@ -15,6 +15,7 @@ import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import { DashboardInteractions } from '../../utils/interactions';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
@@ -112,6 +113,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         source: set,
         removedObject: this.variable,
       });
+      DashboardInteractions.deleteVariableButtonClicked({ type: this.variable.state.type });
     }
   }
 

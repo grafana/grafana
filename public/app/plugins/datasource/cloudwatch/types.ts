@@ -154,6 +154,26 @@ export interface StartQueryRequest extends DataQuery {
   limit?: number;
   refId: string;
   region: string;
+  /**
+   * Query language for the logs query (CWLI, SQL, PPL)
+   */
+  queryLanguage?: raw.LogsQueryLanguage;
+  /**
+   * Log group selection scope - determines how log groups are selected for the query
+   */
+  logsQueryScope?: raw.LogsQueryScope;
+  /**
+   * Log group name prefixes for namePrefix scope mode (max 5)
+   */
+  logGroupPrefixes?: string[];
+  /**
+   * Log group class filter for namePrefix and allLogGroups scope modes
+   */
+  logGroupClass?: raw.LogGroupClass;
+  /**
+   * Selected account IDs for cross-account queries (max 20)
+   */
+  selectedAccountIds?: string[];
 }
 
 export interface QueryParam extends DataQuery {
