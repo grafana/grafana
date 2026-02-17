@@ -30,6 +30,9 @@ var (
 	rawSchemaLogsDrilldownDefaultColumnsv1beta1     = []byte(`{"LogsDefaultColumnsLabel":{"additionalProperties":false,"properties":{"key":{"type":"string"},"value":{"type":"string"}},"required":["key","value"],"type":"object"},"LogsDefaultColumnsLabels":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsLabel"},"type":"array"},"LogsDefaultColumnsRecord":{"additionalProperties":false,"properties":{"columns":{"items":{"type":"string"},"type":"array"},"labels":{"$ref":"#/components/schemas/LogsDefaultColumnsLabels"}},"required":["columns","labels"],"type":"object"},"LogsDefaultColumnsRecords":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsRecord"},"type":"array"},"LogsDrilldownDefaultColumns":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"records":{"$ref":"#/components/schemas/LogsDefaultColumnsRecords"}},"required":["records"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaLogsDrilldownDefaultColumnsv1beta1 app.VersionSchema
 	_                                               = json.Unmarshal(rawSchemaLogsDrilldownDefaultColumnsv1beta1, &versionSchemaLogsDrilldownDefaultColumnsv1beta1)
+	rawSchemaLogsDrilldownDefaultLabelsv1beta1      = []byte(`{"LogsDrilldownDefaultLabels":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"LogsLogsDefaultLabelsRecord":{"additionalProperties":false,"properties":{"dsUid":{"type":"string"},"labels":{"items":{"type":"string"},"type":"array"}},"required":["dsUid","labels"],"type":"object"},"LogsLogsDefaultLabelsRecords":{"items":{"$ref":"#/components/schemas/LogsLogsDefaultLabelsRecord"},"type":"array"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"records":{"$ref":"#/components/schemas/LogsLogsDefaultLabelsRecords"}},"required":["records"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaLogsDrilldownDefaultLabelsv1beta1  app.VersionSchema
+	_                                               = json.Unmarshal(rawSchemaLogsDrilldownDefaultLabelsv1beta1, &versionSchemaLogsDrilldownDefaultLabelsv1beta1)
 )
 
 var appManifestData = app.ManifestData{
@@ -75,6 +78,14 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultColumnsv1beta1,
 				},
+
+				{
+					Kind:       "LogsDrilldownDefaultLabels",
+					Plural:     "LogsDrilldownDefaultLabels",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaLogsDrilldownDefaultLabelsv1beta1,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -97,6 +108,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"LogsDrilldown/v1alpha1":              v1alpha1.LogsDrilldownKind(),
 	"LogsDrilldownDefaults/v1alpha1":      v1alpha1.LogsDrilldownDefaultsKind(),
 	"LogsDrilldownDefaultColumns/v1beta1": v1beta1.LogsDrilldownDefaultColumnsKind(),
+	"LogsDrilldownDefaultLabels/v1beta1":  v1beta1.LogsDrilldownDefaultLabelsKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
