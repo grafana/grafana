@@ -52,6 +52,10 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
       width: '460px',
       minWidth: '460px',
 
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
+
       [theme.breakpoints.down('xl')]: {
         minWidth: '368px',
       },

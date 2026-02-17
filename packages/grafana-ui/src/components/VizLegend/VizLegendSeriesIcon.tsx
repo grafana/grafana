@@ -30,16 +30,27 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
   if (seriesName && onSeriesColorChange && color && !readonly) {
     return (
       <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
-        {({ ref, showColorPicker, hideColorPicker }) => (
-          <SeriesIcon
-            color={color}
-            className="pointer"
-            ref={ref}
-            onClick={showColorPicker}
-            onMouseLeave={hideColorPicker}
-            lineStyle={lineStyle}
-          />
-        )}
+        {({ ref, showColorPicker, hideColorPicker }) => {
+          function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
+            if (e.key === ' ' || e.key === 'Enter') {
+              e.preventDefault();
+              showColorPicker();
+            }
+          }
+          return (
+            <SeriesIcon
+              tabIndex={0}
+              role="button"
+              color={color}
+              className="pointer"
+              ref={ref}
+              onClick={showColorPicker}
+              onKeyDown={handleKeyDown}
+              onMouseLeave={hideColorPicker}
+              lineStyle={lineStyle}
+            />
+          );
+        }}
       </SeriesColorPicker>
     );
   }
