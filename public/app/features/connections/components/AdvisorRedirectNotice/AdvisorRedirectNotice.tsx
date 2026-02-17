@@ -19,6 +19,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alertParagraph: css({
     margin: theme.spacing(0, 1, 0, 0),
     lineHeight: theme.spacing(theme.components.height.sm),
+    color: theme.colors.text.maxContrast,
   }),
 });
 const userStorage = new UserStorage('advisor-redirect-notice');
@@ -67,6 +68,7 @@ export function AdvisorRedirectNotice() {
           icon="arrow-right"
           href="/a/grafana-advisor-app"
           fill="text"
+          variant="secondary"
         >
           <Trans i18nKey="connections.advisor-redirect-notice.go-to-advisor">Go to Advisor</Trans>
         </LinkButton>
