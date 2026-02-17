@@ -228,6 +228,9 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "rolebindings" {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
 					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
@@ -417,7 +420,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
+		b.features, b.accessClient)
 
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler

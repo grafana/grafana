@@ -49,7 +49,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 	}
 
 	// Reset the results after the export as pull will operate on the same resources
-	progress.ResetResults()
+	progress.ResetResults(false)
 
 	// Pull resources from the repository
 	progress.SetMessage(ctx, "pull resources")
