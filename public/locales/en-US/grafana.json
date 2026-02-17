@@ -5315,8 +5315,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom Variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5333,9 +5332,11 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "modal-title": "Query Variable",
-          "preview": "Preview"
+          "modal-title": "Query Variable: {{name}}",
+          "tabs": {
+            "preview": "Preview ({{optionsCount}})",
+            "query": "Query"
+          }
         },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
@@ -6730,6 +6731,12 @@
       "provisioned": "Provisioned",
       "terraform": "Managed by: Terraform"
     },
+    "modal-editor": {
+      "apply": "Apply",
+      "discard": "Discard",
+      "label-static-options": "Static options ({{staticOptionsCount}})",
+      "run-query": "Run query"
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
@@ -7062,10 +7069,20 @@
     "use-modal-editor": {
       "description": {
         "change-variable-query": "Change variable query"
+      },
+      "on-click-apply": {
+        "description": {
+          "change-variable-query": "Change variable query"
+        }
       }
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variable-refreshs-category": {
+      "title": {
+        "refresh-options": "Refresh options"
+      }
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
