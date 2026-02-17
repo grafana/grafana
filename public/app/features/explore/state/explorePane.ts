@@ -23,6 +23,7 @@ import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
+import { variablesReducer } from './variables';
 //
 // Actions and Payloads
 //
@@ -236,6 +237,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
+  state = variablesReducer(state, action);
 
   if (changeSizeAction.match(action)) {
     const containerWidth = Math.floor(action.payload.width);

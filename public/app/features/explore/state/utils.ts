@@ -75,6 +75,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  variables: [],
   compact: false,
   queriesChangedIndex: 0,
   queriesChangedIndexAtRun: 0,

@@ -109,6 +109,12 @@ export interface ExploreState {
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
 export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
 
+export interface ExploreVariable {
+  name: string;
+  values: string[];
+  selectedValue: string;
+}
+
 export interface ExploreItemState {
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
@@ -247,6 +253,11 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+
+  /**
+   * User-defined variables for this Explore pane
+   */
+  variables: ExploreVariable[];
 
   /**
    * If set to true, all query rows will be collapsed initially and the content outline will be hidden
