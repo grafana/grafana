@@ -640,6 +640,8 @@ type Cfg struct {
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+	// SimulatedNetworkLatency is used for testing only
+	SimulatedNetworkLatency time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
