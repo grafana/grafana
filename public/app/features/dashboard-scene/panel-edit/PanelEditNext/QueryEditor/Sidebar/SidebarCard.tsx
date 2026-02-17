@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -20,7 +20,6 @@ interface SidebarCardProps {
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
-  showAddButton: boolean;
   variant?: 'default' | 'ghost';
 }
 
@@ -33,14 +32,13 @@ export const SidebarCard = ({
   onDelete,
   onDuplicate,
   onToggleHide,
-  showAddButton = true,
   variant = 'default',
 }: SidebarCardProps) => {
-  const hasAddButton = showAddButton;
+  const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
-  const styles = useStyles2(getStyles, { isSelected, hasAddButton, item });
+  const styles = useStyles2(getStyles, { isSelected, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -109,7 +107,7 @@ export const SidebarCard = ({
           </div>
         )}
       </div>
-      {hasAddButton && <AddCardButton afterRefId={id} />}
+      <AddCardButton variant={addVariant} afterId={id} />
     </div>
   );
 };
@@ -123,11 +121,9 @@ function getStyles(
   theme: GrafanaTheme2,
   {
     isSelected,
-    hasAddButton,
     item,
   }: {
     isSelected?: boolean;
-    hasAddButton?: boolean;
     item: ActionItem;
   }
 ) {
@@ -161,42 +157,38 @@ function getStyles(
       position: 'relative',
       marginInlineStart: theme.spacing(2),
 
-      // The hover-zone pseudo-elements and add-button visibility rules are
-      // only needed when the card has an AddCardButton.
-      ...(hasAddButton && {
-        // Two slim pseudo-element strips extend the hover zone to the left and
-        // below the card, covering the path to the "+" button without overlapping
-        // the card's clickable area.
+      // Two slim pseudo-element strips extend the hover zone to the left and
+      // below the card, covering the path to the "+" button without overlapping
+      // the card's clickable area.
 
-        // Left strip: narrow gutter running along the card's left edge and below.
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: `calc(-1 * ${theme.spacing(3.5)})`,
-          width: theme.spacing(3.5),
-          height: `calc(100% + ${theme.spacing(1.5)})`,
-        },
+      // Left strip: narrow gutter running along the card's left edge and below.
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: `calc(-1 * ${theme.spacing(3.5)})`,
+        width: theme.spacing(3.5),
+        height: `calc(100% + ${theme.spacing(1.5)})`,
+      },
 
-        // Bottom strip: runs along the card's bottom edge extending to the left.
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: '100%',
-          left: `calc(-1 * ${theme.spacing(3.5)})`,
-          width: `calc(100% + ${theme.spacing(3.5)})`,
-          height: theme.spacing(1.5),
-        },
+      // Bottom strip: runs along the card's bottom edge extending to the left.
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '100%',
+        left: `calc(-1 * ${theme.spacing(3.5)})`,
+        width: `calc(100% + ${theme.spacing(3.5)})`,
+        height: theme.spacing(1.5),
+      },
 
-        '&:hover': {
-          zIndex: 1,
-        },
+      '&:hover': {
+        zIndex: 1,
+      },
 
-        '&:hover [data-add-button], & [data-menu-open]': {
-          opacity: 1,
-          pointerEvents: 'auto',
-        },
-      }),
+      '&:hover [data-add-button], & [data-menu-open]': {
+        opacity: 1,
+        pointerEvents: 'auto',
+      },
     }),
 
     card: css({

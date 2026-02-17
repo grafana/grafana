@@ -34,7 +34,6 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       onDelete={() => deleteQuery(query.refId)}
       onDuplicate={() => duplicateQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
-      showAddButton={true}
     >
       {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
       {editorType === QueryEditorType.Expression && (

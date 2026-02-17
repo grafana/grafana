@@ -20,13 +20,7 @@ export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   };
 
   return (
-    <SidebarCard
-      id={alert.alertId}
-      isSelected={isSelected}
-      item={item}
-      onClick={() => setSelectedAlert(alert)}
-      showAddButton={false}
-    >
+    <SidebarCard id={alert.alertId} isSelected={isSelected} item={item} onClick={() => setSelectedAlert(alert)}>
       <Icon
         name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Alert].icon}
         color={getAlertStateColor(theme, alert.state)}

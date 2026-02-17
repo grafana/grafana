@@ -28,7 +28,6 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       onClick={() => setSelectedTransformation(transformation)}
       onDelete={() => deleteTransformation(transformation.transformId)}
       onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
-      showAddButton={false}
     >
       <Icon
         name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].icon}

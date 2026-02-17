@@ -37,7 +37,6 @@ export function AlertsView({ alertRules }: AlertsViewProps) {
           isSelected={false}
           item={GHOST_ALERT_ITEM}
           onClick={() => {}} // Noop for the ghost alert
-          showAddButton={false}
           variant="ghost"
         >
           <Icon

@@ -5,6 +5,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { Transformation } from '../types';
 
+import { AddCardButton } from './AddCardButton';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
@@ -27,6 +28,7 @@ export function QueriesAndTransformationsView({
     <>
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
+        headerAction={<AddCardButton variant="query" alwaysVisible />}
       >
         <DraggableList
           droppableId="query-sidebar-queries"
@@ -36,8 +38,11 @@ export function QueriesAndTransformationsView({
           onDragEnd={onQueryDragEnd}
         />
       </QuerySidebarCollapsableHeader>
-      {transformations.length > 0 && (
-        <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
+      <QuerySidebarCollapsableHeader
+        label={t('query-editor-next.sidebar.transformations', 'Transformations')}
+        headerAction={<AddCardButton variant="transformation" alwaysVisible />}
+      >
+        {transformations.length > 0 && (
           <DraggableList
             droppableId="query-sidebar-transformations"
             items={transformations}
@@ -45,8 +50,8 @@ export function QueriesAndTransformationsView({
             renderItem={(t) => <TransformationCard transformation={t} />}
             onDragEnd={onTransformationDragEnd}
           />
-        </QuerySidebarCollapsableHeader>
-      )}
+        )}
+      </QuerySidebarCollapsableHeader>
     </>
   );
 }
