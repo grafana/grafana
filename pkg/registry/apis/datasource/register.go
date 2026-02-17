@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -51,7 +50,7 @@ type DataSourceAPIBuilder struct {
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
 	accessControl          accesscontrol.AccessControl
-	queryTypes             *queryV0.QueryTypeDefinitionList
+	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 }
@@ -158,7 +157,7 @@ func NewDataSourceAPIBuilder(
 }
 
 // TODO -- somehow get the list from the plugin -- not hardcoded
-func getHardcodedQueryTypes(pluginId string) (*queryV0.QueryTypeDefinitionList, error) {
+func getHardcodedQueryTypes(pluginId string) (*datasourceV0.QueryTypeDefinitionList, error) {
 	var err error
 	var raw json.RawMessage
 	switch pluginId {
@@ -171,7 +170,7 @@ func getHardcodedQueryTypes(pluginId string) (*queryV0.QueryTypeDefinitionList, 
 		return nil, err
 	}
 	if raw != nil {
-		types := &queryV0.QueryTypeDefinitionList{}
+		types := &datasourceV0.QueryTypeDefinitionList{}
 		err = json.Unmarshal(raw, types)
 		return types, err
 	}
@@ -195,10 +194,10 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&datasourceV0.DatasourceAccessInfo{},
 
 		// Query handler
-		&queryV0.QueryDataRequest{},
-		&queryV0.QueryDataResponse{},
-		&queryV0.QueryTypeDefinition{},
-		&queryV0.QueryTypeDefinitionList{},
+		&datasourceV0.QueryDataRequest{},
+		&datasourceV0.QueryDataResponse{},
+		&datasourceV0.QueryTypeDefinition{},
+		&datasourceV0.QueryTypeDefinitionList{},
 		&metav1.Status{},
 	)
 }
@@ -307,7 +306,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := queryV0.GetOpenAPIDefinitions(ref) // required when running standalone
+		defs := datasourceV0.GetOpenAPIDefinitions(ref) // required when running standalone
 		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
 		return defs
 	}
