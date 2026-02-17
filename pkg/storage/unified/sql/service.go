@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -56,7 +55,6 @@ type service struct {
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
-	db            infraDB.DB
 	log           log.Logger
 	reg           prometheus.Registerer
 	tracing       trace.Tracer
@@ -79,7 +77,6 @@ type service struct {
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
@@ -90,7 +87,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
@@ -113,7 +110,6 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 
 func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
@@ -126,7 +122,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -171,7 +167,6 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 func newService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	tracer trace.Tracer,
@@ -195,7 +190,6 @@ func newService(
 		features:           features,
 		authenticator:      authn,
 		tracing:            tracer,
-		db:                 db,
 		log:                log,
 		reg:                reg,
 		docBuilders:        docBuilders,
@@ -346,7 +340,6 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
-		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
