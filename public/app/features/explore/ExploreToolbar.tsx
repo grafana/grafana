@@ -265,6 +265,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               onChange={(selected) => {
                 if (selected.value !== undefined) {
                   dispatch(updateVariableSelectedValueAction({ exploreId, name: variable.name, selectedValue: selected.value }));
+                  dispatch(runQueries({ exploreId }));
                 }
               }}
               width="auto"

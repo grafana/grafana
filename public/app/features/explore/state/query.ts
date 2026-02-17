@@ -558,6 +558,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       supplementaryQueries,
     } = exploreItemState;
 
+    const exploreVariableScopedVars: ScopedVars = {};
+    for (const v of exploreItemState.variables) {
+      exploreVariableScopedVars[v.name] = { text: v.selectedValue, value: v.selectedValue };
+    }
+    const mergedScopedVars: ScopedVars = { ...scopedVars, ...exploreVariableScopedVars };
+
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -624,7 +630,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         range,
         scanning,
         timeZone,
-        scopedVars
+        mergedScopedVars
       );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
