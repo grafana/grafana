@@ -13,6 +13,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
@@ -29,7 +30,6 @@ interface Props extends PanelProps<Options> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
-  fieldSelectorWidth: number;
 }
 
 export function TableNGWrap({
@@ -49,11 +49,11 @@ export function TableNGWrap({
   onFieldConfigChange,
   replaceVariables,
   onChangeTimeRange,
-  fieldSelectorWidth,
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
 }: Props) {
+  const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,

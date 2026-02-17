@@ -222,8 +222,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       : getDefaultSortBy(props.logsFrames?.[tableFrameIndex], logsSortOrder)
   );
 
+  const fieldSelectorWidthFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth);
   const [fieldSelectorWidth, setFieldSelectorWidth] = useState(
-    store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth) ?? getDefaultFieldSelectorWidth()
+    fieldSelectorWidthFromStorage ? parseInt(fieldSelectorWidthFromStorage, 10) : getDefaultFieldSelectorWidth()
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);

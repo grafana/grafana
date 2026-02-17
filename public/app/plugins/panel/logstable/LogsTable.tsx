@@ -61,7 +61,6 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
-  const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const styles = useStyles2(getStyles, height, width);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
@@ -197,6 +196,7 @@ export const LogsTable = ({
             options={{
               sortOrder: LogsSortOrder.Descending,
               sortBy: [{ displayName: timeFieldName, desc: true }],
+              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
               ...options,
             }}
             transparent={transparent}
@@ -209,7 +209,6 @@ export const LogsTable = ({
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
             logOptionsStorageKey={SETTING_KEY_ROOT}
-            fieldSelectorWidth={fieldSelectorWidth}
           />
         </>
       )}
