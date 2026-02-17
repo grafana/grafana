@@ -13358,15 +13358,15 @@
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
     "auto-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Auto",
+      "label": "Auto"
     },
     "live-option": {
-      "aria-label": "Turn on live streaming",
+      "aria-label": "Live",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Turn off auto refresh",
+      "aria-label": "Off",
       "label": "Off"
     },
     "tooltip": {

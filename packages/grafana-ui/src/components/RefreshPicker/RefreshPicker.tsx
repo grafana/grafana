@@ -32,17 +32,17 @@ export interface Props {
 const offOption = {
   label: 'Off',
   value: '',
-  ariaLabel: 'Turn off auto refresh',
+  ariaLabel: 'Off',
 };
 const liveOption = {
   label: 'Live',
   value: 'LIVE',
-  ariaLabel: 'Turn on live streaming',
+  ariaLabel: 'Live',
 };
 const autoOption = {
   label: 'Auto',
   value: 'auto',
-  ariaLabel: 'Select refresh from the query range',
+  ariaLabel: 'Auto',
 };
 
 /**
@@ -157,19 +157,19 @@ export const translateOption = (option: string) => {
       return {
         label: t('refresh-picker.live-option.label', 'Live'),
         value: option,
-        ariaLabel: t('refresh-picker.live-option.aria-label', 'Turn on live streaming'),
+        ariaLabel: t('refresh-picker.live-option.aria-label', 'Live'),
       };
     case offOption.value:
       return {
         label: t('refresh-picker.off-option.label', 'Off'),
         value: option,
-        ariaLabel: t('refresh-picker.off-option.aria-label', 'Turn off auto refresh'),
+        ariaLabel: t('refresh-picker.off-option.aria-label', 'Off'),
       };
     case autoOption.value:
       return {
-        label: t('refresh-picker.auto-option.label', autoOption.label),
+        label: t('refresh-picker.auto-option.label', 'Auto'),
         value: option,
-        ariaLabel: t('refresh-picker.auto-option.aria-label', autoOption.ariaLabel),
+        ariaLabel: t('refresh-picker.auto-option.aria-label', 'Auto'),
       };
   }
   return {
