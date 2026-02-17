@@ -45,20 +45,18 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   };
 
   const onEndEditName = (newName: string) => {
-    const trimmedName = newName.trim();
-    const error = validateQueryName(trimmedName);
+    setIsEditing(false);
+    setValidationError(null);
 
-    if (error) {
-      setValidationError(error);
+    const trimmedName = newName.trim();
+
+    if (validateQueryName(trimmedName)) {
       return;
     }
 
     if (query.refId !== trimmedName) {
       onQueryUpdate({ ...query, refId: trimmedName }, query.refId);
     }
-
-    setIsEditing(false);
-    setValidationError(null);
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
