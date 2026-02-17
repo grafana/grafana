@@ -276,13 +276,27 @@ export class RowsLayoutManager
   }
 
   public removeRow(row: RowItem, skipUndo?: boolean) {
-    const indexOfRowToRemove = this.state.rows.findIndex((r) => r === row);
+    const rowsBeforeRemoval = [...this.state.rows];
+    const rowsAfterRemoval = rowsBeforeRemoval.filter((r) => r !== row);
+    const layoutParent = this.parent!;
+    if (!isLayoutParent(layoutParent)) {
+      throw new Error('Parent layout is not a LayoutParent');
+    }
+    const thisLayout = this;
 
-    const perform = () => this.setState({ rows: this.state.rows.filter((r) => r !== row) });
+    const perform = () => {
+      if (!rowsAfterRemoval.length) {
+        layoutParent.switchLayout(DefaultGridLayoutManager.fromVizPanels([]));
+      } else {
+        this.setState({ rows: rowsAfterRemoval });
+      }
+    };
     const undo = () => {
-      const rows = [...this.state.rows];
-      rows.splice(indexOfRowToRemove, 0, row);
-      this.setState({ rows });
+      if (!rowsAfterRemoval.length) {
+        layoutParent.switchLayout(thisLayout);
+      } else {
+        this.setState({ rows: rowsBeforeRemoval });
+      }
     };
 
     if (skipUndo) {
