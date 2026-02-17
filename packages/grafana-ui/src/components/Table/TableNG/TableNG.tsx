@@ -975,8 +975,6 @@ const renderRowFactory =
     const rowIdx = row.__index;
     const isExpanded = expandedRows.has(rowIdx);
 
-    const a11yProps: HTMLAttributes<HTMLDivElement> = {};
-
     // Don't render non expanded child rows
     if (row.__depth === 1 && !isExpanded) {
       return null;
@@ -984,9 +982,7 @@ const renderRowFactory =
 
     // Add aria-expanded to parent rows that have nested data
     if (row.data) {
-      a11yProps['aria-level'] = 1;
-      a11yProps['aria-expanded'] = isExpanded;
-      return <Row key={key} {...props} {...a11yProps} />;
+      return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
     }
 
     const handlers: Partial<typeof props> = {};
@@ -1008,5 +1004,5 @@ const renderRowFactory =
       }
     }
 
-    return <Row key={key} {...props} {...handlers} {...a11yProps} />;
+    return <Row key={key} {...props} {...handlers} />;
   };
