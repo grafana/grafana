@@ -60,24 +60,7 @@ To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature t
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
-## Authentication
-
-### Create a GitHub access token
-
-If you chose to authenticate with a GitHub Personal Access Token, create one with the repository permissions described below, and add it to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
-
-To create a GitHub access token:
-
-1. [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
-1. Under **Permissions**, click **Select permissions** and select the following:
-   - **Contents**: Read and write permission
-   - **Metadata**: Read-only permission
-   - **Pull requests**: Read and write permission
-   - **Webhooks**: Read and write permission
-1. Select any additional options and then press **Generate token**.
-1. Copy the access token. Leave the browser window available with the token until you've completed configuration.
-
-### Create a GitHub App
+## Create a GitHub App
 
 GitHub Apps are tools that extend GitHub functionality. They use fine-grained permissions and short-lived tokens, giving you more control over which repositories are being accessed. Find out more in the [GitHub Apps official documentation](https://docs.github.com/en/apps/overview).
 

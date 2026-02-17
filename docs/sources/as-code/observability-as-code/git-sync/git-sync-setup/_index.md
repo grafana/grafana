@@ -60,15 +60,18 @@ Select any of the following options to proceed:
 
 If you want to configure Git Sync for GitHub, you can connect using a **Personal Access Token** or with **GitHub App**.
 
-#### Connect with a Personal Access Token
+#### Connect with a GitHub Personal Access Token
 
-{{< admonition type="note" >}}
+If you want to configure Git Sync for GitHub and authenticate with a Personal Access Token, sign in to GitHub and [create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with these permissions:
 
-Refer to [Create a GitHub access token](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/set-up-before#create-a-github-access-token) for instructions on how to create a Personal Access Token.
+- **Contents**: Read and write permission
+- **Metadata**: Read-only permission
+- **Pull requests**: Read and write permission
+- **Webhooks**: Read and write permission
 
-{{< /admonition >}}
+Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 
-If you want to configure your connection with a Personal Access Token, select the option and follow these steps:
+Return to Grafana and fill in the following fields:
 
 1. Paste your GitHub personal access token into **Enter your access token**.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
@@ -79,25 +82,27 @@ Select **Configure repository** to set up your provisioning folder.
 
 {{< admonition type="note" >}}
 
-Refer to [Create a GitHub App](#create-a-github-app) for instructions on how to create a GitHub App.
+Refer to [Create a GitHub App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/set-up-before#create-a-github-app) for instructions on how to create a GitHub App.
 
 {{< /admonition >}}
 
-If you already have an existing GitHub App connected:
+If you want to configure Git Sync for GitHub and authenticate with GitHub App:
 
-1. Select **Choose an existing app**.
-1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
-1. Paste the **Repository URL** for your GitHub repository into the text box.
+- If you already have an existing GitHub App connected:
 
-If you want to connect using a new GitHub App:
+  1. Select **Choose an existing app**.
+  1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
+  1. Paste the **Repository URL** for your GitHub repository into the text box.
 
-1. Select **Connect to a new app**.
-1. Type in the following fields:
-   - The ID of the GitHub App you want to use
-   - The GitHub Installation ID
-   - The Private Key
-1. Click on **Configure repository** to proceed.
-1. Paste the **Repository URL** for your GitHub repository into the text box.
+- If you want to connect using a new GitHub App:
+
+  1. Select **Connect to a new app**.
+  1. Type in the following fields:
+     - The ID of the GitHub App you want to use
+     - The GitHub Installation ID
+     - The Private Key
+  1. Click on **Configure repository** to proceed.
+  1. Paste the **Repository URL** for your GitHub repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
 
@@ -105,9 +110,9 @@ Select **Configure repository** to set up your provisioning folder.
 
 If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token. To create one, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
 
-- Repository: Read and write
-- User: Read only
-- API: Read and write
+- **Repository**: Read and write permission
+- **User**: Read only permission
+- **API**: Read and write permission
 
 Return to Grafana and fill in the following fields:
 
@@ -120,9 +125,9 @@ Select **Configure repository** to set up your provisioning folder.
 
 If you want to configure Git Sync for Bitbucket, you need a Bitbucket Personal Access Token. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket), go to **Create App passwords** and create a token with these permissions:
 
-- Repositories: Read and write
-- Pull requests: Read and write
-- Webhooks: Read and write
+- **Repositories**: Read and write permission
+- **Pull requests**: Read and write permission
+- **Webhooks**: Read and write permission
 
 Return to Grafana and fill in the following fields:
 
