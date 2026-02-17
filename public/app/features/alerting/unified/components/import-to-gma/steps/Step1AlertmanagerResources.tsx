@@ -4,23 +4,12 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Box,
-  Divider,
-  Field,
-  FileUpload,
-  Input,
-  RadioButtonList,
-  Select,
-  Spinner,
-  Stack,
-  Text,
-} from '@grafana/ui';
+import { Alert, Box, Divider, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { RenamedResourcesList } from '../CollapsibleRenameList';
+import { ExtraConfigWarning } from '../ExtraConfigWarning';
 import { ImportFormValues } from '../ImportToGMA';
+import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions } from '../Wizard/constants';
 import { DryRunValidationResult } from '../types';
 
@@ -30,14 +19,12 @@ interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
   /** Dry-run validation state */
-  dryRunState?: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   /** Dry-run validation result */
   dryRunResult?: DryRunValidationResult;
   /** Callback to trigger dry-run validation */
-  onTriggerDryRun?: () => void;
-  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
-  extraConfigState?: 'none' | 'same' | 'different';
-  /** Identifier of existing extra config, if any */
+  onTriggerDryRun: () => void;
+  /** Identifier of an existing imported config that will be replaced, if any */
   existingIdentifier?: string;
 }
 
@@ -51,7 +38,6 @@ export function Step1Content({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  extraConfigState = 'none',
   existingIdentifier,
 }: Step1ContentProps) {
   const {
@@ -76,17 +62,17 @@ export function Step1Content({
     validatePolicyTreeName(policyTreeName) === true &&
     hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
 
-  // Trigger dry-run when a source is selected (YAML file or datasource) — these are discrete actions
+  // Trigger dry-run when a source is selected (YAML file or datasource)
   useEffect(() => {
-    if (canRunDryRun && onTriggerDryRun) {
+    if (canRunDryRun) {
       onTriggerDryRun();
     }
   }, [canRunDryRun, onTriggerDryRun, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
 
   // Trigger validation + dry-run when the policy tree name input loses focus
   const handlePolicyTreeNameBlur = useCallback(async () => {
-    const isValid = await trigger('policyTreeName');
-    if (isValid && canRunDryRun && onTriggerDryRun) {
+    await trigger('policyTreeName'); //force validation onblur
+    if (canRunDryRun) {
       onTriggerDryRun();
     }
   }, [trigger, canRunDryRun, onTriggerDryRun]);
@@ -108,28 +94,8 @@ export function Step1Content({
         </Alert>
       )}
 
-      {/* Extra config overwrite warning — same or different identifier */}
-      {(extraConfigState === 'same' || extraConfigState === 'different') && existingIdentifier && (
-        <Alert
-          severity="warning"
-          title={t(
-            'alerting.import-to-gma.step1.extra-config-overwrite-title',
-            'Existing configuration will be replaced'
-          )}
-        >
-          {extraConfigState === 'same'
-            ? t(
-                'alerting.import-to-gma.step1.extra-config-overwrite-desc',
-                'An imported configuration named "{{identifier}}" already exists. Importing will replace it with the new configuration.',
-                { identifier: existingIdentifier }
-              )
-            : t(
-                'alerting.import-to-gma.step1.extra-config-replace-desc',
-                'An existing imported configuration named "{{identifier}}" will be replaced by this new configuration.',
-                { identifier: existingIdentifier }
-              )}
-        </Alert>
-      )}
+      {/* Extra config overwrite warning */}
+      {existingIdentifier && <ExtraConfigWarning existingIdentifier={existingIdentifier} />}
 
       {/* Import Source Card */}
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
@@ -231,72 +197,6 @@ export function Step1Content({
         <ValidationStatus state={dryRunState} result={dryRunResult} />
       )}
     </Stack>
-  );
-}
-
-// Validation Status Component
-interface ValidationStatusProps {
-  state: 'loading' | 'success' | 'warning' | 'error';
-  result?: DryRunValidationResult;
-}
-
-function ValidationStatus({ state, result }: ValidationStatusProps) {
-  if (state === 'loading') {
-    return (
-      <Box padding={2} backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
-        <Stack direction="row" gap={1} alignItems="center">
-          <Spinner size="sm" />
-          <Text color="secondary">{t('alerting.import-to-gma.step1.validating', 'Validating configuration...')}</Text>
-        </Stack>
-      </Box>
-    );
-  }
-
-  if (state === 'success') {
-    return (
-      <Alert severity="success" title={t('alerting.import-to-gma.step1.validation-success', 'Validation successful')}>
-        <Trans i18nKey="alerting.import-to-gma.step1.validation-success-desc">
-          No conflicts found. The configuration is ready to import.
-        </Trans>
-      </Alert>
-    );
-  }
-
-  if (state === 'warning' && result) {
-    return <RenameWarning result={result} />;
-  }
-
-  if (state === 'error' && result) {
-    return (
-      <Alert severity="error" title={t('alerting.import-to-gma.step1.validation-error', 'Validation failed')}>
-        <Text>
-          {result.error ||
-            t('alerting.import-to-gma.step1.validation-error-desc', 'Failed to validate the configuration.')}
-        </Text>
-      </Alert>
-    );
-  }
-
-  return null;
-}
-
-/**
- * Shows a collapsible list of resources that will be renamed during import.
- */
-function RenameWarning({ result }: { result: DryRunValidationResult }) {
-  return (
-    <Alert
-      severity="warning"
-      title={t(
-        'alerting.import-to-gma.step1.validation-warning',
-        'Some resources will be renamed to avoid conflicts with existing ones'
-      )}
-    >
-      <RenamedResourcesList
-        renamedReceivers={result.renamedReceivers}
-        renamedTimeIntervals={result.renamedTimeIntervals}
-      />
-    </Alert>
   );
 }
 

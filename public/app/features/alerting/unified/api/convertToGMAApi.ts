@@ -76,6 +76,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
+          // The config identifier is the name of the extra configuration (policy tree name)
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
           // TODO: Remove this header once the backend no longer requires it
           'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,

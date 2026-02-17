@@ -90,7 +90,6 @@ function ImportWizardContent() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
-
   const { runDryRun, isLoading: isDryRunLoading, result: dryRunData, error: dryRunError } = useDryRunNotifications();
 
   // Derive dry-run result from RTK Query state (success data or synthetic error result)
@@ -159,21 +158,23 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  // Watch the policyTreeName to check for existing extra config conflicts
-  const policyTreeName = watch('policyTreeName');
-  const { extraConfigState, existingIdentifier } = useExtraConfigState(policyTreeName);
+  // Check for existing extra config that will be replaced
+  const { existingIdentifier } = useExtraConfigState();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
     const formValues = getValues();
 
     if (!formValues.policyTreeName) {
+      // policy tree name is required to trigger dry-run
       return;
     }
     if (formValues.notificationsSource === 'yaml' && !formValues.notificationsYamlFile) {
+      // YAML file is required to trigger dry-run
       return;
     }
     if (formValues.notificationsSource === 'datasource' && !formValues.notificationsDatasourceName) {
+      // Datasource is required to trigger dry-run
       return;
     }
 
@@ -335,7 +336,6 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
-              extraConfigState={extraConfigState}
               existingIdentifier={existingIdentifier}
             />
           )}
@@ -384,9 +384,7 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
-  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
-  extraConfigState: 'none' | 'same' | 'different';
-  /** Identifier of existing extra config, if any */
+  /** Identifier of an existing imported config that will be replaced, if any */
   existingIdentifier?: string;
 }
 
@@ -397,7 +395,6 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  extraConfigState,
   existingIdentifier,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
@@ -424,7 +421,6 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
-        extraConfigState={extraConfigState}
         existingIdentifier={existingIdentifier}
       />
     </WizardStep>
