@@ -353,6 +353,12 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			expectedError: "too many errors",
 			expectedCalls: 1,
 		},
+		{
+			name:          "file not found error continues",
+			paths:         []string{"test/file1.yaml", "test/file2.yaml"},
+			deleteResults: []error{repository.ErrFileNotFound, nil},
+			expectedCalls: 2,
+		},
 	}
 
 	for _, tt := range tests {
@@ -935,6 +941,83 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	mockProgress.AssertExpectations(t)
 	mockResourcesFactory.AssertExpectations(t)
 	mockRepositoryResources.AssertExpectations(t)
+}
+
+func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := v0alpha1.DeleteJobOptions{
+		Ref: "main",
+	}
+
+	path := "test/nonexistent.yaml"
+
+	// Mock Delete to return ErrFileNotFound
+	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(repository.ErrFileNotFound)
+	mockProgress.On("SetMessage", mock.Anything, "Deleting "+path).Return()
+
+	// When ErrFileNotFound is returned, it should be recorded as a warning, not an error
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		// Verify that the result has the correct path and action
+		if result.Path() != path || result.Action() != repository.FileActionDeleted {
+			return false
+		}
+		// Should have warning set and no error for ErrFileNotFound
+		hasWarning := result.Warning() != nil && errors.Is(result.Warning(), repository.ErrFileNotFound)
+		hasNoError := result.Error() == nil
+		return hasWarning && hasNoError
+	})).Return()
+
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+
+	require.NoError(t, err) // Should not return error, just record it as warning
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
+}
+
+func TestDeleteWorker_deleteFilesOtherErrorNoWarning(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := v0alpha1.DeleteJobOptions{
+		Ref: "main",
+	}
+
+	path := "test/file.yaml"
+	deleteError := errors.New("permission denied")
+
+	// Mock Delete to return a non-ErrFileNotFound error
+	mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(deleteError)
+	mockProgress.On("SetMessage", mock.Anything, "Deleting "+path).Return()
+
+	// Expect Record to be called with a result that has error but NOT warning
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		// Verify that the result has the correct path and action
+		if result.Path() != path || result.Action() != repository.FileActionDeleted {
+			return false
+		}
+		// Verify that error is set but warning is NOT set for non-ErrFileNotFound errors
+		hasError := result.Error() != nil && errors.Is(result.Error(), deleteError)
+		hasNoWarning := result.Warning() == nil
+		return hasError && hasNoWarning
+	})).Return()
+
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+
+	require.NoError(t, err) // Should not return error, just record it
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
 }
 
 func TestDeduplicatePaths(t *testing.T) {
