@@ -9,7 +9,6 @@ permissions: {}
 
 jobs:
   on-pr-opened:
-    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
