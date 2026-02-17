@@ -348,14 +348,18 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 
 	span.AddEvent("cache miss")
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
-	permissions, err := getPermissionsFn(ctx)
-	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
-	if err != nil {
-		return nil, err
+
+	var permissions []accesscontrol.Permission
+	var err error
+	getValue := func() any {
+		permissions, err = getPermissionsFn(ctx)
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+
+		return permissions
 	}
 
-	s.cache.Set(key, permissions, cacheTTL)
-	return permissions, nil
+	s.cache.ExclusiveSet(key, getValue, cacheTTL)
+	return permissions, err
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -408,7 +412,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
