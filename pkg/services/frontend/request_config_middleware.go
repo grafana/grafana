@@ -43,7 +43,7 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
-							Values:   []string{"security"}, // TODO: get correct list
+							Values:   []string{"security", "analytics"},
 						}, {
 							// don't return values from defaults.ini as they conflict with the services's own defaults
 							Key:      "source",
