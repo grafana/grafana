@@ -99,18 +99,16 @@ func (s *consolidationHistoryStore) FinishCurrentConsolidation(ctx context.Conte
 	}()
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		// Lock the latest unfinished row in this transaction so nothing can change between select and update.
-		reqSelect := getLatestUnfinishedConsolidationHistory{
+		reqSelect := getLatestConsolidationHistory{
 			SQLTemplate: sqltemplate.New(s.dialect),
-			IsForUpdate: true,
 		}
-		querySelect, err := sqltemplate.Execute(sqlConsolidationHistoryGetLatestUnfinished, reqSelect)
+		querySelect, err := sqltemplate.Execute(sqlConsolidationHistoryGetLatest, reqSelect)
 		if err != nil {
-			return fmt.Errorf("execute template %q: %w", sqlConsolidationHistoryGetLatestUnfinished.Name(), err)
+			return fmt.Errorf("execute template %q: %w", sqlConsolidationHistoryGetLatest.Name(), err)
 		}
 		rows, err := s.db.QueryContext(ctx, querySelect, reqSelect.GetArgs()...)
 		if err != nil {
-			return fmt.Errorf("querying latest unfinished consolidation: %w", err)
+			return fmt.Errorf("querying latest consolidation: %w", err)
 		}
 		defer func() { _ = rows.Close() }()
 
