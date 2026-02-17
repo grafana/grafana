@@ -12,73 +12,17 @@ labels:
 menuTitle: Query editor
 title: PostgreSQL query editor
 weight: 20
-refs:
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
-  add-template-variables-interval:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__interval
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/explore/
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
-  configure-standard-options-display-name:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/panels-visualizations/configure-standard-options/#display-name
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
-  alert-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
-  template-annotations-and-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/#templates
-  postgres-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # PostgreSQL query editor
 
 Grafana query editors are unique for each data source.
 
-For general information on Grafana query editors, refer to [Query editors](ref:query-editor).
+For general information on Grafana query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors).
 
-For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+For general information on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+The PostgreSQL query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 {{< figure src="/static/img/docs/screenshot-postgres-query-editor.png" class="docs-image--no-shadow" caption="PostgreSQL query builder" >}}
 
@@ -215,7 +159,7 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-To customize default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
+To customize default series name formatting, refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name).
 
 Following are time series query examples.
 
@@ -233,7 +177,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Based on the data frame result in the following example, the time series panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](ref:configure-standard-options-display-name) display value `${__field.labels.hostname}`.
+Based on the data frame result in the following example, the time series panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name) display value `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -278,11 +222,11 @@ Data frame result:
 
 Instead of hard-coding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard and make it easy to change the data displayed in your dashboard.
 
-For query variables, key/value variables, nested variables, multi-property variables, and using variables in queries, refer to [PostgreSQL template variables](ref:postgres-template-variables). For an introduction to template variable types, refer to [Templates](ref:templates).
+For query variables, key/value variables, nested variables, multi-property variables, and using variables in queries, refer to [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/). For an introduction to template variable types, refer to [Templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates).
 
 ## Annotations
 
-[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. Add annotation queries via the **Dashboard settings > Annotations view**.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) allow you to overlay rich event information on top of graphs. Add annotation queries via the **Dashboard settings > Annotations view**.
 
 **Example query using a `time` column with epoch values:**
 
@@ -337,5 +281,5 @@ Use time series queries to create alerts. Table formatted queries aren't yet sup
 
 For more information regarding alerting refer to the following:
 
-- [Alert rules](ref:alert-rules)
-- [Template annotations and labels](ref:template-annotations-and-labels)
+- [Alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/)
+- [Template annotations and labels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/)
