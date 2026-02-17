@@ -144,7 +144,7 @@ jobs:
       contents: read
       id-token: write
     name: Verify OpenAPI specs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-2xlarge
     steps:
     - uses: actions/checkout@v5
       with:

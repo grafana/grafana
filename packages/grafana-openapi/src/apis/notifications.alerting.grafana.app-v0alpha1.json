@@ -28,6 +28,34 @@
         }
       }
     },
+    "/integrationtypeschemas": {
+      "get": {
+        "operationId": "getIntegrationtypeschemas",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIntegrationtypeschemasResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIntegrationtypeschemasResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIntegrationtypeschemasResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": []
+    },
     "/receivers": {
       "get": {
         "tags": ["Receiver"],
@@ -742,6 +770,43 @@
           "name": "pretty",
           "in": "query",
           "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/receivers/{name}/test": {
+      "post": {
+        "tags": ["Receiver"],
+        "description": "connect POST requests to test of Receiver",
+        "operationId": "createReceiverTest",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateReceiverIntegrationTestResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceCallOptions"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCallOptions",
+          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -2915,6 +2980,216 @@
   },
   "components": {
     "schemas": {
+      "CreateReceiverIntegrationTestResponse": {
+        "type": "object",
+        "required": ["status", "duration", "apiVersion", "kind"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "failure"]
+          }
+        }
+      },
+      "GetIntegrationtypeschemasField": {
+        "type": "object",
+        "required": [
+          "element",
+          "inputType",
+          "label",
+          "description",
+          "placeholder",
+          "propertyName",
+          "showWhen",
+          "required",
+          "validationRule",
+          "secure",
+          "dependsOn"
+        ],
+        "properties": {
+          "dependsOn": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "element": {
+            "type": "string"
+          },
+          "inputType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "propertyName": {
+            "type": "string"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "secure": {
+            "type": "boolean"
+          },
+          "selectOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetIntegrationtypeschemasSelectOption"
+            }
+          },
+          "showWhen": {
+            "$ref": "#/components/schemas/GetIntegrationtypeschemasShowWhen"
+          },
+          "subformOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetIntegrationtypeschemasField"
+            }
+          },
+          "validationRule": {
+            "type": "string"
+          }
+        }
+      },
+      "GetIntegrationtypeschemasIntegrationTypeSchema": {
+        "description": "IntegrationTypeSchema - receiver integration schema format",
+        "type": "object",
+        "required": ["type", "currentVersion", "name", "versions"],
+        "properties": {
+          "currentVersion": {
+            "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "info": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetIntegrationtypeschemasIntegrationTypeSchemaVersion"
+            }
+          }
+        }
+      },
+      "GetIntegrationtypeschemasIntegrationTypeSchemaResource": {
+        "description": "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "required": ["name", "namespace"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              }
+            }
+          },
+          "spec": {
+            "$ref": "#/components/schemas/GetIntegrationtypeschemasIntegrationTypeSchema"
+          }
+        }
+      },
+      "GetIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+        "type": "object",
+        "required": ["version", "canCreate", "options"],
+        "properties": {
+          "canCreate": {
+            "type": "boolean"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "info": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetIntegrationtypeschemasField"
+            }
+          },
+          "typeAlias": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "GetIntegrationtypeschemasResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetIntegrationtypeschemasIntegrationTypeSchemaResource"
+            }
+          }
+        }
+      },
+      "GetIntegrationtypeschemasSelectOption": {
+        "type": "object",
+        "required": ["label", "value", "description"],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {}
+        }
+      },
+      "GetIntegrationtypeschemasShowWhen": {
+        "type": "object",
+        "required": ["field", "is"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "is": {
+            "type": "string"
+          }
+        }
+      },
       "Receiver": {
         "type": "object",
         "required": ["kind", "apiVersion", "metadata", "spec"],
@@ -2962,10 +3237,7 @@
           },
           "settings": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "type": {
             "type": "string"
@@ -3848,8 +4120,7 @@
               {
                 "$ref": "#/components/schemas/StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

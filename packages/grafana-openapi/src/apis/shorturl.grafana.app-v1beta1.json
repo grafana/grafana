@@ -760,7 +760,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetGoto"
+                  "$ref": "#/components/schemas/GetGotoResponse"
                 }
               }
             }
@@ -1033,7 +1033,7 @@
   },
   "components": {
     "schemas": {
-      "GetGoto": {
+      "GetGotoResponse": {
         "type": "object",
         "required": ["url"],
         "properties": {
@@ -1128,10 +1128,7 @@
           "details": {
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
@@ -1163,10 +1160,7 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastSeenAt": {
             "description": "The last time the short URL was used, 0 is the initial value",
@@ -1581,8 +1575,7 @@
               {
                 "$ref": "#/components/schemas/StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

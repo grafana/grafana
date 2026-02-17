@@ -3591,7 +3591,7 @@
     "/repositories/{name}/test": {
       "post": {
         "tags": ["Repository"],
-        "description": "Check if the configuration is valid",
+        "description": "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status",
         "operationId": "createRepositoryTest",
         "requestBody": {
           "content": {
@@ -3637,6 +3637,7 @@
             }
           }
         },
+        "deprecated": true,
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
@@ -3947,7 +3948,7 @@
       },
       "ConnectionSpec": {
         "type": "object",
-        "required": ["type"],
+        "required": ["title", "type"],
         "properties": {
           "bitbucket": {
             "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
@@ -3956,6 +3957,10 @@
                 "$ref": "#/components/schemas/BitbucketConnectionConfig"
               }
             ]
+          },
+          "description": {
+            "description": "The connection description",
+            "type": "string"
           },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
@@ -3973,6 +3978,11 @@
               }
             ]
           },
+          "title": {
+            "description": "The connection display name (shown in the UI)",
+            "type": "string",
+            "default": ""
+          },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
             "type": "string",
@@ -3988,8 +3998,37 @@
       "ConnectionStatus": {
         "description": "The status of a Connection. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.",
         "type": "object",
-        "required": ["observedGeneration", "state", "health"],
+        "required": ["observedGeneration", "health"],
         "properties": {
+          "conditions": {
+            "description": "Conditions represent the latest available observations of the connection's state.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Condition"
+                }
+              ]
+            },
+            "x-kubernetes-list-map-keys": ["type"],
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-patch-merge-key": "type",
+            "x-kubernetes-patch-strategy": "merge"
+          },
+          "fieldErrors": {
+            "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "health": {
             "description": "The connection health status",
             "default": {},
@@ -4004,12 +4043,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": ["connected", "disconnected"]
           }
         }
       },
@@ -4043,16 +4076,24 @@
         }
       },
       "ErrorDetails": {
+        "description": "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
         "type": "object",
         "required": ["type"],
         "properties": {
           "detail": {
+            "description": "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
             "type": "string"
           },
           "field": {
+            "description": "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
+            "type": "string"
+          },
+          "origin": {
+            "description": "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
             "type": "string"
           },
           "type": {
+            "description": "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
             "type": "string",
             "default": ""
           }
@@ -4808,6 +4849,22 @@
           }
         }
       },
+      "QuotaStatus": {
+        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "type": "object",
+        "properties": {
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxResourcesPerRepository": {
+            "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "RefItem": {
         "type": "object",
         "required": ["name"],
@@ -5054,9 +5111,38 @@
         "type": "object",
         "required": ["observedGeneration", "health", "sync", "webhook"],
         "properties": {
+          "conditions": {
+            "description": "Conditions represent the latest available observations of the repository's state.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Condition"
+                }
+              ]
+            },
+            "x-kubernetes-list-map-keys": ["type"],
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-patch-merge-key": "type",
+            "x-kubernetes-patch-strategy": "merge"
+          },
           "deleteError": {
             "description": "Error information during repository deletion (if any)",
             "type": "string"
+          },
+          "fieldErrors": {
+            "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
@@ -5072,6 +5158,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "quota": {
+            "description": "Quota contains the configured quota limits for this repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotaStatus"
+              }
+            ]
           },
           "stats": {
             "description": "The object count when sync last ran",
@@ -5092,6 +5187,15 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/SyncStatus"
+              }
+            ]
+          },
+          "token": {
+            "description": "Token will get updated with current token information",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TokenStatus"
               }
             ]
           },
@@ -5178,7 +5282,7 @@
       "RepositoryViewList": {
         "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
         "type": "object",
-        "required": ["allowImageRendering", "items"],
+        "required": ["allowImageRendering", "maxRepositories", "items"],
         "properties": {
           "allowImageRendering": {
             "description": "Whether image rendering is allowed for dashboard previews",
@@ -5221,6 +5325,12 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5614,7 +5724,7 @@
             "default": false
           },
           "intervalSeconds": {
-            "description": "When non-zero, the sync will run periodically",
+            "description": "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
             "type": "integer",
             "format": "int64"
           },
@@ -5675,7 +5785,7 @@
         }
       },
       "TestResults": {
-        "description": "HistoryList is a list of versions of a resource",
+        "description": "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
         "type": "object",
         "required": ["code", "success"],
         "properties": {
@@ -5718,6 +5828,19 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "TokenStatus": {
+        "type": "object",
+        "properties": {
+          "expiration": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastUpdated": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       },
       "WebhookResponse": {
         "type": "object",
@@ -5912,6 +6035,46 @@
               ]
             },
             "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "Condition": {
+        "description": "Condition contains details for one aspect of the current state of this API Resource.",
+        "type": "object",
+        "required": ["type", "status", "lastTransitionTime", "reason", "message"],
+        "properties": {
+          "lastTransitionTime": {
+            "description": "lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Time"
+              }
+            ]
+          },
+          "message": {
+            "description": "message is a human readable message indicating details about the transition. This may be an empty string.",
+            "type": "string",
+            "default": ""
+          },
+          "observedGeneration": {
+            "description": "observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.",
+            "type": "string",
+            "default": ""
+          },
+          "status": {
+            "description": "status of the condition, one of True, False, Unknown.",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -6216,8 +6379,7 @@
               {
                 "$ref": "#/components/schemas/StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
