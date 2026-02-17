@@ -82,7 +82,7 @@ PostgreSQL expands macros into native SQL. When the [TimescaleDB](https://www.ti
 | `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a `GROUP BY` clause. Example: `floor(extract(epoch from dateColumn)/300)*300`. With TimescaleDB: `time_bucket('300s', dateColumn)`.                              |
 | `$__timeGroup(dateColumn,'5m', 0)`                    | Same as the `$__timeGroup(dateColumn,'5m')` macro, but includes a fill parameter to ensure missing points in the series are added by Grafana, using 0 as the default value. **This applies only to time series queries.** |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as the `$__timeGroup(dateColumn,'5m', 0)` but `NULL` is used as the value for missing points. _This applies only to time series queries._                                                                           |
-| `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists, it uses `NULL`. _This applies only to time series queries._        |
+| `$__timeGroup(dateColumn,'5m', previous)`             | Same as `$__timeGroup(dateColumn,'5m', 0)` but uses the previous value in the series as the fill value. If no previous value exists, it uses `NULL`. _This applies only to time series queries._                                                                                    |
 | `$__timeGroupAlias(dateColumn,'5m')`                  | Same as `$__timeGroup` but with an added column alias `AS "time"`. With TimescaleDB, uses `time_bucket()`.                                                                                                                 |
 | `$__unixEpochFilter(dateColumn)`                      | Replaces the value with a time range filter for columns storing UNIX epoch (seconds). Example: `dateColumn >= 1494410783 AND dateColumn <= 1494497183`.                                                                     |
 | `$__unixEpochFrom()`                                  | Replaces the value with the start of the currently active time selection as a UNIX timestamp (seconds). Example: `1494410783`.                                                                                             |
@@ -110,6 +110,8 @@ FROM dashboard
 INNER JOIN "user" on "user".id = dashboard.created_by
 WHERE $__timeFilter(dashboard.created)
 ```
+
+You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) in queries. For example, to filter by a variable named `hostname`: `WHERE hostname IN($hostname)`.
 
 ## Time series queries
 
@@ -169,16 +171,29 @@ To customize default series name formatting, refer to [Standard options definiti
 
 Following are time series query examples.
 
-**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Example with no grouping (raw points):**
+
+To return raw time and value points without grouping, use `$__time` to alias your date/time column as `time`:
 
 ```sql
 SELECT
-  $__timeGroupAlias("createdAt",'5m',0),
+  $__time("time_date_time"),
+  "value_double" as value
+FROM test_data
+WHERE $__timeFilter("time_date_time")
+ORDER BY time
+```
+
+**Example using the fill parameter in the $__timeGroupAlias macro to convert null values to zero:**
+
+```sql
+SELECT
+  $__timeGroupAlias("CreatedAt",'5m',0),
   sum(value) as value,
   hostname
 FROM test_data
 WHERE
-  $__timeFilter("createdAt")
+  $__timeFilter("CreatedAt")
 GROUP BY time, hostname
 ORDER BY time
 ```
@@ -223,6 +238,21 @@ Data frame result:
 | 2020-01-02 03:05:00 | 6               | 7               |
 +---------------------+-----------------+-----------------+
 ```
+
+**Example with UNIX epoch time column:**
+
+When your time column stores UNIX epoch (seconds), use `$__timeEpoch` to alias it as `time` and `$__unixEpochFilter` in the WHERE clause:
+
+```sql
+SELECT
+  $__timeEpoch(epoch_seconds_column),
+  value_column as value
+FROM my_table
+WHERE $__unixEpochFilter(epoch_seconds_column)
+ORDER BY time
+```
+
+For grouped time series with epoch columns, use `$__unixEpochGroupAlias` and `$__unixEpochFilter`. See the [Macros](#macros) table for details.
 
 ## Next steps
 
