@@ -2,9 +2,12 @@ package resource
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -35,17 +38,72 @@ type TenantWatcher struct {
 
 // TenantWatcherConfig holds configuration for the TenantWatcher.
 type TenantWatcherConfig struct {
-	// RESTConfig for connecting to the app-platform API server.
-	RESTConfig *rest.Config
+	// TenantAPIServerURL is the URL of the app-platform API server serving Tenant CRDs.
+	TenantAPIServerURL string
+	// Token is the system token used to sign access tokens.
+	Token string
+	// TokenExchangeURL is the URL used to exchange the system token for an access token.
+	TokenExchangeURL string
+	// AllowInsecure skips TLS verification (for local dev).
+	AllowInsecure bool
 	// ResyncInterval is how often the informer re-lists all tenants.
 	ResyncInterval time.Duration
 	Log            log.Logger
 }
 
+// NewTenantRESTConfig creates a rest.Config that authenticates to the
+// app-platform API server using a signed access token sent via the
+// Authorization header.
+func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
+	if cfg.TenantAPIServerURL == "" {
+		return nil, fmt.Errorf("TenantAPIServerURL is required")
+	}
+
+	var exchangeOpts []authnlib.ExchangeClientOpts
+	if cfg.AllowInsecure {
+		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
+			&http.Client{Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			}},
+		))
+	}
+
+	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	}, exchangeOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("creating token exchange client: %w", err)
+	}
+
+	// Exchange the system token for an access token scoped to cloud.grafana.com.
+	tokenResp, err := tc.Exchange(context.Background(), authnlib.TokenExchangeRequest{
+		Namespace: "*",
+		Audiences: []string{"cloud.grafana.com"},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("exchanging token: %w", err)
+	}
+
+	restCfg := &rest.Config{
+		Host:        cfg.TenantAPIServerURL,
+		BearerToken: tokenResp.Token,
+	}
+
+	if cfg.AllowInsecure {
+		restCfg.TLSClientConfig = rest.TLSClientConfig{
+			Insecure: true,
+		}
+	}
+
+	return restCfg, nil
+}
+
 // NewTenantWatcher creates and starts a TenantWatcher.
 func NewTenantWatcher(ctx context.Context, cfg TenantWatcherConfig) (*TenantWatcher, error) {
-	if cfg.RESTConfig == nil {
-		return nil, fmt.Errorf("RESTConfig is required")
+	restCfg, err := NewTenantRESTConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("building tenant REST config: %w", err)
 	}
 
 	logger := cfg.Log
@@ -58,7 +116,7 @@ func NewTenantWatcher(ctx context.Context, cfg TenantWatcherConfig) (*TenantWatc
 		resync = 5 * time.Minute
 	}
 
-	client, err := dynamic.NewForConfig(cfg.RESTConfig)
+	client, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
 		return nil, fmt.Errorf("creating dynamic client: %w", err)
 	}
