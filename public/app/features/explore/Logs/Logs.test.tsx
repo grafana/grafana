@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -514,6 +514,44 @@ describe('Logs', () => {
 
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
+    });
+  });
+  describe('with table panel visualisation', () => {
+    let originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
+
+    beforeAll(() => {
+      originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
+      config.featureToggles.logsTablePanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.logsTablePanel = originalVisualisationTypeValue;
+    });
+
+    it('should show show table', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'table',
+          },
+        },
+      });
+      waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = screen.queryByTestId('logRows');
+      expect(logs).not.toBeInTheDocument();
+    });
+
+    it('should show show logs', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+      waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
     });
   });
 });
