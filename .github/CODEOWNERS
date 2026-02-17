@@ -106,7 +106,7 @@
 /apps/dashvalidator/ @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
-/pkg/apis/query @grafana/grafana-datasources-core-services
+/pkg/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
