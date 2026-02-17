@@ -1,10 +1,14 @@
 package conversion
 
 import (
+	"context"
+
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Schema Migration: v2beta1 → v2alpha1
@@ -39,14 +43,41 @@ import (
 // the data model to move datasource references from DataQueryKind to spec level.
 
 func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
+	// if available, use parent context from scope so tracing works
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctx, span := tracing.Start(ctx, "dashboard.conversion.v2beta1_to_v2alpha1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+	)
+	defer span.End()
+
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	return convertDashboardSpec_V2beta1_to_V2alpha1(&in.Spec, &out.Spec, scope)
+	if err := convertDashboardSpec_V2beta1_to_V2alpha1(ctx, &in.Spec, &out.Spec, scope); err != nil {
+		return err
+	}
+
+	span.SetAttributes(
+		attribute.Int("conversion.elements_count", len(out.Spec.Elements)),
+		attribute.Int("conversion.variables_count", len(out.Spec.Variables)),
+		attribute.Int("conversion.annotations_count", len(out.Spec.Annotations)),
+		attribute.Int("conversion.links_count", len(out.Spec.Links)),
+	)
+
+	return nil
 }
 
-func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
+	_, span := tracing.Start(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
+	defer span.End()
+
 	// Convert annotations
 	out.Annotations = make([]dashv2alpha1.DashboardAnnotationQueryKind, len(in.Annotations))
 	for i := range in.Annotations {

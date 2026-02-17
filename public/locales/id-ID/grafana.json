@@ -548,48 +548,6 @@
     "alert-warning": {
       "to-rule-list": "Ke daftar aturan"
     },
-    "alertVersionHistory": {
-      "alerting": "Alerting",
-      "alerting-change-description": "Pembaruan ini dilakukan oleh sistem alerting karena perubahan lain. Misalnya, saat mengganti nama titik kontak yang digunakan untuk perutean yang disederhanakan, ini akan memperbarui aturan yang terpengaruh",
-      "annotations": "Anotasi",
-      "compare": "Bandingkan",
-      "compare-with-latest": "Bandingkan dengan versi terbaru",
-      "compareVersions": "Bandingkan versi",
-      "comparing-versions": "Membandingkan versi",
-      "condition": "Kondisi peringatan",
-      "contactPointRouting": "Perutean titik kontak",
-      "description": "Setiap kali Anda mengedit aturan peringatan, versi baru akan dibuat. Pilih dua versi di bawah ini dan bandingkan perbedaannya.",
-      "errorloading": "Gagal memuat versi aturan peringatan",
-      "execErrorState": "Status peringatan saat kesalahan eksekusi",
-      "intervalSeconds": "Interval evaluasi",
-      "labels": "Label",
-      "latest": "Terkini",
-      "name": "Nama",
-      "namespace_uid": "UID Folder",
-      "noDataState": "Status peringatan saat tidak ada data",
-      "noVersionsFound": "Versi untuk aturan ini tidak ditemukan",
-      "paused": "Status dijeda",
-      "pendingPeriod": "Periode tertunda",
-      "provisioning": "Penyediaan",
-      "provisioning-change-description": "Pembaruan versi dilakukan melalui penyediaan",
-      "queryAndAlertCondition": "Kueri dan kondisi peringatan",
-      "restore": "Pulihkan",
-      "restore-manually": "Aturan peringatan Anda tidak dapat dipulihkan. Ini mungkin disebabkan oleh perubahan pada entitas lain seperti titik kontak, sumber data, dll. Pulihkan versi aturan secara manual",
-      "restore-modal": {
-        "body": "Apa Anda yakin ingin memulihkan definisi aturan peringatan ke versi ini? Semua perubahan yang belum disimpan akan hilang.",
-        "confirm": "Ya, pulihkan konfigurasi",
-        "error": "Tidak dapat memulihkan versi aturan peringatan ",
-        "summary": "Ringkasan perubahan yang akan diterapkan:",
-        "title": "Pulihkan versi"
-      },
-      "restore-version": "Pulihkan ke versi {{version}}",
-      "rule_group": "Grup aturan",
-      "unknown": "Tidak diketahui",
-      "unknown-change-description": "Pembaruan ini dilakukan sebelum penerapan riwayat versi aturan peringatan. Pengguna yang membuat perubahan tidak dilacak, tetapi perubahan mendatang akan mencakup pengguna",
-      "user-id": "ID Pengguna {{uid}} ",
-      "warning-restore-manually": "Anda secara manual memulihkan versi lama dari aturan peringatan ini. Tinjau perubahan dengan saksama sebelum menyimpan definisi aturan.",
-      "warning-restore-manually-title": "Memulihkan aturan secara manual"
-    },
     "alertform": {
       "labels": {
         "alerting": "Tambahkan label ke aturan Anda untuk mencari, membisukan, atau merutekan ke kebijakan pemberitahuan.",
@@ -644,6 +602,48 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Cari aturan peringatan berdasarkan nama",
       "no-alert-rules-found": "Tidak ada aturan peringatan yang ditemukan",
       "placeholder-sort-default-az": "Urutkan (Default A-Z)"
+    },
+    "alertVersionHistory": {
+      "alerting": "Alerting",
+      "alerting-change-description": "Pembaruan ini dilakukan oleh sistem alerting karena perubahan lain. Misalnya, saat mengganti nama titik kontak yang digunakan untuk perutean yang disederhanakan, ini akan memperbarui aturan yang terpengaruh",
+      "annotations": "Anotasi",
+      "compare": "Bandingkan",
+      "compare-with-latest": "Bandingkan dengan versi terbaru",
+      "compareVersions": "Bandingkan versi",
+      "comparing-versions": "Membandingkan versi",
+      "condition": "Kondisi peringatan",
+      "contactPointRouting": "Perutean titik kontak",
+      "description": "Setiap kali Anda mengedit aturan peringatan, versi baru akan dibuat. Pilih dua versi di bawah ini dan bandingkan perbedaannya.",
+      "errorloading": "Gagal memuat versi aturan peringatan",
+      "execErrorState": "Status peringatan saat kesalahan eksekusi",
+      "intervalSeconds": "Interval evaluasi",
+      "labels": "Label",
+      "latest": "Terkini",
+      "name": "Nama",
+      "namespace_uid": "UID Folder",
+      "noDataState": "Status peringatan saat tidak ada data",
+      "noVersionsFound": "Versi untuk aturan ini tidak ditemukan",
+      "paused": "Status dijeda",
+      "pendingPeriod": "Periode tertunda",
+      "provisioning": "Penyediaan",
+      "provisioning-change-description": "Pembaruan versi dilakukan melalui penyediaan",
+      "queryAndAlertCondition": "Kueri dan kondisi peringatan",
+      "restore": "Pulihkan",
+      "restore-manually": "Aturan peringatan Anda tidak dapat dipulihkan. Ini mungkin disebabkan oleh perubahan pada entitas lain seperti titik kontak, sumber data, dll. Pulihkan versi aturan secara manual",
+      "restore-modal": {
+        "body": "Apa Anda yakin ingin memulihkan definisi aturan peringatan ke versi ini? Semua perubahan yang belum disimpan akan hilang.",
+        "confirm": "Ya, pulihkan konfigurasi",
+        "error": "Tidak dapat memulihkan versi aturan peringatan ",
+        "summary": "Ringkasan perubahan yang akan diterapkan:",
+        "title": "Pulihkan versi"
+      },
+      "restore-version": "Pulihkan ke versi {{version}}",
+      "rule_group": "Grup aturan",
+      "unknown": "Tidak diketahui",
+      "unknown-change-description": "Pembaruan ini dilakukan sebelum penerapan riwayat versi aturan peringatan. Pengguna yang membuat perubahan tidak dilacak, tetapi perubahan mendatang akan mencakup pengguna",
+      "user-id": "ID Pengguna {{uid}} ",
+      "warning-restore-manually": "Anda secara manual memulihkan versi lama dari aturan peringatan ini. Tinjau perubahan dengan saksama sebelum menyimpan definisi aturan.",
+      "warning-restore-manually-title": "Memulihkan aturan secara manual"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Kebijakan ini cocok dengan semua label"
@@ -2293,6 +2293,9 @@
       "recipient": "Penerima",
       "recipient-notification-fires": "Pilih siapa yang akan menerima pemberitahuan saat aturan peringatan menyala."
     },
+    "open-drawer-icon-button": {
+      "details": ""
+    },
     "option-customfield": {
       "label-custom-template": "Templat kustom",
       "placeholder": "Masukkan teks biasa atau referensikan templat, misalnya {{template \"default.message\" .}}",
@@ -3644,9 +3647,6 @@
       "trace-id": "ID Pelacakan: {{traceId}}"
     }
   },
-  "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Kelola pengaturan autentikasi Anda dan konfigurasikan single sign-on. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
-  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Pengaturan autentikasi"
@@ -3837,6 +3837,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Endpoint .well known/openid-configuration untuk IdP Anda",
       "title-open-id-connect-discovery-url": "URL OpenID Connect Discovery"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Kelola pengaturan autentikasi Anda dan konfigurasikan single sign-on. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
   },
   "bar-chart": {
     "warn": {
@@ -4906,1057 +4909,6 @@
       "run-query": "Jalankan kueri"
     }
   },
-  "dashboard-import": {
-    "file-dropzone": {
-      "primary-text": "Unggah file JSON dasbor",
-      "secondary-text": "Seret dan lepas di sini atau klik untuk menelusuri"
-    },
-    "form-actions": {
-      "cancel": "Batalkan",
-      "load": "Muat"
-    },
-    "gcom-field": {
-      "label": "",
-      "load-button": "Muat",
-      "placeholder": "URL atau ID dasbor Grafana.com",
-      "validation-required": "URL atau ID dasbor Grafana diperlukan"
-    },
-    "json-field": {
-      "label": "Impor melalui model JSON dasbor",
-      "validation-required": "Perlu model JSON dasbor"
-    }
-  },
-  "dashboard-library": {
-    "browse-grafana-com": "Telusuri Grafana.com",
-    "browse-plugins": "Telusuri plugin",
-    "card": {
-      "datasource-provided-badge": "Sumber data disediakan",
-      "details-tooltip": "Detail",
-      "no-preview": "Tidak ada pratinjau yang tersedia",
-      "use-dashboard-button": "Gunakan dasbor",
-      "use-template-button": "Gunakan templat"
-    },
-    "community-empty-title": "Tidak ada dasbor komunitas yang ditemukan",
-    "community-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} komunitas yang ditemukan",
-    "community-error": "Gagal memuat dasbor komunitas. Silakan coba lagi.",
-    "community-error-description": "Gagal memuat dasbor komunitas.",
-    "community-error-title": "Terjadi kesalahan saat memuat dasbor komunitas",
-    "community-mapping-form": {
-      "back": "Kembali ke dasbor",
-      "constants-title": "Variabel Dasbor",
-      "datasources-title": "Konfigurasi Sumber Data",
-      "description": "Dasbor ini memerlukan konfigurasi sumber data. Pilih sumber data untuk setiap input di bawah ini.",
-      "preview": "Pratinjau dasbor",
-      "auto-mapped_other": "{{count}} sumber data dikonfigurasi secara otomatis:"
-    },
-    "community-mapping-select-datasource": "Pilih sumber data",
-    "community-search-placeholder": "Cari dasbor komunitas...",
-    "community-search-placeholder-with-datasource": "Cari dasbor komunitas {{datasourceType}}...",
-    "dashboard-card": {
-      "details": {
-        "datasource": "Sumber data",
-        "dependencies": "Dependensi",
-        "id": "ID",
-        "last-update": "Pembaruan Terakhir",
-        "published-by": "Dipublikasikan Oleh",
-        "view-on-grafana-com": "Lihat di Grafana.com"
-      }
-    },
-    "modal": {
-      "description": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
-      "tab-community": "Komunitas",
-      "tab-datasource": "Sumber data disediakan",
-      "title": "Dasbor yang disarankan",
-      "title-mapping-with-name": "Konfigurasikan sumber data untuk {{dashboardName}}",
-      "title-with-datasource": "Dasbor yang disarankan untuk sumber data {{datasourceType}} Anda"
-    },
-    "no-community-dashboards-datasource": "Coba istilah pencarian lain atau telusuri dasbor untuk berbagai jenis sumber data di Grafana.com.",
-    "no-community-dashboards-search": "Coba istilah pencarian lain atau telusuri lebih banyak dasbor di Grafana.com.",
-    "no-provisioned-dashboards": "Dasbor yang disediakan oleh plugin sumber data. Anda dapat menemukan plugin lainnya di Grafana.com.",
-    "provisioned-empty-title": "Tidak ada dasbor yang disediakan yang ditemukan",
-    "provisioned-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} yang disediakan dan ditemukan",
-    "retry": "Coba lagi",
-    "suggested-dashboards-subtitle": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
-    "suggested-dashboards-title": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data yang Anda pilih",
-    "suggested-dashboards-title-with-datasource": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data {{datasourceType}} Anda",
-    "template-dashboard-modal": {
-      "description": "Mulai menggunakan templat Grafana dengan data sampel. Hubungkan data Anda untuk memberdayakannya dengan metrik yang sebenarnya.",
-      "title": "Mulai dasbor dari templat"
-    },
-    "view-all": "Lihat semua"
-  },
-  "dashboard-links": {
-    "empty-state": {
-      "button-title": "Tambahkan tautan dasbor",
-      "info-box-content": "Tautan dasbor memungkinkan Anda menempatkan tautan ke dasbor dan situs web lain tepat di bawah header dasbor. <2>Pelajari selengkapnya</2>",
-      "title": "Belum ada tautan dasbor yang ditambahkan"
-    }
-  },
-  "dashboard-scene-help-wizard": {
-    "support-bundle": "Anda juga dapat mengambil bundel dukungan yang berisi informasi mengenai instans Grafana Anda dan sumber data yang dikonfigurasi di bagian <1>bundel dukungan</1>."
-  },
-  "dashboard-scene": {
-    "ad-hoc-variable-form": {
-      "adhoc-options": "Opsi ad-hoc",
-      "alert-not-supported": "Sumber data ini tidak mendukung filter ad hoc",
-      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
-      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
-      "label-data-source": "Sumber data",
-      "label-use-static-key-dimensions": "Gunakan dimensi kunci statis",
-      "name-allow-custom-values": "Izinkan nilai kustom"
-    },
-    "add-to-dashboard": {
-      "message": {
-        "could-navigate-selected-dashboard-please-again": "Tidak dapat menavigasi ke dasbor yang dipilih. Silakan coba lagi.",
-        "could-panel-dashboard-please-again": "Tidak dapat menambahkan panel ke dasbor. Silakan coba lagi."
-      }
-    },
-    "add-to-dashboard-form": {
-      "cancel": "Batalkan",
-      "description-choose-where-to-add-the-panel": "Pilih tempat untuk menambahkan panel.",
-      "description-select-which-dashboard-panel-created": "Pilih dasbor tempat panel akan dibuat.",
-      "label": {
-        "existing-dashboard": "Dasbor yang ada",
-        "new-dashboard": "Dasbor baru"
-      },
-      "label-dashboard": "Dasbor",
-      "label-target-dashboard": "Dasbor target",
-      "message": {
-        "this-field-is-required": "Bidang ini wajib diisi."
-      },
-      "open-dashboard": "Buka dasbor",
-      "open-in-new-tab": "Buka di tab baru",
-      "title-error-adding-the-panel": "Kesalahan saat menambahkan panel"
-    },
-    "add-to-dashboard-form-exposed": {
-      "title": {
-        "new-panel": "Panel baru"
-      }
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
-    },
-    "annotation-edit-actions": {
-      "description": {
-        "change-annotation-color": "",
-        "change-annotation-controls-display": "",
-        "change-annotation-enabled-state": "",
-        "change-annotation-name": "",
-        "change-annotation-panel-filter": ""
-      }
-    },
-    "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": ""
-        }
-      },
-      "render-list": {
-        "aria-label-annotation": ""
-      }
-    },
-    "annotation-query-library-dropdown": {
-      "use-saved-query": ""
-    },
-    "annotation-settings-edit": {
-      "back-to-list": "Kembali ke daftar",
-      "control-display-options": {
-        "above-dashboard": {
-          "label": "Di atas dasbor"
-        },
-        "controls-menu": {
-          "description": "Dapat diakses saat menu kontrol terbuka",
-          "label": "Menu kontrol"
-        },
-        "hidden": {
-          "description": "Menyembunyikan tombol untuk mengaktifkan atau menonaktifkan anotasi ini",
-          "label": "Tersembunyi"
-        }
-      },
-      "delete": "Hapus",
-      "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
-      "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
-      "label-annotation-controls-display": "Tampilkan kontrol anotasi di",
-      "label-color": "Warna",
-      "label-data-source": "Sumber data",
-      "label-enabled": "Aktif",
-      "label-name": "Nama",
-      "label-show-in": "Tampilkan di",
-      "placeholder-choose-panels": "Pilih panel",
-      "query": "Kueri",
-      "title-annotation-support-source": "Tidak ada dukungan anotasi untuk sumber data ini"
-    },
-    "annotation-settings-list": {
-      "built-in": "{{annoName}} (Bawaan)",
-      "data-source": "Sumber data",
-      "delete-aria-label": "Hapus kueri dengan judul \"{{title}}\"",
-      "disabled": "{{annoName}} (Dinonaktifkan)",
-      "new-query": "Kueri baru",
-      "query-name": "Nama kueri",
-      "tooltip-move-down": "Pindahkan ke bawah",
-      "tooltip-move-up": "Pindahkan ke atas"
-    },
-    "branch-validation-error": {
-      "cannot-contain-invalid-characters": "Tidak boleh berisi karakter yang tidak valid: '~', '^', ':', '?', '*', '[', '\\\\', atau ']'.",
-      "cannot-start-with": "Tidak boleh dimulai dengan '/' atau diakhiri dengan '/', '.', atau spasi.",
-      "invalid-branch-name": "Nama cabang tidak valid.",
-      "it-cannot-contain-or": "Tidak boleh berisi '//' atau '..'.",
-      "least-valid-character": "Harus memiliki setidaknya satu karakter yang valid."
-    },
-    "build-new-dashboard-save-model": {
-      "data": {
-        "title": {
-          "new-dashboard": "Dasbor baru"
-        }
-      }
-    },
-    "build-new-dashboard-save-model-v2": {
-      "data": {
-        "title": {
-          "new-dashboard": "Dasbor baru"
-        }
-      }
-    },
-    "constant-variable-form": {
-      "constant-options": "Opsi konstan",
-      "label-value": "Nilai",
-      "placeholder-your-metric-prefix": "Awalan metrik Anda"
-    },
-    "conversion-warning-banner": {
-      "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
-      "detail-grids": "Semua kisi otomatis akan ditampilkan sebagai kisi kustom",
-      "detail-tabs": "Semua tab dan baris akan muncul sebagai baris klasik",
-      "details": "Selama periode ini, harap perhatikan hal berikut:",
-      "message": "Fitur Dasbor Dinamis dinonaktifkan sementara",
-      "read-less": "Baca lebih sedikit",
-      "read-more": "Baca selengkapnya",
-      "recommendation": "Setelah fitur diaktifkan lagi, dasbor Anda akan berfungsi normal dalam format Dasbor Dinamis. Karena itu, kami sangat menyarankan untuk tidak membuat perubahan pada dasbor ini sampai fitur diaktifkan kembali, karena pengeditan yang dilakukan dalam mode klasik dapat menyebabkan hasil yang tidak terduga. Atau, Anda dapat menyimpan salinan dasbor menggunakan opsi \"Simpan sebagai salinan\", di menu simpan dasbor.",
-      "save-warning": "Dasbor apa pun yang dibuat sebagai atau dikonversi ke Dasbor Dinamis akan terbuka sebagai dasbor klasik. Menyimpan dasbor dapat menyebabkan hilangnya fitur Dasbor Dinamis yang sudah diatur."
-    },
-    "custom-variable-form": {
-      "custom-options": "Opsi kustom",
-      "json-values-tooltip": "Berikan JSON yang mewakili susunan objek, di mana setiap objek dapat memiliki sejumlah properti.<br />Periksa <4>dokumen kami</4> untuk informasi selengkapnya.",
-      "name-csv-values": "CSV",
-      "name-json-values": "JSON",
-      "name-values-separated-comma": "Nilai dipisahkan dengan koma",
-      "selection-options": "Opsi pemilihan"
-    },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Berikan umpan balik tentang pengalaman pengeditan dasbor baru"
-    },
-    "dashboard-link-form": {
-      "back-to-list": "Kembali ke daftar",
-      "label-icon": "Ikon",
-      "label-include-current-template-variable-values": "Sertakan nilai variabel templat saat ini",
-      "label-include-current-time-range": "Sertakan rentang waktu saat ini",
-      "label-open-link-in-new-tab": "Buka tautan di tab baru",
-      "label-options": "Opsi",
-      "label-show-as-dropdown": "Tampilkan sebagai dropdown",
-      "label-show-in-controls-menu": "Tampilkan di menu kontrol",
-      "label-title": "Judul",
-      "label-tooltip": "Tooltip",
-      "label-type": "Jenis",
-      "label-url": "URL",
-      "label-with-tags": "Dengan tag",
-      "link-type-options": {
-        "label": {
-          "dashboards": "Dasbor",
-          "link": "Tautan"
-        }
-      },
-      "placeholder-open-dashboard": "Buka dasbor"
-    },
-    "dashboard-link-list": {
-      "delete-aria-label": "Hapus tautan dengan judul \"{{title}}\"",
-      "info": "Info",
-      "new-link": "Tautan baru",
-      "tooltip-copy-link": "Salin tautan",
-      "tooltip-move-link-down": "Pindahkan tautan ke bawah",
-      "tooltip-move-link-up": "Pindahkan tautan ke atas",
-      "type": "Jenis"
-    },
-    "dashboard-preview-banner": {
-      "not-yet-saved": "Nilai tidak disimpan dalam database Grafana",
-      "title-dashboard-loaded-external-repository": "Dasbor ini dimuat dari repositori eksternal",
-      "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
-    },
-    "dashboard-scene": {
-      "modal": {
-        "cancel": "Batal",
-        "discard": "Buang",
-        "save": "Simpan",
-        "text": {
-          "save-changes-question": "Ingin menyimpan perubahan?"
-        },
-        "title": {
-          "unsaved-changes": "Perubahan belum tersimpan"
-        }
-      },
-      "text": {
-        "edit-panel": "Edit panel",
-        "view-panel": "Lihat panel"
-      },
-      "title": {
-        "dashboard": "Dasbor",
-        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?",
-        "unsaved-changes-question": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda yakin ingin membuangnya?"
-      }
-    },
-    "dashboard-scene-page-state-manager": {
-      "message": {
-        "dashboard-not-found": "Dasbor tidak ditemukan"
-      }
-    },
-    "dashboard-scene-page-state-manager-v2": {
-      "message": {
-        "dashboard-not-found": "Dasbor tidak ditemukan"
-      }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": ""
-    },
-    "data-source-variable-form": {
-      "data-source-options": "Opsi sumber data",
-      "description-instance-name-filter": "Filter regex untuk instans sumber data yang akan dipilih dalam daftar nilai variabel. Biarkan kosong untuk semua.",
-      "example-instance-name-filter": "Contoh: <codeExample />",
-      "name-instance-name-filter": "Filter nama instance",
-      "name-type": "Jenis",
-      "selection-options": "Opsi pemilihan"
-    },
-    "default-grid-layout-manager": {
-      "row": {
-        "title": {
-          "row-title": "Judul baris"
-        }
-      }
-    },
-    "delete-provisioned-dashboard-form": {
-      "api-error": "Gagal menghapus dasbor",
-      "cancel-action": "Batalkan",
-      "delete-action": "Hapus dasbor",
-      "deleting": "Menghapus...",
-      "drawer-title": "Hapus Dasbor yang Disediakan",
-      "success-message": "Dasbor berhasil dihapus"
-    },
-    "description-label": {
-      "description": "Deskripsi"
-    },
-    "edit-link-view": {
-      "edit-link-page-nav": {
-        "text": {
-          "edit-link": "Edit tautan"
-        }
-      }
-    },
-    "email-list": {
-      "aria-label-emailmenu": "Alihkan tombol menu email"
-    },
-    "embedded-dashboard-test-page": {
-      "subTitle": {
-        "showing-dashboard-panel-tests-pie-chart": "Menampilkan dasbor: Tes Panel - Diagram lingkaran"
-      },
-      "text": {
-        "embedding-dashboard": "Menyematkan dasbor"
-      }
-    },
-    "empty-transformations-message": {
-      "add-transformation": "Tambahkan transformasi",
-      "show-more": "Tampilkan lebih banyak",
-      "sql-name": "Ubah dengan SQL",
-      "sql-transformation-description": "Manipulasi data Anda menggunakan sintaksis mirip MySQL"
-    },
-    "general-settings-edit-view": {
-      "editable_options": {
-        "label": {
-          "editable": "Dapat diedit",
-          "readonly": "Baca saja"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Default",
-          "shared-crosshair": "Crosshair bersama",
-          "shared-tooltip": "Tooltip bersama"
-        }
-      }
-    },
-    "get-edit-options": {
-      "title": {
-        "column-options": "Opsi kolom",
-        "row-height-options": "Opsi tinggi baris"
-      }
-    },
-    "get-editable-variables": {
-      "description": {
-        "add-keyvalue-filters-on-the-fly": "Tambahkan filter kunci/nilai dengan cepat",
-        "dynamically-switch-source-multiple-panels": "Beralih sumber data secara dinamis untuk beberapa panel",
-        "group": "Tambahkan kunci ke grup dengan cepat",
-        "hidden-constant-variable": "Variabel konstan tersembunyi, berguna untuk awalan metrik di dasbor yang ingin Anda bagikan",
-        "users-enter-arbitrary-strings-switch": "Variabel yang dapat diaktifkan dan dinonaktifkan",
-        "users-enter-arbitrary-strings-textbox": "Pengguna dapat memasukkan string acak apa pun dalam kotak teks",
-        "values-are-static-and-defined-manually": "Nilai bersifat statis dan ditentukan secara manual",
-        "values-fetched-source-query": "Nilai diambil dari kueri sumber data",
-        "values-timespans": "Nilai berupa rentang waktu, misalnya 1 mnt, 1 jam, 1 hari"
-      },
-      "name": {
-        "ad-hoc-filters": "Filter ad hoc",
-        "constant": "Konstan",
-        "custom": "Kustom",
-        "data-source": "Sumber data",
-        "group-by": "Kelompokkan berdasarkan",
-        "interval": "Interval",
-        "query": "Kueri",
-        "switch": "Beralih",
-        "textbox": "Kotak teks"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Jangan kirim data anotasi ke panel berikut",
-        "annotation-panels-support-annotations": "Kirim data anotasi ke semua panel yang mendukung anotasi",
-        "annotations-explicitly-listed-panels": "Kirim anotasi ke panel yang tercantum secara eksplisit"
-      },
-      "label": {
-        "all-panels": "Semua panel",
-        "all-panels-except": "Semua panel kecuali",
-        "selected-panels": "Panel yang dipilih"
-      }
-    },
-    "get-panel-frame-options": {
-      "descriptor": {
-        "title": {
-          "panel-options": "Opsi panel"
-        }
-      },
-      "title": {
-        "description": "Deskripsi",
-        "panel-links": "Tautan panel",
-        "title": "Judul",
-        "transparent-background": "Latar belakang transparan"
-      }
-    },
-    "group-by-variable-form": {
-      "alert-not-supported": "Sumber data ini tidak mendukung grup berdasarkan variabel",
-      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
-      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
-      "group-by-options": "Kelompokkan berdasarkan opsi",
-      "label-data-source": "Sumber data",
-      "label-use-static-group-by-dimensions": "Gunakan dimensi grup statis",
-      "name-allow-custom-values": "Izinkan nilai kustom"
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "Salin ke papan klip",
-      "description-randomize-data": "Ubah data asli untuk menyembunyikan informasi sensitif. Perhatikan bahwa panjangnya akan tetap sama, dan nilai duplikat akan setara.",
-      "description-support-snapshot": "Panel: {{panelTitle}}",
-      "download-dashboard": "Dasbor ({{snapshotSize}})",
-      "download-snapshot": "Unduh ({{snapshotSize}})",
-      "label-randomize-data": "Acak data",
-      "label-support-snapshot": "Mendukung snapshot",
-      "label-template": "Templat",
-      "randomize-field-names-label-field-names": "Nama bidang",
-      "randomize-labels-label-labels": "Label",
-      "randomize-string-values-label-string-values": "Nilai string",
-      "tabs": {
-        "label": {
-          "data": "Data",
-          "snapshot": "Snapshot"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "Salin komentar GitHub lengkap ke papan klip",
-      "title-get-help-with-this-panel": "Dapatkan bantuan dengan panel ini",
-      "troubleshooting-docs": "Dokumen pemecahan masalah",
-      "troubleshooting-request-help": "Untuk meminta bantuan pemecahan masalah, kirim snapshot panel ini ke Dukungan Teknis Grafana Labs. Snapshot berisi data respons kueri dan pengaturan panel."
-    },
-    "import-dashboard-form-v2": {
-      "cancel": "Batalkan",
-      "float-grid-items-warning-body": "",
-      "float-grid-items-warning-title": "",
-      "label-folder": "Folder"
-    },
-    "inspect-data-tab": {
-      "no-data-found": "Tidak ada data yang ditemukan"
-    },
-    "inspect-json-tab": {
-      "apply": "Terapkan",
-      "error-element-changed": "Tidak dapat mengubah referensi elemen. Hanya properti tata letak (x, y, lebar, tinggi) yang dapat dimodifikasi.",
-      "error-invalid-json": "JSON tidak valid",
-      "error-invalid-layout": "JSON tata letak tidak lolos validasi. Harap periksa JSON dan coba lagi.",
-      "error-invalid-v2-panel": "JSON Panel tidak lolos validasi. Harap periksa JSON dan coba lagi.",
-      "validation-error": "Kesalahan validasi"
-    },
-    "interval-variable-form": {
-      "description-auto-option": "Menghitung interval secara dinamis dengan membagi rentang waktu dengan jumlah yang ditentukan",
-      "description-calculated-value-below-threshold": "Nilai yang dihitung tidak akan berada di bawah ambang batas ini",
-      "description-step-count": "Berapa kali rentang waktu saat ini harus dibagi untuk menghitung nilai",
-      "interval-options": "Opsi interval",
-      "name-auto-option": "Opsi otomatis",
-      "name-min-interval": "Interval minimum",
-      "name-step-count": "Jumlah langkah",
-      "name-values": "Nilai"
-    },
-    "json-model-edit-view": {
-      "cancel-button": {
-        "cancel": "Batalkan"
-      },
-      "render-save-button-and-error": {
-        "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
-        "title-plugin-dashboard": "Dasbor plugin",
-        "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
-        "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
-      },
-      "save-and-overwrite": "Simpan dan timpa"
-    },
-    "library-viz-panel-info": {
-      "last-edited": "{{timeAgo}} oleh <person />",
-      "usage-count_other": "Digunakan pada {{count}} dasbor"
-    },
-    "managed-badge": {
-      "kubectl": "Dikelola oleh: Kubectl",
-      "plugin": "Dikelola oleh: Plugin {{id}}",
-      "provisioned": "Disediakan",
-      "terraform": "Dikelola oleh: Terraform"
-    },
-    "move-provisioned-dashboard-form": {
-      "api-error": "Gagal memindahkan dasbor",
-      "cancel-action": "Batal",
-      "current-file-not-found": "File dasbor saat ini tidak dapat ditemukan",
-      "drawer-title": "Pindahkan Dasbor yang Disediakan",
-      "file-load-error": "Kesalahan saat memuat dasbor",
-      "loading-dashboard-data": "Memuat data dasbor",
-      "move-action": "Pindahkan dasbor",
-      "move-read-only-message": "Dasbor ini tidak dapat dipindahkan langsung dari Grafana karena repositori bersifat baca-saja. Untuk memindahkan dasbor ini, pindahkan file di repositori Git Anda.",
-      "moving": "Memindahkan...",
-      "success-message": "Dasbor berhasil dipindahkan",
-      "target-path-label": "Jalur target",
-      "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
-      "title-name-already-exists": "Nama sudah ada"
-    },
-    "on-open-snapshot-original-dashboard": {
-      "confirmText": {
-        "proceed": "Lanjutkan"
-      },
-      "title": {
-        "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
-      }
-    },
-    "on-remove-panel": {
-      "text": {
-        "remove-panel": "Anda yakin ingin menghapus panel ini?"
-      },
-      "title": {
-        "remove-panel": "Hapus panel"
-      }
-    },
-    "option-row": {
-      "aria-label-remove-option": "",
-      "title-drag-and-drop-to-reorder": "",
-      "tooltip-remove-option": ""
-    },
-    "panel-data-alerting-tab": {
-      "tab-label": "Peringatan"
-    },
-    "panel-data-alerting-tab-rendered": {
-      "alert": {
-        "title-errors-loading-rules": "Kesalahan saat memuat aturan"
-      },
-      "error-failed-to-load": "Gagal memuat status aturan Grafana: {{errorToDisplay}}",
-      "text-loading-rules": "Memuat aturan...",
-      "title-dashboard-not-saved": "Dasbor tidak disimpan"
-    },
-    "panel-data-queries-tab": {
-      "tab-label": "Kueri"
-    },
-    "panel-data-queries-tab-rendered": {
-      "add-query": "Tambahkan kueri",
-      "expression": "Ekspresi"
-    },
-    "panel-data-transformations-tab": {
-      "tab-label": "Transformasi"
-    },
-    "panel-data-transformations-tab-rendered": {
-      "add-another-transformation": "Tambah transformasi lain",
-      "body-delete-all-transformations": "Dengan menghapus semua transformasi, Anda akan kembali ke layar pilihan utama.",
-      "confirmText-delete-all": "Hapus semua",
-      "delete-all-transformations": "Hapus semua transformasi",
-      "title-delete-all-transformations": "Hapus semua transformasi?"
-    },
-    "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
-      "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
-      "table-view-label-table-view": "Tampilan tabel"
-    },
-    "panel-editor": {
-      "text": {
-        "edit-panel": "Edit panel"
-      }
-    },
-    "panel-editor-renderer": {
-      "aria-label-open-options-pane": "Buka panel opsi",
-      "tooltip-open-options-pane": "Buka panel opsi"
-    },
-    "panel-inspect-renderer": {
-      "body-panel-plugin-not-loaded": "Pastikan panel yang ingin Anda periksa terlihat dan telah ditampilkan sebelum membuka inspeksi.",
-      "title-panel-plugin-not-loaded": "Plugin panel belum dimuat"
-    },
-    "panel-menu-behavior": {
-      "async-func": {
-        "text": {
-          "extensions": "Ekstensi",
-          "metrics-drilldown": "Drilldown metrik"
-        }
-      }
-    },
-    "panel-viz-type-picker": {
-      "button": {
-        "close": "Kembali"
-      },
-      "placeholder-search-for": "Cari...",
-      "radio-options": {
-        "label": {
-          "all-visualizations": "Semua visualisasi",
-          "suggestions": "Saran"
-        }
-      },
-      "title-close": "Tutup"
-    },
-    "provisioned-delete-modal": {
-      "cannot-be-deleted": "Dasbor ini dikelola oleh penyediaan Grafana dan tidak dapat dihapus. Hapus dasbor dari file konfigurasi untuk menghapusnya.",
-      "file-path": "Jalur file: {{dashboardId}}",
-      "ok": "OK",
-      "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
-      "title-cannot-delete-provisioned-dashboard": "Tidak dapat menghapus dasbor yang disediakan"
-    },
-    "query-editor": {
-      "query": "Kueri"
-    },
-    "query-variable-editor-form": {
-      "description-examples": "Grup tangkapan bernama dapat digunakan untuk memisahkan teks tampilan dan nilai (<1>lihat contoh</1>).",
-      "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
-      "description-regex-apply-to": "Pilih apakah akan menerapkan pola regex ke nilai variabel atau teks tampilan",
-      "label-data-source": "Sumber data",
-      "label-regex-apply-to": "Terapkan ekspresi reguler ke",
-      "label-static-options-sort": "Urutan opsi statis",
-      "label-target-data-source": "Sumber data target",
-      "label-use-static-options": "Gunakan opsi statis",
-      "name-regex": "Regex",
-      "query-options": "Opsi kueri",
-      "regex-apply-to-options": {
-        "label": {
-          "text": "Teks tampilan",
-          "value": "Nilai variabel"
-        }
-      },
-      "selection-options": "Opsi pemilihan",
-      "static-options-legend": "Opsi statis"
-    },
-    "resource-export": {
-      "label": {
-        "advanced-options": "Opsi lanjutan",
-        "classic": "Klasik",
-        "json": "JSON",
-        "v1-resource": "Sumber Daya V1",
-        "v2-resource": "Sumber Daya V2",
-        "yaml": "YAML"
-      },
-      "share-externally": "Bagikan dasbor dengan contoh lain",
-      "share-externally-tooltip": "Menghapus semua metadata khusus instance dan referensi sumber data dari sumber daya sebelum diekspor."
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
-      "confirmText-restore-version": "Ya, pulihkan ke versi {{version}}",
-      "title-restore-version": "Pulihkan versi"
-    },
-    "save-button": {
-      "save": "Simpan",
-      "save-and-overwrite": "Simpan dan timpa",
-      "saving": "Menyimpan..."
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-description-field": "Simpan bidang deskripsi dasbor",
-      "aria-label-save-dashboard-title-field": "Simpan bidang judul dasbor",
-      "cancel-button": {
-        "cancel": "Batalkan"
-      },
-      "label-copy-tags": "Salin tag",
-      "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor"
-      },
-      "required": "Wajib diisi"
-    },
-    "save-dashboard-drawer": {
-      "tabs": {
-        "label-changes": "Perubahan",
-        "label-details": "Detail",
-        "title": "Simpan dasbor",
-        "title-copy": "Simpan salinan dasbor",
-        "title-provisioned": "Dasbor yang disediakan"
-      }
-    },
-    "save-dashboard-form": {
-      "aria-label-message": "pesan",
-      "body-dashboard-drastically-changed": "Dasbor akan disimpan menggunakan skema dasbor Grafana eksperimental baru. Tindakan ini tidak dapat dikembalikan dan dapat mengakibatkan hilangnya data yang tidak dapat dipulihkan. Sebaiknya Anda menyimpan dasbor ini sebagai salinan. Jika Anda melihat pesan ini di lingkungan produksi, hubungi Dukungan untuk menonaktifkan fitur ini.",
-      "cancel-button": {
-        "cancel": "Batalkan"
-      },
-      "label-message": "Pesan",
-      "placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional).",
-      "render-footer": {
-        "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
-        "no-changes-to-save": "Tidak ada perubahan untuk disimpan",
-        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
-        "title-plugin-dashboard": "Dasbor plugin",
-        "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
-        "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
-      },
-      "schema-v2-library-panels-export": "Karena keterbatasan dalam skema dasbor baru (V2), panel pustaka akan dikonversi menjadi panel reguler dengan konten yang disematkan selama ekspor eksternal.",
-      "schema-v2-library-panels-export-title": "Panel pustaka akan dikonversi menjadi panel reguler",
-      "title-dashboard-drastically-changed": "Perubahan pada dasbor tidak dapat dipulihkan"
-    },
-    "save-dashboard-form-common-options": {
-      "save-refresh-description-current-refresh-default": "Akan menjadikan muat ulang saat ini sebagai default baru",
-      "save-refresh-label-update-default-refresh-value": "Perbarui nilai muat ulang default",
-      "save-timerange-description-current-range-default": "Akan menjadikan rentang waktu saat ini sebagai default baru",
-      "save-timerange-label-update-default-time-range": "Perbarui rentang waktu default",
-      "save-variables-description-current-values-default": "Akan menjadikan nilai saat ini sebagai default baru",
-      "save-variables-label-update-default-variable-values": "Perbarui nilai variabel default",
-      "show-variables-warning-alert-body": "Beberapa variabel gagal dimuat. Jika Anda tetap mencentang \"Perbarui nilai variabel default\", nilai (gagal) saat ini akan menjadi default dasbor. Anda tetap dapat menyimpan atau menghapus centang opsi untuk menghindari menyimpan nilai (gagal) tersebut.",
-      "show-variables-warning-alert-title": "Kueri variabel gagal"
-    },
-    "save-library-viz-panel-modal": {
-      "cancel": "Batalkan",
-      "dashboard-name": "Nama dasbor",
-      "discard": "Buang",
-      "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
-      "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
-      "update-all": "Perbarui semua",
-      "affected-dashboards_other": "Pembaruan ini akan memengaruhi <strong>{{count}} dasbor.</strong> Dasbor berikut yang menggunakan panel akan terpengaruh:"
-    },
-    "save-provisioned-dashboard-form": {
-      "api-error": "Kesalahan saat menyimpan dasbor",
-      "cancel": "Batalkan",
-      "cannot-be-saved": "Dasbor ini tidak dapat disimpan dari UI Grafana karena telah disediakan dari sumber lain. Salin JSON atau simpan ke file di bawah ini, lalu Anda dapat memperbarui dasbor Anda di sumber penyediaan.",
-      "copy-json-to-clipboard": "Salin JSON ke papan klip",
-      "file-path": "<strong>Jalur file:</strong> {{filePath}}",
-      "label-description": "Deskripsi",
-      "label-target-folder": "Folder target",
-      "label-title": "Judul",
-      "save": "Simpan",
-      "save-json-to-file": "Simpan JSON ke file",
-      "saving": "Menyimpan...",
-      "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
-      "title-required": "Judul dasbor wajib diisi",
-      "title-same-as-folder": "Nama dasbor tidak boleh sama dengan nama folder",
-      "title-validation-failed": "Validasi judul dasbor gagal."
-    },
-    "scenes-new-rule-from-panel-button": {
-      "body-no-alerting-capable-query-found": "Tidak dapat membuat peringatan dari panel ini karena tidak ada kueri ke sumber data berkemampuan peringatan yang ditemukan.",
-      "new-alert-rule": "Aturan peringatan baru",
-      "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
-    },
-    "selection-options-form": {
-      "description-enables-multiple-values-selected": "Memungkinkan beberapa nilai untuk dipilih secara bersamaan",
-      "description-enables-option-include-variables": "Mengaktifkan opsi untuk menyertakan semua nilai",
-      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
-      "name-allow-custom-values": "Izinkan nilai kustom",
-      "name-custom-all-value": "Nilai kustom untuk semua",
-      "name-include-all-option": "Sertakan opsi Semua",
-      "name-multi-value": "Multi-nilai"
-    },
-    "share-button": {
-      "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
-    },
-    "sharing": {
-      "save-before-share": {
-        "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
-        "title": "Perubahan belum tersimpan"
-      }
-    },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "JSON Dasbor digunakan untuk membantu memecahkan masalah visualisasi"
-      },
-      "label": {
-        "git-hub-comment": "Komentar Github",
-        "panel-support-snapshot": "Snapshot dukungan panel"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "Gagal menyalin ke papan klip"
-      }
-    },
-    "switch-variable-form": {
-      "disabled-value": "Nilai dinonaktifkan",
-      "disabled-value-description": "Nilai saat sakelar dinonaktifkan",
-      "disabled-value-placeholder": "misalnya, Mati, Dinonaktifkan, Tidak Aktif",
-      "enabled-value": "Nilai diaktifkan",
-      "enabled-value-description": "Nilai saat sakelar diaktifkan",
-      "enabled-value-placeholder": "misalnya, Hidup, Diaktifkan, Aktif",
-      "same-values-error": "Nilai yang diaktifkan dan dinonaktifkan tidak boleh sama",
-      "switch-options": "Opsi sakelar",
-      "value-pair-type": "Jenis pasangan nilai",
-      "value-pair-type-description": "Pilih jenis nilai untuk status sakelar"
-    },
-    "text-box-variable": {
-      "name-default-value": "Nilai default"
-    },
-    "text-box-variable-form": {
-      "placeholder-default-value-if-any": "(opsional)",
-      "text-options": "Opsi teks"
-    },
-    "textbox-variable-form": {
-      "label-value": "Nilai"
-    },
-    "title-field-label": {
-      "title": "Judul"
-    },
-    "transform-usages-to-network": {
-      "result": {
-        "label": {
-          "dashboard": "dasbor"
-        }
-      }
-    },
-    "transformations-drawer": {
-      "search-box-suffix": {
-        "tooltip-clear-search": "Hapus pencarian"
-      }
-    },
-    "unlink-modal": {
-      "body-unlink-panel": "Jika tautan panel ini Anda putus, Anda akan dapat mengeditnya tanpa memengaruhi dasbor lain. Namun, setelah membuat perubahan, Anda tidak akan dapat kembali ke panel pakai ulang semula.",
-      "confirmText-yes-unlink": "Ya, putus tautan",
-      "title-really-unlink-panel": "Anda yakin ingin memutus tautan panel ini?"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "Batalkan",
-      "changes": "Ingin menyimpan perubahan?",
-      "discard": "Buang",
-      "save-dashboard": "Simpan dasbor",
-      "title-unsaved-changes": "Perubahan belum tersimpan"
-    },
-    "use-dashboard-edit-page-nav": {
-      "page-nav": {
-        "text": {
-          "settings": "Pengaturan"
-        }
-      }
-    },
-    "use-modal-editor": {
-      "description": {
-        "change-variable-query": "Ubah kueri variabel"
-      }
-    },
-    "use-save-dashboard": {
-      "message-dashboard-saved": "Dasbor disimpan"
-    },
-    "variable-check-indicator": {
-      "aria-label-variable-referenced-dashboard": "Variabel ini tidak direferensikan oleh variabel atau dasbor apa pun.",
-      "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
-      "content-variable-not-referenced-other-variables-dashboard": "Variabel ini tidak dirujuk oleh variabel atau dasbor lain.",
-      "content-variable-referenced-other-variables-dashboard": "Variabel ini dirujuk oleh variabel atau dasbor lain."
-    },
-    "variable-controls": {
-      "add-variable": "Tambah variabel"
-    },
-    "variable-display-select": {
-      "label": "Tampilan",
-      "options": {
-        "above-dashboard": {
-          "label": "Di atas dasbor"
-        },
-        "controls-menu": {
-          "description": "Terlihat saat menu kontrol terbuka",
-          "label": "Menu kontrol"
-        },
-        "hidden": {
-          "description": "Hanya terlihat dalam mode edit",
-          "label": "Tersembunyi"
-        },
-        "hidden-label": {
-          "description": "Di atas dasbor, tetapi tanpa menunjukkan nama variabel",
-          "label": "Di atas dasbor, label disembunyikan"
-        }
-      }
-    },
-    "variable-editor-form": {
-      "aria-label-variable-editor-form": "Formulir editor variabel",
-      "back-to-list": "Kembali ke daftar",
-      "confirmText": {
-        "delete-variable": "Hapus variabel"
-      },
-      "delete": "Hapus",
-      "description-optional-display-name": "Nama tampilan opsional",
-      "description-template-variable-characters": "Nama variabel templat. (Maks. 50 karakter)",
-      "general": "Umum",
-      "name-description": "Deskripsi",
-      "name-label": "Label",
-      "name-name": "Nama",
-      "placeholder-descriptive-text": "Teks deskriptif",
-      "placeholder-label-name": "Nama label",
-      "placeholder-variable-name": "Nama variabel",
-      "text-running-query": "Menjalankan kueri...",
-      "title": {
-        "delete-variable": "Hapus variabel"
-      }
-    },
-    "variable-editor-list": {
-      "definition": "Definisi",
-      "new-variable": "Variabel baru",
-      "variable": "Variabel"
-    },
-    "variable-editor-list-row": {
-      "body-delete-variable": "Yakin ingin menghapus: {{variable}}?",
-      "confirmText-delete-variable": "Hapus variabel",
-      "title-delete-variable": "Hapus variabel",
-      "tooltip-duplicate-variable": "Duplikatkan variabel",
-      "tooltip-remove-variable": "Hapus variabel"
-    },
-    "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Label",
-          "nothing": "Tidak ada apa-apa",
-          "variable": "Variabel"
-        }
-      },
-      "label": "Sembunyikan"
-    },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": ""
-        }
-      }
-    },
-    "variable-multi-prop-static-options-form": {
-      "aria-label-static-options": ""
-    },
-    "variable-type-select": {
-      "name-variable-type": "Jenis variabel"
-    },
-    "variable-usages-button": {
-      "title-show-usages": "Menampilkan penggunaan untuk: {{variableId}}",
-      "tooltip-show-usages": "Tampilkan penggunaan"
-    },
-    "variable-values-preview": {
-      "show-more": "Tampilkan lebih banyak",
-      "preview-of-values_other": "Pratinjau nilai ({{count}})"
-    },
-    "version-history": {
-      "comparison": {
-        "button-restore": "Pulihkan ke versi {{version}}"
-      }
-    },
-    "version-history-comparison": {
-      "label-view-json-diff": "Lihat diff JSON",
-      "new-version-updated": "<strong>Versi {{version}}</strong> diperbarui oleh {{editor}} {{timeAgo}}",
-      "old-version-updated": "<strong>Versi {{version}}</strong> diperbarui oleh {{editor}} {{timeAgo}}"
-    },
-    "version-history-header": {
-      "compare-versions": "Membandingkan {{baseVersion}} <3></3> {{newVersion}}",
-      "latest": "(Terkini)",
-      "tooltip-reset-version": "Atur ulang versi"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Alihkan tombol pemilihan versi {{version}}",
-      "date": "Tanggal",
-      "name-latest": "Terkini",
-      "notes": "Catatan",
-      "restore": "Pulihkan",
-      "updated-by": "Diperbarui oleh",
-      "version": "Versi"
-    },
-    "versions-history-buttons": {
-      "compare-versions": "Bandingkan versi",
-      "content-select-two-versions-to-start-comparing": "Pilih dua versi untuk mulai membandingkan",
-      "show-more-versions": "Tampilkan lebih banyak versi"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Ubah visualisasi",
-      "text": "Ubah"
-    },
-    "viz-and-data-pane": {
-      "aria-label-open-query-pane": "Buka panel kueri",
-      "tooltip-open-query-pane": "Buka panel kueri"
-    },
-    "viz-panel-links-renderer": {
-      "aria-label-panel-links": "Tautan panel"
-    }
-  },
-  "dashboard-settings": {
-    "annotations": {
-      "title": "Anotasi"
-    },
-    "dashboard-delete-button": "Hapus dasbor",
-    "delete-modal": {
-      "confirmation-text": "Hapus",
-      "delete-button": "Hapus",
-      "title": "Hapus"
-    },
-    "delete-modal-restore-dashboards-prefix": "Tindakan ini akan menghapus dasbor.",
-    "delete-modal-text": "Apa Anda ingin menghapus dasbor ini?",
-    "general": {
-      "auto-refresh-description": "Tentukan interval muat ulang otomatis yang seharusnya tersedia dalam daftar muat ulang otomatis. Gunakan format '5d' untuk detik, '1m' untuk menit, '1j' untuk jam, dan '1h' untuk hari (misalnya: '5d, 10d, 30d, 1m, 5m, 15m, 30m,1j, 2j, 1h').",
-      "auto-refresh-label": "Muat ulang otomatis",
-      "description-label": "Deskripsi",
-      "editable-description": "Atur ke hanya baca untuk menonaktifkan semua pengeditan. Muat ulang dasbor agar perubahan diterapkan",
-      "editable-label": "Dapat diedit",
-      "folder-label": "Folder",
-      "panel-options-graph-tooltip-description": "Mengontrol tooltip dan perilaku fungsi sorotan di berbagai panel. Muat ulang dasbor agar perubahan diterapkan",
-      "panel-options-graph-tooltip-label": "Tooltip grafik",
-      "panel-options-label": "Opsi panel",
-      "panels-preload-description": "Saat diaktifkan, semua panel akan mulai dimuat segera setelah dasbor dimuat.",
-      "panels-preload-label": "Pramuat panel",
-      "tags-label": "Tag",
-      "title": "Umum",
-      "title-label": "Judul"
-    },
-    "json-editor": {
-      "save-button": "Simpan perubahan",
-      "subtitle": "Model JSON di bawah ini adalah struktur data yang menentukan dasbor. Ini termasuk pengaturan dasbor, pengaturan panel, tata letak, kueri, dan sebagainya.",
-      "title": "Model JSON"
-    },
-    "links": {
-      "title": "Tautan"
-    },
-    "permissions": {
-      "title": "Izin"
-    },
-    "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "Dasbor ini dikelola oleh penyediaan Grafana dan tidak dapat dihapus. Hapus dasbor dari file konfigurasi untuk menghapusnya.",
-      "text-2": "Lihat dokumentasi grafana untuk informasi selengkapnya tentang penyediaan.",
-      "text-3": "Jalur file: {{provisionedId}}",
-      "text-link": "Buka halaman dokumen",
-      "title": "Tidak dapat menghapus dasbor yang disediakan"
-    },
-    "settings": {
-      "title": "Pengaturan"
-    },
-    "time-picker": {
-      "hide-time-picker": "Sembunyikan pemilih waktu",
-      "now-delay-description": "Kecualikan data terbaru yang mungkin tidak lengkap.",
-      "now-delay-label": "Sekarang tunda",
-      "refresh-live-dashboards-description": "Terus perbarui panel ketika rentang waktu mencakup waktu saat ini",
-      "refresh-live-dashboards-label": "Muat ulang dasbor langsung",
-      "time-options-label": "Opsi waktu",
-      "time-zone-label": "Zona waktu",
-      "week-start-label": "Minggu mulai"
-    },
-    "variables": {
-      "title": "Variabel"
-    },
-    "versions": {
-      "provisioned-warning": "",
-      "title": "Versi"
-    }
-  },
   "dashboard": {
     "actions": {
       "open-settings": "Pengaturan"
@@ -6685,8 +5637,8 @@
       "aria-label-expand": "Perluas kategori {{title}}"
     },
     "options-pane-options": {
-      "Recent options-title-recent-options": "Opsi terbaru",
       "placeholder-search-options": "Opsi pencarian",
+      "Recent options-title-recent-options": "Opsi terbaru",
       "title-matched_other": "Cocok {{count}}/{{totalCount}} opsi"
     },
     "outline": {
@@ -7224,6 +6176,1068 @@
         "title-option": "Judul",
         "transparent-background": "Latar belakang transparan"
       }
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Unggah file JSON dasbor",
+      "secondary-text": "Seret dan lepas di sini atau klik untuk menelusuri"
+    },
+    "form-actions": {
+      "cancel": "Batalkan",
+      "load": "Muat"
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "Muat",
+      "placeholder": "URL atau ID dasbor Grafana.com",
+      "validation-required": "URL atau ID dasbor Grafana diperlukan"
+    },
+    "json-field": {
+      "label": "Impor melalui model JSON dasbor",
+      "validation-required": "Perlu model JSON dasbor"
+    }
+  },
+  "dashboard-library": {
+    "browse-grafana-com": "Telusuri Grafana.com",
+    "browse-plugins": "Telusuri plugin",
+    "card": {
+      "datasource-provided-badge": "Sumber data disediakan",
+      "details-tooltip": "Detail",
+      "no-preview": "Tidak ada pratinjau yang tersedia",
+      "use-dashboard-button": "Gunakan dasbor",
+      "use-template-button": "Gunakan templat"
+    },
+    "community-empty-title": "Tidak ada dasbor komunitas yang ditemukan",
+    "community-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} komunitas yang ditemukan",
+    "community-error": "Gagal memuat dasbor komunitas. Silakan coba lagi.",
+    "community-error-description": "Gagal memuat dasbor komunitas.",
+    "community-error-title": "Terjadi kesalahan saat memuat dasbor komunitas",
+    "community-mapping-form": {
+      "back": "Kembali ke dasbor",
+      "constants-title": "Variabel Dasbor",
+      "datasources-title": "Konfigurasi Sumber Data",
+      "description": "Dasbor ini memerlukan konfigurasi sumber data. Pilih sumber data untuk setiap input di bawah ini.",
+      "preview": "Pratinjau dasbor",
+      "auto-mapped_other": "{{count}} sumber data dikonfigurasi secara otomatis:"
+    },
+    "community-mapping-select-datasource": "Pilih sumber data",
+    "community-search-placeholder": "Cari dasbor komunitas...",
+    "community-search-placeholder-with-datasource": "Cari dasbor komunitas {{datasourceType}}...",
+    "compatibility-auto-map-failed": "",
+    "compatibility-badge": {
+      "check": "",
+      "check-tooltip": "",
+      "checking": "",
+      "error-text": "",
+      "error-tooltip": "",
+      "not-supported-tooltip": "",
+      "score-text": "",
+      "tooltip-green": "",
+      "tooltip-orange": "",
+      "tooltip-red": ""
+    },
+    "dashboard-card": {
+      "details": {
+        "datasource": "Sumber data",
+        "dependencies": "Dependensi",
+        "id": "ID",
+        "last-update": "Pembaruan Terakhir",
+        "published-by": "Dipublikasikan Oleh",
+        "view-on-grafana-com": "Lihat di Grafana.com"
+      }
+    },
+    "modal": {
+      "description": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
+      "tab-community": "Komunitas",
+      "tab-datasource": "Sumber data disediakan",
+      "title": "Dasbor yang disarankan",
+      "title-mapping-with-name": "Konfigurasikan sumber data untuk {{dashboardName}}",
+      "title-with-datasource": "Dasbor yang disarankan untuk sumber data {{datasourceType}} Anda"
+    },
+    "no-community-dashboards-datasource": "Coba istilah pencarian lain atau telusuri dasbor untuk berbagai jenis sumber data di Grafana.com.",
+    "no-community-dashboards-search": "Coba istilah pencarian lain atau telusuri lebih banyak dasbor di Grafana.com.",
+    "no-provisioned-dashboards": "Dasbor yang disediakan oleh plugin sumber data. Anda dapat menemukan plugin lainnya di Grafana.com.",
+    "provisioned-empty-title": "Tidak ada dasbor yang disediakan yang ditemukan",
+    "provisioned-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} yang disediakan dan ditemukan",
+    "retry": "Coba lagi",
+    "suggested-dashboards-subtitle": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
+    "suggested-dashboards-title": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data yang Anda pilih",
+    "suggested-dashboards-title-with-datasource": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data {{datasourceType}} Anda",
+    "template-dashboard-modal": {
+      "description": "Mulai menggunakan templat Grafana dengan data sampel. Hubungkan data Anda untuk memberdayakannya dengan metrik yang sebenarnya.",
+      "title": "Mulai dasbor dari templat"
+    },
+    "view-all": "Lihat semua"
+  },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "Tambahkan tautan dasbor",
+      "info-box-content": "Tautan dasbor memungkinkan Anda menempatkan tautan ke dasbor dan situs web lain tepat di bawah header dasbor. <2>Pelajari selengkapnya</2>",
+      "title": "Belum ada tautan dasbor yang ditambahkan"
+    }
+  },
+  "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "Opsi ad-hoc",
+      "alert-not-supported": "Sumber data ini tidak mendukung filter ad hoc",
+      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
+      "label-data-source": "Sumber data",
+      "label-use-static-key-dimensions": "Gunakan dimensi kunci statis",
+      "name-allow-custom-values": "Izinkan nilai kustom"
+    },
+    "add-to-dashboard": {
+      "message": {
+        "could-navigate-selected-dashboard-please-again": "Tidak dapat menavigasi ke dasbor yang dipilih. Silakan coba lagi.",
+        "could-panel-dashboard-please-again": "Tidak dapat menambahkan panel ke dasbor. Silakan coba lagi."
+      }
+    },
+    "add-to-dashboard-form": {
+      "cancel": "Batalkan",
+      "description-choose-where-to-add-the-panel": "Pilih tempat untuk menambahkan panel.",
+      "description-select-which-dashboard-panel-created": "Pilih dasbor tempat panel akan dibuat.",
+      "label": {
+        "existing-dashboard": "Dasbor yang ada",
+        "new-dashboard": "Dasbor baru"
+      },
+      "label-dashboard": "Dasbor",
+      "label-target-dashboard": "Dasbor target",
+      "message": {
+        "this-field-is-required": "Bidang ini wajib diisi."
+      },
+      "open-dashboard": "Buka dasbor",
+      "open-in-new-tab": "Buka di tab baru",
+      "title-error-adding-the-panel": "Kesalahan saat menambahkan panel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "Panel baru"
+      }
+    },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "Kembali ke daftar",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": "Di atas dasbor"
+        },
+        "controls-menu": {
+          "description": "Dapat diakses saat menu kontrol terbuka",
+          "label": "Menu kontrol"
+        },
+        "hidden": {
+          "description": "Menyembunyikan tombol untuk mengaktifkan atau menonaktifkan anotasi ini",
+          "label": "Tersembunyi"
+        }
+      },
+      "delete": "Hapus",
+      "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
+      "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
+      "label-annotation-controls-display": "Tampilkan kontrol anotasi di",
+      "label-color": "Warna",
+      "label-data-source": "Sumber data",
+      "label-enabled": "Aktif",
+      "label-name": "Nama",
+      "label-show-in": "Tampilkan di",
+      "placeholder-choose-panels": "Pilih panel",
+      "query": "Kueri",
+      "title-annotation-support-source": "Tidak ada dukungan anotasi untuk sumber data ini"
+    },
+    "annotation-settings-list": {
+      "built-in": "{{annoName}} (Bawaan)",
+      "data-source": "Sumber data",
+      "delete-aria-label": "Hapus kueri dengan judul \"{{title}}\"",
+      "disabled": "{{annoName}} (Dinonaktifkan)",
+      "new-query": "Kueri baru",
+      "query-name": "Nama kueri",
+      "tooltip-move-down": "Pindahkan ke bawah",
+      "tooltip-move-up": "Pindahkan ke atas"
+    },
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "Tidak boleh berisi karakter yang tidak valid: '~', '^', ':', '?', '*', '[', '\\\\', atau ']'.",
+      "cannot-start-with": "Tidak boleh dimulai dengan '/' atau diakhiri dengan '/', '.', atau spasi.",
+      "invalid-branch-name": "Nama cabang tidak valid.",
+      "it-cannot-contain-or": "Tidak boleh berisi '//' atau '..'.",
+      "least-valid-character": "Harus memiliki setidaknya satu karakter yang valid."
+    },
+    "build-new-dashboard-save-model": {
+      "data": {
+        "title": {
+          "new-dashboard": "Dasbor baru"
+        }
+      }
+    },
+    "build-new-dashboard-save-model-v2": {
+      "data": {
+        "title": {
+          "new-dashboard": "Dasbor baru"
+        }
+      }
+    },
+    "constant-variable-form": {
+      "constant-options": "Opsi konstan",
+      "label-value": "Nilai",
+      "placeholder-your-metric-prefix": "Awalan metrik Anda"
+    },
+    "conversion-warning-banner": {
+      "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
+      "detail-grids": "Semua kisi otomatis akan ditampilkan sebagai kisi kustom",
+      "detail-tabs": "Semua tab dan baris akan muncul sebagai baris klasik",
+      "details": "Selama periode ini, harap perhatikan hal berikut:",
+      "message": "Fitur Dasbor Dinamis dinonaktifkan sementara",
+      "read-less": "Baca lebih sedikit",
+      "read-more": "Baca selengkapnya",
+      "recommendation": "Setelah fitur diaktifkan lagi, dasbor Anda akan berfungsi normal dalam format Dasbor Dinamis. Karena itu, kami sangat menyarankan untuk tidak membuat perubahan pada dasbor ini sampai fitur diaktifkan kembali, karena pengeditan yang dilakukan dalam mode klasik dapat menyebabkan hasil yang tidak terduga. Atau, Anda dapat menyimpan salinan dasbor menggunakan opsi \"Simpan sebagai salinan\", di menu simpan dasbor.",
+      "save-warning": "Dasbor apa pun yang dibuat sebagai atau dikonversi ke Dasbor Dinamis akan terbuka sebagai dasbor klasik. Menyimpan dasbor dapat menyebabkan hilangnya fitur Dasbor Dinamis yang sudah diatur."
+    },
+    "custom-variable-form": {
+      "custom-options": "Opsi kustom",
+      "json-values-tooltip": "Berikan JSON yang mewakili susunan objek, di mana setiap objek dapat memiliki sejumlah properti.<br />Periksa <4>dokumen kami</4> untuk informasi selengkapnya.",
+      "name-csv-values": "CSV",
+      "name-json-values": "JSON",
+      "name-values-separated-comma": "Nilai dipisahkan dengan koma",
+      "selection-options": "Opsi pemilihan"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Berikan umpan balik tentang pengalaman pengeditan dasbor baru"
+    },
+    "dashboard-link-form": {
+      "back-to-list": "Kembali ke daftar",
+      "label-icon": "Ikon",
+      "label-include-current-template-variable-values": "Sertakan nilai variabel templat saat ini",
+      "label-include-current-time-range": "Sertakan rentang waktu saat ini",
+      "label-open-link-in-new-tab": "Buka tautan di tab baru",
+      "label-options": "Opsi",
+      "label-show-as-dropdown": "Tampilkan sebagai dropdown",
+      "label-show-in-controls-menu": "Tampilkan di menu kontrol",
+      "label-title": "Judul",
+      "label-tooltip": "Tooltip",
+      "label-type": "Jenis",
+      "label-url": "URL",
+      "label-with-tags": "Dengan tag",
+      "link-type-options": {
+        "label": {
+          "dashboards": "Dasbor",
+          "link": "Tautan"
+        }
+      },
+      "placeholder-open-dashboard": "Buka dasbor"
+    },
+    "dashboard-link-list": {
+      "delete-aria-label": "Hapus tautan dengan judul \"{{title}}\"",
+      "info": "Info",
+      "new-link": "Tautan baru",
+      "tooltip-copy-link": "Salin tautan",
+      "tooltip-move-link-down": "Pindahkan tautan ke bawah",
+      "tooltip-move-link-up": "Pindahkan tautan ke atas",
+      "type": "Jenis"
+    },
+    "dashboard-preview-banner": {
+      "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
+    },
+    "dashboard-scene": {
+      "modal": {
+        "cancel": "Batal",
+        "discard": "Buang",
+        "save": "Simpan",
+        "text": {
+          "save-changes-question": "Ingin menyimpan perubahan?"
+        },
+        "title": {
+          "unsaved-changes": "Perubahan belum tersimpan"
+        }
+      },
+      "text": {
+        "edit-panel": "Edit panel",
+        "view-panel": "Lihat panel"
+      },
+      "title": {
+        "dashboard": "Dasbor",
+        "discard-changes-to-dashboard": "Batalkan perubahan ke dasbor?",
+        "unsaved-changes-question": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda yakin ingin membuangnya?"
+      }
+    },
+    "dashboard-scene-page-state-manager": {
+      "message": {
+        "dashboard-not-found": "Dasbor tidak ditemukan"
+      }
+    },
+    "dashboard-scene-page-state-manager-v2": {
+      "message": {
+        "dashboard-not-found": "Dasbor tidak ditemukan"
+      }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
+    },
+    "data-source-variable-form": {
+      "data-source-options": "Opsi sumber data",
+      "description-instance-name-filter": "Filter regex untuk instans sumber data yang akan dipilih dalam daftar nilai variabel. Biarkan kosong untuk semua.",
+      "example-instance-name-filter": "Contoh: <codeExample />",
+      "name-instance-name-filter": "Filter nama instance",
+      "name-type": "Jenis",
+      "selection-options": "Opsi pemilihan"
+    },
+    "default-grid-layout-manager": {
+      "row": {
+        "title": {
+          "row-title": "Judul baris"
+        }
+      }
+    },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Gagal menghapus dasbor",
+      "cancel-action": "Batalkan",
+      "delete-action": "Hapus dasbor",
+      "deleting": "Menghapus...",
+      "drawer-title": "Hapus Dasbor yang Disediakan",
+      "success-message": "Dasbor berhasil dihapus"
+    },
+    "description-label": {
+      "description": "Deskripsi"
+    },
+    "edit-link-view": {
+      "edit-link-page-nav": {
+        "text": {
+          "edit-link": "Edit tautan"
+        }
+      }
+    },
+    "email-list": {
+      "aria-label-emailmenu": "Alihkan tombol menu email"
+    },
+    "embedded-dashboard-test-page": {
+      "subTitle": {
+        "showing-dashboard-panel-tests-pie-chart": "Menampilkan dasbor: Tes Panel - Diagram lingkaran"
+      },
+      "text": {
+        "embedding-dashboard": "Menyematkan dasbor"
+      }
+    },
+    "empty-transformations-message": {
+      "add-transformation": "Tambahkan transformasi",
+      "show-more": "Tampilkan lebih banyak",
+      "sql-name": "Ubah dengan SQL",
+      "sql-transformation-description": "Manipulasi data Anda menggunakan sintaksis mirip MySQL"
+    },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "Dapat diedit",
+          "readonly": "Baca saja"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Crosshair bersama",
+          "shared-tooltip": "Tooltip bersama"
+        }
+      }
+    },
+    "get-edit-options": {
+      "title": {
+        "column-options": "Opsi kolom",
+        "row-height-options": "Opsi tinggi baris"
+      }
+    },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "Tambahkan filter kunci/nilai dengan cepat",
+        "dynamically-switch-source-multiple-panels": "Beralih sumber data secara dinamis untuk beberapa panel",
+        "group": "Tambahkan kunci ke grup dengan cepat",
+        "hidden-constant-variable": "Variabel konstan tersembunyi, berguna untuk awalan metrik di dasbor yang ingin Anda bagikan",
+        "users-enter-arbitrary-strings-switch": "Variabel yang dapat diaktifkan dan dinonaktifkan",
+        "users-enter-arbitrary-strings-textbox": "Pengguna dapat memasukkan string acak apa pun dalam kotak teks",
+        "values-are-static-and-defined-manually": "Nilai bersifat statis dan ditentukan secara manual",
+        "values-fetched-source-query": "Nilai diambil dari kueri sumber data",
+        "values-timespans": "Nilai berupa rentang waktu, misalnya 1 mnt, 1 jam, 1 hari"
+      },
+      "name": {
+        "ad-hoc-filters": "Filter ad hoc",
+        "constant": "Konstan",
+        "custom": "Kustom",
+        "data-source": "Sumber data",
+        "group-by": "Kelompokkan berdasarkan",
+        "interval": "Interval",
+        "query": "Kueri",
+        "switch": "Beralih",
+        "textbox": "Kotak teks"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Jangan kirim data anotasi ke panel berikut",
+        "annotation-panels-support-annotations": "Kirim data anotasi ke semua panel yang mendukung anotasi",
+        "annotations-explicitly-listed-panels": "Kirim anotasi ke panel yang tercantum secara eksplisit"
+      },
+      "label": {
+        "all-panels": "Semua panel",
+        "all-panels-except": "Semua panel kecuali",
+        "selected-panels": "Panel yang dipilih"
+      }
+    },
+    "get-panel-frame-options": {
+      "descriptor": {
+        "title": {
+          "panel-options": "Opsi panel"
+        }
+      },
+      "title": {
+        "description": "Deskripsi",
+        "panel-links": "Tautan panel",
+        "title": "Judul",
+        "transparent-background": "Latar belakang transparan"
+      }
+    },
+    "group-by-variable-form": {
+      "alert-not-supported": "Sumber data ini tidak mendukung grup berdasarkan variabel",
+      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
+      "group-by-options": "Kelompokkan berdasarkan opsi",
+      "label-data-source": "Sumber data",
+      "label-use-static-group-by-dimensions": "Gunakan dimensi grup statis",
+      "name-allow-custom-values": "Izinkan nilai kustom"
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Salin ke papan klip",
+      "description-randomize-data": "Ubah data asli untuk menyembunyikan informasi sensitif. Perhatikan bahwa panjangnya akan tetap sama, dan nilai duplikat akan setara.",
+      "description-support-snapshot": "Panel: {{panelTitle}}",
+      "download-dashboard": "Dasbor ({{snapshotSize}})",
+      "download-snapshot": "Unduh ({{snapshotSize}})",
+      "label-randomize-data": "Acak data",
+      "label-support-snapshot": "Mendukung snapshot",
+      "label-template": "Templat",
+      "randomize-field-names-label-field-names": "Nama bidang",
+      "randomize-labels-label-labels": "Label",
+      "randomize-string-values-label-string-values": "Nilai string",
+      "tabs": {
+        "label": {
+          "data": "Data",
+          "snapshot": "Snapshot"
+        }
+      },
+      "title-complete-git-hub-comment-clipboard": "Salin komentar GitHub lengkap ke papan klip",
+      "title-get-help-with-this-panel": "Dapatkan bantuan dengan panel ini",
+      "troubleshooting-docs": "Dokumen pemecahan masalah",
+      "troubleshooting-request-help": "Untuk meminta bantuan pemecahan masalah, kirim snapshot panel ini ke Dukungan Teknis Grafana Labs. Snapshot berisi data respons kueri dan pengaturan panel."
+    },
+    "import-dashboard-form-v2": {
+      "cancel": "Batalkan",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
+      "label-folder": "Folder"
+    },
+    "inspect-data-tab": {
+      "no-data-found": "Tidak ada data yang ditemukan"
+    },
+    "inspect-json-tab": {
+      "apply": "Terapkan",
+      "error-element-changed": "Tidak dapat mengubah referensi elemen. Hanya properti tata letak (x, y, lebar, tinggi) yang dapat dimodifikasi.",
+      "error-invalid-json": "JSON tidak valid",
+      "error-invalid-layout": "JSON tata letak tidak lolos validasi. Harap periksa JSON dan coba lagi.",
+      "error-invalid-v2-panel": "JSON Panel tidak lolos validasi. Harap periksa JSON dan coba lagi.",
+      "validation-error": "Kesalahan validasi"
+    },
+    "interval-variable-form": {
+      "description-auto-option": "Menghitung interval secara dinamis dengan membagi rentang waktu dengan jumlah yang ditentukan",
+      "description-calculated-value-below-threshold": "Nilai yang dihitung tidak akan berada di bawah ambang batas ini",
+      "description-step-count": "Berapa kali rentang waktu saat ini harus dibagi untuk menghitung nilai",
+      "interval-options": "Opsi interval",
+      "name-auto-option": "Opsi otomatis",
+      "name-min-interval": "Interval minimum",
+      "name-step-count": "Jumlah langkah",
+      "name-values": "Nilai"
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": "Batalkan"
+      },
+      "render-save-button-and-error": {
+        "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
+        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
+        "title-plugin-dashboard": "Dasbor plugin",
+        "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
+        "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
+      },
+      "save-and-overwrite": "Simpan dan timpa"
+    },
+    "library-viz-panel-info": {
+      "last-edited": "{{timeAgo}} oleh <person />",
+      "usage-count_other": "Digunakan pada {{count}} dasbor"
+    },
+    "managed-badge": {
+      "kubectl": "Dikelola oleh: Kubectl",
+      "plugin": "Dikelola oleh: Plugin {{id}}",
+      "provisioned": "Disediakan",
+      "terraform": "Dikelola oleh: Terraform"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "Gagal memindahkan dasbor",
+      "cancel-action": "Batal",
+      "current-file-not-found": "File dasbor saat ini tidak dapat ditemukan",
+      "drawer-title": "Pindahkan Dasbor yang Disediakan",
+      "file-load-error": "Kesalahan saat memuat dasbor",
+      "loading-dashboard-data": "Memuat data dasbor",
+      "move-action": "Pindahkan dasbor",
+      "move-read-only-message": "Dasbor ini tidak dapat dipindahkan langsung dari Grafana karena repositori bersifat baca-saja. Untuk memindahkan dasbor ini, pindahkan file di repositori Git Anda.",
+      "moving": "Memindahkan...",
+      "success-message": "Dasbor berhasil dipindahkan",
+      "target-path-label": "Jalur target",
+      "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
+    },
+    "name-already-exists-error": {
+      "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
+      "title-name-already-exists": "Nama sudah ada"
+    },
+    "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": "Lanjutkan"
+      },
+      "title": {
+        "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
+      }
+    },
+    "on-remove-panel": {
+      "text": {
+        "remove-panel": "Anda yakin ingin menghapus panel ini?"
+      },
+      "title": {
+        "remove-panel": "Hapus panel"
+      }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
+    "panel-data-alerting-tab": {
+      "tab-label": "Peringatan"
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": "Kesalahan saat memuat aturan"
+      },
+      "error-failed-to-load": "Gagal memuat status aturan Grafana: {{errorToDisplay}}",
+      "text-loading-rules": "Memuat aturan...",
+      "title-dashboard-not-saved": "Dasbor tidak disimpan"
+    },
+    "panel-data-queries-tab": {
+      "tab-label": "Kueri"
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": "Tambahkan kueri",
+      "expression": "Ekspresi"
+    },
+    "panel-data-transformations-tab": {
+      "tab-label": "Transformasi"
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "Tambah transformasi lain",
+      "body-delete-all-transformations": "Dengan menghapus semua transformasi, Anda akan kembali ke layar pilihan utama.",
+      "confirmText-delete-all": "Hapus semua",
+      "delete-all-transformations": "Hapus semua transformasi",
+      "title-delete-all-transformations": "Hapus semua transformasi?"
+    },
+    "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
+      "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
+      "table-view-label-table-view": "Tampilan tabel"
+    },
+    "panel-editor": {
+      "text": {
+        "edit-panel": "Edit panel"
+      }
+    },
+    "panel-editor-renderer": {
+      "aria-label-open-options-pane": "Buka panel opsi",
+      "tooltip-open-options-pane": "Buka panel opsi"
+    },
+    "panel-inspect-renderer": {
+      "body-panel-plugin-not-loaded": "Pastikan panel yang ingin Anda periksa terlihat dan telah ditampilkan sebelum membuka inspeksi.",
+      "title-panel-plugin-not-loaded": "Plugin panel belum dimuat"
+    },
+    "panel-menu-behavior": {
+      "async-func": {
+        "text": {
+          "extensions": "Ekstensi",
+          "metrics-drilldown": "Drilldown metrik"
+        }
+      }
+    },
+    "panel-viz-type-picker": {
+      "button": {
+        "close": "Kembali"
+      },
+      "placeholder-search-for": "Cari...",
+      "radio-options": {
+        "label": {
+          "all-visualizations": "Semua visualisasi",
+          "suggestions": "Saran"
+        }
+      },
+      "title-close": "Tutup"
+    },
+    "provisioned-delete-modal": {
+      "cannot-be-deleted": "Dasbor ini dikelola oleh penyediaan Grafana dan tidak dapat dihapus. Hapus dasbor dari file konfigurasi untuk menghapusnya.",
+      "file-path": "Jalur file: {{dashboardId}}",
+      "ok": "OK",
+      "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
+      "title-cannot-delete-provisioned-dashboard": "Tidak dapat menghapus dasbor yang disediakan"
+    },
+    "query-editor": {
+      "query": "Kueri"
+    },
+    "query-variable-editor-form": {
+      "description-examples": "Grup tangkapan bernama dapat digunakan untuk memisahkan teks tampilan dan nilai (<1>lihat contoh</1>).",
+      "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
+      "description-regex-apply-to": "Pilih apakah akan menerapkan pola regex ke nilai variabel atau teks tampilan",
+      "label-data-source": "Sumber data",
+      "label-regex-apply-to": "Terapkan ekspresi reguler ke",
+      "label-static-options-sort": "Urutan opsi statis",
+      "label-target-data-source": "Sumber data target",
+      "label-use-static-options": "Gunakan opsi statis",
+      "name-regex": "Regex",
+      "query-options": "Opsi kueri",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "Teks tampilan",
+          "value": "Nilai variabel"
+        }
+      },
+      "selection-options": "Opsi pemilihan",
+      "static-options-legend": "Opsi statis"
+    },
+    "resource-export": {
+      "label": {
+        "advanced-options": "Opsi lanjutan",
+        "classic": "Klasik",
+        "json": "JSON",
+        "v1-resource": "Sumber Daya V1",
+        "v2-resource": "Sumber Daya V2",
+        "yaml": "YAML"
+      },
+      "share-externally": "Bagikan dasbor dengan contoh lain",
+      "share-externally-tooltip": "Menghapus semua metadata khusus instance dan referensi sumber data dari sumber daya sebelum diekspor."
+    },
+    "revert-dashboard-modal": {
+      "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
+      "confirmText-restore-version": "Ya, pulihkan ke versi {{version}}",
+      "title-restore-version": "Pulihkan versi"
+    },
+    "save-button": {
+      "save": "Simpan",
+      "save-and-overwrite": "Simpan dan timpa",
+      "saving": "Menyimpan..."
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "Simpan bidang deskripsi dasbor",
+      "aria-label-save-dashboard-title-field": "Simpan bidang judul dasbor",
+      "cancel-button": {
+        "cancel": "Batalkan"
+      },
+      "label-copy-tags": "Salin tag",
+      "label-folder": "Folder",
+      "render-footer": {
+        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor"
+      },
+      "required": "Wajib diisi"
+    },
+    "save-dashboard-drawer": {
+      "tabs": {
+        "label-changes": "Perubahan",
+        "label-details": "Detail",
+        "title": "Simpan dasbor",
+        "title-copy": "Simpan salinan dasbor",
+        "title-provisioned": "Dasbor yang disediakan"
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "pesan",
+      "body-dashboard-drastically-changed": "Dasbor akan disimpan menggunakan skema dasbor Grafana eksperimental baru. Tindakan ini tidak dapat dikembalikan dan dapat mengakibatkan hilangnya data yang tidak dapat dipulihkan. Sebaiknya Anda menyimpan dasbor ini sebagai salinan. Jika Anda melihat pesan ini di lingkungan produksi, hubungi Dukungan untuk menonaktifkan fitur ini.",
+      "cancel-button": {
+        "cancel": "Batalkan"
+      },
+      "label-message": "Pesan",
+      "placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional).",
+      "render-footer": {
+        "body-plugin-dashboard": "Perubahan Anda akan hilang saat Anda memperbarui plugin. Gunakan <strong>Simpan sebagai</strong> untuk membuat versi kustom.",
+        "no-changes-to-save": "Tidak ada perubahan untuk disimpan",
+        "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
+        "title-plugin-dashboard": "Dasbor plugin",
+        "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
+        "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
+      },
+      "schema-v2-library-panels-export": "Karena keterbatasan dalam skema dasbor baru (V2), panel pustaka akan dikonversi menjadi panel reguler dengan konten yang disematkan selama ekspor eksternal.",
+      "schema-v2-library-panels-export-title": "Panel pustaka akan dikonversi menjadi panel reguler",
+      "title-dashboard-drastically-changed": "Perubahan pada dasbor tidak dapat dipulihkan"
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "Akan menjadikan muat ulang saat ini sebagai default baru",
+      "save-refresh-label-update-default-refresh-value": "Perbarui nilai muat ulang default",
+      "save-timerange-description-current-range-default": "Akan menjadikan rentang waktu saat ini sebagai default baru",
+      "save-timerange-label-update-default-time-range": "Perbarui rentang waktu default",
+      "save-variables-description-current-values-default": "Akan menjadikan nilai saat ini sebagai default baru",
+      "save-variables-label-update-default-variable-values": "Perbarui nilai variabel default",
+      "show-variables-warning-alert-body": "Beberapa variabel gagal dimuat. Jika Anda tetap mencentang \"Perbarui nilai variabel default\", nilai (gagal) saat ini akan menjadi default dasbor. Anda tetap dapat menyimpan atau menghapus centang opsi untuk menghindari menyimpan nilai (gagal) tersebut.",
+      "show-variables-warning-alert-title": "Kueri variabel gagal"
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "Batalkan",
+      "dashboard-name": "Nama dasbor",
+      "discard": "Buang",
+      "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
+      "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
+      "update-all": "Perbarui semua",
+      "affected-dashboards_other": "Pembaruan ini akan memengaruhi <strong>{{count}} dasbor.</strong> Dasbor berikut yang menggunakan panel akan terpengaruh:"
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "Kesalahan saat menyimpan dasbor",
+      "cancel": "Batalkan",
+      "cannot-be-saved": "Dasbor ini tidak dapat disimpan dari UI Grafana karena telah disediakan dari sumber lain. Salin JSON atau simpan ke file di bawah ini, lalu Anda dapat memperbarui dasbor Anda di sumber penyediaan.",
+      "copy-json-to-clipboard": "Salin JSON ke papan klip",
+      "file-path": "<strong>Jalur file:</strong> {{filePath}}",
+      "label-description": "Deskripsi",
+      "label-target-folder": "Folder target",
+      "label-title": "Judul",
+      "save": "Simpan",
+      "save-json-to-file": "Simpan JSON ke file",
+      "saving": "Menyimpan...",
+      "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
+      "title-required": "Judul dasbor wajib diisi",
+      "title-same-as-folder": "Nama dasbor tidak boleh sama dengan nama folder",
+      "title-validation-failed": "Validasi judul dasbor gagal."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "Tidak dapat membuat peringatan dari panel ini karena tidak ada kueri ke sumber data berkemampuan peringatan yang ditemukan.",
+      "new-alert-rule": "Aturan peringatan baru",
+      "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "Memungkinkan beberapa nilai untuk dipilih secara bersamaan",
+      "description-enables-option-include-variables": "Mengaktifkan opsi untuk menyertakan semua nilai",
+      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
+      "name-allow-custom-values": "Izinkan nilai kustom",
+      "name-custom-all-value": "Nilai kustom untuk semua",
+      "name-include-all-option": "Sertakan opsi Semua",
+      "name-multi-value": "Multi-nilai"
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
+        "title": "Perubahan belum tersimpan"
+      }
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": "JSON Dasbor digunakan untuk membantu memecahkan masalah visualisasi"
+      },
+      "label": {
+        "git-hub-comment": "Komentar Github",
+        "panel-support-snapshot": "Snapshot dukungan panel"
+      },
+      "title": {
+        "copy-to-clipboard-failed": "Gagal menyalin ke papan klip"
+      }
+    },
+    "switch-variable-form": {
+      "disabled-value": "Nilai dinonaktifkan",
+      "disabled-value-description": "Nilai saat sakelar dinonaktifkan",
+      "disabled-value-placeholder": "misalnya, Mati, Dinonaktifkan, Tidak Aktif",
+      "enabled-value": "Nilai diaktifkan",
+      "enabled-value-description": "Nilai saat sakelar diaktifkan",
+      "enabled-value-placeholder": "misalnya, Hidup, Diaktifkan, Aktif",
+      "same-values-error": "Nilai yang diaktifkan dan dinonaktifkan tidak boleh sama",
+      "switch-options": "Opsi sakelar",
+      "value-pair-type": "Jenis pasangan nilai",
+      "value-pair-type-description": "Pilih jenis nilai untuk status sakelar"
+    },
+    "text-box-variable": {
+      "name-default-value": "Nilai default"
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "(opsional)",
+      "text-options": "Opsi teks"
+    },
+    "textbox-variable-form": {
+      "label-value": "Nilai"
+    },
+    "title-field-label": {
+      "title": "Judul"
+    },
+    "transform-usages-to-network": {
+      "result": {
+        "label": {
+          "dashboard": "dasbor"
+        }
+      }
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": "Hapus pencarian"
+      }
+    },
+    "unlink-modal": {
+      "body-unlink-panel": "Jika tautan panel ini Anda putus, Anda akan dapat mengeditnya tanpa memengaruhi dasbor lain. Namun, setelah membuat perubahan, Anda tidak akan dapat kembali ke panel pakai ulang semula.",
+      "confirmText-yes-unlink": "Ya, putus tautan",
+      "title-really-unlink-panel": "Anda yakin ingin memutus tautan panel ini?"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Batalkan",
+      "changes": "Ingin menyimpan perubahan?",
+      "discard": "Buang",
+      "save-dashboard": "Simpan dasbor",
+      "title-unsaved-changes": "Perubahan belum tersimpan"
+    },
+    "use-dashboard-edit-page-nav": {
+      "page-nav": {
+        "text": {
+          "settings": "Pengaturan"
+        }
+      }
+    },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": "Ubah kueri variabel"
+      }
+    },
+    "use-save-dashboard": {
+      "message-dashboard-saved": "Dasbor disimpan"
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "Variabel ini tidak direferensikan oleh variabel atau dasbor apa pun.",
+      "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
+      "content-variable-not-referenced-other-variables-dashboard": "Variabel ini tidak dirujuk oleh variabel atau dasbor lain.",
+      "content-variable-referenced-other-variables-dashboard": "Variabel ini dirujuk oleh variabel atau dasbor lain."
+    },
+    "variable-controls": {
+      "add-variable": "Tambah variabel"
+    },
+    "variable-display-select": {
+      "label": "Tampilan",
+      "options": {
+        "above-dashboard": {
+          "label": "Di atas dasbor"
+        },
+        "controls-menu": {
+          "description": "Terlihat saat menu kontrol terbuka",
+          "label": "Menu kontrol"
+        },
+        "hidden": {
+          "description": "Hanya terlihat dalam mode edit",
+          "label": "Tersembunyi"
+        },
+        "hidden-label": {
+          "description": "Di atas dasbor, tetapi tanpa menunjukkan nama variabel",
+          "label": "Di atas dasbor, label disembunyikan"
+        }
+      }
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "Formulir editor variabel",
+      "back-to-list": "Kembali ke daftar",
+      "confirmText": {
+        "delete-variable": "Hapus variabel"
+      },
+      "delete": "Hapus",
+      "description-optional-display-name": "Nama tampilan opsional",
+      "description-template-variable-characters": "Nama variabel templat. (Maks. 50 karakter)",
+      "general": "Umum",
+      "name-description": "Deskripsi",
+      "name-label": "Label",
+      "name-name": "Nama",
+      "placeholder-descriptive-text": "Teks deskriptif",
+      "placeholder-label-name": "Nama label",
+      "placeholder-variable-name": "Nama variabel",
+      "text-running-query": "Menjalankan kueri...",
+      "title": {
+        "delete-variable": "Hapus variabel"
+      }
+    },
+    "variable-editor-list": {
+      "definition": "Definisi",
+      "new-variable": "Variabel baru",
+      "variable": "Variabel"
+    },
+    "variable-editor-list-row": {
+      "body-delete-variable": "Yakin ingin menghapus: {{variable}}?",
+      "confirmText-delete-variable": "Hapus variabel",
+      "title-delete-variable": "Hapus variabel",
+      "tooltip-duplicate-variable": "Duplikatkan variabel",
+      "tooltip-remove-variable": "Hapus variabel"
+    },
+    "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "Label",
+          "nothing": "Tidak ada apa-apa",
+          "variable": "Variabel"
+        }
+      },
+      "label": "Sembunyikan"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
+    "variable-type-select": {
+      "name-variable-type": "Jenis variabel"
+    },
+    "variable-usages-button": {
+      "title-show-usages": "Menampilkan penggunaan untuk: {{variableId}}",
+      "tooltip-show-usages": "Tampilkan penggunaan"
+    },
+    "variable-values-preview": {
+      "show-more": "Tampilkan lebih banyak",
+      "preview-of-values_other": "Pratinjau nilai ({{count}})"
+    },
+    "version-history": {
+      "comparison": {
+        "button-restore": "Pulihkan ke versi {{version}}"
+      }
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": "Lihat diff JSON",
+      "new-version-updated": "<strong>Versi {{version}}</strong> diperbarui oleh {{editor}} {{timeAgo}}",
+      "old-version-updated": "<strong>Versi {{version}}</strong> diperbarui oleh {{editor}} {{timeAgo}}"
+    },
+    "version-history-header": {
+      "compare-versions": "Membandingkan {{baseVersion}} <3></3> {{newVersion}}",
+      "latest": "(Terkini)",
+      "tooltip-reset-version": "Atur ulang versi"
+    },
+    "version-history-table": {
+      "aria-label-toggle-selection": "Alihkan tombol pemilihan versi {{version}}",
+      "date": "Tanggal",
+      "name-latest": "Terkini",
+      "notes": "Catatan",
+      "restore": "Pulihkan",
+      "updated-by": "Diperbarui oleh",
+      "version": "Versi"
+    },
+    "versions-history-buttons": {
+      "compare-versions": "Bandingkan versi",
+      "content-select-two-versions-to-start-comparing": "Pilih dua versi untuk mulai membandingkan",
+      "show-more-versions": "Tampilkan lebih banyak versi"
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Ubah visualisasi",
+      "text": "Ubah"
+    },
+    "viz-and-data-pane": {
+      "aria-label-open-query-pane": "Buka panel kueri",
+      "tooltip-open-query-pane": "Buka panel kueri"
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": "Tautan panel"
+    }
+  },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "Anda juga dapat mengambil bundel dukungan yang berisi informasi mengenai instans Grafana Anda dan sumber data yang dikonfigurasi di bagian <1>bundel dukungan</1>."
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Anotasi"
+    },
+    "dashboard-delete-button": "Hapus dasbor",
+    "delete-modal": {
+      "confirmation-text": "Hapus",
+      "delete-button": "Hapus",
+      "title": "Hapus"
+    },
+    "delete-modal-restore-dashboards-prefix": "Tindakan ini akan menghapus dasbor.",
+    "delete-modal-text": "Apa Anda ingin menghapus dasbor ini?",
+    "general": {
+      "auto-refresh-description": "Tentukan interval muat ulang otomatis yang seharusnya tersedia dalam daftar muat ulang otomatis. Gunakan format '5d' untuk detik, '1m' untuk menit, '1j' untuk jam, dan '1h' untuk hari (misalnya: '5d, 10d, 30d, 1m, 5m, 15m, 30m,1j, 2j, 1h').",
+      "auto-refresh-label": "Muat ulang otomatis",
+      "description-label": "Deskripsi",
+      "editable-description": "Atur ke hanya baca untuk menonaktifkan semua pengeditan. Muat ulang dasbor agar perubahan diterapkan",
+      "editable-label": "Dapat diedit",
+      "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Mengontrol tooltip dan perilaku fungsi sorotan di berbagai panel. Muat ulang dasbor agar perubahan diterapkan",
+      "panel-options-graph-tooltip-label": "Tooltip grafik",
+      "panel-options-label": "Opsi panel",
+      "panels-preload-description": "Saat diaktifkan, semua panel akan mulai dimuat segera setelah dasbor dimuat.",
+      "panels-preload-label": "Pramuat panel",
+      "tags-label": "Tag",
+      "title": "Umum",
+      "title-label": "Judul"
+    },
+    "json-editor": {
+      "save-button": "Simpan perubahan",
+      "subtitle": "Model JSON di bawah ini adalah struktur data yang menentukan dasbor. Ini termasuk pengaturan dasbor, pengaturan panel, tata letak, kueri, dan sebagainya.",
+      "title": "Model JSON"
+    },
+    "links": {
+      "title": "Tautan"
+    },
+    "permissions": {
+      "title": "Izin"
+    },
+    "provisioned-delete-modal": {
+      "confirm-button": "OK",
+      "text-1": "Dasbor ini dikelola oleh penyediaan Grafana dan tidak dapat dihapus. Hapus dasbor dari file konfigurasi untuk menghapusnya.",
+      "text-2": "Lihat dokumentasi grafana untuk informasi selengkapnya tentang penyediaan.",
+      "text-3": "Jalur file: {{provisionedId}}",
+      "text-link": "Buka halaman dokumen",
+      "title": "Tidak dapat menghapus dasbor yang disediakan"
+    },
+    "settings": {
+      "title": "Pengaturan"
+    },
+    "time-picker": {
+      "hide-time-picker": "Sembunyikan pemilih waktu",
+      "now-delay-description": "Kecualikan data terbaru yang mungkin tidak lengkap.",
+      "now-delay-label": "Sekarang tunda",
+      "refresh-live-dashboards-description": "Terus perbarui panel ketika rentang waktu mencakup waktu saat ini",
+      "refresh-live-dashboards-label": "Muat ulang dasbor langsung",
+      "time-options-label": "Opsi waktu",
+      "time-zone-label": "Zona waktu",
+      "week-start-label": "Minggu mulai"
+    },
+    "variables": {
+      "title": "Variabel"
+    },
+    "versions": {
+      "provisioned-warning": "",
+      "title": "Versi"
     }
   },
   "dashboards": {
@@ -10222,17 +10236,17 @@
       "description": "Konfigurasi LDAP Anda tidak berfungsi karena formulir login dasar saat ini dinonaktifkan. Aktifkan formulir login untuk menggunakan autentikasi LDAP. Anda dapat mengaktifkannya di halaman Autentikasi di bagian \"Pengaturan autentikasi\".",
       "title": "Login dasar dinonaktifkan"
     },
-    "search-base-dns": {
-      "description": "Berbagai basis dns untuk dicari.",
-      "error": "Bidang DNS dasar pencarian wajib diisi",
-      "label": "Basis pencarian DNS",
-      "placeholder": "contoh: dc=grafana,dc=org"
-    },
     "search_filter": {
       "description": "Filter pencarian LDAP digunakan untuk menemukan entri tertentu dalam direktori.",
       "error": "Filter pencarian wajib diisi",
       "label": "Filter pencarian",
       "placeholder": "contoh: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "Berbagai basis dns untuk dicari.",
+      "error": "Bidang DNS dasar pencarian wajib diisi",
+      "label": "Basis pencarian DNS",
+      "placeholder": "contoh: dc=grafana,dc=org"
     },
     "subtitle": "Integrasi LDAP di Grafana memungkinkan pengguna Grafana Anda untuk login dengan kredensial LDAP mereka. Cari tahu selengkapnya di <2><1>dokumentasi</1></2> kami.",
     "title": "Pengaturan Dasar"
@@ -10414,6 +10428,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
@@ -10703,6 +10718,7 @@
       "label-inline": "sebaris",
       "label-sidebar": "Bilah samping"
     },
+    "name-enable-field-selector": "",
     "name-enable-infinite-scrolling": "Aktifkan gulir tak terbatas",
     "name-enable-log-details": "Aktifkan detail log",
     "name-enable-logs-highlighting": "Aktifkan penyorotan log",
@@ -11451,6 +11467,7 @@
     },
     "megamenu": {
       "close": "Tutup menu",
+      "dialog-label": "",
       "dock": "Gandeng menu",
       "list-label": "Navigasi",
       "open": "Buka menu",
@@ -11623,10 +11640,6 @@
       "clear-tooltip": "Hapus pemilihan unit"
     }
   },
-  "org-picker": {
-    "noOptionsMessage-no-organizations-found": "Tidak ada organisasi yang ditemukan",
-    "select-placeholder": "Pilih organisasi"
-  },
   "org": {
     "new-org-page": {
       "create": "Buat",
@@ -11664,22 +11677,14 @@
       }
     }
   },
+  "org-picker": {
+    "noOptionsMessage-no-organizations-found": "Tidak ada organisasi yang ditemukan",
+    "select-placeholder": "Pilih organisasi"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit judul"
     }
-  },
-  "panel-group-by": {
-    "button": "Kelompokkan berdasarkan",
-    "loading": "Memuat opsi",
-    "no-options": "Opsi tidak ditemukan",
-    "search-placeholder": "Cari"
-  },
-  "panel-type-filter": {
-    "clear-button": "Hapus jenis",
-    "select-aria-label": "Filter jenis panel",
-    "select-no-options": "Tidak ada jenis panel yang ditemukan",
-    "select-placeholder": "Filter berdasarkan jenis"
   },
   "panel": {
     "dashlist": {
@@ -11792,6 +11797,18 @@
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
   },
+  "panel-group-by": {
+    "button": "Kelompokkan berdasarkan",
+    "loading": "Memuat opsi",
+    "no-options": "Opsi tidak ditemukan",
+    "search-placeholder": "Cari"
+  },
+  "panel-type-filter": {
+    "clear-button": "Hapus jenis",
+    "select-aria-label": "Filter jenis panel",
+    "select-no-options": "Tidak ada jenis panel yang ditemukan",
+    "select-placeholder": "Filter berdasarkan jenis"
+  },
   "piechart": {
     "category-legend": "Legenda",
     "category-pie-chart": "Diagram lingkaran",
@@ -11816,6 +11833,39 @@
     "suggestions": {
       "donut": "Diagram donat",
       "pie": "Diagram lingkaran"
+    }
+  },
+  "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "Daftar putar baru"
+        }
+      }
+    },
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "Item daftar putar, {{itemType}}, {{itemValue}}",
+      "multiple-dashboards-found": "Beberapa item ditemukan: {{items}}",
+      "no-dashboards-found": "Tidak ada dasbor yang ditemukan",
+      "not-found": "Tidak ditemukan: {{items}}"
+    },
+    "start-modal": {
+      "button-start": "Mulai {{title}}",
+      "description-customize-dashboard-elements-visibility": "Sesuaikan visibilitas elemen dasbor",
+      "description-panel-heights-adjusted-screen": "Tinggi panel akan disesuaikan agar pas dengan ukuran layar",
+      "label-autofit": "Paskan otomatis",
+      "label-dashboard-links": "Tautan dasbor",
+      "label-display-dashboard-controls": "Tampilkan kontrol dasbor",
+      "label-mode": "Mode",
+      "label-time-and-refresh": "Waktu dan muat ulang",
+      "label-variables": "Variabel",
+      "modes": {
+        "label": {
+          "kiosk": "Kios",
+          "normal": "Normal"
+        }
+      },
+      "title-start-playlist": "Mulai daftar putar"
     }
   },
   "playlist-edit": {
@@ -11859,39 +11909,6 @@
       "button": "Buat daftar putar",
       "pro-tip": "Anda dapat menggunakan daftar putar untuk memutar dasbor di TV tanpa kontrol pengguna. <2>Pelajari selengkapnya</2>",
       "title": "Belum ada daftar putar yang dibuat"
-    }
-  },
-  "playlist": {
-    "playlist-new-page": {
-      "page-nav": {
-        "text": {
-          "new-playlist": "Daftar putar baru"
-        }
-      }
-    },
-    "playlist-table-rows": {
-      "aria-label-playlist-item": "Item daftar putar, {{itemType}}, {{itemValue}}",
-      "multiple-dashboards-found": "Beberapa item ditemukan: {{items}}",
-      "no-dashboards-found": "Tidak ada dasbor yang ditemukan",
-      "not-found": "Tidak ditemukan: {{items}}"
-    },
-    "start-modal": {
-      "button-start": "Mulai {{title}}",
-      "description-customize-dashboard-elements-visibility": "Sesuaikan visibilitas elemen dasbor",
-      "description-panel-heights-adjusted-screen": "Tinggi panel akan disesuaikan agar pas dengan ukuran layar",
-      "label-autofit": "Paskan otomatis",
-      "label-dashboard-links": "Tautan dasbor",
-      "label-display-dashboard-controls": "Tampilkan kontrol dasbor",
-      "label-mode": "Mode",
-      "label-time-and-refresh": "Waktu dan muat ulang",
-      "label-variables": "Variabel",
-      "modes": {
-        "label": {
-          "kiosk": "Kios",
-          "normal": "Normal"
-        }
-      },
-      "title-start-playlist": "Mulai daftar putar"
     }
   },
   "playlists": {
@@ -12898,38 +12915,6 @@
       "error-save-repository-setting": "Gagal menyimpan pengaturan repositori"
     }
   },
-  "public-dashboard-users-access-list": {
-    "dashboard-modal": {
-      "external-link": "Tautan eksternal",
-      "loading-text": "Memuat...",
-      "open-dashboard-list-text": "Buka daftar dasbor",
-      "sharing-setting": "Pengaturan untuk berbagi"
-    },
-    "delete-user-modal": {
-      "delete-user-button-text": "Hapus pengguna",
-      "delete-user-cancel-button": "Batalkan",
-      "delete-user-revoke-access-button": "Cabut akses",
-      "revoke-access-title": "Cabut akses",
-      "revoke-user-access-modal-desc-line1": "Apa Anda yakin ingin mencabut akses untuk {{email}}?"
-    },
-    "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "Tindakan ini akan segera mencabut akses {{email}} ke semua dasbor bersama."
-    },
-    "modal": {
-      "shared-dashboard-modal-title": "Dasbor bersama"
-    },
-    "table-body": {
-      "dashboard-count_other": "{{count}} dasbor"
-    },
-    "table-header": {
-      "activated-label": "Diaktifkan",
-      "activated-tooltip": "Pengguna paling awal telah menjadi pengguna aktif ke dasbor",
-      "email-label": "Email",
-      "last-active-label": "Terakhir aktif",
-      "origin-label": "Asal",
-      "role-label": "Peran"
-    }
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Sebelum Anda menjadikan dasbor publik, ketahui hal berikut:",
@@ -13053,17 +13038,110 @@
       "unsupported-data-source-alert-desc": "Ada sumber data di dasbor ini yang tidak didukung untuk dasbor bersama. Panel yang menggunakan sumber data ini mungkin tidak berfungsi dengan baik: {{unsupportedDataSources}}."
     }
   },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "external-link": "Tautan eksternal",
+      "loading-text": "Memuat...",
+      "open-dashboard-list-text": "Buka daftar dasbor",
+      "sharing-setting": "Pengaturan untuk berbagi"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Hapus pengguna",
+      "delete-user-cancel-button": "Batalkan",
+      "delete-user-revoke-access-button": "Cabut akses",
+      "revoke-access-title": "Cabut akses",
+      "revoke-user-access-modal-desc-line1": "Apa Anda yakin ingin mencabut akses untuk {{email}}?"
+    },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "Tindakan ini akan segera mencabut akses {{email}} ke semua dasbor bersama."
+    },
+    "modal": {
+      "shared-dashboard-modal-title": "Dasbor bersama"
+    },
+    "table-body": {
+      "dashboard-count_other": "{{count}} dasbor"
+    },
+    "table-header": {
+      "activated-label": "Diaktifkan",
+      "activated-tooltip": "Pengguna paling awal telah menjadi pengguna aktif ke dasbor",
+      "email-label": "Email",
+      "last-active-label": "Terakhir aktif",
+      "origin-label": "Asal",
+      "role-label": "Peran"
+    }
+  },
+  "query": {
+    "query-editor-row-header": {
+      "hidden": "Tersembunyi",
+      "query-name-div-title-edit-query-name": "Edit nama kueri"
+    },
+    "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
+      "trace-id": "(ID Pelacakan: {{traceId}})"
+    },
+    "query-group": {
+      "add-query": "Tambahkan kueri",
+      "expression": "Ekspresi",
+      "title-data-source-help": "Bantuan sumber data"
+    },
+    "query-group-options-editor": {
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "hide-time-info": "Sembunyikan info waktu",
+      "Query options-title-query-options": "Opsi kueri",
+      "relative-time": "Waktu relatif",
+      "relative-time-tooltip": "Mengganti rentang waktu yang relevan untuk masing-masing panel, yang menyebabkannya berbeda dengan yang dipilih di pemilih waktu dasbor di sudut kanan atas dasbor. Misalnya, untuk mengonfigurasi 5 menit Terakhir, Waktu relevan harus <1>{{relativeFrom}}</1> dan <4>{{relativeTo}}</4>, atau variabel seperti <6>{{variable}}</6>.",
+      "render-cache-timeout-option": {
+        "cache-timeout": "Cache timeout"
+      },
+      "render-interval-option": {
+        "interval": "Interval",
+        "interval-tooltip": "Interval yang dievaluasi yang dikirim ke sumber data dan digunakan dalam <1>$__interval</1> dan <4>$__interval_ms</4>. Nilai ini tidak persis sama dengan <6>Rentang waktu/titik data maksimum</6>, ini akan mendekati serangkaian angka ajaib.",
+        "min-interval": "Interval minimum",
+        "min-interval-tooltip": "Batas bawah untuk interval. Direkomendasikan untuk diatur ke frekuensi tulis, misalnya <1>1m</1> jika data Anda ditulis setiap menit. Nilai default dapat diatur dalam pengaturan sumber data untuk sebagian besar sumber data.",
+        "time-range-max-data-points": "Rentang waktu/titik data maksimum"
+      },
+      "render-max-data-points-option": {
+        "max-data-points": "Titik data maksimum",
+        "max-data-points-tooltip": "Titik data maksimum per rangkaian. Digunakan langsung oleh beberapa sumber data dan digunakan dalam perhitungan interval otomatis. Dengan data streaming, nilai ini digunakan untuk rolling buffer.",
+        "width-of-panel": "Lebar panel"
+      },
+      "render-query-caching-ttloption": {
+        "cache-ttl": "Cache TTL"
+      },
+      "time-shift": "Penggeseran waktu",
+      "time-shift-tooltip": "Mengganti rentang waktu untuk masing-masing panel dengan menggeser awal dan akhir yang relevan dengan pemilih waktu. Misalnya, untuk mengonfigurasi 1 jam Terakhir, Pergeseran waktu harus <1>{{relativeFrom}}</1> dan <4>{{relativeTo}}</4>, atau variabel seperti <6>{{variable}}</6>."
+    },
+    "query-group-top-section": {
+      "data-source": "Sumber data",
+      "query-inspector": "Pemeriksa kueri",
+      "query-tab-help-button-title-open-data-source-help": "Buka bantuan sumber data",
+      "title-data-source-help": "Bantuan sumber data"
+    }
+  },
   "query-editor-next": {
     "action": {
-      "coming-soon": "",
+      "add-transformation-filter": "",
       "duplicate": "",
       "hide": "",
       "hide-help": "",
+      "hide-transformation-help": "",
       "inspector": "",
       "more-actions": "",
       "remove": "",
+      "remove-transformation-filter": "",
       "show": "",
-      "show-help": ""
+      "show-help": "",
+      "show-transformation-help": "",
+      "transformation-debug": ""
+    },
+    "delete-modal": {
+      "body-query": "",
+      "body-transformation": "",
+      "confirm": "",
+      "title": ""
     },
     "details-sidebar": {
       "cache-timeout": "",
@@ -13110,6 +13188,7 @@
       "close-aria": ""
     },
     "labels": {
+      "alert": "",
       "expression": "Ekspresi",
       "query": "Kueri",
       "transformation": "Transformasi"
@@ -13119,12 +13198,26 @@
       "add-expression": "",
       "add-query": "",
       "add-saved-query": "",
+      "alert-indicator": {
+        "button-label": "",
+        "tooltip": ""
+      },
       "card-click": "Pilih kartu {{id}}",
       "data": "",
       "data-mode": "",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
       "transformations": "Transformasi"
+    },
+    "transformation-debug": {
+      "input-data": "",
+      "output-data": "",
+      "title": ""
+    },
+    "transformation-filter": {
+      "annotations": "",
+      "label": "",
+      "series": ""
     },
     "validation": {
       "duplicate-name": "",
@@ -13165,57 +13258,6 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
-  },
-  "query": {
-    "query-editor-row-header": {
-      "hidden": "Tersembunyi",
-      "query-name-div-title-edit-query-name": "Edit nama kueri"
-    },
-    "query-error-alert": {
-      "error-details": "",
-      "fix-with-assistant": "",
-      "original-query": "",
-      "trace-id": "(ID Pelacakan: {{traceId}})"
-    },
-    "query-group": {
-      "add-query": "Tambahkan kueri",
-      "expression": "Ekspresi",
-      "title-data-source-help": "Bantuan sumber data"
-    },
-    "query-group-options-editor": {
-      "Query options-title-query-options": "Opsi kueri",
-      "collapsed-interval": "Interval = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
-      "hide-time-info": "Sembunyikan info waktu",
-      "relative-time": "Waktu relatif",
-      "relative-time-tooltip": "Mengganti rentang waktu yang relevan untuk masing-masing panel, yang menyebabkannya berbeda dengan yang dipilih di pemilih waktu dasbor di sudut kanan atas dasbor. Misalnya, untuk mengonfigurasi 5 menit Terakhir, Waktu relevan harus <1>{{relativeFrom}}</1> dan <4>{{relativeTo}}</4>, atau variabel seperti <6>{{variable}}</6>.",
-      "render-cache-timeout-option": {
-        "cache-timeout": "Cache timeout"
-      },
-      "render-interval-option": {
-        "interval": "Interval",
-        "interval-tooltip": "Interval yang dievaluasi yang dikirim ke sumber data dan digunakan dalam <1>$__interval</1> dan <4>$__interval_ms</4>. Nilai ini tidak persis sama dengan <6>Rentang waktu/titik data maksimum</6>, ini akan mendekati serangkaian angka ajaib.",
-        "min-interval": "Interval minimum",
-        "min-interval-tooltip": "Batas bawah untuk interval. Direkomendasikan untuk diatur ke frekuensi tulis, misalnya <1>1m</1> jika data Anda ditulis setiap menit. Nilai default dapat diatur dalam pengaturan sumber data untuk sebagian besar sumber data.",
-        "time-range-max-data-points": "Rentang waktu/titik data maksimum"
-      },
-      "render-max-data-points-option": {
-        "max-data-points": "Titik data maksimum",
-        "max-data-points-tooltip": "Titik data maksimum per rangkaian. Digunakan langsung oleh beberapa sumber data dan digunakan dalam perhitungan interval otomatis. Dengan data streaming, nilai ini digunakan untuk rolling buffer.",
-        "width-of-panel": "Lebar panel"
-      },
-      "render-query-caching-ttloption": {
-        "cache-ttl": "Cache TTL"
-      },
-      "time-shift": "Penggeseran waktu",
-      "time-shift-tooltip": "Mengganti rentang waktu untuk masing-masing panel dengan menggeser awal dan akhir yang relevan dengan pemilih waktu. Misalnya, untuk mengonfigurasi 1 jam Terakhir, Pergeseran waktu harus <1>{{relativeFrom}}</1> dan <4>{{relativeTo}}</4>, atau variabel seperti <6>{{variable}}</6>."
-    },
-    "query-group-top-section": {
-      "data-source": "Sumber data",
-      "query-inspector": "Pemeriksa kueri",
-      "query-tab-help-button-title-open-data-source-help": "Buka bantuan sumber data",
-      "title-data-source-help": "Bantuan sumber data"
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13273,12 +13315,6 @@
     },
     "dismissable-button": "Tutup"
   },
-  "role-picker-drawer": {
-    "basic-roles": {
-      "label": "Peran Dasar"
-    },
-    "user-count": "+{{numUsers}}"
-  },
   "role-picker": {
     "built-in": {
       "basic-roles": "Peran dasar"
@@ -13301,6 +13337,12 @@
     "title": {
       "description": "Tetapkan peran ke pengguna untuk memastikan kontrol terperinci atas akses ke fitur dan sumber daya Grafana. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
     }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Peran Dasar"
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana kemungkinan telah diperbarui. Coba muat ulang halaman.",
@@ -13647,6 +13689,23 @@
       "copy-button": "Salin ke Papan Klip"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "Panel pustaka baru",
+      "share-embed-title": "Bagikan sematan",
+      "share-link-title": "Pengaturan tautan"
+    },
+    "menu": {
+      "new-library-panel-title": "Panel pustaka baru",
+      "share-embed-title": "Bagikan sematan",
+      "share-link-title": "Bagikan tautan",
+      "share-snapshot-title": "Bagikan snapshot"
+    },
+    "new-library-panel": {
+      "cancel-button": "Batalkan",
+      "create-button": "Buat panel pustaka"
+    }
+  },
   "share-panel-image": {
     "disabled-help": "Simpan dasbor untuk mengaktifkan pembuatan gambar",
     "download-disabled-help": "Buat gambar terlebih dahulu untuk mengaktifkan unduhan",
@@ -13674,23 +13733,6 @@
       "width-required": "Lebar wajib diisi"
     }
   },
-  "share-panel": {
-    "drawer": {
-      "new-library-panel-title": "Panel pustaka baru",
-      "share-embed-title": "Bagikan sematan",
-      "share-link-title": "Pengaturan tautan"
-    },
-    "menu": {
-      "new-library-panel-title": "Panel pustaka baru",
-      "share-embed-title": "Bagikan sematan",
-      "share-link-title": "Bagikan tautan",
-      "share-snapshot-title": "Bagikan snapshot"
-    },
-    "new-library-panel": {
-      "cancel-button": "Batalkan",
-      "create-button": "Buat panel pustaka"
-    }
-  },
   "share-playlist": {
     "checkbox-description": "Tinggi panel akan disesuaikan agar sesuai dengan ukuran layar",
     "checkbox-label": "Pas Otomatis",
@@ -13700,6 +13742,24 @@
     "mode-kiosk": "Kios",
     "mode-normal": "Normal",
     "title": "Bagikan daftar putar"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Gelap",
+        "light-label": "Terang",
+        "system-label": "Preferensi sistem"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Apa Anda yakin ingin mencabut akses ini? Dasbor tidak dapat dibagikan lagi.",
+      "revoke-title": "Cabut akses"
+    },
+    "fields": {
+      "timezone-label": "Zona waktu"
+    }
   },
   "shared-dashboard-list": {
     "button": {
@@ -13714,15 +13774,6 @@
     },
     "toggle": {
       "pause-sharing-toggle-text": "Jeda akses"
-    }
-  },
-  "shared-dashboard": {
-    "delete-modal": {
-      "revoke-body-text": "Apa Anda yakin ingin mencabut akses ini? Dasbor tidak dapat dibagikan lagi.",
-      "revoke-title": "Cabut akses"
-    },
-    "fields": {
-      "timezone-label": "Zona waktu"
     }
   },
   "shared-preferences": {
@@ -13745,15 +13796,6 @@
     },
     "title": "Preferensi"
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "Gelap",
-        "light-label": "Terang",
-        "system-label": "Preferensi sistem"
-      }
-    }
-  },
   "sign-up": {
     "back-button": "Kembali ke login",
     "confirm-password-label": "Konfirmasi kata sandi",
@@ -13774,12 +13816,6 @@
       "send-button": "Kirim email verifikasi"
     }
   },
-  "silences-table": {
-    "header": {
-      "alert-name": "Nama peringatan",
-      "state": "Status"
-    }
-  },
   "silences": {
     "empty-state": {
       "button-title": "Buat senyap",
@@ -13793,6 +13829,12 @@
       "noConfig": "Buat titik kontak baru untuk membuat konfigurasi menggunakan nilai default atau hubungi administrator Anda untuk mengatur Alertmanager.",
       "recreate-button": "Buat ulang",
       "unsilence-button": "Batalkan Senyap"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Nama peringatan",
+      "state": "Status"
     }
   },
   "snapshot": {
@@ -14200,9 +14242,9 @@
     }
   },
   "time-period": {
-    "12_hours": "12 jam",
     "1_day": "1 hari",
     "1_hour": "1 jam",
+    "12_hours": "12 jam",
     "30_days": "30 hari",
     "6_hours": "6 Jam",
     "7_days": "7 hari"
@@ -15264,11 +15306,6 @@
   "user-sessions": {
     "loading": "Memuat sesi..."
   },
-  "users-access-list": {
-    "tabs": {
-      "shared-dashboard-users-tab-title": "Pengguna dasbor bersama"
-    }
-  },
   "users": {
     "empty-state": {
       "message": "Pengguna tidak ditemukan"
@@ -15287,6 +15324,11 @@
         }
       },
       "placeholder-search-login-email": "Cari pengguna berdasarkan login, email, atau nama"
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "shared-dashboard-users-tab-title": "Pengguna dasbor bersama"
     }
   },
   "variabels": {
@@ -15468,8 +15510,8 @@
       "title-dependencies": "Dependensi"
     },
     "variables-unknown-button": {
-      "VariablesUnknownButton-tooltip-show-usages": "Tampilkan penggunaan",
-      "usage-title": "Menampilkan penggunaan untuk: {{variableId}}"
+      "usage-title": "Menampilkan penggunaan untuk: {{variableId}}",
+      "VariablesUnknownButton-tooltip-show-usages": "Tampilkan penggunaan"
     },
     "variables-unknown-table": {
       "collapse-label": "Variabel yang diganti namanya atau hilang",
