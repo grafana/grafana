@@ -52,7 +52,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   }
 
   return (
-    <UrlSyncContextProvider scene={dashboard}>
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true}>
       <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />
     </UrlSyncContextProvider>
   );
