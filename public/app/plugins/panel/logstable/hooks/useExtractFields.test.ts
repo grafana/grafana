@@ -54,7 +54,4 @@ describe('useExtractFields', () => {
       expect(result.current.extractedFrame?.fields[4].name).toBe('level');
     });
   });
-
-  // Need to mock the fieldConfigRegistry
-  test.todo('fieldConfig overrides');
 });
