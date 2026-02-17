@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -741,6 +742,299 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))
 			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
 			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)
+		})
+	}
+}
+
+func TestDatasourceToExternalAMcfg(t *testing.T) {
+	tests := []struct {
+		name        string
+		datasource  *datasources.DataSource
+		expected    ExternalAMcfg
+		expectError bool
+	}{
+		{
+			name: "datasource with tlsSkipVerify enabled",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+			},
+		},
+		{
+			name: "datasource with tlsSkipVerify disabled",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": false,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+		},
+		{
+			name: "datasource without tlsSkipVerify (defaults to false)",
+			datasource: &datasources.DataSource{
+				URL:      "https://localhost:9093",
+				OrgID:    1,
+				Type:     datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: false,
+			},
+		},
+		{
+			name: "mimir datasource with tlsSkipVerify",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"implementation": "mimir",
+					"tlsSkipVerify":  true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093/alertmanager",
+				InsecureSkipVerify: true,
+			},
+		},
+		{
+			name: "datasource with basic auth and tlsSkipVerify",
+			datasource: &datasources.DataSource{
+				URL:           "https://localhost:9093",
+				OrgID:         1,
+				Type:          datasources.DS_ALERTMANAGER,
+				BasicAuth:     true,
+				BasicAuthUser: "user",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("password"),
+				},
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+				}),
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://user:password@localhost:9093",
+				InsecureSkipVerify: true,
+			},
+		},
+		{
+			name: "datasource with TLS client auth",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+					"tlsClientKey":  []byte("client-key-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:           "https://localhost:9093",
+				TLSClientCert: "client-cert-content",
+				TLSClientKey:  "client-key-content",
+			},
+		},
+		{
+			name: "datasource with TLS client auth and skip verify",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsSkipVerify": true,
+					"tlsAuth":       true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+					"tlsClientKey":  []byte("client-key-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:                "https://localhost:9093",
+				InsecureSkipVerify: true,
+				TLSClientCert:      "client-cert-content",
+				TLSClientKey:       "client-key-content",
+			},
+		},
+		{
+			name: "tlsAuth enabled but SecureJsonData is nil - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: nil,
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but tlsClientCert is empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientKey": []byte("client-key-content"),
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but tlsClientKey is empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": []byte("client-cert-content"),
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuth enabled but both cert and key are empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuth": true,
+				}),
+				SecureJsonData: map[string][]byte{},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := &AlertsRouter{
+				logger:            log.New("test"),
+				datasourceService: &fake_ds.FakeDataSourceService{},
+				secretService:     fake_secrets.NewFakeSecretsService(),
+			}
+
+			cfg, err := router.datasourceToExternalAMcfg(tt.datasource)
+
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, cfg)
+		})
+	}
+}
+
+func TestExternalAMcfg_SHA256(t *testing.T) {
+	// Golden config with all fields populated
+	goldenCfg := ExternalAMcfg{
+		URL: "https://localhost:9093",
+		Headers: http.Header{
+			"X-Custom-Header": []string{"value1"},
+			"Authorization":   []string{"Bearer token"},
+		},
+		Timeout:            30 * time.Second,
+		InsecureSkipVerify: true,
+		TLSClientCert:      "client-cert-content",
+		TLSClientKey:       "client-key-content",
+	}
+	goldenHash := goldenCfg.SHA256()
+
+	tests := []struct {
+		name         string
+		mutateFn     func(ExternalAMcfg) ExternalAMcfg
+		shouldDiffer bool
+	}{
+		{
+			name: "mutate URL - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.URL = "https://different-host:9093"
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate Headers - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.Headers = http.Header{
+					"X-Different-Header": []string{"different-value"},
+				}
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate Timeout - hash should NOT change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.Timeout = 60 * time.Second
+				return cfg
+			},
+			shouldDiffer: false,
+		},
+		{
+			name: "mutate InsecureSkipVerify - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.InsecureSkipVerify = false
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate TLSClientCert - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.TLSClientCert = "different-cert"
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate TLSClientKey - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.TLSClientKey = "different-key"
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mutatedCfg := tt.mutateFn(goldenCfg)
+			mutatedHash := mutatedCfg.SHA256()
+
+			if tt.shouldDiffer {
+				require.NotEqual(t, goldenHash, mutatedHash, "Expected hash to change after mutation")
+			} else {
+				require.Equal(t, goldenHash, mutatedHash, "Expected hash to remain the same after mutation")
+			}
 		})
 	}
 }
