@@ -105,7 +105,7 @@ The following table lists the types of variables shipped with Grafana.
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
 | Ad hoc filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add ad hoc filters](#add-ad-hoc-filters). |
 | Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                            |
-| Group by            | [Add a switch variable]().                            |
+| Group by            | [Add a switch variable](#add-a-group-by-variable).                            |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
@@ -139,7 +139,7 @@ To create a variable, follow these steps:
    - [Interval](#add-an-interval-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
-   - [Group by]()
+   - [Group by](#add-a-group-by-variable)
 
 <!-- vale Grafana.Spelling = YES -->
 
