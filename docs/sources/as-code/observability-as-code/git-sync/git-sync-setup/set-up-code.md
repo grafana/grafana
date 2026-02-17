@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Set up Git Sync as code
+title: Set up Git Sync as code (GitHub only)
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
