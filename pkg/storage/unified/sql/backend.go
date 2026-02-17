@@ -8,10 +8,14 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"sync"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,10 +28,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -60,7 +68,112 @@ func ProvideStorageBackend(
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer
-	resource.LifecycleHooks
+}
+
+// NewStorageBackend creates the unified storage backend based on options.StorageType.
+// It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
+// Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
+// For all other storage types a SQL backend will be created.
+func NewStorageBackend(
+	cfg *setting.Cfg,
+	db infraDB.DB,
+	reg prometheus.Registerer,
+	storageMetrics *resource.StorageMetrics,
+	tracer trace.Tracer,
+	disableStorageServices bool,
+) (resource.StorageBackend, error) {
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+	switch storageType {
+	case options.StorageTypeFile:
+		return NewFileBackend(cfg)
+	case options.StorageTypeUnifiedGrpc:
+		return nil, nil
+	default: // fall back to SQL backend
+	}
+	// create default unified backend
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
+		cfg.SectionWithEnvOverrides("resource_api"))
+
+	if !cfg.EnableSQLKVBackend {
+		return NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  reg,
+			IsHA:                 isHA,
+			storageMetrics:       storageMetrics,
+			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+			GarbageCollection: GarbageCollectionConfig{
+				Enabled:          cfg.EnableGarbageCollection,
+				Interval:         cfg.GarbageCollectionInterval,
+				BatchSize:        cfg.GarbageCollectionBatchSize,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+			},
+			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
+			DisableStorageServices:  disableStorageServices,
+		})
+	}
+
+	ctx := context.Background()
+	dbConn, err := eDB.Init(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing DB: %w", err)
+	}
+	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	if dialect == nil {
+		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+	}
+
+	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	if err != nil {
+		return nil, fmt.Errorf("error creating sqlkv: %s", err)
+	}
+
+	kvBackendOpts := resource.KVBackendOptions{
+		KvStore:              sqlkv,
+		Tracer:               tracer,
+		Reg:                  reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+	}
+
+	if cfg.EnableSQLKVCompatibilityMode {
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      dbConn,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+		}
+
+		kvBackendOpts.RvManager = rvManager
+	}
+
+	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	dataPath := apiserverCfg.Key("storage_path").
+		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kvStore := resource.NewBadgerKV(db)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kvStore,
+		Log:     log.New("storage-backend"),
+	})
 }
 
 type BackendOptions struct {
@@ -93,7 +206,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
-	return &backend{
+	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
@@ -108,10 +221,20 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
-	}, nil
+	}
+	if err := backend.Init(ctx); err != nil {
+		return nil, err
+	}
+	backend.Service = services.NewIdleService(nil, func(_ error) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return backend.Stop(ctx)
+	})
+	return backend, nil
 }
 
 type backend struct {
+	services.Service
 	//general
 	isHA                   bool
 	disableStorageServices bool
