@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { configureStore } from '../../../store/configureStore';
 import { makeExplorePaneState } from '../state/utils';
@@ -73,40 +73,25 @@ describe('ExploreVariableEditor', () => {
   });
 
   describe('when opened with no variables', () => {
-    it('shows type selection view', () => {
+    it('opens editor form directly for a new CustomVariable', async () => {
       renderEditor({});
-
-      expect(screen.getByText('Custom')).toBeInTheDocument();
-      expect(screen.getByText('Query')).toBeInTheDocument();
-      expect(screen.getByText('Textbox')).toBeInTheDocument();
-      expect(screen.getByText('Constant')).toBeInTheDocument();
-    });
-
-    it('closes the Drawer when cancel is clicked', async () => {
-      const user = userEvent.setup();
-      const { onClose } = renderEditor({});
-
-      await user.click(screen.getByText('Cancel'));
-      expect(onClose).toHaveBeenCalled();
-    });
-  });
-
-  describe('type selection', () => {
-    it('transitions to editor form after selecting a type', async () => {
-      const user = userEvent.setup();
-      renderEditor({});
-
-      await user.click(screen.getByText('Custom'));
 
       const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
       expect(editorForm).toBeInTheDocument();
     });
 
-    it('renders VariableEditorForm for a CustomVariable', async () => {
-      const user = userEvent.setup();
+    it('does not show type selection', () => {
       renderEditor({});
 
-      await user.click(screen.getByText('Custom'));
+      expect(screen.queryByText('Query')).not.toBeInTheDocument();
+      expect(screen.queryByText('Textbox')).not.toBeInTheDocument();
+      expect(screen.queryByText('Constant')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('editor form', () => {
+    it('renders VariableEditorForm for a CustomVariable', async () => {
+      renderEditor({});
 
       const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
       expect(editorForm).toBeInTheDocument();
@@ -117,17 +102,12 @@ describe('ExploreVariableEditor', () => {
       expect(nameInput).toBeInTheDocument();
     });
 
-    it('renders VariableEditorForm for a QueryVariable', async () => {
-      const queryVar = new QueryVariable({ name: 'query0' });
-      const variableSet = new SceneVariableSet({ variables: [queryVar] });
-      renderEditor({ variableSet, initialView: 'list' });
+    it('hides the variable type selector', async () => {
+      renderEditor({});
 
-      const user = userEvent.setup();
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      await user.click(editButtons[0]);
+      await screen.findByRole('form', { name: /variable editor form/i });
 
-      const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
-      expect(editorForm).toBeInTheDocument();
+      expect(screen.queryByLabelText(/variable type/i)).not.toBeInTheDocument();
     });
   });
 
@@ -145,13 +125,6 @@ describe('ExploreVariableEditor', () => {
 
       expect(screen.getByText('myvar')).toBeInTheDocument();
       expect(screen.getByText('othervar')).toBeInTheDocument();
-    });
-
-    it('shows variable type in list', () => {
-      const { variableSet } = setupWithVariables();
-      renderEditor({ variableSet, initialView: 'list' });
-
-      expect(screen.getAllByText('custom').length).toBeGreaterThanOrEqual(2);
     });
 
     it('opens editor form when clicking edit on a variable', async () => {
@@ -177,24 +150,25 @@ describe('ExploreVariableEditor', () => {
       expect(screen.getByText('Delete variable')).toBeInTheDocument();
     });
 
-    it('opens type selection when clicking New variable', async () => {
+    it('opens editor form directly when clicking New variable', async () => {
       const user = userEvent.setup();
       const { variableSet } = setupWithVariables();
       renderEditor({ variableSet, initialView: 'list' });
 
       await user.click(screen.getByText('New variable'));
 
-      expect(screen.getByText('Custom')).toBeInTheDocument();
-      expect(screen.getByText('Query')).toBeInTheDocument();
+      const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
+      expect(editorForm).toBeInTheDocument();
     });
   });
 
   describe('empty list view', () => {
-    it('shows type selection when no variables exist', () => {
+    it('opens editor form directly when no variables exist', async () => {
       const variableSet = new SceneVariableSet({ variables: [] });
       renderEditor({ variableSet });
 
-      expect(screen.getByText('Custom')).toBeInTheDocument();
+      const editorForm = await screen.findByRole('form', { name: /variable editor form/i });
+      expect(editorForm).toBeInTheDocument();
     });
   });
 

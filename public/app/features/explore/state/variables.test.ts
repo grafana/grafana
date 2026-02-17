@@ -1,20 +1,16 @@
 import {
-  ConstantVariable,
   CustomVariable,
-  QueryVariable,
   SceneVariableSet,
   SceneVariableValueChangedEvent,
-  TextBoxVariable,
 } from '@grafana/scenes';
 
-import { getNextAvailableId, getVariableScene } from '../../dashboard-scene/settings/variables/utils';
+import { getNextAvailableId } from '../../dashboard-scene/settings/variables/utils';
 
 import { makeExplorePaneState } from './utils';
 import {
   addSceneVariableAction,
   buildExploreVariableScopedVars,
   removeVariableAction,
-  replaceVariableAction,
   setVariablesAction,
   variablesReducer,
 } from './variables';
@@ -46,66 +42,20 @@ describe('explore variables state management', () => {
       expect((added as CustomVariable).state.query).toBe('a,b,c');
     });
 
-    it('should add a QueryVariable', () => {
-      const state = makeExplorePaneState();
-      const variable = new QueryVariable({ name: 'queryVar', query: 'label_values(up, job)' });
-
-      const newState = variablesReducer(
-        state,
-        addSceneVariableAction({ exploreId: 'left', variable })
-      );
-
-      expect(newState.variableSet.state.variables).toHaveLength(1);
-      const added = newState.variableSet.state.variables[0];
-      expect(added).toBeInstanceOf(QueryVariable);
-      expect(added.state.name).toBe('queryVar');
-    });
-
-    it('should add a TextBoxVariable with a default value', () => {
-      const state = makeExplorePaneState();
-      const variable = new TextBoxVariable({ name: 'textVar', value: 'myvalue' });
-
-      const newState = variablesReducer(
-        state,
-        addSceneVariableAction({ exploreId: 'left', variable })
-      );
-
-      expect(newState.variableSet.state.variables).toHaveLength(1);
-      const added = newState.variableSet.state.variables[0];
-      expect(added).toBeInstanceOf(TextBoxVariable);
-      expect(added.state.name).toBe('textVar');
-      expect(String(added.getValue())).toBe('myvalue');
-    });
-
-    it('should add a ConstantVariable with a value', () => {
-      const state = makeExplorePaneState();
-      const variable = new ConstantVariable({ name: 'constVar', value: 'fixed' });
-
-      const newState = variablesReducer(
-        state,
-        addSceneVariableAction({ exploreId: 'left', variable })
-      );
-
-      expect(newState.variableSet.state.variables).toHaveLength(1);
-      const added = newState.variableSet.state.variables[0];
-      expect(added).toBeInstanceOf(ConstantVariable);
-      expect(added.state.name).toBe('constVar');
-      expect(String(added.getValue())).toBe('fixed');
-    });
   });
 
   describe('auto-generated names', () => {
     it('should generate unique names for the same type', () => {
-      const v0 = new QueryVariable({ name: 'query0' });
+      const v0 = new CustomVariable({ name: 'custom0' });
       const variables = [v0];
 
-      const nextName = getNextAvailableId('query', variables);
-      expect(nextName).toBe('query1');
+      const nextName = getNextAvailableId('custom', variables);
+      expect(nextName).toBe('custom1');
     });
 
-    it('should generate query0 when no query variables exist', () => {
-      const nextName = getNextAvailableId('query', []);
-      expect(nextName).toBe('query0');
+    it('should generate custom0 when no custom variables exist', () => {
+      const nextName = getNextAvailableId('custom', []);
+      expect(nextName).toBe('custom0');
     });
 
     it('should skip taken names', () => {
@@ -153,28 +103,6 @@ describe('explore variables state management', () => {
     });
   });
 
-  describe('replaceVariableAction', () => {
-    it('should replace a variable by name preserving name and label', () => {
-      const original = new CustomVariable({ name: 'myVar', label: 'My Variable', query: 'a,b' });
-      const state = makeExplorePaneState({
-        variableSet: new SceneVariableSet({ variables: [original] }),
-      });
-
-      const replacement = getVariableScene('textbox', { name: 'myVar', label: 'My Variable' });
-
-      const newState = variablesReducer(
-        state,
-        replaceVariableAction({ exploreId: 'left', oldName: 'myVar', variable: replacement })
-      );
-
-      expect(newState.variableSet.state.variables).toHaveLength(1);
-      const replaced = newState.variableSet.state.variables[0];
-      expect(replaced).toBeInstanceOf(TextBoxVariable);
-      expect(replaced.state.name).toBe('myVar');
-      expect(replaced.state.label).toBe('My Variable');
-    });
-  });
-
   describe('buildExploreVariableScopedVars', () => {
     it('should convert empty SceneVariableSet to empty ScopedVars', () => {
       const variableSet = new SceneVariableSet({ variables: [] });
@@ -194,20 +122,16 @@ describe('explore variables state management', () => {
 
     it('should convert multiple variables to multiple ScopedVars entries', () => {
       const v1 = new CustomVariable({ name: 'job', query: 'demo,node', value: 'demo', text: 'demo' });
-      const v2 = new TextBoxVariable({ name: 'filter', value: 'error' });
-      const v3 = new ConstantVariable({ name: 'env', value: 'prod' });
+      const v2 = new CustomVariable({ name: 'env', query: 'dev,prod', value: 'dev', text: 'dev' });
+      const v3 = new CustomVariable({ name: 'region', query: 'us,eu', value: 'us', text: 'us' });
       const variableSet = new SceneVariableSet({ variables: [v1, v2, v3] });
 
       const scopedVars = buildExploreVariableScopedVars(variableSet);
 
       expect(Object.keys(scopedVars)).toHaveLength(3);
       expect(scopedVars['job']).toEqual({ text: 'demo', value: 'demo' });
-      expect(scopedVars['filter']).toEqual(
-        expect.objectContaining({ value: 'error' })
-      );
-      expect(scopedVars['env']).toEqual(
-        expect.objectContaining({ value: 'prod' })
-      );
+      expect(scopedVars['env']).toEqual({ text: 'dev', value: 'dev' });
+      expect(scopedVars['region']).toEqual({ text: 'us', value: 'us' });
     });
   });
 

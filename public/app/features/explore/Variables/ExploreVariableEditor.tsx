@@ -1,22 +1,17 @@
 import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { ConfirmModal, Drawer } from '@grafana/ui';
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
-import {
-  EditableVariableType,
-  getNextAvailableId,
-  getVariableScene,
-} from 'app/features/dashboard-scene/settings/variables/utils';
+import { getNextAvailableId } from 'app/features/dashboard-scene/settings/variables/utils';
 import { useDispatch } from 'app/types/store';
 
-import { addSceneVariableAction, removeVariableAction, replaceVariableAction } from '../state/variables';
+import { addSceneVariableAction, removeVariableAction } from '../state/variables';
 
 import { ExploreVariableListView } from './ExploreVariableListView';
-import { ExploreVariableTypeSelection } from './ExploreVariableTypeSelection';
 
-type DrawerView = 'list' | 'typeSelection' | 'editor';
+type DrawerView = 'list' | 'editor';
 
 interface Props {
   exploreId: string;
@@ -31,38 +26,18 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
   const hasVariables = variables.length > 0;
 
   const computedInitialView: DrawerView =
-    initialViewProp === 'list' && hasVariables
-      ? 'list'
-      : initialViewProp === 'editor' || !hasVariables
-        ? 'typeSelection'
-        : 'list';
+    initialViewProp === 'list' && hasVariables ? 'list' : 'editor';
   const [view, setView] = useState<DrawerView>(computedInitialView);
-  const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<SceneVariable | null>(null);
-
-  const onSelectType = useCallback(
-    (type: EditableVariableType) => {
-      const name = getNextAvailableId(type, variableSet.state.variables);
-      const variable = getVariableScene(type, { name });
+  const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(() => {
+    if (computedInitialView === 'editor') {
+      const name = getNextAvailableId('custom', variableSet.state.variables);
+      const variable = new CustomVariable({ name });
       dispatch(addSceneVariableAction({ exploreId, variable }));
-      setEditingVariable(variable);
-      setView('editor');
-    },
-    [dispatch, exploreId, variableSet]
-  );
-
-  const onTypeChange = useCallback(
-    (type: EditableVariableType) => {
-      if (!editingVariable) {
-        return;
-      }
-      const { name, label } = editingVariable.state;
-      const newVariable = getVariableScene(type, { name, label });
-      dispatch(replaceVariableAction({ exploreId, oldName: name, variable: newVariable }));
-      setEditingVariable(newVariable);
-    },
-    [dispatch, exploreId, editingVariable]
-  );
+      return variable;
+    }
+    return null;
+  });
+  const [deleteTarget, setDeleteTarget] = useState<SceneVariable | null>(null);
 
   const onConfirmDelete = useCallback(
     (variable: SceneVariable) => {
@@ -104,15 +79,17 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
   }, [hasVariables, onClose]);
 
   const onAddFromList = useCallback(() => {
-    setView('typeSelection');
-  }, []);
+    const name = getNextAvailableId('custom', variableSet.state.variables);
+    const variable = new CustomVariable({ name });
+    dispatch(addSceneVariableAction({ exploreId, variable }));
+    setEditingVariable(variable);
+    setView('editor');
+  }, [dispatch, exploreId, variableSet]);
 
   const drawerTitle =
     view === 'list'
       ? t('explore.variable-editor.title-variables', 'Variables')
-      : view === 'typeSelection'
-        ? t('explore.variable-editor.title-select-type', 'Select variable type')
-        : t('explore.variable-editor.title-edit-variable', 'Edit variable');
+      : t('explore.variable-editor.title-edit-variable', 'Edit variable');
 
   return (
     <>
@@ -125,16 +102,9 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
             onAdd={onAddFromList}
           />
         )}
-        {view === 'typeSelection' && (
-          <ExploreVariableTypeSelection
-            onSelect={onSelectType}
-            onCancel={hasVariables ? () => setView('list') : onClose}
-          />
-        )}
         {view === 'editor' && editingVariable && (
           <VariableEditorForm
             variable={editingVariable}
-            onTypeChange={onTypeChange}
             onGoBack={onGoBack}
             onDelete={onDeleteFromEditor}
             key={editingVariable.state.key}

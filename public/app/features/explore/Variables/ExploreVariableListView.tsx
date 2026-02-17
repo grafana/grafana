@@ -46,10 +46,7 @@ export function ExploreVariableListView({ variables, onEdit, onDelete, onAdd }: 
         <tbody>
           {variables.map((variable) => (
             <tr key={variable.state.name}>
-              <td className={styles.nameCell}>
-                <span className={styles.variableName}>{variable.state.name}</span>
-                <span className={styles.variableType}>{variable.state.type}</span>
-              </td>
+              <td className={styles.nameCell}>{variable.state.name}</td>
               <td className={styles.definitionCell}>{getDefinition(variable)}</td>
               <td className={styles.actionsCell}>
                 <Stack direction="row" gap={1}>
@@ -99,16 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   nameCell: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.25),
-  }),
-  variableName: css({
     fontWeight: theme.typography.fontWeightMedium,
-  }),
-  variableType: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
   }),
   definitionCell: css({
     color: theme.colors.text.secondary,
