@@ -935,9 +935,9 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
-      "used-by_one": "Used by {{count}} notification policy",
+      "used-by_one": "Used by {{count}} notification policies",
       "used-by_other": "Used by {{count}} notification policies",
-      "used-by-rules_one": "Used by {{count}} alert rule",
+      "used-by-rules_one": "Used by {{count}} alert rules",
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
@@ -4160,11 +4160,11 @@
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
-      "all-failed_other": "Failed to restore {{count}} dashboards.",
+      "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
-      "failed-count_other": "{{count}} dashboards failed",
+      "failed-count_other": "{{count}} dashboard failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboards restored successfully",
+      "success-count_other": "{{count}} dashboard restored successfully",
       "success-multiple": "Dashboards restored",
       "success-single": "Dashboard restored",
       "view-dashboard": "View dashboard",
@@ -6254,6 +6254,19 @@
     "community-mapping-select-datasource": "Select a datasource",
     "community-search-placeholder": "Search community dashboards...",
     "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+    "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
+    "compatibility-badge": {
+      "check": "Check compatibility",
+      "check-tooltip": "Checks how many dashboard metrics match your data source.",
+      "checking": "Checking",
+      "error-text": "Error",
+      "error-tooltip": "Compatibility check failed. First, verify the <2>data source</2> is working. Then open the dashboard and review the <6>variables</6>.",
+      "not-supported-tooltip": "This dashboard or datasource type is not yet supported. Only Prometheus datasources and non-dynamic dashboards (v1) are currently supported.",
+      "score-text": "{{score}}% compatible",
+      "tooltip-green": "{{score}}% ({{found}}/{{total}}) of metrics match.",
+      "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",
+      "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
@@ -10339,7 +10352,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
