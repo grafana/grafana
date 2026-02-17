@@ -12723,6 +12723,7 @@
       "source-code": "Source code"
     },
     "repository-card": {
+      "last-sync": "Last sync: {{date}}",
       "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
