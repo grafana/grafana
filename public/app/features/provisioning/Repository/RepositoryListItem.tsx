@@ -1,15 +1,21 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  Repository,
+  ResourceCount,
+  useGetRepositoryFilesQuery,
+  useGetRepositoryResourcesQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
+import { buildTree, countMissingMetadata, mergeFilesAndResources } from '../utils/treeUtils';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -21,6 +27,20 @@ export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
+
+  // SPIKE: detect missing folder metadata for this repository
+  const filesQuery = useGetRepositoryFilesQuery({ name });
+  const resourcesQuery = useGetRepositoryResourcesQuery({ name });
+  const hasMissingMetadata = useMemo(() => {
+    const files = filesQuery.data?.items ?? [];
+    const resources = resourcesQuery.data?.items ?? [];
+    if (!files.length && !resources.length) {
+      return false;
+    }
+    const merged = mergeFilesAndResources(files, resources);
+    const tree = buildTree(merged);
+    return countMissingMetadata(tree) > 0;
+  }, [filesQuery.data?.items, resourcesQuery.data?.items]);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -54,7 +74,7 @@ export function RepositoryListItem({ repository }: Props) {
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
-          <StatusBadge repo={repository} />
+          <StatusBadge repo={repository} hasMissingMetadata={hasMissingMetadata} />
           {isReadOnlyRepo && (
             <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
           )}

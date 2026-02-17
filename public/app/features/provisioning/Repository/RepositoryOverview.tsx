@@ -2,12 +2,18 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Repository,
+  ResourceCount,
+  useGetRepositoryFilesQuery,
+  useGetRepositoryResourcesQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { buildTree, countMissingMetadata, mergeFilesAndResources } from '../utils/treeUtils';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -24,10 +30,25 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
+  const repoName = repo.metadata?.name ?? '';
 
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
   const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
+
+  // SPIKE: detect missing folder metadata
+  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
+  const resourcesQuery = useGetRepositoryResourcesQuery({ name: repoName });
+  const missingMetadataCount = useMemo(() => {
+    const files = filesQuery.data?.items ?? [];
+    const resources = resourcesQuery.data?.items ?? [];
+    if (!files.length && !resources.length) {
+      return 0;
+    }
+    const merged = mergeFilesAndResources(files, resources);
+    const tree = buildTree(merged);
+    return countMissingMetadata(tree);
+  }, [filesQuery.data?.items, resourcesQuery.data?.items]);
 
   const resourceColumns = useMemo(
     () => [
@@ -53,6 +74,21 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
+        {missingMetadataCount > 0 && (
+          <Alert
+            severity="warning"
+            title={t(
+              'provisioning.repository-overview.missing-metadata-title',
+              '{{count}} folder(s) missing metadata',
+              { count: missingMetadataCount }
+            )}
+          >
+            <Trans i18nKey="provisioning.repository-overview.missing-metadata-body">
+              Some folders in this repository are missing .folder.json metadata files. Go to the Resources tab to review
+              and fix them.
+            </Trans>
+          </Alert>
+        )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
             <Card noMargin className={styles.card}>

@@ -97,6 +97,8 @@ export interface TreeItem {
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
+  /** SPIKE: folder is missing .folder.json metadata file */
+  missingMetadata?: boolean;
 }
 
 export interface FlatTreeItem {

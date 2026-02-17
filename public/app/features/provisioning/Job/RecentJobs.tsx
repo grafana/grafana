@@ -75,7 +75,21 @@ const getJobColumns = () => [
   {
     id: 'message',
     header: t('provisioning.recent-jobs.column-message', 'Message'),
-    cell: ({ row: { original: job } }: JobCell) => <span>{job.status?.message}</span>,
+    cell: ({ row: { original: job } }: JobCell) => {
+      const message = job.status?.message;
+      const hasMetadataWarning = message?.includes('missing .folder.json');
+      if (hasMetadataWarning && job.spec?.repository) {
+        return (
+          <Stack direction="row" gap={1} alignItems="center">
+            <span>{message}</span>
+            <a href={`/provisioning/${job.spec.repository}?tab=resources`}>
+              <Badge text="Fix" color="orange" icon="wrench" />
+            </a>
+          </Stack>
+        );
+      }
+      return <span>{message}</span>;
+    },
   },
 ];
 

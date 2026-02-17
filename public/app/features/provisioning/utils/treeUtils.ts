@@ -179,6 +179,20 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   };
 
   updateFolderStatus(roots);
+
+  // SPIKE: detect folders missing .folder.json metadata files
+  const filePaths = new Set(mergedItems.map((item) => item.path));
+  const markMissingMetadata = (nodes: TreeItem[]) => {
+    for (const node of nodes) {
+      if (node.type === 'Folder') {
+        const metadataPath = node.path ? `${node.path}/.folder.json` : '.folder.json';
+        node.missingMetadata = !filePaths.has(metadataPath);
+        markMissingMetadata(node.children);
+      }
+    }
+  };
+  markMissingMetadata(roots);
+
   return roots;
 }
 
@@ -197,6 +211,20 @@ export function flattenTree(items: TreeItem[], level = 0): FlatTreeItem[] {
   }
 
   return result;
+}
+
+/**
+ * SPIKE: Count folders with missing .folder.json metadata in a tree.
+ */
+export function countMissingMetadata(items: TreeItem[]): number {
+  let count = 0;
+  for (const item of items) {
+    if (item.missingMetadata) {
+      count++;
+    }
+    count += countMissingMetadata(item.children);
+  }
+  return count;
 }
 
 /**

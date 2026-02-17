@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
+  Alert,
+  Button,
   CellProps,
   Column,
   FilterInput,
@@ -13,6 +15,7 @@ import {
   LinkButton,
   Spinner,
   Stack,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -23,7 +26,14 @@ import {
 
 import { FlatTreeItem, TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
-import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
+import {
+  buildTree,
+  countMissingMetadata,
+  filterTree,
+  flattenTree,
+  getIconName,
+  mergeFilesAndResources,
+} from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
   repo: Repository;
@@ -51,22 +61,30 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFixing, setIsFixing] = useState(false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
-  const flatItems = useMemo(() => {
+  const { flatItems, missingCount } = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
 
     const merged = mergeFilesAndResources(files, resources);
     let tree = buildTree(merged);
+    const missing = countMissingMetadata(tree);
 
     if (searchQuery) {
       tree = filterTree(tree, searchQuery);
     }
 
-    return flattenTree(tree);
+    return { flatItems: flattenTree(tree), missingCount: missing };
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery]);
+
+  const handleFixFolderIds = () => {
+    setIsFixing(true);
+    // SPIKE: Simulate creating a PR job to fix folder metadata
+    setTimeout(() => setIsFixing(false), 2000);
+  };
 
   const columns: Array<Column<FlatTreeItem>> = useMemo(
     () => [
@@ -97,7 +115,16 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'status',
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { status } = original.item;
+          const { status, missingMetadata } = original.item;
+
+          if (missingMetadata) {
+            return (
+              <Tooltip content={t('provisioning.resource-tree.missing-metadata', 'Missing .folder.json metadata file')}>
+                <Icon name="exclamation-triangle" className={styles.warningIcon} />
+              </Tooltip>
+            );
+          }
+
           if (!status) {
             return null;
           }
@@ -143,24 +170,25 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           let sourceLink: string | undefined = undefined;
           if (item.hasFile && repo.spec?.type) {
             const spec = repo.spec;
-            const config = spec.github || spec.gitlab || spec.bitbucket;
-            if (config) {
+            const ghConfig = spec.github || spec.gitlab || spec.bitbucket;
+            if (ghConfig) {
               sourceLink = getRepoFileUrl({
                 repoType: spec.type,
-                url: config.url,
-                branch: config.branch,
+                url: ghConfig.url,
+                branch: ghConfig.branch,
                 filePath: item.path,
-                pathPrefix: config.path,
+                pathPrefix: ghConfig.path,
               });
             }
           }
 
-          if (!viewLink && !sourceLink) {
-            return null;
-          }
-
           return (
             <Stack direction="row" gap={1}>
+              {item.missingMetadata && (
+                <Button size="sm" variant="secondary" icon="wrench" onClick={handleFixFolderIds} disabled={isFixing}>
+                  <Trans i18nKey="provisioning.resource-tree.fix">Fix</Trans>
+                </Button>
+              )}
               {viewLink && (
                 <LinkButton href={viewLink} size="sm" variant="secondary">
                   <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
@@ -176,7 +204,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [repo.spec, styles]
+    [repo.spec, styles, handleFixFolderIds, isFixing]
   );
 
   if (isLoading) {
@@ -189,6 +217,32 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   return (
     <Stack direction="column" gap={2}>
+      {missingCount > 0 && (
+        <Alert
+          severity="warning"
+          title={t(
+            'provisioning.resource-tree.missing-metadata-alert',
+            '{{count}} folder(s) are missing .folder.json metadata files',
+            { count: missingCount }
+          )}
+        >
+          <Stack direction="row" alignItems="center" gap={2}>
+            <span>
+              <Trans i18nKey="provisioning.resource-tree.missing-metadata-description">
+                Folders without metadata files may lose their identity across syncs. Fix this by creating a PR to add
+                the missing files.
+              </Trans>
+            </span>
+            <Button variant="secondary" icon="wrench" onClick={handleFixFolderIds} disabled={isFixing}>
+              {isFixing ? (
+                <Trans i18nKey="provisioning.resource-tree.fixing">Fixing...</Trans>
+              ) : (
+                <Trans i18nKey="provisioning.resource-tree.fix-all">Fix folder IDs</Trans>
+              )}
+            </Button>
+          </Stack>
+        </Alert>
+      )}
       <FilterInput
         placeholder={t('provisioning.resource-tree.search-placeholder', 'Search by path or title')}
         autoFocus={true}
@@ -222,5 +276,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   syncedIcon: css({
     color: theme.colors.success.text,
+  }),
+  warningIcon: css({
+    color: theme.colors.warning.text,
   }),
 });

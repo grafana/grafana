@@ -54,8 +54,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
-  // Show permissions only if the folder is not provisioned
-  const canShowPermissions = canViewPermissions && !isProvisionedFolder;
+  // SPIKE: Permissions are now allowed for provisioned folders (folder UID is stable)
+  const canShowPermissions = canViewPermissions;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
@@ -148,7 +148,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const menu = (
     <Menu>
-      {canViewPermissions && !isProvisionedFolder && (
+      {/* SPIKE: Permissions now shown for provisioned folders too */}
+      {canViewPermissions && (
         <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
       )}
       {showManageOwners && (

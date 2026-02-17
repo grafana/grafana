@@ -14,7 +14,7 @@ interface BadgeConfig {
   tooltip?: string;
 }
 
-function getBadgeConfig(repo: Repository): BadgeConfig {
+function getBadgeConfig(repo: Repository, hasMissingMetadata?: boolean): BadgeConfig {
   if (repo.metadata?.deletionTimestamp) {
     return {
       color: 'red',
@@ -37,6 +37,19 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
       text: t('provisioning.status-badge.pending', 'Pending'),
       icon: 'spinner',
       tooltip: t('provisioning.status-badge.waiting-for-health-check', 'Waiting for health check to run'),
+    };
+  }
+
+  // SPIKE: if metadata is missing, show warning regardless of sync state
+  if (hasMissingMetadata) {
+    return {
+      color: 'orange',
+      text: t('provisioning.status-badge.missing-metadata', 'Missing metadata'),
+      icon: 'exclamation-triangle',
+      tooltip: t(
+        'provisioning.status-badge.missing-metadata-tooltip',
+        'Some folders are missing .folder.json metadata files'
+      ),
     };
   }
 
@@ -79,9 +92,11 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
 interface StatusBadgeProps {
   repo?: Repository;
   displayOnly?: boolean; // if true, disable click action and cursor will be default
+  /** SPIKE: whether the repo has folders with missing metadata */
+  hasMissingMetadata?: boolean;
 }
 
-export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
+export function StatusBadge({ repo, displayOnly = false, hasMissingMetadata }: StatusBadgeProps) {
   const handleClick = useCallback(() => {
     if (displayOnly || !repo?.metadata?.name) {
       return;
@@ -93,7 +108,7 @@ export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
     return null;
   }
 
-  const { color, text, icon, tooltip } = getBadgeConfig(repo);
+  const { color, text, icon, tooltip } = getBadgeConfig(repo, hasMissingMetadata);
 
   return (
     <Badge
