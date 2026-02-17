@@ -64,8 +64,8 @@ func TestSetTeamMembershipsViaK8s_Success(t *testing.T) {
 
 	s.mockResClient.AssertExpectations(t)
 
-	s.mockResClient.AssertCalled(t, "List", s.ctx, s.namespace, mock.Anything)
-	s.mockResClient.AssertCalled(t, "Delete", s.ctx, resource.Identifier{
+	s.mockResClient.AssertCalled(t, "List", mock.Anything, s.namespace, mock.Anything)
+	s.mockResClient.AssertCalled(t, "Delete", mock.Anything, resource.Identifier{
 		Namespace: s.namespace,
 		Name:      oldBindingName,
 	}, resource.DeleteOptions{})
@@ -188,10 +188,13 @@ func setupTest(t *testing.T) *testSetup {
 	mockUserSvc := usertest.NewMockService(t)
 	teamBindingClient := iamv0alpha1.NewTeamBindingClient(mockResClient)
 
+	mockFactory := NewMockTeamBindingClientFactory(t)
+	mockFactory.On("GetClient", mock.Anything).Return(teamBindingClient, nil)
+
 	tapi := &TeamAPI{
-		teamBindingClient: teamBindingClient,
-		userService:       mockUserSvc,
-		logger:            log.NewNopLogger(),
+		teamBindingClientFactory: mockFactory,
+		userService:              mockUserSvc,
+		logger:                   log.NewNopLogger(),
 	}
 
 	reqContext := &contextmodel.ReqContext{
@@ -199,8 +202,9 @@ func setupTest(t *testing.T) *testSetup {
 			Req: &http.Request{},
 		},
 		SignedInUser: &user.SignedInUser{
-			UserID: 1,
-			OrgID:  orgID,
+			UserID:    1,
+			OrgID:     orgID,
+			Namespace: fmt.Sprintf("org-%d", orgID),
 		},
 	}
 	reqContext.Req = reqContext.Req.WithContext(ctx)
@@ -220,17 +224,17 @@ func setupTest(t *testing.T) *testSetup {
 }
 
 func (s *testSetup) mockUserExists(email string, userID int64) {
-	s.mockUserSvc.On("GetByEmail", s.ctx, &user.GetUserByEmailQuery{Email: email}).
+	s.mockUserSvc.On("GetByEmail", mock.Anything, &user.GetUserByEmailQuery{Email: email}).
 		Return(&user.User{ID: userID, Email: email}, nil)
 }
 
 func (s *testSetup) mockUserExistsForGetByID(userID int64, email string) {
-	s.mockUserSvc.On("GetByID", s.ctx, &user.GetUserByIDQuery{ID: userID}).
+	s.mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: userID}).
 		Return(&user.User{ID: userID, Email: email}, nil)
 }
 
 func (s *testSetup) mockListBindings(bindings *iamv0alpha1.TeamBindingList) {
-	s.mockResClient.On("List", s.ctx, s.namespace, mock.MatchedBy(func(opts resource.ListOptions) bool {
+	s.mockResClient.On("List", mock.Anything, s.namespace, mock.MatchedBy(func(opts resource.ListOptions) bool {
 		return len(opts.FieldSelectors) == 1 && opts.FieldSelectors[0] == fmt.Sprintf("spec.teamRef.name=%s", s.teamName)
 	})).Return(bindings, nil)
 }
@@ -254,7 +258,7 @@ func (s *testSetup) mockCreateBinding(userID int64, permission iamv0alpha1.TeamB
 	}
 
 	userIDStr := fmt.Sprintf("%d", userID)
-	s.mockResClient.On("Create", s.ctx, mock.MatchedBy(func(id resource.Identifier) bool {
+	s.mockResClient.On("Create", mock.Anything, mock.MatchedBy(func(id resource.Identifier) bool {
 		return id.Namespace == s.namespace
 	}), mock.MatchedBy(func(obj resource.Object) bool {
 		if b, ok := obj.(*iamv0alpha1.TeamBinding); ok {
@@ -267,7 +271,7 @@ func (s *testSetup) mockCreateBinding(userID int64, permission iamv0alpha1.TeamB
 }
 
 func (s *testSetup) mockDeleteBinding(bindingName string) {
-	s.mockResClient.On("Delete", s.ctx, resource.Identifier{
+	s.mockResClient.On("Delete", mock.Anything, resource.Identifier{
 		Namespace: s.namespace,
 		Name:      bindingName,
 	}, resource.DeleteOptions{}).Return(nil).Once()

@@ -1,12 +1,11 @@
 package teamapi
 
 import (
-	"github.com/grafana/grafana-app-sdk/resource"
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -22,18 +21,14 @@ type TeamAPI struct {
 	teamPermissionsService accesscontrol.TeamPermissionsService
 	// FIXME: it's a legacy functionality and we should move to api calls in the future.
 	// https://github.com/grafana/identity-access-team/issues/1922
-	userService       user.Service
-	license           licensing.Licensing
-	cfg               *setting.Cfg
-	preferenceService pref.Service
-	ds                dashboards.DashboardService
-	logger            log.Logger
-	features          featuremgmt.FeatureToggles
-	teamBindingClient *iamv0alpha1.TeamBindingClient
-}
-
-func ProvideTeamBindingClient(clientGenerator resource.ClientGenerator) (*iamv0alpha1.TeamBindingClient, error) {
-	return iamv0alpha1.NewTeamBindingClientFromGenerator(clientGenerator)
+	userService              user.Service
+	license                  licensing.Licensing
+	cfg                      *setting.Cfg
+	preferenceService        pref.Service
+	ds                       dashboards.DashboardService
+	logger                   log.Logger
+	features                 featuremgmt.FeatureToggles
+	teamBindingClientFactory teamBindingClientFactory
 }
 
 func ProvideTeamAPI(
@@ -48,20 +43,20 @@ func ProvideTeamAPI(
 	preferenceService pref.Service,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
-	teamBindingClient *iamv0alpha1.TeamBindingClient,
+	clientConfigProvider apiserver.DirectRestConfigProvider,
 ) *TeamAPI {
 	tapi := &TeamAPI{
-		teamService:            teamService,
-		ac:                     ac,
-		teamPermissionsService: teamPermissionsService,
-		userService:            userService,
-		license:                license,
-		cfg:                    cfg,
-		preferenceService:      preferenceService,
-		ds:                     ds,
-		logger:                 log.New("team-api"),
-		features:               features,
-		teamBindingClient:      teamBindingClient,
+		teamService:              teamService,
+		ac:                       ac,
+		teamPermissionsService:   teamPermissionsService,
+		userService:              userService,
+		license:                  license,
+		cfg:                      cfg,
+		preferenceService:        preferenceService,
+		ds:                       ds,
+		logger:                   log.New("team-api"),
+		features:                 features,
+		teamBindingClientFactory: &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)

@@ -2,13 +2,16 @@ package teamapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -19,6 +22,32 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
+
+//go:generate mockery --name teamBindingClientFactory --structname MockTeamBindingClientFactory --inpackage --filename team_binding_client_factory_mock.go
+type teamBindingClientFactory interface {
+	GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamBindingClient, error)
+}
+
+type directRestConfigClientFactory struct {
+	clientConfigProvider apiserver.DirectRestConfigProvider
+}
+
+func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamBindingClient, error) {
+	restConfig := f.clientConfigProvider.GetDirectRestConfig(c)
+	if restConfig == nil {
+		return nil, errors.New("rest config not available")
+	}
+
+	restConfig.APIPath = "apis"
+	clientRegistry := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
+
+	resClient, err := clientRegistry.ClientFor(iamv0alpha1.TeamBindingKind())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource client for TeamBinding: %w", err)
+	}
+
+	return iamv0alpha1.NewTeamBindingClient(resClient), nil
+}
 
 // setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
 func (tapi *TeamAPI) setTeamMembershipsViaK8s(
@@ -40,6 +69,11 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		teamName  = strconv.FormatInt(teamID, 10)
 	)
 
+	teamBindingClient, err := tapi.teamBindingClientFactory.GetClient(c)
+	if err != nil {
+		return response.Error(http.StatusServiceUnavailable, "Team binding service not available", err)
+	}
+
 	adminEmails := make(map[string]struct{}, len(cmd.Admins))
 	for _, admin := range cmd.Admins {
 		adminEmails[admin] = struct{}{}
@@ -53,9 +87,10 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		return response.Error(http.StatusNotFound, "User validation failed", err)
 	}
 
-	existingBindings, err := tapi.teamBindingClient.List(
+	existingBindings, err := teamBindingClient.List(
 		ctx,
-		namespace, resource.ListOptions{
+		namespace,
+		resource.ListOptions{
 			FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamName)},
 		})
 	if err != nil {
@@ -69,12 +104,13 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		memberEmails,
 	)
 
-	if err := tapi.updateTeamBindings(ctx, bindingUpdates); err != nil {
+	if err := tapi.updateTeamBindings(ctx, teamBindingClient, bindingUpdates); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update team bindings", err)
 	}
 
 	if err := tapi.createTeamBindingsForUsers(
 		ctx,
+		teamBindingClient,
 		namespace,
 		teamName,
 		adminEmails,
@@ -85,6 +121,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 
 	if err := tapi.createTeamBindingsForUsers(
 		ctx,
+		teamBindingClient,
 		namespace,
 		teamName,
 		memberEmails,
@@ -93,7 +130,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		return response.Error(http.StatusInternalServerError, "Failed to create team bindings for members", err)
 	}
 
-	if err := tapi.deleteTeamBindings(ctx, bindingsToDelete); err != nil {
+	if err := tapi.deleteTeamBindings(ctx, teamBindingClient, bindingsToDelete); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete team bindings", err)
 	}
 
@@ -189,10 +226,11 @@ func (tapi *TeamAPI) processExistingBindings(
 // updateTeamBindings updates team bindings
 func (tapi *TeamAPI) updateTeamBindings(
 	ctx context.Context,
+	teamBindingClient *iamv0alpha1.TeamBindingClient,
 	bindingUpdates []*iamv0alpha1.TeamBinding,
 ) error {
 	for _, binding := range bindingUpdates {
-		if _, err := tapi.teamBindingClient.Update(ctx, binding, resource.UpdateOptions{}); err != nil {
+		if _, err := teamBindingClient.Update(ctx, binding, resource.UpdateOptions{}); err != nil {
 			return fmt.Errorf("update team binding for user %s: %w", binding.Spec.Subject.Name, err)
 		}
 	}
@@ -203,6 +241,7 @@ func (tapi *TeamAPI) updateTeamBindings(
 // createTeamBindingsForUsers creates team bindings for the given users
 func (tapi *TeamAPI) createTeamBindingsForUsers(
 	ctx context.Context,
+	teamBindingClient *iamv0alpha1.TeamBindingClient,
 	namespace string,
 	teamName string,
 	userEmails map[string]struct{},
@@ -235,7 +274,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 			},
 		}
 
-		if _, err := tapi.teamBindingClient.Create(ctx, binding, resource.CreateOptions{}); err != nil {
+		if _, err := teamBindingClient.Create(ctx, binding, resource.CreateOptions{}); err != nil {
 			return fmt.Errorf("create team binding for user %s: %w", email, err)
 		}
 	}
@@ -246,10 +285,11 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 // deleteTeamBindings deletes the specified team bindings
 func (tapi *TeamAPI) deleteTeamBindings(
 	ctx context.Context,
+	teamBindingClient *iamv0alpha1.TeamBindingClient,
 	bindingsToDelete []iamv0alpha1.TeamBinding,
 ) error {
 	for _, binding := range bindingsToDelete {
-		if err := tapi.teamBindingClient.Delete(ctx, resource.Identifier{
+		if err := teamBindingClient.Delete(ctx, resource.Identifier{
 			Namespace: binding.Namespace,
 			Name:      binding.Name,
 		}, resource.DeleteOptions{}); err != nil {
