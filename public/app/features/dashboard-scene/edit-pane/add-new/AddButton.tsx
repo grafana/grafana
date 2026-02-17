@@ -6,8 +6,8 @@ import { useStyles2, Button } from '@grafana/ui';
 type AddButtonProps = {
   icon: IconName;
   label: string;
-  tooltip: string;
   onClick: () => void;
+  tooltip?: string;
 };
 
 export function AddButton({ icon, label, tooltip, onClick }: AddButtonProps) {

@@ -6345,6 +6345,9 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
       "label-annotation-query": "Annotation query"
