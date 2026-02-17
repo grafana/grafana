@@ -1,4 +1,4 @@
-name: PR opened
+name: PR Security Review
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  on-pr-opened:
+  security-review:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -62,14 +62,35 @@ jobs:
           If no vulnerabilities are found, confirm the PR looks clean.
           Write a concise summary." | tee security_review.txt
 
+      - name: Check for vulnerabilities
+        id: check-vulnerabilities
+        run: |
+          if grep -qiE '(critical|high|medium|low)\s*[:\-]|vulnerability|vulnerabilities found|injection|xss|insecure|unsafe|secret[s]? (exposed|committed|leaked)' security_review.txt \
+             && ! grep -qiE 'no (security )?(vulnerabilities|issues)|looks clean|no concerns' security_review.txt; then
+            echo "has_vulnerabilities=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vulnerabilities=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Comment review on PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           {
-            echo "## Security Review (Cursor CLI)"
+            echo "## 🔒 Security Review (Cursor CLI)"
             echo ""
-            cat security_review.txt
+            if [ "${{ steps.check-vulnerabilities.outputs.has_vulnerabilities }}" = "true" ]; then
+              cat security_review.txt
+            else
+              echo "**No security vulnerabilities found.** This PR looks clean."
+              echo ""
+              echo "<details>"
+              echo "<summary>Full review output</summary>"
+              echo ""
+              cat security_review.txt
+              echo ""
+              echo "</details>"
+            fi
           } > comment_body.txt
           gh pr comment "${PR_NUMBER}" --body-file comment_body.txt
