@@ -856,7 +856,7 @@ lineage: schemas: [{
 			ref: {
 				group?: string
 			}
-		}
+		} 
 
 		#ControlSourceRef: #DatasourceControlSourceRef
 	}

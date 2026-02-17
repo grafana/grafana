@@ -1193,6 +1193,13 @@ export const defaultRowPanel: Partial<RowPanel> = {
   panels: [],
 };
 
+export interface DatasourceControlSourceRef {
+  ref: {
+    group?: string;
+  };
+  type: 'datasource';
+}
+
 export interface Dashboard {
   /**
    * Contains the list of annotations that are associated with the dashboard.

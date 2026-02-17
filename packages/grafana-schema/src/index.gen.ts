@@ -81,7 +81,8 @@ export type {
   FieldConfigSource,
   MatcherConfig,
   FieldConfig,
-  RowPanel
+  RowPanel,
+  DatasourceControlSourceRef
 } from './veneer/dashboard.types';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
