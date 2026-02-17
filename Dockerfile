@@ -4,7 +4,7 @@ ARG GF_VERSION=11.3.7
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.11
+ARG GO_IMAGE=golang:1.24.13
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -229,12 +229,22 @@ COPY --from=js-src /tmp/grafana/public ./public
 
 USER 0
 
+ARG TARGETARCH
+
 ENV GF_PLUGIN_DIR="/usr/share/grafana/plugins" \
     GF_PATHS_PLUGINS="/usr/share/grafana/plugins"
 
+RUN apt-get update && \
+    apt-get install -y unzip && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY grafana-clickhouse-datasource-linux-${TARGETARCH}.zip /tmp/grafana-clickhouse-datasource.zip
+
 RUN mkdir -p ${GF_PLUGIN_DIR} && \
     chmod -R 777 ${GF_PLUGIN_DIR} && \
-    grafana cli plugins install grafana-clickhouse-datasource 4.11.4 && \
+    unzip /tmp/grafana-clickhouse-datasource.zip -d ${GF_PLUGIN_DIR} && \
+    rm /tmp/grafana-clickhouse-datasource.zip && \
     grafana cli plugins install marcusolsson-treemap-panel 2.0.1
 
 USER "$GF_UID"
