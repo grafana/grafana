@@ -70,10 +70,23 @@ export const SidebarCard = ({
     }
   };
 
+  if (variant === 'ghost') {
+    return (
+      <div className={styles.wrapper} aria-hidden>
+        <div className={cx(styles.card, styles.ghostCard)}>
+          <div className={styles.cardContent}>
+            <div className={styles.ghostCardIcon} />
+            <div className={styles.ghostCardTitle} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrapper}>
       <div
-        className={cx(styles.card, { [styles.ghostCard]: variant === 'ghost' })}
+        className={styles.card}
         onClick={onClick}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
@@ -83,16 +96,7 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>
-          {variant === 'ghost' ? (
-            <>
-              <div className={styles.ghostCardIcon} />
-              <div className={styles.ghostCardTitle} />
-            </>
-          ) : (
-            children
-          )}
-        </div>
+        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
         {hasActions && (
           <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
             <Actions
@@ -222,22 +226,6 @@ function getStyles(
         pointerEvents: 'auto',
       },
     }),
-    ghostCard: css({
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderLeft: `3px solid ${theme.colors.border.medium}`,
-      background: 'transparent',
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-        borderColor: theme.colors.border.strong,
-        borderLeftColor: borderColor,
-      },
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color'], {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
-    }),
-
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,
@@ -261,9 +249,27 @@ function getStyles(
         }),
       },
     }),
+
     hidden: css({
       opacity: 0.7,
     }),
+
+    ghostCard: css({
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      background: 'transparent',
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        borderColor: theme.colors.border.strong,
+        borderLeftColor: borderColor,
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color'], {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+
     ghostCardIcon: css({
       width: theme.spacing(2),
       height: theme.spacing(2),
@@ -274,6 +280,7 @@ function getStyles(
         animation: `${ghostCardPulse} 3s ease-in-out infinite`,
       },
     }),
+
     ghostCardTitle: css({
       height: theme.spacing(1.5),
       flex: 1,
