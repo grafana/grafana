@@ -647,7 +647,7 @@
 
 ### Features and enhancements
 
-- ** Alerting:** Add feedback buttons for the new AI helpers (Enterprise)
+- **Alerting:** Add feedback buttons for the new AI helpers (Enterprise)
 - **Access:** Remove plugin app access in plugin basic role seeder (Enterprise)
 - **Actions:** Infinity authentication [#109493](https://github.com/grafana/grafana/pull/109493), [@adela-almasan](https://github.com/adela-almasan)
 - **Alerting:** Add GMA export to the new list page [#109784](https://github.com/grafana/grafana/pull/109784), [@konrad147](https://github.com/konrad147)
@@ -2395,7 +2395,7 @@
 
 ### Bug fixes
 
-- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97528](https://github.com/grafana/grafana/pull/97528), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97528](https://github.com/grafana/grafana/pull/97528), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Allow notification policy filters to match quoted matchers [#98525](https://github.com/grafana/grafana/pull/98525), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Fix alert rule list view summaries [#98433](https://github.com/grafana/grafana/pull/98433), [@yincongcyincong](https://github.com/yincongcyincong)
 - **Alerting:** Fix alert rules unpausing after moving rule to different folder [#97580](https://github.com/grafana/grafana/pull/97580), [@santihernandezc](https://github.com/santihernandezc)
@@ -2467,7 +2467,7 @@
 
 ### Bug fixes
 
-- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97830](https://github.com/grafana/grafana/pull/97830), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97830](https://github.com/grafana/grafana/pull/97830), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Fix alert rules unpausing after moving rule to different folder [#97583](https://github.com/grafana/grafana/pull/97583), [@santihernandezc](https://github.com/santihernandezc)
 - **Alerting:** Fix label escaping in rule export [#98649](https://github.com/grafana/grafana/pull/98649), [@moustafab](https://github.com/moustafab)
 - **Alerting:** Fix slack image uploading to use new api [#98066](https://github.com/grafana/grafana/pull/98066), [@moustafab](https://github.com/moustafab)
@@ -2498,7 +2498,7 @@
 
 ### Bug fixes
 
-- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97829](https://github.com/grafana/grafana/pull/97829), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:**AlertingQueryRunner should skip descendant nodes of invalid queries [#97829](https://github.com/grafana/grafana/pull/97829), [@gillesdemey](https://github.com/gillesdemey)
 - **Azure/GCM:** Improve error display [#97593](https://github.com/grafana/grafana/pull/97593), [@aangelisc](https://github.com/aangelisc)
 - **Dashboard:** Fixes issue with compatability of old DashboardModel.annotations [#97467](https://github.com/grafana/grafana/pull/97467), [@torkelo](https://github.com/torkelo)
 - **Dashboards:** Fix issue where filtered panels would not react to variable changes [#98733](https://github.com/grafana/grafana/pull/98733), [@oscarkilhed](https://github.com/oscarkilhed)
@@ -3445,7 +3445,7 @@
 - **VizTooltip:** Allow setting the `maxWidth` option. [#88652](https://github.com/grafana/grafana/issues/88652), [@adela-almasan](https://github.com/adela-almasan)
 - **Auth:** Add org to role mappings support to GitHub integration . [#88537](https://github.com/grafana/grafana/issues/88537), [@mgyongyosi](https://github.com/mgyongyosi)
 - **CloudWatch:** Handle permissions error and update docs. [#88524](https://github.com/grafana/grafana/issues/88524), [@iwysiu](https://github.com/iwysiu)
-- ** Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Mute Timing service to prevent changing provenance status to none. [#88462](https://github.com/grafana/grafana/issues/88462), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Alerting:** Ensure we fetch AM config before saving new configuration. [#88458](https://github.com/grafana/grafana/issues/88458), [@tomratcliffe](https://github.com/tomratcliffe)
 - **Alerting:** Remove regex reference in silences filter tooltip. [#88455](https://github.com/grafana/grafana/issues/88455), [@tomratcliffe](https://github.com/tomratcliffe)
