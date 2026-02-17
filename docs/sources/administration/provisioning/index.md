@@ -671,16 +671,6 @@ Grafana encrypts secure settings in the database.
 | `singleEmail` |                |
 | `addresses`   |                |
 
-#### Alert notification `opsgenie`
-
-| Name               | Secure setting |
-| ------------------ | -------------- |
-| `apiKey`           | yes            |
-| `apiUrl`           |                |
-| `autoClose`        |                |
-| `overridePriority` |                |
-| `sendTagsAs`       |                |
-
 #### Alert notification `telegram`
 
 | Name          | Secure setting |

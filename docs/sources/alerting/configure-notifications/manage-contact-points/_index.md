@@ -173,7 +173,6 @@ Each contact point integration has its own configuration options and setup proce
 - Line
 - [Microsoft Teams](ref:teams)
 - [MQTT](ref:mqtt)
-- [Opsgenie](ref:opsgenie)
 - [PagerDuty](ref:pagerduty)
 - Pushover
 - Sensu Go
