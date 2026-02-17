@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -367,7 +368,7 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }
 
-type ReceiverStatus apimodels.Receiver
+type ReceiverStatus alertingmodels.ReceiverStatus
 
 func (rs ReceiverStatus) GetUID() string {
 	return legacy_storage.NameToUid(rs.Name)

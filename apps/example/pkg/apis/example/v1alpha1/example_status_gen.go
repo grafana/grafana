@@ -20,6 +20,11 @@ func NewExamplestatusOperatorState() *ExamplestatusOperatorState {
 	return &ExamplestatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for ExamplestatusOperatorState.
+func (ExamplestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExamplestatusOperatorState"
+}
+
 // status is where state and status information which may be used or updated by the operator or back-end should be placed
 // If you do not have any such information, you do not need to include this field,
 // however, as mentioned above, certain fields will be added by the kind system regardless.
@@ -38,6 +43,11 @@ func NewExampleStatus() *ExampleStatus {
 	return &ExampleStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for ExampleStatus.
+func (ExampleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleStatus"
+}
+
 // +k8s:openapi-gen=true
 type ExampleStatusOperatorStateState string
 
@@ -46,3 +56,8 @@ const (
 	ExampleStatusOperatorStateStateInProgress ExampleStatusOperatorStateState = "in_progress"
 	ExampleStatusOperatorStateStateFailed     ExampleStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for ExampleStatusOperatorStateState.
+func (ExampleStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleStatusOperatorStateState"
+}

@@ -16,6 +16,11 @@ func NewRoutingTreeRouteDefaults() *RoutingTreeRouteDefaults {
 	return &RoutingTreeRouteDefaults{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoutingTreeRouteDefaults.
+func (RoutingTreeRouteDefaults) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRouteDefaults"
+}
+
 // +k8s:openapi-gen=true
 type RoutingTreeRoute struct {
 	Receiver            *string              `json:"receiver,omitempty"`
@@ -35,6 +40,11 @@ func NewRoutingTreeRoute() *RoutingTreeRoute {
 	return &RoutingTreeRoute{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoutingTreeRoute.
+func (RoutingTreeRoute) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRoute"
+}
+
 // +k8s:openapi-gen=true
 type RoutingTreeMatcher struct {
 	Type  RoutingTreeMatcherType `json:"type"`
@@ -45,6 +55,11 @@ type RoutingTreeMatcher struct {
 // NewRoutingTreeMatcher creates a new RoutingTreeMatcher object.
 func NewRoutingTreeMatcher() *RoutingTreeMatcher {
 	return &RoutingTreeMatcher{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for RoutingTreeMatcher.
+func (RoutingTreeMatcher) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeMatcher"
 }
 
 // +k8s:openapi-gen=true
@@ -61,6 +76,11 @@ func NewRoutingTreeSpec() *RoutingTreeSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoutingTreeSpec.
+func (RoutingTreeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeSpec"
+}
+
 // +k8s:openapi-gen=true
 type RoutingTreeMatcherType string
 
@@ -70,3 +90,8 @@ const (
 	RoutingTreeMatcherTypeEqualRegex    RoutingTreeMatcherType = "=~"
 	RoutingTreeMatcherTypeNotEqualRegex RoutingTreeMatcherType = "!~"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for RoutingTreeMatcherType.
+func (RoutingTreeMatcherType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeMatcherType"
+}

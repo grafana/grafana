@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaDummyv0alpha1     = []byte(`{"Dummy":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"description":"Spec is the schema of our resource. The spec should include all the user-editable information for the kind.","properties":{"dummyField":{"type":"integer"}},"required":["dummyField"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaDummyv0alpha1     = []byte(`{"Dummy":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"description":"Spec is the schema of our resource. The spec should include all the user-editable information for the kind.","properties":{"dummyField":{"type":"integer"}},"required":["dummyField"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaDummyv0alpha1 app.VersionSchema
 	_                          = json.Unmarshal(rawSchemaDummyv0alpha1, &versionSchemaDummyv0alpha1)
 )
@@ -66,16 +66,7 @@ var appManifestData = app.ManifestData{
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"object"},
 																				AdditionalProperties: &spec.SchemaOrBool{
-																					Schema: &spec.Schema{
-																						SchemaProps: spec.SchemaProps{
-																							Type: []string{"object"},
-																							AdditionalProperties: &spec.SchemaOrBool{
-																								Schema: &spec.Schema{
-																									SchemaProps: spec.SchemaProps{},
-																								},
-																							},
-																						},
-																					},
+																					Allows: true,
 																				},
 																			},
 																		},
@@ -119,6 +110,13 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "GroupLabels optionally filters the entries by matching group labels.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
+																	},
+																},
+																"labels": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Labels optionally filters the entries by matching alert labels.",
 																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
 																	},
 																},
@@ -453,8 +451,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistory{},
-	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationquery{},
+	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistoryResponse{},
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
