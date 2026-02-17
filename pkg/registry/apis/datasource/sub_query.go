@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,7 +32,7 @@ var (
 )
 
 func (r *subQueryREST) New() runtime.Object {
-	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	// This is added as the "ResponseType" regardless what ProducesObject() says :)
 	return &query.QueryDataResponse{}
 }
 
@@ -96,6 +95,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
+				Format:        backend.QueryResponseFormat_JSON, // encode directly in the plugin
 			}, newChunkedWriter(w)); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
 			}
@@ -165,25 +165,21 @@ func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 					}
 				}
 
-				// Replace any newlines with a space
-				// NOTE: this should only happen if the frames were pretty printed
-				str := strings.ReplaceAll(string(chunk.Frame), "\n", " ")
-
 				s.WriteMore()
 				s.WriteObjectField("frame")
-				s.WriteRaw(str)
+				s.WriteRaw(string(chunk.Frame)) // must not contain newlines!
 			}
 
 			if chunk.Error != "" {
 				s.WriteMore()
 				s.WriteObjectField("error")
 				s.WriteString(chunk.Error)
-			}
 
-			if chunk.Error != "" {
-				s.WriteMore()
-				s.WriteObjectField("errorSource")
-				s.WriteString(chunk.ErrorSource)
+				if chunk.ErrorSource != "" {
+					s.WriteMore()
+					s.WriteObjectField("errorSource")
+					s.WriteString(chunk.ErrorSource)
+				}
 			}
 
 			s.WriteObjectEnd()
