@@ -102,6 +102,7 @@ export type PanelOptionsSupplier<TOptions> = (
 ) => void;
 
 /**
+ * Context passed to presets supplier
  * @alpha
  */
 export interface PresetsSupplierContext<TOptions = unknown, TFieldConfigOptions extends object = {}> {
