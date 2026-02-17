@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -26,10 +26,10 @@ import { StoreState, useDispatch, useSelector } from 'app/types/store';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
-import { AddVariableDialog } from './AddVariableDialog';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
+import { ExploreVariableEditor } from './Variables/ExploreVariableEditor';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
@@ -43,7 +43,6 @@ import {
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
-import { addVariableAction } from './state/variables';
 import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
@@ -135,14 +134,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     [isLeftPane, isLargerPane]
   );
 
-  const [isAddVariableOpen, setIsAddVariableOpen] = useState(false);
-  const onAddVariable = useCallback(
-    (name: string, values: string[]) => {
-      dispatch(addVariableAction({ exploreId, name, values }));
-      setIsAddVariableOpen(false);
-    },
-    [dispatch, exploreId]
-  );
+  const [isVariableEditorOpen, setIsVariableEditorOpen] = useState(false);
 
   const refreshPickerLabel = loading
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
@@ -289,7 +281,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             key="add-variable"
             icon="plus"
             variant="canvas"
-            onClick={() => setIsAddVariableOpen(true)}
+            onClick={() => setIsVariableEditorOpen(true)}
           >
             <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
           </ToolbarButton>,
@@ -402,11 +394,13 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           ),
         ].filter(Boolean)}
       </PageToolbar>
-      <AddVariableDialog
-        isOpen={isAddVariableOpen}
-        onDismiss={() => setIsAddVariableOpen(false)}
-        onAdd={onAddVariable}
-      />
+      {isVariableEditorOpen && variableSet && (
+        <ExploreVariableEditor
+          exploreId={exploreId}
+          variableSet={variableSet}
+          onClose={() => setIsVariableEditorOpen(false)}
+        />
+      )}
     </div>
   );
 }

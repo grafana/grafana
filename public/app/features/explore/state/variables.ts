@@ -2,13 +2,12 @@ import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
 import { ScopedVars } from '@grafana/data';
-import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
+import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { ExploreItemState } from 'app/types/explore';
 
-export interface AddVariablePayload {
+export interface AddSceneVariablePayload {
   exploreId: string;
-  name: string;
-  values: string[];
+  variable: SceneVariable;
 }
 
 export interface RemoveVariablePayload {
@@ -16,8 +15,15 @@ export interface RemoveVariablePayload {
   name: string;
 }
 
-export const addVariableAction = createAction<AddVariablePayload>('explore/addVariable');
+export interface ReplaceVariablePayload {
+  exploreId: string;
+  oldName: string;
+  variable: SceneVariable;
+}
+
+export const addSceneVariableAction = createAction<AddSceneVariablePayload>('explore/addSceneVariable');
 export const removeVariableAction = createAction<RemoveVariablePayload>('explore/removeVariable');
+export const replaceVariableAction = createAction<ReplaceVariablePayload>('explore/replaceVariable');
 
 export function buildExploreVariableScopedVars(variableSet: SceneVariableSet): ScopedVars {
   const scopedVars: ScopedVars = {};
@@ -28,16 +34,8 @@ export function buildExploreVariableScopedVars(variableSet: SceneVariableSet): S
 }
 
 export const variablesReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (addVariableAction.match(action)) {
-    const { name, values } = action.payload;
-    const query = values.join(',');
-    const variable = new CustomVariable({
-      name,
-      query,
-      value: values[0] ?? '',
-      text: values[0] ?? '',
-      options: values.map((v) => ({ label: v || '(empty)', value: v })),
-    });
+  if (addSceneVariableAction.match(action)) {
+    const { variable } = action.payload;
     const newSet = new SceneVariableSet({
       variables: [...state.variableSet.state.variables, variable],
     });
@@ -48,6 +46,14 @@ export const variablesReducer = (state: ExploreItemState, action: AnyAction): Ex
     const { name } = action.payload;
     const newSet = new SceneVariableSet({
       variables: state.variableSet.state.variables.filter((v) => v.state.name !== name),
+    });
+    return { ...state, variableSet: newSet };
+  }
+
+  if (replaceVariableAction.match(action)) {
+    const { oldName, variable } = action.payload;
+    const newSet = new SceneVariableSet({
+      variables: state.variableSet.state.variables.map((v) => (v.state.name === oldName ? variable : v)),
     });
     return { ...state, variableSet: newSet };
   }
