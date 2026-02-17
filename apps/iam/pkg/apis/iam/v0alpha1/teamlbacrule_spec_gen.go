@@ -19,3 +19,8 @@ func NewTeamLBACRuleSpec() *TeamLBACRuleSpec {
 		TeamFilters: map[string][]string{},
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for TeamLBACRuleSpec.
+func (TeamLBACRuleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamLBACRuleSpec"
+}

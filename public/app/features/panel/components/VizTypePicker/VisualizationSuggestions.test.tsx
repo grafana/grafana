@@ -1,6 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 
-import { LoadingState, PanelData, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import { LoadingState, PanelData, PanelModel, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import * as getAllSuggestionsModule from '../../suggestions/getAllSuggestions';
 
@@ -152,6 +153,92 @@ describe('VisualizationSuggestions', () => {
 
     await waitFor(() => {
       expect(mockGetAllSuggestions.mock.calls.length).toBeGreaterThan(callCountBeforeChange);
+    });
+  });
+
+  it('should call onChange for new panels (unconfigured)', async () => {
+    const mockOnChange = jest.fn();
+    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(
+      <VisualizationSuggestions onChange={mockOnChange} data={data} panel={unconfiguredPanel} isNewPanel={true} />
+    );
+
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalled();
+    });
+  });
+
+  it('should not call onChange for existing panels', async () => {
+    const mockOnChange = jest.fn();
+    const existingPanel = { type: 'timeseries' } as PanelModel;
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={mockOnChange} data={data} panel={existingPanel} isNewPanel={false} />);
+
+    // Wait for suggestions to load
+    await waitFor(() => {
+      expect(mockGetAllSuggestions).toHaveBeenCalled();
+    });
+
+    // Wait for any potential state updates to complete
+    await waitFor(
+      () => {
+        // If onChange was going to be called, it would have been by now
+        expect(mockOnChange).not.toHaveBeenCalled();
+      },
+      { timeout: 500 }
+    );
+  });
+
+  it('should call onChange for unconfigured panels', async () => {
+    const mockOnChange = jest.fn();
+    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(
+      <VisualizationSuggestions onChange={mockOnChange} data={data} panel={unconfiguredPanel} isNewPanel={false} />
+    );
+
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalled();
     });
   });
 });

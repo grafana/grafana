@@ -19,6 +19,11 @@ func NewExampleDefinedType() *ExampleDefinedType {
 	return &ExampleDefinedType{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for ExampleDefinedType.
+func (ExampleDefinedType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleDefinedType"
+}
+
 // Spec is the schema of our resource. The spec should include all the user-editable information for the kind.
 // +k8s:openapi-gen=true
 type ExampleSpec struct {
@@ -31,4 +36,9 @@ type ExampleSpec struct {
 // NewExampleSpec creates a new ExampleSpec object.
 func NewExampleSpec() *ExampleSpec {
 	return &ExampleSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ExampleSpec.
+func (ExampleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleSpec"
 }

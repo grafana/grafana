@@ -30,6 +30,11 @@ func NewPlaylistPlaylistItem() *PlaylistPlaylistItem {
 	return &PlaylistPlaylistItem{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PlaylistPlaylistItem.
+func (PlaylistPlaylistItem) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem"
+}
+
 // +k8s:openapi-gen=true
 type PlaylistSpec struct {
 	Title    string         `json:"title"`
@@ -44,6 +49,11 @@ func NewPlaylistSpec() *PlaylistSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PlaylistSpec.
+func (PlaylistSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistSpec"
+}
+
 // +k8s:openapi-gen=true
 type PlaylistPlaylistItemType string
 
@@ -52,3 +62,8 @@ const (
 	PlaylistPlaylistItemTypeDashboardByUid PlaylistPlaylistItemType = "dashboard_by_uid"
 	PlaylistPlaylistItemTypeDashboardById  PlaylistPlaylistItemType = "dashboard_by_id"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for PlaylistPlaylistItemType.
+func (PlaylistPlaylistItemType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItemType"
+}

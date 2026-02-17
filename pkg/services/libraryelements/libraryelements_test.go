@@ -365,6 +365,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		dashboardsService: dashService,
 		AccessControl:     ac,
 		log:               log.NewNopLogger(),
+		treeCache:         newFolderTreeCache(folderSvc),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
