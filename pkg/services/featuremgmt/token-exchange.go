@@ -2,57 +2,40 @@ package featuremgmt
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 
 	authlib "github.com/grafana/authlib/authn"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
-	infralog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-type TokenExchangeMiddleware struct {
-	tokenExchangeClient authlib.TokenExchanger
-	namespace           string
-}
-
-type tokenExchangeMiddlewareImpl struct {
-	tokenExchangeClient authlib.TokenExchanger
-	namespace           string
-	audiences           []string
-	next                http.RoundTripper
-}
 
 type signerSettings struct {
 	token            string
 	tokenExchangeURL string
 }
 
-var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
-
-func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) *TokenExchangeMiddleware {
-	return &TokenExchangeMiddleware{
-		tokenExchangeClient: tokenExchangeClient,
-		namespace:           "*",
-	}
+// TestingTokenExchangeMiddleware creates a middleware for testing purposes
+func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) *features.TokenExchangeMiddleware {
+	return features.NewTokenExchangeMiddleware(tokenExchangeClient, "*")
 }
 
-func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, error) {
+// getTokenExchangeConfig reads token exchange configuration from Grafana settings
+// and returns the token exchanger and namespace.
+func getTokenExchangeConfig(cfg *setting.Cfg) (authlib.TokenExchanger, string, error) {
 	clientCfg, err := readSignerSettings(cfg)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	stackID := cfg.SectionWithEnvOverrides("environment").Key("stack_id").MustString("")
 	if stackID == "" {
-		return nil, fmt.Errorf("stack_id is required")
+		return nil, "", fmt.Errorf("stack_id is required")
 	}
 
 	stackIDInt, err := strconv.ParseInt(stackID, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse stack_id: %w", err)
+		return nil, "", fmt.Errorf("failed to parse stack_id: %w", err)
 	}
 	nsMapper := request.GetNamespaceMapper(cfg)
 	namespace := nsMapper(stackIDInt)
@@ -62,42 +45,22 @@ func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, err
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
 	})
 	if err != nil {
+		return nil, "", err
+	}
+
+	return tokenExchangeClient, namespace, nil
+}
+
+// NewTokenExchangeMiddleware creates a token exchange middleware from Grafana configuration.
+// This is a Grafana-specific wrapper that reads configuration from setting.Cfg.
+//
+// Deprecated: Use getTokenExchangeConfig with features.CreateHTTPClientWithTokenExchange instead.
+func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*features.TokenExchangeMiddleware, error) {
+	tokenExchangeClient, namespace, err := getTokenExchangeConfig(cfg)
+	if err != nil {
 		return nil, err
 	}
-	return &TokenExchangeMiddleware{
-		tokenExchangeClient: tokenExchangeClient,
-		namespace:           namespace,
-	}, nil
-}
-
-func (p *TokenExchangeMiddleware) New(audiences []string) sdkhttpclient.MiddlewareFunc {
-	return func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return &tokenExchangeMiddlewareImpl{
-			tokenExchangeClient: p.tokenExchangeClient,
-			namespace:           p.namespace,
-			audiences:           audiences,
-			next:                next,
-		}
-	}
-}
-
-func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Response, e error) {
-	log := infralog.New("token-exchange-middleware")
-
-	namespace := m.namespace
-
-	log.Debug("signing request", "url", req.URL.Path, "audience", m.audiences, "namespace", namespace)
-	token, err := m.tokenExchangeClient.Exchange(req.Context(), authlib.TokenExchangeRequest{
-		Namespace: namespace,
-		Audiences: m.audiences,
-	})
-
-	if err != nil {
-		log.Error("token signing failed", "error", err)
-		return nil, fmt.Errorf("failed to exchange token: %w", err)
-	}
-	req.Header.Set("X-Access-Token", "Bearer "+token.Token)
-	return m.next.RoundTrip(req)
+	return features.NewTokenExchangeMiddleware(tokenExchangeClient, namespace), nil
 }
 
 // we exercise the below code path in OSS but would rather have it fail

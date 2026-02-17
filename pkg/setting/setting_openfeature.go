@@ -3,19 +3,25 @@ package setting
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/grafana/grafana/pkg/infra/features"
 )
 
-type OpenFeatureProviderType string
+// OpenFeatureProviderType is an alias for features.OpenFeatureProviderType
+type OpenFeatureProviderType = features.OpenFeatureProviderType
 
 const (
-	StaticProviderType          OpenFeatureProviderType = "static"
-	FeaturesServiceProviderType OpenFeatureProviderType = "features-service"
-	OFREPProviderType           OpenFeatureProviderType = "ofrep"
+	// StaticProviderType is for internal Grafana use with static flags
+	StaticProviderType OpenFeatureProviderType = "static"
+
+	// Re-export features package constants for convenience
+	FeaturesServiceProviderType = features.FeaturesServiceProviderType
+	OFREPProviderType           = features.OFREPProviderType
 )
 
 type OpenFeatureSettings struct {
 	APIEnabled   bool
-	ProviderType OpenFeatureProviderType
+	ProviderType features.OpenFeatureProviderType
 	URL          *url.URL
 	TargetingKey string
 	ContextAttrs map[string]string
@@ -35,10 +41,10 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 		switch in {
 		case string(StaticProviderType):
 			return string(StaticProviderType)
-		case string(FeaturesServiceProviderType):
-			return string(FeaturesServiceProviderType)
-		case string(OFREPProviderType):
-			return string(OFREPProviderType)
+		case string(features.FeaturesServiceProviderType):
+			return string(features.FeaturesServiceProviderType)
+		case string(features.OFREPProviderType):
+			return string(features.OFREPProviderType)
 		default:
 			cfg.Logger.Warn("invalid provider type", "provider", in)
 			cfg.Logger.Info("using static provider for openfeature")
@@ -46,7 +52,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 		}
 	})
 
-	cfg.OpenFeature.ProviderType = OpenFeatureProviderType(providerType)
+	cfg.OpenFeature.ProviderType = features.OpenFeatureProviderType(providerType)
 	strURL := config.Key("url").MustString("")
 
 	defaultTargetingKey := "default"
@@ -56,7 +62,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(defaultTargetingKey)
 
-	if strURL != "" && (cfg.OpenFeature.ProviderType == FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == OFREPProviderType) {
+	if strURL != "" && (cfg.OpenFeature.ProviderType == features.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == features.OFREPProviderType) {
 		u, err := url.Parse(strURL)
 		if err != nil {
 			return fmt.Errorf("invalid feature provider url: %w", err)
