@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import {
@@ -11,6 +10,7 @@ import {
   trackAlertsActivityBannerDismiss,
   trackAlertsActivityBannerImpression,
 } from '../Analytics';
+import { shouldShowAlertsActivityBanner } from '../featureToggles';
 import { ALERTING_PATHS } from '../utils/navigation';
 import { createRelativeUrl } from '../utils/url';
 
@@ -28,24 +28,21 @@ import { useAlertsActivityBannerPrefs } from './hooks/useAlertsActivityBannerPre
  */
 export function AlertsActivityBanner() {
   const styles = useStyles2(getStyles);
-  const { isDismissed, dismissBanner } = useAlertsActivityBannerPrefs();
+  const { bannerIsDismissed, dismissBanner } = useAlertsActivityBannerPrefs();
   const impressionTracked = useRef(false);
 
-  // Check if Alerts Activity feature is available
-  const isAlertsActivityEnabled = config.featureToggles.alertingTriage ?? false;
+  // Check if banner should be shown (requires both alertingAlertsActivityBanner and alertingTriage)
+  const showActivityBanner = shouldShowAlertsActivityBanner();
 
   // Track impression once per mount
   useEffect(() => {
-    if (!impressionTracked.current && !isDismissed && isAlertsActivityEnabled) {
+    if (!impressionTracked.current && !bannerIsDismissed && showActivityBanner) {
       trackAlertsActivityBannerImpression();
       impressionTracked.current = true;
     }
-  }, [isDismissed, isAlertsActivityEnabled]);
+  }, [bannerIsDismissed, showActivityBanner]);
 
-  // Don't render if:
-  // - Alerts Activity is not enabled
-  // - User has dismissed the banner (within 30 days)
-  if (!isAlertsActivityEnabled || isDismissed) {
+  if (!showActivityBanner || bannerIsDismissed) {
     return null;
   }
 

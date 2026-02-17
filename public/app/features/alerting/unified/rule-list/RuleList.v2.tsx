@@ -11,7 +11,6 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { shouldShowAlertsActivityBanner } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -28,11 +27,10 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
-  const showBanner = shouldShowAlertsActivityBanner();
 
   return (
     <Stack direction="column">
-      {showBanner && <AlertsActivityBanner />}
+      <AlertsActivityBanner />
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       {viewMode === 'list' ? (
         <FilterView filterState={filterState} />

@@ -25,18 +25,19 @@ describe('AlertsActivityBanner', () => {
     localStorage.clear();
   });
 
-  describe('when feature toggle is disabled', () => {
+  describe('when feature toggles are disabled', () => {
     testWithFeatureToggles({ enable: [] });
 
-    it('should not render when alertingTriage is disabled', () => {
+    it('should not render when feature toggles are disabled', () => {
       render(<AlertsActivityBanner />);
 
       expect(ui.banner.query()).not.toBeInTheDocument();
     });
   });
 
-  describe('when feature toggle is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingTriage'] });
+  describe('when feature toggles are enabled', () => {
+    // Both alertingAlertsActivityBanner and alertingTriage are required
+    testWithFeatureToggles({ enable: ['alertingAlertsActivityBanner', 'alertingTriage'] });
 
     it('should render the banner with correct content', () => {
       render(<AlertsActivityBanner />);

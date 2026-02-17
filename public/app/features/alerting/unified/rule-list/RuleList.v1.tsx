@@ -16,7 +16,7 @@ import { RuleListErrors } from '../components/rules/RuleListErrors';
 import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
-import { shouldShowAlertsActivityBanner, shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
@@ -42,7 +42,6 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const showBanner = shouldShowAlertsActivityBanner();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [expandAll, setExpandAll] = useState(false);
 
@@ -130,7 +129,7 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
-        {showBanner && <AlertsActivityBanner />}
+        <AlertsActivityBanner />
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (

@@ -8,7 +8,7 @@ const STORAGE_KEY_DISMISSED_UNTIL = 'grafana.alerting.alerts_activity_banner.dis
 const DISMISSAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface AlertsActivityBannerPrefs {
-  isDismissed: boolean;
+  bannerIsDismissed: boolean;
   dismissBanner: () => string;
 }
 
@@ -23,7 +23,7 @@ export function useAlertsActivityBannerPrefs(): AlertsActivityBannerPrefs {
     store.get(STORAGE_KEY_DISMISSED_UNTIL)
   );
 
-  const isDismissed = useMemo(() => {
+  const bannerIsDismissed = useMemo(() => {
     if (!dismissedUntilRaw) {
       return false;
     }
@@ -43,7 +43,7 @@ export function useAlertsActivityBannerPrefs(): AlertsActivityBannerPrefs {
   }, []);
 
   return {
-    isDismissed,
+    bannerIsDismissed,
     dismissBanner,
   };
 }
