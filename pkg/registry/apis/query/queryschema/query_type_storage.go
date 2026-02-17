@@ -4,13 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
 var (

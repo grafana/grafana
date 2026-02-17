@@ -18,7 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	claims "github.com/grafana/authlib/types"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -198,16 +198,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
-
-	plugins := newPluginsStorage(b.registry)
-	storage[plugins.resourceInfo.StoragePath()] = plugins
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		// The plugin registry is still experimental, and not yet accurate
-		// For standard k8s api discovery to work, at least one resource must be registered
-		// While this feature is under development, we can return an empty list for non-dev instances
-		plugins.returnEmptyList = true
-	}
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
