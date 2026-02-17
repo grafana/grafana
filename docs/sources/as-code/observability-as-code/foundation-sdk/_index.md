@@ -32,7 +32,7 @@ The SDK supports multiple programming languages, including Go, TypeScript, Pytho
 Ensure you have the following prerequisites:
 
 - **Programming environment:** Set up for your chosen language. For example: Go, Node.js for TypeScript, or Python 3.x for Python.
-- **Grafana instance:** A running Grafana instance compatible with the SDK version you’re using (refer to the [compatibility matrix](https://github.com/grafana/grafana-foundation-sdk#navigating-the-sdk)).
+- **Grafana instance:** A running Grafana instance compatible with the SDK (>= Grafana 10).
 - **Package manager:** Appropriate for your language, for example, `npm` or `yarn` for TypeScript or `pip` for Python.
 
 To get started, clone the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk) to access examples and a `docker-compose` stack.
@@ -40,11 +40,11 @@ To get started, clone the [intro-to-foundation-sdk repository](https://github.co
 ## Install the Grafana Foundation SDK
 
 Select the `go` or `typescript` tab to view instructions to install the SDK.
-For other languages, refer to the Grafana Foundation SDK documentation for installation instructions.
+For other languages, refer to the [Grafana Foundation SDK documentation](https://grafana.github.io/grafana-foundation-sdk/) for installation instructions.
 {{< code >}}
 
 ```go
-go get github.com/grafana/grafana-foundation-sdk/go@next+cog-v0.0.x
+go get github.com/grafana/grafana-foundation-sdk/go@latest
 ```
 
 ```typescript
@@ -263,7 +263,7 @@ Example using options:
 stat.NewPanelBuilder().
   ReduceOptions(common.NewReduceDataOptionsBuilder().
     Calcs([]string{"lastNotNull"}).
-    Fields("/.*/"))
+    Fields("/.*/")
   )
 ```
 
