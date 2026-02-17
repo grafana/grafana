@@ -14,7 +14,7 @@ import { useScrollReflowLimit } from '../useScrollReflowLimit';
 import { SidebarSize } from './constants';
 
 type UseHorizontalRatioResizeOptions = {
-  initialRatio: number;
+  getDefaultRatio: (containerWidth: number) => number;
   containerWidth: number;
   minRatio?: number;
   maxRatio?: number;
@@ -22,13 +22,17 @@ type UseHorizontalRatioResizeOptions = {
 };
 
 export function useHorizontalRatioResize({
-  initialRatio,
+  getDefaultRatio,
   containerWidth,
   minRatio = 0,
   maxRatio = 1,
   className,
 }: UseHorizontalRatioResizeOptions) {
-  const [ratio, setRatio] = useState<number>(initialRatio);
+  // null = user hasn't manually dragged, so the ratio tracks the container width automatically.
+  // Once the user drags, their chosen value is locked in.
+  const [userRatio, setUserRatio] = useState<number | null>(null);
+  const ratio = userRatio ?? getDefaultRatio(containerWidth);
+
   const styles = useStyles2(getDragStyles, 'middle');
 
   const ratioRef = useRef(ratio);
@@ -50,7 +54,7 @@ export function useHorizontalRatioResize({
       const deltaX = e.clientX - startX;
       const deltaRatio = deltaX / totalWidth;
       const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + deltaRatio));
-      setRatio(newRatio);
+      setUserRatio(newRatio);
     };
 
     const onMouseUp = () => {
@@ -77,6 +81,8 @@ export function useHorizontalRatioResize({
       }
     };
   }, []);
+
+  const setRatio = setUserRatio;
 
   return { handleRef, ratio, setRatio, className: cx(styles.dragHandleVertical, className) };
 }
@@ -187,19 +193,21 @@ export function usePanelEditorShell(model: PanelEditor) {
 }
 
 /**
- * Returns an initial sidebar ratio based on the window width at mount time,
- * so the sidebar doesn't take up too much space on large monitors.
- * Uses window.innerWidth (logical pixels) as a proxy for monitor size:
- *   >= 2560px  → large monitor (e.g. 4K/5K/27"+)  → 0.15
- *   >= 1920px  → medium-large (e.g. 24" FHD/QHD)  → 0.20
- *   below      → normal (e.g. 16" laptop)          → 0.25
+ * Returns a default sidebar ratio based on the full panel editor container width
+ * (which includes both the viz/data area and the options pane).
+ * This is reactive — it re-evaluates on window/container resize, but is overridden
+ * once the user manually drags the handle.
+ *
+ * Breakpoints (containerWidth ≈ window width minus Grafana nav sidebar):
+ *   >= 2200px  → large monitor full-screen (e.g. 27" 4K)   → 0.15
+ *   >= 1800px  → medium-large (e.g. 24" FHD full-screen)   → 0.20
+ *   below      → 16" laptop or smaller / partial window     → 0.25
  */
-function getInitialSidebarRatio(): number {
-  const w = window.innerWidth;
-  if (w >= 2560) {
+function getDefaultSidebarRatio(containerWidth: number): number {
+  if (containerWidth >= 2200) {
     return 0.15;
   }
-  if (w >= 1920) {
+  if (containerWidth >= 1800) {
     return 0.2;
   }
   return 0.25;
@@ -233,7 +241,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   const panelToShow = tableView ?? panel;
 
   const sidebarResize = useHorizontalRatioResize({
-    initialRatio: getInitialSidebarRatio(),
+    getDefaultRatio: getDefaultSidebarRatio,
     containerWidth,
     minRatio: MIN_SIDEBAR_RATIO,
     maxRatio: MAX_SIDEBAR_RATIO,
