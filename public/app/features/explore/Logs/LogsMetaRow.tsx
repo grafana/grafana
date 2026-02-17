@@ -19,7 +19,7 @@ import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/co
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 
-import { LogsVisualisationType } from './Logs';
+import { LogsVisualisationType } from './constants';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({

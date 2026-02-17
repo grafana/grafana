@@ -90,6 +90,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+import { LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultSortBy } from './utils/table/logsTable';
@@ -140,8 +141,6 @@ interface Props extends Themeable2 {
   loadMoreLogs?(range: AbsoluteTimeRange): void;
   onPinLineCallback?: () => void;
 }
-
-export type LogsVisualisationType = 'table' | 'logs';
 
 // we need to define the order of these explicitly
 const DEDUP_OPTIONS = [
