@@ -992,6 +992,26 @@ spec:
 		name, _, _ := unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
 		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
 	})
+
+	t.Run("folder not allowed", func(t *testing.T) {
+		code := 0
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "folder.json").
+			Body([]byte(`apiVersion: folder.grafana.app/v1beta1
+kind: Folder
+metadata:
+  name: someFolder
+spec:
+  title: Test Folder
+`)).Do(ctx).StatusCode(&code)
+		require.Error(t, result.Error(), "should return error")
+		require.Contains(t, result.Error().Error(), "cannot declare folders through files")
+		require.Equal(t, http.StatusBadRequest, code, "expect bad request result")
+	})
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
