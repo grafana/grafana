@@ -78,6 +78,26 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function moveFocusFromEditor(container: HTMLDivElement | null, forward: boolean): void {
+  if (!container || !document.body) {
+    return;
+  }
+  const focusables = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (el) => el.offsetParent !== null
+  );
+  const currentIndex = focusables.findIndex((el) => container.contains(el));
+  if (currentIndex < 0) {
+    return;
+  }
+  const nextIndex = forward ? currentIndex + 1 : currentIndex - 1;
+  if (nextIndex >= 0 && nextIndex < focusables.length) {
+    focusables[nextIndex].focus();
+  }
+}
+
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css({
@@ -238,6 +258,22 @@ const MonacoQueryField = (props: Props) => {
             monaco.KeyMod.Shift | monaco.KeyCode.Enter,
             () => {
               onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
+
+          // Tab moves focus out of the editor instead of inserting a tab (accessibility)
+          editor.addCommand(
+            monaco.KeyCode.Tab,
+            () => {
+              moveFocusFromEditor(containerRef.current, true);
+            },
+            'isEditorFocused' + id
+          );
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Tab,
+            () => {
+              moveFocusFromEditor(containerRef.current, false);
             },
             'isEditorFocused' + id
           );
