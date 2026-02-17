@@ -30,12 +30,12 @@ export function useHorizontalRatioResize({
 }: UseHorizontalRatioResizeOptions) {
   const [ratio, setRatio] = useState<number>(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
-  
+
   const ratioRef = useRef(ratio);
   const containerWidthRef = useRef(containerWidth);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
-  
+
   ratioRef.current = ratio;
   containerWidthRef.current = containerWidth;
   minRatioRef.current = minRatio;
@@ -70,7 +70,7 @@ export function useHorizontalRatioResize({
     if (handle?.nodeType === Node.ELEMENT_NODE) {
       handle.addEventListener('mousedown', onMouseDown);
     }
-    
+
     return () => {
       if (handle?.nodeType === Node.ELEMENT_NODE) {
         handle.removeEventListener('mousedown', onMouseDown);
@@ -98,12 +98,12 @@ export function useVerticalRatioResize({
 }: UseVerticalRatioResizeOptions) {
   const [ratio, setRatio] = useState<number>(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
-  
+
   const ratioRef = useRef(ratio);
   const containerHeightRef = useRef(containerHeight);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
-  
+
   ratioRef.current = ratio;
   containerHeightRef.current = containerHeight;
   minRatioRef.current = minRatio;
@@ -138,7 +138,7 @@ export function useVerticalRatioResize({
     if (handle?.nodeType === Node.ELEMENT_NODE) {
       handle.addEventListener('mousedown', onMouseDown);
     }
-    
+
     return () => {
       if (handle?.nodeType === Node.ELEMENT_NODE) {
         handle.removeEventListener('mousedown', onMouseDown);
