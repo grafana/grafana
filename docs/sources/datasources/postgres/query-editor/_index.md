@@ -230,9 +230,4 @@ You can overlay event data on your panels using annotations. Add annotation quer
 
 ## Alerting
 
-Use time series queries to create alerts. Table formatted queries aren't yet supported in alert rule conditions.
-
-For more information regarding alerting refer to the following:
-
-- [Alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/)
-- [Template annotations and labels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/)
+You can create alert rules that evaluate PostgreSQL time series queries. Only time series format is supported; table format is not supported in alert conditions. For setup, supported format, and an example query, refer to [PostgreSQL alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/alerting/).

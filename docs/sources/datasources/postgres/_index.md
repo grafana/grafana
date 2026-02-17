@@ -31,6 +31,7 @@ The following documents will help you get started with the PostgreSQL data sourc
 - [PostgreSQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/)
 - [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/)
 - [PostgreSQL annotations](annotations/)
+- [PostgreSQL alerting](alerting/)
 - [Troubleshooting](troubleshooting/)
 
 After you have configured the data source you can:
@@ -38,7 +39,7 @@ After you have configured the data source you can:
 - Create a variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - Add [annotations](annotations/) to overlay events on your panels
 - Use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) for dynamic dashboards
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Set up [alerting](alerting/) with time series queries
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
 
 View a PostgreSQL overview on Grafana Play:
