@@ -10,7 +10,6 @@ import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { useFocusReturn } from '../FocusReturnContext';
 
 import ShareMenu from './ShareMenu';
 import { buildShareUrl } from './utils';
@@ -20,7 +19,6 @@ const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButt
 export default function ShareButton({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
-  const focusReturn = useFocusReturn();
 
   const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
@@ -49,7 +47,6 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
-          ref={focusReturn?.triggerRef}
           aria-label={t('dashboard-scene.share-button.aria-label-sharedropdownmenu', 'Toggle share menu')}
           data-testid={newShareButtonSelector.arrowMenu}
           size="sm"

@@ -1,34 +1,6 @@
 import { ReactElement } from 'react';
 import * as React from 'react';
 
-/** Element shape that may have a ref (React stores ref on element.ref at runtime) */
-type ElementWithOptionalRef<T = HTMLElement> = React.ReactElement | { ref?: React.Ref<T> };
-
-/**
- * Extracts the ref from a React element. The ref is stored on element.ref (not in props).
- * React's TypeScript types omit ref from ReactElement, but it exists at runtime.
- */
-export function getRefFromElement<T = HTMLElement>(element: ElementWithOptionalRef<T>): React.Ref<T> | undefined {
-  return 'ref' in element ? element.ref : undefined;
-}
-
-/**
- * Assigns a value to a React ref. Handles both callback refs and object refs.
- * Used when merging refs (e.g. forwarding a ref while also using one internally).
- * React's RefObject has readonly current, but refs from useRef() are mutable at runtime.
- */
-export function setRef<T>(ref: React.Ref<T> | undefined, value: T | null): void {
-  if (ref == null) {
-    return;
-  }
-  if (typeof ref === 'function') {
-    ref(value);
-  } else {
-    // Use Object.assign to update current - avoids readonly assignment on RefObject
-    Object.assign(ref, { current: value });
-  }
-}
-
 /** Returns the ID value of the first, and only, child element  */
 export function getChildId(children: ReactElement<Record<string, unknown>>): string | undefined {
   let inputId: unknown;

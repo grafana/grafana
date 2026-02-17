@@ -65,7 +65,6 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
 function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const { activeShare } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const focusReturn = useFocusReturn();
 
   return (
     <Drawer
@@ -73,7 +72,6 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
       subtitle={activeShare?.getSubtitle?.()}
       onClose={model.onDismiss}
       size="md"
-      returnFocusRef={focusReturn?.triggerRef}
     >
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {activeShare && <activeShare.Component model={activeShare} />}

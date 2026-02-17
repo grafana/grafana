@@ -9,7 +9,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
-import { FocusReturnProvider } from '../sharing/FocusReturnContext';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
@@ -73,10 +72,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   if (editview) {
     return (
-      <FocusReturnProvider>
+      <>
         <editview.Component model={editview} />
         {overlay && <overlay.Component model={overlay} />}
-      </FocusReturnProvider>
+      </>
     );
   }
 
@@ -97,7 +96,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   return (
-    <FocusReturnProvider>
+    <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
@@ -111,6 +110,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         )}
         {overlay && <overlay.Component model={overlay} />}
       </Page>
-    </FocusReturnProvider>
+    </>
   );
 }
