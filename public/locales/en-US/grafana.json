@@ -13254,6 +13254,8 @@
       "expression": "Expression",
       "pending-expression": "Select an Expression",
       "pending-expression-cancel": "Cancel",
+      "pending-transformation": "Select a Transformation",
+      "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13270,7 +13272,10 @@
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-query": "Add query",
+      "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
+      "add-transformation": "Add transformation",
+      "add-transformation-below": "Add transformation below {{id}}",
       "alert-indicator": {
         "button-label": "View alert rules",
         "tooltip": "View alert rules"
