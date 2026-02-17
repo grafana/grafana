@@ -357,36 +357,6 @@ function setup() {
   return { orchestrator, manager, gridItem, panel };
 }
 
-function setupWithRows() {
-  const panel = new VizPanel({
-    title: 'Panel A',
-    key: 'panel-1',
-    pluginId: 'table',
-  });
-
-  const gridItem = new AutoGridItem({
-    key: 'grid-item-1',
-    body: panel,
-  });
-
-  const manager = new AutoGridLayoutManager({
-    layout: new AutoGridLayout({ children: [gridItem] }),
-  });
-
-  const tabsManager = new TabsLayoutManager({
-    tabs: [new TabItem({ title: 'Tab 1', layout: manager })],
-  });
-
-  const orchestrator = new DashboardLayoutOrchestrator();
-
-  new DashboardScene({
-    body: tabsManager,
-    layoutOrchestrator: orchestrator,
-  });
-
-  return { orchestrator, manager, gridItem, panel, tabsManager };
-}
-
 function setupAutoGrid() {
   const panel1 = new VizPanel({
     title: 'Panel A',
