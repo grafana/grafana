@@ -326,8 +326,8 @@ func TestFromUpdateCommand(t *testing.T) {
 			Name:   "Test",
 			Access: datasources.DS_ACCESS_PROXY,
 			SecureJsonData: map[string]string{
-				"password":          "",        // empty string = remove
-				"basicAuthPassword": "secret",  // non-empty = create
+				"password":          "",       // empty string = remove
+				"basicAuthPassword": "secret", // non-empty = create
 			},
 		}
 
