@@ -139,7 +139,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     if (result.type === 'TAB') {
-      model.state.layoutOrchestrator?.endTabDrag(
+      model.state.layoutOrchestrator?.stopTabDrag(
         result.destination?.droppableId,
         result.source.index,
         result.destination?.index

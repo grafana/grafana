@@ -432,7 +432,7 @@ export function setupTabsTest(scenario: TabsTestSetup) {
   return {
     performDrag: () => {
       orchestrator.startTabDrag(drag!);
-      orchestrator.endTabDrag(destManager!.state.key!, sourceIndex, destIndex);
+      orchestrator.stopTabDrag(destManager!.state.key!, sourceIndex, destIndex);
     },
     assertExpectedTabs: () => {
       const all = managers.map((manager) =>

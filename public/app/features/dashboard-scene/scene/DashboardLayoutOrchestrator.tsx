@@ -267,7 +267,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     });
   }
 
-  public endTabDrag(
+  public stopTabDrag(
     destinationManagerKey: string | undefined,
     sourceIndex: number,
     destinationIndex: number | undefined
