@@ -19,12 +19,11 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
 func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSourceIndexProvider) string {
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.get_default_datasource")
+	ctx, span := TracingStart(ctx, "dashboard.conversion.get_default_datasource")
 	defer span.End()
 
 	const defaultType = "grafana"
@@ -50,7 +49,7 @@ func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSo
 
 // getDatasourceTypeByUID gets the datasource type by UID using the datasource provider
 func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemaversion.DataSourceIndexProvider) string {
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.get_datasource_by_uid",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.get_datasource_by_uid",
 		attribute.String("datasource.uid", uid),
 	)
 	defer span.End()
@@ -142,7 +141,7 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 		}
 	}
 
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.v1beta1_to_v2alpha1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v1beta1_to_v2alpha1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 	)
@@ -157,7 +156,7 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 }
 
 func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.spec_v1beta1_to_v2alpha1")
+	ctx, span := TracingStart(ctx, "dashboard.conversion.spec_v1beta1_to_v2alpha1")
 	defer span.End()
 
 	// Parse the unstructured spec into a dashboard JSON structure

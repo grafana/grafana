@@ -17,6 +17,7 @@ replace (
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
+	github.com/grafana/grafana/apps/example => ../example
 	github.com/grafana/grafana/apps/folder => ../folder
 	github.com/grafana/grafana/apps/iam => ../iam
 	github.com/grafana/grafana/apps/live => ../live
@@ -25,6 +26,7 @@ replace (
 	github.com/grafana/grafana/apps/plugins => ../plugins
 	github.com/grafana/grafana/apps/preferences => ../preferences
 	github.com/grafana/grafana/apps/provisioning => ../provisioning
+	github.com/grafana/grafana/apps/quotas => ../quotas
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
@@ -41,7 +43,7 @@ replace (
 )
 
 require (
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.50.4
 	github.com/grafana/grafana-app-sdk/logging v0.50.2
 	github.com/stretchr/testify v1.11.1
@@ -77,7 +79,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
+	github.com/VividCortex/mysqlerr v1.0.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.1 // indirect
@@ -208,8 +210,8 @@ require (
 	github.com/grafana/grafana/apps/collections v0.0.0 // indirect
 	github.com/grafana/grafana/apps/correlations v0.0.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
-	github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6 // indirect
-	github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5 // indirect
+	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // indirect
+	github.com/grafana/grafana/apps/example v0.0.0 // indirect
 	github.com/grafana/grafana/apps/folder v0.0.0 // indirect
 	github.com/grafana/grafana/apps/iam v0.0.0 // indirect
 	github.com/grafana/grafana/apps/live v0.0.0 // indirect
@@ -262,7 +264,7 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
+	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
@@ -272,7 +274,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mattn/go-sqlite3 v1.14.32 // indirect
+	github.com/mattn/go-sqlite3 v1.14.34 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -403,7 +405,7 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect

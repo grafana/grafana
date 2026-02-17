@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
 
+import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
@@ -14,6 +21,17 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     state: { isPlaying: false },
     stop: jest.fn(),
   },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({ getTagKeysProvider: jest.fn() }),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+    registerRuntimeDataSource: jest.fn(),
+  })),
 }));
 
 describe('DashboardControls', () => {
@@ -147,6 +165,57 @@ describe('DashboardControls', () => {
       expect(renderer.getByText('Mocked Component')).toBeInTheDocument();
 
       jest.restoreAllMocks();
+    });
+
+    describe('drilldown wrapper hidden variables', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+
+      beforeEach(() => {
+        config.featureToggles = {
+          dashboardNewLayouts: true,
+          dashboardAdHocAndGroupByWrapper: true,
+        };
+      });
+
+      afterEach(() => {
+        config.featureToggles = originalFeatureToggles;
+      });
+
+      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
+        const adHocVar = new AdHocFiltersVariable({
+          name: 'filters',
+          label: 'filters',
+          filters: [],
+          datasource: { uid: 'devscopes' },
+          applicabilityEnabled: false,
+        });
+        const groupByVar = new GroupByVariable({
+          name: 'query0',
+          value: ['instance'],
+          text: ['instance'],
+          options: [],
+          datasource: { uid: 'devscopes' },
+          hide: VariableHide.hideVariable,
+          applicabilityEnabled: false,
+        });
+
+        const dashboard = new DashboardScene({
+          uid: 'test-dashboard',
+          $variables: new SceneVariableSet({
+            variables: [adHocVar, groupByVar],
+          }),
+          controls: new DashboardControls({}),
+        });
+
+        dashboard.activate();
+        dashboard.setState({ isEditing: true });
+
+        const controls = dashboard.state.controls as DashboardControls;
+        render(<controls.Component model={controls} />);
+
+        // Hidden variables should still be visible in edit mode.
+        expect(await screen.findByText('query0')).toBeInTheDocument();
+      });
     });
   });
 
