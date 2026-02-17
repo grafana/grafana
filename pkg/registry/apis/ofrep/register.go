@@ -224,12 +224,6 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
-		return
-	}
-
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
@@ -246,6 +240,12 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.GOFFProviderType {
+		if !b.validateNamespace(r) {
+			b.logger.Error("stackId in evaluation context does not match requested namespace")
+			http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+			return
+		}
+
 		b.proxyFlagReq(flagKey, isAuthedReq, w, r)
 		return
 	}
@@ -254,15 +254,15 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
-		return
-	}
-
 	isAuthedReq := b.isAuthenticatedRequest(r)
 
 	if b.providerType == setting.GOFFProviderType {
+		if !b.validateNamespace(r) {
+			b.logger.Error("stackId in evaluation context does not match requested namespace")
+			http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+			return
+		}
+
 		b.proxyAllFlagReq(isAuthedReq, w, r)
 		return
 	}
