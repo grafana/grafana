@@ -53,7 +53,3 @@ export const filterDataTransformerConfigs = (
 ): DataTransformerConfig[] => {
   return transformations.filter((t): t is DataTransformerConfig => isDataTransformerConfig(t));
 };
-
-export function getTransformId(transformConfigId: string, index: number): string {
-  return `${transformConfigId}-${index}`;
-}
