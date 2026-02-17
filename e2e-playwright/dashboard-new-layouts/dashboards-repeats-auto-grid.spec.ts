@@ -20,7 +20,7 @@ const newTitleBase = 'edited rep - ';
 const repeatOptions = [1, 2, 3, 4];
 
 test.use({
-  featureToggles: {    
+  featureToggles: {
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
