@@ -1,11 +1,17 @@
 package datasource
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -75,5 +81,113 @@ func TestLegacyStorageValidateURL(t *testing.T) {
 	}
 }
 
-// Note: Auth proxy header validation tests have been moved to register_test.go
-// as the validation now happens in the admission layer (DataSourceAPIBuilder.Validate)
+func TestLegacyStorageUpdatePreservesSecureValues(t *testing.T) {
+	oldDS := &v0alpha1.DataSource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-uid",
+			Namespace: "default",
+		},
+		Spec: v0alpha1.UnstructuredSpec{},
+		Secure: common.InlineSecureValues{
+			"password": common.InlineSecureValue{
+				Name: "existing-secret-ref",
+			},
+			"apiKey": common.InlineSecureValue{
+				Name: "existing-apikey-ref",
+			},
+		},
+	}
+	oldDS.Spec.SetTitle("Test DS").SetAccess("proxy").SetURL("http://localhost:9090")
+
+	// New datasource from update request has NO secure values (nil map)
+	newDS := &v0alpha1.DataSource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-uid",
+			Namespace: "default",
+		},
+		Spec:   v0alpha1.UnstructuredSpec{},
+		Secure: nil, // This is the key - nil secure map
+	}
+	newDS.Spec.SetTitle("Updated DS").SetAccess("proxy").SetURL("http://localhost:9090")
+
+	mockProvider := &mockUpdateProvider{
+		getResult:    oldDS,
+		updateResult: nil, // Will be set from input
+	}
+
+	resourceInfo := v0alpha1.DataSourceResourceInfo.WithGroupAndShortName(
+		"test.datasource.grafana.app", "test",
+	)
+
+	s := &legacyStorage{
+		datasources:  mockProvider,
+		resourceInfo: &resourceInfo,
+		pluginType:   "test",
+	}
+
+	// This should NOT panic even though newDS.Secure is nil
+	result, created, err := s.Update(
+		context.Background(),
+		"test-uid",
+		&simpleUpdateObjectInfo{obj: newDS},
+		nil,
+		nil,
+		false,
+		&metav1.UpdateOptions{},
+	)
+
+	require.NoError(t, err)
+	assert.False(t, created)
+
+	// Verify the updated datasource has the old secure values preserved
+	updatedDS, ok := result.(*v0alpha1.DataSource)
+	require.True(t, ok)
+	require.NotNil(t, updatedDS.Secure)
+	assert.Len(t, updatedDS.Secure, 2)
+	assert.Equal(t, "existing-secret-ref", updatedDS.Secure["password"].Name)
+	assert.Equal(t, "existing-apikey-ref", updatedDS.Secure["apiKey"].Name)
+}
+
+// mockUpdateProvider implements PluginDatasourceProvider for testing Update
+type mockUpdateProvider struct {
+	getResult    *v0alpha1.DataSource
+	updateResult *v0alpha1.DataSource
+}
+
+func (m *mockUpdateProvider) GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error) {
+	return m.getResult, nil
+}
+
+func (m *mockUpdateProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
+	// Return the input as the result (simulating successful update)
+	return ds, nil
+}
+
+func (m *mockUpdateProvider) CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
+	return nil, nil
+}
+
+func (m *mockUpdateProvider) DeleteDataSource(ctx context.Context, uid string) error {
+	return nil
+}
+
+func (m *mockUpdateProvider) ListDataSources(ctx context.Context) (*v0alpha1.DataSourceList, error) {
+	return nil, nil
+}
+
+func (m *mockUpdateProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
+	return nil, nil
+}
+
+// simpleUpdateObjectInfo implements rest.UpdatedObjectInfo for testing
+type simpleUpdateObjectInfo struct {
+	obj *v0alpha1.DataSource
+}
+
+func (s *simpleUpdateObjectInfo) Preconditions() *metav1.Preconditions {
+	return nil
+}
+
+func (s *simpleUpdateObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+	return s.obj, nil
+}

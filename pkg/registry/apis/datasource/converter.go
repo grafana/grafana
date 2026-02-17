@@ -201,8 +201,15 @@ func (r *Converter) FromUpdateCommand(cmd *datasources.UpdateDataSourceCommand, 
 	if len(cmd.SecureJsonData) > 0 {
 		ds.Secure = make(common.InlineSecureValues)
 		for k, v := range cmd.SecureJsonData {
-			ds.Secure[k] = common.InlineSecureValue{
-				Create: common.RawSecureValue(v),
+			if v == "" {
+				// Empty string means remove the secure value
+				ds.Secure[k] = common.InlineSecureValue{
+					Remove: true,
+				}
+			} else {
+				ds.Secure[k] = common.InlineSecureValue{
+					Create: common.RawSecureValue(v),
+				}
 			}
 		}
 	}

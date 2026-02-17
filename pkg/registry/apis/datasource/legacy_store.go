@@ -192,6 +192,9 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	// Keep all the old secure values
 	if len(oldDS.Secure) > 0 {
+		if ds.Secure == nil {
+			ds.Secure = make(common.InlineSecureValues)
+		}
 		for k, v := range oldDS.Secure {
 			_, found := ds.Secure[k]
 			if !found {

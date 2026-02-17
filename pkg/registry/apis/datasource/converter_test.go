@@ -318,4 +318,28 @@ func TestFromUpdateCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, ds.Secure)
 	})
+
+	t.Run("empty secureJsonData value sets Remove flag", func(t *testing.T) {
+		cmd := &datasources.UpdateDataSourceCommand{
+			UID:    "test-uid",
+			OrgID:  1,
+			Name:   "Test",
+			Access: datasources.DS_ACCESS_PROXY,
+			SecureJsonData: map[string]string{
+				"password":          "",        // empty string = remove
+				"basicAuthPassword": "secret",  // non-empty = create
+			},
+		}
+
+		ds, err := converter.FromUpdateCommand(cmd, "v0alpha1")
+		require.NoError(t, err)
+
+		require.Len(t, ds.Secure, 2)
+		// Empty string should set Remove: true
+		assert.True(t, ds.Secure["password"].Remove)
+		assert.Empty(t, ds.Secure["password"].Create)
+		// Non-empty string should set Create
+		assert.False(t, ds.Secure["basicAuthPassword"].Remove)
+		assert.Equal(t, "secret", string(ds.Secure["basicAuthPassword"].Create))
+	})
 }
