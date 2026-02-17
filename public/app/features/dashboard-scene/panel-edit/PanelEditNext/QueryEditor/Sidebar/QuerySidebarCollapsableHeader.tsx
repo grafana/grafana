@@ -25,7 +25,11 @@ export const QuerySidebarCollapsableHeader = ({
           <Text color="maxContrast" variant="bodySmall" weight="light">
             {label}
           </Text>
-          {headerAction}
+          {headerAction && (
+            // Prevent the header action from triggering the collapsable section collapse
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <div onClick={(e) => e.stopPropagation()}>{headerAction}</div>
+          )}
         </Stack>
       }
       isOpen={isOpen}
