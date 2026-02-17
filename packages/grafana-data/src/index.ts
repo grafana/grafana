@@ -665,6 +665,7 @@ export {
   type DataSourcePluginComponents,
   type DataSourceConstructor,
   type DataSourceGetTagKeysOptions,
+  type DataSourceGetGroupByKeysOptions,
   type DataSourceGetTagValuesOptions,
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DataSourceGetRecommendedDrilldownsOptions,
