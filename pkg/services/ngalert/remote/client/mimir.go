@@ -17,9 +17,10 @@ import (
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 
+	alertingmodels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
@@ -39,7 +40,7 @@ type MimirClient interface {
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 
 	// Mimir implements an extended version of the receivers API under a different path.
-	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
+	GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error)
 }
 
 type Mimir struct {

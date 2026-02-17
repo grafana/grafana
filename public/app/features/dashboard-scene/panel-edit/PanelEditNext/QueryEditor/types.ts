@@ -1,9 +1,16 @@
-import { DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
+import { AlertState, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 export type Transformation = {
   registryItem: TransformerRegistryItem | undefined;
   transformId: string;
   transformConfig: DataTransformerConfig;
+};
+
+export type AlertRule = {
+  alertId: string;
+  rule: CombinedRule;
+  state: AlertState;
 };
 
 export enum QueryOptionField {

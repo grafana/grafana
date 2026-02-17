@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Automatisk max. inaktiv",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Om det är aktiverat ställer du automatiskt in antalet för <i>Maximalt antal inaktiva anslutningar</i> till samma värde som <i>Max. öppna anslutningar</i>. Om antalet maximala öppna anslutningar inte är inställt kommer det att ställas in på standard ({{defaultMaxIdle}}).",
+        "content-max-idle": "Det maximala antalet anslutningar i den inaktiva anslutningspoolen. Om <i>Max. öppna anslutningar</i> är större än 0 men mindre än <i>Max. inaktiva anslutningar</i> kommer <i>Max. inaktiva anslutningar</i> att reduceras för att matcha gränsen för <i>Max. öppna anslutningar</i>. Om inställningen är 0 behålls inga inaktiva anslutningar.",
         "content-max-lifetime": "Den maximala tiden i sekunder som en anslutning kan återanvändas. Om inställningen är 0 återanvänds anslutningarna för evigt.",
-        "content-max-open": "",
+        "content-max-open": "Det maximala antalet öppna anslutningar till databasen. Om <i>Max. inaktiva anslutningar</i> är större än 0 och <i>Max. öppna anslutningar</i> är mindre än <i>Max. inaktiva anslutningar</i>kommer <i>Max. inaktiva anslutningar</i> att reduceras för att matcha gränsen för <i>Max. öppna anslutningar</i>. Om inställningen är 0 finns det ingen gräns för antalet öppna anslutningar.",
         "max-idle": "Max inaktiv",
         "max-lifetime": "Max livstid",
         "max-open": "Max öppen",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Din fråga är ogiltig. Se nedan för mer information. <br />Du kan dock fortfarande köra denna fråga.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Kod"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Textfält",
+          "valueField": "Värdefält"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatera fråga"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Den här frågan kommer att behandla <strong>{{bytes}}</strong> när den körs.",
         "validating-query": "Validerar frågan …"
       },
       "raw-editor": {

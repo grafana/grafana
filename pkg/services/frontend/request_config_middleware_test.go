@@ -8,6 +8,7 @@ import (
 
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -22,13 +23,16 @@ import (
 )
 
 // setupTestContext creates a request with a proper context that includes a logger
-func setupTestContext(r *http.Request) *http.Request {
+func setupTestContext(r *http.Request, namespace string) *http.Request {
 	logger := log.NewNopLogger()
 	reqCtx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: r},
 		Logger:  logger,
 	}
 	ctx := ctxkey.Set(r.Context(), reqCtx)
+	if namespace != "" {
+		ctx = request.WithNamespace(ctx, namespace)
+	}
 	return r.WithContext(ctx)
 }
 
@@ -56,7 +60,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req)
+		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -88,7 +92,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req)
+		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -128,8 +132,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("baggage", "namespace=stacks-123")
-		req = setupTestContext(req)
+		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -175,8 +178,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("baggage", "namespace=stacks-123")
-		req = setupTestContext(req)
+		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -192,7 +194,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.True(t, mockSettingsService.called)
 	})
 
-	t.Run("should not call settings service without namespace header", func(t *testing.T) {
+	t.Run("should not call settings service when no namespace is present", func(t *testing.T) {
 		mockSettingsService := &mockSettingsService{}
 
 		license := &licensing.OSSLicensingService{}
@@ -211,7 +213,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req)
+		req = setupTestContext(req, "")
 		// No baggage header
 		recorder := httptest.NewRecorder()
 
@@ -219,103 +221,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.False(t, mockSettingsService.called)
-	})
-
-	t.Run("should parse namespace from baggage header with multiple values", func(t *testing.T) {
-		mockSettingsService := &mockSettingsService{
-			settings: []*settingservice.Setting{
-				{Section: "security", Key: "content_security_policy", Value: "true"},
-			},
-		}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:        ini.Empty(),
-			HTTPPort:   "1234",
-			CSPEnabled: false, // Base config has CSP disabled
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
-
-		var capturedConfig FSRequestConfig
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			capturedConfig, err = FSRequestConfigFromContext(r.Context())
-			require.NoError(t, err)
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		// Baggage header with multiple key-value pairs
-		req.Header.Set("baggage", "trace-id=abc123,namespace=tenant-456,user-id=xyz")
-		req = setupTestContext(req)
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.True(t, capturedConfig.CSPEnabled, "Should apply tenant overrides when namespace is present")
-		assert.True(t, mockSettingsService.called, "Should call settings service when namespace is in baggage")
-	})
-
-	t.Run("should not call settings service with malformed baggage header", func(t *testing.T) {
-		mockSettingsService := &mockSettingsService{}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:      ini.Empty(),
-			HTTPPort: "1234",
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
-
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		// Malformed baggage header
-		req.Header.Set("baggage", "invalid baggage format;;;")
-		req = setupTestContext(req)
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.False(t, mockSettingsService.called, "Should not call settings service with malformed baggage")
-	})
-
-	t.Run("should not call settings service when baggage has no namespace", func(t *testing.T) {
-		mockSettingsService := &mockSettingsService{}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:      ini.Empty(),
-			HTTPPort: "1234",
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
-
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		// Baggage header without namespace key
-		req.Header.Set("baggage", "trace-id=abc123,user-id=xyz")
-		req = setupTestContext(req)
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.False(t, mockSettingsService.called, "Should not call settings service when namespace is not in baggage")
 	})
 }
 
