@@ -32,7 +32,7 @@ The SDK supports multiple programming languages, including Go, TypeScript, Pytho
 Ensure you have the following prerequisites:
 
 - **Programming environment:** Set up for your chosen language. For example: Go, Node.js for TypeScript, or Python 3.x for Python.
-- **Grafana instance:** A running Grafana instance compatible with the SDK (>= Grafana 10).
+- **Grafana instance:** A running Grafana instance compatible with the SDK (Grafana v10.0 or higher).
 - **Package manager:** Appropriate for your language, for example, `npm` or `yarn` for TypeScript or `pip` for Python.
 
 To get started, clone the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk) to access examples and a `docker-compose` stack.
