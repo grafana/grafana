@@ -7837,6 +7837,11 @@
       "save-correlation": "Save correlation",
       "title-unsaved-changes-to-correlation": "Unsaved changes to correlation"
     },
+    "custom-container": {
+      "body-find-plugin": "Failed to find a panel plugin with the id <1>{{pluginId}}</1>.",
+      "error-with-stack": "Failed to get panel plugin",
+      "title-find-plugin": "Failed to find plugin"
+    },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
       "click-horizontally-somewhere-colored-below": "Click and drag horizontally somewhere in the colored area, below.",

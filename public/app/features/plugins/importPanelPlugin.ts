@@ -1,69 +1,48 @@
-import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import config from 'app/core/config';
+import { PanelPlugin } from '@grafana/data';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 
-import builtInPlugins, { isBuiltinPluginPath } from './built_in_plugins';
 import { pluginImporter } from './importer/pluginImporter';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
 
-export function importPanelPlugin(id: string): Promise<PanelPlugin> {
+export async function importPanelPlugin(id: string): Promise<PanelPlugin> {
   const loaded = promiseCache[id];
   if (loaded) {
     return loaded;
   }
 
-  const meta = getPanelPluginMeta(id);
+  // we need to make sure this continues to handle concurrent calls
+  promiseCache[id] = getPanelPluginMeta(id)
+    .then((meta) => {
+      if (!meta) {
+        throw new Error(`Plugin ${id} not found`);
+      }
 
-  if (!meta) {
-    throw new Error(`Plugin ${id} not found`);
-  }
+      const promise = pluginImporter.importPanel(meta);
+      if (id !== meta.type) {
+        promiseCache[meta.type] = promise;
+      }
 
-  promiseCache[id] = getPanelPlugin(meta);
-  if (id !== meta.type) {
-    promiseCache[meta.type] = promiseCache[id];
-  }
+      return promise;
+    })
+    .catch((error) => {
+      // clear cache on error
+      delete promiseCache[id];
+      throw error;
+    });
 
   return promiseCache[id];
-}
-
-export function isBuiltInPlugin(id?: string): id is keyof typeof builtInPlugins {
-  if (!id) {
-    return false;
-  }
-  const meta = getPanelPluginMeta(id);
-  return Boolean(meta != null && isBuiltinPluginPath(meta.module));
-}
-
-export function hasPanelPlugin(id: string): boolean {
-  return !!getPanelPluginMeta(id);
-}
-
-export function getPanelPluginMeta(id: string): PanelPluginMeta {
-  const v = config.panels[id];
-  if (!v) {
-    // Check alias values before failing
-    for (const p of Object.values(config.panels)) {
-      if (p.aliasIDs?.includes(id)) {
-        return p;
-      }
-    }
-  }
-  return v;
-}
-
-export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  return getPanelPlugin(meta);
 }
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
   return pluginImporter.getPanel(id);
 }
 
-function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  return pluginImporter.importPanel(meta);
-}
-
 export function clearPanelPluginCache(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearPanelPluginCache() function can only be called from tests.');
+  }
+
   for (const key of Object.keys(promiseCache)) {
     delete promiseCache[key];
   }
