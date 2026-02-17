@@ -179,7 +179,6 @@ configs:
       retrievers:
         - kind: "file"
           path: "/flags/flags.yaml"
-
   goff_flags:
     file: ./goff-flags.yaml
 

@@ -35,10 +35,9 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			// This is the default configuration that will be used for all requests
 			requestConfig := NewFSRequestConfig(cfg, license)
 
-			// Extract namespace from context (set by contextMiddleware)
+			// Fetch tenant-specific configuration if namespace is present
 			if namespace, ok := request.NamespaceFrom(ctx); ok {
-				// Fetch tenant-specific configuration if namespace is present
-				if settingsService != nil {
+				if namespace != "" && settingsService != nil {
 					// Fetch tenant overrides for relevant sections only
 					selector := metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{{

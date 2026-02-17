@@ -40,8 +40,9 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	ctx, span := tracing.Start(ctx, "setRequestContext")
 	defer span.End()
 
+	webCtx := web.FromContext(ctx)
 	reqContext := &contextmodel.ReqContext{
-		Context:      web.FromContext(ctx),
+		Context:      webCtx,
 		Logger:       log.New("context"),
 		SignedInUser: &user.SignedInUser{},
 	}
@@ -51,7 +52,9 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 	// Set the context for the http.Request.Context
 	// This modifies both r and reqContext.Req since they point to the same value
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+	if webCtx != nil {
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+	}
 
 	// add traceID to logger context
 	traceID := tracing.TraceIDFromContext(ctx, false)
@@ -76,14 +79,18 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			}
 		}
 	}
-	ctx = request.WithNamespace(ctx, namespace)
-
-	ns := "default"
 	if namespace != "" {
-		ns = namespace
+		ctx = request.WithNamespace(ctx, namespace)
 	}
-	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
-		"namespace": ns,
+
+	// Note: OpenFeature is already initialized by target.go before this service starts.
+	// The frontend service only needs to set evaluation context per request
+	openFeatureNamespace := "default"
+	if namespace != "" {
+		openFeatureNamespace = namespace
+	}
+	evalCtx := openfeature.NewEvaluationContext(openFeatureNamespace, map[string]any{
+		"namespace": openFeatureNamespace,
 	})
 	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 

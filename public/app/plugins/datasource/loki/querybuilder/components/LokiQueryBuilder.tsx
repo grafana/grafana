@@ -15,6 +15,7 @@ import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
 } from '@grafana/plugin-ui';
+import { Stack } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
@@ -132,7 +133,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <div data-testid={testIds.editor}>
+    <Stack direction="column" gap={0.5} data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -200,7 +201,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
           showExplain={showExplain}
         />
       )}
-    </div>
+    </Stack>
   );
 });
 

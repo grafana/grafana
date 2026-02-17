@@ -121,6 +121,12 @@ func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 	return err == nil, nil
 }
 
+// GetStoreInfo returns store information for a given namespace.
+// This is used by the reconciler to access store IDs for direct operations.
+func (s *Server) GetStoreInfo(ctx context.Context, namespace string) (*storeInfo, error) {
+	return s.getStoreInfo(ctx, namespace)
+}
+
 func (s *Server) Close() {
 	s.store.Close()
 }

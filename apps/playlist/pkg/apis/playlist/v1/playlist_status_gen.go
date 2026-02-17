@@ -20,6 +20,11 @@ func NewPlayliststatusOperatorState() *PlayliststatusOperatorState {
 	return &PlayliststatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PlayliststatusOperatorState.
+func (PlayliststatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlayliststatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type PlaylistStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewPlaylistStatus() *PlaylistStatus {
 	return &PlaylistStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PlaylistStatus.
+func (PlaylistStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatus"
+}
+
 // +k8s:openapi-gen=true
 type PlaylistStatusOperatorStateState string
 
@@ -43,9 +53,7 @@ const (
 	PlaylistStatusOperatorStateStateFailed     PlaylistStatusOperatorStateState = "failed"
 )
 
-func (PlayliststatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlayliststatusOperatorState"
-}
-func (PlaylistStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatus"
+// OpenAPIModelName returns the OpenAPI model name for PlaylistStatusOperatorStateState.
+func (PlaylistStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatusOperatorStateState"
 }

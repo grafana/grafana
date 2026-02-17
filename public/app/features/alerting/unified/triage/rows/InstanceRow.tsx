@@ -22,7 +22,7 @@ import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
 
 import { GenericRow } from './GenericRow';
-import { OpenDrawerIconButton } from './OpenDrawerIconButton';
+import { OpenDrawerButton } from './OpenDrawerButton';
 
 interface Instance {
   labels: Labels;
@@ -117,7 +117,7 @@ export function InstanceRow({
           )
         }
         actions={
-          <OpenDrawerIconButton
+          <OpenDrawerButton
             aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
             onClick={handleDrawerOpen}
           />

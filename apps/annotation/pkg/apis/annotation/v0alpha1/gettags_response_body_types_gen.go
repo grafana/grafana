@@ -14,6 +14,11 @@ func NewGetTagsBody() *GetTagsBody {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GetTagsBody.
+func (GetTagsBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetTagsBody"
+}
+
 // +k8s:openapi-gen=true
 type GetTagsV0alpha1BodyTags struct {
 	Tag   string  `json:"tag"`
@@ -24,9 +29,8 @@ type GetTagsV0alpha1BodyTags struct {
 func NewGetTagsV0alpha1BodyTags() *GetTagsV0alpha1BodyTags {
 	return &GetTagsV0alpha1BodyTags{}
 }
-func (GetTagsBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetTagsBody"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetTagsV0alpha1BodyTags.
 func (GetTagsV0alpha1BodyTags) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetTagsV0alpha1BodyTags"
 }
