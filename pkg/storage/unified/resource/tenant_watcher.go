@@ -100,7 +100,7 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 }
 
 // NewTenantWatcher creates and starts a TenantWatcher.
-func NewTenantWatcher(ctx context.Context, cfg TenantWatcherConfig) (*TenantWatcher, error) {
+func NewTenantWatcher(ctx context.Context, kv KV, cfg TenantWatcherConfig) (*TenantWatcher, error) {
 	restCfg, err := NewTenantRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building tenant REST config: %w", err)
@@ -129,26 +129,17 @@ func NewTenantWatcher(ctx context.Context, cfg TenantWatcherConfig) (*TenantWatc
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(client, resync)
 	informer := factory.ForResource(tenantGVR).Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			tw.handleTenant(obj.(*unstructured.Unstructured))
 		},
 		UpdateFunc: func(_, newObj interface{}) {
 			tw.handleTenant(newObj.(*unstructured.Unstructured))
 		},
-		DeleteFunc: func(obj interface{}) {
-			tenant, ok := obj.(*unstructured.Unstructured)
-			if !ok {
-				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					logger.Warn("unexpected delete event object type")
-					return
-				}
-				tenant = tombstone.Obj.(*unstructured.Unstructured)
-			}
-			tw.handleTenantDeleted(tenant.GetName())
-		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	factory.Start(tw.stopCh)
 	factory.WaitForCacheSync(tw.stopCh)
@@ -167,15 +158,15 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 	labels := tenant.GetLabels()
 
 	if labels[labelPendingDelete] == "true" {
-		deleteAfter := tenant.GetAnnotations()[annotationPendingDeleteAfter]
+		deleteAfter, ok := tenant.GetAnnotations()[annotationPendingDeleteAfter]
+		if !ok {
+			tw.log.Warn("tenant marked pending-delete but missing delete-after annotation", "tenant", name)
+			return
+		}
 		tw.markPendingDelete(name, deleteAfter)
 	} else {
 		tw.clearPendingDelete(name)
 	}
-}
-
-func (tw *TenantWatcher) handleTenantDeleted(name string) {
-	tw.clearPendingDelete(name)
 }
 
 // markPendingDelete records that a tenant is pending deletion in the KV store.

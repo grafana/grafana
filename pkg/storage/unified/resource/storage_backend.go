@@ -168,7 +168,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
-		tw, err := NewTenantWatcher(ctx, *opts.TenantWatcherConfig)
+		tw, err := NewTenantWatcher(ctx, kv, *opts.TenantWatcherConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start tenant watcher: %w", err)
 		}
