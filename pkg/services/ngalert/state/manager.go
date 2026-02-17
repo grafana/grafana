@@ -495,19 +495,18 @@ func (st *Manager) Put(states []*State) {
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
 func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
-	var staleStatesCount int
+	staleStates := map[data.Fingerprint]struct{}{}
 
-	toDelete := func(s *State) bool {
+	for _, s := range st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
 		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
-			return false
+			continue
 		}
+
 		// After this point, we know that the state is not in the current evaluation.
 		// Check if it's stale, and if so, resolve it.
-		oldState := s.State
-		oldReason := s.StateReason
-
 		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+
 		// 'Error' and 'NoData' states (including Pending with Error/NoData reason) should be resolved
 		// after 1 missing evaluation instead of waiting for the configured missing series evaluations.
 		// This ensures these transient error conditions are cleaned up promptly when the series disappears.
@@ -515,9 +514,9 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			(s.State == eval.Pending && (s.StateReason == ngModels.StateReasonError || s.StateReason == ngModels.StateReasonNoData)) {
 			missingEvalsToResolve = 1
 		}
-		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
 
-		if isStale {
+		oldState, oldReason := s.State, s.StateReason
+		if stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve) {
 			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
 
 			s.State = eval.Normal
@@ -528,43 +527,29 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				image := takeImageFn("stale state")
-				if image != nil {
-					s.Image = image
-				}
+				s.Image = takeImageFn("stale state") // Potentially nil
 			}
 
-			staleStatesCount++
+			staleStates[s.CacheID] = struct{}{}
 		} else if s.State == eval.Alerting {
 			// Update 'EndsAt' so the Alertmanager won't auto-resolve this alert.
 			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
-		record := StateTransition{
+		missingTransitions = append(missingTransitions, StateTransition{
 			State:               s,
 			PreviousState:       oldState,
 			PreviousStateReason: oldReason,
-		}
-		missingTransitions = append(missingTransitions, record)
-
-		return isStale
+		})
 	}
 
-	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-
-	toDeleteStates := map[data.Fingerprint]struct{}{}
-	for _, s := range states {
-		if toDelete(s) {
-			toDeleteStates[s.CacheID] = struct{}{}
-		}
-	}
-
+	// deleteRuleStates holds a lock on the cache, thus the pre-computed map of states.
 	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		_, ok := toDeleteStates[s.CacheID]
+		_, ok := staleStates[s.CacheID]
 		return ok
 	})
 
-	return missingTransitions, staleStatesCount
+	return missingTransitions, len(staleStates)
 }
 
 // stateIsStale determines whether the evaluation state is considered stale.

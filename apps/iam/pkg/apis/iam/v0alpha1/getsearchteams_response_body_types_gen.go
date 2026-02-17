@@ -16,6 +16,11 @@ func NewGetSearchTeamsTeamHit() *GetSearchTeamsTeamHit {
 	return &GetSearchTeamsTeamHit{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GetSearchTeamsTeamHit.
+func (GetSearchTeamsTeamHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsTeamHit"
+}
+
 // +k8s:openapi-gen=true
 type GetSearchTeamsBody struct {
 	Offset    int64                   `json:"offset"`
@@ -31,9 +36,8 @@ func NewGetSearchTeamsBody() *GetSearchTeamsBody {
 		Hits: []GetSearchTeamsTeamHit{},
 	}
 }
-func (GetSearchTeamsTeamHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsTeamHit"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchTeamsBody.
 func (GetSearchTeamsBody) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsBody"
 }

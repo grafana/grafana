@@ -290,7 +290,7 @@ describe('ChannelSubForm', () => {
           label: 'Webhook',
           description: 'Sends HTTP POST request',
           canCreate: true,
-          options: grafanaAlertNotifiers.webhook.options,
+          options: grafanaAlertNotifiers.webhook.options ?? [],
         },
       ],
     };
