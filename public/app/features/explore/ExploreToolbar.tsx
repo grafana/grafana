@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,7 @@ import { StoreState, useDispatch, useSelector } from 'app/types/store';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
+import { AddVariableDialog } from './AddVariableDialog';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
@@ -40,6 +41,7 @@ import {
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
+import { addVariableAction } from './state/variables';
 import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
@@ -92,6 +94,15 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
     [isLeftPane, isLargerPane]
+  );
+
+  const [isAddVariableOpen, setIsAddVariableOpen] = useState(false);
+  const onAddVariable = useCallback(
+    (name: string, values: string[]) => {
+      dispatch(addVariableAction({ exploreId, name, values }));
+      setIsAddVariableOpen(false);
+    },
+    [dispatch, exploreId]
   );
 
   const refreshPickerLabel = loading
@@ -235,6 +246,14 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="queryless"
           />,
+          <ToolbarButton
+            key="add-variable"
+            icon="plus"
+            variant="canvas"
+            onClick={() => setIsAddVariableOpen(true)}
+          >
+            <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
+          </ToolbarButton>,
         ].filter(Boolean)}
         forceShowLeftItems
       >
@@ -341,6 +360,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           ),
         ].filter(Boolean)}
       </PageToolbar>
+      <AddVariableDialog
+        isOpen={isAddVariableOpen}
+        onDismiss={() => setIsAddVariableOpen(false)}
+        onAdd={onAddVariable}
+      />
     </div>
   );
 }
