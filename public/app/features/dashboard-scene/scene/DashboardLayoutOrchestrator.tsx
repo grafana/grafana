@@ -110,13 +110,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   /**
-   * Returns true if any drag operation is in progress (grid item or row)
-   */
-  public isDragging(): boolean {
-    return !!(this.state.draggingGridItem || this.state.draggingRow);
-  }
-
-  /**
    * Returns true if the current drag operation will drop the item to a different layout
    * than where it started. Used by AutoGridLayout to know whether to clear draggingKey.
    */
