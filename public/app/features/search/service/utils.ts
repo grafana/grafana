@@ -1,3 +1,4 @@
+import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { isSharedWithMe } from 'app/features/browse-dashboards/utils/dashboards';
@@ -82,14 +83,18 @@ function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
   return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
 }
 
+export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): ManagerKind | undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const managedByStr = typeof item.managedBy === 'string' ? item.managedBy : (item.managedBy?.kind as ManagerKind);
+  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),

@@ -1,11 +1,10 @@
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -82,9 +81,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    managedBy: typeof item.managedBy === 'string' ? item.managedBy : (item.managedBy?.kind as ManagerKind),
-
+    managedBy: extractManagerKind(item.managedBy),
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
   }));
