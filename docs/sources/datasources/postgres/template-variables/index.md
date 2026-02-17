@@ -59,6 +59,8 @@ This is useful when you want to display a user-friendly label (like a hostname) 
 
 Note that the values in the `__text` column should be unique. If there are duplicates, Grafana uses only the first matching entry.
 
+You can also use different column names and map them in the variable editor: in the variable query editor, set **Value Field** and **Text Field** to your column names instead of using `__value` and `__text`.
+
 ```sql
 SELECT hostname AS __text, id AS __value FROM host
 ```
