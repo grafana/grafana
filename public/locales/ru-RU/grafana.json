@@ -557,48 +557,6 @@
     "alert-warning": {
       "to-rule-list": "К списку правил"
     },
-    "alertVersionHistory": {
-      "alerting": "Оповещение",
-      "alerting-change-description": "Обновление было выполнено системой оповещения из-за других изменений. Например, при переименовании точки контакта, которая используется для упрощенной маршрутизации, будут обновлены затронутые правила.",
-      "annotations": "Аннотации",
-      "compare": "Сравнить",
-      "compare-with-latest": "Сравнить с последней версией",
-      "compareVersions": "Сравнить версии",
-      "comparing-versions": "Сравнение версий",
-      "condition": "Условие оповещения",
-      "contactPointRouting": "Маршрутизация к точке контакта",
-      "description": "Каждый раз, когда вы редактируете правило оповещения, создается новая версия. Выберите две версии ниже и сравните их различия.",
-      "errorloading": "Не удалось загрузить версии правил оповещения",
-      "execErrorState": "Состояние оповещения при ошибке выполнения",
-      "intervalSeconds": "Интервал оценки",
-      "labels": "Метки",
-      "latest": "Последние",
-      "name": "Имя",
-      "namespace_uid": "UID папки",
-      "noDataState": "Состояние оповещения при отсутствии данных",
-      "noVersionsFound": "Для этого правила версии не найдены",
-      "paused": "Состояние приостановки",
-      "pendingPeriod": "Период ожидания",
-      "provisioning": "Подготовка к работе",
-      "provisioning-change-description": "Обновление версии было выполнено посредством подготовки к работе",
-      "queryAndAlertCondition": "Условие запроса и оповещения",
-      "restore": "Восстановить",
-      "restore-manually": "Не удалось восстановить правило оповещения. Это может быть связано с изменениями в других объектах, таких как точки контакта, источники данных и т. д. Восстановите версию правила вручную",
-      "restore-modal": {
-        "body": "Действительно восстановить определение правила оповещения до этой версии? Все несохраненные изменения будут потеряны.",
-        "confirm": "Да, восстановить конфигурацию",
-        "error": "Не удалось восстановить версию правила оповещения ",
-        "summary": "Краткое описание изменений, которые необходимо применить:",
-        "title": "Восстановление версии"
-      },
-      "restore-version": "Восстановить до версии {{version}} ",
-      "rule_group": "Группа правил",
-      "unknown": "Неизвестно",
-      "unknown-change-description": "Обновление было выполнено до внедрения истории версий правил оповещения. Отслеживание пользователя, внесшего изменения, не осуществляется, но будущие изменения будут включать данные пользователя",
-      "user-id": "Идентификатор пользователя {{uid}}",
-      "warning-restore-manually": "Вы вручную восстанавливаете старую версию этого правила оповещения. Внимательно просмотрите изменения перед сохранением определения правила.",
-      "warning-restore-manually-title": "Восстановление правила вручную"
-    },
     "alertform": {
       "labels": {
         "alerting": "Добавьте к правилу метки для поиска и отключения оповещений или их маршрутизации к политике уведомления.",
@@ -653,6 +611,48 @@
       "name-filter-placeholder-search-alert-rules-by-name": "Поиск правил оповещения по имени",
       "no-alert-rules-found": "Правила оповещения не найдены",
       "placeholder-sort-default-az": "Сортировать (по умолчанию: A–Z)"
+    },
+    "alertVersionHistory": {
+      "alerting": "Оповещение",
+      "alerting-change-description": "Обновление было выполнено системой оповещения из-за других изменений. Например, при переименовании точки контакта, которая используется для упрощенной маршрутизации, будут обновлены затронутые правила.",
+      "annotations": "Аннотации",
+      "compare": "Сравнить",
+      "compare-with-latest": "Сравнить с последней версией",
+      "compareVersions": "Сравнить версии",
+      "comparing-versions": "Сравнение версий",
+      "condition": "Условие оповещения",
+      "contactPointRouting": "Маршрутизация к точке контакта",
+      "description": "Каждый раз, когда вы редактируете правило оповещения, создается новая версия. Выберите две версии ниже и сравните их различия.",
+      "errorloading": "Не удалось загрузить версии правил оповещения",
+      "execErrorState": "Состояние оповещения при ошибке выполнения",
+      "intervalSeconds": "Интервал оценки",
+      "labels": "Метки",
+      "latest": "Последние",
+      "name": "Имя",
+      "namespace_uid": "UID папки",
+      "noDataState": "Состояние оповещения при отсутствии данных",
+      "noVersionsFound": "Для этого правила версии не найдены",
+      "paused": "Состояние приостановки",
+      "pendingPeriod": "Период ожидания",
+      "provisioning": "Подготовка к работе",
+      "provisioning-change-description": "Обновление версии было выполнено посредством подготовки к работе",
+      "queryAndAlertCondition": "Условие запроса и оповещения",
+      "restore": "Восстановить",
+      "restore-manually": "Не удалось восстановить правило оповещения. Это может быть связано с изменениями в других объектах, таких как точки контакта, источники данных и т. д. Восстановите версию правила вручную",
+      "restore-modal": {
+        "body": "Действительно восстановить определение правила оповещения до этой версии? Все несохраненные изменения будут потеряны.",
+        "confirm": "Да, восстановить конфигурацию",
+        "error": "Не удалось восстановить версию правила оповещения ",
+        "summary": "Краткое описание изменений, которые необходимо применить:",
+        "title": "Восстановление версии"
+      },
+      "restore-version": "Восстановить до версии {{version}} ",
+      "rule_group": "Группа правил",
+      "unknown": "Неизвестно",
+      "unknown-change-description": "Обновление было выполнено до внедрения истории версий правил оповещения. Отслеживание пользователя, внесшего изменения, не осуществляется, но будущие изменения будут включать данные пользователя",
+      "user-id": "Идентификатор пользователя {{uid}}",
+      "warning-restore-manually": "Вы вручную восстанавливаете старую версию этого правила оповещения. Внимательно просмотрите изменения перед сохранением определения правила.",
+      "warning-restore-manually-title": "Восстановление правила вручную"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Эта политика сопоставляет все метки"
@@ -2338,6 +2338,9 @@
       "recipient": "Получатель",
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
+    "open-drawer-icon-button": {
+      "details": ""
+    },
     "option-customfield": {
       "label-custom-template": "Пользовательский шаблон",
       "placeholder": "Введите обычный текст или добавьте ссылку на шаблон, например: {{template \"default.message\" .}}",
@@ -3704,9 +3707,6 @@
       "trace-id": "Идентификатор трассировки: {{traceId}}"
     }
   },
-  "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
-  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Параметры аутентификации"
@@ -3897,6 +3897,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Конечная точка .well-known/openid-configuration для вашего поставщика удостоверений (IdP)",
       "title-open-id-connect-discovery-url": "URL-адрес обнаружения OpenID Connect"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4990,1069 +4993,6 @@
       "run-query": "Выполнить запрос"
     }
   },
-  "dashboard-import": {
-    "file-dropzone": {
-      "primary-text": "Загрузить JSON-файл дашборда",
-      "secondary-text": "Перетащите файл сюда или нажмите, чтобы выбрать"
-    },
-    "form-actions": {
-      "cancel": "Отмена",
-      "load": "Загрузить"
-    },
-    "gcom-field": {
-      "label": "",
-      "load-button": "Загрузить",
-      "placeholder": "URL-адрес или идентификатор дашборда Grafana.com",
-      "validation-required": "Требуется URL-адрес или идентификатор дашборда Grafana"
-    },
-    "json-field": {
-      "label": "Импорт через модель JSON дашборда",
-      "validation-required": "Требуется модель JSON дашборда"
-    }
-  },
-  "dashboard-library": {
-    "browse-grafana-com": "Обзор Grafana.com",
-    "browse-plugins": "Обзор плагинов",
-    "card": {
-      "datasource-provided-badge": "Источник данных указан",
-      "details-tooltip": "Подробности",
-      "no-preview": "Предварительный просмотр недоступен",
-      "use-dashboard-button": "Использовать дашборд",
-      "use-template-button": "Использовать шаблон"
-    },
-    "community-empty-title": "Дашборды сообщества не найдены",
-    "community-empty-title-with-datasource": "Дашборды сообщества ({{datasourceType}}) не найдены",
-    "community-error": "Не удалось загрузить дашборды сообщества. Повторите попытку.",
-    "community-error-description": "Не удалось загрузить дашборд сообщества.",
-    "community-error-title": "Ошибка при загрузке дашборда сообщества",
-    "community-mapping-form": {
-      "back": "Назад к дашбордам",
-      "constants-title": "Переменные дашборда",
-      "datasources-title": "Конфигурация источника данных",
-      "description": "Для этого дашборда требуется конфигурация источника данных. Выберите источники данных для каждого из указанных ниже вариантов.",
-      "preview": "Предварительный просмотр дашборда",
-      "auto-mapped_one": "Выполнена автоматическая конфигурация {{count}} источника данных:",
-      "auto-mapped_few": "Выполнена автоматическая конфигурация {{count}} источников данных:",
-      "auto-mapped_many": "Выполнена автоматическая конфигурация {{count}} источников данных:",
-      "auto-mapped_other": "Выполнена автоматическая конфигурация {{count}} источника данных:"
-    },
-    "community-mapping-select-datasource": "Выберите источник данных",
-    "community-search-placeholder": "Поиск дашбордов сообщества...",
-    "community-search-placeholder-with-datasource": "Поиск дашбордов сообщества ({{datasourceType}})...",
-    "dashboard-card": {
-      "details": {
-        "datasource": "Источник данных",
-        "dependencies": "Зависимости",
-        "id": "Идентификатор",
-        "last-update": "Последнее обновление",
-        "published-by": "Опубликовано",
-        "view-on-grafana-com": "Просмотр на Grafana.com"
-      }
-    },
-    "modal": {
-      "description": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-      "tab-community": "Сообщество",
-      "tab-datasource": "Источник данных указан",
-      "title": "Рекомендуемые дашборды",
-      "title-mapping-with-name": "Настройте источники данных для дашборда {{dashboardName}}",
-      "title-with-datasource": "Рекомендуемые дашборды для источника данных {{datasourceType}}"
-    },
-    "no-community-dashboards-datasource": "Попробуйте изменить поисковый запрос или найти другие типы источников данных в дашбордах на Grafana.com.",
-    "no-community-dashboards-search": "Попробуйте изменить поисковый запрос или просмотрите больше дашбордов на Grafana.com.",
-    "no-provisioned-dashboards": "Подготовленные дашборды предоставлены плагинами источников данных. Больше плагинов можно найти на Grafana.com.",
-    "provisioned-empty-title": "Подготовленные дашборды не найдены",
-    "provisioned-empty-title-with-datasource": "Подготовленные дашборды ({{datasourceType}}) не найдены",
-    "retry": "Повторить попытку",
-    "suggested-dashboards-subtitle": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-    "suggested-dashboards-title": "Создайте дашборд на основе предложенных вариантов для выбранного источника данных",
-    "suggested-dashboards-title-with-datasource": "Создайте дашборд на основе предложенных вариантов для источника данных {{datasourceType}}",
-    "template-dashboard-modal": {
-      "description": "Попробуйте шаблоны Grafana на основе образцов данных. Подключите свои данные, чтобы добавить реальные метрики.",
-      "title": "Создайте дашборд из шаблона"
-    },
-    "view-all": "Посмотреть все"
-  },
-  "dashboard-links": {
-    "empty-state": {
-      "button-title": "Добавить ссылку на дашборд",
-      "info-box-content": "Ссылки на дашборды позволяют размещать ссылки на другие дашборды и веб-сайты непосредственно под заголовком дашборда. <2>Подробнее</2>",
-      "title": "Ссылки на дашборды еще не добавлены"
-    }
-  },
-  "dashboard-scene-help-wizard": {
-    "support-bundle": "Вы также можете получить пакет поддержки, содержащий информацию о вашем экземпляре Grafana и настроенных источниках данных в <1>разделе о пакетах поддержки</1>."
-  },
-  "dashboard-scene": {
-    "ad-hoc-variable-form": {
-      "adhoc-options": "Специальные параметры",
-      "alert-not-supported": "Этот источник данных не поддерживает специальные фильтры",
-      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
-      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
-      "label-data-source": "Источник данных",
-      "label-use-static-key-dimensions": "Использовать измерения статического ключа",
-      "name-allow-custom-values": "Разрешить пользовательские значения"
-    },
-    "add-to-dashboard": {
-      "message": {
-        "could-navigate-selected-dashboard-please-again": "Не удалось перейти к выбранному дашборду. Повторите попытку.",
-        "could-panel-dashboard-please-again": "Не удалось добавить панель на дашборд. Повторите попытку."
-      }
-    },
-    "add-to-dashboard-form": {
-      "cancel": "Отмена",
-      "description-choose-where-to-add-the-panel": "Выберите место для добавления панели.",
-      "description-select-which-dashboard-panel-created": "Выберите дашборд для создания панели.",
-      "label": {
-        "existing-dashboard": "Существующий дашборд",
-        "new-dashboard": "Новый дашборд"
-      },
-      "label-dashboard": "Дашборд",
-      "label-target-dashboard": "Целевой дашборд",
-      "message": {
-        "this-field-is-required": "Поле является обязательным."
-      },
-      "open-dashboard": "Открыть дашборд",
-      "open-in-new-tab": "Открыть в новой вкладке",
-      "title-error-adding-the-panel": "Ошибка при добавлении панели"
-    },
-    "add-to-dashboard-form-exposed": {
-      "title": {
-        "new-panel": "Новая панель"
-      }
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
-    },
-    "annotation-edit-actions": {
-      "description": {
-        "change-annotation-color": "",
-        "change-annotation-controls-display": "",
-        "change-annotation-enabled-state": "",
-        "change-annotation-name": "",
-        "change-annotation-panel-filter": ""
-      }
-    },
-    "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": ""
-        }
-      },
-      "render-list": {
-        "aria-label-annotation": ""
-      }
-    },
-    "annotation-query-library-dropdown": {
-      "use-saved-query": ""
-    },
-    "annotation-settings-edit": {
-      "back-to-list": "Назад к списку",
-      "control-display-options": {
-        "above-dashboard": {
-          "label": "Над дашбордом"
-        },
-        "controls-menu": {
-          "description": "Доступно при открытом меню управления",
-          "label": "Меню элементов управления"
-        },
-        "hidden": {
-          "description": "Скрывает переключатель для включения и отключения этой аннотации",
-          "label": "Скрыто"
-        }
-      },
-      "delete": "Удалить",
-      "description-color-annotation-event-markers": "Цвет, который будет использоваться для маркеров событий аннотаций.",
-      "description-enabled-annotation-query-issued-every-dashboard": "Если этот параметр включен, запрос аннотации выдается при каждом обновлении панели.",
-      "label-annotation-controls-display": "Показывать элементы управления аннотациями в",
-      "label-color": "Цвет",
-      "label-data-source": "Источник данных",
-      "label-enabled": "Включено",
-      "label-name": "Имя",
-      "label-show-in": "Показать в",
-      "placeholder-choose-panels": "Выбрать панели",
-      "query": "Запрос",
-      "title-annotation-support-source": "Нет поддержки аннотаций для источника данных"
-    },
-    "annotation-settings-list": {
-      "built-in": "{{annoName}} (встроена)",
-      "data-source": "Источник данных",
-      "delete-aria-label": "Удалить запрос с заголовком «{{title}}»",
-      "disabled": "{{annoName}} (отключена)",
-      "new-query": "Новый запрос",
-      "query-name": "Название запроса",
-      "tooltip-move-down": "Вниз",
-      "tooltip-move-up": "Вверх"
-    },
-    "branch-validation-error": {
-      "cannot-contain-invalid-characters": "Не может содержать недопустимые символы: «~», «^», «:», «?», «*», «[», «\\\\» или «]».",
-      "cannot-start-with": "Не может начинаться с «/» или заканчиваться «/», «.» или пробелом.",
-      "invalid-branch-name": "Недопустимое имя ветви.",
-      "it-cannot-contain-or": "Не может содержать «//» или «..».",
-      "least-valid-character": "Должен содержаться хотя бы один допустимый символ."
-    },
-    "build-new-dashboard-save-model": {
-      "data": {
-        "title": {
-          "new-dashboard": "Новый дашборд"
-        }
-      }
-    },
-    "build-new-dashboard-save-model-v2": {
-      "data": {
-        "title": {
-          "new-dashboard": "Новый дашборд"
-        }
-      }
-    },
-    "constant-variable-form": {
-      "constant-options": "Параметры констант",
-      "label-value": "Значение",
-      "placeholder-your-metric-prefix": "Префикс метрик"
-    },
-    "conversion-warning-banner": {
-      "detail-conditional": "Правила отображения/скрытия не будут действовать",
-      "detail-grids": "Все автоматические сетки будут отображаться как пользовательские",
-      "detail-tabs": "Все вкладки и строки будут отображаться как классические строки",
-      "details": "Обратите внимание на следующую информацию:",
-      "message": "Функция динамических дашбордов временно отключена",
-      "read-less": "Показать меньше",
-      "read-more": "Показать больше",
-      "recommendation": "После включения функции дашборды будут отображаться в динамическом формате. Настоятельно рекомендуем не корректировать дашборды до тех пор, пока функция не станет активной, поскольку правки, внесенные в классическом режиме, могут привести к неожиданным результатам. Вы также можете сохранить копию дашборда с помощью соответствующей опции в меню сохранения.",
-      "save-warning": "Дашборд, созданный как динамический или преобразованный в него, будет открываться как классический. При сохранении дашборда настройки для динамического режима могут не сохраниться."
-    },
-    "custom-variable-form": {
-      "custom-options": "Пользовательские параметры",
-      "json-values-tooltip": "Укажите JSON-массив объектов, где каждый объект может иметь любое количество свойств.<br />Подробнее — в <4>документации</4>.",
-      "name-csv-values": "CSV",
-      "name-json-values": "JSON",
-      "name-values-separated-comma": "Значения, разделенные запятыми",
-      "selection-options": "Параметры выбора"
-    },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"
-    },
-    "dashboard-link-form": {
-      "back-to-list": "Назад к списку",
-      "label-icon": "Значок",
-      "label-include-current-template-variable-values": "Включить текущие значения переменных шаблона",
-      "label-include-current-time-range": "Включить текущий временной диапазон",
-      "label-open-link-in-new-tab": "Открыть ссылку в новой вкладке",
-      "label-options": "Параметры",
-      "label-show-as-dropdown": "Показывать как раскрывающийся список",
-      "label-show-in-controls-menu": "Показывать в меню управления",
-      "label-title": "Название",
-      "label-tooltip": "Подсказка",
-      "label-type": "Тип",
-      "label-url": "URL",
-      "label-with-tags": "С тегами",
-      "link-type-options": {
-        "label": {
-          "dashboards": "Дашборды",
-          "link": "Ссылка"
-        }
-      },
-      "placeholder-open-dashboard": "Открыть дашборд"
-    },
-    "dashboard-link-list": {
-      "delete-aria-label": "Удалить ссылку с заголовком «{{title}}»",
-      "info": "Информация",
-      "new-link": "Новая ссылка",
-      "tooltip-copy-link": "Копировать ссылку",
-      "tooltip-move-link-down": "Переместить ссылку вниз",
-      "tooltip-move-link-up": "Переместить ссылку вверх",
-      "type": "Тип"
-    },
-    "dashboard-preview-banner": {
-      "not-yet-saved": "Значение не сохранено в базе данных Grafana",
-      "title-dashboard-loaded-external-repository": "Дашборд загружается из внешнего репозитория",
-      "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
-    },
-    "dashboard-scene": {
-      "modal": {
-        "cancel": "Отмена",
-        "discard": "Отменить",
-        "save": "Сохранить",
-        "text": {
-          "save-changes-question": "Сохранить изменения?"
-        },
-        "title": {
-          "unsaved-changes": "Несохраненные изменения"
-        }
-      },
-      "text": {
-        "edit-panel": "Редактировать панель",
-        "view-panel": "Просмотр панели"
-      },
-      "title": {
-        "dashboard": "Дашборд",
-        "discard-changes-to-dashboard": "Отменить изменения на дашборде?",
-        "unsaved-changes-question": "На дашборде есть несохраненные изменения. Вы действительно хотите их отменить?"
-      }
-    },
-    "dashboard-scene-page-state-manager": {
-      "message": {
-        "dashboard-not-found": "Дашборд не найден"
-      }
-    },
-    "dashboard-scene-page-state-manager-v2": {
-      "message": {
-        "dashboard-not-found": "Дашборд не найден"
-      }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": ""
-    },
-    "data-source-variable-form": {
-      "data-source-options": "Параметры источника данных",
-      "description-instance-name-filter": "Фильтр регулярных выражений для выбора экземпляров источников данных в списке значений переменных. Оставьте пустым для всех.",
-      "example-instance-name-filter": "Пример: <codeExample />",
-      "name-instance-name-filter": "Фильтр по имени экземпляров",
-      "name-type": "Тип",
-      "selection-options": "Параметры выбора"
-    },
-    "default-grid-layout-manager": {
-      "row": {
-        "title": {
-          "row-title": "Заголовок строки"
-        }
-      }
-    },
-    "delete-provisioned-dashboard-form": {
-      "api-error": "Не удалось удалить дашборд",
-      "cancel-action": "Отмена",
-      "delete-action": "Удалить дашборд",
-      "deleting": "Удаление...",
-      "drawer-title": "Удалить подготовленный дашборд",
-      "success-message": "Дашборд удален"
-    },
-    "description-label": {
-      "description": "Описание"
-    },
-    "edit-link-view": {
-      "edit-link-page-nav": {
-        "text": {
-          "edit-link": "Редактировать ссылку"
-        }
-      }
-    },
-    "email-list": {
-      "aria-label-emailmenu": "Переключить меню электронной почты"
-    },
-    "embedded-dashboard-test-page": {
-      "subTitle": {
-        "showing-dashboard-panel-tests-pie-chart": "Отображаемый дашборд: тесты панелей — круговая диаграмма"
-      },
-      "text": {
-        "embedding-dashboard": "Встраиваемый дашборд"
-      }
-    },
-    "empty-transformations-message": {
-      "add-transformation": "Добавить преобразование",
-      "show-more": "Показать еще",
-      "sql-name": "Преобразование с помощью SQL",
-      "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
-    },
-    "general-settings-edit-view": {
-      "editable_options": {
-        "label": {
-          "editable": "Редактируемый",
-          "readonly": "Только для чтения"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "По умолчанию",
-          "shared-crosshair": "Общее перекрестие",
-          "shared-tooltip": "Общая подсказка"
-        }
-      }
-    },
-    "get-edit-options": {
-      "title": {
-        "column-options": "Параметры столбцов",
-        "row-height-options": "Параметры высоты строк"
-      }
-    },
-    "get-editable-variables": {
-      "description": {
-        "add-keyvalue-filters-on-the-fly": "Добавляйте фильтры «ключ/значение» в процессе работы",
-        "dynamically-switch-source-multiple-panels": "Динамическое переключение источника данных для нескольких панелей",
-        "group": "Добавляйте ключи для группировки в процессе работы",
-        "hidden-constant-variable": "Скрытая константная переменная для префиксов метрик на дашбордах, доступ к которым вы хотите открыть",
-        "users-enter-arbitrary-strings-switch": "Переменная, которую можно включать и отключать",
-        "users-enter-arbitrary-strings-textbox": "Пользователи могут вводить любые произвольные строки в текстовое поле",
-        "values-are-static-and-defined-manually": "Значения являются статическими и задаются вручную",
-        "values-fetched-source-query": "Значения извлекаются из запроса к источнику данных",
-        "values-timespans": "Значения являются временными интервалами, например, 1 мин, 1 ч, 1 д"
-      },
-      "name": {
-        "ad-hoc-filters": "Специальные фильтры",
-        "constant": "Константа",
-        "custom": "Пользовательская",
-        "data-source": "Источник данных",
-        "group-by": "Группировать по",
-        "interval": "Интервал",
-        "query": "Запрос",
-        "switch": "Переключатель",
-        "textbox": "Текстовое поле"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
-        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
-        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
-      },
-      "label": {
-        "all-panels": "Все панели",
-        "all-panels-except": "Все панели, кроме",
-        "selected-panels": "Выбранные панели"
-      }
-    },
-    "get-panel-frame-options": {
-      "descriptor": {
-        "title": {
-          "panel-options": "Параметры панели"
-        }
-      },
-      "title": {
-        "description": "Описание",
-        "panel-links": "Ссылки на панели",
-        "title": "Заголовок",
-        "transparent-background": "Прозрачный фон"
-      }
-    },
-    "group-by-variable-form": {
-      "alert-not-supported": "Этот источник данных не поддерживает группировку по переменным",
-      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
-      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
-      "group-by-options": "Группировать по параметрам",
-      "label-data-source": "Источник данных",
-      "label-use-static-group-by-dimensions": "Использовать измерения статической группы",
-      "name-allow-custom-values": "Разрешить пользовательские значения"
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "Копировать в буфер обмена",
-      "description-randomize-data": "Измените исходные данные, чтобы скрыть конфиденциальную информацию. Обратите внимание, что длина останется прежней, а повторяющиеся значения будут равными.",
-      "description-support-snapshot": "Панель: {{panelTitle}}.",
-      "download-dashboard": "Дашборд ({{snapshotSize}})",
-      "download-snapshot": "Загрузить ({{snapshotSize}})",
-      "label-randomize-data": "Рандомизировать данные",
-      "label-support-snapshot": "Поддержка снимков",
-      "label-template": "Шаблон",
-      "randomize-field-names-label-field-names": "Названия полей",
-      "randomize-labels-label-labels": "Метки",
-      "randomize-string-values-label-string-values": "Строковые значения",
-      "tabs": {
-        "label": {
-          "data": "Данные",
-          "snapshot": "Снимок"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "Копирование полного комментария GitHub в буфер обмена",
-      "title-get-help-with-this-panel": "Получение помощи с панелью",
-      "troubleshooting-docs": "Документация по устранению неполадок",
-      "troubleshooting-request-help": "Чтобы запросить помощь в устранении неполадок, отправьте снимок этой панели в службу технической поддержки Grafana Labs. Снимок содержит данные ответа на запрос и параметры панели."
-    },
-    "import-dashboard-form-v2": {
-      "cancel": "Отмена",
-      "float-grid-items-warning-body": "",
-      "float-grid-items-warning-title": "",
-      "label-folder": "Папка"
-    },
-    "inspect-data-tab": {
-      "no-data-found": "Данные не найдены"
-    },
-    "inspect-json-tab": {
-      "apply": "Применить",
-      "error-element-changed": "Вы не можете обновить ссылку на элемент. Можно изменить только свойства макета (x, y, ширина, высота).",
-      "error-invalid-json": "Недопустимый JSON",
-      "error-invalid-layout": "JSON-файл макета не прошел проверку. Проверьте файл и повторите попытку.",
-      "error-invalid-v2-panel": "JSON-файл панели не прошел проверку. Проверьте файл и повторите попытку.",
-      "validation-error": "Ошибка проверки"
-    },
-    "interval-variable-form": {
-      "description-auto-option": "Динамически рассчитывает интервал путем деления временного диапазона на указанное количество",
-      "description-calculated-value-below-threshold": "Расчетное значение не будет ниже этого порога.",
-      "description-step-count": "Сколько раз нужно разделить текущий временной диапазон для расчета значения.",
-      "interval-options": "Параметры интервалов",
-      "name-auto-option": "Автоматический параметр",
-      "name-min-interval": "Мин. интервал",
-      "name-step-count": "Количество шагов",
-      "name-values": "Значения"
-    },
-    "json-model-edit-view": {
-      "cancel-button": {
-        "cancel": "Отмена"
-      },
-      "render-save-button-and-error": {
-        "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
-        "title-plugin-dashboard": "Дашборд плагинов",
-        "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
-        "would-still-dashboard": "Все равно сохранить дашборд?"
-      },
-      "save-and-overwrite": "Сохранить и перезаписать"
-    },
-    "library-viz-panel-info": {
-      "last-edited": "{{timeAgo}}, <person />",
-      "usage-count_one": "Используется на {{count}} дашбордах",
-      "usage-count_few": "Используется на {{count}} дашбордах",
-      "usage-count_many": "Используется на {{count}} дашбордах",
-      "usage-count_other": "Используется на {{count}} дашбордах"
-    },
-    "managed-badge": {
-      "kubectl": "Управляется Kubectl",
-      "plugin": "Управляется плагином {{id}}",
-      "provisioned": "Подготовлено",
-      "terraform": "Управляется Terraform"
-    },
-    "move-provisioned-dashboard-form": {
-      "api-error": "Не удалось переместить дашборд",
-      "cancel-action": "Отмена",
-      "current-file-not-found": "Текущий файл дашборда не найден",
-      "drawer-title": "Переместить подготовленный дашборд",
-      "file-load-error": "Ошибка при загрузке дашборда",
-      "loading-dashboard-data": "Загрузка данных дашборда",
-      "move-action": "Переместить дашборд",
-      "move-read-only-message": "Дашборд невозможно переместить непосредственно из Grafana, поскольку репозиторий доступен только для чтения. Чтобы переместить этот дашборд, переместите файл в репозиторий Git.",
-      "moving": "Перемещение...",
-      "success-message": "Дашборд перемещен",
-      "target-path-label": "Целевой путь",
-      "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
-    },
-    "name-already-exists-error": {
-      "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
-      "title-name-already-exists": "Название уже существует"
-    },
-    "on-open-snapshot-original-dashboard": {
-      "confirmText": {
-        "proceed": "Продолжить"
-      },
-      "title": {
-        "proceed-to-external-site": "Перейти на внешний сайт?"
-      }
-    },
-    "on-remove-panel": {
-      "text": {
-        "remove-panel": "Действительно удалить панель?"
-      },
-      "title": {
-        "remove-panel": "Удалить панель"
-      }
-    },
-    "option-row": {
-      "aria-label-remove-option": "",
-      "title-drag-and-drop-to-reorder": "",
-      "tooltip-remove-option": ""
-    },
-    "panel-data-alerting-tab": {
-      "tab-label": "Оповещение"
-    },
-    "panel-data-alerting-tab-rendered": {
-      "alert": {
-        "title-errors-loading-rules": "Ошибки при загрузке правил"
-      },
-      "error-failed-to-load": "Не удалось загрузить состояние правил Grafana: {{errorToDisplay}}",
-      "text-loading-rules": "Загрузка правил...",
-      "title-dashboard-not-saved": "Дашборд не сохранен"
-    },
-    "panel-data-queries-tab": {
-      "tab-label": "Запросы"
-    },
-    "panel-data-queries-tab-rendered": {
-      "add-query": "Добавить запрос",
-      "expression": "Выражение"
-    },
-    "panel-data-transformations-tab": {
-      "tab-label": "Преобразования"
-    },
-    "panel-data-transformations-tab-rendered": {
-      "add-another-transformation": "Добавить другое преобразование",
-      "body-delete-all-transformations": "Удалив все преобразования, вы вернетесь на главный экран выбора.",
-      "confirmText-delete-all": "Удалить все",
-      "delete-all-transformations": "Удалить все преобразования",
-      "title-delete-all-transformations": "Удалить все преобразования?"
-    },
-    "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
-      "table-view-aria-label-toggletableview": "Переключить табличное представление",
-      "table-view-label-table-view": "Табличное представление"
-    },
-    "panel-editor": {
-      "text": {
-        "edit-panel": "Редактировать панель"
-      }
-    },
-    "panel-editor-renderer": {
-      "aria-label-open-options-pane": "Открыть область параметров",
-      "tooltip-open-options-pane": "Открыть область параметров"
-    },
-    "panel-inspect-renderer": {
-      "body-panel-plugin-not-loaded": "Перед началом проверки убедитесь, что отображается панель, которую нужно проверить.",
-      "title-panel-plugin-not-loaded": "Плагин панели не загружен"
-    },
-    "panel-menu-behavior": {
-      "async-func": {
-        "text": {
-          "extensions": "Расширения",
-          "metrics-drilldown": "Детализация метрик"
-        }
-      }
-    },
-    "panel-viz-type-picker": {
-      "button": {
-        "close": "Назад"
-      },
-      "placeholder-search-for": "Поиск...",
-      "radio-options": {
-        "label": {
-          "all-visualizations": "Все визуализации",
-          "suggestions": "Предложения"
-        }
-      },
-      "title-close": "Закрыть"
-    },
-    "provisioned-delete-modal": {
-      "cannot-be-deleted": "Дашборд управляется функцией подготовки Grafana и не может быть удален. Чтобы удалить дашборд, его необходимо удалить из файла конфигурации.",
-      "file-path": "Путь к файлу: {{dashboardId}}",
-      "ok": "OK",
-      "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
-      "title-cannot-delete-provisioned-dashboard": "Невозможно удалить подготовленный дашборд"
-    },
-    "query-editor": {
-      "query": "Запрос"
-    },
-    "query-variable-editor-form": {
-      "description-examples": "Именованные группы записи можно использовать для разделения отображаемого текста и значения (<1>см. примеры</1>).",
-      "description-optional": "Дополнительно, если вы хотите извлечь часть имени ряда или сегмента узла метрики.",
-      "description-regex-apply-to": "Выберите, следует ли применить шаблон регулярного выражения к значению переменной или отображаемому тексту",
-      "label-data-source": "Источник данных",
-      "label-regex-apply-to": "Применить регулярное выражение к",
-      "label-static-options-sort": "Сортировка статических параметров",
-      "label-target-data-source": "Целевой источник данных",
-      "label-use-static-options": "Использовать статические параметры",
-      "name-regex": "Регулярное выражение",
-      "query-options": "Параметры запросов",
-      "regex-apply-to-options": {
-        "label": {
-          "text": "Отображаемый текст",
-          "value": "Значение переменной"
-        }
-      },
-      "selection-options": "Параметры выбора",
-      "static-options-legend": "Статические параметры"
-    },
-    "resource-export": {
-      "label": {
-        "advanced-options": "Дополнительные параметры",
-        "classic": "Классический",
-        "json": "JSON",
-        "v1-resource": "Ресурс V1",
-        "v2-resource": "Ресурс V2",
-        "yaml": "YAML"
-      },
-      "share-externally": "Предоставить общий доступ к дашборду другому экземпляру",
-      "share-externally-tooltip": "Перед экспортом удаляет из ресурса все связанные с экземпляром метаданные и ссылки на источники данных."
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
-      "confirmText-restore-version": "Да, восстановить до версии {{version}}",
-      "title-restore-version": "Восстановление версии"
-    },
-    "save-button": {
-      "save": "Сохранить",
-      "save-and-overwrite": "Сохранить и перезаписать",
-      "saving": "Сохранение..."
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-description-field": "Сохранить поле описания дашборда",
-      "aria-label-save-dashboard-title-field": "Сохранить поле заголовка дашборда",
-      "cancel-button": {
-        "cancel": "Отмена"
-      },
-      "label-copy-tags": "Копировать теги",
-      "label-folder": "Папка",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд"
-      },
-      "required": "Обязательно"
-    },
-    "save-dashboard-drawer": {
-      "tabs": {
-        "label-changes": "Изменения",
-        "label-details": "Подробности",
-        "title": "Сохранить дашборд",
-        "title-copy": "Сохранить копию дашборда",
-        "title-provisioned": "Подготовленный дашборд"
-      }
-    },
-    "save-dashboard-form": {
-      "aria-label-message": "сообщение",
-      "body-dashboard-drastically-changed": "Дашборд будет сохранен с использованием новой экспериментальной схемы дашбордов Grafana. Действие нельзя отменить, и оно может привести к необратимой потере данных. Рекомендуем сохранить дашборд как копию. Если вы видите это сообщение в рабочей среде, обратитесь в службу поддержки, чтобы отключить функцию.",
-      "cancel-button": {
-        "cancel": "Отмена"
-      },
-      "label-message": "Сообщение",
-      "placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно).",
-      "render-footer": {
-        "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
-        "no-changes-to-save": "Нет изменений для сохранения",
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
-        "title-plugin-dashboard": "Дашборд плагинов",
-        "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
-        "would-still-dashboard": "Все равно сохранить дашборд?"
-      },
-      "schema-v2-library-panels-export": "Из-за ограничений в новой схеме дашборда (V2) панели библиотеки будут преобразованы в обычные панели со встроенным содержимым во время внешнего экспорта.",
-      "schema-v2-library-panels-export-title": "Панели библиотеки будут преобразованы в обычные панели",
-      "title-dashboard-drastically-changed": "Дашборд необратимо изменен"
-    },
-    "save-dashboard-form-common-options": {
-      "save-refresh-description-current-refresh-default": "Текущее обновление станет новым значением по умолчанию",
-      "save-refresh-label-update-default-refresh-value": "Изменить значение обновления по умолчанию",
-      "save-timerange-description-current-range-default": "Текущий временной диапазон станет новым значением по умолчанию",
-      "save-timerange-label-update-default-time-range": "Изменить временной диапазон по умолчанию",
-      "save-variables-description-current-values-default": "Текущие значения станут новым значением по умолчанию",
-      "save-variables-label-update-default-variable-values": "Изменить значения переменных по умолчанию",
-      "show-variables-warning-alert-body": "Не удалось загрузить некоторые переменные. Если установлен флажок «Изменить значения переменных по умолчанию», текущие (неудачные) значения станут значениями по умолчанию для дашборда. Вы можете сохранить эту настройку или снять флажок, чтобы не сохранять эти (неудачные) значения.",
-      "show-variables-warning-alert-title": "Не удалось выполнить запросы переменных"
-    },
-    "save-library-viz-panel-modal": {
-      "cancel": "Отмена",
-      "dashboard-name": "Название дашборда",
-      "discard": "Отменить",
-      "loading-connected-dashboards": "Загрузка подключенных дашбордов...",
-      "placeholder-search-affected-dashboards": "Поиск затронутых дашбордов",
-      "update-all": "Обновить все",
-      "affected-dashboards_one": "Изменение повлияет на <strong>{{count}} дашборд.</strong> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_few": "Изменение повлияет на <strong>{{count}} дашборда.</strong> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_many": "Изменение повлияет на <strong>{{count}} дашбордов.</strong> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_other": "Изменение повлияет на <strong>{{count}} дашборда.</strong> Будут затронуты следующие дашборды, использующие панель:"
-    },
-    "save-provisioned-dashboard-form": {
-      "api-error": "Ошибка при сохранении дашборда",
-      "cancel": "Отмена",
-      "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
-      "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
-      "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
-      "label-description": "Описание",
-      "label-target-folder": "Целевая папка",
-      "label-title": "Название",
-      "save": "Сохранить",
-      "save-json-to-file": "Сохранить модель JSON в файл",
-      "saving": "Сохранение...",
-      "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
-      "title-required": "Требуется указать название дашборда",
-      "title-same-as-folder": "Имя дашборда не может совпадать с именем папки",
-      "title-validation-failed": "Не удалось проверить название дашборда."
-    },
-    "scenes-new-rule-from-panel-button": {
-      "body-no-alerting-capable-query-found": "Невозможно создать оповещения с этой панели, поскольку не найден запрос к источнику данных, способному генерировать оповещения.",
-      "new-alert-rule": "Новое правило оповещения",
-      "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
-    },
-    "selection-options-form": {
-      "description-enables-multiple-values-selected": "Позволяет выбирать несколько значений одновременно.",
-      "description-enables-option-include-variables": "Включает параметр для добавления всех значений",
-      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
-      "name-allow-custom-values": "Разрешить пользовательские значения",
-      "name-custom-all-value": "Пользовательское значение «Все»",
-      "name-include-all-option": "Включить параметр «Все»",
-      "name-multi-value": "Несколько значений"
-    },
-    "share-button": {
-      "aria-label-sharedropdownmenu": "Переключить меню общего доступа"
-    },
-    "sharing": {
-      "save-before-share": {
-        "text": "На дашборде есть несохраненные изменения. Сохраните их, чтобы предоставить общий доступ к дашборду.",
-        "title": "Несохраненные изменения"
-      }
-    },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "JSON-файл дашборда используется для устранения проблем с визуализацией"
-      },
-      "label": {
-        "git-hub-comment": "Комментарий GitHub",
-        "panel-support-snapshot": "Вспомогательный снимок панели"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "Не удалось скопировать в буфер обмена"
-      }
-    },
-    "switch-variable-form": {
-      "disabled-value": "Значение при отключении",
-      "disabled-value-description": "Значение в отключенном состоянии",
-      "disabled-value-placeholder": "например, выкл., отключено, неактивно",
-      "enabled-value": "Значение при включении",
-      "enabled-value-description": "Значение во включенном состоянии",
-      "enabled-value-placeholder": "например, вкл., включено, активно",
-      "same-values-error": "Значения при включении и отключении не могут совпадать",
-      "switch-options": "Варианты переключения",
-      "value-pair-type": "Тип пары значений",
-      "value-pair-type-description": "Выберите тип значений для состояний переключателя"
-    },
-    "text-box-variable": {
-      "name-default-value": "Значение по умолчанию"
-    },
-    "text-box-variable-form": {
-      "placeholder-default-value-if-any": "(необязательно)",
-      "text-options": "Параметры текста"
-    },
-    "textbox-variable-form": {
-      "label-value": "Значение"
-    },
-    "title-field-label": {
-      "title": "Название"
-    },
-    "transform-usages-to-network": {
-      "result": {
-        "label": {
-          "dashboard": "дашборд"
-        }
-      }
-    },
-    "transformations-drawer": {
-      "search-box-suffix": {
-        "tooltip-clear-search": "Очистить поиск"
-      }
-    },
-    "unlink-modal": {
-      "body-unlink-panel": "Если вы отсоедините эту панель, вы сможете редактировать ее отдельно от других дашбордов. Однако после внесения изменений вы не сможете вернуться к исходной панели многократного использования.",
-      "confirmText-yes-unlink": "Да, отсоединить",
-      "title-really-unlink-panel": "Действительно отсоединить панель?"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "Отмена",
-      "changes": "Сохранить изменения?",
-      "discard": "Отменить",
-      "save-dashboard": "Сохранить дашборд",
-      "title-unsaved-changes": "Несохраненные изменения"
-    },
-    "use-dashboard-edit-page-nav": {
-      "page-nav": {
-        "text": {
-          "settings": "Параметры"
-        }
-      }
-    },
-    "use-modal-editor": {
-      "description": {
-        "change-variable-query": "Измените запрос переменной"
-      }
-    },
-    "use-save-dashboard": {
-      "message-dashboard-saved": "Дашборд сохранен"
-    },
-    "variable-check-indicator": {
-      "aria-label-variable-referenced-dashboard": "На эту переменную не ссылается ни одна переменная или дашборд",
-      "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
-      "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
-      "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
-    },
-    "variable-controls": {
-      "add-variable": "Добавить переменную"
-    },
-    "variable-display-select": {
-      "label": "Отобразить",
-      "options": {
-        "above-dashboard": {
-          "label": "Над дашбордом"
-        },
-        "controls-menu": {
-          "description": "Отображается при открытом меню управления",
-          "label": "Меню элементов управления"
-        },
-        "hidden": {
-          "description": "Отображается только в режиме редактирования",
-          "label": "Скрыто"
-        },
-        "hidden-label": {
-          "description": "Над дашбордом, но имя переменной не отображается",
-          "label": "Над дашбордом, метка скрыта"
-        }
-      }
-    },
-    "variable-editor-form": {
-      "aria-label-variable-editor-form": "Форма редактора переменных",
-      "back-to-list": "Назад к списку",
-      "confirmText": {
-        "delete-variable": "Удалить переменную"
-      },
-      "delete": "Удалить",
-      "description-optional-display-name": "Отображаемое имя (необязательно)",
-      "description-template-variable-characters": "Название переменной шаблона. (Макс. 50 символов.)",
-      "general": "Общие сведения",
-      "name-description": "Описание",
-      "name-label": "Метка",
-      "name-name": "Имя",
-      "placeholder-descriptive-text": "Поясняющий текст",
-      "placeholder-label-name": "Название метки",
-      "placeholder-variable-name": "Название переменной",
-      "text-running-query": "Выполняется запрос...",
-      "title": {
-        "delete-variable": "Удаление переменной"
-      }
-    },
-    "variable-editor-list": {
-      "definition": "Определение",
-      "new-variable": "Новая переменная",
-      "variable": "Переменная"
-    },
-    "variable-editor-list-row": {
-      "body-delete-variable": "Вы действительно хотите удалить {{variable}}?",
-      "confirmText-delete-variable": "Удалить переменную",
-      "title-delete-variable": "Удаление переменной",
-      "tooltip-duplicate-variable": "Дублировать переменную",
-      "tooltip-remove-variable": "Удалить переменную"
-    },
-    "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Метка",
-          "nothing": "Ничего",
-          "variable": "Переменная"
-        }
-      },
-      "label": "Скрыть"
-    },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": ""
-        }
-      }
-    },
-    "variable-multi-prop-static-options-form": {
-      "aria-label-static-options": ""
-    },
-    "variable-type-select": {
-      "name-variable-type": "Тип переменной"
-    },
-    "variable-usages-button": {
-      "title-show-usages": "Показаны варианты использования для: {{variableId}}",
-      "tooltip-show-usages": "Показать варианты использования"
-    },
-    "variable-values-preview": {
-      "show-more": "Показать еще",
-      "preview-of-values_one": "Просмотр значений ({{count}})",
-      "preview-of-values_few": "Просмотр значений ({{count}})",
-      "preview-of-values_many": "Просмотр значений ({{count}})",
-      "preview-of-values_other": "Просмотр значений ({{count}})"
-    },
-    "version-history": {
-      "comparison": {
-        "button-restore": "Восстановить до версии {{version}} "
-      }
-    },
-    "version-history-comparison": {
-      "label-view-json-diff": "Просмотр JSON Diff",
-      "new-version-updated": "<strong>Версия {{version}}</strong> обновлена пользователем {{editor}} {{timeAgo}}",
-      "old-version-updated": "<strong>Версия {{version}}</strong> обновлена пользователем {{editor}} {{timeAgo}}"
-    },
-    "version-history-header": {
-      "compare-versions": "Сравнение {{baseVersion}} <3></3> {{newVersion}}",
-      "latest": "(Последняя)",
-      "tooltip-reset-version": "Сброс версии"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Переключить выбор версии {{version}}",
-      "date": "Дата",
-      "name-latest": "Последние",
-      "notes": "Примечания",
-      "restore": "Восстановить",
-      "updated-by": "Кем обновлено",
-      "version": "Версия"
-    },
-    "versions-history-buttons": {
-      "compare-versions": "Сравнить версии",
-      "content-select-two-versions-to-start-comparing": "Выберите две версии, чтобы начать сравнение",
-      "show-more-versions": "Показать больше версий"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Изменить визуализацию",
-      "text": "Изменить"
-    },
-    "viz-and-data-pane": {
-      "aria-label-open-query-pane": "Открыть панель запросов",
-      "tooltip-open-query-pane": "Открыть панель запросов"
-    },
-    "viz-panel-links-renderer": {
-      "aria-label-panel-links": "Ссылки на панели"
-    }
-  },
-  "dashboard-settings": {
-    "annotations": {
-      "title": "Аннотации"
-    },
-    "dashboard-delete-button": "Удалить дашборд",
-    "delete-modal": {
-      "confirmation-text": "Удалить",
-      "delete-button": "Удалить",
-      "title": "Удаление"
-    },
-    "delete-modal-restore-dashboards-prefix": "Дашборд будет удален.",
-    "delete-modal-text": "Действительно удалить дашборд?",
-    "general": {
-      "auto-refresh-description": "Задайте интервалы автообновления, которые должны быть доступны в соответствующем списке. Используйте формат «5 с» для секунд, «1 м» для минут, «1 ч» для часов и «1 д» для дней (например, «5 с, 10 с, 30 с, 1 м, 5 м, 15 м, 30 м, 1 ч, 2 ч, 1 д»).",
-      "auto-refresh-label": "Автообновление",
-      "description-label": "Описание",
-      "editable-description": "Чтобы отключить редактирование, установите значение «только для чтения». Чтобы изменения вступили в силу, перезагрузите дашборд.",
-      "editable-label": "Редактируемый",
-      "folder-label": "Папка",
-      "panel-options-graph-tooltip-description": "Управляет всплывающими подсказками и выделением при наведении курсора на разных панелях. Чтобы изменения вступили в силу, перезагрузите дашборд.",
-      "panel-options-graph-tooltip-label": "Всплывающая подсказка графа",
-      "panel-options-label": "Параметры панели",
-      "panels-preload-description": "Если этот параметр включен, все панели начнут загружаться сразу после загрузки дашборда.",
-      "panels-preload-label": "Предварительная загрузка панелей",
-      "tags-label": "Теги",
-      "title": "Общие",
-      "title-label": "Название"
-    },
-    "json-editor": {
-      "save-button": "Сохранить изменения",
-      "subtitle": "Модель JSON, приведенная ниже, представляет собой структуру данных, которая определяет дашборд. Она включает параметры дашборда и панелей, макет, запросы и т. д.",
-      "title": "Модель JSON"
-    },
-    "links": {
-      "title": "Ссылки"
-    },
-    "permissions": {
-      "title": "Разрешения"
-    },
-    "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "Дашборд управляется функцией подготовки Grafana и не может быть удален. Чтобы удалить дашборд, его необходимо удалить из файла конфигурации.",
-      "text-2": "Для получения дополнительной информации о функции подготовки см. документацию Grafana.",
-      "text-3": "Путь к файлу: {{provisionedId}}",
-      "text-link": "Перейти на страницу документации",
-      "title": "Невозможно удалить подготовленный дашборд"
-    },
-    "settings": {
-      "title": "Параметры"
-    },
-    "time-picker": {
-      "hide-time-picker": "Скрыть указатель времени",
-      "now-delay-description": "Исключите последние данные, которые могут быть неполными.",
-      "now-delay-label": "Задержка в текущий момент",
-      "refresh-live-dashboards-description": "Постоянно обновляйте панели, когда временной диапазон включает текущее время.",
-      "refresh-live-dashboards-label": "Обновить дашборды в реальном времени",
-      "time-options-label": "Параметры времени",
-      "time-zone-label": "Часовой пояс",
-      "week-start-label": "Начало недели"
-    },
-    "variables": {
-      "title": "Переменные"
-    },
-    "versions": {
-      "provisioned-warning": "",
-      "title": "Версии"
-    }
-  },
   "dashboard": {
     "actions": {
       "open-settings": "Параметры"
@@ -6781,8 +5721,8 @@
       "aria-label-expand": "Развернуть категорию «{{title}}»"
     },
     "options-pane-options": {
-      "Recent options-title-recent-options": "Последние параметры",
       "placeholder-search-options": "Поиск параметров",
+      "Recent options-title-recent-options": "Последние параметры",
       "title-matched_one": "Совпадение: {{count}}/{{totalCount}} параметра",
       "title-matched_few": "Совпадение: {{count}}/{{totalCount}} параметров",
       "title-matched_many": "Совпадение: {{count}}/{{totalCount}} параметров",
@@ -7323,6 +6263,1080 @@
         "title-option": "Название",
         "transparent-background": "Прозрачный фон"
       }
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Загрузить JSON-файл дашборда",
+      "secondary-text": "Перетащите файл сюда или нажмите, чтобы выбрать"
+    },
+    "form-actions": {
+      "cancel": "Отмена",
+      "load": "Загрузить"
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "Загрузить",
+      "placeholder": "URL-адрес или идентификатор дашборда Grafana.com",
+      "validation-required": "Требуется URL-адрес или идентификатор дашборда Grafana"
+    },
+    "json-field": {
+      "label": "Импорт через модель JSON дашборда",
+      "validation-required": "Требуется модель JSON дашборда"
+    }
+  },
+  "dashboard-library": {
+    "browse-grafana-com": "Обзор Grafana.com",
+    "browse-plugins": "Обзор плагинов",
+    "card": {
+      "datasource-provided-badge": "Источник данных указан",
+      "details-tooltip": "Подробности",
+      "no-preview": "Предварительный просмотр недоступен",
+      "use-dashboard-button": "Использовать дашборд",
+      "use-template-button": "Использовать шаблон"
+    },
+    "community-empty-title": "Дашборды сообщества не найдены",
+    "community-empty-title-with-datasource": "Дашборды сообщества ({{datasourceType}}) не найдены",
+    "community-error": "Не удалось загрузить дашборды сообщества. Повторите попытку.",
+    "community-error-description": "Не удалось загрузить дашборд сообщества.",
+    "community-error-title": "Ошибка при загрузке дашборда сообщества",
+    "community-mapping-form": {
+      "back": "Назад к дашбордам",
+      "constants-title": "Переменные дашборда",
+      "datasources-title": "Конфигурация источника данных",
+      "description": "Для этого дашборда требуется конфигурация источника данных. Выберите источники данных для каждого из указанных ниже вариантов.",
+      "preview": "Предварительный просмотр дашборда",
+      "auto-mapped_one": "Выполнена автоматическая конфигурация {{count}} источника данных:",
+      "auto-mapped_few": "Выполнена автоматическая конфигурация {{count}} источников данных:",
+      "auto-mapped_many": "Выполнена автоматическая конфигурация {{count}} источников данных:",
+      "auto-mapped_other": "Выполнена автоматическая конфигурация {{count}} источника данных:"
+    },
+    "community-mapping-select-datasource": "Выберите источник данных",
+    "community-search-placeholder": "Поиск дашбордов сообщества...",
+    "community-search-placeholder-with-datasource": "Поиск дашбордов сообщества ({{datasourceType}})...",
+    "compatibility-auto-map-failed": "",
+    "compatibility-badge": {
+      "check": "",
+      "check-tooltip": "",
+      "checking": "",
+      "error-text": "",
+      "error-tooltip": "",
+      "not-supported-tooltip": "",
+      "score-text": "",
+      "tooltip-green": "",
+      "tooltip-orange": "",
+      "tooltip-red": ""
+    },
+    "dashboard-card": {
+      "details": {
+        "datasource": "Источник данных",
+        "dependencies": "Зависимости",
+        "id": "Идентификатор",
+        "last-update": "Последнее обновление",
+        "published-by": "Опубликовано",
+        "view-on-grafana-com": "Просмотр на Grafana.com"
+      }
+    },
+    "modal": {
+      "description": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
+      "tab-community": "Сообщество",
+      "tab-datasource": "Источник данных указан",
+      "title": "Рекомендуемые дашборды",
+      "title-mapping-with-name": "Настройте источники данных для дашборда {{dashboardName}}",
+      "title-with-datasource": "Рекомендуемые дашборды для источника данных {{datasourceType}}"
+    },
+    "no-community-dashboards-datasource": "Попробуйте изменить поисковый запрос или найти другие типы источников данных в дашбордах на Grafana.com.",
+    "no-community-dashboards-search": "Попробуйте изменить поисковый запрос или просмотрите больше дашбордов на Grafana.com.",
+    "no-provisioned-dashboards": "Подготовленные дашборды предоставлены плагинами источников данных. Больше плагинов можно найти на Grafana.com.",
+    "provisioned-empty-title": "Подготовленные дашборды не найдены",
+    "provisioned-empty-title-with-datasource": "Подготовленные дашборды ({{datasourceType}}) не найдены",
+    "retry": "Повторить попытку",
+    "suggested-dashboards-subtitle": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
+    "suggested-dashboards-title": "Создайте дашборд на основе предложенных вариантов для выбранного источника данных",
+    "suggested-dashboards-title-with-datasource": "Создайте дашборд на основе предложенных вариантов для источника данных {{datasourceType}}",
+    "template-dashboard-modal": {
+      "description": "Попробуйте шаблоны Grafana на основе образцов данных. Подключите свои данные, чтобы добавить реальные метрики.",
+      "title": "Создайте дашборд из шаблона"
+    },
+    "view-all": "Посмотреть все"
+  },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "Добавить ссылку на дашборд",
+      "info-box-content": "Ссылки на дашборды позволяют размещать ссылки на другие дашборды и веб-сайты непосредственно под заголовком дашборда. <2>Подробнее</2>",
+      "title": "Ссылки на дашборды еще не добавлены"
+    }
+  },
+  "dashboard-scene": {
+    "ad-hoc-variable-form": {
+      "adhoc-options": "Специальные параметры",
+      "alert-not-supported": "Этот источник данных не поддерживает специальные фильтры",
+      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
+      "label-data-source": "Источник данных",
+      "label-use-static-key-dimensions": "Использовать измерения статического ключа",
+      "name-allow-custom-values": "Разрешить пользовательские значения"
+    },
+    "add-to-dashboard": {
+      "message": {
+        "could-navigate-selected-dashboard-please-again": "Не удалось перейти к выбранному дашборду. Повторите попытку.",
+        "could-panel-dashboard-please-again": "Не удалось добавить панель на дашборд. Повторите попытку."
+      }
+    },
+    "add-to-dashboard-form": {
+      "cancel": "Отмена",
+      "description-choose-where-to-add-the-panel": "Выберите место для добавления панели.",
+      "description-select-which-dashboard-panel-created": "Выберите дашборд для создания панели.",
+      "label": {
+        "existing-dashboard": "Существующий дашборд",
+        "new-dashboard": "Новый дашборд"
+      },
+      "label-dashboard": "Дашборд",
+      "label-target-dashboard": "Целевой дашборд",
+      "message": {
+        "this-field-is-required": "Поле является обязательным."
+      },
+      "open-dashboard": "Открыть дашборд",
+      "open-in-new-tab": "Открыть в новой вкладке",
+      "title-error-adding-the-panel": "Ошибка при добавлении панели"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "Новая панель"
+      }
+    },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "",
+      "label-annotation-query": "",
+      "tooltip-add-new-annotation-query": ""
+    },
+    "annotation-edit-actions": {
+      "description": {
+        "change-annotation-color": "",
+        "change-annotation-controls-display": "",
+        "change-annotation-enabled-state": "",
+        "change-annotation-name": "",
+        "change-annotation-panel-filter": ""
+      }
+    },
+    "annotation-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-annotations-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-annotation": ""
+      }
+    },
+    "annotation-query-library-dropdown": {
+      "use-saved-query": ""
+    },
+    "annotation-settings-edit": {
+      "back-to-list": "Назад к списку",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": "Над дашбордом"
+        },
+        "controls-menu": {
+          "description": "Доступно при открытом меню управления",
+          "label": "Меню элементов управления"
+        },
+        "hidden": {
+          "description": "Скрывает переключатель для включения и отключения этой аннотации",
+          "label": "Скрыто"
+        }
+      },
+      "delete": "Удалить",
+      "description-color-annotation-event-markers": "Цвет, который будет использоваться для маркеров событий аннотаций.",
+      "description-enabled-annotation-query-issued-every-dashboard": "Если этот параметр включен, запрос аннотации выдается при каждом обновлении панели.",
+      "label-annotation-controls-display": "Показывать элементы управления аннотациями в",
+      "label-color": "Цвет",
+      "label-data-source": "Источник данных",
+      "label-enabled": "Включено",
+      "label-name": "Имя",
+      "label-show-in": "Показать в",
+      "placeholder-choose-panels": "Выбрать панели",
+      "query": "Запрос",
+      "title-annotation-support-source": "Нет поддержки аннотаций для источника данных"
+    },
+    "annotation-settings-list": {
+      "built-in": "{{annoName}} (встроена)",
+      "data-source": "Источник данных",
+      "delete-aria-label": "Удалить запрос с заголовком «{{title}}»",
+      "disabled": "{{annoName}} (отключена)",
+      "new-query": "Новый запрос",
+      "query-name": "Название запроса",
+      "tooltip-move-down": "Вниз",
+      "tooltip-move-up": "Вверх"
+    },
+    "branch-validation-error": {
+      "cannot-contain-invalid-characters": "Не может содержать недопустимые символы: «~», «^», «:», «?», «*», «[», «\\\\» или «]».",
+      "cannot-start-with": "Не может начинаться с «/» или заканчиваться «/», «.» или пробелом.",
+      "invalid-branch-name": "Недопустимое имя ветви.",
+      "it-cannot-contain-or": "Не может содержать «//» или «..».",
+      "least-valid-character": "Должен содержаться хотя бы один допустимый символ."
+    },
+    "build-new-dashboard-save-model": {
+      "data": {
+        "title": {
+          "new-dashboard": "Новый дашборд"
+        }
+      }
+    },
+    "build-new-dashboard-save-model-v2": {
+      "data": {
+        "title": {
+          "new-dashboard": "Новый дашборд"
+        }
+      }
+    },
+    "constant-variable-form": {
+      "constant-options": "Параметры констант",
+      "label-value": "Значение",
+      "placeholder-your-metric-prefix": "Префикс метрик"
+    },
+    "conversion-warning-banner": {
+      "detail-conditional": "Правила отображения/скрытия не будут действовать",
+      "detail-grids": "Все автоматические сетки будут отображаться как пользовательские",
+      "detail-tabs": "Все вкладки и строки будут отображаться как классические строки",
+      "details": "Обратите внимание на следующую информацию:",
+      "message": "Функция динамических дашбордов временно отключена",
+      "read-less": "Показать меньше",
+      "read-more": "Показать больше",
+      "recommendation": "После включения функции дашборды будут отображаться в динамическом формате. Настоятельно рекомендуем не корректировать дашборды до тех пор, пока функция не станет активной, поскольку правки, внесенные в классическом режиме, могут привести к неожиданным результатам. Вы также можете сохранить копию дашборда с помощью соответствующей опции в меню сохранения.",
+      "save-warning": "Дашборд, созданный как динамический или преобразованный в него, будет открываться как классический. При сохранении дашборда настройки для динамического режима могут не сохраниться."
+    },
+    "custom-variable-form": {
+      "custom-options": "Пользовательские параметры",
+      "json-values-tooltip": "Укажите JSON-массив объектов, где каждый объект может иметь любое количество свойств.<br />Подробнее — в <4>документации</4>.",
+      "name-csv-values": "CSV",
+      "name-json-values": "JSON",
+      "name-values-separated-comma": "Значения, разделенные запятыми",
+      "selection-options": "Параметры выбора"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"
+    },
+    "dashboard-link-form": {
+      "back-to-list": "Назад к списку",
+      "label-icon": "Значок",
+      "label-include-current-template-variable-values": "Включить текущие значения переменных шаблона",
+      "label-include-current-time-range": "Включить текущий временной диапазон",
+      "label-open-link-in-new-tab": "Открыть ссылку в новой вкладке",
+      "label-options": "Параметры",
+      "label-show-as-dropdown": "Показывать как раскрывающийся список",
+      "label-show-in-controls-menu": "Показывать в меню управления",
+      "label-title": "Название",
+      "label-tooltip": "Подсказка",
+      "label-type": "Тип",
+      "label-url": "URL",
+      "label-with-tags": "С тегами",
+      "link-type-options": {
+        "label": {
+          "dashboards": "Дашборды",
+          "link": "Ссылка"
+        }
+      },
+      "placeholder-open-dashboard": "Открыть дашборд"
+    },
+    "dashboard-link-list": {
+      "delete-aria-label": "Удалить ссылку с заголовком «{{title}}»",
+      "info": "Информация",
+      "new-link": "Новая ссылка",
+      "tooltip-copy-link": "Копировать ссылку",
+      "tooltip-move-link-down": "Переместить ссылку вниз",
+      "tooltip-move-link-up": "Переместить ссылку вверх",
+      "type": "Тип"
+    },
+    "dashboard-preview-banner": {
+      "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
+    },
+    "dashboard-scene": {
+      "modal": {
+        "cancel": "Отмена",
+        "discard": "Отменить",
+        "save": "Сохранить",
+        "text": {
+          "save-changes-question": "Сохранить изменения?"
+        },
+        "title": {
+          "unsaved-changes": "Несохраненные изменения"
+        }
+      },
+      "text": {
+        "edit-panel": "Редактировать панель",
+        "view-panel": "Просмотр панели"
+      },
+      "title": {
+        "dashboard": "Дашборд",
+        "discard-changes-to-dashboard": "Отменить изменения на дашборде?",
+        "unsaved-changes-question": "На дашборде есть несохраненные изменения. Вы действительно хотите их отменить?"
+      }
+    },
+    "dashboard-scene-page-state-manager": {
+      "message": {
+        "dashboard-not-found": "Дашборд не найден"
+      }
+    },
+    "dashboard-scene-page-state-manager-v2": {
+      "message": {
+        "dashboard-not-found": "Дашборд не найден"
+      }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": ""
+    },
+    "data-source-variable-form": {
+      "data-source-options": "Параметры источника данных",
+      "description-instance-name-filter": "Фильтр регулярных выражений для выбора экземпляров источников данных в списке значений переменных. Оставьте пустым для всех.",
+      "example-instance-name-filter": "Пример: <codeExample />",
+      "name-instance-name-filter": "Фильтр по имени экземпляров",
+      "name-type": "Тип",
+      "selection-options": "Параметры выбора"
+    },
+    "default-grid-layout-manager": {
+      "row": {
+        "title": {
+          "row-title": "Заголовок строки"
+        }
+      }
+    },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Не удалось удалить дашборд",
+      "cancel-action": "Отмена",
+      "delete-action": "Удалить дашборд",
+      "deleting": "Удаление...",
+      "drawer-title": "Удалить подготовленный дашборд",
+      "success-message": "Дашборд удален"
+    },
+    "description-label": {
+      "description": "Описание"
+    },
+    "edit-link-view": {
+      "edit-link-page-nav": {
+        "text": {
+          "edit-link": "Редактировать ссылку"
+        }
+      }
+    },
+    "email-list": {
+      "aria-label-emailmenu": "Переключить меню электронной почты"
+    },
+    "embedded-dashboard-test-page": {
+      "subTitle": {
+        "showing-dashboard-panel-tests-pie-chart": "Отображаемый дашборд: тесты панелей — круговая диаграмма"
+      },
+      "text": {
+        "embedding-dashboard": "Встраиваемый дашборд"
+      }
+    },
+    "empty-transformations-message": {
+      "add-transformation": "Добавить преобразование",
+      "show-more": "Показать еще",
+      "sql-name": "Преобразование с помощью SQL",
+      "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
+    },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "Редактируемый",
+          "readonly": "Только для чтения"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "По умолчанию",
+          "shared-crosshair": "Общее перекрестие",
+          "shared-tooltip": "Общая подсказка"
+        }
+      }
+    },
+    "get-edit-options": {
+      "title": {
+        "column-options": "Параметры столбцов",
+        "row-height-options": "Параметры высоты строк"
+      }
+    },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "Добавляйте фильтры «ключ/значение» в процессе работы",
+        "dynamically-switch-source-multiple-panels": "Динамическое переключение источника данных для нескольких панелей",
+        "group": "Добавляйте ключи для группировки в процессе работы",
+        "hidden-constant-variable": "Скрытая константная переменная для префиксов метрик на дашбордах, доступ к которым вы хотите открыть",
+        "users-enter-arbitrary-strings-switch": "Переменная, которую можно включать и отключать",
+        "users-enter-arbitrary-strings-textbox": "Пользователи могут вводить любые произвольные строки в текстовое поле",
+        "values-are-static-and-defined-manually": "Значения являются статическими и задаются вручную",
+        "values-fetched-source-query": "Значения извлекаются из запроса к источнику данных",
+        "values-timespans": "Значения являются временными интервалами, например, 1 мин, 1 ч, 1 д"
+      },
+      "name": {
+        "ad-hoc-filters": "Специальные фильтры",
+        "constant": "Константа",
+        "custom": "Пользовательская",
+        "data-source": "Источник данных",
+        "group-by": "Группировать по",
+        "interval": "Интервал",
+        "query": "Запрос",
+        "switch": "Переключатель",
+        "textbox": "Текстовое поле"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
+        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
+        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
+      },
+      "label": {
+        "all-panels": "Все панели",
+        "all-panels-except": "Все панели, кроме",
+        "selected-panels": "Выбранные панели"
+      }
+    },
+    "get-panel-frame-options": {
+      "descriptor": {
+        "title": {
+          "panel-options": "Параметры панели"
+        }
+      },
+      "title": {
+        "description": "Описание",
+        "panel-links": "Ссылки на панели",
+        "title": "Заголовок",
+        "transparent-background": "Прозрачный фон"
+      }
+    },
+    "group-by-variable-form": {
+      "alert-not-supported": "Этот источник данных не поддерживает группировку по переменным",
+      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
+      "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
+      "group-by-options": "Группировать по параметрам",
+      "label-data-source": "Источник данных",
+      "label-use-static-group-by-dimensions": "Использовать измерения статической группы",
+      "name-allow-custom-values": "Разрешить пользовательские значения"
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Копировать в буфер обмена",
+      "description-randomize-data": "Измените исходные данные, чтобы скрыть конфиденциальную информацию. Обратите внимание, что длина останется прежней, а повторяющиеся значения будут равными.",
+      "description-support-snapshot": "Панель: {{panelTitle}}.",
+      "download-dashboard": "Дашборд ({{snapshotSize}})",
+      "download-snapshot": "Загрузить ({{snapshotSize}})",
+      "label-randomize-data": "Рандомизировать данные",
+      "label-support-snapshot": "Поддержка снимков",
+      "label-template": "Шаблон",
+      "randomize-field-names-label-field-names": "Названия полей",
+      "randomize-labels-label-labels": "Метки",
+      "randomize-string-values-label-string-values": "Строковые значения",
+      "tabs": {
+        "label": {
+          "data": "Данные",
+          "snapshot": "Снимок"
+        }
+      },
+      "title-complete-git-hub-comment-clipboard": "Копирование полного комментария GitHub в буфер обмена",
+      "title-get-help-with-this-panel": "Получение помощи с панелью",
+      "troubleshooting-docs": "Документация по устранению неполадок",
+      "troubleshooting-request-help": "Чтобы запросить помощь в устранении неполадок, отправьте снимок этой панели в службу технической поддержки Grafana Labs. Снимок содержит данные ответа на запрос и параметры панели."
+    },
+    "import-dashboard-form-v2": {
+      "cancel": "Отмена",
+      "float-grid-items-warning-body": "",
+      "float-grid-items-warning-title": "",
+      "label-folder": "Папка"
+    },
+    "inspect-data-tab": {
+      "no-data-found": "Данные не найдены"
+    },
+    "inspect-json-tab": {
+      "apply": "Применить",
+      "error-element-changed": "Вы не можете обновить ссылку на элемент. Можно изменить только свойства макета (x, y, ширина, высота).",
+      "error-invalid-json": "Недопустимый JSON",
+      "error-invalid-layout": "JSON-файл макета не прошел проверку. Проверьте файл и повторите попытку.",
+      "error-invalid-v2-panel": "JSON-файл панели не прошел проверку. Проверьте файл и повторите попытку.",
+      "validation-error": "Ошибка проверки"
+    },
+    "interval-variable-form": {
+      "description-auto-option": "Динамически рассчитывает интервал путем деления временного диапазона на указанное количество",
+      "description-calculated-value-below-threshold": "Расчетное значение не будет ниже этого порога.",
+      "description-step-count": "Сколько раз нужно разделить текущий временной диапазон для расчета значения.",
+      "interval-options": "Параметры интервалов",
+      "name-auto-option": "Автоматический параметр",
+      "name-min-interval": "Мин. интервал",
+      "name-step-count": "Количество шагов",
+      "name-values": "Значения"
+    },
+    "json-model-edit-view": {
+      "cancel-button": {
+        "cancel": "Отмена"
+      },
+      "render-save-button-and-error": {
+        "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
+        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
+        "title-plugin-dashboard": "Дашборд плагинов",
+        "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
+        "would-still-dashboard": "Все равно сохранить дашборд?"
+      },
+      "save-and-overwrite": "Сохранить и перезаписать"
+    },
+    "library-viz-panel-info": {
+      "last-edited": "{{timeAgo}}, <person />",
+      "usage-count_one": "Используется на {{count}} дашбордах",
+      "usage-count_few": "Используется на {{count}} дашбордах",
+      "usage-count_many": "Используется на {{count}} дашбордах",
+      "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "managed-badge": {
+      "kubectl": "Управляется Kubectl",
+      "plugin": "Управляется плагином {{id}}",
+      "provisioned": "Подготовлено",
+      "terraform": "Управляется Terraform"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "Не удалось переместить дашборд",
+      "cancel-action": "Отмена",
+      "current-file-not-found": "Текущий файл дашборда не найден",
+      "drawer-title": "Переместить подготовленный дашборд",
+      "file-load-error": "Ошибка при загрузке дашборда",
+      "loading-dashboard-data": "Загрузка данных дашборда",
+      "move-action": "Переместить дашборд",
+      "move-read-only-message": "Дашборд невозможно переместить непосредственно из Grafana, поскольку репозиторий доступен только для чтения. Чтобы переместить этот дашборд, переместите файл в репозиторий Git.",
+      "moving": "Перемещение...",
+      "success-message": "Дашборд перемещен",
+      "target-path-label": "Целевой путь",
+      "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
+    },
+    "name-already-exists-error": {
+      "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
+      "title-name-already-exists": "Название уже существует"
+    },
+    "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": "Продолжить"
+      },
+      "title": {
+        "proceed-to-external-site": "Перейти на внешний сайт?"
+      }
+    },
+    "on-remove-panel": {
+      "text": {
+        "remove-panel": "Действительно удалить панель?"
+      },
+      "title": {
+        "remove-panel": "Удалить панель"
+      }
+    },
+    "option-row": {
+      "aria-label-remove-option": "",
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-remove-option": ""
+    },
+    "panel-data-alerting-tab": {
+      "tab-label": "Оповещение"
+    },
+    "panel-data-alerting-tab-rendered": {
+      "alert": {
+        "title-errors-loading-rules": "Ошибки при загрузке правил"
+      },
+      "error-failed-to-load": "Не удалось загрузить состояние правил Grafana: {{errorToDisplay}}",
+      "text-loading-rules": "Загрузка правил...",
+      "title-dashboard-not-saved": "Дашборд не сохранен"
+    },
+    "panel-data-queries-tab": {
+      "tab-label": "Запросы"
+    },
+    "panel-data-queries-tab-rendered": {
+      "add-query": "Добавить запрос",
+      "expression": "Выражение"
+    },
+    "panel-data-transformations-tab": {
+      "tab-label": "Преобразования"
+    },
+    "panel-data-transformations-tab-rendered": {
+      "add-another-transformation": "Добавить другое преобразование",
+      "body-delete-all-transformations": "Удалив все преобразования, вы вернетесь на главный экран выбора.",
+      "confirmText-delete-all": "Удалить все",
+      "delete-all-transformations": "Удалить все преобразования",
+      "title-delete-all-transformations": "Удалить все преобразования?"
+    },
+    "panel-edit-controls": {
+      "query-editor-version": "",
+      "query-editor-version-toggle": "",
+      "table-view-aria-label-toggletableview": "Переключить табличное представление",
+      "table-view-label-table-view": "Табличное представление"
+    },
+    "panel-editor": {
+      "text": {
+        "edit-panel": "Редактировать панель"
+      }
+    },
+    "panel-editor-renderer": {
+      "aria-label-open-options-pane": "Открыть область параметров",
+      "tooltip-open-options-pane": "Открыть область параметров"
+    },
+    "panel-inspect-renderer": {
+      "body-panel-plugin-not-loaded": "Перед началом проверки убедитесь, что отображается панель, которую нужно проверить.",
+      "title-panel-plugin-not-loaded": "Плагин панели не загружен"
+    },
+    "panel-menu-behavior": {
+      "async-func": {
+        "text": {
+          "extensions": "Расширения",
+          "metrics-drilldown": "Детализация метрик"
+        }
+      }
+    },
+    "panel-viz-type-picker": {
+      "button": {
+        "close": "Назад"
+      },
+      "placeholder-search-for": "Поиск...",
+      "radio-options": {
+        "label": {
+          "all-visualizations": "Все визуализации",
+          "suggestions": "Предложения"
+        }
+      },
+      "title-close": "Закрыть"
+    },
+    "provisioned-delete-modal": {
+      "cannot-be-deleted": "Дашборд управляется функцией подготовки Grafana и не может быть удален. Чтобы удалить дашборд, его необходимо удалить из файла конфигурации.",
+      "file-path": "Путь к файлу: {{dashboardId}}",
+      "ok": "OK",
+      "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
+      "title-cannot-delete-provisioned-dashboard": "Невозможно удалить подготовленный дашборд"
+    },
+    "query-editor": {
+      "query": "Запрос"
+    },
+    "query-variable-editor-form": {
+      "description-examples": "Именованные группы записи можно использовать для разделения отображаемого текста и значения (<1>см. примеры</1>).",
+      "description-optional": "Дополнительно, если вы хотите извлечь часть имени ряда или сегмента узла метрики.",
+      "description-regex-apply-to": "Выберите, следует ли применить шаблон регулярного выражения к значению переменной или отображаемому тексту",
+      "label-data-source": "Источник данных",
+      "label-regex-apply-to": "Применить регулярное выражение к",
+      "label-static-options-sort": "Сортировка статических параметров",
+      "label-target-data-source": "Целевой источник данных",
+      "label-use-static-options": "Использовать статические параметры",
+      "name-regex": "Регулярное выражение",
+      "query-options": "Параметры запросов",
+      "regex-apply-to-options": {
+        "label": {
+          "text": "Отображаемый текст",
+          "value": "Значение переменной"
+        }
+      },
+      "selection-options": "Параметры выбора",
+      "static-options-legend": "Статические параметры"
+    },
+    "resource-export": {
+      "label": {
+        "advanced-options": "Дополнительные параметры",
+        "classic": "Классический",
+        "json": "JSON",
+        "v1-resource": "Ресурс V1",
+        "v2-resource": "Ресурс V2",
+        "yaml": "YAML"
+      },
+      "share-externally": "Предоставить общий доступ к дашборду другому экземпляру",
+      "share-externally-tooltip": "Перед экспортом удаляет из ресурса все связанные с экземпляром метаданные и ссылки на источники данных."
+    },
+    "revert-dashboard-modal": {
+      "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
+      "confirmText-restore-version": "Да, восстановить до версии {{version}}",
+      "title-restore-version": "Восстановление версии"
+    },
+    "save-button": {
+      "save": "Сохранить",
+      "save-and-overwrite": "Сохранить и перезаписать",
+      "saving": "Сохранение..."
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-description-field": "Сохранить поле описания дашборда",
+      "aria-label-save-dashboard-title-field": "Сохранить поле заголовка дашборда",
+      "cancel-button": {
+        "cancel": "Отмена"
+      },
+      "label-copy-tags": "Копировать теги",
+      "label-folder": "Папка",
+      "render-footer": {
+        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд"
+      },
+      "required": "Обязательно"
+    },
+    "save-dashboard-drawer": {
+      "tabs": {
+        "label-changes": "Изменения",
+        "label-details": "Подробности",
+        "title": "Сохранить дашборд",
+        "title-copy": "Сохранить копию дашборда",
+        "title-provisioned": "Подготовленный дашборд"
+      }
+    },
+    "save-dashboard-form": {
+      "aria-label-message": "сообщение",
+      "body-dashboard-drastically-changed": "Дашборд будет сохранен с использованием новой экспериментальной схемы дашбордов Grafana. Действие нельзя отменить, и оно может привести к необратимой потере данных. Рекомендуем сохранить дашборд как копию. Если вы видите это сообщение в рабочей среде, обратитесь в службу поддержки, чтобы отключить функцию.",
+      "cancel-button": {
+        "cancel": "Отмена"
+      },
+      "label-message": "Сообщение",
+      "placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно).",
+      "render-footer": {
+        "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
+        "no-changes-to-save": "Нет изменений для сохранения",
+        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
+        "title-plugin-dashboard": "Дашборд плагинов",
+        "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
+        "would-still-dashboard": "Все равно сохранить дашборд?"
+      },
+      "schema-v2-library-panels-export": "Из-за ограничений в новой схеме дашборда (V2) панели библиотеки будут преобразованы в обычные панели со встроенным содержимым во время внешнего экспорта.",
+      "schema-v2-library-panels-export-title": "Панели библиотеки будут преобразованы в обычные панели",
+      "title-dashboard-drastically-changed": "Дашборд необратимо изменен"
+    },
+    "save-dashboard-form-common-options": {
+      "save-refresh-description-current-refresh-default": "Текущее обновление станет новым значением по умолчанию",
+      "save-refresh-label-update-default-refresh-value": "Изменить значение обновления по умолчанию",
+      "save-timerange-description-current-range-default": "Текущий временной диапазон станет новым значением по умолчанию",
+      "save-timerange-label-update-default-time-range": "Изменить временной диапазон по умолчанию",
+      "save-variables-description-current-values-default": "Текущие значения станут новым значением по умолчанию",
+      "save-variables-label-update-default-variable-values": "Изменить значения переменных по умолчанию",
+      "show-variables-warning-alert-body": "Не удалось загрузить некоторые переменные. Если установлен флажок «Изменить значения переменных по умолчанию», текущие (неудачные) значения станут значениями по умолчанию для дашборда. Вы можете сохранить эту настройку или снять флажок, чтобы не сохранять эти (неудачные) значения.",
+      "show-variables-warning-alert-title": "Не удалось выполнить запросы переменных"
+    },
+    "save-library-viz-panel-modal": {
+      "cancel": "Отмена",
+      "dashboard-name": "Название дашборда",
+      "discard": "Отменить",
+      "loading-connected-dashboards": "Загрузка подключенных дашбордов...",
+      "placeholder-search-affected-dashboards": "Поиск затронутых дашбордов",
+      "update-all": "Обновить все",
+      "affected-dashboards_one": "Изменение повлияет на <strong>{{count}} дашборд.</strong> Будут затронуты следующие дашборды, использующие панель:",
+      "affected-dashboards_few": "Изменение повлияет на <strong>{{count}} дашборда.</strong> Будут затронуты следующие дашборды, использующие панель:",
+      "affected-dashboards_many": "Изменение повлияет на <strong>{{count}} дашбордов.</strong> Будут затронуты следующие дашборды, использующие панель:",
+      "affected-dashboards_other": "Изменение повлияет на <strong>{{count}} дашборда.</strong> Будут затронуты следующие дашборды, использующие панель:"
+    },
+    "save-provisioned-dashboard-form": {
+      "api-error": "Ошибка при сохранении дашборда",
+      "cancel": "Отмена",
+      "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
+      "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
+      "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
+      "label-description": "Описание",
+      "label-target-folder": "Целевая папка",
+      "label-title": "Название",
+      "save": "Сохранить",
+      "save-json-to-file": "Сохранить модель JSON в файл",
+      "saving": "Сохранение...",
+      "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
+      "title-required": "Требуется указать название дашборда",
+      "title-same-as-folder": "Имя дашборда не может совпадать с именем папки",
+      "title-validation-failed": "Не удалось проверить название дашборда."
+    },
+    "scenes-new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "Невозможно создать оповещения с этой панели, поскольку не найден запрос к источнику данных, способному генерировать оповещения.",
+      "new-alert-rule": "Новое правило оповещения",
+      "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
+    },
+    "selection-options-form": {
+      "description-enables-multiple-values-selected": "Позволяет выбирать несколько значений одновременно.",
+      "description-enables-option-include-variables": "Включает параметр для добавления всех значений",
+      "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
+      "name-allow-custom-values": "Разрешить пользовательские значения",
+      "name-custom-all-value": "Пользовательское значение «Все»",
+      "name-include-all-option": "Включить параметр «Все»",
+      "name-multi-value": "Несколько значений"
+    },
+    "share-button": {
+      "aria-label-sharedropdownmenu": "Переключить меню общего доступа"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "На дашборде есть несохраненные изменения. Сохраните их, чтобы предоставить общий доступ к дашборду.",
+        "title": "Несохраненные изменения"
+      }
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": "JSON-файл дашборда используется для устранения проблем с визуализацией"
+      },
+      "label": {
+        "git-hub-comment": "Комментарий GitHub",
+        "panel-support-snapshot": "Вспомогательный снимок панели"
+      },
+      "title": {
+        "copy-to-clipboard-failed": "Не удалось скопировать в буфер обмена"
+      }
+    },
+    "switch-variable-form": {
+      "disabled-value": "Значение при отключении",
+      "disabled-value-description": "Значение в отключенном состоянии",
+      "disabled-value-placeholder": "например, выкл., отключено, неактивно",
+      "enabled-value": "Значение при включении",
+      "enabled-value-description": "Значение во включенном состоянии",
+      "enabled-value-placeholder": "например, вкл., включено, активно",
+      "same-values-error": "Значения при включении и отключении не могут совпадать",
+      "switch-options": "Варианты переключения",
+      "value-pair-type": "Тип пары значений",
+      "value-pair-type-description": "Выберите тип значений для состояний переключателя"
+    },
+    "text-box-variable": {
+      "name-default-value": "Значение по умолчанию"
+    },
+    "text-box-variable-form": {
+      "placeholder-default-value-if-any": "(необязательно)",
+      "text-options": "Параметры текста"
+    },
+    "textbox-variable-form": {
+      "label-value": "Значение"
+    },
+    "title-field-label": {
+      "title": "Название"
+    },
+    "transform-usages-to-network": {
+      "result": {
+        "label": {
+          "dashboard": "дашборд"
+        }
+      }
+    },
+    "transformations-drawer": {
+      "search-box-suffix": {
+        "tooltip-clear-search": "Очистить поиск"
+      }
+    },
+    "unlink-modal": {
+      "body-unlink-panel": "Если вы отсоедините эту панель, вы сможете редактировать ее отдельно от других дашбордов. Однако после внесения изменений вы не сможете вернуться к исходной панели многократного использования.",
+      "confirmText-yes-unlink": "Да, отсоединить",
+      "title-really-unlink-panel": "Действительно отсоединить панель?"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Отмена",
+      "changes": "Сохранить изменения?",
+      "discard": "Отменить",
+      "save-dashboard": "Сохранить дашборд",
+      "title-unsaved-changes": "Несохраненные изменения"
+    },
+    "use-dashboard-edit-page-nav": {
+      "page-nav": {
+        "text": {
+          "settings": "Параметры"
+        }
+      }
+    },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": "Измените запрос переменной"
+      }
+    },
+    "use-save-dashboard": {
+      "message-dashboard-saved": "Дашборд сохранен"
+    },
+    "variable-check-indicator": {
+      "aria-label-variable-referenced-dashboard": "На эту переменную не ссылается ни одна переменная или дашборд",
+      "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
+      "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
+      "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
+    },
+    "variable-controls": {
+      "add-variable": "Добавить переменную"
+    },
+    "variable-display-select": {
+      "label": "Отобразить",
+      "options": {
+        "above-dashboard": {
+          "label": "Над дашбордом"
+        },
+        "controls-menu": {
+          "description": "Отображается при открытом меню управления",
+          "label": "Меню элементов управления"
+        },
+        "hidden": {
+          "description": "Отображается только в режиме редактирования",
+          "label": "Скрыто"
+        },
+        "hidden-label": {
+          "description": "Над дашбордом, но имя переменной не отображается",
+          "label": "Над дашбордом, метка скрыта"
+        }
+      }
+    },
+    "variable-editor-form": {
+      "aria-label-variable-editor-form": "Форма редактора переменных",
+      "back-to-list": "Назад к списку",
+      "confirmText": {
+        "delete-variable": "Удалить переменную"
+      },
+      "delete": "Удалить",
+      "description-optional-display-name": "Отображаемое имя (необязательно)",
+      "description-template-variable-characters": "Название переменной шаблона. (Макс. 50 символов.)",
+      "general": "Общие сведения",
+      "name-description": "Описание",
+      "name-label": "Метка",
+      "name-name": "Имя",
+      "placeholder-descriptive-text": "Поясняющий текст",
+      "placeholder-label-name": "Название метки",
+      "placeholder-variable-name": "Название переменной",
+      "text-running-query": "Выполняется запрос...",
+      "title": {
+        "delete-variable": "Удаление переменной"
+      }
+    },
+    "variable-editor-list": {
+      "definition": "Определение",
+      "new-variable": "Новая переменная",
+      "variable": "Переменная"
+    },
+    "variable-editor-list-row": {
+      "body-delete-variable": "Вы действительно хотите удалить {{variable}}?",
+      "confirmText-delete-variable": "Удалить переменную",
+      "title-delete-variable": "Удаление переменной",
+      "tooltip-duplicate-variable": "Дублировать переменную",
+      "tooltip-remove-variable": "Удалить переменную"
+    },
+    "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "Метка",
+          "nothing": "Ничего",
+          "variable": "Переменная"
+        }
+      },
+      "label": "Скрыть"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": ""
+    },
+    "variable-type-select": {
+      "name-variable-type": "Тип переменной"
+    },
+    "variable-usages-button": {
+      "title-show-usages": "Показаны варианты использования для: {{variableId}}",
+      "tooltip-show-usages": "Показать варианты использования"
+    },
+    "variable-values-preview": {
+      "show-more": "Показать еще",
+      "preview-of-values_one": "Просмотр значений ({{count}})",
+      "preview-of-values_few": "Просмотр значений ({{count}})",
+      "preview-of-values_many": "Просмотр значений ({{count}})",
+      "preview-of-values_other": "Просмотр значений ({{count}})"
+    },
+    "version-history": {
+      "comparison": {
+        "button-restore": "Восстановить до версии {{version}} "
+      }
+    },
+    "version-history-comparison": {
+      "label-view-json-diff": "Просмотр JSON Diff",
+      "new-version-updated": "<strong>Версия {{version}}</strong> обновлена пользователем {{editor}} {{timeAgo}}",
+      "old-version-updated": "<strong>Версия {{version}}</strong> обновлена пользователем {{editor}} {{timeAgo}}"
+    },
+    "version-history-header": {
+      "compare-versions": "Сравнение {{baseVersion}} <3></3> {{newVersion}}",
+      "latest": "(Последняя)",
+      "tooltip-reset-version": "Сброс версии"
+    },
+    "version-history-table": {
+      "aria-label-toggle-selection": "Переключить выбор версии {{version}}",
+      "date": "Дата",
+      "name-latest": "Последние",
+      "notes": "Примечания",
+      "restore": "Восстановить",
+      "updated-by": "Кем обновлено",
+      "version": "Версия"
+    },
+    "versions-history-buttons": {
+      "compare-versions": "Сравнить версии",
+      "content-select-two-versions-to-start-comparing": "Выберите две версии, чтобы начать сравнение",
+      "show-more-versions": "Показать больше версий"
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Изменить визуализацию",
+      "text": "Изменить"
+    },
+    "viz-and-data-pane": {
+      "aria-label-open-query-pane": "Открыть панель запросов",
+      "tooltip-open-query-pane": "Открыть панель запросов"
+    },
+    "viz-panel-links-renderer": {
+      "aria-label-panel-links": "Ссылки на панели"
+    }
+  },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "Вы также можете получить пакет поддержки, содержащий информацию о вашем экземпляре Grafana и настроенных источниках данных в <1>разделе о пакетах поддержки</1>."
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Аннотации"
+    },
+    "dashboard-delete-button": "Удалить дашборд",
+    "delete-modal": {
+      "confirmation-text": "Удалить",
+      "delete-button": "Удалить",
+      "title": "Удаление"
+    },
+    "delete-modal-restore-dashboards-prefix": "Дашборд будет удален.",
+    "delete-modal-text": "Действительно удалить дашборд?",
+    "general": {
+      "auto-refresh-description": "Задайте интервалы автообновления, которые должны быть доступны в соответствующем списке. Используйте формат «5 с» для секунд, «1 м» для минут, «1 ч» для часов и «1 д» для дней (например, «5 с, 10 с, 30 с, 1 м, 5 м, 15 м, 30 м, 1 ч, 2 ч, 1 д»).",
+      "auto-refresh-label": "Автообновление",
+      "description-label": "Описание",
+      "editable-description": "Чтобы отключить редактирование, установите значение «только для чтения». Чтобы изменения вступили в силу, перезагрузите дашборд.",
+      "editable-label": "Редактируемый",
+      "folder-label": "Папка",
+      "panel-options-graph-tooltip-description": "Управляет всплывающими подсказками и выделением при наведении курсора на разных панелях. Чтобы изменения вступили в силу, перезагрузите дашборд.",
+      "panel-options-graph-tooltip-label": "Всплывающая подсказка графа",
+      "panel-options-label": "Параметры панели",
+      "panels-preload-description": "Если этот параметр включен, все панели начнут загружаться сразу после загрузки дашборда.",
+      "panels-preload-label": "Предварительная загрузка панелей",
+      "tags-label": "Теги",
+      "title": "Общие",
+      "title-label": "Название"
+    },
+    "json-editor": {
+      "save-button": "Сохранить изменения",
+      "subtitle": "Модель JSON, приведенная ниже, представляет собой структуру данных, которая определяет дашборд. Она включает параметры дашборда и панелей, макет, запросы и т. д.",
+      "title": "Модель JSON"
+    },
+    "links": {
+      "title": "Ссылки"
+    },
+    "permissions": {
+      "title": "Разрешения"
+    },
+    "provisioned-delete-modal": {
+      "confirm-button": "OK",
+      "text-1": "Дашборд управляется функцией подготовки Grafana и не может быть удален. Чтобы удалить дашборд, его необходимо удалить из файла конфигурации.",
+      "text-2": "Для получения дополнительной информации о функции подготовки см. документацию Grafana.",
+      "text-3": "Путь к файлу: {{provisionedId}}",
+      "text-link": "Перейти на страницу документации",
+      "title": "Невозможно удалить подготовленный дашборд"
+    },
+    "settings": {
+      "title": "Параметры"
+    },
+    "time-picker": {
+      "hide-time-picker": "Скрыть указатель времени",
+      "now-delay-description": "Исключите последние данные, которые могут быть неполными.",
+      "now-delay-label": "Задержка в текущий момент",
+      "refresh-live-dashboards-description": "Постоянно обновляйте панели, когда временной диапазон включает текущее время.",
+      "refresh-live-dashboards-label": "Обновить дашборды в реальном времени",
+      "time-options-label": "Параметры времени",
+      "time-zone-label": "Часовой пояс",
+      "week-start-label": "Начало недели"
+    },
+    "variables": {
+      "title": "Переменные"
+    },
+    "versions": {
+      "provisioned-warning": "",
+      "title": "Версии"
     }
   },
   "dashboards": {
@@ -10363,17 +10377,17 @@
       "description": "Ваша конфигурация LDAP не работает, поскольку базовая форма входа в настоящее время отключена. Включите форму входа, чтобы использовать аутентификацию LDAP. Вы можете включить ее на странице аутентификации в разделе «Параметры аутентификации».",
       "title": "Базовый вход отключен"
     },
-    "search-base-dns": {
-      "description": "Массив базовых DN для поиска.",
-      "error": "Базовые DN для поиска являются обязательным полем",
-      "label": "Базовые DN для поиска",
-      "placeholder": "пример: dc=grafana, dc=org"
-    },
     "search_filter": {
       "description": "LDAP-фильтр поиска используется, чтобы найти определенные записи в каталоге.",
       "error": "Фильтр поиска является обязательным полем",
       "label": "Фильтр поиска",
       "placeholder": "пример: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "Массив базовых DN для поиска.",
+      "error": "Базовые DN для поиска являются обязательным полем",
+      "label": "Базовые DN для поиска",
+      "placeholder": "пример: dc=grafana, dc=org"
     },
     "subtitle": "Интеграция LDAP в Grafana позволяет пользователям выполнять вход с помощью учетных данных LDAP. Подробнее — в <2><1>документации</1></2>.",
     "title": "Основные параметры"
@@ -10564,6 +10578,7 @@
       "label-numbers": "Номера",
       "label-signature": "Подпись"
     },
+    "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала",
     "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
@@ -10862,6 +10877,7 @@
       "label-inline": "Встроенные",
       "label-sidebar": "Боковая панель"
     },
+    "name-enable-field-selector": "",
     "name-enable-infinite-scrolling": "Включить бесконечную прокрутку",
     "name-enable-log-details": "Включить сведения о журнале",
     "name-enable-logs-highlighting": "Включить выделение журналов",
@@ -11610,6 +11626,7 @@
     },
     "megamenu": {
       "close": "Закрыть меню",
+      "dialog-label": "",
       "dock": "Закрепить меню",
       "list-label": "Навигация",
       "open": "Открыть меню",
@@ -11791,10 +11808,6 @@
       "clear-tooltip": "Очистить выбор единицы"
     }
   },
-  "org-picker": {
-    "noOptionsMessage-no-organizations-found": "Организации не найдены",
-    "select-placeholder": "Выбрать организацию"
-  },
   "org": {
     "new-org-page": {
       "create": "Создать",
@@ -11832,22 +11845,14 @@
       }
     }
   },
+  "org-picker": {
+    "noOptionsMessage-no-organizations-found": "Организации не найдены",
+    "select-placeholder": "Выбрать организацию"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Редактировать заголовок"
     }
-  },
-  "panel-group-by": {
-    "button": "Группировать по",
-    "loading": "Загрузка параметров",
-    "no-options": "Параметры не найдены",
-    "search-placeholder": "Поиск"
-  },
-  "panel-type-filter": {
-    "clear-button": "Очистить типы",
-    "select-aria-label": "Фильтр типов панелей",
-    "select-no-options": "Типы панелей не найдены",
-    "select-placeholder": "Фильтр по типу"
   },
   "panel": {
     "dashlist": {
@@ -11960,6 +11965,18 @@
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
     }
   },
+  "panel-group-by": {
+    "button": "Группировать по",
+    "loading": "Загрузка параметров",
+    "no-options": "Параметры не найдены",
+    "search-placeholder": "Поиск"
+  },
+  "panel-type-filter": {
+    "clear-button": "Очистить типы",
+    "select-aria-label": "Фильтр типов панелей",
+    "select-no-options": "Типы панелей не найдены",
+    "select-placeholder": "Фильтр по типу"
+  },
   "piechart": {
     "category-legend": "Условные обозначения",
     "category-pie-chart": "Круговая диаграмма",
@@ -11984,6 +12001,39 @@
     "suggestions": {
       "donut": "Кольцевая диаграмма",
       "pie": "Круговая диаграмма"
+    }
+  },
+  "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "Новый плейлист"
+        }
+      }
+    },
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "Элемент плейлиста, {{itemType}}, {{itemValue}}",
+      "multiple-dashboards-found": "Найдено несколько элементов: {{items}}",
+      "no-dashboards-found": "Дашборды не найдены",
+      "not-found": "{{items}} не найдены"
+    },
+    "start-modal": {
+      "button-start": "Пуск {{title}}",
+      "description-customize-dashboard-elements-visibility": "Настроить видимость элементов дашборда.",
+      "description-panel-heights-adjusted-screen": "Высота панелей регулируется в соответствии с размером экрана.",
+      "label-autofit": "Автоподгонка",
+      "label-dashboard-links": "Ссылки на дашборд",
+      "label-display-dashboard-controls": "Показать элементы управления дашбордом",
+      "label-mode": "Режим",
+      "label-time-and-refresh": "Время и обновление",
+      "label-variables": "Переменные",
+      "modes": {
+        "label": {
+          "kiosk": "Киоск",
+          "normal": "Нормальное"
+        }
+      },
+      "title-start-playlist": "Запустить плейлист"
     }
   },
   "playlist-edit": {
@@ -12027,39 +12077,6 @@
       "button": "Создать плейлист",
       "pro-tip": "Вы можете использовать плейлисты для циклического переключения дашбордов на телевизорах без участия пользователя. <2>Подробнее</2>",
       "title": "Плейлисты еще не созданы"
-    }
-  },
-  "playlist": {
-    "playlist-new-page": {
-      "page-nav": {
-        "text": {
-          "new-playlist": "Новый плейлист"
-        }
-      }
-    },
-    "playlist-table-rows": {
-      "aria-label-playlist-item": "Элемент плейлиста, {{itemType}}, {{itemValue}}",
-      "multiple-dashboards-found": "Найдено несколько элементов: {{items}}",
-      "no-dashboards-found": "Дашборды не найдены",
-      "not-found": "{{items}} не найдены"
-    },
-    "start-modal": {
-      "button-start": "Пуск {{title}}",
-      "description-customize-dashboard-elements-visibility": "Настроить видимость элементов дашборда.",
-      "description-panel-heights-adjusted-screen": "Высота панелей регулируется в соответствии с размером экрана.",
-      "label-autofit": "Автоподгонка",
-      "label-dashboard-links": "Ссылки на дашборд",
-      "label-display-dashboard-controls": "Показать элементы управления дашбордом",
-      "label-mode": "Режим",
-      "label-time-and-refresh": "Время и обновление",
-      "label-variables": "Переменные",
-      "modes": {
-        "label": {
-          "kiosk": "Киоск",
-          "normal": "Нормальное"
-        }
-      },
-      "title-start-playlist": "Запустить плейлист"
     }
   },
   "playlists": {
@@ -13084,41 +13101,6 @@
       "error-save-repository-setting": "Не удалось сохранить параметры репозитория"
     }
   },
-  "public-dashboard-users-access-list": {
-    "dashboard-modal": {
-      "external-link": "Внешняя ссылка",
-      "loading-text": "Загрузка…",
-      "open-dashboard-list-text": "Открыть список дашбордов",
-      "sharing-setting": "Параметры общего доступа"
-    },
-    "delete-user-modal": {
-      "delete-user-button-text": "Удалить пользователя",
-      "delete-user-cancel-button": "Отмена",
-      "delete-user-revoke-access-button": "Отозвать доступ",
-      "revoke-access-title": "Отзыв доступа",
-      "revoke-user-access-modal-desc-line1": "Действительно отозвать доступ для {{email}}?"
-    },
-    "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "Это действие приведет к немедленному отзыву доступа {{email}} ко всем совместно используемым дашбордам."
-    },
-    "modal": {
-      "shared-dashboard-modal-title": "Совместно используемые дашборды"
-    },
-    "table-body": {
-      "dashboard-count_one": "{{count}} дашборд",
-      "dashboard-count_few": "{{count}} дашборда",
-      "dashboard-count_many": "{{count}} дашбордов",
-      "dashboard-count_other": "{{count}} дашборда"
-    },
-    "table-header": {
-      "activated-label": "Активирован",
-      "activated-tooltip": "Время первого доступа к дашборду в качестве активного пользователя",
-      "email-label": "Адрес электронной почты",
-      "last-active-label": "Время последней активности",
-      "origin-label": "Источник",
-      "role-label": "Роль"
-    }
-  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Прежде чем сделать дашборд общедоступным, обратите внимание на следующее:",
@@ -13240,6 +13222,92 @@
       "revoke-access-button": "Отозвать доступ",
       "revoke-access-description": "Действительно отозвать доступ? Дашборд больше не допускает совместного использования.",
       "unsupported-data-source-alert-desc": "Дашборд использует источники данных, которые не поддерживаются для совместно используемых дашбордов. Панели, которые используют следующие источники данных, могут работать неправильно: {{unsupportedDataSources}}."
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "external-link": "Внешняя ссылка",
+      "loading-text": "Загрузка…",
+      "open-dashboard-list-text": "Открыть список дашбордов",
+      "sharing-setting": "Параметры общего доступа"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Удалить пользователя",
+      "delete-user-cancel-button": "Отмена",
+      "delete-user-revoke-access-button": "Отозвать доступ",
+      "revoke-access-title": "Отзыв доступа",
+      "revoke-user-access-modal-desc-line1": "Действительно отозвать доступ для {{email}}?"
+    },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "Это действие приведет к немедленному отзыву доступа {{email}} ко всем совместно используемым дашбордам."
+    },
+    "modal": {
+      "shared-dashboard-modal-title": "Совместно используемые дашборды"
+    },
+    "table-body": {
+      "dashboard-count_one": "{{count}} дашборд",
+      "dashboard-count_few": "{{count}} дашборда",
+      "dashboard-count_many": "{{count}} дашбордов",
+      "dashboard-count_other": "{{count}} дашборда"
+    },
+    "table-header": {
+      "activated-label": "Активирован",
+      "activated-tooltip": "Время первого доступа к дашборду в качестве активного пользователя",
+      "email-label": "Адрес электронной почты",
+      "last-active-label": "Время последней активности",
+      "origin-label": "Источник",
+      "role-label": "Роль"
+    }
+  },
+  "query": {
+    "query-editor-row-header": {
+      "hidden": "Скрыто",
+      "query-name-div-title-edit-query-name": "Редактирование названия запроса"
+    },
+    "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
+      "trace-id": "(Идентификатор трассировки: {{traceId}})"
+    },
+    "query-group": {
+      "add-query": "Добавить запрос",
+      "expression": "Выражение",
+      "title-data-source-help": "Справка по источнику данных"
+    },
+    "query-group-options-editor": {
+      "collapsed-interval": "Интервал = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "hide-time-info": "Скрыть информацию о времени",
+      "Query options-title-query-options": "Параметры запросов",
+      "relative-time": "Относительное время",
+      "relative-time-tooltip": "Переопределяет относительный временной диапазон для отдельных панелей, поэтому они отличаются от выбранных в указателе времени в правом верхнем углу дашборда. Например, чтобы установить интервал «Последние 5 минут», относительное время должно быть от <1>{{relativeFrom}}</1> до <4>{{relativeTo}}</4> или переменной, например <6>{{variable}}</6>.",
+      "render-cache-timeout-option": {
+        "cache-timeout": "Таймаут кэша"
+      },
+      "render-interval-option": {
+        "interval": "Интервал",
+        "interval-tooltip": "Оцениваемый интервал, который отправляется в источник данных и используется в <1>$__interval</1> и <4>$__interval_ms</4>. Это значение не будет точно равно <6>Временному диапазону / макс. количеству точек данных</6>. Оно будет приблизительно равно ряду магических чисел.",
+        "min-interval": "Мин. интервал",
+        "min-interval-tooltip": "Нижний предел интервала. Рекомендуем установить частоту записи, например <1>1 мин</1>, если ваши данные записываются каждую минуту. Значение по умолчанию можно установить в параметрах источника данных для большинства из них.",
+        "time-range-max-data-points": "Временной диапазон / макс. количество точек данных"
+      },
+      "render-max-data-points-option": {
+        "max-data-points": "Макс. количество точек данных",
+        "max-data-points-tooltip": "Максимальное количество точек данных на ряд. Используется непосредственно некоторыми источниками данных и при расчете автоматического интервала. При потоковой передаче данных это значение используется для кольцевого буфера.",
+        "width-of-panel": "Ширина панели"
+      },
+      "render-query-caching-ttloption": {
+        "cache-ttl": "Время жизни кэша"
+      },
+      "time-shift": "Сдвиг времени",
+      "time-shift-tooltip": "Переопределяет временной диапазон для отдельных панелей, сдвигая его начало и конец относительно указателя времени. Например, чтобы установить интервал «Последний час», сдвиг времени должен быть от <1>{{relativeFrom}}</1> до <4>{{relativeTo}}</4> или переменной, например <6>{{variable}}</6>."
+    },
+    "query-group-top-section": {
+      "data-source": "Источник данных",
+      "query-inspector": "Инспектор запросов",
+      "query-tab-help-button-title-open-data-source-help": "Открыть справку по источнику данных",
+      "title-data-source-help": "Справка по источнику данных"
     }
   },
   "query-editor-next": {
@@ -13380,57 +13448,6 @@
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
   },
-  "query": {
-    "query-editor-row-header": {
-      "hidden": "Скрыто",
-      "query-name-div-title-edit-query-name": "Редактирование названия запроса"
-    },
-    "query-error-alert": {
-      "error-details": "",
-      "fix-with-assistant": "",
-      "original-query": "",
-      "trace-id": "(Идентификатор трассировки: {{traceId}})"
-    },
-    "query-group": {
-      "add-query": "Добавить запрос",
-      "expression": "Выражение",
-      "title-data-source-help": "Справка по источнику данных"
-    },
-    "query-group-options-editor": {
-      "Query options-title-query-options": "Параметры запросов",
-      "collapsed-interval": "Интервал = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
-      "hide-time-info": "Скрыть информацию о времени",
-      "relative-time": "Относительное время",
-      "relative-time-tooltip": "Переопределяет относительный временной диапазон для отдельных панелей, поэтому они отличаются от выбранных в указателе времени в правом верхнем углу дашборда. Например, чтобы установить интервал «Последние 5 минут», относительное время должно быть от <1>{{relativeFrom}}</1> до <4>{{relativeTo}}</4> или переменной, например <6>{{variable}}</6>.",
-      "render-cache-timeout-option": {
-        "cache-timeout": "Таймаут кэша"
-      },
-      "render-interval-option": {
-        "interval": "Интервал",
-        "interval-tooltip": "Оцениваемый интервал, который отправляется в источник данных и используется в <1>$__interval</1> и <4>$__interval_ms</4>. Это значение не будет точно равно <6>Временному диапазону / макс. количеству точек данных</6>. Оно будет приблизительно равно ряду магических чисел.",
-        "min-interval": "Мин. интервал",
-        "min-interval-tooltip": "Нижний предел интервала. Рекомендуем установить частоту записи, например <1>1 мин</1>, если ваши данные записываются каждую минуту. Значение по умолчанию можно установить в параметрах источника данных для большинства из них.",
-        "time-range-max-data-points": "Временной диапазон / макс. количество точек данных"
-      },
-      "render-max-data-points-option": {
-        "max-data-points": "Макс. количество точек данных",
-        "max-data-points-tooltip": "Максимальное количество точек данных на ряд. Используется непосредственно некоторыми источниками данных и при расчете автоматического интервала. При потоковой передаче данных это значение используется для кольцевого буфера.",
-        "width-of-panel": "Ширина панели"
-      },
-      "render-query-caching-ttloption": {
-        "cache-ttl": "Время жизни кэша"
-      },
-      "time-shift": "Сдвиг времени",
-      "time-shift-tooltip": "Переопределяет временной диапазон для отдельных панелей, сдвигая его начало и конец относительно указателя времени. Например, чтобы установить интервал «Последний час», сдвиг времени должен быть от <1>{{relativeFrom}}</1> до <4>{{relativeTo}}</4> или переменной, например <6>{{variable}}</6>."
-    },
-    "query-group-top-section": {
-      "data-source": "Источник данных",
-      "query-inspector": "Инспектор запросов",
-      "query-tab-help-button-title-open-data-source-help": "Открыть справку по источнику данных",
-      "title-data-source-help": "Справка по источнику данных"
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "Восстановить"
@@ -13493,12 +13510,6 @@
     },
     "dismissable-button": "Закрыть"
   },
-  "role-picker-drawer": {
-    "basic-roles": {
-      "label": "Основные роли"
-    },
-    "user-count": "+{{numUsers}}"
-  },
   "role-picker": {
     "built-in": {
       "basic-roles": "Основные роли"
@@ -13521,6 +13532,12 @@
     "title": {
       "description": "Назначайте роли пользователям, чтобы обеспечить детальное управление доступом к функциям и ресурсам Grafana. Подробнее см. в нашей <2>документации</2>."
     }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Основные роли"
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Вероятно, Grafana была обновлена. Попробуйте перезагрузить страницу.",
@@ -13870,6 +13887,23 @@
       "copy-button": "Копировать в буфер обмена"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "Новая панель библиотеки",
+      "share-embed-title": "Общий доступ к встроенному коду",
+      "share-link-title": "Параметры ссылки"
+    },
+    "menu": {
+      "new-library-panel-title": "Новая панель библиотеки",
+      "share-embed-title": "Общий доступ к встроенному коду",
+      "share-link-title": "Общий доступ к ссылке",
+      "share-snapshot-title": "Общий доступ к снимку"
+    },
+    "new-library-panel": {
+      "cancel-button": "Отмена",
+      "create-button": "Создать панель библиотеки"
+    }
+  },
   "share-panel-image": {
     "disabled-help": "Сохраните дашборд, чтобы включить создание изображений",
     "download-disabled-help": "Сначала создайте изображение, чтобы включить загрузку",
@@ -13897,23 +13931,6 @@
       "width-required": "Необходимо указать ширину"
     }
   },
-  "share-panel": {
-    "drawer": {
-      "new-library-panel-title": "Новая панель библиотеки",
-      "share-embed-title": "Общий доступ к встроенному коду",
-      "share-link-title": "Параметры ссылки"
-    },
-    "menu": {
-      "new-library-panel-title": "Новая панель библиотеки",
-      "share-embed-title": "Общий доступ к встроенному коду",
-      "share-link-title": "Общий доступ к ссылке",
-      "share-snapshot-title": "Общий доступ к снимку"
-    },
-    "new-library-panel": {
-      "cancel-button": "Отмена",
-      "create-button": "Создать панель библиотеки"
-    }
-  },
   "share-playlist": {
     "checkbox-description": "Высота панелей регулируется в соответствии с размером экрана.",
     "checkbox-label": "Автоподгонка",
@@ -13923,6 +13940,24 @@
     "mode-kiosk": "Киоск",
     "mode-normal": "Нормальный",
     "title": "Общий доступ к плейлисту"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Темная",
+        "light-label": "Светлая",
+        "system-label": "Системные настройки"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Действительно отозвать доступ? Дашборд больше не допускает совместного использования.",
+      "revoke-title": "Отзыв доступа"
+    },
+    "fields": {
+      "timezone-label": "Часовой пояс"
+    }
   },
   "shared-dashboard-list": {
     "button": {
@@ -13937,15 +13972,6 @@
     },
     "toggle": {
       "pause-sharing-toggle-text": "Приостановить доступ"
-    }
-  },
-  "shared-dashboard": {
-    "delete-modal": {
-      "revoke-body-text": "Действительно отозвать доступ? Дашборд больше не допускает совместного использования.",
-      "revoke-title": "Отзыв доступа"
-    },
-    "fields": {
-      "timezone-label": "Часовой пояс"
     }
   },
   "shared-preferences": {
@@ -13968,15 +13994,6 @@
     },
     "title": "Настройки"
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "Темная",
-        "light-label": "Светлая",
-        "system-label": "Системные настройки"
-      }
-    }
-  },
   "sign-up": {
     "back-button": "Назад на страницу входа",
     "confirm-password-label": "Подтвердить пароль",
@@ -13997,12 +14014,6 @@
       "send-button": "Отправить письмо для подтверждения"
     }
   },
-  "silences-table": {
-    "header": {
-      "alert-name": "Имя оповещения",
-      "state": "Состояние"
-    }
-  },
   "silences": {
     "empty-state": {
       "button-title": "Создать временное отключение",
@@ -14016,6 +14027,12 @@
       "noConfig": "Создайте новую точку контакта, чтобы создать конфигурацию с использованием значений по умолчанию, или обратитесь к администратору для настройки обработчика оповещений Alertmanager.",
       "recreate-button": "Повторно создать",
       "unsilence-button": "Отменить временное отключение"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Имя оповещения",
+      "state": "Состояние"
     }
   },
   "snapshot": {
@@ -14426,9 +14443,9 @@
     }
   },
   "time-period": {
-    "12_hours": "12 часов",
     "1_day": "1 день",
     "1_hour": "1 час",
+    "12_hours": "12 часов",
     "30_days": "30 дней",
     "6_hours": "6 часов",
     "7_days": "7 дней"
@@ -15490,11 +15507,6 @@
   "user-sessions": {
     "loading": "Загрузка сеансов..."
   },
-  "users-access-list": {
-    "tabs": {
-      "shared-dashboard-users-tab-title": "Пользователи совместно используемого дашборда"
-    }
-  },
   "users": {
     "empty-state": {
       "message": "Пользователи не найдены"
@@ -15513,6 +15525,11 @@
         }
       },
       "placeholder-search-login-email": "Поиск пользователя по логину, адресу электронной почты или имени"
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "shared-dashboard-users-tab-title": "Пользователи совместно используемого дашборда"
     }
   },
   "variabels": {
@@ -15694,8 +15711,8 @@
       "title-dependencies": "Зависимости"
     },
     "variables-unknown-button": {
-      "VariablesUnknownButton-tooltip-show-usages": "Показать варианты использования",
-      "usage-title": "Показаны варианты использования для: {{variableId}}"
+      "usage-title": "Показаны варианты использования для: {{variableId}}",
+      "VariablesUnknownButton-tooltip-show-usages": "Показать варианты использования"
     },
     "variables-unknown-table": {
       "collapse-label": "Переименованные или отсутствующие переменные",
