@@ -39,13 +39,13 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { SavedSearches } from '../../components/saved-searches/SavedSearches';
+import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
-import { SavedSearches } from './SavedSearches';
-import { SavedSearch } from './savedSearchesSchema';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,

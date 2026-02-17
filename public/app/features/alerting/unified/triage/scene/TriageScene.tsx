@@ -15,6 +15,7 @@ import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 
 import { DATASOURCE_UID } from '../constants';
 
+import { TriageSavedSearchesControl } from './TriageSavedSearchesControl';
 import { WorkbenchSceneObject } from './Workbench';
 import { prometheusExpressionBuilder } from './expressionBuilder';
 import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
@@ -27,6 +28,7 @@ export const triageScene = new EmbeddedSceneWithContext({
   $behaviors: [cursorSync],
   controls: [
     new VariableValueSelectors({}),
+    new TriageSavedSearchesControl({}),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({}),

@@ -619,6 +619,11 @@ export interface FeatureToggles {
   */
   alertingSavedSearches?: boolean;
   /**
+  * Enables saved searches for the Alert Activity page
+  * @default false
+  */
+  alertingTriageSavedSearches?: boolean;
+  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
   */

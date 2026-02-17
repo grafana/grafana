@@ -4,9 +4,13 @@ import { withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 
+import { useApplyDefaultTriageSearch } from './hooks/useApplyDefaultTriageSearch';
 import { TriageScene, triageScene } from './scene/TriageScene';
 
 export const TriagePage = () => {
+  // Apply default saved search on first visit (if enabled and no active filters)
+  useApplyDefaultTriageSearch();
+
   return (
     <AlertingPageWrapper
       navId="alert-alerts"

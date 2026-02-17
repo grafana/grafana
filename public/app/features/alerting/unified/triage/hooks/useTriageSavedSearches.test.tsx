@@ -38,25 +38,29 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
+import {
+  loadDefaultTriageSavedSearch,
+  trackTriageSavedSearchApplied,
+  useTriageSavedSearches,
+} from './useTriageSavedSearches';
 
 // Set up MSW server for other handlers (not UserStorage - that's mocked directly)
 setupMswServer();
 
-// Mock data is ordered as it will appear after sorting by useSavedSearches:
+// Mock data is ordered as it will appear after sorting by useTriageSavedSearches:
 // default search first, then alphabetically by name
 const mockSavedSearches = [
   {
     id: '2',
-    name: 'Default Search',
-    query: 'label:team=A',
+    name: 'Default Triage Search',
+    query: 'var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity&from=now-1h&to=now',
     isDefault: true,
     createdAt: Date.now() - 2000,
   },
   {
     id: '1',
-    name: 'Test Search 1',
-    query: 'state:firing',
+    name: 'Critical Alerts',
+    query: 'var-filters=severity%7C%3D%7Ccritical',
     isDefault: false,
     createdAt: Date.now() - 1000,
   },
@@ -75,7 +79,7 @@ function createWrapper() {
   };
 }
 
-describe('useSavedSearches', () => {
+describe('useTriageSavedSearches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
@@ -89,7 +93,7 @@ describe('useSavedSearches', () => {
     it('should load saved searches from UserStorage', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -99,28 +103,12 @@ describe('useSavedSearches', () => {
     });
 
     it('should handle empty storage gracefully', async () => {
-      // Storage is empty by default after resetUserStorage() in afterEach
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.savedSearches).toEqual([]);
-    });
-
-    it('should handle 404 (no stored data) gracefully', async () => {
-      // When no data exists, UserStorage returns 404, which is handled as "not found"
-      // The hook should return an empty array without error
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      // UserStorage handles 404 gracefully - returns empty storage
       expect(result.current.savedSearches).toEqual([]);
     });
 
@@ -134,7 +122,7 @@ describe('useSavedSearches', () => {
       ];
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mixedData));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -142,15 +130,15 @@ describe('useSavedSearches', () => {
 
       // Invalid entries are filtered out, valid ones are preserved
       expect(result.current.savedSearches).toHaveLength(2);
-      expect(result.current.savedSearches[0].name).toBe('Default Search');
-      expect(result.current.savedSearches[1].name).toBe('Test Search 1');
+      expect(result.current.savedSearches[0].name).toBe('Default Triage Search');
+      expect(result.current.savedSearches[1].name).toBe('Critical Alerts');
     });
 
     it('should handle malformed JSON gracefully', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       mockUserStorage.getItem.mockResolvedValue('not valid json');
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -163,58 +151,54 @@ describe('useSavedSearches', () => {
   });
 
   describe('saveSearch', () => {
-    it('should save a new search', async () => {
-      // Start with empty storage (default mock behavior)
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+    it('should save a new search with triage storage key', async () => {
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
-        await result.current.saveSearch('New Search', 'state:pending');
+        await result.current.saveSearch('New Triage Search', 'var-filters=test&var-groupBy=severity');
       });
 
       expect(result.current.savedSearches).toHaveLength(1);
-      expect(result.current.savedSearches[0].name).toBe('New Search');
-      expect(result.current.savedSearches[0].query).toBe('state:pending');
+      expect(result.current.savedSearches[0].name).toBe('New Triage Search');
+      expect(result.current.savedSearches[0].query).toBe('var-filters=test&var-groupBy=severity');
 
-      // Verify data was persisted via UserStorage.setItem
+      // Verify data was persisted via UserStorage.setItem with TRIAGE key
       expect(mockUserStorage.setItem).toHaveBeenCalledWith(
-        'savedSearches',
-        expect.stringContaining('"name":"New Search"')
+        'triageSavedSearches',
+        expect.stringContaining('"name":"New Triage Search"')
       );
     });
 
     it('should throw validation error for duplicate name (case-insensitive)', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
-        await expect(result.current.saveSearch('TEST SEARCH 1', 'state:pending')).rejects.toEqual({
+        await expect(result.current.saveSearch('CRITICAL ALERTS', 'var-filters=test')).rejects.toEqual({
           field: 'name',
           message: expect.stringContaining('already exists'),
         });
       });
     });
 
-    it('should track analytics on save', async () => {
-      // Start with empty storage
-
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+    it('should track analytics with page: triage on save', async () => {
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
-        await result.current.saveSearch('New Search', 'state:pending');
+        await result.current.saveSearch('New Search', 'var-filters=test');
       });
 
       expect(runtime.reportInteraction).toHaveBeenCalledWith(
@@ -222,6 +206,7 @@ describe('useSavedSearches', () => {
         expect.objectContaining({
           hasDefault: false,
           totalCount: 1,
+          page: 'triage',
         })
       );
     });
@@ -231,7 +216,7 @@ describe('useSavedSearches', () => {
     it('should rename an existing search', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -245,25 +230,26 @@ describe('useSavedSearches', () => {
 
       // Verify data was persisted via UserStorage.setItem
       expect(mockUserStorage.setItem).toHaveBeenCalledWith(
-        'savedSearches',
+        'triageSavedSearches',
         expect.stringContaining('"name":"Renamed Search"')
       );
     });
 
-    it('should throw validation error for duplicate name on rename', async () => {
+    it('should track analytics with page: triage on rename', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
-        await expect(result.current.renameSearch('1', 'Default Search')).rejects.toEqual({
-          field: 'name',
-          message: expect.stringContaining('already exists'),
-        });
+        await result.current.renameSearch('1', 'Renamed Search');
+      });
+
+      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_rename', {
+        page: 'triage',
       });
     });
   });
@@ -272,7 +258,7 @@ describe('useSavedSearches', () => {
     it('should delete a search', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -288,10 +274,10 @@ describe('useSavedSearches', () => {
       expect(result.current.savedSearches.find((s) => s.id === '1')).toBeUndefined();
     });
 
-    it('should track analytics on delete', async () => {
+    it('should track analytics with page: triage on delete', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -301,7 +287,9 @@ describe('useSavedSearches', () => {
         await result.current.deleteSearch('1');
       });
 
-      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete', {});
+      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete', {
+        page: 'triage',
+      });
     });
   });
 
@@ -309,7 +297,7 @@ describe('useSavedSearches', () => {
     it('should set a search as default', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -326,7 +314,7 @@ describe('useSavedSearches', () => {
     it('should clear default when null is passed', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -339,10 +327,10 @@ describe('useSavedSearches', () => {
       expect(result.current.savedSearches.every((s) => !s.isDefault)).toBe(true);
     });
 
-    it('should track analytics with correct action', async () => {
+    it('should track analytics with page: triage on set default', async () => {
       mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
 
-      const { result } = renderHook(() => useSavedSearches(), { wrapper: createWrapper() });
+      const { result } = renderHook(() => useTriageSavedSearches(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -354,47 +342,77 @@ describe('useSavedSearches', () => {
 
       expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_set_default', {
         action: 'set',
-      });
-
-      jest.clearAllMocks();
-
-      await act(async () => {
-        await result.current.setDefaultSearch(null);
-      });
-
-      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_set_default', {
-        action: 'clear',
+        page: 'triage',
       });
     });
   });
 });
 
-describe('trackSavedSearchApplied', () => {
+describe('loadDefaultTriageSavedSearch', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUserStorage.getItem.mockResolvedValue(null);
+  });
+
+  it('should return default search when one exists', async () => {
+    mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+
+    const result = await loadDefaultTriageSavedSearch();
+
+    expect(result).toEqual(mockSavedSearches[0]);
+    expect(result?.isDefault).toBe(true);
+  });
+
+  it('should return null when no default search exists', async () => {
+    const noDefaultSearches = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
+    mockUserStorage.getItem.mockResolvedValue(JSON.stringify(noDefaultSearches));
+
+    const result = await loadDefaultTriageSavedSearch();
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null when storage is empty', async () => {
+    mockUserStorage.getItem.mockResolvedValue(null);
+
+    const result = await loadDefaultTriageSavedSearch();
+
+    expect(result).toBeNull();
+  });
+});
+
+describe('trackTriageSavedSearchApplied', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should track with isDefault true for default searches', () => {
-    trackSavedSearchApplied({
+  it('should track with isDefault true and page: triage for default searches', () => {
+    trackTriageSavedSearchApplied({
       id: '1',
       name: 'Default',
-      query: 'state:firing',
+      query: 'var-filters=test',
       isDefault: true,
       createdAt: Date.now(),
     });
 
-    expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_apply', { isDefault: true });
+    expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_apply', {
+      isDefault: true,
+      page: 'triage',
+    });
   });
 
-  it('should track with isDefault false for non-default searches', () => {
-    trackSavedSearchApplied({
+  it('should track with isDefault false and page: triage for non-default searches', () => {
+    trackTriageSavedSearchApplied({
       id: '1',
       name: 'Regular',
-      query: 'state:firing',
+      query: 'var-filters=test',
       isDefault: false,
       createdAt: Date.now(),
     });
 
-    expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_apply', { isDefault: false });
+    expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_apply', {
+      isDefault: false,
+      page: 'triage',
+    });
   });
 });
