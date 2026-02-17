@@ -3,14 +3,17 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -22,9 +25,11 @@ import (
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,8 +43,9 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg    *setting.Cfg
-	legacy *legacyStorage
+	cfg         *setting.Cfg
+	legacy      *legacyStorage
+	authService *accesscontrol.AuthService
 }
 
 func RegisterAppInstaller(
@@ -47,9 +53,11 @@ func RegisterAppInstaller(
 	features featuremgmt.FeatureToggles,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	authService *accesscontrol.AuthService,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
-		cfg: cfg,
+		cfg:         cfg,
+		authService: authService,
 	}
 
 	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
@@ -57,8 +65,9 @@ func RegisterAppInstaller(
 		mapper := grafrequest.GetNamespaceMapper(cfg)
 		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
 		installer.legacy = &legacyStorage{
-			store:  sqlAdapter,
-			mapper: mapper,
+			store:       sqlAdapter,
+			mapper:      mapper,
+			authService: authService,
 		}
 		// Create the tags handler using the sqlAdapter as TagProvider
 		tagHandler = newTagsHandler(sqlAdapter)
@@ -90,9 +99,101 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
 
-		// Any authenticated user can access the API
+		// Allow all authenticated users through - authorization is handled in the Mutate hook
+		// and legacyStorage methods, which check dashboard-specific permissions
 		return authorizer.DecisionAllow, "", nil
 	})
+}
+
+func (a *AppInstaller) AdmissionPlugin() admission.Factory {
+	return func(config io.Reader) (admission.Interface, error) {
+		return &annotationAdmissionController{installer: a}, nil
+	}
+}
+
+// annotationAdmissionController implements admission.Interface for annotations
+type annotationAdmissionController struct {
+	installer *AppInstaller
+}
+
+var _ admission.Interface = (*annotationAdmissionController)(nil)
+
+func (c *annotationAdmissionController) Admit(ctx context.Context, attr admission.Attributes, o admission.ObjectInterfaces) error {
+	// Only handle annotation resources
+	if attr.GetResource().Group != "annotation.grafana.app" || attr.GetResource().Resource != "annotations" {
+		return nil
+	}
+	return c.installer.Mutate(ctx, attr, o)
+}
+
+func (c *annotationAdmissionController) Validate(ctx context.Context, attr admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
+}
+
+func (c *annotationAdmissionController) Handles(operation admission.Operation) bool {
+	return operation == admission.Create || operation == admission.Update || operation == admission.Delete
+}
+
+func (a *AppInstaller) Mutate(ctx context.Context, attr admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := attr.GetOperation()
+
+	// Only check authorization for write operations
+	if verb != admission.Create && verb != admission.Update && verb != admission.Delete {
+		return nil
+	}
+
+	// Get the current user
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return admission.NewForbidden(attr, fmt.Errorf("authentication required: %w", err))
+	}
+
+	// Get the annotation object - for Delete, use GetOldObject()
+	var obj runtime.Object
+	if verb == admission.Delete {
+		obj = attr.GetOldObject()
+	} else {
+		obj = attr.GetObject()
+	}
+
+	annotation, ok := obj.(*annotationV0.Annotation)
+	if !ok {
+		return admission.NewForbidden(attr, fmt.Errorf("expected annotation, got %T", obj))
+	}
+
+	// Extract dashboard UID
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	// Build authorization query
+	query := annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+		Limit:        1,
+	}
+
+	resources, err := a.authService.Authorize(ctx, query)
+	if err != nil {
+		return admission.NewForbidden(attr, fmt.Errorf("authorization failed: %w", err))
+	}
+
+	// Verify user has access
+	if dashboardUID != "" {
+		// Dashboard annotation - check dashboard access
+		if _, canAccess := resources.Dashboards[dashboardUID]; !canAccess {
+			return admission.NewForbidden(attr, fmt.Errorf("user does not have permission to %s annotations on dashboard %s", verb, dashboardUID))
+		}
+	} else {
+		// Organization annotation - check org access
+		if !resources.CanAccessOrgAnnotations {
+			return admission.NewForbidden(attr, fmt.Errorf("user does not have permission to %s organization annotations", verb))
+		}
+	}
+
+	return nil
 }
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
@@ -142,6 +243,7 @@ type legacyStorage struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
+	authService    *accesscontrol.AuthService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -226,21 +328,97 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		opts.Continue = options.Continue
 	}
 
+	// Fetch from storage
 	result, err := s.store.List(ctx, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return list with continue token for pagination
+	// Get user for authorization
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errors.NewUnauthorized("authentication required")
+	}
+
+	// Build authorization query
+	query := annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		Limit:        1,
+	}
+
+	// Check permissions
+	resources, err := s.authService.Authorize(ctx, query)
+	if err != nil {
+		// Return empty list on authorization error
+		return &annotationV0.AnnotationList{
+			Items:    []annotationV0.Annotation{},
+			ListMeta: metav1.ListMeta{Continue: result.Continue},
+		}, nil
+	}
+
+	// Filter annotations based on permissions
+	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
+	for _, anno := range result.Items {
+		if s.canAccessAnnotation(&anno, resources) {
+			filtered = append(filtered, anno)
+		}
+	}
+
 	return &annotationV0.AnnotationList{
-		Items:    result.Items,
+		Items:    filtered,
 		ListMeta: metav1.ListMeta{Continue: result.Continue},
 	}, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	return s.store.Get(ctx, namespace, name)
+
+	// Fetch the annotation from storage
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check user permissions
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errors.NewUnauthorized("authentication required")
+	}
+
+	// Extract dashboard UID
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	// Build authorization query
+	query := annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+		Limit:        1,
+	}
+
+	// Check permissions
+	resources, err := s.authService.Authorize(ctx, query)
+	if err != nil {
+		// Return NotFound instead of Forbidden to avoid leaking existence
+		return nil, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	// Verify access to this specific annotation
+	if !s.canAccessAnnotation(annotation, resources) {
+		return nil, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	return annotation, nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -293,10 +471,68 @@ func (s *legacyStorage) Update(ctx context.Context,
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
+
+	// Fetch the annotation first to check permissions
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Check user permissions
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, errors.NewUnauthorized("authentication required")
+	}
+
+	// Extract dashboard UID
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	// Build authorization query - require EDIT permission for delete
+	query := annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+		Limit:        1,
+	}
+
+	// Check permissions
+	resources, err := s.authService.Authorize(ctx, query)
+	if err != nil {
+		// Return NotFound instead of Forbidden to avoid leaking existence
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	// Verify access to this specific annotation
+	if !s.canAccessAnnotation(annotation, resources) {
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	// Perform the delete
+	err = s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
+}
+
+func (s *legacyStorage) canAccessAnnotation(anno *annotationV0.Annotation, resources *accesscontrol.AccessResources) bool {
+	// Organization annotations (no dashboard UID)
+	if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
+		return resources.CanAccessOrgAnnotations
+	}
+
+	// Dashboard annotations - check if user has access to the dashboard
+	dashboardUID := *anno.Spec.DashboardUID
+	_, canAccess := resources.Dashboards[dashboardUID]
+	return canAccess
 }
