@@ -1,9 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CellProps,
+  Grid,
+  InteractiveTable,
+  LinkButton,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import {
   Repository,
   ResourceCount,
@@ -75,19 +87,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
     <Box padding={2}>
       <Stack direction="column" gap={2}>
         {missingMetadataCount > 0 && (
-          <Alert
-            severity="warning"
-            title={t(
-              'provisioning.repository-overview.missing-metadata-title',
-              '{{count}} folder(s) missing metadata',
-              { count: missingMetadataCount }
-            )}
-          >
-            <Trans i18nKey="provisioning.repository-overview.missing-metadata-body">
-              Some folders in this repository are missing .folder.json metadata files. Go to the Resources tab to review
-              and fix them.
-            </Trans>
-          </Alert>
+          <MissingMetadataAlert count={missingMetadataCount} repoName={repoName} />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
@@ -183,6 +183,44 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         </div>
       </Stack>
     </Box>
+  );
+}
+
+// SPIKE: alert with "Fix folder IDs" button for missing metadata
+function MissingMetadataAlert({ count, repoName }: { count: number; repoName: string }) {
+  const [isFixing, setIsFixing] = useState(false);
+
+  const handleFix = () => {
+    setIsFixing(true);
+    // SPIKE: Simulate creating a PR job to fix folder metadata
+    setTimeout(() => setIsFixing(false), 2000);
+  };
+
+  return (
+    <Alert
+      severity="warning"
+      title={t(
+        'provisioning.repository-overview.missing-metadata-title',
+        '{{count}} folder(s) missing metadata',
+        { count }
+      )}
+    >
+      <Stack direction="row" alignItems="center" gap={2}>
+        <span>
+          <Trans i18nKey="provisioning.repository-overview.missing-metadata-body">
+            Some folders in this repository are missing .folder.json metadata files. Go to the Resources tab to review
+            and fix them.
+          </Trans>
+        </span>
+        <Button variant="secondary" icon="wrench" onClick={handleFix} disabled={isFixing}>
+          {isFixing ? (
+            <Trans i18nKey="provisioning.repository-overview.fixing">Fixing...</Trans>
+          ) : (
+            <Trans i18nKey="provisioning.repository-overview.fix-all">Fix folder IDs</Trans>
+          )}
+        </Button>
+      </Stack>
+    </Alert>
   );
 }
 
