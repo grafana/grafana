@@ -48,6 +48,7 @@ export const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => 
   const [createCorrelation, { data, isLoading, isError }] = useCreateCorrelationMutation();
 
   useEffect(() => {
+    // console.log('hook', onCreated, isError, isLoading, data);
     if (!isError && !isLoading && data) {
       onCreated();
     }
@@ -56,6 +57,7 @@ export const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => 
   const defaultValues: Partial<FormDTO> = { type: 'query', config: { target: {}, field: '' } };
 
   const onSubmit = async (data: FormDTO) => {
+    // console.log('submit', createCorrelation, data);
     const corrSpec = await generateAddSpec(data);
     return createCorrelation({
       correlation: {

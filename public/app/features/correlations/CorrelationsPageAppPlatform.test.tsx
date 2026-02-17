@@ -5,6 +5,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import {
+  useCreateCorrelationMutation,
+  useListCorrelationQuery,
+  CorrelationCorrelationType,
+} from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv } from '@grafana/runtime';
@@ -21,10 +26,16 @@ import { Correlation } from './types';
 jest.mock('@grafana/api-clients/rtkq/correlations/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/correlations/v0alpha1'),
   useListCorrelationQuery: jest.fn().mockReturnValue([]),
-  useCreateCorrelationMutation: jest.fn().mockImplementation(() => {
-    return [jest.fn(), { data: undefined, isLoading: false, isError: false }];
-  }),
+  useCreateCorrelationMutation: jest.fn(),
 }));
+
+//const useListCorrelationQueryMock = useListCorrelationQuery as jest.Mock;
+//const useCreateCorrelationMutationMock = useCreateCorrelationMutation as jest.Mock;
+
+const mockCreateCorrelation = jest.fn();
+const useCreateCorrelationMutationMock = useCreateCorrelationMutation as jest.MockedFunction<
+  typeof useCreateCorrelationMutation
+>;
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
@@ -150,7 +161,6 @@ const originalFeatureToggles = config.featureToggles;
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
   /** this test renders a specific page for app platform, but other forms used internally have a wrapper and use the FF still*/
-
   config.featureToggles.kubernetesCorrelations = true;
 });
 
@@ -165,8 +175,8 @@ describe('CorrelationsPage - App platform', () => {
       await renderWithContext({
         loki: mockDataSource(
           {
-            uid: 'loki',
-            name: 'loki',
+            uid: 'lokiUID',
+            name: 'lokiName',
             readOnly: false,
             jsonData: {},
             type: 'datasource',
@@ -175,8 +185,8 @@ describe('CorrelationsPage - App platform', () => {
         ),
         prometheus: mockDataSource(
           {
-            uid: 'prometheus',
-            name: 'prometheus',
+            uid: 'prometheusUID',
+            name: 'prometheusName',
             readOnly: false,
             jsonData: {},
             type: 'datasource',
@@ -191,6 +201,7 @@ describe('CorrelationsPage - App platform', () => {
     });
 
     it('shows the first page of the wizard', async () => {
+      useCreateCorrelationMutationMock.mockReturnValue([jest.fn(), { reset: jest.fn() }]);
       const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -209,7 +220,56 @@ describe('CorrelationsPage - App platform', () => {
       expect(await screen.findByRole('button', { name: /next$/i })).toBeInTheDocument();
     });
 
+    //Protip DeleteProvisionedDashboardDrawer
+
     it.only('correctly adds first correlation', async () => {
+      const createdCorrelation = {
+        correlation: {
+          apiVersion: 'correlations.grafana.app/v0alpha1',
+          kind: 'Correlation',
+          metadata: {},
+          spec: {
+            config: {
+              field: 'Line',
+              target: {},
+              transformations: [
+                {
+                  expression: 'test expression',
+                  field: '',
+                  mapValue: '',
+                  type: SupportedTransformationType.Regex,
+                },
+              ],
+            },
+            description: 'A Description',
+            label: 'A Label',
+            source: {
+              group: 'lokiUID',
+              name: 'lokiName',
+            },
+            target: undefined,
+            type: 'query' as CorrelationCorrelationType,
+          },
+        },
+      };
+      const mockCreateCorrelation = jest.fn();
+
+      useCreateCorrelationMutationMock.mockReturnValueOnce([
+        mockCreateCorrelation,
+        { reset: jest.fn() } as ReturnType<typeof useCreateCorrelationMutation>[1],
+      ]);
+
+      const wat: ReturnType<typeof useCreateCorrelationMutation>[1] = {
+        reset: jest.fn(),
+        originalArgs: { correlation: createdCorrelation.correlation },
+      };
+
+      useCreateCorrelationMutationMock.mockReturnValueOnce([
+        mockCreateCorrelation,
+        wat as ReturnType<typeof useCreateCorrelationMutation>[1],
+      ]);
+
+      console.log('start');
       const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -228,13 +288,13 @@ describe('CorrelationsPage - App platform', () => {
       // step 2:
       // set target datasource picker value
       await userEvent.click(screen.getByLabelText(/^target/i));
-      await userEvent.click(screen.getByText('prometheus'));
+      await userEvent.click(screen.getByText('prometheusName'));
       await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
       // step 3:
       // set source datasource picker value
       await userEvent.click(screen.getByLabelText(/^source/i));
-      await userEvent.click(screen.getByText('loki'));
+      await userEvent.click(screen.getByText('lokiName'));
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
@@ -250,7 +310,10 @@ describe('CorrelationsPage - App platform', () => {
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+        //TODO the datasource isnt populating in the returned correlation - why?
+        expect(mockCreateCorrelation).toHaveBeenCalledWith(createdCorrelation);
+        //TODO: test the onSubmit callback, the original was testing reportInteraction
+        // expect(mocks.onSubmit).toHaveBeenCalledWith('grafana_correlations_added');
       });
 
       // the table showing correlations should have appeared

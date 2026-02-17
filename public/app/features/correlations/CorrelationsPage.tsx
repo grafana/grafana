@@ -73,6 +73,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdded = useCallback(() => {
+    // console.log('handleAdded', reportInteraction);
     reportInteraction('grafana_correlations_added');
     fetchCorrelations({ page: page.current });
     setIsAdding(false);
