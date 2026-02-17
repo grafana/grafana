@@ -27,6 +27,21 @@ const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGro
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
+  test('a11y', { tag: ['@a11y'] }, async ({ gotoDashboardPage, scanForA11yViolations, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ viewPanel: '1' }),
+    });
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+    await waitForTableLoad(page);
+    const report = await scanForA11yViolations({
+      runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
+    });
+    expect(report).toHaveNoA11yViolations({ ignoredRules: ['page-has-heading-one', 'region', 'color-contrast'] });
+  });
+
   test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
     gotoDashboardPage,
     selectors,
