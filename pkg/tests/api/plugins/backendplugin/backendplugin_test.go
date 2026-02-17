@@ -850,7 +850,7 @@ type testPlugin struct {
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler
-	backend.InformationHandler
+	backend.TabularInformationHandler
 }
 
 func (tp *testPlugin) PluginID() string {

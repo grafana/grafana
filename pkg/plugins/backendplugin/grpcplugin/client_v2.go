@@ -32,7 +32,7 @@ type ClientV2 struct {
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
-	grpcplugin.InformationClient
+	grpcplugin.TabularInformationClient
 }
 
 func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
@@ -71,7 +71,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		return nil, err
 	}
 
-	rawInformation, err := rpcClient.Dispense("information")
+	rawTabularInformation, err := rpcClient.Dispense("tabularinformation")
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,9 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawInformation != nil {
-		if informationClient, ok := rawInformation.(grpcplugin.InformationClient); ok {
-			c.InformationClient = informationClient
+	if rawTabularInformation != nil {
+		if tabularInformationClient, ok := rawTabularInformation.(grpcplugin.TabularInformationClient); ok {
+			c.TabularInformationClient = tabularInformationClient
 		}
 	}
 
@@ -397,12 +397,12 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 }
 
 func (c *ClientV2) Tables(ctx context.Context, req *backend.TableInformationRequest) (*backend.TableInformationResponse, error) {
-	if c.InformationClient == nil {
+	if c.TabularInformationClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().TableInformationRequest(req)
-	protoResp, err := c.InformationClient.Tables(ctx, protoReq)
+	protoResp, err := c.TabularInformationClient.Tables(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {

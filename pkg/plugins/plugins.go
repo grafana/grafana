@@ -76,7 +76,7 @@ var (
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
 	_ = backend.ConversionHandler(&Plugin{})
-	_ = backend.InformationHandler(&Plugin{})
+	_ = backend.TabularInformationHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -488,7 +488,7 @@ type PluginClient interface {
 	backend.AdmissionHandler
 	backend.ConversionHandler
 	backend.StreamHandler
-	backend.InformationHandler
+	backend.TabularInformationHandler
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {

@@ -35,14 +35,14 @@ var handshake = goplugin.HandshakeConfig{
 // pluginSet is list of plugins supported on v2.
 var pluginSet = map[int]goplugin.PluginSet{
 	grpcplugin.ProtocolVersion: {
-		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":    &grpcplugin.ResourceGRPCPlugin{},
-		"data":        &grpcplugin.DataGRPCPlugin{},
-		"stream":      &grpcplugin.StreamGRPCPlugin{},
-		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
-		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
-		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
-		"information": &grpcplugin.InformationGRPCPlugin{},
+		"diagnostics":        &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":           &grpcplugin.ResourceGRPCPlugin{},
+		"data":               &grpcplugin.DataGRPCPlugin{},
+		"stream":             &grpcplugin.StreamGRPCPlugin{},
+		"admission":          &grpcplugin.AdmissionGRPCPlugin{},
+		"conversion":         &grpcplugin.ConversionGRPCPlugin{},
+		"renderer":           &pluginextensionv2.RendererGRPCPlugin{},
+		"tabularinformation": &grpcplugin.TabularInformationGRPCPlugin{},
 	},
 }
 

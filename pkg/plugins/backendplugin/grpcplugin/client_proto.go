@@ -31,6 +31,7 @@ type PluginV2 interface {
 	pluginv2.StreamClient
 	pluginv2.AdmissionControlClient
 	pluginv2.ResourceConversionClient
+	pluginv2.TabularInformationClient
 }
 
 type ProtoClient interface {
@@ -212,5 +213,5 @@ func (r *protoClient) Tables(ctx context.Context, in *pluginv2.TableInformationR
 	if !exists {
 		return nil, errClientNotAvailable
 	}
-	return c.InformationClient.Tables(ctx, in, opts...)
+	return c.TabularInformationClient.Tables(ctx, in, opts...)
 }
