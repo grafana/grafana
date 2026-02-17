@@ -14,9 +14,10 @@ export interface FinishedJobProps {
   repositoryName: string;
   jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -69,6 +70,10 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
             message: messages.error,
           },
           warning: warningInfo,
+          action: onRetry && {
+            label: t('provisioning.job-status.retry-action', 'Retry'),
+            onClick: onRetry,
+          },
         });
       } else if (state === 'success') {
         onStatusChange?.({
@@ -93,7 +98,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange, retryFailed]);
+  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
 
   // If retry failed, return null - parent handles the error via onStatusChange
   if (retryFailed) {
@@ -111,5 +116,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
     );
   }
 
-  return <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} />;
+  return (
+    <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} onRetry={onRetry} />
+  );
 }
