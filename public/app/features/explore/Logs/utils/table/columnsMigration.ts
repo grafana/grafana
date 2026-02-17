@@ -15,7 +15,7 @@ export const getDefaultDisplayedFieldsFromExploreState = (
   newLogsTable: boolean
 ): string[] => {
   // If there are already displayed fields set, use those.
-  if (panelState?.displayedFields) {
+  if (panelState?.displayedFields && panelState.displayedFields.length > 0) {
     return panelState.displayedFields;
   }
 
