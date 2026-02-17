@@ -52,11 +52,6 @@ func ProvideUnifiedStorageMigrationService(
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
-		// Still ensure the migration log table exists so that MigrationStatusReader
-		// can query and backfill it. This is schema setup, not a data migration.
-		if err := ensureMigrationLogTable(ctx, p.sqlStore, p.cfg); err != nil {
-			return fmt.Errorf("failed to ensure migration log table: %w", err)
-		}
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
