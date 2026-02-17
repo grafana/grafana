@@ -28,7 +28,7 @@ Here are a few you've already seen:
 - `PanelBuilder` - Creates individual visualizations like time series panels, stat panels, or log panels.
 - `DataqueryBuilder` - Defines how a panel fetches data, for example, from Prometheus or the `testdata` plugin.
 
-Builders are chainable, so you can fluently compose dashboards in a readable, structured way:
+Builders can be chained, so you can fluently compose dashboards in a readable, structured way:
 
 {{< code >}}
 
