@@ -38,7 +38,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			})
 		}
 		for _, muteInterval := range muteIntervals {
-			cfg.MuteTimeIntervals = append(cfg.MuteTimeIntervals, config.MuteTimeInterval{
+			cfg.MuteTimeIntervals = append(cfg.MuteTimeIntervals, definitions.AmMuteTimeInterval{
 				Name: muteInterval,
 			})
 		}
