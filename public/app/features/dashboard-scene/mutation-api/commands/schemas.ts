@@ -568,6 +568,188 @@ export const movePanelPayloadSchema = z.object({
     ),
 });
 
+// Panel CRUD payload schemas
+
+const dataLinkSchema = z.object({
+  title: z.string().describe('Link title'),
+  url: z.string().describe('Link URL (supports template variables)'),
+  targetBlank: z.boolean().optional().describe('Open link in a new tab'),
+});
+
+/**
+ * PanelQueryKind schema -- v2beta1 format wrapping a DataQueryKind.
+ * Shape: { kind: "PanelQuery", spec: { refId, hidden, query: DataQueryKind } }
+ */
+export const panelQueryKindSchema = z
+  .object({
+    kind: z.literal('PanelQuery').optional().default('PanelQuery'),
+    spec: z.object({
+      refId: z.string().describe('Unique query reference ID (e.g., "A", "B")'),
+      hidden: z.boolean().optional().default(false).describe('Whether the query is hidden from the panel'),
+      query: dataQueryKindSchema.describe('The data query definition'),
+    }),
+  })
+  .describe('A panel query wrapping a DataQueryKind with a refId and visibility flag.');
+
+/**
+ * TransformationKind schema -- v2beta1 format.
+ * Shape: { kind: string (transformation ID), spec: { id, options, ... } }
+ */
+export const transformationKindSchema = z
+  .object({
+    kind: z.string().describe('Transformation identifier (e.g., "reduce", "sortBy", "organize")'),
+    spec: z
+      .object({
+        id: z.string().describe('Transformation ID'),
+        disabled: z.boolean().optional().describe('Whether this transformation is disabled'),
+        options: z.record(z.string(), z.unknown()).optional().default({}).describe('Transformation-specific options'),
+        topic: z.string().optional().describe('Data topic (e.g., "annotations")'),
+      })
+      .describe('Transformation configuration'),
+  })
+  .describe('A data transformation applied to query results.');
+
+const queryOptionsSchema = z
+  .object({
+    maxDataPoints: z.number().optional().describe('Maximum number of data points'),
+    interval: z.string().optional().describe('Minimum time interval between data points'),
+    cacheTimeout: z.string().optional().describe('Cache timeout'),
+    queryCachingTTL: z.number().optional().describe('Query caching TTL in milliseconds'),
+    timeFrom: z.string().optional().describe('Relative time range override (from)'),
+    timeShift: z.string().optional().describe('Relative time range shift'),
+    hideTimeOverride: z.boolean().optional().describe('Hide time override info in panel header'),
+  })
+  .optional()
+  .default({})
+  .describe('Query options');
+
+const queryGroupSpecSchema = z.object({
+  queries: z.array(panelQueryKindSchema).describe('Panel queries (PanelQueryKind[])'),
+  transformations: z
+    .array(transformationKindSchema)
+    .optional()
+    .default([])
+    .describe('Transformations applied to query results'),
+  queryOptions: queryOptionsSchema,
+});
+
+const vizConfigSchema = z.object({
+  kind: z.literal('VizConfig').optional().default('VizConfig'),
+  group: z.string().describe('Visualization plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart")'),
+  version: z.string().optional().default('').describe('Plugin version'),
+  spec: z
+    .object({
+      options: z.record(z.string(), z.unknown()).optional().default({}).describe('Plugin-specific options'),
+      fieldConfig: z
+        .object({
+          defaults: z.record(z.string(), z.unknown()).optional().default({}).describe('Field config defaults'),
+          overrides: z.array(z.unknown()).optional().default([]).describe('Field config overrides'),
+        })
+        .optional()
+        .default({})
+        .describe('Field configuration'),
+    })
+    .optional()
+    .default({})
+    .describe('Visualization spec'),
+});
+
+export const panelSpecSchema = z.object({
+  title: z.string().optional().default('').describe('Panel title'),
+  description: z.string().optional().default('').describe('Panel description'),
+  transparent: z.boolean().optional().describe('Whether the panel background is transparent'),
+  links: z.array(dataLinkSchema).optional().default([]).describe('Panel links'),
+  data: z
+    .object({
+      kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+      spec: queryGroupSpecSchema,
+    })
+    .optional()
+    .describe('Panel data queries and transformations. Omit to create a panel with no queries.'),
+  vizConfig: vizConfigSchema.describe('Visualization configuration (plugin type and options)'),
+});
+
+export const addPanelPayloadSchema = z.object({
+  panel: panelSpecSchema.describe('Panel specification'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0" to add inside a row.'),
+  position: gridPositionSchema
+    .optional()
+    .describe('Grid position. Auto-positioned if omitted. Ignored for AutoGridLayout targets.'),
+});
+
+export const updatePanelPayloadSchema = z.object({
+  element: elementReferenceSchema.describe('Element to update, identified by name'),
+  panel: z
+    .object({
+      title: z.string().optional().describe('New panel title'),
+      description: z.string().optional().describe('New panel description'),
+      transparent: z.boolean().optional().describe('Whether the panel background is transparent'),
+      vizConfig: z
+        .object({
+          kind: z.literal('VizConfig').optional().default('VizConfig'),
+          group: z.string().optional().describe('New visualization plugin ID'),
+          version: z.string().optional().describe('Plugin version'),
+          spec: z
+            .object({
+              options: z.record(z.string(), z.unknown()).optional().describe('Plugin-specific options (deep-merged)'),
+              fieldConfig: z
+                .object({
+                  defaults: z
+                    .record(z.string(), z.unknown())
+                    .optional()
+                    .describe('Field config defaults (deep-merged)'),
+                  overrides: z.array(z.unknown()).optional().describe('Field config overrides (replaced)'),
+                })
+                .optional()
+                .describe('Field configuration'),
+            })
+            .optional()
+            .describe('Visualization spec'),
+        })
+        .optional()
+        .describe('New visualization configuration (partial update, options/fieldConfig.defaults are deep-merged)'),
+      data: z
+        .object({
+          kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+          spec: z
+            .object({
+              queries: z.array(panelQueryKindSchema).optional().describe('Replace all queries'),
+              transformations: z
+                .array(transformationKindSchema)
+                .optional()
+                .describe('Replace all transformations'),
+              queryOptions: z
+                .object({
+                  maxDataPoints: z.number().optional().describe('Maximum number of data points'),
+                  interval: z.string().optional().describe('Minimum time interval between data points'),
+                  cacheTimeout: z.string().optional().describe('Cache timeout'),
+                  queryCachingTTL: z.number().optional().describe('Query caching TTL in milliseconds'),
+                  timeFrom: z.string().optional().describe('Relative time range override (from)'),
+                  timeShift: z.string().optional().describe('Relative time range shift'),
+                  hideTimeOverride: z.boolean().optional().describe('Hide time override info in panel header'),
+                })
+                .optional()
+                .describe('Query options (partial update)'),
+            })
+            .describe('Data spec (partial update -- only provided fields are replaced)'),
+        })
+        .optional()
+        .describe('Update panel queries, transformations, or query options'),
+    })
+    .describe(
+      'Partial panel fields to update. Only provided fields are changed. ' +
+        'options and fieldConfig.defaults are deep-merged with existing values; ' +
+        'queries, transformations, and overrides are replaced wholesale.'
+    ),
+});
+
+export const removePanelPayloadSchema = z.object({
+  element: elementReferenceSchema.describe('Element to remove, identified by name'),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -590,4 +772,7 @@ export const payloads = {
   updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
   moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
   movePanel: movePanelPayloadSchema.describe('Move a panel to a different group or position'),
+  addPanel: addPanelPayloadSchema.describe('Add a new panel to the dashboard'),
+  updatePanel: updatePanelPayloadSchema.describe('Update an existing panel on the dashboard'),
+  removePanel: removePanelPayloadSchema.describe('Remove a panel from the dashboard'),
 };

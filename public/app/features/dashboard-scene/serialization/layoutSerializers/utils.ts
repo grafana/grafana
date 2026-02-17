@@ -394,7 +394,7 @@ export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] 
   return queries;
 }
 
-function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+export function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   // Add datasource to match Go backend V2→V1 conversion:
   // - If explicit UID (datasource.name) exists → add { uid, type }
   // - If only type (group) exists → add { type } only

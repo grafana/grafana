@@ -44,6 +44,7 @@ describe('Command consistency', () => {
   it('registers the expected set of commands', () => {
     const names = ALL_COMMANDS.map((cmd) => cmd.name).sort();
     expect(names).toEqual([
+      'ADD_PANEL',
       'ADD_ROW',
       'ADD_TAB',
       'ADD_VARIABLE',
@@ -53,9 +54,11 @@ describe('Command consistency', () => {
       'MOVE_PANEL',
       'MOVE_ROW',
       'MOVE_TAB',
+      'REMOVE_PANEL',
       'REMOVE_ROW',
       'REMOVE_TAB',
       'REMOVE_VARIABLE',
+      'UPDATE_PANEL',
       'UPDATE_ROW',
       'UPDATE_TAB',
       'UPDATE_VARIABLE',
