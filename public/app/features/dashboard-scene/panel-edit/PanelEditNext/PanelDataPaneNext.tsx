@@ -27,6 +27,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { transferTransformationUid } from './QueryEditor/transformationUid';
 import { filterDataTransformerConfigs } from './QueryEditor/utils';
 
 /**
@@ -328,8 +329,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    const transformation = transformations[index];
-    transformations[index] = { ...transformation, disabled: !transformation.disabled };
+    const oldConfig = transformations[index];
+    const newConfig = { ...oldConfig, disabled: !oldConfig.disabled };
+    transferTransformationUid(oldConfig, newConfig);
+    transformations[index] = newConfig;
     transformer.setState({ transformations });
     this.runQueries();
   };
@@ -483,6 +486,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
+    transferTransformationUid(oldConfig, newConfig);
     transformations[index] = newConfig;
     dataTransformer.setState({ transformations });
 
