@@ -221,7 +221,6 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  useQueryEditorUIContext();
   const {
     selectedAlert,
     selectedQuery,
