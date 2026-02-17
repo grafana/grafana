@@ -93,15 +93,9 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
     [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
   );
 
-  const handleTransformationClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (alwaysVisible) {
-        e.stopPropagation();
-      }
-      setPendingTransformation({ insertAfter: afterId });
-    },
-    [afterId, alwaysVisible, setPendingTransformation]
-  );
+  const handleTransformationClick = useCallback(() => {
+    setPendingTransformation({ insertAfter: afterId });
+  }, [afterId, setPendingTransformation]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 
