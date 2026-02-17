@@ -3,7 +3,7 @@ import { Button } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { EMPTY_ALERT_SENTINEL } from '../types';
+import { EMPTY_ALERT } from '../types';
 
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();
@@ -20,33 +20,25 @@ export function AlertIndicator() {
     if (isAlertView) {
       setSelectedAlert(null);
     } else {
-      setSelectedAlert(hasAlerts ? alertRules[0] : EMPTY_ALERT_SENTINEL);
+      setSelectedAlert(hasAlerts ? alertRules[0] : EMPTY_ALERT);
     }
   };
 
-  const buttonText = `(${alertRules.length})`;
-
-  const tooltip = isAlertView
-    ? t('query-editor-next.sidebar.alert-indicator.tooltip-hide', 'Hide alert rules')
-    : hasAlerts
-      ? t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules')
-      : t('query-editor-next.sidebar.alert-indicator.tooltip-create', 'Create alert rule');
-
-  const ariaLabel = isAlertView
+  const helperText = isAlertView
     ? t('query-editor-next.sidebar.alert-indicator.button-label-hide', 'Hide alert rules')
-    : hasAlerts
-      ? t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules')
-      : t('query-editor-next.sidebar.alert-indicator.button-label-create', 'Create alert rule');
+    : t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules');
+
+  const buttonText = `(${alertRules.length})`;
 
   return (
     <Button
-      tooltip={tooltip}
+      aria-label={helperText}
       fill="text"
-      variant="primary"
       icon={isAlertView ? 'times' : 'bell'}
-      size="sm"
       onClick={handleClick}
-      aria-label={ariaLabel}
+      size="sm"
+      tooltip={helperText}
+      variant="primary"
     >
       {isAlertView ? t('query-editor-next.sidebar.alert-indicator.close', 'Close') : buttonText}
     </Button>

@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { AlertRule } from '../types';
+import { ActionItem, AlertRule } from '../types';
 
 import { AlertCard } from './AlertCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
@@ -12,25 +12,25 @@ interface AlertsViewProps {
   alertRules: AlertRule[];
 }
 
+const GHOST_ALERT_ITEM: ActionItem = {
+  name: 'New alert rule',
+  type: QueryEditorType.Alert,
+  isHidden: false,
+  alertState: null,
+};
+
 export function AlertsView({ alertRules }: AlertsViewProps) {
   const theme = useStyles2((theme) => theme);
 
   if (alertRules.length === 0) {
-    const ghostItem = {
-      name: 'New alert rule',
-      type: QueryEditorType.Alert,
-      isHidden: false,
-      alertState: null,
-    };
-
     return (
       <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.alerts', 'Alerts')}>
         <Stack direction="column" gap={1}>
           <SidebarCard
-            isSelected={false}
             id="ghost-alert"
-            item={ghostItem}
-            onClick={() => {}}
+            isSelected={false}
+            item={GHOST_ALERT_ITEM}
+            onClick={() => {}} // Noop for the ghost alert
             showAddButton={false}
             variant="ghost"
           >

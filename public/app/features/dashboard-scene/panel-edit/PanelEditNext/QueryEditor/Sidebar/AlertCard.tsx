@@ -1,4 +1,4 @@
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
@@ -9,33 +9,30 @@ import { SidebarCard } from './SidebarCard';
 
 export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   const { selectedAlert, setSelectedAlert } = useQueryEditorUIContext();
-  const theme = useStyles2((theme) => theme);
+  const theme = useTheme2();
   const isSelected = selectedAlert?.alertId === alert.alertId;
 
-  const alertName = alert.rule.name;
-  const alertState = alert.state;
-
   const item = {
-    name: alertName,
+    name: alert.rule.name,
     type: QueryEditorType.Alert,
     isHidden: false,
-    alertState,
+    alertState: alert.state,
   };
 
   return (
     <SidebarCard
-      isSelected={isSelected}
       id={alert.alertId}
+      isSelected={isSelected}
       item={item}
       onClick={() => setSelectedAlert(alert)}
       showAddButton={false}
     >
       <Icon
         name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Alert].icon}
-        color={getAlertStateColor(theme, alertState)}
+        color={getAlertStateColor(theme, alert.state)}
         size="sm"
       />
-      <CardTitle title={alertName} isHidden={false} />
+      <CardTitle title={alert.rule.name} isHidden={false} />
     </SidebarCard>
   );
 };

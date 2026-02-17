@@ -5,18 +5,15 @@ import { EmptyState } from '@grafana/ui';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 
 import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
-import { EMPTY_ALERT_SENTINEL } from './types';
+import { EMPTY_ALERT } from './types';
 
 export function AlertEditorRenderer() {
   const { alertRules, isDashboardSaved } = useAlertingContext();
   const { selectedAlert } = useQueryEditorUIContext();
 
   const rule = useMemo(() => {
-    if (!selectedAlert) {
-      return [];
-    }
-    const selectedAlertRule = alertRules.find(({ alertId }) => alertId === selectedAlert.alertId);
-    return selectedAlertRule?.rule ? [selectedAlertRule.rule] : [];
+    const alertRule = alertRules.find(({ alertId }) => alertId === selectedAlert?.alertId);
+    return alertRule?.rule ? [alertRule.rule] : [];
   }, [alertRules, selectedAlert]);
 
   if (!selectedAlert) {
@@ -24,7 +21,7 @@ export function AlertEditorRenderer() {
   }
 
   // Show empty state when viewing alerts with no alerts
-  if (selectedAlert.alertId === EMPTY_ALERT_SENTINEL.alertId) {
+  if (selectedAlert.alertId === EMPTY_ALERT.alertId) {
     if (!isDashboardSaved) {
       return (
         <EmptyState

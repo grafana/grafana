@@ -5,41 +5,43 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../Actions';
+import { Actions } from '../../Actions';
 import { QUERY_EDITOR_COLORS } from '../../constants';
+import { ActionItem } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
 
 interface SidebarCardProps {
-  isSelected: boolean;
-  id: string;
   children: React.ReactNode;
+  id: string;
+  isSelected: boolean;
+  item: ActionItem;
   onClick: () => void;
-  onDuplicate?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onToggleHide?: () => void;
   showAddButton: boolean;
-  item: ActionItem;
   variant?: 'default' | 'ghost';
 }
 
 export const SidebarCard = ({
-  isSelected,
-  id,
   children,
+  id,
+  isSelected,
+  item,
   onClick,
-  onDuplicate,
   onDelete,
+  onDuplicate,
   onToggleHide,
   showAddButton = true,
-  item,
   variant = 'default',
 }: SidebarCardProps) => {
   const hasAddButton = showAddButton;
   const hasActions = onDelete || onDuplicate || onToggleHide;
-  const styles = useStyles2(getStyles, { isSelected, hasAddButton, item });
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+
+  const styles = useStyles2(getStyles, { isSelected, hasAddButton, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -85,8 +87,8 @@ export const SidebarCard = ({
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>
           {variant === 'ghost' ? (
             <>
-              <div className={styles.shimmerIcon} />
-              <div className={styles.shimmerTitle} />
+              <div className={styles.ghostCardIcon} />
+              <div className={styles.ghostCardTitle} />
             </>
           ) : (
             children
@@ -109,13 +111,9 @@ export const SidebarCard = ({
   );
 };
 
-const skeletonPulse = keyframes`
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.5;
-  }
+const ghostCardPulse = keyframes`
+  from, to { opacity: 0.1; }
+  50% { opacity: 0.8; }
 `;
 
 function getStyles(
@@ -227,7 +225,7 @@ function getStyles(
     }),
     ghostCard: css({
       border: `1px dashed ${theme.colors.border.medium}`,
-      borderLeft: `2px dashed ${borderColor}`,
+      borderLeft: `3px solid ${theme.colors.border.medium}`,
       background: 'transparent',
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
@@ -267,24 +265,24 @@ function getStyles(
     hidden: css({
       opacity: 0.7,
     }),
-    shimmerIcon: css({
+    ghostCardIcon: css({
       width: theme.spacing(2),
       height: theme.spacing(2),
       borderRadius: theme.shape.radius.default,
       background: theme.colors.border.weak,
       flexShrink: 0,
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${skeletonPulse} 3s ease-in-out infinite`,
+        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
       },
     }),
-    shimmerTitle: css({
+    ghostCardTitle: css({
       height: theme.spacing(1.5),
       flex: 1,
       maxWidth: '70%',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.border.weak,
       [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${skeletonPulse} 3s ease-in-out infinite`,
+        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
       },
     }),
   };
