@@ -542,7 +542,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(
 	var extGroupMappingStore storewrapper.K8sStorage = extGroupMappingUniStore
 
 	if b.externalGroupMappingStorage != nil {
-		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
+		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage, selectableFieldsOpts)
 		if err != nil {
 			return err
 		}
@@ -587,7 +587,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
 	var coreRoleStore storewrapper.K8sStorage = uniStore
 
 	if b.coreRolesStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -630,7 +630,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	var roleBindingStore storewrapper.K8sStorage = uniStore
 
 	if b.roleBindingsStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -673,7 +673,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	var regStoreDW storewrapper.K8sStorage = uniStore
 
 	if b.resourcePermissionsStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -988,7 +988,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 }
 
 func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
-	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (*registry.Store, error) {
+	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend, selectableFieldsOpts grafanaregistry.SelectableFieldsOptions) (*registry.Store, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend:      storageBackend,
 		Reg:          reg,
@@ -1005,7 +1005,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	client := resource.NewLocalResourceClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
-	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err
 }
 
