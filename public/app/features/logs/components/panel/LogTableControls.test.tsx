@@ -3,7 +3,16 @@ import userEvent from '@testing-library/user-event';
 
 import { LogsSortOrder } from '@grafana/data';
 
+import { DownloadFormat, downloadLogs } from '../../utils';
+
 import { LogTableControls } from './LogTableControls';
+
+const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
+
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  downloadLogs: jest.fn(),
+}));
 
 describe('LogTableControls', () => {
   it.each([LogsSortOrder.Descending, LogsSortOrder.Ascending])('should render descending', (sortOrder) => {
@@ -72,5 +81,26 @@ describe('LogTableControls', () => {
     }
   );
 
-  it.todo('downloadLogs');
+  test.each([
+    ['txt', 'text'],
+    ['json', 'json'],
+    ['csv', 'csv'],
+  ])('Allows to download logs', async (label: string, format: string) => {
+    jest.mocked(downloadLogs).mockClear();
+    const setSortOrder = jest.fn();
+    render(
+      <LogTableControls
+        logOptionsStorageKey={''}
+        controlsExpanded={false}
+        setControlsExpanded={jest.fn()}
+        sortOrder={LogsSortOrder.Ascending}
+        setSortOrder={setSortOrder}
+        downloadLogs={downloadLogs as unknown as (format: DownloadFormat) => void}
+      />
+    );
+    await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
+    await userEvent.click(await screen.findByText(label));
+    expect(downloadLogs).toHaveBeenCalledTimes(1);
+    expect(downloadLogs).toHaveBeenCalledWith(format);
+  });
 });
