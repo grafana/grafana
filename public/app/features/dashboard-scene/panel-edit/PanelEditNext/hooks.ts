@@ -186,6 +186,25 @@ export function usePanelEditorShell(model: PanelEditor) {
   };
 }
 
+/**
+ * Returns an initial sidebar ratio based on the window width at mount time,
+ * so the sidebar doesn't take up too much space on large monitors.
+ * Uses window.innerWidth (logical pixels) as a proxy for monitor size:
+ *   >= 2560px  → large monitor (e.g. 4K/5K/27"+)  → 0.15
+ *   >= 1920px  → medium-large (e.g. 24" FHD/QHD)  → 0.20
+ *   below      → normal (e.g. 16" laptop)          → 0.25
+ */
+function getInitialSidebarRatio(): number {
+  const w = window.innerWidth;
+  if (w >= 2560) {
+    return 0.15;
+  }
+  if (w >= 1920) {
+    return 0.2;
+  }
+  return 0.25;
+}
+
 export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number, containerWidth: number) {
   const CONTROLS_ROW_HEIGHT = 'auto';
   const SIDEBAR_EXPANDED_PADDING = 16;
@@ -214,7 +233,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   const panelToShow = tableView ?? panel;
 
   const sidebarResize = useHorizontalRatioResize({
-    initialRatio: 0.25, // 25% of container width
+    initialRatio: getInitialSidebarRatio(),
     containerWidth,
     minRatio: MIN_SIDEBAR_RATIO,
     maxRatio: MAX_SIDEBAR_RATIO,
