@@ -1,0 +1,26 @@
+name: PR opened
+
+on:
+  pull_request:
+    types:
+      - opened
+
+permissions: {}
+
+jobs:
+  on-pr-opened:
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Log PR details
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.actor }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          echo "PR #${PR_NUMBER} was opened by @${PR_AUTHOR}"
+          echo "Title: ${PR_TITLE}"
+          echo "URL: ${PR_URL}"
