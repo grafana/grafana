@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { useLocalStorage, useMeasure } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
@@ -11,7 +11,7 @@ import { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { SidebarSize } from './constants';
+import { QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 
 type UseHorizontalResizeOptions = {
   initialWidth: number;
@@ -152,7 +152,10 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
   const { controls } = dashboard.useState();
-  const [sidebarSize, setSidebarSize] = useState<SidebarSize>(SidebarSize.Mini);
+  const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
+    QUERY_EDITOR_SIDEBAR_SIZE_KEY,
+    SidebarSize.Mini
+  );
 
   const isScrollingLayout = useScrollReflowLimit();
 
