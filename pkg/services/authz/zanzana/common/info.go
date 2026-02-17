@@ -85,6 +85,33 @@ func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
 	)
 }
 
+func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInfo {
+	typ, relations := getTypeAndRelations(item.GetGroup(), item.GetResource())
+
+	resource := newResource(
+		typ,
+		item.GetGroup(),
+		item.GetResource(),
+		item.GetName(),
+		item.GetFolder(),
+		item.GetSubresource(),
+		relations,
+	)
+
+	// Special case for creating folders and resources in the root folder
+	if item.GetVerb() == utils.VerbCreate {
+		if resource.IsFolderResource() && resource.name == "" {
+			resource.name = accesscontrol.GeneralFolderUID
+		} else if resource.HasFolderSupport() && resource.folder == "" {
+			resource.folder = accesscontrol.GeneralFolderUID
+		}
+
+		return resource
+	}
+
+	return resource
+}
+
 func getTypeAndRelations(group, resource string) (string, []string) {
 	if info, ok := getTypeInfo(group, resource); ok {
 		return info.Type, info.Relations

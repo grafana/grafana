@@ -243,6 +243,10 @@ func (o *AlertRule) DeepCopyInto(dst *AlertRule) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (AlertRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRule"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &AlertRule{}
 
@@ -294,6 +298,10 @@ func (o *AlertRuleList) DeepCopy() *AlertRuleList {
 
 func (o *AlertRuleList) DeepCopyInto(dst *AlertRuleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (AlertRuleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleList"
 }
 
 // Interface compliance compile-time check
