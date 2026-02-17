@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -35,7 +36,8 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*DataSourceAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
 )
 
 type DataSourceAPIBuilderConfig struct {
@@ -55,9 +57,11 @@ type DataSourceAPIBuilder struct {
 	queryTypes             *queryV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
+	configProvider         configprovider.ConfigProvider
 }
 
 func RegisterAPIService(
+	configProvider configprovider.ConfigProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
@@ -99,6 +103,7 @@ func RegisterAPIService(
 
 		groupName := pluginJSON.ID + ".datasource.grafana.app"
 		builder, err = NewDataSourceAPIBuilder(
+			configProvider,
 			groupName,
 			pluginJSON,
 			client,
@@ -134,6 +139,7 @@ type PluginClient interface {
 }
 
 func NewDataSourceAPIBuilder(
+	configProvider configprovider.ConfigProvider,
 	groupName string,
 	plugin plugins.JSONData,
 	client PluginClient,
@@ -150,6 +156,7 @@ func NewDataSourceAPIBuilder(
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
 		cfg:                    cfg,
+		configProvider:         configProvider,
 	}
 	var err error
 	if cfg.LoadQueryTypes {
@@ -264,6 +271,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			datasources:                     b.datasources,
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
+			pluginType:                      b.pluginJSON.ID,
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {

@@ -305,22 +305,32 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 	})
 }
 
-// TestIntegrationDataSourcePutByUID tests the PUT /api/datasources/uid/:uid endpoint.
-//
-// k8s-reroute PUT handler is not implemented yet! This only tests the legacy mode.
+// TestIntegrationDataSourcePutByUID tests the PUT /api/datasources/uid/:uid endpoint
+// with both legacy and K8s-reroute feature flag modes.
 func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-	})
-	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
-	ctx := context.Background()
-	store := testEnv.SQLStore
-	cfg := testEnv.Cfg
+	for _, mode := range getTestModes() {
+		t.Run(mode.name, func(t *testing.T) {
+			// set up Grafana and a database
+			dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+				DisableAnonymous:     true,
+				EnableFeatureToggles: mode.featureToggles,
+			})
+			grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+			ctx := context.Background()
+			store := testEnv.SQLStore
+			cfg := testEnv.Cfg
 
+			runPutTests(t, ctx, grafanaListeningAddr, testEnv, store, cfg, mode.name)
+		})
+	}
+}
+
+// runPutTests runs all PUT endpoint tests
+func runPutTests(t *testing.T, ctx context.Context, grafanaListeningAddr string, testEnv *server.TestEnv, store db.DB, cfg *setting.Cfg, modePrefix string) {
 	t.Run("PUT - succeeds", func(t *testing.T) {
-		uid := "test-update-ds"
+		uid := fmt.Sprintf("%s-test-update-ds", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -380,7 +390,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 		}
 		body, _ := json.Marshal(updatePayload)
 
-		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/nonexistent-put", grafanaListeningAddr)
+		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s-nonexistent-put", grafanaListeningAddr, modePrefix)
 		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 
@@ -392,7 +402,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - specific UID scope granted", func(t *testing.T) {
-		dsUID := "test-ds-update-perms-0"
+		dsUID := fmt.Sprintf("%s-test-ds-update-perms-0", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -404,11 +414,13 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-put-0"
+		login := fmt.Sprintf("%s-user-put-0", modePrefix)
 		password := "testpass"
 		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
 			{
-				Actions:           []string{datasources.ActionWrite},
+				// Both read and write permissions are needed because k8s-reroute mode
+				// requires read permission to lookup the connection before updating
+				Actions:           []string{datasources.ActionRead, datasources.ActionWrite},
 				Resource:          "datasources",
 				ResourceAttribute: "uid",
 				ResourceID:        dsUID,
@@ -436,7 +448,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - wildcard scope granted", func(t *testing.T) {
-		dsUID := "test-ds-update-perms-1"
+		dsUID := fmt.Sprintf("%s-test-ds-update-perms-1", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -448,11 +460,13 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-put-1"
+		login := fmt.Sprintf("%s-user-put-1", modePrefix)
 		password := "testpass"
 		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
 			{
-				Actions:           []string{datasources.ActionWrite},
+				// Both read and write permissions are needed because k8s-reroute mode
+				// requires read permission to lookup the connection before updating
+				Actions:           []string{datasources.ActionRead, datasources.ActionWrite},
 				Resource:          "datasources",
 				ResourceAttribute: "uid",
 				ResourceID:        "*",
@@ -480,7 +494,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - permission denied (wrong UID scope)", func(t *testing.T) {
-		dsUID := "test-ds-update-perms-2"
+		dsUID := fmt.Sprintf("%s-test-ds-update-perms-2", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -492,7 +506,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-put-2"
+		login := fmt.Sprintf("%s-user-put-2", modePrefix)
 		password := "testpass"
 		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
 			{
@@ -524,7 +538,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - permission denied (read only)", func(t *testing.T) {
-		dsUID := "test-ds-update-perms-3"
+		dsUID := fmt.Sprintf("%s-test-ds-update-perms-3", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -536,7 +550,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-put-3"
+		login := fmt.Sprintf("%s-user-put-3", modePrefix)
 		password := "testpass"
 		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
 			{
@@ -568,7 +582,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - permission denied (no permissions)", func(t *testing.T) {
-		dsUID := "test-ds-update-perms-4"
+		dsUID := fmt.Sprintf("%s-test-ds-update-perms-4", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -580,7 +594,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-put-4"
+		login := fmt.Sprintf("%s-user-put-4", modePrefix)
 		password := "testpass"
 		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{})
 
@@ -606,10 +620,10 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 	// Role-based PUT tests
 	t.Run("PUT - Admin role succeeds", func(t *testing.T) {
-		dsUID := "test-ds-role-admin-put"
+		dsUID := fmt.Sprintf("%s-test-ds-role-admin-put", modePrefix)
 		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin PUT")
 
-		login := "admin-user-put"
+		login := fmt.Sprintf("%s-admin-user-put", modePrefix)
 		password := "testpass"
 		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleAdmin),
@@ -638,10 +652,10 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - Editor role denied", func(t *testing.T) {
-		dsUID := "test-ds-role-editor-put"
+		dsUID := fmt.Sprintf("%s-test-ds-role-editor-put", modePrefix)
 		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Editor PUT")
 
-		login := "editor-user-put"
+		login := fmt.Sprintf("%s-editor-user-put", modePrefix)
 		password := "testpass"
 		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleEditor),
@@ -670,10 +684,10 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 	})
 
 	t.Run("PUT - Viewer role denied", func(t *testing.T) {
-		dsUID := "test-ds-role-viewer-put"
+		dsUID := fmt.Sprintf("%s-test-ds-role-viewer-put", modePrefix)
 		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Viewer PUT")
 
-		login := "viewer-user-put"
+		login := fmt.Sprintf("%s-viewer-user-put", modePrefix)
 		password := "testpass"
 		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleViewer),

@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,6 +41,7 @@ type legacyStorage struct {
 	datasources                     PluginDatasourceProvider
 	resourceInfo                    *utils.ResourceInfo
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	pluginType                      string
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -146,9 +150,20 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, fmt.Errorf("expected a datasource object")
 	}
 
-	oldDS, ok := obj.(*v0alpha1.DataSource)
+	oldDS, ok := old.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, false, fmt.Errorf("expected a datasource object (old)")
+	}
+
+	// Validate: read-only datasources cannot be updated
+	if oldDS.Spec.ReadOnly() {
+		return nil, false, apierrors.NewForbidden(s.resourceInfo.GroupResource(), name, errors.New("cannot update read-only data source"))
+	}
+
+	// Validate: URL
+	if err := s.validateURL(ds.Spec.URL()); err != nil {
+		return nil, false, apierrors.NewInvalid(s.resourceInfo.GroupVersionKind().GroupKind(), ds.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "url"), ds.Spec.URL(), err.Error())})
 	}
 
 	// Expose any secure value changes to the dual writer
@@ -221,4 +236,40 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		}
 	}
 	return nil, nil
+}
+
+// reURL is a regexp to detect if a URL specifies the protocol.
+var reURL = regexp.MustCompile("^[^:]*://")
+
+// validateURL validates a data source's URL.
+func (s *legacyStorage) validateURL(urlStr string) error {
+	// Check for empty URLs
+	if datasources.RequiresURL(s.pluginType) && strings.TrimSpace(urlStr) == "" {
+		return errors.New("URL is required for this data source type")
+	}
+
+	if urlStr == "" {
+		return nil // URL is optional for this type
+	}
+
+	// Make sure the URL can be parsed
+	switch strings.ToLower(s.pluginType) {
+	case "mssql":
+		// MSSQL uses ODBC connection strings, validate differently
+		reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?(?:;.+)?$`)
+		if !reODBC.MatchString(urlStr) {
+			return fmt.Errorf("invalid MSSQL URL format: %q", urlStr)
+		}
+	default:
+		// Make sure the URL starts with a protocol specifier
+		parseURL := urlStr
+		if !reURL.MatchString(urlStr) {
+			parseURL = fmt.Sprintf("http://%s", urlStr)
+		}
+		if _, err := url.Parse(parseURL); err != nil {
+			return fmt.Errorf("invalid URL: %w", err)
+		}
+	}
+
+	return nil
 }
