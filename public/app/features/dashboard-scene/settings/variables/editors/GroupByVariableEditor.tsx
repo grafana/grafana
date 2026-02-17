@@ -23,6 +23,15 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     return await getDataSourceSrv().get(datasourceRef);
   }, [variable.state]);
 
+  const { value: tagKeyOptions = [] } = useAsync(async () => {
+    if (!datasource?.getTagKeys) {
+      return [];
+    }
+    const result = await datasource.getTagKeys({ filters: [] });
+    const keys = Array.isArray(result) ? result : (result.data ?? []);
+    return keys.map((k) => ({ label: k.text || String(k.value), value: String(k.value) }));
+  }, [datasource]);
+
   const supported = datasource?.getTagKeys !== undefined;
   const message = supported
     ? 'Group by dimensions are applied automatically to all queries that target this data source'
@@ -71,6 +80,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
       defaultValue={defaultValueStrings}
+      defaultValueOptions={tagKeyOptions}
       onDefaultValueChange={onDefaultValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}

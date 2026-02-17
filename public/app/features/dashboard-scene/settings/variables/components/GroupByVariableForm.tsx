@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, ComboboxOption, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DefaultValueEditor } from './DefaultValueEditor';
@@ -21,6 +21,7 @@ export interface GroupByVariableFormProps {
   allowCustomValue: boolean;
   onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
   defaultValue?: string[];
+  defaultValueOptions?: Array<ComboboxOption<string>>;
   onDefaultValueChange?: (values: string[]) => void;
   inline?: boolean;
   datasourceSupported: boolean;
@@ -35,6 +36,7 @@ export function GroupByVariableForm({
   allowCustomValue,
   onAllowCustomValueChange,
   defaultValue,
+  defaultValueOptions,
   onDefaultValueChange,
   inline,
   datasourceSupported,
@@ -83,6 +85,7 @@ export function GroupByVariableForm({
       {datasourceSupported && onDefaultValueChange && (
         <DefaultValueEditor
           values={defaultValue ?? []}
+          options={defaultValueOptions}
           onChange={onDefaultValueChange}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection}
         />

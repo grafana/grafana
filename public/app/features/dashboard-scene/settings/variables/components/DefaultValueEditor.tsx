@@ -1,28 +1,32 @@
 import { ReactElement } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, Field, Input, Stack } from '@grafana/ui';
+import { Button, Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
 
 export interface DefaultValueEditorProps {
   values: string[];
+  options?: Array<ComboboxOption<string>>;
   onChange: (values: string[]) => void;
   'data-testid'?: string;
 }
 
 interface DefaultValueRowProps {
   value: string;
+  options: Array<ComboboxOption<string>>;
   onChange: (value: string) => void;
   onRemove: () => void;
 }
 
-function DefaultValueRow({ value, onChange, onRemove }: DefaultValueRowProps): ReactElement {
+function DefaultValueRow({ value, options, onChange, onRemove }: DefaultValueRowProps): ReactElement {
   return (
     <Stack gap={0.5} alignItems="center">
-      <Input
+      <Combobox
         aria-label={t('dashboard-scene.default-value-row.value-aria-label', 'Default value')}
         placeholder={t('dashboard-scene.default-value-row.value-placeholder', 'Value')}
-        value={value}
-        onChange={(e) => onChange(e.currentTarget.value)}
+        value={value || null}
+        options={options}
+        onChange={(option) => onChange(option.value)}
+        createCustomValue
       />
       <Button
         aria-label={t('dashboard-scene.default-value-row.remove-aria-label', 'Remove default value')}
@@ -36,7 +40,7 @@ function DefaultValueRow({ value, onChange, onRemove }: DefaultValueRowProps): R
   );
 }
 
-export function DefaultValueEditor({ values, onChange, ...rest }: DefaultValueEditorProps): ReactElement {
+export function DefaultValueEditor({ values, options = [], onChange, ...rest }: DefaultValueEditorProps): ReactElement {
   const onAddValue = () => {
     onChange([...values, '']);
   };
@@ -65,6 +69,7 @@ export function DefaultValueEditor({ values, onChange, ...rest }: DefaultValueEd
             <DefaultValueRow
               key={index}
               value={value}
+              options={options}
               onChange={(updatedValue) => onChangeValue(index, updatedValue)}
               onRemove={() => onRemoveValue(index)}
             />

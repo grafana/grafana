@@ -22,6 +22,11 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
+const mockGetTagKeys = jest.fn().mockReturnValue([
+  { text: 'job', value: 'job' },
+  { text: 'instance', value: 'instance' },
+]);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -32,11 +37,10 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
-      getTagKeys: () => [],
+      getTagKeys: mockGetTagKeys,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
-    getTagKeys: () => [],
   }),
 }));
 
@@ -87,6 +91,14 @@ describe('GroupByVariableEditor', () => {
     );
 
     expect(variable.state.defaultOptions).toEqual(undefined);
+  });
+
+  it('should fetch tag keys from datasource', async () => {
+    await setup();
+
+    await waitFor(() => {
+      expect(mockGetTagKeys).toHaveBeenCalledWith({ filters: [] });
+    });
   });
 
   it('should render provided default values as inputs', async () => {
