@@ -15,7 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot Azure Monitor data source issues
 weight: 500
 last_reviewed: 2025-12-04
