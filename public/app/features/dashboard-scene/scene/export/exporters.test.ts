@@ -7,8 +7,8 @@ import {
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';

@@ -140,8 +140,8 @@ export function usePanelEditorShell(model: PanelEditor) {
 
 export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number) {
   const CONTROLS_ROW_HEIGHT = 'auto';
-  const SIDEBAR_MIN_WIDTH = 285;
-  const SIDEBAR_MAX_WIDTH = 380;
+  const SIDEBAR_MIN_WIDTH = 320;
+  const SIDEBAR_MAX_WIDTH = 420;
   const VIZ_MIN_HEIGHT = 0;
   const INITIAL_VIZ_MIN_HEIGHT = 350;
   const VIZ_BOTTOM_GAP = 80;
@@ -149,7 +149,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   const COLLAPSE_BELOW_PX = 150;
 
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, tableView, editPreview } = model.useState();
+  const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
   const { controls } = dashboard.useState();
   const [sidebarSize, setSidebarSize] = useState<SidebarSize>(SidebarSize.Mini);
@@ -164,7 +164,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
     disabled: isScrollingLayout,
   });
 
-  const panelToShow = tableView ?? editPreview ?? panel;
+  const panelToShow = tableView ?? panel;
 
   const sidebarResize = useHorizontalResize({
     initialWidth: SIDEBAR_MIN_WIDTH,

@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
@@ -328,6 +333,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -418,6 +428,11 @@ export interface FeatureToggles {
   * @default false
   */
   pdfTables?: boolean;
+  /**
+  * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
+  * @default false
+  */
+  reportingV2Layouts?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -608,6 +623,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableSendAlertsExternal?: boolean;
+  /**
+  * Use the new k8s API for fetching integration type schemas
+  * @default false
+  */
+  alertingSyncNotifiersApiMigration?: boolean;
   /**
   * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
   * @default false
@@ -1463,8 +1483,28 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Use the new APIs for syncing users to teams
+  * @default false
+  */
+  kubernetesTeamSync?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Makes NoData and Error alerts fire immediately, without 'pending' stage
+  * @default false
+  */
+  alertingIgnorePendingForNoDataAndError?: boolean;
+  /**
+  * Enables the notification history tab in the rule viewer
+  * @default false
+  */
+  alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables the notification history global menu item viewer
+  * @default false
+  */
+  alertingNotificationHistoryGlobal?: boolean;
 }

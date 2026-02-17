@@ -2,6 +2,7 @@ package features
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -58,11 +59,6 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("path must end with user uid (%s)", userID)
 	}
 
-	// While testing with provisioning repositories, we will limit this to admin only
-	if !u.HasRole(identity.RoleAdmin) {
-		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("only admin users for now")
-	}
-
 	b.watchingMu.Lock()
 	defer b.watchingMu.Unlock()
 
@@ -105,6 +101,17 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	if len(name) > 1 {
 		opts.FieldSelector = "metadata.name=" + name
 	}
+
+	// Support resourceVersion from subscription data.
+	if len(e.Data) > 0 {
+		var subData struct {
+			ResourceVersion string `json:"resourceVersion,omitempty"`
+		}
+		if err := json.Unmarshal(e.Data, &subData); err == nil && subData.ResourceVersion != "" {
+			opts.ResourceVersion = subData.ResourceVersion
+		}
+	}
+
 	watch, err := client.Watch(ctx, opts)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
@@ -188,24 +195,13 @@ func (b *watcher) run(ctx context.Context) {
 				return
 			}
 
-			cfg := jsoniter.ConfigCompatibleWithStandardLibrary
-			stream := cfg.BorrowStream(nil)
-			defer cfg.ReturnStream(stream)
+			data, err := marshalWatchEvent(event)
+			if err != nil {
+				logger.Error("marshal error", "channel", b.channel, "err", err)
+				continue
+			}
 
-			// regular json.Marshal() uses upper case
-			stream.WriteObjectStart()
-			stream.WriteObjectField("type")
-			stream.WriteString(string(event.Type))
-			stream.WriteMore()
-			stream.WriteObjectField("object")
-			stream.WriteVal(event.Object)
-			stream.WriteObjectEnd()
-
-			buf := stream.Buffer()
-			data := make([]byte, len(buf))
-			copy(data, buf)
-
-			err := b.publisher(b.ns, b.channel, data)
+			err = b.publisher(b.ns, b.channel, data)
 			if err != nil {
 				logger.Error("publish error", "channel", b.channel, "err", err)
 				b.watch.Stop()
@@ -214,4 +210,29 @@ func (b *watcher) run(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// marshalWatchEvent serializes a watch event to JSON. This is extracted from the
+// run loop so that defer correctly returns the borrowed jsoniter stream each call.
+func marshalWatchEvent(event watch.Event) ([]byte, error) {
+	cfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	stream := cfg.BorrowStream(nil)
+	defer cfg.ReturnStream(stream)
+
+	stream.WriteObjectStart()
+	stream.WriteObjectField("type")
+	stream.WriteString(string(event.Type))
+	stream.WriteMore()
+	stream.WriteObjectField("object")
+	stream.WriteVal(event.Object)
+	stream.WriteObjectEnd()
+
+	if stream.Error != nil {
+		return nil, stream.Error
+	}
+
+	buf := stream.Buffer()
+	data := make([]byte, len(buf))
+	copy(data, buf)
+	return data, nil
 }

@@ -948,7 +948,7 @@
       },
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec": {
         "type": "object",
-        "additionalProperties": {}
+        "additionalProperties": true
       },
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTransformationSpec": {
         "type": "object",
