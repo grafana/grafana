@@ -1652,6 +1652,10 @@
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
+      "renamed-intervals_one": "{{count}} time intervals will be renamed",
+      "renamed-intervals_other": "{{count}} time intervals will be renamed",
+      "renamed-receivers_one": "{{count}} contact points will be renamed",
+      "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
         "back": "Alert rules",
         "filter": "Filter",
@@ -1668,10 +1672,6 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
-        "renamed-intervals_one": "Time intervals renamed: {{count}}",
-        "renamed-intervals_other": "Time intervals renamed: {{count}}",
-        "renamed-receivers_one": "Receivers renamed: {{count}}",
-        "renamed-receivers_other": "Receivers renamed: {{count}}",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1700,8 +1700,6 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
-        "extra-config-conflict-desc": "There is already an uncommitted imported configuration named \"{{identifier}}\". To proceed, either use \"{{identifier}}\" as your policy tree name to replace it, or commit/discard the existing configuration first.",
-        "extra-config-conflict-title": "Cannot import notification resources",
         "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
         "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
@@ -1711,11 +1709,8 @@
         "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-required": "Policy tree name is required",
         "policy-tree-title": "Policy Tree Name",
-        "renamed-intervals_one": "{{count}} time intervals will be renamed",
-        "renamed-intervals_other": "{{count}} time intervals will be renamed",
-        "renamed-receivers_one": "{{count}} contact points will be renamed",
-        "renamed-receivers_other": "{{count}} contact points will be renamed",
         "select-datasource": "Select data source",
         "skip": "Skip this step",
         "source": {
@@ -1732,8 +1727,7 @@
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
-        "validation-warning": "Some resources will be renamed",
-        "validation-warning-desc": "Some resources will be renamed to avoid conflicts with existing resources.",
+        "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
         "yaml-file": "Alertmanager config YAML"
       },
       "step2": {
