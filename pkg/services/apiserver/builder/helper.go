@@ -64,6 +64,14 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
+// OSS needs to redirect query.grafana.app, but the explicit standalone apiservers should not
+var PathRewritersOSS = append(PathRewriters, filters.PathRewriter{
+	Pattern: regexp.MustCompile(`/apis/query.grafana.app/v0alpha1(.*$)`),
+	ReplaceFunc: func(matches []string) string {
+		return "/apis/datasource.grafana.app/v0alpha1" + matches[1]
+	},
+})
+
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
@@ -77,7 +85,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
 		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, PathRewriters)
+		handler = filters.WithPathRewriters(handler, PathRewritersOSS)
 		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
