@@ -397,7 +397,13 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// During dry-run, skip legacy storage and delegate directly to unified storage
 	// which already handles dry-run correctly via DryRunnableStorage.
 	if dryrun.IsDryRun(options.DryRun) {
-		return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		dryRunInfo := objInfo
+		dryRunForceCreate := forceAllowCreate
+		if !d.readUnified {
+			dryRunInfo = &wrappedUpdateInfo{objInfo: objInfo}
+			dryRunForceCreate = true
+		}
+		return d.unified.Update(ctx, name, dryRunInfo, createValidation, updateValidation, dryRunForceCreate, options)
 	}
 
 	log := logging.FromContext(ctx).With("method", "Update", "name", name)

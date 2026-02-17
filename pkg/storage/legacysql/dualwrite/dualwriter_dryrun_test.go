@@ -127,6 +127,90 @@ func TestDryRun_Update(t *testing.T) {
 	}
 }
 
+func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
+	t.Run("Mode1 should wrap objInfo and set forceAllowCreate=true", func(t *testing.T) {
+		l := (rest.Storage)(nil)
+		s := (rest.Storage)(nil)
+
+		ls := storageMock{&mock.Mock{}, l}
+		us := storageMock{&mock.Mock{}, s}
+
+		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+
+		dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
+		require.NoError(t, err)
+
+		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
+			func(ctx context.Context, obj runtime.Object) error { return nil },
+			func(ctx context.Context, obj, old runtime.Object) error { return nil },
+			false, &metav1.UpdateOptions{DryRun: dryRunAll})
+		require.NoError(t, err)
+
+		// Verify unified was called with wrappedUpdateInfo and forceAllowCreate=true
+		require.Len(t, us.Calls, 1)
+		call := us.Calls[0]
+		_, isWrapped := call.Arguments[2].(*wrappedUpdateInfo)
+		require.True(t, isWrapped, "Mode1 dry-run should wrap objInfo with wrappedUpdateInfo")
+		forceCreate := call.Arguments[5].(bool)
+		require.True(t, forceCreate, "Mode1 dry-run should set forceAllowCreate=true")
+	})
+
+	t.Run("Mode2 should wrap objInfo and set forceAllowCreate=true", func(t *testing.T) {
+		l := (rest.Storage)(nil)
+		s := (rest.Storage)(nil)
+
+		ls := storageMock{&mock.Mock{}, l}
+		us := storageMock{&mock.Mock{}, s}
+
+		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+
+		dw, err := NewStaticStorage(kind, rest.Mode2, ls, us)
+		require.NoError(t, err)
+
+		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
+			func(ctx context.Context, obj runtime.Object) error { return nil },
+			func(ctx context.Context, obj, old runtime.Object) error { return nil },
+			false, &metav1.UpdateOptions{DryRun: dryRunAll})
+		require.NoError(t, err)
+
+		// Verify unified was called with wrappedUpdateInfo and forceAllowCreate=true
+		require.Len(t, us.Calls, 1)
+		call := us.Calls[0]
+		_, isWrapped := call.Arguments[2].(*wrappedUpdateInfo)
+		require.True(t, isWrapped, "Mode2 dry-run should wrap objInfo with wrappedUpdateInfo")
+		forceCreate := call.Arguments[5].(bool)
+		require.True(t, forceCreate, "Mode2 dry-run should set forceAllowCreate=true")
+	})
+
+	t.Run("Mode3 should pass original objInfo unchanged", func(t *testing.T) {
+		l := (rest.Storage)(nil)
+		s := (rest.Storage)(nil)
+
+		ls := storageMock{&mock.Mock{}, l}
+		us := storageMock{&mock.Mock{}, s}
+
+		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+
+		dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+		require.NoError(t, err)
+
+		originalInfo := updatedObjInfoObj{}
+		_, _, err = dw.Update(context.Background(), "foo", originalInfo,
+			func(ctx context.Context, obj runtime.Object) error { return nil },
+			func(ctx context.Context, obj, old runtime.Object) error { return nil },
+			false, &metav1.UpdateOptions{DryRun: dryRunAll})
+		require.NoError(t, err)
+
+		// Verify unified was called with original objInfo (not wrapped)
+		require.Len(t, us.Calls, 1)
+		call := us.Calls[0]
+		_, isWrapped := call.Arguments[2].(*wrappedUpdateInfo)
+		require.False(t, isWrapped, "Mode3 dry-run should NOT wrap objInfo")
+		forceCreate := call.Arguments[5].(bool)
+		require.False(t, forceCreate, "Mode3 dry-run should preserve original forceAllowCreate=false")
+	})
+}
+
 func TestDryRun_DeleteCollection(t *testing.T) {
 	modes := []struct {
 		name string
