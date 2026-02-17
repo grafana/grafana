@@ -379,30 +379,6 @@ export type AlertRuleTrackingProps = {
 // Alerts Activity Banner & View Experience Telemetry
 // ============================================================================
 
-export type UserPlan = 'Enterprise' | 'Advanced' | 'Free' | 'Unknown';
-
-/**
- * Determine the user's plan from license info
- */
-export function getUserPlan(): UserPlan {
-  const licenseInfo = config.licenseInfo;
-  if (!licenseInfo) {
-    return 'Unknown';
-  }
-
-  // Check edition from license info or build info
-  const edition = licenseInfo.edition || config.buildInfo?.edition;
-
-  if (edition === 'Enterprise') {
-    return 'Enterprise';
-  }
-  if (edition === 'Pro') {
-    return 'Advanced';
-  }
-  // Free/OSS edition
-  return 'Free';
-}
-
 /**
  * Track banner impression - fired once per session when banner is first shown.
  * Note: user_id, org_id, grafana_version, and other common properties are automatically
@@ -435,7 +411,6 @@ export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
 // Payload for view experience toggle telemetry.
 
 export interface ViewExperienceToggleEventPayload {
-  source: 'titleControl';
   currentView: 'v1' | 'v2';
   targetView: 'v1' | 'v2';
 }

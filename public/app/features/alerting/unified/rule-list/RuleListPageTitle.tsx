@@ -22,7 +22,6 @@ export function RuleListPageTitle({ title }: { title: string }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const getEventPayload = (): ViewExperienceToggleEventPayload => ({
-    source: 'titleControl',
     currentView: listViewV2Enabled ? 'v2' : 'v1',
     targetView: listViewV2Enabled ? 'v1' : 'v2',
   });
