@@ -529,7 +529,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	extGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
-	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, extGroupMappingResource, opts.OptsGetter)
+
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.ExternalGroupMappingKind()),
+	}
+	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme,
+		extGroupMappingResource, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
