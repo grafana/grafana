@@ -102,7 +102,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		if len(versions) > 0 {
-			_, err = sess.Insert(versions)
+			_, err = sess.BulkInsert(alertRuleVersion{}, versions, sqlstore.NativeSettingsForDialect(st.SQLStore.GetDialect()))
 			if err != nil {
 				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 			}
