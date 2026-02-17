@@ -230,13 +230,38 @@ var (
 		},
 	}
 
+	inhibitionRulesReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.inhibition-rules:reader",
+			DisplayName: "Inhibition Rules Reader",
+			Description: "Read all inhibition rules in Grafana alerting",
+			Group:       models.AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesRead},
+			},
+		},
+	}
+
+	inhibitionRulesWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.inhibition-rules:writer",
+			DisplayName: "Inhibition Rules Writer",
+			Description: "Create, update, and delete all inhibition rules in Grafana alerting",
+			Group:       models.AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(inhibitionRulesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite},
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete},
+			}),
+		},
+	}
+
 	notificationsReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications:reader",
 			DisplayName: "Notifications Reader",
 			Description: "Read notification policies and contact points in Grafana and external providers",
 			Group:       models.AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, templatesReaderRole.Role.Permissions, timeIntervalsReaderRole.Role.Permissions, routesReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, templatesReaderRole.Role.Permissions, timeIntervalsReaderRole.Role.Permissions, routesReaderRole.Role.Permissions, inhibitionRulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsRead, // TODO remove when we decide tò limit access to raw config API
 				},
@@ -254,7 +279,7 @@ var (
 			DisplayName: "Notifications Writer",
 			Description: "Add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       models.AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, templatesWriterRole.Role.Permissions, timeIntervalsWriterRole.Role.Permissions, routesWriterRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, templatesWriterRole.Role.Permissions, timeIntervalsWriterRole.Role.Permissions, routesWriterRole.Role.Permissions, inhibitionRulesWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsWrite, // TODO remove when we decide tò limit access to raw config API
 				},
@@ -386,7 +411,7 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
 		// k8s roles
 		receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole,
-		timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole,
+		timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole, inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)
