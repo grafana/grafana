@@ -6,7 +6,7 @@ import {
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -25,6 +26,33 @@ import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { filterDataTransformerConfigs } from './QueryEditor/utils';
+
+/**
+ * Resolve the datasource ref to assign to a new query.
+ */
+function resolveNewQueryDatasource(
+  callerDs: DataSourceRef | undefined,
+  panelDsSettings: DataSourceInstanceSettings | undefined
+): DataSourceRef | undefined {
+  // Caller explicitly chose a datasource (e.g. ExpressionDatasourceRef).
+  if (callerDs) {
+    return callerDs;
+  }
+
+  if (!panelDsSettings) {
+    return undefined;
+  }
+
+  // "Mixed" isn't meaningful on a per-query basis; use the configured default.
+  // If missing a default datasource (unexpected), leave `undefined`
+  // so the query inherits the panel datasource at render time.
+  if (panelDsSettings.meta.mixed) {
+    const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+    return defaultDs ? getDataSourceRef(defaultDs) : undefined;
+  }
+
+  return getDataSourceRef(panelDsSettings);
+}
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -135,7 +163,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     });
   };
 
-  public addQuery = (query?: Partial<DataQuery>) => {
+  public addQuery = (query?: Partial<DataQuery>, afterRefId?: string): string | undefined => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
@@ -144,15 +172,38 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const { datasource, dsSettings } = this.state;
     const currentQueries = queryRunner.state.queries;
 
-    // Build new query with defaults
+    // Build new query with defaults.
     const newQuery: Partial<DataQuery> = {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
       ...query,
-      datasource: dsSettings ? getDataSourceRef(dsSettings) : undefined,
     };
 
+    newQuery.datasource = resolveNewQueryDatasource(newQuery.datasource ?? undefined, dsSettings);
+
     const updatedQueries = addQuery(currentQueries, newQuery);
+
+    // Identify the newly added query by refId rather than position, so this
+    // is resilient to future changes in how addQuery orders the array.
+    const existingRefIds = new Set(currentQueries.map((q) => q.refId));
+    const newItem = updatedQueries.find((q) => !existingRefIds.has(q.refId));
+
+    // If afterRefId is specified, move the new query to just after it
+    if (afterRefId && newItem) {
+      const newItemIndex = updatedQueries.indexOf(newItem);
+      if (newItemIndex !== -1) {
+        updatedQueries.splice(newItemIndex, 1);
+      }
+      const afterIndex = updatedQueries.findIndex((q) => q.refId === afterRefId);
+      if (afterIndex !== -1) {
+        updatedQueries.splice(afterIndex + 1, 0, newItem);
+      } else {
+        updatedQueries.push(newItem); // fallback to append if not found
+      }
+    }
+
     queryRunner.setState({ queries: updatedQueries });
+
+    return newItem?.refId;
   };
 
   public deleteQuery = (refId: string) => {
@@ -216,6 +267,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return { transformations: undefined, transformer: undefined };
   }
 
+  public reorderTransformations = (transformations: DataTransformerConfig[]) => {
+    const transformer = this.getSceneDataTransformer();
+    if (transformer) {
+      transformer.setState({ transformations });
+      transformer.reprocessTransformations();
+    }
+  };
+
   public deleteTransformation = (index: number) => {
     const { transformations, transformer } = this.getTransformations(index);
     if (!transformations || !transformer) {
@@ -239,6 +298,24 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     this.runQueries();
   };
 
+  /**
+   * Changes the datasource for a specific query.
+   *
+   * Panel-level vs Per-query datasources:
+   * - Normally, a panel has a single datasource and all queries inherit from it
+   * - When queries use different datasources, the panel switches to "Mixed" mode
+   * - In Mixed mode, each query must have an explicit datasource property
+   *
+   * This method:
+   * 1. Updates the target query with the new datasource (applying default query if type changed)
+   * 2. If not already Mixed, transitions the panel to Mixed mode by:
+   *    - Enriching all queries without explicit datasources with the current panel datasource
+   *    - Setting the panel datasource to "Mixed"
+   * 3. Runs the queries with the new configuration
+   *
+   * @param dsRef - The datasource reference to switch to
+   * @param queryRefId - The refId of the query to update
+   */
   public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
@@ -277,7 +354,34 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     queries[targetIndex] = updatedQuery;
 
-    queryRunner.setState({ queries });
+    // Transition to Mixed mode if not already there.
+    // Mixed mode is required when queries use different datasources, ensuring each query's
+    // datasource is respected during execution.
+    if (queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+      // CRITICAL: Before switching to Mixed, enrich all queries without explicit datasources.
+      // Mixed datasource has no QueryEditor component and can't be edited directly.
+      // Queries that inherit from Mixed would fail with "Data source plugin does not export any query editor component".
+      // We must "freeze" their current inherited datasource into an explicit datasource property.
+      // Matches legacy behavior in PanelDataQueriesTab.tsx:onSelectQueryFromLibrary (lines 391-410)
+      const currentPanelDsRef = queryRunner.state.datasource;
+      const fallbackDsRef =
+        currentPanelDsRef || getDataSourceRef(getDataSourceSrv().getInstanceSettings(config.defaultDatasource)!);
+
+      const queriesWithExplicitDs = queries.map((query) => {
+        if (query.datasource) {
+          return query; // Already has explicit datasource
+        }
+        return { ...query, datasource: fallbackDsRef }; // Set inherited datasource explicitly
+      });
+
+      queryRunner.setState({
+        queries: queriesWithExplicitDs,
+        datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
+      });
+    } else {
+      queryRunner.setState({ queries });
+    }
+
     queryRunner.runQueries();
   };
 

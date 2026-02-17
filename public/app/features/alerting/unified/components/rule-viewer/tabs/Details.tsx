@@ -10,6 +10,7 @@ import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { Time } from '../../../../../explore/Time';
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
 import { makeEditTimeIntervalLink } from '../../../utils/misc';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
@@ -160,7 +161,8 @@ export const Details = ({ rule }: DetailsProps) => {
               <DetailText
                 id="last-evaluation-duration"
                 label={t('alerting.alert.last-evaluation-duration', 'Last evaluation duration')}
-                value={`${evaluationDuration} ms`}
+                value={Time({ timeInMs: evaluationDuration! * 1000, humanize: true })}
+                tooltipValue={`${evaluationDuration}s`}
               />
             )}
             {missingSeriesEvalsToResolve && (

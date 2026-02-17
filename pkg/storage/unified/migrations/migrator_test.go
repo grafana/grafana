@@ -10,10 +10,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	dashboardpkg "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	playlistpkg "github.com/grafana/grafana/pkg/registry/apps/playlist"
-	shorturlpkg "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	dashboard "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	playlist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
@@ -43,6 +45,7 @@ func TestIntegrationMigrations(t *testing.T) {
 	migrationTestCases := []testcases.ResourceMigratorTestCase{
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
+		testcases.NewShortURLsTestCase(),
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -65,6 +68,18 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		})
 		t.Logf("Using shared database path: %s", dbPath)
+	}
+
+	// Collect feature toggles required by all test cases
+	var featureToggles []string
+	seen := make(map[string]bool)
+	for _, tc := range testCases {
+		for _, ft := range tc.FeatureToggles() {
+			if !seen[ft] {
+				featureToggles = append(featureToggles, ft)
+				seen[ft] = true
+			}
+		}
 	}
 
 	// Store UIDs created by each test case
@@ -99,6 +114,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			DisableDBCleanup:      true,
 			APIServerStorageType:  "unified",
 			UnifiedStorageConfig:  unifiedConfig,
+			EnableFeatureToggles:  featureToggles,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -145,6 +161,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				UnifiedStorageConfig:  unifiedConfig,
+				EnableFeatureToggles:  featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -179,6 +196,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDBCleanup:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -203,6 +221,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDataMigrations: false, // Run migrations at startup
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
+				EnableFeatureToggles:  featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -211,18 +230,19 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		for _, state := range testStates {
 			t.Run(state.tc.Name(), func(t *testing.T) {
-				shouldExist := true
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-					// Resources exist if they're either:
+					// Only verify resources that are expected to be migrated, either:
 					// 1. In MigratedUnifiedResources (enabled by default), OR
 					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
+					// Resources not in either map won't have mode 5 enforced, so the K8s API
+					// may still serve them from legacy storage, making verification unreliable.
 					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
-						shouldExist = false
-						break
+						t.Skipf("Resource %s is not migrated by default, skipping verification", resourceKey)
+						return
 					}
 				}
-				state.tc.Verify(t, helper, shouldExist)
+				state.tc.Verify(t, helper, true)
 			})
 		}
 
@@ -249,6 +269,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDataMigrations: false,
 				APIServerStorageType:  "unified",
 				UnifiedStorageConfig:  unifiedConfig,
+				EnableFeatureToggles:  featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -276,11 +297,13 @@ const (
 
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
+	shorturlsID            = "shorturls migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
+	shorturlsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
@@ -401,15 +424,11 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
-			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			mockPlaylist := &legacy.MockPlaylistMigrator{}
-			mockShortURL := &legacy.MockShortURLMigrator{}
 			registry := migrations.NewMigrationRegistry()
-			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
-			registry.Register(shorturlpkg.ShortURLMigration(mockShortURL))
+			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				mockAccessor,
 				mockClient,
 				registry,
 			)
@@ -461,15 +480,11 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 		Once()
 
 	// Create migrator with mock client
-	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	mockPlaylist := &legacy.MockPlaylistMigrator{}
-	mockShortURL := &legacy.MockShortURLMigrator{}
 	registry := migrations.NewMigrationRegistry()
-	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
-	registry.Register(shorturlpkg.ShortURLMigration(mockShortURL))
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		mockAccessor,
 		mockClient,
 		registry,
 	)
@@ -653,15 +668,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
-			mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-			mockPlaylist := &legacy.MockPlaylistMigrator{}
-			mockShortURL := &legacy.MockShortURLMigrator{}
 			registry := migrations.NewMigrationRegistry()
-			registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-			registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
-			registry.Register(shorturlpkg.ShortURLMigration(mockShortURL))
+			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				mockAccessor,
 				mockClient,
 				registry,
 			)
@@ -729,15 +740,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 		Once()
 
 	// Create migrator with mock client
-	mockAccessor := &legacy.MockMigrationDashboardAccessor{}
-	mockPlaylist := &legacy.MockPlaylistMigrator{}
-	mockShortURL := &legacy.MockShortURLMigrator{}
 	registry := migrations.NewMigrationRegistry()
-	registry.Register(dashboardpkg.FoldersDashboardsMigration(mockAccessor))
-	registry.Register(playlistpkg.PlaylistMigration(mockPlaylist))
-	registry.Register(shorturlpkg.ShortURLMigration(mockShortURL))
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
+	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		mockAccessor,
 		mockClient,
 		registry,
 	)
