@@ -134,6 +134,18 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := grpcSection.Key("token").MustString("")
+	tokenExchangeURL := grpcSection.Key("token_exchange_url").MustString("")
+
+	tenantWatcherCfg := &resource.TenantWatcherConfig{
+		TenantAPIServerURL: cfg.TenantApiServerAddress,
+		Token:              token,
+		TokenExchangeURL:   tokenExchangeURL,
+		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
+		Log:                log.New("tenant-watcher"),
+	}
+
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
 		Tracer:               tracer,
@@ -142,6 +154,7 @@ func NewStorageBackend(
 		Log:                  log.New("storage-backend"),
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  tenantWatcherCfg,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
