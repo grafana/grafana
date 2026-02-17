@@ -104,12 +104,12 @@ spec:
   title: <REPOSITORY_TITLE>
   type: github
   github:
-    appID: "<GITHUB_APP_ID>"
-    installationID: "<GITHUB_INSTALL_ID>"
+    appID: '<GITHUB_APP_ID>'
+    installationID: '<GITHUB_INSTALL_ID>'
 secure:
   privateKey:
-    create: "<GITHUB_PRIVATE_KEY"
-```    
+    create: '<GITHUB_PRIVATE_KEY'
+```
 
 Replace the placeholders with your values:
 
