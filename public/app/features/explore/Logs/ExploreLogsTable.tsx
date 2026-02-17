@@ -5,7 +5,6 @@ import {
   DataFrame,
   EventBus,
   EventBusSrv,
-  ExplorePanelsState,
   FieldConfigSource,
   PanelData,
   urlUtil,
@@ -28,7 +27,6 @@ export function ExploreLogsTable(props: {
   data: PanelData;
   timeZone: 'utc' | 'browser' | string;
   buildLinkToLogLine: BuildLinkToLogLine;
-  panelState: ExplorePanelsState | undefined;
   width: number;
   height: number;
   onOptionsChange: (options: Options) => void;

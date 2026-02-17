@@ -1151,7 +1151,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 throw new Error('onFieldConfigChange not implemented.');
               }}
               onChangeTimeRange={onChangeTime}
-              panelState={panelState}
             />
           )}
 
