@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	alertmanager_config "github.com/prometheus/alertmanager/config"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -631,7 +629,7 @@ func escapeRouteExport(r *definitions.RouteExport) {
 		// convert regex to string, escape then covert back to regex
 		stringRepr := addEscapeCharactersToString(v.String())
 		mutated := regexp.MustCompile(stringRepr)
-		r.MatchRE[k] = alertmanager_config.Regexp{Regexp: mutated}
+		r.MatchRE[k] = definitions.Regexp{Regexp: mutated}
 	}
 	if r.MuteTimeIntervals != nil {
 		muteTimeIntervals := make([]string, len(*r.MuteTimeIntervals))

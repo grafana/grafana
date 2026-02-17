@@ -14,9 +14,10 @@ export interface JobStatusProps {
   watch: Job;
   jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -56,7 +57,15 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   }
 
   if (activeJob) {
-    return <JobContent job={activeJob} isFinishedJob={false} onStatusChange={onStatusChange} jobType={jobType} />;
+    return (
+      <JobContent
+        job={activeJob}
+        isFinishedJob={false}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+        onRetry={onRetry}
+      />
+    );
   }
 
   if (shouldCheckFinishedJobs) {
@@ -66,6 +75,7 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
         repositoryName={repoLabel}
         onStatusChange={onStatusChange}
         jobType={jobType}
+        onRetry={onRetry}
       />
     );
   }
