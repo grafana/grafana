@@ -452,12 +452,13 @@ You can also use switch variables in panel titles and other dashboard elements:
 
 ## Add a group by variable
 
-_What does this solve?_
-_How is it different from an ad hoc variable? Is it?_
-_Where can I see this in action?_
-_What do I need to have set up (data source, query, what should I be trying to group, what's the expected outcome?)_
-_Where can I take clean screenshots for a what's new?_
-_Will there be an instance where someone doesn't have dynamic dashboards but has this feature?_
+- _What does this solve?_
+- _I'm not clear on how grouping something "allows dashboard viewers to break down these panels into more digestible sub-sections while maintaining the context of the entire data set." if they're applied to the entire dashboard; does it automatically create sections?_
+- _How is it different from an ad hoc variable? Is it?_
+- _Where can I see this in action?_
+- _What do I need to have set up (data source, query, what should I be trying to group, what's the expected outcome?)_
+- _Where can I take clean screenshots for a what's new?_
+- _Will there be an instance where someone doesn't have dynamic dashboards but has this feature?_
 
 1. [Enter general options](#enter-general-options).
 1. Under the **Group by options** section of the page, select a target data source in the **Data source** drop-down list.
