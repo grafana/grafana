@@ -1,14 +1,22 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Stack, useStyles2 } from '@grafana/ui';
 import {
   EditableVariableType,
   getEditableVariables,
 } from 'app/features/dashboard-scene/settings/variables/utils';
 
-const EXPLORE_VARIABLE_TYPES: EditableVariableType[] = ['custom', 'query', 'textbox', 'constant'];
+export const EXPLORE_VARIABLE_TYPES: EditableVariableType[] = ['custom', 'query', 'textbox', 'constant'];
+
+const EXPLORE_DESCRIPTION_OVERRIDES: Partial<Record<EditableVariableType, () => string>> = {
+  constant: () =>
+    t(
+      'explore.variable-type-selection.constant-description',
+      'A hidden constant variable, useful for metric prefixes in shared queries'
+    ),
+};
 
 interface Props {
   onSelect: (type: EditableVariableType) => void;
@@ -24,10 +32,11 @@ export function ExploreVariableTypeSelection({ onSelect, onCancel }: Props) {
       <Stack direction="column" gap={1}>
         {EXPLORE_VARIABLE_TYPES.map((type) => {
           const config = editableVariables[type];
+          const description = EXPLORE_DESCRIPTION_OVERRIDES[type]?.() ?? config.description;
           return (
             <Card key={type} onClick={() => onSelect(type)} className={styles.card} noMargin>
               <Card.Heading>{config.name}</Card.Heading>
-              <Card.Description>{config.description}</Card.Description>
+              <Card.Description>{description}</Card.Description>
             </Card>
           );
         })}

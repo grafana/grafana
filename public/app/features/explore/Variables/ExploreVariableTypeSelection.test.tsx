@@ -30,6 +30,13 @@ describe('ExploreVariableTypeSelection', () => {
     expect(screen.queryByText('Switch')).not.toBeInTheDocument();
   });
 
+  it('does not mention dashboard in any type card description', () => {
+    const { container } = render(<ExploreVariableTypeSelection onSelect={onSelect} onCancel={onCancel} />);
+
+    const allText = container.textContent ?? '';
+    expect(allText.toLowerCase()).not.toContain('dashboard');
+  });
+
   it('calls onSelect with the correct type when clicking a card', async () => {
     const user = userEvent.setup();
     render(<ExploreVariableTypeSelection onSelect={onSelect} onCancel={onCancel} />);
