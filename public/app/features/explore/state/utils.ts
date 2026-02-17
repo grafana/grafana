@@ -22,6 +22,7 @@ import {
   URLRangeValue,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { SceneVariableSet } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -75,7 +76,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
-  variables: [],
+  variableSet: new SceneVariableSet({ variables: [] }),
   compact: false,
   queriesChangedIndex: 0,
   queriesChangedIndexAtRun: 0,

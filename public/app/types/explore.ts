@@ -20,6 +20,7 @@ import {
   DataLinkTransformationConfig,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
+import { SceneVariableSet } from '@grafana/scenes';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export type ExploreQueryParams = UrlQueryMap;
@@ -108,12 +109,6 @@ export interface ExploreState {
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
 export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
-
-export interface ExploreVariable {
-  name: string;
-  values: string[];
-  selectedValue: string;
-}
 
 export interface ExploreItemState {
   /**
@@ -257,7 +252,7 @@ export interface ExploreItemState {
   /**
    * User-defined variables for this Explore pane
    */
-  variables: ExploreVariable[];
+  variableSet: SceneVariableSet;
 
   /**
    * If set to true, all query rows will be collapsed initially and the content outline will be hidden

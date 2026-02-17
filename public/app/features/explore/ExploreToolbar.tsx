@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { CustomVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import {
   defaultIntervals,
   PageToolbar,
@@ -42,7 +43,7 @@ import {
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
-import { addVariableAction, updateVariableSelectedValueAction } from './state/variables';
+import { addVariableAction } from './state/variables';
 import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
@@ -66,6 +67,23 @@ interface Props {
   isContentOutlineOpen: boolean;
 }
 
+function ExploreVariableSelect({ variable }: { variable: CustomVariable }) {
+  const { value, options, name } = variable.useState();
+  return (
+    <Select
+      prefix={`$${name}`}
+      value={String(value)}
+      options={options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }))}
+      onChange={(selected) => {
+        if (selected.value !== undefined) {
+          variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
+        }
+      }}
+      width="auto"
+    />
+  );
+}
+
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
@@ -80,7 +98,26 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     }),
     shallowEqual
   );
-  const variables = useSelector((state: StoreState) => state.explore.panes[exploreId]?.variables ?? []);
+  const variableSet = useSelector((state: StoreState) => state.explore.panes[exploreId]?.variableSet);
+  const [variables, setVariables] = useState(() =>
+    (variableSet?.state.variables ?? []).filter((v): v is CustomVariable => v instanceof CustomVariable)
+  );
+
+  useEffect(() => {
+    setVariables(
+      (variableSet?.state.variables ?? []).filter((v): v is CustomVariable => v instanceof CustomVariable)
+    );
+  }, [variableSet]);
+
+  useEffect(() => {
+    if (!variableSet) {
+      return;
+    }
+    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      dispatch(runQueries({ exploreId }));
+    });
+    return () => sub.unsubscribe();
+  }, [variableSet, dispatch, exploreId]);
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -257,19 +294,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
           </ToolbarButton>,
           ...variables.map((variable) => (
-            <Select
-              key={`var-${variable.name}`}
-              prefix={`$${variable.name}`}
-              value={variable.selectedValue}
-              options={variable.values.map((v) => ({ label: v || '(empty)', value: v }))}
-              onChange={(selected) => {
-                if (selected.value !== undefined) {
-                  dispatch(updateVariableSelectedValueAction({ exploreId, name: variable.name, selectedValue: selected.value }));
-                  dispatch(runQueries({ exploreId }));
-                }
-              }}
-              width="auto"
-            />
+            <ExploreVariableSelect key={`var-${variable.state.name}`} variable={variable} />
           )),
         ].filter(Boolean)}
         forceShowLeftItems

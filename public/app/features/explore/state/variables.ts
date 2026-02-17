@@ -1,6 +1,8 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
+import { ScopedVars } from '@grafana/data';
+import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import { ExploreItemState } from 'app/types/explore';
 
 export interface AddVariablePayload {
@@ -14,41 +16,40 @@ export interface RemoveVariablePayload {
   name: string;
 }
 
-export interface UpdateVariableSelectedValuePayload {
-  exploreId: string;
-  name: string;
-  selectedValue: string;
-}
-
 export const addVariableAction = createAction<AddVariablePayload>('explore/addVariable');
 export const removeVariableAction = createAction<RemoveVariablePayload>('explore/removeVariable');
-export const updateVariableSelectedValueAction = createAction<UpdateVariableSelectedValuePayload>(
-  'explore/updateVariableSelectedValue'
-);
+
+export function buildExploreVariableScopedVars(variableSet: SceneVariableSet): ScopedVars {
+  const scopedVars: ScopedVars = {};
+  for (const v of variableSet.state.variables) {
+    scopedVars[v.state.name] = { text: v.getValueText?.() ?? '', value: v.getValue() };
+  }
+  return scopedVars;
+}
 
 export const variablesReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
   if (addVariableAction.match(action)) {
     const { name, values } = action.payload;
-    return {
-      ...state,
-      variables: [...state.variables, { name, values, selectedValue: values[0] }],
-    };
+    const query = values.join(',');
+    const variable = new CustomVariable({
+      name,
+      query,
+      value: values[0] ?? '',
+      text: values[0] ?? '',
+      options: values.map((v) => ({ label: v || '(empty)', value: v })),
+    });
+    const newSet = new SceneVariableSet({
+      variables: [...state.variableSet.state.variables, variable],
+    });
+    return { ...state, variableSet: newSet };
   }
 
   if (removeVariableAction.match(action)) {
     const { name } = action.payload;
-    return {
-      ...state,
-      variables: state.variables.filter((v) => v.name !== name),
-    };
-  }
-
-  if (updateVariableSelectedValueAction.match(action)) {
-    const { name, selectedValue } = action.payload;
-    return {
-      ...state,
-      variables: state.variables.map((v) => (v.name === name ? { ...v, selectedValue } : v)),
-    };
+    const newSet = new SceneVariableSet({
+      variables: state.variableSet.state.variables.filter((v) => v.state.name !== name),
+    });
+    return { ...state, variableSet: newSet };
   }
 
   return state;

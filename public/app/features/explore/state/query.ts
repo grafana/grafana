@@ -64,6 +64,7 @@ import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
+import { buildExploreVariableScopedVars } from './variables';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -558,10 +559,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       supplementaryQueries,
     } = exploreItemState;
 
-    const exploreVariableScopedVars: ScopedVars = {};
-    for (const v of exploreItemState.variables) {
-      exploreVariableScopedVars[v.name] = { text: v.selectedValue, value: v.selectedValue };
-    }
+    const exploreVariableScopedVars = buildExploreVariableScopedVars(exploreItemState.variableSet);
     const mergedScopedVars: ScopedVars = { ...scopedVars, ...exploreVariableScopedVars };
 
     let newQuerySource: Observable<ExplorePanelData>;
