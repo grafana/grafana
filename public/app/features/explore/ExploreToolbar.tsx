@@ -11,6 +11,7 @@ import {
   defaultIntervals,
   PageToolbar,
   RefreshPicker,
+  Select,
   SetInterval,
   ToolbarButton,
   ButtonGroup,
@@ -41,7 +42,7 @@ import {
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
-import { addVariableAction } from './state/variables';
+import { addVariableAction, updateVariableSelectedValueAction } from './state/variables';
 import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
@@ -79,6 +80,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     }),
     shallowEqual
   );
+  const variables = useSelector((state: StoreState) => state.explore.panes[exploreId]?.variables ?? []);
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -254,6 +256,20 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           >
             <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
           </ToolbarButton>,
+          ...variables.map((variable) => (
+            <Select
+              key={`var-${variable.name}`}
+              prefix={`$${variable.name}`}
+              value={variable.selectedValue}
+              options={variable.values.map((v) => ({ label: v || '(empty)', value: v }))}
+              onChange={(selected) => {
+                if (selected.value !== undefined) {
+                  dispatch(updateVariableSelectedValueAction({ exploreId, name: variable.name, selectedValue: selected.value }));
+                }
+              }}
+              width="auto"
+            />
+          )),
         ].filter(Boolean)}
         forceShowLeftItems
       >
