@@ -659,6 +659,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "reportingV2Layouts",
+			Description:  "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
 			Stage:        FeatureStagePublicPreview,
@@ -2011,6 +2019,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingAlertsActivityBanner",
+			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
@@ -2367,7 +2384,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
-	}
+		{
+			Name:         "alertingNotificationHistoryGlobal",
+			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		}}
 )
 
 //go:embed toggles_gen.json
