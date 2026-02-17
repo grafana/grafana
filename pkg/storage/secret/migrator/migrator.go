@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	TableNameKeeper         = "secret_keeper"
-	TableNameSecureValue    = "secret_secure_value"
-	TableNameDataKey        = "secret_data_key"
-	TableNameEncryptedValue = "secret_encrypted_value"
+	TableNameKeeper               = "secret_keeper"
+	TableNameSecureValue          = "secret_secure_value"
+	TableNameDataKey              = "secret_data_key"
+	TableNameEncryptedValue       = "secret_encrypted_value"
+	TableNameConsolidationHistory = "secret_consolidation_history"
 )
 
 type SecretDB struct {
@@ -134,6 +135,16 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 	tables = append(tables, encryptedValueTable)
+
+	consolidationHistoryTable := migrator.Table{
+		Name: TableNameConsolidationHistory,
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "completed", Type: migrator.DB_BigInt, Nullable: false},
+		},
+	}
+	tables = append(tables, consolidationHistoryTable)
 
 	// Initialize all tables
 	for t := range tables {

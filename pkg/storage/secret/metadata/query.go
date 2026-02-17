@@ -37,6 +37,10 @@ var (
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
 	sqlSecureValueSetVersionToInactive         = mustTemplate("secure_value_set_version_to_inactive.sql")
+
+	sqlConsolidationHistoryCreate    = mustTemplate("consolidation_history_create.sql")
+	sqlConsolidationHistoryGetLatest = mustTemplate("consolidation_history_get_latest.sql")
+	sqlConsolidationHistoryFinish    = mustTemplate("consolidation_history_finish.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -153,6 +157,38 @@ type listByNameKeeper struct {
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameKeeper) Validate() error {
 	return nil // TODO
+}
+
+/****************************************/
+/**-- Consolidation History Queries --**/
+/****************************************/
+
+type createConsolidationHistory struct {
+	sqltemplate.SQLTemplate
+	Created   int64
+	Completed int64
+}
+
+func (r createConsolidationHistory) Validate() error {
+	return nil
+}
+
+type getLatestConsolidationHistory struct {
+	sqltemplate.SQLTemplate
+}
+
+func (r getLatestConsolidationHistory) Validate() error {
+	return nil
+}
+
+type finishConsolidationHistory struct {
+	sqltemplate.SQLTemplate
+	ID        int64
+	Completed int64
+}
+
+func (r finishConsolidationHistory) Validate() error {
+	return nil
 }
 
 /******************************/

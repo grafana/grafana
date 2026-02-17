@@ -17,6 +17,7 @@ type ConsolidationService struct {
 	encryptedValueStore       contracts.EncryptedValueStorage
 	globalEncryptedValueStore contracts.GlobalEncryptedValueStorage
 	encryptionManager         contracts.EncryptionManager
+	consolidationHistoryStore contracts.ConsolidationHistoryStorage
 }
 
 func ProvideConsolidationService(
@@ -25,6 +26,7 @@ func ProvideConsolidationService(
 	encryptedValueStore contracts.EncryptedValueStorage,
 	globalEncryptedValueStore contracts.GlobalEncryptedValueStorage,
 	encryptionManager contracts.EncryptionManager,
+	consolidationHistoryStore contracts.ConsolidationHistoryStorage,
 ) contracts.ConsolidationService {
 	return &ConsolidationService{
 		tracer:                    tracer,
@@ -32,10 +34,11 @@ func ProvideConsolidationService(
 		encryptedValueStore:       encryptedValueStore,
 		globalEncryptedValueStore: globalEncryptedValueStore,
 		encryptionManager:         encryptionManager,
+		consolidationHistoryStore: consolidationHistoryStore,
 	}
 }
 
-func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
+func (s *ConsolidationService) Consolidate(ctx context.Context, force bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
 	defer span.End()
 

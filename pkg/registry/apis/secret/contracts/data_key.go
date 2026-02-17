@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrDataKeyNotFound = errors.New("data key not found")
+	ErrDataKeyNotFound         = errors.New("data key not found")
+	ErrNoConsolidationToFinish = errors.New("no consolidation to finish")
 )
 
 // SecretDataKey does not have a mirrored K8s resource
@@ -37,4 +38,18 @@ type DataKeyStorage interface {
 // GlobalDataKeyStorage is an interface for namespace unbounded operations.
 type GlobalDataKeyStorage interface {
 	DisableAllDataKeys(ctx context.Context) error
+}
+
+// ConsolidationRecord is for internal use only and does not have a mirrored K8s resource
+type ConsolidationRecord struct {
+	ID        int64
+	Created   time.Time
+	Completed time.Time
+}
+
+// ConsolidationHistoryStorage is the interface for wiring and dependency injection.
+type ConsolidationHistoryStorage interface {
+	StartNewConsolidation(ctx context.Context) error
+	FinishCurrentConsolidation(ctx context.Context) error
+	GetLatestConsolidation(ctx context.Context) (*ConsolidationRecord, error)
 }
