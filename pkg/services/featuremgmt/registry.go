@@ -608,6 +608,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "browseDashboardsUseNavigate",
+			Description:  "Use React Router's useNavigate hook instead of locationService in browse dashboards pages",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "unlimitedLayoutsNesting",
 			Description:  "Enables unlimited dashboard panel grouping",
 			Stage:        FeatureStageExperimental,

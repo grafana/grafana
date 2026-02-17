@@ -399,6 +399,11 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
+  * Use React Router's useNavigate hook instead of locationService in browse dashboards pages
+  * @default false
+  */
+  browseDashboardsUseNavigate?: boolean;
+  /**
   * Enables unlimited dashboard panel grouping
   * @default false
   */

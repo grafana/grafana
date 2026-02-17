@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
@@ -29,6 +30,7 @@ interface Props {
 
 export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
@@ -80,7 +82,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     });
     const { parents } = folder;
     const parentUrl = parents && parents.length ? parents[parents.length - 1].url : '/dashboards';
-    locationService.push(parentUrl);
+    if (config.featureToggles.browseDashboardsUseNavigate) {
+      navigate(parentUrl);
+    } else {
+      locationService.push(parentUrl);
+    }
   };
 
   const showMoveModal = () => {

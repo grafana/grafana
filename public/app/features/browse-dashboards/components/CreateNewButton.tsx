@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
@@ -46,6 +46,7 @@ export default function CreateNewButton({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
@@ -87,7 +88,12 @@ export default function CreateNewButton({
       }
 
       if (folder.data) {
-        locationService.push(locationUtil.stripBaseFromUrl(folder.data.url));
+        const url = locationUtil.stripBaseFromUrl(folder.data.url);
+        if (config.featureToggles.browseDashboardsUseNavigate) {
+          navigate(url);
+        } else {
+          locationService.push(url);
+        }
       }
     } finally {
       setShowNewFolderDrawer(false);

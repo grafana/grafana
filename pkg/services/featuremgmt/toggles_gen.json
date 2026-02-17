@@ -940,6 +940,20 @@
     },
     {
       "metadata": {
+        "name": "browseDashboardsUseNavigate",
+        "resourceVersion": "1771343866425",
+        "creationTimestamp": "2026-02-17T15:57:46Z"
+      },
+      "spec": {
+        "description": "Use React Router's useNavigate hook instead of locationService in browse dashboards pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-12T16:56:49Z",
@@ -3425,6 +3439,21 @@
     },
     {
       "metadata": {
+        "name": "playlistUseNavigate",
+        "resourceVersion": "1770830522113",
+        "creationTimestamp": "2026-02-11T17:22:02Z",
+        "deletionTimestamp": "2026-02-17T15:57:46Z"
+      },
+      "spec": {
+        "description": "Use React Router's useNavigate hook instead of locationService in playlist pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-12-20T03:09:31Z",
@@ -4162,6 +4191,21 @@
     },
     {
       "metadata": {
+        "name": "serviceAccountsUseNavigate",
+        "resourceVersion": "1770830522113",
+        "creationTimestamp": "2026-02-11T17:22:02Z",
+        "deletionTimestamp": "2026-02-17T15:57:46Z"
+      },
+      "spec": {
+        "description": "Use React Router's useNavigate hook instead of locationService in service accounts pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-15T21:07:39Z"
@@ -4378,6 +4422,21 @@
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamsUseNavigate",
+        "resourceVersion": "1770830522113",
+        "creationTimestamp": "2026-02-11T17:22:02Z",
+        "deletionTimestamp": "2026-02-17T15:57:46Z"
+      },
+      "spec": {
+        "description": "Use React Router's useNavigate hook instead of locationService in teams pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "expression": "false"
       }
     },
