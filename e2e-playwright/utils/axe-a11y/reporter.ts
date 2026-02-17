@@ -3,8 +3,7 @@ import type { AxeResults } from 'axe-core';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { AXE_A11Y_ANNOTATION_TYPE } from './constants';
-import { AxeA11yReport, AxeA11yReportAnnotation, AxeA11yReportViolation } from './types';
+import { AxeA11yReport, AxeA11yReportViolation } from './types';
 
 class AxeA11yReporter implements Reporter {
   private violations: AxeA11yReportViolation[] = [];
@@ -25,7 +24,7 @@ class AxeA11yReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    const axeA11yAnnotation = result.annotations.find((a) => a.type === AXE_A11Y_ANNOTATION_TYPE);
+    const axeA11yAnnotation = result.annotations.find((a) => a.type === 'axe-a11y');
     if (!axeA11yAnnotation) {
       return;
     }
@@ -39,7 +38,7 @@ class AxeA11yReporter implements Reporter {
 
     const reportJson = axeA11yAnnotation.description;
     if (!reportJson) {
-      console.error(`No report found in axe-a11y annotation for test ${testName}`);
+      console.error(`No report found inside "axe-a11y" annotation for test ${testName}`);
       return;
     }
 
@@ -47,10 +46,10 @@ class AxeA11yReporter implements Reporter {
     // or whether a rule is being excluded that doesn't need to be? This would help identify opportunities to improve our accessibility
     // over time by tightening thresholds and re-enabling rules. Maybe it's like a "verbose mode."
     try {
-      const axeA11yReport: AxeA11yReportAnnotation = JSON.parse(reportJson);
-      this.reports[testName] = axeA11yReport.result;
+      const axeA11yReport: AxeResults = JSON.parse(reportJson);
+      this.reports[testName] = axeA11yReport;
       this.violations.push(
-        ...axeA11yReport.result.violations.map((violation) => ({ testName, location: test.location, violation }))
+        ...axeA11yReport.violations.map((violation) => ({ testName, location: test.location, violation }))
       );
       this.failedTests += result.status === 'failed' ? 1 : 0;
     } catch (e) {
@@ -60,35 +59,6 @@ class AxeA11yReporter implements Reporter {
   }
 
   async onEnd(_result: FullResult) {
-    if (this.totalTests === 0) {
-      return;
-    }
-
-    console.log('--- [axe-a11y] Accessibility Test Summary ---');
-    console.log(`Total a11y tests: ${this.totalTests}`);
-    if (this.violations.length > 0) {
-      console.log(`Violations (${this.violations.length}):`);
-
-      for (const { testName, violation, location } of this.violations) {
-        console.log(`• Test:      ${testName}`);
-        console.log(`             (${location.file}:${location.line}:${location.column})`);
-        console.log(`  Violation: ${violation.help} (${violation.helpUrl})`);
-        console.log(`  Impact:    ${violation.impact}`);
-
-        const nodePrintLimit = 5;
-        for (let i = 0; i < violation.nodes.length && i < nodePrintLimit; i++) {
-          console.log(`  ${i === 0 ? 'Nodes:' : '      '}     • ${violation.nodes[i].html}`);
-        }
-        if (violation.nodes.length > nodePrintLimit) {
-          console.log(`             ... and ${violation.nodes.length - nodePrintLimit} more node(s)`);
-        }
-
-        console.log('');
-      }
-    } else {
-      console.log('No violations found! 🏆');
-    }
-
     if (process.env.AXE_A11Y_REPORT_PATH) {
       try {
         const report: AxeA11yReport = {
@@ -102,13 +72,11 @@ class AxeA11yReporter implements Reporter {
           rawReports: this.reports,
         };
         await writeFile(path.join(process.cwd(), process.env.AXE_A11Y_REPORT_PATH), JSON.stringify(report, null, 2));
-        console.info(`\nReport: ${process.env.AXE_A11Y_REPORT_PATH}`);
+        console.info(`Axe a11y report written to ${process.env.AXE_A11Y_REPORT_PATH}`);
       } catch (e) {
         console.error('Failed to write axe-a11y report:', e);
       }
     }
-
-    console.log('---------------------------------------------');
   }
 }
 
