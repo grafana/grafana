@@ -9,7 +9,7 @@ import { QueryGroupOptions } from 'app/types/query';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { QueryEditorProvider } from './QueryEditorContext';
+import { PendingExpression, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
@@ -217,10 +217,20 @@ export function QueryEditorContextWrapper({
         toggleDebug,
       },
       pendingExpression,
-      setPendingExpression,
+      setPendingExpression: (pending: PendingExpression | null) => {
+        if (pending) {
+          clearPendingTransformation();
+        }
+        setPendingExpression(pending);
+      },
       finalizePendingExpression,
       pendingTransformation,
-      setPendingTransformation,
+      setPendingTransformation: (pending: PendingTransformation | null) => {
+        if (pending) {
+          clearPendingExpression();
+        }
+        setPendingTransformation(pending);
+      },
       finalizePendingTransformation,
     }),
     [
