@@ -240,7 +240,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			importedRules: importedRules,
 			ruleName:      testImportedRule.Name,
 			updatedRule:   testImportedRule,
-			expErr:        models.MakeErrInhibitionRuleOrigin(testImportedRule.UID, "update"),
+			expErr:        models.MakeErrInhibitionRuleOrigin(testImportedRule.Name, "update"),
 		},
 	}
 
@@ -290,7 +290,7 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 			name:          "can't delete imported rule",
 			importedRules: importedRules,
 			ruleName:      testImportedRule.Name,
-			expErr:        models.MakeErrInhibitionRuleOrigin(testImportedRule.UID, "delete"),
+			expErr:        models.MakeErrInhibitionRuleOrigin(testImportedRule.Name, "delete"),
 		},
 	}
 

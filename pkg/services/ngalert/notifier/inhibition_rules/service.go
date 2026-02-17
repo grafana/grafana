@@ -134,7 +134,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 
 	existingProv := models.Provenance(existing.Provenance)
 	if existingProv == models.ProvenanceConvertedPrometheus {
-		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(existing.UID, "update")
+		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(existing.Name, "update")
 	}
 
 	prov := models.Provenance(rule.Provenance)
@@ -191,7 +191,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 
 	existingProv := models.Provenance(existing.Provenance)
 	if existingProv == models.ProvenanceConvertedPrometheus {
-		return models.MakeErrInhibitionRuleOrigin(existing.UID, "delete")
+		return models.MakeErrInhibitionRuleOrigin(existing.Name, "delete")
 	}
 
 	if err := svc.validator(existingProv, provenance); err != nil {
