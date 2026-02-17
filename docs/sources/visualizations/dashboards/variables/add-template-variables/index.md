@@ -105,6 +105,7 @@ The following table lists the types of variables shipped with Grafana.
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
 | Ad hoc filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add ad hoc filters](#add-ad-hoc-filters). |
 | Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                            |
+| Group by            | [Add a switch variable]().                            |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
@@ -138,6 +139,7 @@ To create a variable, follow these steps:
    - [Interval](#add-an-interval-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
+   - [Group by]()
 
 <!-- vale Grafana.Spelling = YES -->
 
@@ -325,7 +327,7 @@ To create an ad hoc filter, follow these steps:
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
-1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the space provided.
+1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the field provided.
 1. Click **Save dashboard**.
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
@@ -447,6 +449,30 @@ You can also use switch variables in panel titles and other dashboard elements:
 ```
 {{#if debug_mode}}Debug Mode: {{/if}}Application Metrics
 ```
+
+## Add a group by variable
+
+_What does this solve?_
+_How is it different from an ad hoc variable? Is it?_
+_Where can I see this in action?_
+_What do I need to have set up (data source, query, what should I be trying to group, what's the expected outcome?)_
+_Where can I take clean screenshots for a what's new?_
+_Will there be an instance where someone doesn't have dynamic dashboards but has this feature?_
+
+1. [Enter general options](#enter-general-options).
+1. Under the **Group by options** section of the page, select a target data source in the **Data source** drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+
+1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the field provided.
+1. (Optional) Select the **Allow custom values** checkbox to let users add custom values to the list.
+1. Review the list of current variable values in the **Preview of values** section to ensure they match what you expect.
+1. Click **Save dashboard**.
+1. Enter an optional description of your dashboard changes, and then click **Save**.
+1. Click **Back to dashboard** and **Exit edit**.
+
+Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
