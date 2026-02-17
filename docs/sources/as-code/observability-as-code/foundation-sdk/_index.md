@@ -65,7 +65,12 @@ You'll see these concepts in action in the next example. These concepts are expl
 
 ## Create a dashboard
 
-The following example demonstrates how you can create a simple dashboard:
+See the following examples in Go and Typescript to create a simple dashboard:
+
+This code defines a dashboard titled “My Dashboard” with a two panels:
+
+- a simple stat panel displaying a version number, and
+- a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
 
 {{< code >}}
 
@@ -172,11 +177,6 @@ console.log(JSON.stringify(dashboard, null, 2));
 
 {{< /code >}}
 
-This code defines a dashboard titled “My Dashboard” with a two panels:
-
-- a simple stat panel displaying a version number, and
-- a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
-
 ## Export and use the JSON
 
 After you've defined your dashboard as code, build the final dashboard representation using the dashboard builder (typically using the `build()` function depending on language choice) and output the result as a JSON.
@@ -185,95 +185,6 @@ With the JSON payload, you can:
 
 - **Manually import:** Paste into Grafana’s dashboard import feature.
 - **Automate:** Use [Grafana's API](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/) or the [Grafana CLI](../grafana-cli/) to programmatically upload the dashboard JSON.
-
-## Concepts
-
-Now that you've seen how to define a basic dashboard using code, let's take a moment to explain how it all works behind the scenes. The Grafana Foundation SDK is built around a few core concepts that make your dashboards structured, reusable, and strongly typed.
-
-### Builders
-
-The SDK follows a builder pattern, which lets you compose dashboards step-by-step using chained method calls.
-Almost every piece of the dashboard, including dashboards, panels, rows, queries, and variables, has its own `Builder` class.
-
-Here are a few you've already seen:
-
-- `DashboardBuilder` - Starts the dashboard definition and sets global configuration settings like title, UID, refresh interval, time range, etc.
-- `PanelBuilder` - Creates individual visualizations like time series panels, stat panels, or log panels.
-- `DataqueryBuilder` - Defines how a panel fetches data, for example, from Prometheus or the `testdata` plugin.
-
-Builders are chainable, so you can fluently compose dashboards in a readable, structured way:
-
-{{< code >}}
-
-```go
-stat.NewPanelBuilder().
-  Title("Version").
-  Datasource(testdataRef).
-  ReduceOptions(common.NewReduceDataOptionsBuilder().
-    Calcs([]string{"lastNotNull"}).
-    Fields("/.*/")).
-  WithTarget(
-    testdata.NewDataqueryBuilder().
-      ScenarioId("csv_content").
-      CsvContent("version\nv1.2.3"),
-  )
-```
-
-```typescript
-new stat.PanelBuilder()
-  .title('Version')
-  .reduceOptions(new common.ReduceDataOptionsBuilder().calcs(['lastNotNull']).fields('/.*/'))
-  .datasource(testdataRef)
-  .withTarget(new testdata.DataqueryBuilder().scenarioId('csv_content').csvContent('version\nv1.2.3'));
-```
-
-{{< /code >}}
-
-### Types
-
-The Grafana Foundation SDK uses strong types under the hood to help catch mistakes before you deploy a broken dashboard.
-
-For example:
-
-- When setting a unit, you'll get autocomplete suggestions for valid Grafana units like `"percent"` or `"bps"`.
-- When defining a time range, you'll be guided to provide the correct structure, like `from` and `to` values.
-- When referencing data sources, you'll use a structured `DataSourceRef` object with defined `type` and `uid` fields.
-
-This helps you:
-
-- Avoid typos or unsupported configuration values
-- Get full autocomplete and inline documentation in your IDE
-- Write dashboards that are less error-prone and easier to maintain
-
-Strong typing also makes it easier to build reusable patterns and components with confidence, especially in large codebases or teams.
-
-### Options
-
-Most builder methods accept simple values like strings or numbers, but others expect more structured option objects. These are used for things like:
-
-- `ReduceDataOptions` - How to reduce time series data into single values (e.g. last, avg).
-- `VizLegendOptions` - Configure how the legend of a panel is displayed.
-- `CanvasElementOptions` - Define how the the various components of a Canvas panel should be displayed.
-
-Example using options:
-
-{{< code >}}
-
-```go
-stat.NewPanelBuilder().
-  ReduceOptions(common.NewReduceDataOptionsBuilder().
-    Calcs([]string{"lastNotNull"}).
-    Fields("/.*/"))
-  )
-```
-
-```typescript
-new stat.PanelBuilder().reduceOptions(new common.ReduceDataOptionsBuilder().calcs(['lastNotNull']).fields('/.*/'));
-```
-
-{{< /code >}}
-
-By using option builders, you don't need to manually construct deeply nested configuration objects. Instead, the SDK gives you a typed and guided API that mirrors a dashboards internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
 
 ## Explore a real-world example
 

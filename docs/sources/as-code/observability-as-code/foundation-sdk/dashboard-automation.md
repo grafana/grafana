@@ -19,26 +19,26 @@ aliases:
 
 # Automate dashboard provisioning with CI/CD
 
-## Introduction
+Managing Grafana dashboards manually can be inefficient and error-prone. With the Grafana Foundation SDK you can define dashboards using strongly typed code, commit them to version control systems, and automatically deploy them using GitHub Actions.
 
-Managing Grafana dashboards manually can be inefficient and error-prone. As you saw in the Getting Started guide, we can define dashboards using strongly typed code with the Grafana Foundation SDK. We can then commit them to version controls, and automatically deploy them using GitHub Actions.
+## Overview
 
-This guide walks through:
+This guide shows you how to:
 
-- Generating a Grafana dashboard as code
-- Formatting it for Kubernetes-style deployment
-- Using GitHub Actions to deploy the dashboard
-- Checking if the dashboard exists and updating it if needed
+- Generate a Grafana dashboard as code
+- Format it for Kubernetes-style deployment
+- Use GitHub Actions to deploy the dashboard
+- Verify and update the dashboard
 
-By the end, every change to your dashboard code will be automatically created or updated in your Grafana instance without manual intervention.
+By the end, you'll be able to provision your dashboard as code, and every change to your dashboard cwill be automatically created or updated in your Grafana instance without manual intervention.
 
 {{< youtube id="cFnO8kVOaAI" >}}
 
-You can find the full example source code in the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example).
+You can find the full example source code in the [Introduction to the Foundation SDK](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example) GitHib repository.
 
-## 1. Generating the dashboard JSON
+## 1. Generate the dashboard JSON
 
-Before deploying a dashboard, we need to define it in code using the Grafana Foundation SDK. We ran through an example of this in the Getting Started guide, however, in order to comply with the Kubernetes resource compatible API that Grafana exposes, we’ll make some changes to the code to output the dashboard JSON in the appropriate format.
+Before deploying a dashboard, define it as code using the Grafana Foundation SDK. We ran through an example of this in the Getting Started guide, however, in order to comply with the Kubernetes resource compatible API that Grafana exposes, we’ll make some changes to the code to output the dashboard JSON in the appropriate format.
 
 {{< code >}}
 
@@ -142,12 +142,13 @@ This script:
 - Wraps it in a Kubernetes-style API format (`apiVersion`, `kind`, `metadata`, `spec`)
 - Saves it as `dashboard.json` for deployment
 
-## 2. Automating deployment with GitHub Actions
+## 2. Automate deployment with GitHub Actions
 
 Next, we’ll set up GitHub Actions to:
-Extract the dashboard name from `dashboard.json`
-Check if the dashboard already exists within our Grafana instance
-Update it if it does, create it if it doesn’t
+
+- Extract the dashboard name from `dashboard.json`
+- Check if the dashboard already exists within our Grafana instance
+- Update it if it does, create it if it doesn’t
 
 {{< admonition type="note" >}}
 The following GitHub Action configuration assumes you are using a Go-based dashboard generator. If you are using one of the other languages that the Foundation SDK supports, please modify the **Generate Dashboard JSON** step accordingly.
