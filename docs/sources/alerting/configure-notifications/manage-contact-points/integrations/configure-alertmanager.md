@@ -59,9 +59,9 @@ For more details on contact points, including how to test them and enable notifi
 
 ## Alertmanager settings
 
-| Option | Description           |
-| ------ | --------------------- |
-| URL    | The Alertmanager URL. |
+| Option | Description                                                                                                                        |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| URL    | The Alertmanager URL. This field is [protected](ref:configure-contact-points#protected-fields) from modification in Grafana Cloud. |
 
 #### Optional settings
 
