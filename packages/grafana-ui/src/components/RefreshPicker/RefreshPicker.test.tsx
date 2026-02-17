@@ -11,7 +11,7 @@ describe('RefreshPicker', () => {
         const result = intervalsToOptions();
 
         expect(result).toEqual([
-          { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
+          { value: '', label: 'Off', ariaLabel: 'Off' },
           { value: '5s', label: '5s', ariaLabel: '5 seconds' },
           { value: '10s', label: '10s', ariaLabel: '10 seconds' },
           { value: '30s', label: '30s', ariaLabel: '30 seconds' },
@@ -33,7 +33,7 @@ describe('RefreshPicker', () => {
         const result = intervalsToOptions({ intervals });
 
         expect(result).toEqual([
-          { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
+          { value: '', label: 'Off', ariaLabel: 'Off' },
           { value: '5s', label: '5s', ariaLabel: '5 seconds' },
           { value: '10s', label: '10s', ariaLabel: '10 seconds' },
         ]);
@@ -45,7 +45,7 @@ describe('RefreshPicker', () => {
 
       const result = intervalsToOptions({ intervals });
       expect(result).toEqual([
-        { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
+        { value: '', label: 'Off', ariaLabel: 'Off' },
         { value: '10s', label: '10s', ariaLabel: '10 seconds' },
         { value: '1m 30s', label: '1m 30s', ariaLabel: '1 minute 30 seconds' },
       ]);
@@ -74,12 +74,12 @@ describe('RefreshPicker', () => {
       expect(RefreshPicker.isLive(undefined)).toBe(false);
     });
     it('offOption, liveOption and autoOption', () => {
-      expect(RefreshPicker.offOption).toEqual({ value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' });
-      expect(RefreshPicker.liveOption).toEqual({ value: 'LIVE', label: 'Live', ariaLabel: 'Turn on live streaming' });
+      expect(RefreshPicker.offOption).toEqual({ value: '', label: 'Off', ariaLabel: 'Off' });
+      expect(RefreshPicker.liveOption).toEqual({ value: 'LIVE', label: 'Live', ariaLabel: 'Live' });
       expect(RefreshPicker.autoOption).toEqual({
         value: 'auto',
         label: 'Auto',
-        ariaLabel: 'Select refresh from the query range',
+        ariaLabel: 'Auto',
       });
     });
   });
