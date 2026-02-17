@@ -65,8 +65,6 @@ export function AlertsActivityBanner() {
       title={t('alerting.alerts-activity-banner.title', 'Alert Activity is now available!')}
       onRemove={handleDismiss}
       className={styles.banner}
-      role="region"
-      aria-labelledby="alerts-activity-banner-title"
     >
       <Stack direction="column" gap={2}>
         <Text>

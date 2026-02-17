@@ -11,7 +11,7 @@ jest.mock('../Analytics', () => ({
 }));
 
 const ui = {
-  banner: byRole('region'),
+  banner: byRole('status'),
   title: byText(/alert activity is now available/i),
   description: byText(/a brand new page is now available/i),
   openButton: byRole('link', { name: /open alerts activity/i }),
