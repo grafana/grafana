@@ -7,6 +7,8 @@ import { DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
+import { setVariablesAction } from 'app/features/explore/state/variables';
+import { deserializeVariables } from 'app/features/explore/state/variablesSerialization';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkDispatch } from 'app/types/store';
@@ -33,7 +35,7 @@ export function initializeFromURL(
   dispatch(clearPanes());
 
   Promise.all(
-    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
+    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact, variables }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
         return Promise.resolve(
           // Given the Grafana datasource will always be present, this should always be defined.
@@ -64,13 +66,13 @@ export function initializeFromURL(
             ];
           }
 
-          return { exploreId, compact, range, panelsState, queries: validQueries, datasource: paneDatasource };
+          return { exploreId, compact, range, panelsState, queries: validQueries, datasource: paneDatasource, variables };
         });
       });
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact, variables: urlVariables }) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -81,7 +83,14 @@ export function initializeFromURL(
             eventBridge: new EventBusSrv(),
             compact: !!compact,
           })
-        ).unwrap();
+        )
+          .unwrap()
+          .then((result) => {
+            if (urlVariables && urlVariables.length > 0) {
+              dispatch(setVariablesAction({ exploreId, variables: deserializeVariables(urlVariables) }));
+            }
+            return result;
+          });
       })
     );
 

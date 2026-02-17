@@ -11,9 +11,12 @@ import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
+import { CustomVariable } from '@grafana/scenes';
+
 import { makeDatasourceSetup } from '../../spec/helper/setup';
 import { updateQueryLibraryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
+import { addSceneVariableAction, removeVariableAction } from '../../state/variables';
 
 import { useStateSync } from './';
 
@@ -613,6 +616,197 @@ describe('useStateSync', () => {
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
       expect(panes.one?.queryLibraryRef).toBeUndefined();
+    });
+  });
+
+  it('restores variables from URL on initial load', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            variables: [
+              { name: 'job', query: 'demo,node', value: 'demo', text: 'demo' },
+              { name: 'env', query: 'dev,prod', isMulti: true, value: 'dev', text: 'dev' },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const pane = store.getState().explore.panes['one'];
+      expect(pane).toBeDefined();
+      const variables = pane?.variableSet.state.variables ?? [];
+      expect(variables).toHaveLength(2);
+      expect(variables[0].state.name).toBe('job');
+      expect(variables[1].state.name).toBe('env');
+    });
+  });
+
+  it('persists variables to URL when a variable is added', async () => {
+    const { store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: { datasource: 'loki-uid', queries: [{ expr: 'a' }] },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']).toBeDefined();
+    });
+
+    act(() => {
+      const variable = new CustomVariable({ name: 'job', query: 'demo,node', value: 'demo', text: 'demo' });
+      store.dispatch(addSceneVariableAction({ exploreId: 'one', variable }));
+    });
+
+    await waitFor(() => {
+      const search = location.getSearchObject();
+      const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
+      expect(panes.one?.variables).toBeDefined();
+      expect(panes.one.variables).toHaveLength(1);
+      expect(panes.one.variables[0].name).toBe('job');
+    });
+  });
+
+  it('removes variables from URL when a variable is deleted', async () => {
+    const { store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            variables: [{ name: 'job', query: 'demo,node', value: 'demo', text: 'demo' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const pane = store.getState().explore.panes['one'];
+      expect(pane?.variableSet.state.variables).toHaveLength(1);
+    });
+
+    act(() => {
+      store.dispatch(removeVariableAction({ exploreId: 'one', name: 'job' }));
+    });
+
+    await waitFor(() => {
+      const search = location.getSearchObject();
+      const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
+      expect(panes.one?.variables).toBeUndefined();
+    });
+  });
+
+  it('restores variables from URL on browser navigation (syncFromURL)', async () => {
+    const { rerender, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: { datasource: 'loki-uid', queries: [{ expr: 'a' }] },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']).toBeDefined();
+    });
+
+    rerender({
+      children: null,
+      params: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            variables: [{ name: 'region', query: 'us,eu', value: 'us', text: 'us' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const pane = store.getState().explore.panes['one'];
+      const variables = pane?.variableSet.state.variables ?? [];
+      expect(variables).toHaveLength(1);
+      expect(variables[0].state.name).toBe('region');
+    });
+  });
+
+  it('handles URLs without variables field (backwards compatibility)', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const pane = store.getState().explore.panes['one'];
+      expect(pane).toBeDefined();
+      expect(pane?.variableSet.state.variables).toHaveLength(0);
+    });
+  });
+
+  it('handles malformed variables field gracefully', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            variables: 'not-an-array',
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const pane = store.getState().explore.panes['one'];
+      expect(pane).toBeDefined();
+      expect(pane?.variableSet.state.variables).toHaveLength(0);
+    });
+  });
+
+  it('maintains independent variables per split pane', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            variables: [{ name: 'leftVar', query: 'a,b', value: 'a', text: 'a' }],
+          },
+          two: {
+            datasource: 'elastic-uid',
+            queries: [{ expr: 'b' }],
+            variables: [{ name: 'rightVar', query: 'x,y', value: 'x', text: 'x' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      const paneOne = store.getState().explore.panes['one'];
+      const paneTwo = store.getState().explore.panes['two'];
+      expect(paneOne?.variableSet.state.variables).toHaveLength(1);
+      expect(paneOne?.variableSet.state.variables[0].state.name).toBe('leftVar');
+      expect(paneTwo?.variableSet.state.variables).toHaveLength(1);
+      expect(paneTwo?.variableSet.state.variables[0].state.name).toBe('rightVar');
     });
   });
 });

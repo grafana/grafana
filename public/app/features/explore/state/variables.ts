@@ -21,9 +21,15 @@ export interface ReplaceVariablePayload {
   variable: SceneVariable;
 }
 
+export interface SetVariablesPayload {
+  exploreId: string;
+  variables: SceneVariable[];
+}
+
 export const addSceneVariableAction = createAction<AddSceneVariablePayload>('explore/addSceneVariable');
 export const removeVariableAction = createAction<RemoveVariablePayload>('explore/removeVariable');
 export const replaceVariableAction = createAction<ReplaceVariablePayload>('explore/replaceVariable');
+export const setVariablesAction = createAction<SetVariablesPayload>('explore/setVariables');
 
 export function buildExploreVariableScopedVars(variableSet: SceneVariableSet): ScopedVars {
   const scopedVars: ScopedVars = {};
@@ -55,6 +61,12 @@ export const variablesReducer = (state: ExploreItemState, action: AnyAction): Ex
     const newSet = new SceneVariableSet({
       variables: state.variableSet.state.variables.map((v) => (v.state.name === oldName ? variable : v)),
     });
+    return { ...state, variableSet: newSet };
+  }
+
+  if (setVariablesAction.match(action)) {
+    const { variables } = action.payload;
+    const newSet = new SceneVariableSet({ variables });
     return { ...state, variableSet: newSet };
   }
 
