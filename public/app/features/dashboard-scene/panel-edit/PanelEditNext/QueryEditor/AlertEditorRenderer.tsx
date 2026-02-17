@@ -4,10 +4,13 @@ import { Trans, t } from '@grafana/i18n';
 import { EmptyState } from '@grafana/ui';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 
-import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
+import { ScenesNewRuleFromPanelButton } from '../../PanelDataPane/NewAlertRuleButton';
+
+import { useAlertingContext, usePanelContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { EMPTY_ALERT } from './types';
 
 export function AlertEditorRenderer() {
+  const { panel } = usePanelContext();
   const { alertRules, isDashboardSaved } = useAlertingContext();
   const { selectedAlert } = useQueryEditorUIContext();
 
@@ -39,6 +42,7 @@ export function AlertEditorRenderer() {
       <EmptyState
         variant="not-found"
         message={t('query-editor-next.alerts.no-alerts', 'No alert rules for this panel')}
+        button={<ScenesNewRuleFromPanelButton panel={panel} size="sm" compactAlert />}
       >
         <Trans i18nKey="query-editor-next.alerts.no-alerts-description">
           Create an alert rule to get notified when your data meets certain conditions.
