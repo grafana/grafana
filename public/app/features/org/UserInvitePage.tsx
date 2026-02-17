@@ -16,10 +16,7 @@ export function UserInvitePage() {
   );
 
   const onExternalUserMngClick = () => {
-    reportInteraction('users_invite_actions_clicked', {
-      category: 'org_users',
-      item: 'manage_users_external',
-    });
+    reportInteraction('admin_manage_users_invite_form_action_clicked');
   };
 
   const actions = <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />;
