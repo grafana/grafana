@@ -7,7 +7,9 @@
  * Merge behaviour:
  *   - options and fieldConfig.defaults are deep-merged with existing values.
  *   - queries, transformations, and fieldConfig.overrides are replaced wholesale.
- *   - title, description, transparent, pluginId are set directly.
+ *   - title, description, transparent are set directly.
+ *   - Changing vizConfig.group (plugin type) calls changePluginType() which
+ *     loads the new plugin and migrates options/fieldConfig with proper defaults.
  */
 
 import { z } from 'zod';
@@ -60,11 +62,16 @@ function deepMerge(target: Record<string, unknown>, source: Record<string, unkno
 /**
  * Apply partial updates to a VizPanel's metadata and vizConfig.
  * options and fieldConfig.defaults are deep-merged; other fields are replaced.
+ *
+ * When vizConfig.group changes (plugin type change), we call changePluginType()
+ * which properly loads the new plugin and migrates options/fieldConfig. If
+ * options or fieldConfig are also provided, they are merged on top *after*
+ * the plugin change.
  */
-function applyPanelUpdates(
+async function applyPanelUpdates(
   vizPanel: VizPanel,
   updates: UpdatePanelPayload['panel']
-): { previousValue: Record<string, unknown>; newValue: Record<string, unknown> } {
+): Promise<{ previousValue: Record<string, unknown>; newValue: Record<string, unknown> }> {
   const previous: Record<string, unknown> = {};
   const next: Record<string, unknown> = {};
   const stateUpdates: Record<string, unknown> = {};
@@ -88,26 +95,44 @@ function applyPanelUpdates(
     stateUpdates.displayMode = updates.transparent ? 'transparent' : 'default';
   }
 
+  // Apply non-vizConfig state updates first
+  if (Object.keys(stateUpdates).length > 0) {
+    vizPanel.setState(stateUpdates);
+  }
+
   if (updates.vizConfig) {
-    if (updates.vizConfig.group !== undefined) {
+    const isPluginChange =
+      updates.vizConfig.group !== undefined && updates.vizConfig.group !== vizPanel.state.pluginId;
+
+    if (isPluginChange) {
       previous.pluginId = vizPanel.state.pluginId;
       next.pluginId = updates.vizConfig.group;
-      stateUpdates.pluginId = updates.vizConfig.group;
-    }
-    if (updates.vizConfig.version !== undefined) {
-      previous.pluginVersion = vizPanel.state.pluginVersion;
-      next.pluginVersion = updates.vizConfig.version;
-      stateUpdates.pluginVersion = updates.vizConfig.version;
-    }
-    if (updates.vizConfig.spec) {
-      if (updates.vizConfig.spec.options !== undefined) {
+
+      // changePluginType loads the new plugin and migrates options/fieldConfig.
+      // Pass initial options/fieldConfig if provided so they're applied with
+      // the new plugin's defaults rather than merged on stale state.
+      await vizPanel.changePluginType(
+        updates.vizConfig.group!,
+        updates.vizConfig.spec?.options ? toRecord(updates.vizConfig.spec.options) : undefined,
+        updates.vizConfig.spec?.fieldConfig
+          ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
+            ({
+              defaults: toRecord(updates.vizConfig.spec.fieldConfig.defaults ?? {}),
+              overrides: updates.vizConfig.spec.fieldConfig.overrides ?? [],
+            } as unknown as import('@grafana/data').FieldConfigSource)
+          : undefined
+      );
+
+      // After changePluginType, options/fieldConfig have been applied with
+      // the new plugin's defaults. If options or fieldConfig were provided,
+      // merge them on top of the post-change state for completeness.
+      if (updates.vizConfig.spec?.options) {
         previous.options = vizPanel.state.options;
-        const currentOptions = toRecord(vizPanel.state.options ?? {});
-        const merged = deepMerge(currentOptions, toRecord(updates.vizConfig.spec.options));
+        const merged = deepMerge(toRecord(vizPanel.state.options ?? {}), toRecord(updates.vizConfig.spec.options));
+        vizPanel.onOptionsChange(merged, true);
         next.options = merged;
-        stateUpdates.options = merged;
       }
-      if (updates.vizConfig.spec.fieldConfig !== undefined) {
+      if (updates.vizConfig.spec?.fieldConfig) {
         previous.fieldConfig = vizPanel.state.fieldConfig;
         const currentFieldConfig = toRecord(vizPanel.state.fieldConfig ?? {});
         const currentDefaults = toRecord(currentFieldConfig.defaults ?? {});
@@ -116,19 +141,59 @@ function applyPanelUpdates(
           : currentDefaults;
         const currentOverrides = Array.isArray(currentFieldConfig.overrides) ? currentFieldConfig.overrides : [];
         const newOverrides = updates.vizConfig.spec.fieldConfig.overrides ?? currentOverrides;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with FieldConfigSource
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
         const fieldConfig = {
           defaults: newDefaults,
           overrides: newOverrides,
-        } as unknown as FieldConfigSource;
+        } as unknown as import('@grafana/data').FieldConfigSource;
+        vizPanel.onFieldConfigChange(fieldConfig, true);
         next.fieldConfig = fieldConfig;
-        stateUpdates.fieldConfig = transformMappingsToV1(fieldConfig);
+      }
+    } else {
+      // No plugin change -- apply vizConfig fields via setState + merge
+      const vizStateUpdates: Record<string, unknown> = {};
+
+      if (updates.vizConfig.group !== undefined) {
+        previous.pluginId = vizPanel.state.pluginId;
+        next.pluginId = updates.vizConfig.group;
+        vizStateUpdates.pluginId = updates.vizConfig.group;
+      }
+      if (updates.vizConfig.version !== undefined) {
+        previous.pluginVersion = vizPanel.state.pluginVersion;
+        next.pluginVersion = updates.vizConfig.version;
+        vizStateUpdates.pluginVersion = updates.vizConfig.version;
+      }
+      if (updates.vizConfig.spec) {
+        if (updates.vizConfig.spec.options !== undefined) {
+          previous.options = vizPanel.state.options;
+          const currentOptions = toRecord(vizPanel.state.options ?? {});
+          const merged = deepMerge(currentOptions, toRecord(updates.vizConfig.spec.options));
+          next.options = merged;
+          vizStateUpdates.options = merged;
+        }
+        if (updates.vizConfig.spec.fieldConfig !== undefined) {
+          previous.fieldConfig = vizPanel.state.fieldConfig;
+          const currentFieldConfig = toRecord(vizPanel.state.fieldConfig ?? {});
+          const currentDefaults = toRecord(currentFieldConfig.defaults ?? {});
+          const newDefaults = updates.vizConfig.spec.fieldConfig.defaults
+            ? deepMerge(currentDefaults, toRecord(updates.vizConfig.spec.fieldConfig.defaults))
+            : currentDefaults;
+          const currentOverrides = Array.isArray(currentFieldConfig.overrides) ? currentFieldConfig.overrides : [];
+          const newOverrides = updates.vizConfig.spec.fieldConfig.overrides ?? currentOverrides;
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with FieldConfigSource
+          const fieldConfig = {
+            defaults: newDefaults,
+            overrides: newOverrides,
+          } as unknown as FieldConfigSource;
+          next.fieldConfig = fieldConfig;
+          vizStateUpdates.fieldConfig = transformMappingsToV1(fieldConfig);
+        }
+      }
+
+      if (Object.keys(vizStateUpdates).length > 0) {
+        vizPanel.setState(vizStateUpdates);
       }
     }
-  }
-
-  if (Object.keys(stateUpdates).length > 0) {
-    vizPanel.setState(stateUpdates);
   }
 
   return { previousValue: previous, newValue: next };
@@ -253,7 +318,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       }
 
       // Apply metadata + vizConfig updates (with merge semantics)
-      const { previousValue, newValue } = applyPanelUpdates(vizPanel, panelUpdates);
+      const { previousValue, newValue } = await applyPanelUpdates(vizPanel, panelUpdates);
 
       // Apply data pipeline updates (queries, transformations, queryOptions)
       if (panelUpdates.data?.spec) {
