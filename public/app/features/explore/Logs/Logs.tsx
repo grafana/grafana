@@ -91,8 +91,8 @@ import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
-import { getDefaultSortBy } from './utils/logsTable';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
+import { getDefaultSortBy } from './utils/table/logsTable';
 import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
