@@ -85,7 +85,7 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
 			case inhibitionrule.ResourceInfo.GroupResource().Resource:
-				return inhibitionrule.Authorize(ctx, authz, a)
+				return inhibitionrule.Authorize(ctx, ac.NewInhibitionRuleAccess(authz), a)
 			case templategroup.ResourceInfo.GroupResource().Resource:
 				return templategroup.Authorize(ctx, authz, a)
 			case timeinterval.ResourceInfo.GroupResource().Resource:

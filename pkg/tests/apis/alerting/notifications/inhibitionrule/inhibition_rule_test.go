@@ -157,28 +157,20 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	reader := helper.CreateUser("InhibitionRulesReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{
-			Actions: []string{
-				accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
-			},
-		},
+		createWildcardPermission(accesscontrol.ActionAlertingNotificationsInhibitionRulesRead),
 	})
 	writer := helper.CreateUser("InhibitionRulesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{
-			Actions: []string{
-				accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
-				accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
-			},
-		},
+		createWildcardPermission(
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+		),
 	})
 
 	deleter := helper.CreateUser("InhibitionRulesDeleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{
-			Actions: []string{
-				accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
-				accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
-			},
-		},
+		createWildcardPermission(
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+		),
 	})
 
 	testCases := []testCase{
@@ -304,5 +296,14 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Note: Don't actually delete in the canDelete case to preserve test data
 			})
 		})
+	}
+}
+
+func createWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
+	return resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          "inhibition-rules",
+		ResourceAttribute: "uid",
+		ResourceID:        "*",
 	}
 }

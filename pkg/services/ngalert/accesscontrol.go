@@ -237,7 +237,7 @@ var (
 			Description: "Read all inhibition rules in Grafana alerting",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesRead},
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesRead, Scope: models.ScopeInhibitionRulesAll},
 			},
 		},
 	}
@@ -249,8 +249,8 @@ var (
 			Description: "Create, update, and delete all inhibition rules in Grafana alerting",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(inhibitionRulesReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite},
-				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete},
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite, Scope: models.ScopeInhibitionRulesAll},
+				{Action: accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete, Scope: models.ScopeInhibitionRulesAll},
 			}),
 		},
 	}
