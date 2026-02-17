@@ -4,4 +4,5 @@ INSERT INTO {{ .Ident "secret_consolidation_history" }} (
 ) VALUES (
   {{ .Arg .Created }},
   {{ .Arg .Completed }}
-);
+)
+RETURNING {{ .Ident "id" }};

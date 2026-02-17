@@ -49,7 +49,7 @@ type ConsolidationRecord struct {
 
 // ConsolidationHistoryStorage is the interface for wiring and dependency injection.
 type ConsolidationHistoryStorage interface {
-	StartNewConsolidation(ctx context.Context) error
-	FinishCurrentConsolidation(ctx context.Context) error
+	StartNewConsolidation(ctx context.Context) (*ConsolidationRecord, error)
+	FinishConsolidation(ctx context.Context, record *ConsolidationRecord) error
 	GetLatestConsolidation(ctx context.Context) (*ConsolidationRecord, error)
 }

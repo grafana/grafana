@@ -49,6 +49,29 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, force bool) (err
 		}
 	}()
 
+	// Check if there is an ongoing consolidation and return an error if this is not forced
+	latestConsolidation, err := s.consolidationHistoryStore.GetLatestConsolidation(ctx)
+	if err != nil {
+		return fmt.Errorf("getting latest consolidation: %w", err)
+	} else if latestConsolidation != nil && latestConsolidation.Completed.IsZero() && !force {
+		return fmt.Errorf("there is an ongoing consolidation with ID %d, use --force to override, or clean the db state and try again", latestConsolidation.ID)
+	}
+
+	// Start a new consolidation in the database, then ensure it is finalized whenever this function terminates
+	consolidationRecord, err := s.consolidationHistoryStore.StartNewConsolidation(ctx)
+	if err != nil {
+		return fmt.Errorf("creating new consolidation record: %w", err)
+	}
+	logging.FromContext(ctx).Info("Started new consolidation", "id", consolidationRecord.ID, "created", consolidationRecord.Created)
+
+	defer func() {
+		if err != nil {
+			if finishErr := s.consolidationHistoryStore.FinishConsolidation(ctx, consolidationRecord); finishErr != nil {
+				logging.FromContext(ctx).Error("Failed to finish consolidation", "id", consolidationRecord.ID, "error", finishErr)
+			}
+		}
+	}()
+
 	// Disable all active data keys.
 	// This will ensure that no new data can be encrypted with the old keys.
 	err = s.globalDataKeyStore.DisableAllDataKeys(ctx)
