@@ -49,7 +49,7 @@ describe('MuteTimingsTable', () => {
       renderWithProvider();
       await user.click(await screen.findByRole('button', { name: /export all/i }));
 
-      expect(await screen.findByRole('dialog', { name: /drawer title export/i })).toBeInTheDocument();
+      expect(await screen.findByRole('dialog', { name: /export/i })).toBeInTheDocument();
     });
 
     it("shows individual 'export' drawer when allowed and supported, and can close", async () => {
@@ -58,11 +58,11 @@ describe('MuteTimingsTable', () => {
       const exportMuteTiming = await within(table).findAllByText(/export/i);
       await user.click(exportMuteTiming[0]);
 
-      expect(await screen.findByRole('dialog', { name: /drawer title export/i })).toBeInTheDocument();
+      expect(await screen.findByRole('dialog', { name: /export/i })).toBeInTheDocument();
 
       await user.click(screen.getByText(/cancel/i));
 
-      expect(screen.queryByRole('dialog', { name: /drawer title export/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: /export/i })).not.toBeInTheDocument();
     });
 
     it('does not show export button when not supported', async () => {
