@@ -5,10 +5,12 @@ import Skeleton from 'react-loading-skeleton';
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
+import { CompatibilityBadge, CompatibilityState } from './CompatibilityBadge';
 import { GnetDashboard } from './types';
 import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
@@ -32,6 +34,12 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
+  /** Show the compact compatibility badge (replaces showCompatibilityButton) */
+  showCompatibilityBadge?: boolean;
+  /** State for the compatibility badge (idle, loading, success, error) */
+  compatibilityState?: CompatibilityState;
+  /** Handler called when Check button is clicked in the badge */
+  onCompatibilityCheck?: () => void;
   showAssistantButton?: boolean;
 }
 
@@ -46,9 +54,23 @@ function DashboardCardComponent({
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
+  showCompatibilityBadge,
+  compatibilityState,
+  onCompatibilityCheck,
   showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+
+  const detailsButton = details && (
+    <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
+      <IconButton
+        name="info-circle"
+        size={isCompatibilityAppEnabled ? 'sm' : 'xl'}
+        aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
+      />
+    </Tooltip>
+  );
 
   const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
@@ -79,7 +101,16 @@ function DashboardCardComponent({
 
   return (
     <Card className={styles.card} noMargin>
-      <Card.Heading className={styles.title}>{title}</Card.Heading>
+      <Card.Heading className={styles.title}>
+        {isCompatibilityAppEnabled ? (
+          <span className={styles.titleWithInfo}>
+            <span className={styles.titleText}>{title}</span>
+            {detailsButton}
+          </span>
+        ) : (
+          title
+        )}
+      </Card.Heading>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
           <img
@@ -129,14 +160,13 @@ function DashboardCardComponent({
             <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
           </Button>
         )}
-        {details && (
-          <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
-            <IconButton
-              name="info-circle"
-              size="xl"
-              aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
-            />
-          </Tooltip>
+        {!isCompatibilityAppEnabled && detailsButton}
+        {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
+          <CompatibilityBadge
+            state={compatibilityState ?? { status: 'idle' }}
+            onCheck={onCompatibilityCheck}
+            onRetry={onCompatibilityCheck}
+          />
         )}
       </Card.Actions>
     </Card>
@@ -266,6 +296,19 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     }),
+    titleWithInfo: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      maxWidth: '100%',
+    }),
+    titleText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      flexShrink: 1,
+      minWidth: 0,
+    }),
     description: css({
       display: '-webkit-box',
       WebkitLineClamp: 2,
@@ -276,7 +319,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     actionsContainer: css({
       marginTop: 0,
-      alignItems: 'stretch',
+      alignItems: 'center',
       flexWrap: 'nowrap',
     }),
     detailsContainer: css({

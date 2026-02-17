@@ -54,11 +54,7 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 
-	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
-		<-ctx.Done()
-		return nil
-	}, nil).WithName(modules.SearchServerDistributor)
-
+	s.BasicService = services.NewIdleService(nil, nil).WithName(modules.SearchServerDistributor)
 	return s, nil
 }
 

@@ -6,7 +6,6 @@ import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLib
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
 
@@ -33,19 +32,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
       : {}),
   });
 }
-
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
