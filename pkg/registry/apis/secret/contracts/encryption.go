@@ -58,5 +58,5 @@ type EncryptedValueMigrationExecutor interface {
 }
 
 type ConsolidationService interface {
-	Consolidate(ctx context.Context) error
+	Consolidate(ctx context.Context, force bool) error
 }

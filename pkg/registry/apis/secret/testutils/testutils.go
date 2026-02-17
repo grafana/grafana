@@ -168,7 +168,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
 
-	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
+	consolidationHistoryStore, err := metadata.ProvideConsolidationHistoryStore(database, tracer, nil)
+	require.NoError(t, err)
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager, consolidationHistoryStore)
 
 	garbageCollectionWorker := garbagecollectionworker.ProvideWorker(
 		cfg,
@@ -183,6 +185,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		DecryptService:                  decryptService,
 		EncryptedValueStorage:           encryptedValueStorage,
 		GlobalEncryptedValueStorage:     globalEncryptedValueStorage,
+		ConsolidationHistoryStore:       consolidationHistoryStore,
 		EncryptedValueMigrationExecutor: realMigrationExecutor,
 		SQLKeeper:                       sqlKeeper,
 		Database:                        database,
@@ -205,6 +208,7 @@ type Sut struct {
 	DecryptService                  decryptcontracts.DecryptService
 	EncryptedValueStorage           contracts.EncryptedValueStorage
 	GlobalEncryptedValueStorage     contracts.GlobalEncryptedValueStorage
+	ConsolidationHistoryStore       contracts.ConsolidationHistoryStorage
 	EncryptedValueMigrationExecutor contracts.EncryptedValueMigrationExecutor
 	SQLKeeper                       *sqlkeeper.SQLKeeper
 	Database                        *database.Database

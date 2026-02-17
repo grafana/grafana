@@ -465,6 +465,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideGlobalDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretencryption.ProvideGlobalEncryptedValueStorage,
+	secretmetadata.ProvideConsolidationHistoryStore,
 	secretencryption.ProvideEncryptedValueMigrationExecutor,
 	secretsecurevalueservice.ProvideSecureValueService,
 	secretvalidator.ProvideKeeperValidator,

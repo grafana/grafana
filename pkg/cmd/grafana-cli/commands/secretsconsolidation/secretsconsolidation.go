@@ -8,6 +8,6 @@ import (
 )
 
 func ConsolidateSecrets(_ utils.CommandLine, runner server.Runner) error {
-	err := runner.SecretsConsolidationService.Consolidate(context.Background())
+	err := runner.SecretsConsolidationService.Consolidate(context.Background(), false)
 	return err
 }

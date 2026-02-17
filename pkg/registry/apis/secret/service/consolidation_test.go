@@ -104,7 +104,7 @@ func TestConsolidation(t *testing.T) {
 		}
 
 		// Run consolidation
-		err := sut.ConsolidationService.Consolidate(ctx)
+		err := sut.ConsolidationService.Consolidate(ctx, false)
 		require.NoError(t, err)
 
 		for i, tc := range testCases {
@@ -238,10 +238,11 @@ func TestConsolidation(t *testing.T) {
 			sut.EncryptedValueStorage,
 			mockStorage,
 			sut.EncryptionManager,
+			sut.ConsolidationHistoryStore,
 		)
 
 		// Run consolidation
-		err := customConsolidationService.Consolidate(ctx)
+		err := customConsolidationService.Consolidate(ctx, false)
 		require.NoError(t, err)
 
 		for i, tc := range initialSecrets {
