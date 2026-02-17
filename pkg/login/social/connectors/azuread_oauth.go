@@ -16,10 +16,8 @@ import (
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
-	"golang.org/x/oauth2"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -222,7 +221,8 @@ func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2
 	defer s.reloadMutex.RUnlock()
 
 	if s.info.ClientAuthentication == social.WorkloadIdentity {
-		return &AzureADTokenSource{
+		return &azureADTokenSource{
+			log:                       s.log,
 			ctx:                       ctx,
 			conf:                      s.Config,
 			token:                     t,
@@ -234,7 +234,8 @@ func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2
 	return s.Config.TokenSource(ctx, t)
 }
 
-type AzureADTokenSource struct {
+type azureADTokenSource struct {
+	log                       log.Logger
 	ctx                       context.Context
 	conf                      *oauth2.Config
 	token                     *oauth2.Token
@@ -242,15 +243,14 @@ type AzureADTokenSource struct {
 	workloadIdentityTokenFile string
 }
 
-func (s *AzureADTokenSource) Token() (*oauth2.Token, error) {
-	log := logging.FromContext(s.ctx)
-	log.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
+func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
+	s.log.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
 	if s.token.Valid() {
 		return s.token, nil
 	}
 
 	if s.token.RefreshToken == "" {
-		log.Warn("AzureADToken fetchToken failed: no refresh token available")
+		s.log.Warn("AzureADToken fetchToken failed: no refresh token available")
 		return nil, fmt.Errorf("no refresh token available to refresh the access token")
 	}
 
@@ -270,8 +270,7 @@ func (s *AzureADTokenSource) Token() (*oauth2.Token, error) {
 	return s.fetchToken(v)
 }
 
-func (s *AzureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
-	log := logging.FromContext(s.ctx)
+func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
 	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, err
@@ -296,7 +295,8 @@ func (s *AzureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("oauth2: cannot fetch token: %v\nResponse: %s", resp.Status, body)
+		s.log.Warn("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
 	}
 
 	var rawResponse interface{}
@@ -309,7 +309,7 @@ func (s *AzureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
 	}
 
-	log.Debug("AzureADToken fetchToken completed")
+	s.log.Debug("AzureADToken fetchToken completed")
 	return token.WithExtra(rawResponse), nil
 }
 
