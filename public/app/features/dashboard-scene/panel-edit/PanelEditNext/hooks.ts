@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
@@ -30,40 +30,53 @@ export function useHorizontalRatioResize({
 }: UseHorizontalRatioResizeOptions) {
   const [ratio, setRatio] = useState<number>(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
+  
+  const ratioRef = useRef(ratio);
+  const containerWidthRef = useRef(containerWidth);
+  const minRatioRef = useRef(minRatio);
+  const maxRatioRef = useRef(maxRatio);
+  
+  ratioRef.current = ratio;
+  containerWidthRef.current = containerWidth;
+  minRatioRef.current = minRatio;
+  maxRatioRef.current = maxRatio;
 
-  const handleRef = useCallback(
-    (handle: HTMLElement | null) => {
-      let startX = 0;
-      let startRatio = 0;
-      let totalWidth = 0;
+  const handleRef = useCallback((handle: HTMLElement | null) => {
+    let startX = 0;
+    let startRatio = 0;
+    let totalWidth = 0;
 
-      const onMouseMove = (e: MouseEvent) => {
-        const deltaX = e.clientX - startX; // dragging right increases ratio of left sidebar
-        const deltaRatio = deltaX / totalWidth;
-        const newRatio = Math.min(maxRatio, Math.max(minRatio, startRatio + deltaRatio));
-        setRatio(newRatio);
-      };
+    const onMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaRatio = deltaX / totalWidth;
+      const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + deltaRatio));
+      setRatio(newRatio);
+    };
 
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
 
-      const onMouseDown = (e: MouseEvent) => {
-        e.preventDefault();
-        startX = e.clientX;
-        startRatio = ratio;
-        totalWidth = containerWidth;
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      };
+    const onMouseDown = (e: MouseEvent) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startRatio = ratioRef.current;
+      totalWidth = containerWidthRef.current;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
 
+    if (handle?.nodeType === Node.ELEMENT_NODE) {
+      handle.addEventListener('mousedown', onMouseDown);
+    }
+    
+    return () => {
       if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.addEventListener('mousedown', onMouseDown);
+        handle.removeEventListener('mousedown', onMouseDown);
       }
-    },
-    [ratio, containerWidth, maxRatio, minRatio]
-  );
+    };
+  }, []);
 
   return { handleRef, ratio, setRatio, className: cx(styles.dragHandleVertical, className) };
 }
@@ -85,40 +98,53 @@ export function useVerticalRatioResize({
 }: UseVerticalRatioResizeOptions) {
   const [ratio, setRatio] = useState<number>(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
+  
+  const ratioRef = useRef(ratio);
+  const containerHeightRef = useRef(containerHeight);
+  const minRatioRef = useRef(minRatio);
+  const maxRatioRef = useRef(maxRatio);
+  
+  ratioRef.current = ratio;
+  containerHeightRef.current = containerHeight;
+  minRatioRef.current = minRatio;
+  maxRatioRef.current = maxRatio;
 
-  const handleRef = useCallback(
-    (handle: HTMLElement | null) => {
-      let startY = 0;
-      let startRatio = 0;
-      let totalHeight = 0;
+  const handleRef = useCallback((handle: HTMLElement | null) => {
+    let startY = 0;
+    let startRatio = 0;
+    let totalHeight = 0;
 
-      const onMouseMove = (e: MouseEvent) => {
-        const deltaY = e.clientY - startY;
-        const deltaRatio = deltaY / totalHeight;
-        const newRatio = Math.min(maxRatio, Math.max(minRatio, startRatio + deltaRatio));
-        setRatio(newRatio);
-      };
+    const onMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const deltaRatio = deltaY / totalHeight;
+      const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + deltaRatio));
+      setRatio(newRatio);
+    };
 
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
 
-      const onMouseDown = (e: MouseEvent) => {
-        e.preventDefault();
-        startY = e.clientY;
-        startRatio = ratio;
-        totalHeight = containerHeight;
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      };
+    const onMouseDown = (e: MouseEvent) => {
+      e.preventDefault();
+      startY = e.clientY;
+      startRatio = ratioRef.current;
+      totalHeight = containerHeightRef.current;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
 
+    if (handle?.nodeType === Node.ELEMENT_NODE) {
+      handle.addEventListener('mousedown', onMouseDown);
+    }
+    
+    return () => {
       if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.addEventListener('mousedown', onMouseDown);
+        handle.removeEventListener('mousedown', onMouseDown);
       }
-    },
-    [ratio, containerHeight, maxRatio, minRatio]
-  );
+    };
+  }, []);
 
   return { handleRef, ratio, setRatio, className: cx(styles.dragHandleHorizontal, className) };
 }
