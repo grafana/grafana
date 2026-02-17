@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
+	"github.com/grafana/grafana/pkg/registry/apps/myresource"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
@@ -34,4 +35,5 @@ var WireSet = wire.NewSet(
 	quotas.RegisterAppInstaller,
 	example.RegisterAppInstaller,
 	dashvalidator.RegisterAppInstaller,
+	myresource.RegisterAppInstaller,
 )
