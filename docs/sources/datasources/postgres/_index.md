@@ -31,6 +31,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
+  postgres-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -60,12 +65,14 @@ The following documents will help you get started with the PostgreSQL data sourc
 
 - [Configure the PostgreSQL data source](ref:configure-postgres-data-source)
 - [PostgreSQL query editor](ref:postgres-query-editor)
+- [PostgreSQL template variables](ref:postgres-template-variables)
 - [Troubleshooting](troubleshooting/)
 
 After you have configured the data source you can:
 
 - Create a variety of [visualizations](ref:visualizations)
 - Add [annotations](ref:annotate-visualizations)
+- Use [template variables](ref:postgres-template-variables) for dynamic dashboards
 - Set up [alerting](ref:alerting)
 - Add [transformations](ref:transformations)
 

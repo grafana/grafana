@@ -58,6 +58,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/#templates
+  postgres-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/
   annotate-visualizations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
@@ -271,93 +276,9 @@ Data frame result:
 
 ## Templating
 
-Instead of hard coding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
+Instead of hard-coding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard and make it easy to change the data displayed in your dashboard.
 
-Refer to [Templates](ref:templates) for an introduction to creating template variables as well as the different types.
-
-### Query variable
-
-If you add a `Query` template variable you can write a PostgreSQL query to retrieve items such as measurement names, key names, or key values, which will be displayed in the drop-down menu.
-
-For example, you can use a variable to retrieve all the values from the `hostname` column in a table by creating the following query in the templating variable _Query_ setting.
-
-```sql
-SELECT hostname FROM host
-```
-
-A query can return multiple columns, and Grafana will automatically generate a list based on the query results. For example, the following query returns a list with values from `hostname` and `hostname2`.
-
-```sql
-SELECT host.hostname, other_host.hostname2 FROM host JOIN other_host ON host.city = other_host.city
-```
-
-To use time range dependent macros like `$__timeFilter(column)` in your query, you must set the template variable's refresh mode to _On Time Range Change_.
-
-```sql
-SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
-```
-
-Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column must contain unique values (if not, only the first value is used). This allows the drop-down options to display a text-friendly name as the text while using an ID as the value. For example, a query could use `hostname` as the text and `id` as the value:
-
-```sql
-SELECT hostname AS __text, id AS __value FROM host
-```
-
-You can also create nested variables. For example, if you have a variable named `region`, you can configure the `hosts` variable to display only the hosts within the currently selected region as shown in the following example. If `region` is a multi-value variable, use the `IN` operator instead of `=` to match multiple values.
-
-```sql
-SELECT hostname FROM host WHERE region IN($region)
-```
-
-#### Using `__searchFilter` to filter results in Query Variable
-
-Using `__searchFilter` in the query field allows the query results to be filtered based on the user’s input in the drop-down selection box. If you do not enter anything, the default value for `__searchFilter` is `%`.
-
-Note that you must enclose the `__searchFilter` expression in quotes as Grafana does not add them automatically.
-
-The following example demonstrates how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user type in the drop-down selection box.
-
-```sql
-SELECT hostname FROM my_host WHERE hostname LIKE '$__searchFilter'
-```
-
-### Using Variables in Queries
-
-Template variable values are only quoted when the template variable is a `multi-value`.
-
-If the variable is a multi-value variable, use the `IN` comparison operator instead of `=` to match against multiple values.
-
-You can use two different syntaxes:
-
-`$<varname>` Example with a template variable named `hostname`:
-
-```sql
-SELECT
-  atimestamp as time,
-  aint as value
-FROM table
-WHERE $__timeFilter(atimestamp) and hostname in($hostname)
-ORDER BY atimestamp ASC
-```
-
-`[[varname]]` Example with a template variable named `hostname`:
-
-```sql
-SELECT
-  atimestamp as time,
-  aint as value
-FROM table
-WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
-ORDER BY atimestamp ASC
-```
-
-#### Disabling quoting for multi-value variables
-
-Grafana automatically formats multi-value variables as a quoted, comma-separated string. For example, if `server01` and `server02` are selected, they are formatted as `'server01'`, `'server02'`. To remove the quotes, enable the CSV formatting option for the variables:
-
-`${servers:csv}`
-
-Read more about variable formatting options in the [Variables](ref:variable-syntax-advanced-variable-format-options) documentation.
+For query variables, key/value variables, nested variables, multi-property variables, and using variables in queries, refer to [PostgreSQL template variables](ref:postgres-template-variables). For an introduction to template variable types, refer to [Templates](ref:templates).
 
 ## Annotations
 
