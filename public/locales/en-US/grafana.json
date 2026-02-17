@@ -12682,6 +12682,7 @@
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
       "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
+      "retry-action": "Retry",
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
