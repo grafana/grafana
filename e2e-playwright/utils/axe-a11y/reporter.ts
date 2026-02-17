@@ -4,7 +4,7 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { AXE_A11Y_ANNOTATION_TYPE } from './constants';
-import { AxeA11yReport, AxeA11yReportViolation } from './types';
+import { AxeA11yReport, AxeA11yReportAnnotation, AxeA11yReportViolation } from './types';
 
 class AxeA11yReporter implements Reporter {
   private violations: AxeA11yReportViolation[] = [];
@@ -43,11 +43,14 @@ class AxeA11yReporter implements Reporter {
       return;
     }
 
+    // TODO: should we have a mode where we write out whether the passing report has higher thresholds than it needs,
+    // or whether a rule is being excluded that doesn't need to be? This would help identify opportunities to improve our accessibility
+    // over time by tightening thresholds and re-enabling rules. Maybe it's like a "verbose mode."
     try {
-      const axeA11yReport: AxeResults = JSON.parse(reportJson);
-      this.reports[testName] = axeA11yReport;
+      const axeA11yReport: AxeA11yReportAnnotation = JSON.parse(reportJson);
+      this.reports[testName] = axeA11yReport.result;
       this.violations.push(
-        ...axeA11yReport.violations.map((violation) => ({ testName, location: test.location, violation }))
+        ...axeA11yReport.result.violations.map((violation) => ({ testName, location: test.location, violation }))
       );
       this.failedTests += result.status === 'failed' ? 1 : 0;
     } catch (e) {

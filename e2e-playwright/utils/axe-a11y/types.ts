@@ -1,6 +1,16 @@
 import type { Location } from '@playwright/test/reporter';
 import type { AxeResults, Result as AxeResult } from 'axe-core';
 
+export interface AxeA11yReportAnnotation {
+  result: AxeResults;
+  options?: AxeA11yReportOptions;
+}
+
+export interface AxeA11yReportOptions {
+  disabledRules?: string[];
+  threshold?: number;
+}
+
 export interface AxeA11yReportViolation {
   testName: string;
   location: Location;
