@@ -1,7 +1,18 @@
-import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  SceneGridItemLike,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneQueryRunner,
+  SceneTimeRange,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 
-import { findVizPanelByKey } from '../../utils/utils';
+import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
@@ -211,6 +222,31 @@ describe('DefaultGridLayoutManager', () => {
       expect(gridRow.state.children.length).toBe(3);
     });
   });
+
+  describe('layout conversion', () => {
+    it('preserves panel options when switching from auto grid to custom grid', () => {
+      const dashboard = setupSceneWithAutoGrid();
+
+      switchToCustomGrid(dashboard);
+
+      const panels = dashboard.state.body.getVizPanels();
+      expect(panels).toHaveLength(1);
+      expect(panels[0].state.pluginId).toBe(panelPluginId);
+      expect(panels[0].state.title).toBe(panelTitle);
+      expect(panels[0].state.options).toEqual(panelOptions);
+    });
+
+    it('preserves panel queries when switching from auto grid to custom grid', () => {
+      const dashboard = setupSceneWithAutoGrid();
+
+      switchToCustomGrid(dashboard);
+
+      const panels = dashboard.state.body.getVizPanels();
+      const runner = getQueryRunnerFor(panels[0]);
+      expect(runner).toBeDefined();
+      expect(runner?.state.queries).toEqual(queries);
+    });
+  });
 });
 
 interface TestOptions {
@@ -265,4 +301,41 @@ function setup(options?: TestOptions) {
   new DashboardScene({ body: manager });
 
   return { manager, grid };
+}
+
+const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };
+const panelTitle = 'Test panel';
+const panelPluginId = 'timeseries';
+const queries = [{ refId: 'A', datasource: { type: 'test', uid: 'ds1' } }];
+
+function setupSceneWithAutoGrid() {
+  const vizPanel = new VizPanel({
+    key: 'panel-1',
+    pluginId: panelPluginId,
+    title: panelTitle,
+    options: panelOptions,
+    $data: new SceneQueryRunner({ key: 'test', queries }),
+  });
+
+  return new DashboardScene({
+    $variables: new SceneVariableSet({ variables: [] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: new AutoGridLayoutManager({
+      layout: new AutoGridLayout({
+        children: [
+          new AutoGridItem({
+            key: 'auto-grid-item-1',
+            body: vizPanel,
+          }),
+        ],
+      }),
+    }),
+  });
+}
+
+function switchToCustomGrid(dashboard: DashboardScene) {
+  const autoLayout = dashboard.state.body as AutoGridLayoutManager;
+  const customLayout = DefaultGridLayoutManager.createFromLayout(autoLayout);
+  dashboard.switchLayout(customLayout, true);
 }
