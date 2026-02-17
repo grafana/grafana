@@ -1,8 +1,9 @@
 import { t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
+import { ActionItem } from '../../Actions';
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { ActionItem, AlertRule } from '../types';
+import { AlertRule } from '../types';
 
 import { AlertCard } from './AlertCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';

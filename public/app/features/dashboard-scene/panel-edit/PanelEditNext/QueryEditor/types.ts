@@ -1,8 +1,6 @@
 import { AlertState, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { QueryEditorType } from '../constants';
-
 export type Transformation = {
   registryItem: TransformerRegistryItem | undefined;
   transformId: string;
@@ -14,14 +12,6 @@ export type AlertRule = {
   rule: CombinedRule;
   state: AlertState | null;
 };
-
-export interface ActionItem {
-  name: string;
-  type: QueryEditorType;
-  isHidden: boolean;
-  /** Alert state for dynamic styling (only used when type is Alert) */
-  alertState?: AlertState | null;
-}
 
 /**
  * Empty alert used to show the alerts view when no actual alerts exist.

@@ -1,11 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { IconName } from '@grafana/data';
+import { AlertState, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Stack, Tooltip } from '@grafana/ui';
 
-import { ActionItem } from './QueryEditor/types';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
+
+export interface ActionItem {
+  name: string;
+  type: QueryEditorType;
+  isHidden: boolean;
+  /** Alert state for dynamic styling (only used when type is Alert) */
+  alertState?: AlertState | null;
+}
 
 interface ActionsProps {
   contentHeader?: boolean;

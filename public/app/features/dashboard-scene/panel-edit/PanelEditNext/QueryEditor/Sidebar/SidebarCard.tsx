@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { Actions } from '../../Actions';
+import { ActionItem, Actions } from '../../Actions';
 import { QUERY_EDITOR_COLORS } from '../../constants';
-import { ActionItem } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
