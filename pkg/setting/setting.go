@@ -638,6 +638,8 @@ type Cfg struct {
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+	TenantApiServerAddress                     string
+	TenantWatcherAllowInsecureTLS              bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
