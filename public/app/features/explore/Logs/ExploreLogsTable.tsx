@@ -9,6 +9,7 @@ import {
   FieldConfigSource,
   PanelData,
   TimeRange,
+  urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
@@ -62,6 +63,23 @@ export function ExploreLogsTable(props: {
     [onClickFilterLabel, onClickFilterOutLabel, frame]
   );
 
+  const selectedLogInfo = useMemo(() => {
+    const { selectedLine } = urlUtil.getUrlSearchParams();
+
+    const param = Array.isArray(selectedLine) ? selectedLine[0] : selectedLine;
+
+    if (typeof param !== 'string') {
+      return undefined;
+    }
+
+    try {
+      const { id, row } = JSON.parse(param);
+      return { id, row };
+    } catch (error) {
+      return undefined;
+    }
+  }, []);
+
   return (
     <PanelContextProvider
       value={{
@@ -82,6 +100,7 @@ export function ExploreLogsTable(props: {
           showControls: true,
           showCopyLogLink: true,
           ...props.externalOptions,
+          permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
         }}
         transparent={false}
         width={props.width}

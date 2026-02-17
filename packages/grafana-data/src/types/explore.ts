@@ -78,6 +78,7 @@ export interface ExploreTracePanelState {
 
 export interface ExploreLogsPanelState {
   id?: string;
+  // @deprecated - only used in tableRT
   columns?: Record<number, string>;
   visualisationType?: 'table' | 'logs';
   labelFieldName?: string;

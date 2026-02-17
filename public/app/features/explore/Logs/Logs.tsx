@@ -92,6 +92,7 @@ import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultSortBy } from './utils/logsTable';
+import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
@@ -227,7 +228,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     fieldSelectorWidthFromStorage ? parseInt(fieldSelectorWidthFromStorage, 10) : getDefaultFieldSelectorWidth()
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
@@ -252,6 +252,44 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
+  const updatePanelState = useCallback(
+    (logsPanelState: Partial<ExploreLogsPanelState>) => {
+      const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
+      if (state?.panelsState) {
+        dispatch(
+          changePanelState(exploreId, 'logs', {
+            ...state.panelsState.logs,
+            columns: logsPanelState.columns ?? panelState?.logs?.columns,
+            visualisationType: logsPanelState.visualisationType ?? visualisationType,
+            labelFieldName: logsPanelState.labelFieldName,
+            refId: logsPanelState.refId ?? panelState?.logs?.refId,
+            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
+          })
+        );
+      }
+    },
+    [
+      dispatch,
+      exploreId,
+      panelState?.logs?.columns,
+      panelState?.logs?.displayedFields,
+      panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
+      visualisationType,
+    ]
+  );
+
+  const [displayedFields, setDisplayedFields] = useState<string[]>(
+    getDefaultDisplayedFieldsFromExploreState(
+      panelState?.logs,
+      updatePanelState,
+      config.featureToggles.logsTablePanel ?? false
+    )
+  );
 
   // Get pinned log lines
   const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
@@ -345,36 +383,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       })
     );
   });
-
-  const updatePanelState = useCallback(
-    (logsPanelState: Partial<ExploreLogsPanelState>) => {
-      const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
-      if (state?.panelsState) {
-        dispatch(
-          changePanelState(exploreId, 'logs', {
-            ...state.panelsState.logs,
-            columns: logsPanelState.columns ?? panelState?.logs?.columns,
-            visualisationType: logsPanelState.visualisationType ?? visualisationType,
-            labelFieldName: logsPanelState.labelFieldName,
-            refId: logsPanelState.refId ?? panelState?.logs?.refId,
-            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
-            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
-            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
-          })
-        );
-      }
-    },
-    [
-      dispatch,
-      exploreId,
-      panelState?.logs?.columns,
-      panelState?.logs?.displayedFields,
-      panelState?.logs?.refId,
-      panelState?.logs?.tableSortBy,
-      panelState?.logs?.tableSortDir,
-      visualisationType,
-    ]
-  );
 
   useEffect(() => {
     if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
