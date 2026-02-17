@@ -32,6 +32,30 @@ const Separator = () => (
   </Text>
 );
 
+interface PendingPickerHeaderProps {
+  editorType: QueryEditorType;
+  label: NonNullable<React.ReactNode>;
+  onCancel?: () => void;
+  cancelLabel: React.ReactNode;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function PendingPickerHeader({ editorType, label, onCancel, cancelLabel, styles }: PendingPickerHeaderProps) {
+  return (
+    <div className={styles.container}>
+      <div className={styles.leftSection}>
+        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} size="sm" />
+        <Text weight="light" variant="body" color="secondary">
+          {label}
+        </Text>
+      </div>
+      <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancel}>
+        {cancelLabel}
+      </Button>
+    </div>
+  );
+}
+
 /**
  * Props for the standalone ContentHeader component.
  * This interface defines everything needed to render the header without Scene coupling.
@@ -95,33 +119,25 @@ export function ContentHeader({
 
   if (pendingExpression) {
     return (
-      <div className={styles.container}>
-        <div className={styles.leftSection}>
-          <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Expression].icon} size="sm" />
-          <Text weight="light" variant="body" color="secondary">
-            <Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>
-          </Text>
-        </div>
-        <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingExpression}>
-          <Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>
-        </Button>
-      </div>
+      <PendingPickerHeader
+        editorType={QueryEditorType.Expression}
+        label={<Trans i18nKey="query-editor-next.header.pending-expression">Select an Expression</Trans>}
+        onCancel={onCancelPendingExpression}
+        cancelLabel={<Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>}
+        styles={styles}
+      />
     );
   }
 
   if (pendingTransformation) {
     return (
-      <div className={styles.container}>
-        <div className={styles.leftSection}>
-          <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].icon} size="sm" />
-          <Text weight="light" variant="body" color="secondary">
-            <Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>
-          </Text>
-        </div>
-        <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingTransformation}>
-          <Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>
-        </Button>
-      </div>
+      <PendingPickerHeader
+        editorType={QueryEditorType.Transformation}
+        label={<Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>}
+        onCancel={onCancelPendingTransformation}
+        cancelLabel={<Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>}
+        styles={styles}
+      />
     );
   }
 
