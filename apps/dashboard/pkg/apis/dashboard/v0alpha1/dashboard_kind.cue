@@ -860,7 +860,7 @@ lineage: schemas: [{
 			ref: {
 				group?: string
 			}
-		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+		} 
 
 		#ControlSourceRef: #DatasourceControlSourceRef
 	}
