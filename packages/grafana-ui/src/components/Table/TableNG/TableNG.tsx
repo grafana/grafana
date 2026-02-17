@@ -4,7 +4,6 @@ import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
   CSSProperties,
-  HTMLAttributes,
   type JSX,
   Key,
   ReactNode,
@@ -36,7 +35,7 @@ import {
   FieldType,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -374,7 +373,7 @@ export function TableNG(props: TableNGProps) {
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
-      name: '',
+      name: t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows'),
       field: {
         name: '',
         type: FieldType.other,
@@ -444,6 +443,9 @@ export function TableNG(props: TableNGProps) {
             />
           </div>
         );
+      },
+      renderHeaderCell(props) {
+        return <div className="sr-only">{props.column.name}</div>;
       },
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
