@@ -18,6 +18,7 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
+import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupOptions } from 'app/types/query';
 
@@ -98,48 +99,49 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    // Get datasource ref from queryRunner or infer from first query
-    let dsRef = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
-    
-    // Fallback to last-used datasource from localStorage (parity with PanelDataQueriesTab)
-    if (!dsRef) {
-      const dashboard = getDashboardSceneFor(this);
-      const dashboardUid = dashboard.state.uid ?? '';
-      const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid);
-
-      if (lastUsedDatasource?.datasourceUid) {
-        const lastUsedDsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource.datasourceUid });
-        if (lastUsedDsSettings) {
-          dsRef = getDataSourceRef(lastUsedDsSettings);
-          // Update queryRunner with the last-used datasource
-          queryRunner.setState({
-            datasource: dsRef,
-          });
-        }
-      }
-    }
-
-    if (!dsRef) {
-      this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
-      return;
-    }
-
     try {
-      const dsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
-      if (!dsSettings) {
-        this.setState({
-          datasource: undefined,
-          dsSettings: undefined,
-          dsError: new Error(`Datasource settings not found for ${dsRef.uid}`),
-        });
-        return;
+      let datasource: DataSourceApi | undefined;
+      let dsSettings: DataSourceInstanceSettings | undefined;
+
+      // Get datasource ref from queryRunner or infer from first query
+      let datasourceToLoad = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
+
+      // Fallback to last-used datasource from localStorage (parity with PanelDataQueriesTab)
+      if (!datasourceToLoad) {
+        const dashboard = getDashboardSceneFor(this);
+        const dashboardUid = dashboard.state.uid ?? '';
+        const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid);
+
+        if (lastUsedDatasource?.datasourceUid) {
+          dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource.datasourceUid });
+          if (dsSettings) {
+            datasource = await getDataSourceSrv().get({
+              uid: lastUsedDatasource.datasourceUid,
+              type: dsSettings.type,
+            });
+
+            queryRunner.setState({
+              datasource: {
+                ...getDataSourceRef(dsSettings),
+                uid: lastUsedDatasource.datasourceUid,
+              },
+            });
+          }
+        }
+      } else {
+        datasource = await getDataSourceSrv().get(datasourceToLoad);
+        dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
       }
 
-      const datasource = await getDataSourceSrv().get(dsRef);
-      this.setState({ datasource, dsSettings, dsError: undefined });
+      if (datasource && dsSettings) {
+        this.setState({ datasource, dsSettings, dsError: undefined });
+        storeLastUsedDataSourceInLocalStorage(getDataSourceRef(dsSettings) || { default: true });
+      } else {
+        this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
+      }
     } catch (err) {
       console.error('Failed to load datasource:', err);
-      
+
       // Fallback to default datasource (parity with PanelDataQueriesTab)
       try {
         const datasource = await getDataSourceSrv().get(config.defaultDatasource);
