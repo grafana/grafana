@@ -14,7 +14,7 @@ jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMe
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 
-describe('when useMTPlugins flag is enabled and apps is not initialized', () => {
+describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: true });
   });
@@ -23,103 +23,97 @@ describe('when useMTPlugins flag is enabled and apps is not initialized', () => 
     setTestFlags({});
   });
 
-  beforeEach(() => {
-    setAppPluginMetas({});
-    jest.resetAllMocks();
-    initPluginMetasMock.mockResolvedValue({ items: [] });
+  describe('and apps is not initialized', () => {
+    beforeEach(() => {
+      setAppPluginMetas({});
+      jest.resetAllMocks();
+      initPluginMetasMock.mockResolvedValue({ items: [] });
+    });
+
+    it('getAppPluginMetas should call initPluginMetas and return correct result', async () => {
+      const apps = await getAppPluginMetas();
+
+      expect(apps).toEqual([]);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getAppPluginMeta should call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginMeta('myorg-someplugin-app');
+
+      expect(result).toEqual(null);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('isAppPluginInstalled should call initPluginMetas and return false', async () => {
+      const installed = await isAppPluginInstalled('myorg-someplugin-app');
+
+      expect(installed).toEqual(false);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getAppPluginVersion should call initPluginMetas and return null', async () => {
+      const result = await getAppPluginVersion('myorg-someplugin-app');
+
+      expect(result).toEqual(null);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('getAppPluginMetas should call initPluginMetas and return correct result', async () => {
-    const apps = await getAppPluginMetas();
+  describe('and apps is initialized', () => {
+    beforeEach(() => {
+      setAppPluginMetas({ 'myorg-someplugin-app': app });
+      jest.resetAllMocks();
+    });
 
-    expect(apps).toEqual([]);
-    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-  });
+    it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
+      const apps = await getAppPluginMetas();
 
-  it('getAppPluginMeta should call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginMeta('myorg-someplugin-app');
+      expect(apps).toEqual([app]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-    expect(result).toEqual(null);
-    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-  });
+    it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginMeta('myorg-someplugin-app');
 
-  it('isAppPluginInstalled should call initPluginMetas and return false', async () => {
-    const installed = await isAppPluginInstalled('myorg-someplugin-app');
+      expect(result).toEqual(app);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-    expect(installed).toEqual(false);
-    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-  });
+    it('getAppPluginMeta should return null if the pluginId is not found', async () => {
+      const result = await getAppPluginMeta('otherorg-otherplugin-app');
 
-  it('getAppPluginVersion should call initPluginMetas and return null', async () => {
-    const result = await getAppPluginVersion('myorg-someplugin-app');
+      expect(result).toEqual(null);
+    });
 
-    expect(result).toEqual(null);
-    expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-  });
-});
+    it('isAppPluginInstalled should not call initPluginMetas and return true', async () => {
+      const installed = await isAppPluginInstalled('myorg-someplugin-app');
 
-describe('when useMTPlugins flag is enabled and apps is initialized', () => {
-  beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
-  });
+      expect(installed).toEqual(true);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
+    it('isAppPluginInstalled should return false if the pluginId is not found', async () => {
+      const result = await isAppPluginInstalled('otherorg-otherplugin-app');
 
-  beforeEach(() => {
-    setAppPluginMetas({ 'myorg-someplugin-app': app });
-    jest.resetAllMocks();
-  });
+      expect(result).toEqual(false);
+    });
 
-  it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
-    const apps = await getAppPluginMetas();
+    it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginVersion('myorg-someplugin-app');
 
-    expect(apps).toEqual([app]);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
+      expect(result).toEqual('1.0.0');
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-  it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginMeta('myorg-someplugin-app');
+    it('getAppPluginVersion should return null if the pluginId is not found', async () => {
+      const result = await getAppPluginVersion('otherorg-otherplugin-app');
 
-    expect(result).toEqual(app);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('getAppPluginMeta should return null if the pluginId is not found', async () => {
-    const result = await getAppPluginMeta('otherorg-otherplugin-app');
-
-    expect(result).toEqual(null);
-  });
-
-  it('isAppPluginInstalled should not call initPluginMetas and return true', async () => {
-    const installed = await isAppPluginInstalled('myorg-someplugin-app');
-
-    expect(installed).toEqual(true);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('isAppPluginInstalled should return false if the pluginId is not found', async () => {
-    const result = await isAppPluginInstalled('otherorg-otherplugin-app');
-
-    expect(result).toEqual(false);
-  });
-
-  it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginVersion('myorg-someplugin-app');
-
-    expect(result).toEqual('1.0.0');
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('getAppPluginVersion should return null if the pluginId is not found', async () => {
-    const result = await getAppPluginVersion('otherorg-otherplugin-app');
-
-    expect(result).toEqual(null);
+      expect(result).toEqual(null);
+    });
   });
 });
 
-describe('when useMTPlugins flag is disabled and apps is not initialized', () => {
+describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
     setTestFlags({ useMTPlugins: false });
   });
@@ -128,110 +122,96 @@ describe('when useMTPlugins flag is disabled and apps is not initialized', () =>
     setTestFlags({});
   });
 
-  beforeEach(() => {
-    setAppPluginMetas({});
-    jest.resetAllMocks();
+  describe('and apps is not initialized', () => {
+    beforeEach(() => {
+      setAppPluginMetas({});
+      jest.resetAllMocks();
+    });
+
+    it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
+      const apps = await getAppPluginMetas();
+
+      expect(apps).toEqual([]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginMeta('myorg-someplugin-app');
+
+      expect(result).toEqual(null);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('isAppPluginInstalled should not call initPluginMetas and return false', async () => {
+      const result = await isAppPluginInstalled('myorg-someplugin-app');
+
+      expect(result).toEqual(false);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginVersion('myorg-someplugin-app');
+
+      expect(result).toEqual(null);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
   });
 
-  it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
-    const apps = await getAppPluginMetas();
+  describe('and apps is initialized', () => {
+    beforeEach(() => {
+      setAppPluginMetas({ 'myorg-someplugin-app': app });
+      jest.resetAllMocks();
+    });
 
-    expect(apps).toEqual([]);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
+    it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
+      const apps = await getAppPluginMetas();
 
-  it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginMeta('myorg-someplugin-app');
+      expect(apps).toEqual([app]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-    expect(result).toEqual(null);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
+    it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginMeta('myorg-someplugin-app');
 
-  it('isAppPluginInstalled should not call initPluginMetas and return false', async () => {
-    const result = await isAppPluginInstalled('myorg-someplugin-app');
+      expect(result).toEqual(app);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-    expect(result).toEqual(false);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
+    it('getAppPluginMeta should return null if the pluginId is not found', async () => {
+      const result = await getAppPluginMeta('otherorg-otherplugin-app');
 
-  it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginVersion('myorg-someplugin-app');
+      expect(result).toEqual(null);
+    });
 
-    expect(result).toEqual(null);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-});
+    it('isAppPluginInstalled should not call initPluginMetas and return true', async () => {
+      const result = await isAppPluginInstalled('myorg-someplugin-app');
 
-describe('when useMTPlugins flag is disabled and apps is initialized', () => {
-  beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
-  });
+      expect(result).toEqual(true);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-  afterAll(() => {
-    setTestFlags({});
-  });
+    it('isAppPluginInstalled should return false if the pluginId is not found', async () => {
+      const result = await isAppPluginInstalled('otherorg-otherplugin-app');
 
-  beforeEach(() => {
-    setAppPluginMetas({ 'myorg-someplugin-app': app });
-    jest.resetAllMocks();
-  });
+      expect(result).toEqual(false);
+    });
 
-  it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
-    const apps = await getAppPluginMetas();
+    it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
+      const result = await getAppPluginVersion('myorg-someplugin-app');
 
-    expect(apps).toEqual([app]);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
+      expect(result).toEqual('1.0.0');
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
 
-  it('getAppPluginMeta should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginMeta('myorg-someplugin-app');
+    it('getAppPluginVersion should return null if the pluginId is not found', async () => {
+      const result = await getAppPluginVersion('otherorg-otherplugin-app');
 
-    expect(result).toEqual(app);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('getAppPluginMeta should return null if the pluginId is not found', async () => {
-    const result = await getAppPluginMeta('otherorg-otherplugin-app');
-
-    expect(result).toEqual(null);
-  });
-
-  it('isAppPluginInstalled should not call initPluginMetas and return true', async () => {
-    const result = await isAppPluginInstalled('myorg-someplugin-app');
-
-    expect(result).toEqual(true);
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('isAppPluginInstalled should return false if the pluginId is not found', async () => {
-    const result = await isAppPluginInstalled('otherorg-otherplugin-app');
-
-    expect(result).toEqual(false);
-  });
-
-  it('getAppPluginVersion should not call initPluginMetas and return correct result', async () => {
-    const result = await getAppPluginVersion('myorg-someplugin-app');
-
-    expect(result).toEqual('1.0.0');
-    expect(initPluginMetasMock).not.toHaveBeenCalled();
-  });
-
-  it('getAppPluginVersion should return null if the pluginId is not found', async () => {
-    const result = await getAppPluginVersion('otherorg-otherplugin-app');
-
-    expect(result).toEqual(null);
+      expect(result).toEqual(null);
+    });
   });
 });
 
 describe('immutability', () => {
-  beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
