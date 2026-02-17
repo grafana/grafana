@@ -5,15 +5,20 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../constants';
 
-import { PendingExpression } from './QueryEditorContext';
+import { PendingExpression, PendingTransformation } from './QueryEditorContext';
 import { AlertRule, Transformation } from './types';
 
 export function getEditorType(
   card: DataQuery | Transformation | AlertRule | null,
-  pendingExpression?: PendingExpression | null
+  pendingExpression?: PendingExpression | null,
+  pendingTransformation?: PendingTransformation | null
 ): QueryEditorType {
   if (pendingExpression) {
     return QueryEditorType.Expression;
+  }
+
+  if (pendingTransformation) {
+    return QueryEditorType.Transformation;
   }
 
   if (!card) {

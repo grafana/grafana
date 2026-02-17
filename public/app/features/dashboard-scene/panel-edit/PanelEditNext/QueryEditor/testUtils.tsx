@@ -64,6 +64,7 @@ export const mockActions: QueryEditorActions = {
   changeDataSource: jest.fn(),
   toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),
+  addTransformation: jest.fn(),
   deleteTransformation: jest.fn(),
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
@@ -100,6 +101,9 @@ export const mockUIStateBase = {
   pendingExpression: null,
   setPendingExpression: jest.fn(),
   finalizePendingExpression: jest.fn(),
+  pendingTransformation: null,
+  setPendingTransformation: jest.fn(),
+  finalizePendingTransformation: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -180,6 +184,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
+    pendingTransformation: null,
+    setPendingTransformation: jest.fn(),
+    finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     ...uiStateOverrides,
