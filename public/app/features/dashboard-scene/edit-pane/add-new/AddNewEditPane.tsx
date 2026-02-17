@@ -91,13 +91,12 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'move',
     }),
     dragContainer: css({
-      height: 150,
+      height: 120,
     }),
     imageContainer: css({
       cursor: 'pointer',
       opacity: 0.8,
       overflow: 'hidden',
-      padding: theme.spacing(2, 0),
       borderRadius: theme.shape.radius.sm,
       width: '100%',
       '&:hover': {
