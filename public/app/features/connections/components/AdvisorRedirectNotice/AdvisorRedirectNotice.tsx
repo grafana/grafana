@@ -67,8 +67,6 @@ export function AdvisorRedirectNotice() {
           aria-label={t('connections.advisor-redirect-notice.aria-label-link-to-advisor', 'Link to Advisor')}
           icon="arrow-right"
           href="/a/grafana-advisor-app"
-          fill="text"
-          variant="secondary"
         >
           <Trans i18nKey="connections.advisor-redirect-notice.go-to-advisor">Go to Advisor</Trans>
         </LinkButton>
