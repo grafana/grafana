@@ -5,8 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorTypeConfig } from '../../constants';
+import { ActionItem, Actions } from '../../Actions';
+import { QueryEditorTypeConfig, QUERY_EDITOR_COLORS } from '../../constants';
 
 import { AddCardButton } from './AddCardButton';
 
@@ -19,8 +19,8 @@ interface SidebarCardProps {
   onDuplicate?: () => void;
   onDelete: () => void;
   onToggleHide: () => void;
-  isHidden: boolean;
   showAddButton: boolean;
+  item: ActionItem;
 }
 
 export const SidebarCard = ({
@@ -32,12 +32,11 @@ export const SidebarCard = ({
   onDuplicate,
   onDelete,
   onToggleHide,
-  isHidden,
   showAddButton = true,
+  item,
 }: SidebarCardProps) => {
   const hasAddButton = showAddButton;
   const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
-  const typeText = config.getLabel();
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
   const handleFocus = useCallback(() => {
@@ -48,6 +47,11 @@ export const SidebarCard = ({
     if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
       setHasFocusWithin(false);
     }
+  }, []);
+
+  // Setter function to reset the focus state of the card when the modal is closed.
+  const handleResetFocus = useCallback(() => {
+    setHasFocusWithin(false);
   }, []);
 
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
@@ -76,14 +80,14 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={cx(styles.cardContent, { [styles.hidden]: isHidden })}>{children}</div>
+        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
         <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
           <Actions
-            onDuplicate={onDuplicate}
+            handleResetFocus={handleResetFocus}
+            item={item}
             onDelete={onDelete}
+            onDuplicate={onDuplicate}
             onToggleHide={onToggleHide}
-            isHidden={isHidden}
-            typeLabel={typeText}
           />
         </div>
       </div>

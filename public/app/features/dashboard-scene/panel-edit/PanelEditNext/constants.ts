@@ -1,4 +1,4 @@
-import { IconName } from '@grafana/data';
+import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
 import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
@@ -20,6 +20,7 @@ export enum QueryEditorType {
   Query = 'query',
   Expression = 'expression',
   Transformation = 'transformation',
+  Alert = 'alert',
 }
 export enum SidebarSize {
   Mini = 'mini',
@@ -42,6 +43,31 @@ export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;
   getLabel: () => string;
+  deleteConfirmation: boolean;
+}
+
+/**
+ * Gets the color for an alert based on its state from the theme.
+ * Used for alert card borders and indicators.
+ */
+export function getAlertStateColor(theme: GrafanaTheme2, state: AlertState | null): string {
+  if (!state) {
+    return theme.colors.text.secondary;
+  }
+
+  switch (state) {
+    case AlertState.Alerting:
+      return theme.colors.error.main;
+    case AlertState.Pending:
+      return theme.colors.warning.main;
+    case AlertState.NoData:
+      return theme.colors.info.main;
+    case AlertState.Paused:
+      return theme.colors.text.disabled;
+    case AlertState.OK:
+    default:
+      return theme.colors.success.main;
+  }
 }
 
 export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
@@ -49,16 +75,27 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     icon: 'database',
     color: QUERY_EDITOR_COLORS.query,
     getLabel: () => t('query-editor-next.labels.query', 'Query'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Expression]: {
     icon: 'calculator-alt',
     color: QUERY_EDITOR_COLORS.expression,
     getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Transformation]: {
     icon: 'process',
     color: QUERY_EDITOR_COLORS.transformation,
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    // Note: For alerts, use getAlertStateColor() instead of this static color
+    // This placeholder is only used when alert state is unknown
+    color: '#6E6E6E',
+    getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
+    deleteConfirmation: false,
   },
 } as const;
 
