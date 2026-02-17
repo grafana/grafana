@@ -82,7 +82,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		},
 	}
 
-	// For testdata, add an additional response format
+	// For testdata, add an explicit response format
 	if b.pluginJSON.ID == "grafana-testdata-datasource" {
 		query = oas.Paths.Paths[root+"namespaces/{namespace}/datasources/{name}/query"]
 		for query == nil || query.Post == nil {
@@ -108,7 +108,9 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 									MediaTypeProps: spec3.MediaTypeProps{
 										Schema: &spec.Schema{
 											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"),
+												Description: "Server sent event stream: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events",
+												Type:        []string{"string"},
+												Format:      "",
 											},
 										},
 									},

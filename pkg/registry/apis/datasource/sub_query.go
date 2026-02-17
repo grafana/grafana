@@ -188,7 +188,6 @@ func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 
 			s.WriteObjectEnd()
 			s.WriteRaw("\n\n") // marks the end of a message in SSE
-			s.Flush()
-			return nil
+			return s.Flush()
 		})
 }

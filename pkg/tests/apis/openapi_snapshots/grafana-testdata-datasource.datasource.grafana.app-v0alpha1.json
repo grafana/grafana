@@ -967,9 +967,15 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "description": "Server sent event stream: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events",
+                  "type": "string"
                 }
               }
             }
