@@ -19,8 +19,8 @@ import { getDefaultVizPanel } from '../utils/utils';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -95,11 +95,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew
-            onAddPanel={onAddNewPanel}
-            dashboard={dashboard}
-            selectedElement={selectedLayoutElement}
-          />
+          <AddNewEditPane onAddPanel={onAddNewPanel} dashboard={dashboard} selectedElement={selectedLayoutElement} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (

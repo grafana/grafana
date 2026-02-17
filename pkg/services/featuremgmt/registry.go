@@ -484,6 +484,15 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "useNewAPIsForDatasourceCRUD",
+			Description:     "Use the new datasource API groups for datasource CRUD requests",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+			Expression:      "false",
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -646,6 +655,14 @@ var (
 			Description:  "Enables generating table data as PDF in reporting",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "reportingV2Layouts",
+			Description:  "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
 		},
@@ -957,6 +974,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingSyncNotifiersApiMigration",
+			Description:  "Use the new k8s API for fetching integration type schemas",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 			Expression:   "false",
 		},
 		{
@@ -1994,6 +2019,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingAlertsActivityBanner",
+			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
@@ -2342,7 +2376,22 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
-	}
+		{
+			Name:         "alertingNotificationHistoryRuleViewer",
+			Description:  "Enables the notification history tab in the rule viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryGlobal",
+			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		}}
 )
 
 //go:embed toggles_gen.json
