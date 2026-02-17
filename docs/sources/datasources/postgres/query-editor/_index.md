@@ -226,54 +226,7 @@ For query variables, key/value variables, nested variables, multi-property varia
 
 ## Annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) allow you to overlay rich event information on top of graphs. Add annotation queries via the **Dashboard settings > Annotations view**.
-
-**Example query using a `time` column with epoch values:**
-
-```sql
-SELECT
-  epoch_time as time,
-  metric1 as text,
-  concat_ws(', ', metric1::text, metric2::text) as tags
-FROM
-  public.test_data
-WHERE
-  $__unixEpochFilter(epoch_time)
-```
-
-**Example region query using `time` and `timeend` columns with epoch values:**
-
-```sql
-SELECT
-  epoch_time as time,
-  epoch_time_end as timeend,
-  metric1 as text,
-  concat_ws(', ', metric1::text, metric2::text) as tags
-FROM
-  public.test_data
-WHERE
-  $__unixEpochFilter(epoch_time)
-```
-
-**Example query using a `time` column with a native SQL date/time data type:**
-
-```sql
-SELECT
-  native_date_time as time,
-  metric1 as text,
-  concat_ws(', ', metric1::text, metric2::text) as tags
-FROM
-  public.test_data
-WHERE
-  $__timeFilter(native_date_time)
-```
-
-| Name      | Description                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field, which can be a column with a native SQL date/time data type or epoch value.          |
-| `timeend` | Optional name of the end date/time field, which can be a column with a native SQL date/time data type or epoch value. |
-| `text`    | Event description field.                                                                                              |
-| `tags`    | Optional field name to use for event tags as a comma-separated string.                                                |
+You can overlay event data on your panels using annotations. Add annotation queries via **Dashboard settings > Annotations**. For query columns, examples, and macros, refer to [PostgreSQL annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/annotations/).
 
 ## Alerting
 
