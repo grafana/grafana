@@ -266,7 +266,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 		return result.Path() == "test/path" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", true).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
@@ -307,7 +307,7 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "test/path", "", "Delete test/path").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", true).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	syncError := errors.New("sync failed")
@@ -601,7 +601,7 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	// Mock sync worker behavior that happens when no ref is specified
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", true).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	mockSyncWorker := jobs.NewMockWorker(t)
@@ -1154,7 +1154,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
 	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
 	mockProgress.On("TooManyErrors").Return(nil).Once()
-	mockProgress.On("ResetResults").Once()
+	mockProgress.On("ResetResults", true).Once()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified
