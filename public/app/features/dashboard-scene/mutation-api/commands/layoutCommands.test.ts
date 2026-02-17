@@ -429,7 +429,7 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       const data = result.data as { layout: any; elements: Record<string, unknown> };
       expect(data.layout.kind).toBe('RowsLayout');
       expect(data.layout.spec.rows).toHaveLength(2);
@@ -444,7 +444,7 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       const data = result.data as { layout: any; elements: Record<string, unknown> };
       expect(data.layout.kind).toBe('TabsLayout');
       expect(data.layout.spec.tabs).toHaveLength(2);
@@ -459,7 +459,7 @@ describe('Layout mutation commands', () => {
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
       const data = result.data as { layout: any; elements: Record<string, unknown> };
       expect(data.elements).toEqual({});
     });
@@ -538,7 +538,9 @@ describe('Layout mutation commands', () => {
       const body = scene.state.body as unknown as RowsLayoutManager;
       const panels = body.state.rows[0].state.layout.getVizPanels();
       expect(panels).toHaveLength(1);
-      const gridItem = panels[0].parent as unknown as { state: { x: number; y: number; width: number; height: number } };
+      const gridItem = panels[0].parent as unknown as {
+        state: { x: number; y: number; width: number; height: number };
+      };
       expect(gridItem.state.x).toBe(6);
       expect(gridItem.state.y).toBe(10);
       expect(gridItem.state.width).toBe(12);
@@ -593,9 +595,13 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => { state.isEditing = true; }),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
         forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => { Object.assign(state, partial); }),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
       } as unknown as MutableDashboardScene;
 
       const executor = new MutationExecutor(scene);
@@ -610,7 +616,7 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ path: '/tabs/0/rows/1' });
 
-      const tabBody = (body.state.tabs[0].state.layout as RowsLayoutManager);
+      const tabBody = body.state.tabs[0].state.layout as RowsLayoutManager;
       expect(tabBody.state.rows).toHaveLength(2);
       expect(tabBody.state.rows[1].state.title).toBe('New Nested Row');
     });
@@ -629,19 +635,20 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row C', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const body = new TabsLayoutManager({
-        tabs: [
-          new TabItem({ title: 'Tab 0', layout: tab0Rows }),
-          new TabItem({ title: 'Tab 1', layout: tab1Rows }),
-        ],
+        tabs: [new TabItem({ title: 'Tab 0', layout: tab0Rows }), new TabItem({ title: 'Tab 1', layout: tab1Rows })],
       });
       const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
       const scene = {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => { state.isEditing = true; }),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
         forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => { Object.assign(state, partial); }),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
       } as unknown as MutableDashboardScene;
 
       const executor = new MutationExecutor(scene);
@@ -678,9 +685,13 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => { state.isEditing = true; }),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
         forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => { Object.assign(state, partial); }),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
       } as unknown as MutableDashboardScene;
 
       const executor = new MutationExecutor(scene);
@@ -703,9 +714,13 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => { state.isEditing = true; }),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
         forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => { Object.assign(state, partial); }),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
       } as unknown as MutableDashboardScene;
 
       const executor = new MutationExecutor(scene);
@@ -739,9 +754,13 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => { state.isEditing = true; }),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
         forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => { Object.assign(state, partial); }),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
       } as unknown as MutableDashboardScene;
 
       const executor = new MutationExecutor(scene);
@@ -758,6 +777,190 @@ describe('Layout mutation commands', () => {
       expect(body.state.rows).toHaveLength(1);
       expect(body.state.rows[0].state.title).toBe('Row 2');
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(1);
+    });
+
+    it('preserves panel titles when moving via movePanelsTo', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'CPU Usage', pluginId: 'timeseries' });
+      const panelB = new VizPanel({ key: 'panel-2', title: 'Memory', pluginId: 'gauge' });
+      const row1 = new RowItem({
+        title: 'Source',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA, panelB]),
+      });
+      const row2 = new RowItem({
+        title: 'Target',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const body = new RowsLayoutManager({ rows: [row1, row2] });
+      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer(),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      } as unknown as MutableDashboardScene;
+
+      const executor = new MutationExecutor(scene);
+      const result = await executor.execute({
+        type: 'REMOVE_ROW',
+        payload: { path: '/rows/0', movePanelsTo: '/rows/1' },
+      });
+
+      expect(result.success).toBe(true);
+      const movedPanels = body.state.rows[0].state.layout.getVizPanels();
+      expect(movedPanels).toHaveLength(2);
+      const titles = movedPanels.map((p) => p.state.title).sort();
+      expect(titles).toEqual(['CPU Usage', 'Memory']);
+    });
+
+    it('moves panels from a tab with nested rows to another tab', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const panelB = new VizPanel({ key: 'panel-2', title: 'Panel B', pluginId: 'stat' });
+
+      const tab0 = new TabItem({
+        title: 'Source Tab',
+        layout: new RowsLayoutManager({
+          rows: [
+            new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([panelA]) }),
+            new RowItem({ title: 'Row B', layout: DefaultGridLayoutManager.fromVizPanels([panelB]) }),
+          ],
+        }),
+      });
+      const tab1 = new TabItem({
+        title: 'Target Tab',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab0, tab1] });
+      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer(),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      } as unknown as MutableDashboardScene;
+
+      const executor = new MutationExecutor(scene);
+      const result = await executor.execute({
+        type: 'REMOVE_TAB',
+        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(body.state.tabs).toHaveLength(1);
+      expect(body.state.tabs[0].state.title).toBe('Target Tab');
+      const movedPanels = body.state.tabs[0].state.layout.getVizPanels();
+      expect(movedPanels).toHaveLength(2);
+      const titles = movedPanels.map((p) => p.state.title).sort();
+      expect(titles).toEqual(['Panel A', 'Panel B']);
+    });
+
+    it('moves panels to a RowsLayout target (resolves to first row)', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const tab0 = new TabItem({
+        title: 'Source',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
+      });
+      const tab1 = new TabItem({
+        title: 'Target',
+        layout: new RowsLayoutManager({
+          rows: [new RowItem({ title: 'Dest Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+        }),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab0, tab1] });
+      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer(),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      } as unknown as MutableDashboardScene;
+
+      const executor = new MutationExecutor(scene);
+      const result = await executor.execute({
+        type: 'REMOVE_TAB',
+        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+      });
+
+      expect(result.success).toBe(true);
+      const targetRows = (body.state.tabs[0].state.layout as RowsLayoutManager).state.rows;
+      expect(targetRows[0].state.layout.getVizPanels()).toHaveLength(1);
+      expect(targetRows[0].state.layout.getVizPanels()[0].state.title).toBe('Panel A');
+    });
+
+    it('fails when movePanelsTo targets an empty RowsLayout', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const row1 = new RowItem({
+        title: 'Row 1',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
+      });
+      const body = new RowsLayoutManager({ rows: [row1] });
+      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer(),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      } as unknown as MutableDashboardScene;
+
+      // movePanelsTo targets "/" which is the RowsLayoutManager itself.
+      // After removing /rows/0, the RowsLayout has no rows, so we can't place panels.
+      // However, the move happens BEFORE the removal, so at this point rows[0] still exists.
+      // Let's test with a scenario where the target is genuinely empty.
+      // We'll create a tabs scene where tab1 has an empty RowsLayout.
+      const emptyRowsTab = new TabItem({
+        title: 'Empty',
+        layout: new RowsLayoutManager({ rows: [] }),
+      });
+      const sourceTab = new TabItem({
+        title: 'Source',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
+      });
+      const tabsBody = new TabsLayoutManager({ tabs: [sourceTab, emptyRowsTab] });
+      const tabsState: Record<string, unknown> = { uid: 'test', isEditing: false, body: tabsBody };
+      const tabsScene = {
+        state: tabsState,
+        serializer: mockSerializer(),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          tabsState.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(tabsState, partial);
+        }),
+      } as unknown as MutableDashboardScene;
+
+      const executor = new MutationExecutor(tabsScene);
+      const result = await executor.execute({
+        type: 'REMOVE_TAB',
+        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('empty RowsLayout');
     });
   });
 
