@@ -268,7 +268,7 @@ export const DashNav = memo<Props>((props) => {
 
   const renderRightActions = () => {
     const { dashboard, isFullscreen, hideTimePicker } = props;
-    const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
+    const { canSave, canEdit, showSettings, canShare, isEmbedded } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -329,8 +329,7 @@ export const DashNav = memo<Props>((props) => {
         />
       );
     }
-
-    if (canShare) {
+    if (canShare && !isEmbedded) {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 

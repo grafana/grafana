@@ -153,13 +153,14 @@ export function findRouteInTree(
 
 export function cleanRouteIDs<
   T extends RouteWithID | Route | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
->(route: T): Omit<T, 'id'> {
+>(route: T): Omit<T, 'id' | 'name'> {
   return omit(
     {
       ...route,
       routes: route.routes?.map((route) => cleanRouteIDs(route)),
     },
-    'id'
+    'id',
+    'name'
   );
 }
 
@@ -198,6 +199,7 @@ export function hashRoute(route: Route): string {
  */
 export function stabilizeRoute(route: Route): Required<Route> {
   const result: Required<Route> = {
+    name: route.name ?? '',
     receiver: route.receiver ?? '',
     group_by: route.group_by ? [...route.group_by].sort() : [],
     continue: route.continue ?? false,

@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
 var _ TeamGroupsHandler = (*NoopTeamGroupsREST)(nil)
@@ -26,7 +27,7 @@ func (n *NoopTeamGroupsREST) Connect(ctx context.Context, id string, options run
 
 // New implements rest.Storage.
 func (s *NoopTeamGroupsREST) New() runtime.Object {
-	return iamv0alpha1.NewGetGroups()
+	return iamv0alpha1.NewGetGroupsResponse()
 }
 
 // Destroy implements rest.Storage.

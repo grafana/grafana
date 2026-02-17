@@ -199,8 +199,10 @@ func (m *scopedReceiverTestingPermissions) Exec(sess *xorm.Session, mg *migrator
 		rolesAffected[result.RoleID] = append(rolesAffected[result.RoleID], result.Identifier)
 	}
 	_, err := sess.InsertMulti(&permissionsToCreate)
-	for id, ids := range rolesAffected {
-		mg.Logger.Debug(fmt.Sprintf("Added permission '%s' to managed role", accesscontrol.ActionAlertingReceiversTestCreate), "roleID", id, "identifiers", ids)
+	if err == nil {
+		for id, ids := range rolesAffected {
+			mg.Logger.Debug(fmt.Sprintf("Added permission '%s' to managed role", accesscontrol.ActionAlertingReceiversTestCreate), "roleID", id, "identifiers", ids)
+		}
 	}
 	return err
 }

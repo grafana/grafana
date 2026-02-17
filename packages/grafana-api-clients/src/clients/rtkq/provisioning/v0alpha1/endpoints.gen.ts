@@ -1471,10 +1471,14 @@ export type GitlabConnectionConfig = {
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
+  /** The connection description */
+  description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
+  /** The connection display name (shown in the UI) */
+  title: string;
   /** The connection provider type
     
     Possible enum values:
@@ -1532,12 +1536,6 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
-  /** Connection state
-    
-    Possible enum values:
-     - `"connected"`
-     - `"disconnected"` */
-  state: 'connected' | 'disconnected';
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

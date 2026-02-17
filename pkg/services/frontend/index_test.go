@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -74,6 +75,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 	t.Run("should serve index with proper assets", func(t *testing.T) {
 		publicDir := setupTestWebAssets(t)
 		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
 			StaticRootPath: publicDir,
 			Env:            setting.Dev, // needs to be dev to bypass the cache

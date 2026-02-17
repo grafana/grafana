@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Auto. max. inaktiv",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Wenn diese Option aktiviert ist, erhält die Anzahl der <i>Maximalen inaktiven Verbindungen</i> automatisch den gleichen Wert wie <i>Maximal offene Verbindungen</i>. Wenn die Anzahl der maximalen offenen Verbindungen nicht festgelegt ist, wird sie auf den Standardwert ({{defaultMaxIdle}}) festgelegt.",
+        "content-max-idle": "Die maximale Anzahl der Verbindungen im Pool der inaktiven Verbindungen. Wenn die Anzahl der <i>Maximalen offenen Verbindungen</i> größer als 0 ist, aber kleiner als die Anzahl der <i>Maximalen inaktiven Verbindungen</i>, werden die <i>Maximalen inaktiven Verbindungen</i> so verringert, dass sie der Grenze für die Anzahl der <i>Maximalen offenen Verbindungen</i> entsprechen. Wenn der Wert auf 0 festgelegt ist, werden keine inaktiven Verbindungen beibehalten.",
         "content-max-lifetime": "Die maximale Zeitdauer der Wiederverwendung einer Verbindung in Sekunden. Bei einer Einstellung auf 0 werden Verbindungen immer wiederverwendet.",
-        "content-max-open": "",
+        "content-max-open": "Die maximale Anzahl offener Verbindungen zur Datenbank. Wenn die Anzahl der <i>Maximalen inaktiven Verbindungen</i> größer als 0 ist und die Anzahl der <i>Maximalen offenen Verbindungen</i> kleiner als die Anzahl der <i>Maximalen inaktiven Verbindungen</i> ist, werden die <i>Maximalen inaktiven Verbindungen</i> so verringert, dass sie der Grenze für die Anzahl der <i>Maximalen offenen Verbindungen</i> entsprechen. Wenn 0 festgelegt ist, gibt es keine Begrenzung der Anzahl offener Verbindungen.",
         "max-idle": "Max. inaktiv",
         "max-lifetime": "Max. Lebensdauer",
         "max-open": "Max. offen",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Ihre Abfrage ist ungültig. Die Details finden Sie unten. <br />Sie können diese Abfrage aber trotzdem ausführen.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Textfeld",
+          "valueField": "Wertfeld"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatabfrage"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Diese Abfrage verarbeitet <strong>{{bytes}}</strong>, wenn sie ausgeführt wird.",
         "validating-query": "Abfrage wird validiert …"
       },
       "raw-editor": {

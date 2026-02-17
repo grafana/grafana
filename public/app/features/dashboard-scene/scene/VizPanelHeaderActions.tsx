@@ -122,7 +122,7 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
   const variables = sceneGraph.getVariables(model);
   const groupByVariable = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
-  const queries = queryRunner?.state.data?.request?.targets ?? [];
+  const queries = queryRunner?.state.queries ?? [];
 
   return (
     <>

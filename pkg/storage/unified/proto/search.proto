@@ -62,7 +62,7 @@ enum QueryFieldType {
   // The query must exactly match the indexed token
   KEYWORD = 2;
   // Like a text query, but the position and offsets influence the score
-  PHRASE = 3; 
+  PHRASE = 3;
 }
 
 // Search within a single resource
@@ -130,6 +130,12 @@ message ResourceSearchRequest {
 
   // Optionally specify which fields are included in the query
   repeated QueryField query_fields = 13;
+
+  // Sort values for SearchAfter pagination.
+  repeated string search_after = 14;
+
+  // Sort values for SearchBefore pagination.
+  repeated string search_before = 15;
 }
 
 message ResourceSearchResponse {
@@ -170,6 +176,9 @@ message ResourceSearchResponse {
 
   // Facet results
   map<string,Facet> facet = 7;
+
+  // Resource version of the index used for this search.
+  int64 resource_version = 8;
 }
 
 message RebuildIndexesRequest {
@@ -181,6 +190,12 @@ message RebuildIndexesRequest {
 }
 
 message RebuildIndexesResponse {
+  message IndexBuildTime {
+    string group = 1;
+    string resource = 2;
+    int64 buildTimeUnix = 3; // Unix timestamp in seconds when the index was originally built
+  }
+
   // Total count of rebuilt indexes
   int64 rebuildCount = 1;
 
@@ -189,5 +204,11 @@ message RebuildIndexesResponse {
 
   // Error details
   ErrorResult error = 3;
+
+  // Build times for indexes (set by search pods, aggregated as MIN by distributor)
+  repeated IndexBuildTime buildTimes = 4;
+
+  // Whether all pods in the ring were contacted (only set by distributor)
+  bool ContactedAllInstances = 5;
 }
 

@@ -199,7 +199,7 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    jest.spyOn(localStorage, 'checkLimits').mockImplementationOnce((queries) => {
+    jest.spyOn(localStorage, 'cleanUpUnstarredQuery').mockImplementationOnce((queries) => {
       return { queriesToKeep: queries, limitExceeded: true };
     });
 

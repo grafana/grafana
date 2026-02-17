@@ -12,6 +12,7 @@ import (
 )
 
 type ImportedConfigRevision struct {
+	identifier     string
 	rev            *ConfigRevision
 	opts           definition.MergeOpts
 	importedConfig *definition.PostableApiAlertingConfig
@@ -26,6 +27,7 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	}
 	// support only one config for now
 	mimirCfg := rev.Config.ExtraConfigs[0]
+	result.identifier = mimirCfg.Identifier
 	opts := definition.MergeOpts{
 		DedupSuffix:     mimirCfg.Identifier,
 		SubtreeMatchers: mimirCfg.MergeMatchers,
@@ -132,4 +134,22 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		}
 	}
 	return m
+}
+
+func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	renamed, err := definition.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
+	}
+
+	definition.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
+
+	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
+	mr.Provenance = models.ProvenanceConvertedPrometheus
+	mr.Origin = models.ResourceOriginImported
+	return mr, nil
 }

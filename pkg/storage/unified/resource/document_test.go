@@ -14,7 +14,7 @@ import (
 
 func TestStandardDocumentBuilder(t *testing.T) {
 	ctx := context.Background()
-	builder := StandardDocumentBuilder()
+	builder := StandardDocumentBuilder(nil)
 
 	body, err := os.ReadFile("testdata/playlist-resource.json")
 	require.NoError(t, err)

@@ -25,6 +25,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    // GitHub App connection name (when using app-based auth instead of PAT)
+    connectionName?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
@@ -33,7 +35,9 @@ export type RepositorySettingsField = Path<RepositoryFormData>;
 export type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
-  type: ConnectionSpec['type'];
+  type: ConnectionType;
+  title: string;
+  description: string;
   appID: string;
   installationID: string;
   privateKey?: string;
@@ -98,4 +102,11 @@ export interface TreeItem {
 export interface FlatTreeItem {
   item: TreeItem;
   level: number;
+}
+
+// External repository from the provider (e.g., GitHub)
+export interface ExternalRepository {
+  name?: string;
+  owner?: string;
+  url?: string;
 }

@@ -1,0 +1,26 @@
+apiVersion: 1
+policies:
+    - orgId: 1
+      receiver: lotsa-emails
+      group_by:
+        - alertname
+      routes:
+        - object_matchers:
+            - - severity
+              - =
+              - warn
+        - object_matchers:
+            - - severity
+              - =~
+              - critical
+        - object_matchers:
+            - - severity
+              - '!~'
+              - info
+        - object_matchers:
+            - - severity
+              - '!='
+              - debug
+      group_wait: 2s
+      group_interval: 2m
+      repeat_interval: 2h

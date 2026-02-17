@@ -1,6 +1,6 @@
 import { initRegionalFormatForTests } from '@grafana/i18n';
 
-import { RawTimeRange, TimeRange } from '../types/time';
+import { RawTimeRange, TimeOption, TimeRange } from '../types/time';
 import * as featureToggles from '../utils/featureToggles';
 
 import { dateTime } from './moment_wrapper';
@@ -12,6 +12,7 @@ import {
   relativeToTimeRange,
   roundInterval,
   timeRangeToRelative,
+  describeTextRange,
 } from './rangeutil';
 
 describe('Range Utils', () => {
@@ -320,11 +321,14 @@ describe('Range Utils', () => {
       ['now-5m', 'now', 'Last 5 minutes'],
       ['now-15m', 'now', 'Last 15 minutes'],
       ['now-1h', 'now', 'Last 1 hour'],
+      ['now-13h', 'now', 'Last 13 hours'],
       ['now-24h', 'now', 'Last 24 hours'],
       ['now-7d', 'now', 'Last 7 days'],
       ['now-30d', 'now', 'Last 30 days'],
+      ['now', 'now+30m', 'Next 30 minutes'],
       ['now/d', 'now/d', 'Today'],
       ['now/d', 'now', 'Today so far'],
+      ['now/d+6h', 'now', 'now/d+6h to now'],
       ['now/w', 'now/w', 'This week'],
       ['now/M', 'now/M', 'This month'],
       ['now/y', 'now/y', 'This year'],
@@ -336,8 +340,17 @@ describe('Range Utils', () => {
       ['now/fy', 'now/fy', 'This fiscal year'],
       ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
       ['now-1y/fy', 'now-1y/fy', 'Previous fiscal year'],
+      ['now-6h', 'now-3h', 'now-6h to now-3h'],
+      ['now-6h', 'now+1h', 'now-6h to now+1h'],
+      ['now/d+6h', 'now-3h', 'now/d+6h to now-3h'],
     ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
       expect(describeTimeRange({ from, to })).toBe(expected);
+    });
+
+    it('displays custom quick ranges', () => {
+      const opt: TimeOption = { from: 'now-4w/w', to: 'now-1w/w', display: 'Previous 4 weeks' };
+      const text = describeTimeRange({ from: opt.from, to: opt.to }, undefined, [opt]);
+      expect(text).toBe('Previous 4 weeks');
     });
 
     it('should prioritize custom quick ranges over standard ranges', () => {
@@ -369,6 +382,14 @@ describe('Range Utils', () => {
 
       const result = describeTimeRange({ from, to });
       expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
+    });
+
+    it('should handle absolute from, relative math to', () => {
+      const text = describeTimeRange({
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
+        to: 'now-1d',
+      });
+      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
     });
 
     it('should handle relative from, absolute to', () => {
@@ -489,5 +510,50 @@ describe('Range Utils', () => {
     it('should handle null custom ranges', () => {
       expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
     });
+  });
+});
+
+describe('describeTextRange', () => {
+  it('should handle simple old expression with only amount and unit', () => {
+    const info = describeTextRange('5m');
+    expect(info.display).toBe('Last 5 minutes');
+  });
+
+  it('should have singular when amount is 1', () => {
+    const info = describeTextRange('1h');
+    expect(info.display).toBe('Last 1 hour');
+  });
+
+  it('should handle non default amount', () => {
+    const info = describeTextRange('13h');
+    expect(info.display).toBe('Last 13 hours');
+    expect(info.from).toBe('now-13h');
+  });
+
+  it('should handle non default future amount', () => {
+    const info = describeTextRange('+3h');
+    expect(info.display).toBe('Next 3 hours');
+    expect(info.from).toBe('now');
+    expect(info.to).toBe('now+3h');
+  });
+
+  it('should handle now/d', () => {
+    const info = describeTextRange('now/d');
+    expect(info.display).toBe('Today so far');
+  });
+
+  it('should handle now/w', () => {
+    const info = describeTextRange('now/w');
+    expect(info.display).toBe('This week so far');
+  });
+
+  it('should handle now/M', () => {
+    const info = describeTextRange('now/M');
+    expect(info.display).toBe('This month so far');
+  });
+
+  it('should handle now/y', () => {
+    const info = describeTextRange('now/y');
+    expect(info.display).toBe('This year so far');
   });
 });

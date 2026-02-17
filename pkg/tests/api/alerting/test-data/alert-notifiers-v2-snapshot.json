@@ -3114,7 +3114,7 @@
     "versions": [
       {
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -3347,7 +3347,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       },
       {
         "version": "v0mimir1",
@@ -4206,7 +4207,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       }
     ]
   },

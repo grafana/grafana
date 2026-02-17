@@ -1,46 +1,30 @@
 import { t } from '@grafana/i18n';
 
 import { Step } from '../Stepper';
-import { GitHubAuthType, RepoType, WizardStep } from '../types';
+import { RepoType, WizardStep } from '../types';
 
-export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array<Step<WizardStep>> => {
-  const steps: Array<Step<WizardStep>> = [];
-
-  // For GitHub, add auth type selection step
-  if (type === 'github') {
-    steps.push({
+export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
+  const isLocal = type === 'local';
+  const authStepText = isLocal
+    ? t('provisioning.wizard.connect-step-local', 'File provisioning')
+    : t('provisioning.wizard.connect-step', 'Connect');
+  return [
+    {
       id: 'authType',
-      name: t('provisioning.wizard.step-auth-type', 'Choose connection type'),
-      title: t('provisioning.wizard.title-auth-type', 'Choose connection type'),
-      submitOnNext: false,
-    });
-
-    // If GitHub App is selected, add the GitHub App configuration step
-    if (githubAuthType === 'github-app') {
-      steps.push({
-        id: 'githubApp',
-        name: t('provisioning.wizard.step-github-app', 'Connect'),
-        title: t('provisioning.wizard.title-github-app', 'Connect to GitHub'),
-        submitOnNext: true,
-      });
-    }
-  }
-
-  // Connection step (always present, but fields vary)
-  steps.push({
-    id: 'connection',
-    name:
-      type === 'github' && githubAuthType === 'github-app'
-        ? t('provisioning.wizard.step-configure-repo', 'Configure repository')
-        : t('provisioning.wizard.step-connect', 'Connect'),
-    title:
-      type === 'github' && githubAuthType === 'github-app'
-        ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
-        : t('provisioning.wizard.title-connect', 'Connect to external storage'),
-    submitOnNext: true,
-  });
-
-  steps.push(
+      name: authStepText,
+      title: authStepText,
+      submitOnNext: true,
+    },
+    {
+      id: 'connection',
+      name: isLocal
+        ? t('provisioning.wizard.step-connect', 'Connect')
+        : t('provisioning.wizard.step-configure-repo', 'Configure repository'),
+      title: isLocal
+        ? t('provisioning.wizard.title-connect', 'Connect to external storage')
+        : t('provisioning.wizard.title-configure-repo', 'Configure repository'),
+      submitOnNext: true,
+    },
     {
       id: 'bootstrap',
       name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
@@ -58,8 +42,6 @@ export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array
       name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
       title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
       submitOnNext: true,
-    }
-  );
-
-  return steps;
+    },
+  ];
 };

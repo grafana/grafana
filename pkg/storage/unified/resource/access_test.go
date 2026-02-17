@@ -13,6 +13,87 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
+	t.Run("RBAC compatible resources should use underlying client", func(t *testing.T) {
+		mockClient := authlib.FixedAccessClient(false)
+		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "check1", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet, Name: "dash1"},
+				{CorrelationID: "check2", Group: "folder.grafana.app", Resource: "folders", Verb: utils.VerbGet, Name: "folder1"},
+			},
+		}
+
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.Len(t, resp.Results, 2)
+		assert.False(t, resp.Results["check1"].Allowed)
+		assert.False(t, resp.Results["check2"].Allowed)
+	})
+
+	t.Run("non-RBAC compatible resources should be allowed", func(t *testing.T) {
+		mockClient := authlib.FixedAccessClient(false)
+		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "check1", Group: "unknown.group", Resource: "unknown.resource", Verb: utils.VerbGet, Name: "item1"},
+				{CorrelationID: "check2", Group: "another.group", Resource: "another.resource", Verb: utils.VerbGet, Name: "item2"},
+			},
+		}
+
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.Len(t, resp.Results, 2)
+		assert.True(t, resp.Results["check1"].Allowed)
+		assert.True(t, resp.Results["check2"].Allowed)
+	})
+
+	t.Run("mixed resources - some RBAC compatible, some not", func(t *testing.T) {
+		mockClient := authlib.FixedAccessClient(false)
+		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "check1", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet, Name: "dash1"},
+				{CorrelationID: "check2", Group: "unknown.group", Resource: "unknown.resource", Verb: utils.VerbGet, Name: "item1"},
+				{CorrelationID: "check3", Group: "folder.grafana.app", Resource: "folders", Verb: utils.VerbGet, Name: "folder1"},
+			},
+		}
+
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.Len(t, resp.Results, 3)
+		// RBAC compatible - should be denied (mockClient returns false)
+		assert.False(t, resp.Results["check1"].Allowed)
+		// Not RBAC compatible - should be allowed
+		assert.True(t, resp.Results["check2"].Allowed)
+		// RBAC compatible - should be denied (mockClient returns false)
+		assert.False(t, resp.Results["check3"].Allowed)
+	})
+
+	t.Run("RBAC compatible resources with allowed client", func(t *testing.T) {
+		mockClient := authlib.FixedAccessClient(true)
+		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "check1", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet, Name: "dash1"},
+			},
+		}
+
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.Len(t, resp.Results, 1)
+		assert.True(t, resp.Results["check1"].Allowed)
+	})
+}
+
 func TestAuthzLimitedClient_Check(t *testing.T) {
 	mockClient := authlib.FixedAccessClient(false)
 	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})

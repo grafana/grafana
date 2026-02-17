@@ -12,6 +12,7 @@ import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion 
 
 import { SlatePrism } from '../../slate-plugins/slate-prism';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
@@ -67,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: 0,
       backgroundColor: 'transparent',
       border: 'none',
+      '&:focus-within': getFocusStyles(theme),
     },
   }),
 });

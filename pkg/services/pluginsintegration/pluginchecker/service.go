@@ -2,6 +2,7 @@ package pluginchecker
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/Masterminds/semver"
@@ -88,34 +89,37 @@ func (s *Service) IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bo
 }
 
 func (s *Service) CanUpdate(pluginId string, currentVersion string, targetVersion string, onlyMinor bool) bool {
+	canUpdate, reason := CanUpdateVersion(currentVersion, targetVersion, onlyMinor)
+	if !canUpdate {
+		s.log.Debug("Skipping update", "pluginId", pluginId, "reason", reason)
+	}
+	return canUpdate
+}
+
+func CanUpdateVersion(currentVersion string, targetVersion string, onlyMinor bool) (bool, string) {
 	// If we are already on the latest version, skip the installation
 	if currentVersion == targetVersion {
-		s.log.Debug("Latest plugin already installed", "pluginId", pluginId, "version", targetVersion)
-		return false
+		return false, fmt.Sprintf("Latest plugin already installed: %s", targetVersion)
 	}
 
 	// If the latest version is a new major version, skip the installation
 	parsedLatestVersion, err := semver.NewVersion(targetVersion)
 	if err != nil {
-		s.log.Error("Failed to parse latest version, skipping potential update", "pluginId", pluginId, "version", targetVersion, "error", err)
-		return false
+		return false, fmt.Sprintf("Failed to parse latest version %s: %s", targetVersion, err)
 	}
 	parsedCurrentVersion, err := semver.NewVersion(currentVersion)
 	if err != nil {
-		s.log.Error("Failed to parse current version, skipping potential update", "pluginId", pluginId, "version", currentVersion, "error", err)
-		return false
+		return false, fmt.Sprintf("Failed to parse current version %s: %s", currentVersion, err)
 	}
 
 	if onlyMinor && (parsedLatestVersion.Major() > parsedCurrentVersion.Major()) {
-		s.log.Debug("New major version available, skipping update due to possible breaking changes", "pluginId", pluginId, "version", targetVersion)
-		return false
+		return false, fmt.Sprintf("New major version available, skipping update due to possible breaking changes: %s", targetVersion)
 	}
 
 	if parsedCurrentVersion.Compare(parsedLatestVersion) >= 0 {
-		s.log.Debug("No update available", "pluginId", pluginId, "version", targetVersion)
-		return false
+		return false, fmt.Sprintf("No update available: %s", targetVersion)
 	}
 
 	// We should update the plugin
-	return true
+	return true, ""
 }

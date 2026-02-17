@@ -1,3 +1,4 @@
+import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
@@ -5,45 +6,54 @@ import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoIcon } from '../Shared/RepoIcon';
 import { RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
-import { getRepositoryTypeConfigs } from '../utils/repositoryTypes';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
 interface Props {
   connection: Connection;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
-export function ConnectionListItem({ connection }: Props) {
+export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const { metadata, spec, status } = connection;
   const name = metadata?.name ?? '';
+  const title = spec?.title || name;
+  const description = spec?.description;
   const url = spec?.url;
   const providerType: RepoType = spec?.type ?? 'github';
-  const repoConfig = getRepositoryTypeConfigs().find((config) => config.type === providerType);
   return (
-    <Card noMargin key={name}>
+    <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
         <RepoIcon type={providerType} />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
-          {repoConfig && <Text variant="h3">{`${repoConfig.label} app connection`}</Text>}
-          {status?.state && <ConnectionStatusBadge status={status} />}
+          <Text variant="h3">{title}</Text>
+          <ConnectionStatusBadge status={status} />
         </Stack>
       </Card.Heading>
 
-      {url && (
+      {(description || url) && (
         <Card.Meta>
-          <TextLink external href={url}>
-            {url}
-          </TextLink>
+          <Stack direction="column">
+            {description && <Text color="secondary">{description}</Text>}
+            {url && (
+              <TextLink external href={textUtil.sanitizeUrl(url)}>
+                {url}
+              </TextLink>
+            )}
+          </Stack>
         </Card.Meta>
       )}
 
-      <Card.Actions>
-        <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
-          <Trans i18nKey="provisioning.connections.view">View</Trans>
-        </LinkButton>
-      </Card.Actions>
+      {!onClick && (
+        <Card.Actions>
+          <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
+            <Trans i18nKey="provisioning.connections.view">View</Trans>
+          </LinkButton>
+        </Card.Actions>
+      )}
     </Card>
   );
 }

@@ -8,9 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
@@ -19,8 +18,9 @@ var (
 	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
 	//lint:ignore ST1005 this is not punctuation
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
-	//lint:ignore ST1005 this is not punctuation
-	ErrNotFound = apierrors.NewNotFound(schema.GroupResource{Resource: "github"}, "resource not found")
+
+	ErrNotFound            = errors.New("not found")
+	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
@@ -49,6 +49,23 @@ type App struct {
 	Slug string
 	// Owner represents the GH account/org owning the app
 	Owner string
+	// Permissions granted to the GitHub App
+	Permissions AppPermissions
+}
+type AppPermission int
+
+const (
+	AppPermissionNone AppPermission = iota
+	AppPermissionRead
+	AppPermissionWrite
+)
+
+// AppPermissions represents the permissions granted to a GitHub App installation
+type AppPermissions struct {
+	Contents     AppPermission
+	Metadata     AppPermission
+	PullRequests AppPermission
+	Webhooks     AppPermission
 }
 
 // AppInstallation represents a Github App Installation.
@@ -85,7 +102,7 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return App{}, ErrAuthentication
 			case http.StatusNotFound:
-				return App{}, ErrNotFound
+				return App{}, fmt.Errorf("app: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
 				return App{}, ErrServiceUnavailable
 			}
@@ -97,6 +114,12 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
 		Owner: app.GetOwner().GetLogin(),
+		Permissions: AppPermissions{
+			Contents:     toAppPermission(app.GetPermissions().GetContents()),
+			Metadata:     toAppPermission(app.GetPermissions().GetMetadata()),
+			PullRequests: toAppPermission(app.GetPermissions().GetPullRequests()),
+			Webhooks:     toAppPermission(app.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 
@@ -115,7 +138,7 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return AppInstallation{}, ErrAuthentication
 			case http.StatusNotFound:
-				return AppInstallation{}, ErrNotFound
+				return AppInstallation{}, fmt.Errorf("installation: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
 				return AppInstallation{}, ErrServiceUnavailable
 			}
@@ -127,6 +150,17 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
 	}, nil
+}
+
+func toAppPermission(permissions string) AppPermission {
+	switch permissions {
+	case "read":
+		return AppPermissionRead
+	case "write":
+		return AppPermissionWrite
+	default:
+		return AppPermissionNone
+	}
 }
 
 const (
@@ -194,9 +228,20 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return InstallationToken{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusServiceUnavailable:
+				return InstallationToken{}, ErrServiceUnavailable
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return InstallationToken{}, ErrAuthentication
+			case http.StatusNotFound:
+				// Not Found is returned by this API when the given installation is not present.
+				return InstallationToken{}, fmt.Errorf("installation: %w", ErrNotFound)
+			case http.StatusUnprocessableEntity:
+				return InstallationToken{}, fmt.Errorf("%s: %w", ghErr.Message, ErrUnprocessableEntity)
+			}
 		}
+
 		return InstallationToken{}, err
 	}
 

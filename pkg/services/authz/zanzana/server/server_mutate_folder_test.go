@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateFolders(t *testing.T, srv *Server) *Server {
@@ -26,7 +27,10 @@ func setupMutateFolders(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateFolders(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateFolders(t, srv)
 
 	t.Run("should create new folder parent relation", func(t *testing.T) {

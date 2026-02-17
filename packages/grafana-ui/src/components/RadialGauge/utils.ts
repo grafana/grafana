@@ -1,4 +1,4 @@
-import { FieldDisplay, getDisplayProcessor } from '@grafana/data';
+import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialGaugeDimensions } from './types';
 
@@ -118,12 +118,20 @@ export function calculateDimensions(
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
 
-  // If rounded bars is enabled they need a bit more vertical space
-  if (yMaxAngle < 180 && roundedBars) {
-    outerRadius -= barWidth;
-    maxRadiusH -= barWidth;
-    maxRadiusW -= barWidth;
-  }
+  // When enabling stroke-linecap="round" on a path, the circular endcap is appended outside of the path.
+  // If you don't adjust the positioning or the path, then the endcaps will probably clip off the bottom
+  // of the panel. To account for this, the circular endcap radius (which is half the bar width) needs
+  // to be accounted for. To get the best visual result, we will take some off the radius of the
+  // visualization overall and some off of the vertical space by offsetting the centerY upwards.
+  const totalEndcapAdjustment = yMaxAngle < 180 && roundedBars ? barWidth * 0.5 : 0;
+
+  // change the factor we multiply here to steal more or less from the size of the gauge vs. the centerY position.
+  // there's actually a range of values you could use here to make this work, the 50/50 split looks the best
+  // to me, because it handles use cases like bar glow well and avoids clipping on either vertical edge of the panel.
+  const radiusEndcapAdjustment = totalEndcapAdjustment * 0.5;
+  outerRadius -= radiusEndcapAdjustment;
+  maxRadiusH -= radiusEndcapAdjustment;
+  maxRadiusW -= radiusEndcapAdjustment;
 
   // Scale labels
   let scaleLabelsFontSize = 0;
@@ -169,7 +177,8 @@ export function calculateDimensions(
   const belowCenterY = maxRadius * Math.sin(toRad(yMaxAngle));
   const rest = height - belowCenterY - margin * 2 - maxRadius;
   const centerX = width / 2;
-  const centerY = maxRadius + margin + rest / 2;
+  const centerYEndcapAdjustment = totalEndcapAdjustment - radiusEndcapAdjustment;
+  const centerY = maxRadius + margin + rest / 2 - centerYEndcapAdjustment;
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;
@@ -202,14 +211,7 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
   };
 }
 
-export function drawRadialArcPath(
-  startAngle: number,
-  endAngle: number,
-  dimensions: RadialGaugeDimensions,
-  roundedBars?: boolean
-): string {
-  const { radius, centerX, centerY } = dimensions;
-
+export function drawRadialArcPath(startAngle: number, endAngle: number, radius: number): string {
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
     endAngle = 359.99;
@@ -220,12 +222,14 @@ export function drawRadialArcPath(
 
   const largeArc = endAngle > 180 ? 1 : 0;
 
-  let x1 = centerX + radius * Math.cos(startRadians);
-  let y1 = centerY + radius * Math.sin(startRadians);
-  let x2 = centerX + radius * Math.cos(endRadians);
-  let y2 = centerY + radius * Math.sin(endRadians);
+  const MAX_DECIMALS = 2;
 
-  return ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
+  const x1 = parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
+
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {
@@ -249,3 +253,27 @@ export function getOptimalSegmentCount(
 
   return Math.min(maxSegments, segmentCount);
 }
+
+export function getThresholdPercentageValue(
+  threshold: Threshold,
+  thresholdsMode: ThresholdsMode,
+  fieldDisplay: FieldDisplay
+): number {
+  if (thresholdsMode === ThresholdsMode.Percentage) {
+    return threshold.value / 100;
+  }
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (threshold.value - min) / (max - min);
+}
+
+export const IS_SAFARI = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  return true;
+})();

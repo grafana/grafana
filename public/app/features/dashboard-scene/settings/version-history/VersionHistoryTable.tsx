@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-
-import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -15,9 +15,16 @@ type VersionsTableProps = {
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
+  isLoadingUserDisplayNames?: boolean;
 };
 
-export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {
+export const VersionHistoryTable = ({
+  versions,
+  canCompare,
+  onCheck,
+  onRestore,
+  isLoadingUserDisplayNames,
+}: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -61,7 +68,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
               </td>
               <td>{version.version}</td>
               <td>{version.createdDateString}</td>
-              <td>{version.createdBy}</td>
+              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
@@ -83,7 +90,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             version: version.version,
                             index: idx,
                             confirm: false,
-                            version_date: version.created,
+                            version_date: new Date(version.created),
                           });
                         }}
                       >

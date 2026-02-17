@@ -245,6 +245,7 @@ export enum PluginExtensionPointPatterns {
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
 }
@@ -307,6 +308,8 @@ export type PluginExtensionResourceAttributesContext = {
     type: string;
     uid: string;
   };
+  traceID?: string;
+  spanID?: string;
 };
 
 export type DataSourceConfigErrorStatusContext = {

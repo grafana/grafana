@@ -24,7 +24,7 @@
     "i18next-cli": "^1.24.22",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0",
+    "webpack": "^5.105.0",
     "webpack-merge": "5.10.0"
   },
   "engines": {
@@ -39,7 +39,7 @@
     "@grafana/ui": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-router-dom": "^6.22.0",
+    "react-router-dom": "^6.26.1",
     "rxjs": "7.8.1",
     "tslib": "2.6.3"
   },

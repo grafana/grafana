@@ -131,12 +131,26 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					if old != nil {
 						oldCfg := old.Config()
 						repository.CopySecureValues(&cfg, oldCfg)
+
+						// Copying previous finalizers
+						if len(cfg.GetFinalizers()) == 0 {
+							cfg.SetFinalizers(oldCfg.GetFinalizers())
+						}
 					}
 				}
 
 				cfg.SetName(name)
 				if cfg.GetNamespace() == "" {
 					cfg.SetNamespace(ns)
+				}
+
+				// In case the given repo has no finalizers, set the default ones.
+				// This is because we now enforce their existence at validation time.
+				if len(cfg.GetFinalizers()) == 0 {
+					cfg.SetFinalizers([]string{
+						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
+					})
 				}
 
 				// In case a connection is specified, we should try creating a new token with given info
@@ -158,7 +172,8 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 
 					token, err := c.GenerateRepositoryToken(ctx, &cfg)
 					if err != nil {
-						if errors.Is(err, connection.ErrNotImplemented) {
+						switch {
+						case errors.Is(err, connection.ErrNotImplemented):
 							responder.Error(&k8serrors.StatusError{
 								ErrStatus: metav1.Status{
 									Status:  metav1.StatusFailure,
@@ -167,17 +182,43 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 									Message: "token generation not implemented for given connection type",
 								},
 							})
-							return
+						case errors.Is(err, connection.ErrRepositoryAccess):
+							responder.Error(&k8serrors.StatusError{
+								ErrStatus: metav1.Status{
+									Status:  metav1.StatusFailure,
+									Code:    http.StatusUnprocessableEntity,
+									Reason:  "UnprocessableEntity",
+									Message: err.Error(),
+								},
+							})
+						case errors.Is(err, connection.ErrNotFound):
+							responder.Error(&k8serrors.StatusError{
+								ErrStatus: metav1.Status{
+									Status:  metav1.StatusFailure,
+									Code:    http.StatusNotFound,
+									Reason:  metav1.StatusReasonNotFound,
+									Message: err.Error(),
+								},
+							})
+						case errors.Is(err, connection.ErrAuthentication):
+							responder.Error(&k8serrors.StatusError{
+								ErrStatus: metav1.Status{
+									Status:  metav1.StatusFailure,
+									Code:    http.StatusUnauthorized,
+									Reason:  metav1.StatusReasonUnauthorized,
+									Message: fmt.Sprintf("failed to generate repository token from connection: %v", err),
+								},
+							})
+						default:
+							responder.Error(&k8serrors.StatusError{
+								ErrStatus: metav1.Status{
+									Status:  metav1.StatusFailure,
+									Code:    http.StatusInternalServerError,
+									Reason:  metav1.StatusReasonInternalError,
+									Message: fmt.Sprintf("failed to generate repository token from connection: %v", err),
+								},
+							})
 						}
-
-						responder.Error(&k8serrors.StatusError{
-							ErrStatus: metav1.Status{
-								Status:  metav1.StatusFailure,
-								Code:    http.StatusInternalServerError,
-								Reason:  "InternalServerError",
-								Message: "failed to generate repository token from connection",
-							},
-						})
 						return
 					}
 
