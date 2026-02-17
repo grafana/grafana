@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -155,6 +157,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		if err != nil {
 			return nil, fmt.Errorf("load resource URLs: %w", err)
 		}
+	}
+
+	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
+		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist
