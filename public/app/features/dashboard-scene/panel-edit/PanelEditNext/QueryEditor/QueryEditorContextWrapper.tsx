@@ -96,17 +96,6 @@ export function QueryEditorContextWrapper({
     setFocusedField(null);
   }, []);
 
-  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
-    selectedQueryRefId,
-    selectedTransformationId,
-    selectedAlertId,
-    queryRunnerState?.queries ?? [],
-    transformations,
-    alertingState.alertRules
-  );
-
-  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
-
   // Transformation UI toggles
   const toggleHelp = useCallback(() => {
     setTransformTogglesState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
@@ -152,6 +141,18 @@ export function QueryEditorContextWrapper({
       addTransformation: addTransformationAction,
       onCardSelectionChange,
     });
+
+  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
+    selectedQueryRefId,
+    selectedTransformationId,
+    selectedAlertId,
+    queryRunnerState?.queries ?? [],
+    transformations,
+    alertingState.alertRules,
+    Boolean(pendingExpression) || Boolean(pendingTransformation)
+  );
+
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const uiState = useMemo(
     () => ({
