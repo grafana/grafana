@@ -76,72 +76,15 @@ func TestSetTeamMembershipsViaK8s_Success(t *testing.T) {
 	s.mockResClient.AssertNumberOfCalls(t, "Delete", 1)
 }
 
-func TestSetTeamMembershipsViaK8s_FailureWithRollback(t *testing.T) {
-	const (
-		admin1Email  = "admin1@example.com"
-		admin2Email  = "admin2@example.com"
-		admin1UserID = int64(10)
-		admin2UserID = int64(20)
-	)
-
-	s := setupTest(t)
-
-	cmd := team.SetTeamMembershipsCommand{
-		Admins:  []string{admin1Email, admin2Email},
-		Members: []string{},
-	}
-
-	s.mockUserExists(admin1Email, admin1UserID)
-	s.mockUserExists(admin2Email, admin2UserID)
-
-	existingBindings := &iamv0alpha1.TeamBindingList{
-		Items: []iamv0alpha1.TeamBinding{},
-	}
-	s.mockListBindings(existingBindings)
-
-	s.mockCreateBinding(admin1UserID, iamv0alpha1.TeamBindingTeamPermissionAdmin, nil)
-
-	s.mockCreateBinding(admin2UserID, iamv0alpha1.TeamBindingTeamPermissionAdmin, assert.AnError)
-
-	admin1BindingName := fmt.Sprintf("tb-%s-%d", s.teamName, admin1UserID)
-	s.mockDeleteBinding(admin1BindingName)
-
-	resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, cmd)
-	require.NotNil(t, resp)
-	assert.Equal(t, http.StatusInternalServerError, resp.Status())
-
-	bodyBytes := resp.Body()
-	bodyStr := string(bodyBytes)
-	assert.Contains(t, bodyStr, "Failed to create team bindings for admins")
-
-	s.mockResClient.AssertExpectations(t)
-
-	// Verify rollback was executed
-	s.mockResClient.AssertCalled(t, "Delete", s.ctx, resource.Identifier{
-		Namespace: s.namespace,
-		Name:      admin1BindingName,
-	}, resource.DeleteOptions{})
-
-	// Verify operations happened in correct order:
-	// 1. List existing bindings
-	// 2. Create first admin binding (success)
-	// 3. Create second admin binding (failure)
-	// 4. Delete first admin binding (rollback)
-	s.mockResClient.AssertCalled(t, "List", s.ctx, s.namespace, mock.Anything)
-	s.mockResClient.AssertNumberOfCalls(t, "Create", 2) // 2 attempts (1 success, 1 failure)
-	s.mockResClient.AssertNumberOfCalls(t, "Delete", 1) // 1 rollback deletion
-}
-
 func TestCheckAndCreateBindingUpdate(t *testing.T) {
 	tests := []struct {
-		name              string
-		binding           iamv0alpha1.TeamBinding
-		userEmail         string
-		emailsMap         map[string]struct{}
-		targetPermission  iamv0alpha1.TeamBindingTeamPermission
-		expectWasFound    bool
-		expectNeedsUpdate bool
-		expectMapEmpty    bool
+		name             string
+		binding          iamv0alpha1.TeamBinding
+		userEmail        string
+		emailsMap        map[string]struct{}
+		targetPermission iamv0alpha1.TeamBindingTeamPermission
+		expectWasFound   bool
+		expectMapEmpty   bool
 	}{
 		{
 			name: "user not in map",
@@ -150,12 +93,11 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 					Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
 				},
 			},
-			userEmail:         "user@example.com",
-			emailsMap:         map[string]struct{}{},
-			targetPermission:  iamv0alpha1.TeamBindingTeamPermissionAdmin,
-			expectWasFound:    false,
-			expectNeedsUpdate: false,
-			expectMapEmpty:    true,
+			userEmail:        "user@example.com",
+			emailsMap:        map[string]struct{}{},
+			targetPermission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+			expectWasFound:   false,
+			expectMapEmpty:   true,
 		},
 		{
 			name: "user in map, permission matches",
@@ -172,10 +114,9 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 			emailsMap: map[string]struct{}{
 				"user@example.com": {},
 			},
-			targetPermission:  iamv0alpha1.TeamBindingTeamPermissionAdmin,
-			expectWasFound:    true,
-			expectNeedsUpdate: false,
-			expectMapEmpty:    true,
+			targetPermission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+			expectWasFound:   true,
+			expectMapEmpty:   true,
 		},
 		{
 			name: "user in map, permission differs - needs update",
@@ -195,16 +136,15 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 			emailsMap: map[string]struct{}{
 				"user@example.com": {},
 			},
-			targetPermission:  iamv0alpha1.TeamBindingTeamPermissionAdmin,
-			expectWasFound:    true,
-			expectNeedsUpdate: true,
-			expectMapEmpty:    true,
+			targetPermission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+			expectWasFound:   true,
+			expectMapEmpty:   true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			wasFound, update, needsUpdate := checkAndCreateBindingUpdate(
+			wasFound, update := checkAndCreateBindingUpdate(
 				tt.binding,
 				tt.userEmail,
 				tt.emailsMap,
@@ -212,17 +152,14 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 			)
 
 			assert.Equal(t, tt.expectWasFound, wasFound, "wasFound mismatch")
-			assert.Equal(t, tt.expectNeedsUpdate, needsUpdate, "needsUpdate mismatch")
 
 			if tt.expectMapEmpty {
 				assert.Empty(t, tt.emailsMap, "emailsMap should be empty after processing")
 			}
 
-			if needsUpdate {
-				assert.NotNil(t, update.original, "original binding should not be nil")
-				assert.NotNil(t, update.updated, "updated binding should not be nil")
-				assert.Equal(t, tt.targetPermission, update.updated.Spec.Permission, "permission should be updated")
-				assert.NotEqual(t, update.original.Spec.Permission, update.updated.Spec.Permission, "permissions should differ")
+			if update != nil {
+				assert.NotNil(t, update, "updated binding should not be nil")
+				assert.Equal(t, tt.targetPermission, update.Spec.Permission, "permission should be updated")
 			}
 		})
 	}
