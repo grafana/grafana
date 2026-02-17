@@ -53,7 +53,7 @@ func (s *consolidationHistoryStore) StartNewConsolidation(ctx context.Context) (
 			args = append(args, "error", createErr)
 		}
 		logging.FromContext(ctx).Info("ConsolidationHistoryStore.StartNewConsolidation", args...)
-		s.metrics.KeeperMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.ConsolidationHistoryStartDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	now := time.Now().UTC().Unix()
@@ -95,40 +95,65 @@ func (s *consolidationHistoryStore) FinishCurrentConsolidation(ctx context.Conte
 			args = append(args, "error", finishErr)
 		}
 		logging.FromContext(ctx).Info("ConsolidationHistoryStore.FinishCurrentConsolidation", args...)
-		s.metrics.KeeperMetadataUpdateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.ConsolidationHistoryFinishDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	latest, err := s.GetLatestConsolidation(ctx)
+	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		// Lock the latest unfinished row in this transaction so nothing can change between select and update.
+		reqSelect := getLatestUnfinishedConsolidationHistory{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			IsForUpdate: true,
+		}
+		querySelect, err := sqltemplate.Execute(sqlConsolidationHistoryGetLatestUnfinished, reqSelect)
+		if err != nil {
+			return fmt.Errorf("execute template %q: %w", sqlConsolidationHistoryGetLatestUnfinished.Name(), err)
+		}
+		rows, err := s.db.QueryContext(ctx, querySelect, reqSelect.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("querying latest unfinished consolidation: %w", err)
+		}
+		defer func() { _ = rows.Close() }()
+
+		if !rows.Next() {
+			return contracts.ErrNoConsolidationToFinish
+		}
+		var id int64
+		var created, completed int64
+		if err := rows.Scan(&id, &created, &completed); err != nil {
+			return fmt.Errorf("scanning consolidation row: %w", err)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("read rows error: %w", err)
+		}
+		if completed != 0 {
+			return contracts.ErrNoConsolidationToFinish
+		}
+
+		now := time.Now().UTC().Unix()
+		reqUpdate := finishConsolidationHistory{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			ID:          id,
+			Completed:   now,
+		}
+		queryUpdate, err := sqltemplate.Execute(sqlConsolidationHistoryFinish, reqUpdate)
+		if err != nil {
+			return fmt.Errorf("execute template %q: %w", sqlConsolidationHistoryFinish.Name(), err)
+		}
+		result, err := s.db.ExecContext(ctx, queryUpdate, reqUpdate.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("updating consolidation completed: %w", err)
+		}
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+		if rowsAffected != 1 {
+			return contracts.ErrNoConsolidationToFinish
+		}
+		return nil
+	})
 	if err != nil {
 		return err
-	}
-	if latest == nil {
-		return contracts.ErrNoConsolidationToFinish
-	}
-	if !latest.Completed.IsZero() {
-		return contracts.ErrNoConsolidationToFinish
-	}
-
-	now := time.Now().UTC().Unix()
-	req := finishConsolidationHistory{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		ID:          latest.ID,
-		Completed:   now,
-	}
-	query, err := sqltemplate.Execute(sqlConsolidationHistoryFinish, req)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlConsolidationHistoryFinish.Name(), err)
-	}
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("updating consolidation completed: %w", err)
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("getting rows affected: %w", err)
-	}
-	if rowsAffected != 1 {
-		return contracts.ErrNoConsolidationToFinish
 	}
 	return nil
 }
@@ -147,7 +172,7 @@ func (s *consolidationHistoryStore) GetLatestConsolidation(ctx context.Context) 
 			args = append(args, "error", err)
 		}
 		logging.FromContext(ctx).Info("ConsolidationHistoryStore.GetLatestConsolidation", args...)
-		s.metrics.KeeperMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.ConsolidationHistoryGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	req := getLatestConsolidationHistory{

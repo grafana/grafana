@@ -34,6 +34,10 @@ type StorageMetrics struct {
 	SecureValueSetStatusDuration      *prometheus.HistogramVec
 	SecureValueDeleteDuration         *prometheus.HistogramVec
 
+	ConsolidationHistoryStartDuration  *prometheus.HistogramVec
+	ConsolidationHistoryFinishDuration *prometheus.HistogramVec
+	ConsolidationHistoryGetDuration    *prometheus.HistogramVec
+
 	DecryptDuration *prometheus.HistogramVec
 }
 
@@ -127,6 +131,29 @@ func newStorageMetrics() *StorageMetrics {
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
 
+		// Consolidation history metrics
+		ConsolidationHistoryStartDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "consolidation_history_start_duration_seconds",
+			Help:      "Duration of consolidation history start operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
+		ConsolidationHistoryFinishDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "consolidation_history_finish_duration_seconds",
+			Help:      "Duration of consolidation history finish operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
+		ConsolidationHistoryGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "consolidation_history_get_duration_seconds",
+			Help:      "Duration of consolidation history get latest operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
+
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
@@ -162,6 +189,9 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.SecureValueDeleteDuration,
+				m.ConsolidationHistoryStartDuration,
+				m.ConsolidationHistoryFinishDuration,
+				m.ConsolidationHistoryGetDuration,
 				m.DecryptDuration,
 			)
 		}
