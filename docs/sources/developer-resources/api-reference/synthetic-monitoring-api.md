@@ -5,7 +5,7 @@ keywords:
   - Cloud
   - synthetic monitoring
   - API
-menuTitle: Synthetic Monitoring API 
+menuTitle: Synthetic Monitoring API
 title: Grafana Cloud Synthetic Monitoring API reference
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/synthetic-monitoring-api/
