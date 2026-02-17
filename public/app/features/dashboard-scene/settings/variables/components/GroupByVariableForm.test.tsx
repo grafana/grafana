@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { byTestId } from 'testing-library-selector';
 
@@ -152,6 +152,26 @@ describe('GroupByVariableForm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Remove default value' }));
     expect(mockOnDefaultValueChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should show defaultValueOptions in combobox dropdown', async () => {
+    const mockOnDefaultValueChange = jest.fn();
+    const { user } = setup({
+      defaultValue: [''],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
+      onDefaultValueChange: mockOnDefaultValueChange,
+    });
+
+    const combobox = screen.getByLabelText('Default value');
+    await user.click(combobox);
+
+    await waitFor(() => {
+      expect(screen.getByText('job')).toBeInTheDocument();
+      expect(screen.getByText('instance')).toBeInTheDocument();
+    });
   });
 
   it('should render only datasource picker and alert when not supported', async () => {
