@@ -84,6 +84,10 @@ export async function refetchPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     panels = settings.panels;
+
+    // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
+    // eslint-disable-next-line no-restricted-syntax
+    config.panels = settings.panels;
     return;
   }
 
