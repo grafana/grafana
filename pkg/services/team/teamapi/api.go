@@ -20,14 +20,16 @@ type TeamAPI struct {
 	teamService            team.Service
 	ac                     accesscontrol.Service
 	teamPermissionsService accesscontrol.TeamPermissionsService
-	userService            user.Service
-	license                licensing.Licensing
-	cfg                    *setting.Cfg
-	preferenceService      pref.Service
-	ds                     dashboards.DashboardService
-	logger                 log.Logger
-	features               featuremgmt.FeatureToggles
-	teamBindingClient      *iamv0alpha1.TeamBindingClient
+	// FIXME: it's a legacy functionality and we should move to api calls in the future.
+	// https://github.com/grafana/identity-access-team/issues/1922
+	userService       user.Service
+	license           licensing.Licensing
+	cfg               *setting.Cfg
+	preferenceService pref.Service
+	ds                dashboards.DashboardService
+	logger            log.Logger
+	features          featuremgmt.FeatureToggles
+	teamBindingClient *iamv0alpha1.TeamBindingClient
 }
 
 func ProvideTeamBindingClient(clientGenerator resource.ClientGenerator) (*iamv0alpha1.TeamBindingClient, error) {

@@ -12,8 +12,13 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
 
 // setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
 func (tapi *TeamAPI) setTeamMembershipsViaK8s(
@@ -21,10 +26,17 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	teamID int64,
 	cmd team.SetTeamMembershipsCommand,
 ) response.Response {
+	ctx := c.Req.Context()
+	ctx, span := tracer.Start(ctx, "setTeamMembershipsViaK8s", trace.WithAttributes(
+		attribute.Int64("team_id", teamID),
+		attribute.String("namespace", c.Namespace),
+		attribute.Int("admin_count", len(cmd.Admins)),
+		attribute.Int("member_count", len(cmd.Members)),
+	))
+	defer span.End()
+
 	var (
-		ctx       = c.Req.Context()
-		orgID     = c.GetOrgID()
-		namespace = fmt.Sprintf("org-%d", orgID)
+		namespace = c.Namespace
 		teamName  = strconv.FormatInt(teamID, 10)
 	)
 
