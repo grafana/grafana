@@ -11,17 +11,17 @@ import (
 
 func TestLegacyStorageValidateURL(t *testing.T) {
 	tests := []struct {
-		name       string
-		pluginType string
-		url        string
-		wantErr    bool
+		name        string
+		pluginType  string
+		url         string
+		wantErr     bool
 		errContains string
 	}{
 		{
-			name:       "empty URL for required type returns error",
-			pluginType: datasources.DS_PROMETHEUS,
-			url:        "",
-			wantErr:    true,
+			name:        "empty URL for required type returns error",
+			pluginType:  datasources.DS_PROMETHEUS,
+			url:         "",
+			wantErr:     true,
 			errContains: "URL is required",
 		},
 		{

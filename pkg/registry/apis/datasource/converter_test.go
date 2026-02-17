@@ -279,7 +279,7 @@ func TestFromUpdateCommand(t *testing.T) {
 			Name:   "Test",
 			Access: datasources.DS_ACCESS_PROXY,
 			SecureJsonData: map[string]string{
-				"password":       "secret123",
+				"password":          "secret123",
 				"basicAuthPassword": "basicSecret",
 			},
 		}
