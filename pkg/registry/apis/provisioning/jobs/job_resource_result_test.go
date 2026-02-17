@@ -62,6 +62,35 @@ func TestNewJobResourceResult_WithError(t *testing.T) {
 	assert.Equal(t, err, result.Error())
 }
 
+func TestNewJobResourceResult_WithWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	warningErr := errors.New("some warning error")
+
+	// Test with ParseError directly (a warning error)
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithWarning(warningErr).
+		Build()
+
+	assert.Equal(t, name, result.Name())
+	assert.Equal(t, group, result.Group())
+	assert.Equal(t, kind, result.Kind())
+	assert.Equal(t, path, result.Path())
+	assert.Equal(t, action, result.Action())
+	assert.Nil(t, result.Error(), "error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "error should be stored as warning")
+	assert.Equal(t, warningErr, result.Warning())
+}
+
 func TestNewJobResourceResult_WithoutError(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
