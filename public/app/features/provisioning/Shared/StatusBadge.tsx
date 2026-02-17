@@ -23,44 +23,20 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
     };
   }
 
-  let config: BadgeConfig;
+  if (!repo.spec?.sync?.enabled) {
+    return {
+      color: 'orange',
+      text: t('provisioning.status-badge.disabled', 'Disabled'),
+      icon: 'info-circle',
+      tooltip: t(
+        'provisioning.status-badge.automatic-pulling-disabled-tooltip',
+        'Automatic pulling disabled. Review your connection configuration to enable pulling.'
+      ),
+    };
+  }
 
-  // Sync state takes precedence over disabled state
-  if (repo.status?.sync?.state?.length) {
-    switch (repo.status.sync.state) {
-      case 'success':
-        config = { icon: 'check', text: t('provisioning.status-badge.up-to-date', 'Up-to-date'), color: 'green' };
-        break;
-      case 'warning':
-        config = {
-          color: 'orange',
-          text: t('provisioning.status-badge.warning', 'Warning'),
-          icon: 'exclamation-triangle',
-        };
-        break;
-      case 'working':
-      case 'pending':
-        config = { color: 'darkgrey', text: t('provisioning.status-badge.pulling', 'Pulling'), icon: 'spinner' };
-        break;
-      case 'error':
-        config = {
-          color: 'red',
-          text: t('provisioning.status-badge.error', 'Error'),
-          icon: 'exclamation-triangle',
-        };
-        break;
-      default:
-        config = {
-          color: 'purple',
-          text: t('provisioning.status-badge.unknown', 'Unknown'),
-          icon: 'exclamation-triangle',
-        };
-        break;
-    }
-  } else if (!repo.spec?.sync?.enabled) {
-    config = { color: 'orange', text: t('provisioning.status-badge.disabled', 'Disabled'), icon: 'info-circle' };
-  } else {
-    config = {
+  if (!repo.status?.sync?.state?.length) {
+    return {
       color: 'darkgrey',
       text: t('provisioning.status-badge.pending', 'Pending'),
       icon: 'spinner',
@@ -68,14 +44,31 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
     };
   }
 
-  if (!repo.spec?.sync?.enabled) {
-    config.tooltip = t(
-      'provisioning.status-badge.automatic-pulling-disabled-tooltip',
-      'Automatic pulling disabled. Review your connection configuration to enable pulling.'
-    );
+  switch (repo.status.sync.state) {
+    case 'success':
+      return { icon: 'check', text: t('provisioning.status-badge.up-to-date', 'Up-to-date'), color: 'green' };
+    case 'warning':
+      return {
+        color: 'orange',
+        text: t('provisioning.status-badge.warning', 'Warning'),
+        icon: 'exclamation-triangle',
+      };
+    case 'working':
+    case 'pending':
+      return { color: 'darkgrey', text: t('provisioning.status-badge.pulling', 'Pulling'), icon: 'spinner' };
+    case 'error':
+      return {
+        color: 'red',
+        text: t('provisioning.status-badge.error', 'Error'),
+        icon: 'exclamation-triangle',
+      };
+    default:
+      return {
+        color: 'purple',
+        text: t('provisioning.status-badge.unknown', 'Unknown'),
+        icon: 'exclamation-triangle',
+      };
   }
-
-  return config;
 }
 
 interface StatusBadgeProps {
