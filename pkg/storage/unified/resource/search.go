@@ -1056,6 +1056,17 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
+		// Phase 1: Buffer all raw row data inside the DB transaction.
+		// This keeps the transaction open only for the duration of the SELECT,
+		// avoiding long-held transactions that can be killed by server-side
+		// policies (e.g., MySQL killing connections with open transactions > N seconds).
+		type bufferedRow struct {
+			name            string
+			resourceVersion int64
+			value           []byte
+		}
+		rows := make([]bufferedRow, 0, size)
+
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
@@ -1066,60 +1077,69 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Process documents in batches to avoid memory issues
-			// When dealing with large collections (e.g., 100k+ documents),
-			// loading all documents into memory at once can cause OOM errors.
-			items := make([]*BulkIndexItem, 0, maxBatchSize)
-
+			// Only buffer raw data here — no document building or indexing.
+			// This keeps the DB transaction short-lived.
 			for iter.Next() {
-				if err = iter.Error(); err != nil {
+				if err := iter.Error(); err != nil {
 					return err
 				}
+				// Copy the value slice since the iterator may reuse the underlying buffer.
+				val := iter.Value()
+				valCopy := make([]byte, len(val))
+				copy(valCopy, val)
 
-				// Update the key name
-				key := &resourcepb.ResourceKey{
-					Group:     nsr.Group,
-					Resource:  nsr.Resource,
-					Namespace: nsr.Namespace,
-					Name:      iter.Name(),
-				}
-
-				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", iter.Name())))
-				// Convert it to an indexable document
-				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
-				if err != nil {
-					span.RecordError(err)
-					logger.Error("error building search document", "key", SearchID(key), "err", err)
-					continue
-				}
-
-				// Add to bulk items
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
+				rows = append(rows, bufferedRow{
+					name:            iter.Name(),
+					resourceVersion: iter.ResourceVersion(),
+					value:           valCopy,
 				})
-
-				// When we reach the batch size, perform bulk index and reset the batch.
-				if len(items) >= maxBatchSize {
-					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
-						return err
-					}
-
-					items = items[:0]
-				}
-			}
-
-			// Index any remaining items in the final batch.
-			if len(items) > 0 {
-				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
-					return err
-				}
 			}
 			return iter.Error()
 		})
-		return listRV, err
+		if err != nil {
+			return listRV, err
+		}
+
+		// Phase 2: Build documents and index them outside the DB transaction.
+		items := make([]*BulkIndexItem, 0, maxBatchSize)
+		for _, row := range rows {
+			key := &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+				Name:      row.name,
+			}
+
+			span.AddEvent("building document", trace.WithAttributes(attribute.String("name", row.name)))
+			doc, err := builder.BuildDocument(ctx, key, row.resourceVersion, row.value)
+			if err != nil {
+				span.RecordError(err)
+				logger.Error("error building search document", "key", SearchID(key), "err", err)
+				continue
+			}
+
+			items = append(items, &BulkIndexItem{
+				Action: ActionIndex,
+				Doc:    doc,
+			})
+
+			if len(items) >= maxBatchSize {
+				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
+				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+					return listRV, err
+				}
+				items = items[:0]
+			}
+		}
+
+		if len(items) > 0 {
+			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
+			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				return listRV, err
+			}
+		}
+
+		return listRV, nil
 	}
 
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {

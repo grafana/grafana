@@ -984,3 +984,188 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
 	})
 }
+
+// sliceListIterator implements ListIterator using an in-memory slice.
+type sliceListIterator struct {
+	items []listIterItem
+	idx   int
+	err   error
+}
+
+type listIterItem struct {
+	name            string
+	namespace       string
+	folder          string
+	resourceVersion int64
+	value           []byte
+}
+
+func (it *sliceListIterator) Next() bool {
+	if it.err != nil {
+		return false
+	}
+	it.idx++
+	return it.idx <= len(it.items)
+}
+
+func (it *sliceListIterator) Error() error { return it.err }
+func (it *sliceListIterator) ContinueToken() string { return "" }
+func (it *sliceListIterator) ResourceVersion() int64 { return it.items[it.idx-1].resourceVersion }
+func (it *sliceListIterator) Namespace() string { return it.items[it.idx-1].namespace }
+func (it *sliceListIterator) Name() string { return it.items[it.idx-1].name }
+func (it *sliceListIterator) Folder() string { return it.items[it.idx-1].folder }
+func (it *sliceListIterator) Value() []byte { return it.items[it.idx-1].value }
+
+// failingListIteratorBackend is a storage backend where ListIterator always fails,
+// simulating a MySQL connection killed during a long-running transaction.
+type failingListIteratorBackend struct {
+	mockStorageBackend
+}
+
+func (m *failingListIteratorBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, _ func(ListIterator) error) (int64, error) {
+	return 0, fmt.Errorf("failed to build index: commit: invalid connection")
+}
+
+// rowProvidingStorageBackend is a storage backend that provides rows via ListIterator
+// and tracks whether the transaction (callback) is currently open.
+type rowProvidingStorageBackend struct {
+	mockStorageBackend
+	rows   []listIterItem
+	mu     sync.Mutex
+	txOpen bool
+}
+
+func (m *rowProvidingStorageBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	m.mu.Lock()
+	m.txOpen = true
+	m.mu.Unlock()
+
+	iter := &sliceListIterator{items: m.rows}
+	err := callback(iter)
+
+	m.mu.Lock()
+	m.txOpen = false
+	m.mu.Unlock()
+
+	return 100, err
+}
+
+func (m *rowProvidingStorageBackend) IsTxOpen() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.txOpen
+}
+
+// txTrackingMockIndex wraps MockResourceIndex and tracks whether BulkIndex
+// was called while the storage transaction was open or after it closed.
+type txTrackingMockIndex struct {
+	MockResourceIndex
+	storage               *rowProvidingStorageBackend
+	mu                    sync.Mutex
+	itemsIndexedDuringTx  int
+	itemsIndexedOutsideTx int
+}
+
+func (m *txTrackingMockIndex) BulkIndex(req *BulkIndexRequest) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.storage.IsTxOpen() {
+		m.itemsIndexedDuringTx += len(req.Items)
+	} else {
+		m.itemsIndexedOutsideTx += len(req.Items)
+	}
+	return nil
+}
+
+// txTrackingSearchBackend wraps mockSearchBackend and uses txTrackingMockIndex
+// to verify that indexing happens outside the storage transaction.
+type txTrackingSearchBackend struct {
+	mockSearchBackend
+	storage     *rowProvidingStorageBackend
+	trackingIdx *txTrackingMockIndex
+}
+
+func (m *txTrackingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
+	m.trackingIdx = &txTrackingMockIndex{storage: m.storage}
+	m.trackingIdx.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
+
+	_, err := builder(m.trackingIdx)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = m.trackingIdx
+
+	return m.trackingIdx, nil
+}
+
+func testResourceJSON(name, title string) []byte {
+	return []byte(fmt.Sprintf(`{"apiVersion":"test/v1","kind":"Test","metadata":{"name":"%s"},"spec":{"title":"%s"}}`, name, title))
+}
+
+func TestBuildIndexBuffersRowsOutsideTransaction(t *testing.T) {
+	// This test verifies that the index build correctly:
+	// 1. Buffers all row data inside the ListIterator callback (transaction scope)
+	// 2. Builds documents and indexes them AFTER the callback returns (outside transaction)
+	// This is critical for environments with short transaction timeout policies
+	// (e.g., MySQL killing connections with open transactions > 15 seconds).
+
+	rows := []listIterItem{
+		{name: "dash-1", namespace: "ns", resourceVersion: 1, value: testResourceJSON("dash-1", "Dashboard 1")},
+		{name: "dash-2", namespace: "ns", resourceVersion: 2, value: testResourceJSON("dash-2", "Dashboard 2")},
+		{name: "dash-3", namespace: "ns", resourceVersion: 3, value: testResourceJSON("dash-3", "Dashboard 3")},
+		{name: "dash-4", namespace: "ns", resourceVersion: 4, value: testResourceJSON("dash-4", "Dashboard 4")},
+		{name: "dash-5", namespace: "ns", resourceVersion: 5, value: testResourceJSON("dash-5", "Dashboard 5")},
+	}
+
+	storage := &rowProvidingStorageBackend{
+		mockStorageBackend: mockStorageBackend{
+			resourceStats: []ResourceStats{
+				{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: int64(len(rows)), ResourceVersion: 100},
+			},
+		},
+		rows: rows,
+	}
+
+	searchBackend := &txTrackingSearchBackend{
+		storage: storage,
+	}
+
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	opts := SearchOptions{
+		Backend:      searchBackend,
+		Resources:    supplier,
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	err = support.init(context.Background())
+	require.NoError(t, err)
+	defer support.stop()
+
+	// Verify the tracking index was created
+	require.NotNil(t, searchBackend.trackingIdx, "tracking index should have been created during init")
+
+	// Verify that all items were indexed
+	totalIndexed := searchBackend.trackingIdx.itemsIndexedDuringTx + searchBackend.trackingIdx.itemsIndexedOutsideTx
+	require.Equal(t, len(rows), totalIndexed, "all rows should be indexed")
+
+	// Verify that NO items were indexed during the transaction (inside the callback)
+	require.Equal(t, 0, searchBackend.trackingIdx.itemsIndexedDuringTx,
+		"no items should be indexed while the DB transaction is open")
+
+	// Verify that ALL items were indexed outside the transaction (after callback returns)
+	require.Equal(t, len(rows), searchBackend.trackingIdx.itemsIndexedOutsideTx,
+		"all items should be indexed after the DB transaction closes")
+}
