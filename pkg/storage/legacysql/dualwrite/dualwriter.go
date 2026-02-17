@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -172,6 +173,12 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.Create(ctx, in, createValidation, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Create")
 
 	accIn, err := meta.Accessor(in)
@@ -283,6 +290,12 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// the delete operation in the unified storage store.
 	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.Delete(ctx, name, deleteValidation, options)
+	}
+
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
@@ -319,6 +332,18 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		dryRunInfo := objInfo
+		dryRunForceCreate := forceAllowCreate
+		if !d.readUnified {
+			dryRunInfo = &wrappedUpdateInfo{objInfo}
+			dryRunForceCreate = true
+		}
+		return d.unified.Update(ctx, name, dryRunInfo, createValidation, updateValidation, dryRunForceCreate, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Update")
 
 	// update in legacy first, and then unistore. Will return a failure if either fails.
@@ -366,6 +391,12 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	}
+
 	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion)
 
 	// delete from legacy first, and anything that is successful can be deleted in unistore too.
