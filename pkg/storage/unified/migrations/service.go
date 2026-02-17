@@ -52,11 +52,6 @@ func ProvideUnifiedStorageMigrationService(
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	// skip migrations if disabled in config
 	if p.cfg.DisableDataMigrations {
-		// Still ensure the migration log table exists so that MigrationStatusReader
-		// can query and backfill it. This is schema setup, not a data migration.
-		if err := ensureMigrationLogTable(ctx, p.sqlStore, p.cfg); err != nil {
-			return fmt.Errorf("failed to ensure migration log table: %w", err)
-		}
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
@@ -67,10 +62,8 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client, p.registry)
 }
 
-// ensureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
-// This is needed for environments where disable_data_migrations=true (e.g., Grafana Cloud),
-// so that MigrationStatusReader can query and backfill migration status.
-func ensureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+// EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
+func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 	sec := cfg.Raw.Section("database")

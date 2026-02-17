@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -59,14 +60,14 @@ func TestMigrationStatusReader_FindDefinition(t *testing.T) {
 	})
 }
 
-func TestMigrationStatusReader_IsMigrated_ConfigFallback(t *testing.T) {
-	// This test only exercises the config fallback path (no DB).
+func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
+	// These tests exercise config-based resolution (no DB).
 	// The migration log path requires a real database and is covered by integration tests.
 
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
 
-	t.Run("returns true when config says Mode5", func(t *testing.T) {
+	t.Run("Mode5 returns Unified", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode5},
@@ -74,15 +75,15 @@ func TestMigrationStatusReader_IsMigrated_ConfigFallback(t *testing.T) {
 		}
 		reader := &migrationStatusReader{
 			cfg:      cfg,
-			registry: NewMigrationRegistry(), // empty registry = no migration log entries
+			registry: NewMigrationRegistry(), // empty registry = no migration log path
 		}
 
-		migrated, err := reader.IsMigrated(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 		require.NoError(t, err)
-		require.True(t, migrated)
+		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
-	t.Run("returns true when config says Mode4", func(t *testing.T) {
+	t.Run("Mode4 returns Unified", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode4},
@@ -93,12 +94,28 @@ func TestMigrationStatusReader_IsMigrated_ConfigFallback(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		migrated, err := reader.IsMigrated(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 		require.NoError(t, err)
-		require.True(t, migrated)
+		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
-	t.Run("returns false when config says Mode2", func(t *testing.T) {
+	t.Run("Mode1 returns DualWrite", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+			},
+		}
+		reader := &migrationStatusReader{
+			cfg:      cfg,
+			registry: NewMigrationRegistry(),
+		}
+
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
+		require.Equal(t, contract.StorageModeDualWrite, mode)
+	})
+
+	t.Run("Mode2 returns DualWrite (backward compat)", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode2},
@@ -109,12 +126,44 @@ func TestMigrationStatusReader_IsMigrated_ConfigFallback(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		migrated, err := reader.IsMigrated(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 		require.NoError(t, err)
-		require.False(t, migrated)
+		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
-	t.Run("returns false when resource not in config", func(t *testing.T) {
+	t.Run("Mode3 returns DualWrite (backward compat)", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode3},
+			},
+		}
+		reader := &migrationStatusReader{
+			cfg:      cfg,
+			registry: NewMigrationRegistry(),
+		}
+
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
+		require.Equal(t, contract.StorageModeDualWrite, mode)
+	})
+
+	t.Run("Mode0 returns Legacy", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode0},
+			},
+		}
+		reader := &migrationStatusReader{
+			cfg:      cfg,
+			registry: NewMigrationRegistry(),
+		}
+
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
+		require.Equal(t, contract.StorageModeLegacy, mode)
+	})
+
+	t.Run("resource not in config returns Legacy", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{},
 		}
@@ -123,20 +172,60 @@ func TestMigrationStatusReader_IsMigrated_ConfigFallback(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		migrated, err := reader.IsMigrated(context.Background(), unknownGR)
+		mode, err := reader.GetStorageMode(context.Background(), unknownGR)
 		require.NoError(t, err)
-		require.False(t, migrated)
+		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 
-	t.Run("returns false when config is nil", func(t *testing.T) {
+	t.Run("nil UnifiedStorage returns Legacy", func(t *testing.T) {
 		cfg := &setting.Cfg{}
 		reader := &migrationStatusReader{
 			cfg:      cfg,
 			registry: NewMigrationRegistry(),
 		}
 
-		migrated, err := reader.IsMigrated(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 		require.NoError(t, err)
-		require.False(t, migrated)
+		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
+}
+
+func TestMigrationStatusReader_GetStorageMode_DualWritePriority(t *testing.T) {
+	// Verify that Mode1 config takes priority even when a resource is registered
+	// in the migration registry (but no DB to check migration log).
+	// This simulates cloud holding a resource in DualWrite.
+
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "playlists",
+		MigrationID: "playlists migration",
+		Resources:   []ResourceInfo{{GroupResource: playlistGR}},
+	})
+
+	t.Run("Mode1 takes priority over migration log lookup", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+			},
+		}
+		reader := &migrationStatusReader{
+			cfg:      cfg,
+			registry: registry,
+			// sqlStore is nil — if we reach the migration log check, it will panic.
+			// The test verifies Mode1 short-circuits before that.
+		}
+
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
+		require.Equal(t, contract.StorageModeDualWrite, mode)
+	})
+}
+
+func TestStorageMode_String(t *testing.T) {
+	require.Equal(t, "legacy", contract.StorageModeLegacy.String())
+	require.Equal(t, "dual-write", contract.StorageModeDualWrite.String())
+	require.Equal(t, "unified", contract.StorageModeUnified.String())
+	require.Equal(t, "unknown", contract.StorageMode(99).String())
 }

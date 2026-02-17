@@ -14,13 +14,49 @@ type UnifiedStorageMigrationService interface {
 	registry.BackgroundService
 }
 
-// MigrationStatusReader provides a way to check whether a resource has been migrated
-// to unified storage. This is the single source of truth for determining the storage
-// mode (Legacy vs Unified) for any given resource.
+// StorageMode represents the storage mode for a resource.
+// This is the simplified model replacing the previous 5-mode system (Mode0-Mode5).
+type StorageMode int
+
+const (
+	// StorageModeLegacy means all reads and writes go to legacy SQL storage.
+	// The resource has not been migrated and no dual writing is active.
+	StorageModeLegacy StorageMode = iota
+
+	// StorageModeDualWrite means writes go to both legacy (primary) and unified (best effort),
+	// while reads come from legacy. Unified write errors are non-blocking.
+	// This is used as a preparatory step before full migration, allowing unified storage
+	// to be populated and validated before switching reads.
+	StorageModeDualWrite
+
+	// StorageModeUnified means all reads and writes go to unified storage.
+	// The resource has been fully migrated.
+	StorageModeUnified
+)
+
+// String returns a human-readable name for the storage mode.
+func (m StorageMode) String() string {
+	switch m {
+	case StorageModeLegacy:
+		return "legacy"
+	case StorageModeDualWrite:
+		return "dual-write"
+	case StorageModeUnified:
+		return "unified"
+	default:
+		return "unknown"
+	}
+}
+
+// MigrationStatusReader provides a way to determine the storage mode for a resource.
+// This is the single source of truth for determining whether a resource should use
+// legacy storage, dual-write mode, or unified storage.
 //
-// The implementation checks the unifiedstorage_migration_log table as the primary source.
-// As a temporary fallback for environments where data migrations are run externally
-// (e.g., Grafana Cloud), it also consults the static configuration.
+// Resolution priority:
+//  1. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
+//  2. Migration log entry exists → Unified
+//  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
+//  4. Otherwise → Legacy
 type MigrationStatusReader interface {
-	IsMigrated(ctx context.Context, gr schema.GroupResource) (bool, error)
+	GetStorageMode(ctx context.Context, gr schema.GroupResource) (StorageMode, error)
 }
