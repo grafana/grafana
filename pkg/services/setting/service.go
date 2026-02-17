@@ -217,7 +217,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 	if err != nil {
 		return nil, err
 	}
-	iniFile, err := toIni(settings)
+	iniFile, err := toIni(ctx, settings)
 	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
@@ -281,6 +281,9 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 }
 
 func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSelector, continueToken string) ([]*Setting, string, error) {
+	ctx, span := tracer.Start(ctx, "remoteSettingService.fetchPage")
+	defer span.End()
+
 	req := s.restClient.Get().
 		Resource(resource).
 		Namespace(namespace).
@@ -299,11 +302,14 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 	}
 	defer func() { _ = stream.Close() }()
 
-	return parseSettingList(stream)
+	return parseSettingList(ctx, stream)
 }
 
 // parseSettingList parses a SettingList JSON response using token-by-token streaming.
-func parseSettingList(r io.Reader) ([]*Setting, string, error) {
+func parseSettingList(ctx context.Context, r io.Reader) ([]*Setting, string, error) {
+	_, span := tracer.Start(ctx, "remoteSettingService.parseSettingList")
+	defer span.End()
+
 	decoder := json.NewDecoder(r)
 	// Currently, first page may have a large number of items.
 	settings := make([]*Setting, 0, 1600)
@@ -388,7 +394,10 @@ func parseItems(decoder *json.Decoder) ([]*Setting, error) {
 	return settings, nil
 }
 
-func toIni(settings []*Setting) (*ini.File, error) {
+func toIni(ctx context.Context, settings []*Setting) (*ini.File, error) {
+	_, span := tracer.Start(ctx, "remoteSettingService.toIni")
+	defer span.End()
+
 	conf := ini.Empty()
 	for _, setting := range settings {
 		if !conf.HasSection(setting.Section) {

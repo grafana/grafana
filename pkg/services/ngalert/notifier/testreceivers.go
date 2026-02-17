@@ -61,6 +61,6 @@ func (am *alertmanager) TestIntegration(ctx context.Context, receiverName string
 	return am.Base.TestIntegration(ctx, receiverName, cfg, alert)
 }
 
-func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
+func (am *alertmanager) GetReceivers(_ context.Context) ([]models.ReceiverStatus, error) {
 	return am.Base.GetReceiversStatus(), nil
 }

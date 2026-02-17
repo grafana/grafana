@@ -44,7 +44,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -298,7 +298,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,

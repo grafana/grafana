@@ -36,6 +36,11 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
 
 export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
+    value: ExpressionQueryType.sql,
+    label: 'SQL',
+    description: 'Transform data using SQL. Supports MySQL syntax.',
+  },
+  {
     value: ExpressionQueryType.math,
     label: 'Math',
     description: 'Free-form math formulas on time series or number data.',
@@ -62,11 +67,6 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     label: 'Threshold',
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
-  },
-  {
-    value: ExpressionQueryType.sql,
-    label: 'SQL',
-    description: 'Transform data using SQL. Supports MySQL syntax.',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {

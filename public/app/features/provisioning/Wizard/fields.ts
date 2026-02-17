@@ -212,10 +212,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'provisioning.git.token-user-description',
           'The username that will be used to access the repository with the access token'
         ),
-        required: true,
-        validation: {
-          required: t('provisioning.git.token-user-required', 'Username is required'),
-        },
+        required: false,
       },
       url: {
         ...shared.url,

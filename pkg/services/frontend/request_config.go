@@ -123,6 +123,13 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	applyString(settings, "security", "content_security_policy_template", &c.CSPTemplate, logger)
 	applyBool(settings, "security", "content_security_policy_report_only", &c.CSPReportOnlyEnabled, logger)
 	applyString(settings, "security", "content_security_policy_report_only_template", &c.CSPReportOnlyTemplate, logger)
+
+	applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
+	applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
+	applyString(settings, "analytics", "rudderstack_sdk_url", &c.RudderstackSdkUrl, logger)
+	applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
+	applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
+	applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
 }
 
 func getValue(settings *ini.File, section, key string) *ini.Key {

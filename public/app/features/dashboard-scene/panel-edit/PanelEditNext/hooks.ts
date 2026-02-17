@@ -139,16 +139,17 @@ export function usePanelEditorShell(model: PanelEditor) {
 }
 
 export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number) {
-  const CONTROLS_ROW_HEIGHT_PX = 32;
-  const SIDEBAR_MIN_WIDTH = 285;
-  const SIDEBAR_MAX_WIDTH = 380;
-  const VIZ_MIN_HEIGHT = 200;
+  const CONTROLS_ROW_HEIGHT = 'auto';
+  const SIDEBAR_MIN_WIDTH = 320;
+  const SIDEBAR_MAX_WIDTH = 420;
+  const VIZ_MIN_HEIGHT = 0;
+  const INITIAL_VIZ_MIN_HEIGHT = 350;
   const VIZ_BOTTOM_GAP = 80;
   const SIDEBAR_EXPANDED_PADDING = 16;
   const COLLAPSE_BELOW_PX = 150;
 
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, tableView, editPreview } = model.useState();
+  const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
   const { controls } = dashboard.useState();
   const [sidebarSize, setSidebarSize] = useState<SidebarSize>(SidebarSize.Mini);
@@ -163,7 +164,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
     disabled: isScrollingLayout,
   });
 
-  const panelToShow = tableView ?? editPreview ?? panel;
+  const panelToShow = tableView ?? panel;
 
   const sidebarResize = useHorizontalResize({
     initialWidth: SIDEBAR_MIN_WIDTH,
@@ -177,7 +178,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   });
 
   const vizResize = useVerticalResize({
-    initialHeight: Math.max(containerHeight / 2, VIZ_MIN_HEIGHT),
+    initialHeight: Math.max(containerHeight / 2, INITIAL_VIZ_MIN_HEIGHT),
     minHeight: VIZ_MIN_HEIGHT,
     maxHeight: containerHeight - VIZ_BOTTOM_GAP,
     className: vizResizeBarClass,
@@ -189,15 +190,13 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
         controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
         isSidebarFullWidth: sidebarSize === SidebarSize.Full,
-        controlsRowHeightPx: CONTROLS_ROW_HEIGHT_PX,
+        controlsRowHeight: CONTROLS_ROW_HEIGHT,
         vizHeight: vizResize.height,
         sidebarWidth: sidebarResize.width,
-        containerHeight,
       }),
-    [controls, dataPane, sidebarSize, vizResize.height, sidebarResize.width, containerHeight]
+    [controls, dataPane, sidebarSize, CONTROLS_ROW_HEIGHT, vizResize.height, sidebarResize.width]
   );
 
-  const bottomPaneHeight = containerHeight - vizResize.height - VIZ_BOTTOM_GAP;
   const expandedSidebarHeight = containerHeight - SIDEBAR_EXPANDED_PADDING;
 
   return {
@@ -212,7 +211,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
       isScrollingLayout,
       sidebarResize,
       vizResize,
-      bottomPaneHeight,
       expandedSidebarHeight,
     },
     actions: {
@@ -229,26 +227,24 @@ type VizAndDataPaneGridInput = {
   controlsEnabled: boolean;
   hasDataPane: boolean;
   isSidebarFullWidth: boolean;
-  controlsRowHeightPx: number;
+  controlsRowHeight: string;
   vizHeight: number;
   sidebarWidth: number;
-  containerHeight: number;
 };
 
 function buildVizAndDataPaneGrid({
   controlsEnabled,
   hasDataPane,
   isSidebarFullWidth,
-  controlsRowHeightPx,
+  controlsRowHeight,
   vizHeight,
   sidebarWidth,
-  containerHeight,
 }: VizAndDataPaneGridInput) {
   const rows: string[] = [];
   const grid: Array<[string, string]> = [];
 
   if (controlsEnabled) {
-    rows.push(`${controlsRowHeightPx}px`);
+    rows.push(controlsRowHeight);
     grid.push(['controls', 'controls']);
   }
 
@@ -256,7 +252,7 @@ function buildVizAndDataPaneGrid({
   grid.push(['viz', 'viz']);
 
   if (hasDataPane) {
-    rows.push('auto');
+    rows.push('1fr');
     grid.push(['sidebar', 'data-pane']);
   }
 
@@ -267,8 +263,7 @@ function buildVizAndDataPaneGrid({
   }
 
   return {
-    height: containerHeight,
-    maxHeight: containerHeight,
+    height: '100%',
     gridTemplateAreas: '\n' + grid.map((row) => `"${row.join(' ')}"`).join('\n'),
     gridTemplateRows: rows.join(' '),
     gridTemplateColumns: `${sidebarWidth}px 1fr`,

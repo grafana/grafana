@@ -16,7 +16,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
@@ -33,6 +33,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -48,6 +49,7 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -229,6 +231,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
+    // SECURITY: The mutation client is intentionally NOT stored as a field on
+    // this scene instance. window.__grafanaSceneContext exposes the scene to
+    // all plugins. Storing the client here would let any plugin bypass the
+    // RestrictedGrafanaApis access control. The client reference lives only in
+    // the module-level store (dashboardMutationApi.ts), which plugins cannot
+    // import. Do not add a _mutationClient property to this class.
+    let mutationClient: DashboardMutationClient | undefined;
+    try {
+      mutationClient = new DashboardMutationClient(this);
+      setDashboardMutationClient(mutationClient);
+    } catch (error) {
+      console.error('Failed to register Dashboard Mutation API:', error);
+    }
+
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
@@ -257,6 +273,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
+      setDashboardMutationClient(null);
+      mutationClient = undefined;
       clearKeyBindings();
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();

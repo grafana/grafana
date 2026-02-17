@@ -31,6 +31,7 @@ export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   TEMPLATES: '/alerting/notifications/templates',
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',
+  ALERTS_ACTIVITY: '/alerting/alerts',
 };
 
 /**

@@ -13,6 +13,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 | Folders | `folder.grafana.app` | `dashboard` |
 | Dashboards | `dashboard.grafana.app` | `dashboard` |
 | Playlists | `playlist.grafana.app` | `playlist` |
+| Short URLs | `shorturl.grafana.app` | `short_url` |
 
 ## Architecture
 
@@ -44,25 +45,34 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 ### Components
 
-- **`registry.go`**: `MigrationDefinition` and thread-safe `MigrationRegistry`
-- **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — returns the folders and dashboards definition (owned by the dashboard team)
-- **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — returns the playlists definition (owned by the playlist team)
-- **`resource_migration.go`**: `MigrationRunner` (logic) and `ResourceMigration` (SQL migration wrapper)
-- **`resources.go`**: Migration registration and auto-migrate logic
+- **`registry.go`**: Core type definitions (`MigrationDefinition`, `MigrationRegistry`, `ResourceInfo`, `MigratorFunc`, `Validator`, `ValidatorFactory`)
+- **`resource_migration.go`**: `MigrationRunner` (executes per-org logic) and `ResourceMigration` (SQL migration wrapper)
+- **`resources.go`**: Migration registration and config validation
+- **`migrator.go`**: `UnifiedMigrator` interface, BulkProcess streaming, and index rebuilding with retry
 - **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
-- **`migrator.go`**: `UnifiedMigrator` interface and BulkProcess streaming
-- **`service.go`**: Migration service entry point
+- **`service.go`**: `UnifiedStorageMigrationServiceImpl` — Wire-provided entry point that runs migrations on startup
+
+#### Migration registrars (owned by each team)
+
+- **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — folders and dashboards definition
+- **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
+- **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
+
+Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
 
 ## How migrations work
 
 ### Migration flow
 
-1. Grafana starts and checks migration status in `unifiedstorage_migration_log` table
-2. `MigrationRunner` executes for each organization:
-   - Reads resources from legacy SQL tables via `UnifiedMigrator`
+1. Grafana starts and `UnifiedStorageMigrationService.Run()` is called
+2. The service validates that all expected resources are registered in the `MigrationRegistry`
+3. For each `MigrationDefinition`, the system checks if `enableMigration = true` in the resource's config
+4. `MigrationRunner` executes for each organization:
+   - Reads resources from legacy SQL tables via team-owned `MigratorFunc` implementations
    - Streams resources to unified storage via BulkProcess API
+   - Rebuilds search indexes (with exponential backoff retry)
    - Runs validators to verify data integrity
-3. Records migration result in `unifiedstorage_migration_log` table
+5. Records migration result in `unifiedstorage_migration_log` table
 
 ### Per-organization execution
 
@@ -72,11 +82,11 @@ Migrations run independently for each organization using namespace format `org-{
 
 ### CountValidator
 
-Compares resource counts between legacy SQL and unified storage. Accounts for rejected items during validation.
+Compares resource counts between legacy SQL and unified storage. Accounts for rejected items during validation. Uses direct table queries for SQLite and the `GetStats` API for other databases.
 
 ### FolderTreeValidator
 
-Verifies folder parent-child relationships are preserved after migration.
+Verifies folder parent-child relationships are preserved after migration by comparing parent maps built from both legacy and unified storage.
 
 ## Configuration
 
@@ -152,29 +162,37 @@ func (a *myAccess) MigrateMyResources(
 
 #### 2. Define a migrator interface
 
-Define a small interface in the legacy or types package so that Wire can provide it:
+Define a small interface in a `migrator/` subpackage within your team's package:
 
 ```go
+// pkg/registry/apps/myresource/migrator/migrator.go
+package migrator
+
 type MyResourceMigrator interface {
-    MigrateMyResources(ctx context.Context, orgId int64, opts MigrateOptions,
+    MigrateMyResources(ctx context.Context, orgId int64, opts migrations.MigrateOptions,
         stream resourcepb.BulkStore_BulkProcessClient) error
+}
+
+func ProvideMyResourceMigrator(db legacydb.LegacyDatabaseProvider) MyResourceMigrator {
+    return &myResourceMigrator{db: db}
 }
 ```
 
 #### 3. Create a migration definition function
 
-Create a new file (e.g. `migration_registrar.go`) in your team's package:
+Create a `migration_registrar.go` file in your team's package:
 
 ```go
 package myresource
 
 import (
     myresource "github.com/grafana/grafana/apps/myresource/pkg/apis/myresource/v1beta1"
+    "github.com/grafana/grafana/pkg/registry/apps/myresource/migrator"
     "github.com/grafana/grafana/pkg/storage/unified/migrations"
     "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func MyResourceMigration(migrator MyResourceMigrator) migrations.MigrationDefinition {
+func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.MigrationDefinition {
     gr := schema.GroupResource{
         Group:    myresource.GROUP,
         Resource: myresource.RESOURCE,
@@ -200,37 +218,31 @@ func MyResourceMigration(migrator MyResourceMigrator) migrations.MigrationDefini
 
 Add your migration to the Wire dependency chain:
 
-**a.** Add a provider for your migrator interface (in your legacy package or provider file):
+**a.** Add the migrator provider to `wire.go`:
 
 ```go
-func ProvideMyResourceMigrator(...) MyResourceMigrator {
-    return &myResourceAccess{...}
-}
+myresourcemigrator.ProvideMyResourceMigrator,
 ```
 
-**b.** Add the provider to `wire.go`:
-
-```go
-myresource.ProvideMyResourceMigrator,
-```
-
-**c.** Register the definition in `provideMigrationRegistry` in `pkg/server/wire.go`:
+**b.** Register the definition in `provideMigrationRegistry` in `pkg/server/wire.go`:
 
 ```go
 func provideMigrationRegistry(
-    dashMigrator dashboardmigrator.DashboardMigrator,
+    dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
     playlistMigrator playlistmigrator.PlaylistMigrator,
-    myResourceMigrator myresource.MyResourceMigrator, // <-- add parameter
+    shortURLMigrator shorturlmigrator.ShortURLMigrator,
+    myResourceMigrator myresourcemigrator.MyResourceMigrator, // <-- add parameter
 ) *unifiedmigrations.MigrationRegistry {
     r := unifiedmigrations.NewMigrationRegistry()
     r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
     r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+    r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
     r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
     return r
 }
 ```
 
-**d.** Regenerate wire: run `make gen-go` from the repository root.
+**c.** Regenerate wire: run `make gen-go` from the repository root.
 
 #### 5. Configure the resource
 
@@ -245,13 +257,14 @@ dualWriterMode = 0
 #### Checklist
 
 - [ ] Migrator function implemented and tested
-- [ ] Migrator interface defined
-- [ ] Migration definition function created in your team's package
+- [ ] Migrator interface defined in a `migrator/` subpackage
+- [ ] Migration definition function created in your team's package (`migration_registrar.go`)
+- [ ] Migrator provider added to `wire.go`
 - [ ] `provideMigrationRegistry` updated in `pkg/server/wire.go`
 - [ ] `wire_gen.go` regenerated (`make gen-go`)
 - [ ] Validators added (at minimum, `CountValidation`)
 - [ ] Configuration added to `conf/defaults.ini`
-- [ ] Integration tested with `grafana-cli datamigrations to-unified-storage`
+- [ ] Integration test case added to `testcases/` package
 
 ### Adding a new validator
 
@@ -296,6 +309,7 @@ SELECT * FROM unifiedstorage_migration_log;
 -- Delete a specific entry to allow re-running that migration
 DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'folders and dashboards migration';
 DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'playlists migration';
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'shorturls migration';
 ```
 
 After removing the row, restart Grafana to trigger the migration again. Since the migration performs a full delete of the target resources before writing, re-running is safe and will not result in duplicate data.

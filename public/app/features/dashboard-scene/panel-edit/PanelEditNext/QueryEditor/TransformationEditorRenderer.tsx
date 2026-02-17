@@ -4,7 +4,10 @@ import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import { TransformationDebugDisplay } from './TransformationDebugDisplay';
 import { TransformationEditor } from './TransformationEditor';
+import { TransformationFilterDisplay } from './TransformationFilterDisplay';
+import { TransformationHelpDisplay } from './TransformationHelpDisplay';
 
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
@@ -32,10 +35,15 @@ export function TransformationEditorRenderer() {
   }
 
   return (
-    <TransformationEditor
-      inputData={inputData}
-      onUpdate={updateTransformation}
-      transformation={selectedTransformation}
-    />
+    <>
+      <TransformationFilterDisplay />
+      <TransformationEditor
+        inputData={inputData}
+        onUpdate={updateTransformation}
+        transformation={selectedTransformation}
+      />
+      <TransformationHelpDisplay />
+      <TransformationDebugDisplay />
+    </>
   );
 }

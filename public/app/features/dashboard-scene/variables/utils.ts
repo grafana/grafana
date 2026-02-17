@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Dashboard } from '@grafana/schema';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { isRecord } from 'app/core/utils/isRecord';
 import type { GraphEdge, GraphNode } from 'app/features/variables/inspect/types';

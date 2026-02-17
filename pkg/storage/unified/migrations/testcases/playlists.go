@@ -29,6 +29,10 @@ func (tc *playlistsTestCase) Name() string {
 	return "playlists"
 }
 
+func (tc *playlistsTestCase) FeatureToggles() []string {
+	return nil
+}
+
 func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{

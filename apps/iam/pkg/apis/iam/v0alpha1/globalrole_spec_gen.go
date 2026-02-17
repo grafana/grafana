@@ -15,6 +15,11 @@ func NewGlobalRolespecPermission() *GlobalRolespecPermission {
 	return &GlobalRolespecPermission{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GlobalRolespecPermission.
+func (GlobalRolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecPermission"
+}
+
 // +k8s:openapi-gen=true
 type GlobalRoleSpec struct {
 	// Display name of the role
@@ -34,9 +39,8 @@ func NewGlobalRoleSpec() *GlobalRoleSpec {
 		Permissions: []GlobalRolespecPermission{},
 	}
 }
-func (GlobalRolespecPermission) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecPermission"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GlobalRoleSpec.
 func (GlobalRoleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleSpec"
 }

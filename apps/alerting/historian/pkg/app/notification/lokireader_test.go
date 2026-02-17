@@ -235,6 +235,65 @@ func TestBuildQuery(t *testing.T) {
 			},
 			experr: ErrInvalidQuery,
 		},
+		{
+			name: "query with alert label matcher",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with many alert label matchers",
+			query: Query{
+				Labels: &Matchers{
+					{Type: "=", Label: "severity", Value: "critical"},
+					{Type: "!=", Label: "env", Value: "test"},
+					{Type: "=~", Label: "team", Value: "platform.*"},
+					{Type: "!~", Label: "region", Value: "us-.*"},
+				},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical" | alert_labels_env != "test"`+
+				` | alert_labels_team =~ "platform.*" | alert_labels_region !~ "us-.*"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with both group labels and alert labels",
+			query: Query{
+				GroupLabels: &Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+				Labels:      &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | groupLabels_alertname = "HighCPU" | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with invalid alert label with space",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "seve rity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label starting with number",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "1severity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label with attempted injection",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "\" = \"inject\"", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label operator",
+			query: Query{
+				Labels: &Matchers{{Type: "|=", Label: "severity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
 	}
 
 	for _, tt := range tests {

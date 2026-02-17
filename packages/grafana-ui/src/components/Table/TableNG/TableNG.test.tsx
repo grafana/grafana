@@ -394,7 +394,7 @@ describe('TableNG', () => {
       async (desc) => {
         const { container } = render(
           <TableNG
-            initialSortBy={[
+            sortBy={[
               {
                 displayName: 'Category',
                 desc,
@@ -416,6 +416,104 @@ describe('TableNG', () => {
         expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       }
     );
+  });
+
+  describe('TableNG::sortBy', () => {
+    it.each([true, false])('should set initial sort', async (desc) => {
+      render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId(desc ? 'icon-arrow-down' : 'icon-arrow-up')).toBeVisible();
+    });
+    it('should not update sort on rerender if not managed', async () => {
+      const { rerender } = render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: true,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+
+      rerender(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: false,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+    });
+    it('should manage sort', async () => {
+      const { rerender } = render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: true,
+            },
+          ]}
+          sortByBehavior={'managed'}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+
+      rerender(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: false,
+            },
+          ]}
+          sortByBehavior={'managed'}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-up')).toBeVisible();
+    });
   });
 
   describe('Basic TableNG rendering', () => {

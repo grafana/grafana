@@ -13,6 +13,8 @@ func NewGetAlertstatehistoryResponse() *GetAlertstatehistoryResponse {
 		Body: map[string]interface{}{},
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetAlertstatehistoryResponse.
 func (GetAlertstatehistoryResponse) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
 }

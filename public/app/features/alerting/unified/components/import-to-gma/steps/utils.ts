@@ -2,6 +2,27 @@
  * Shared validation utilities for import-to-gma steps
  */
 
+/** RFC 1123 subdomain pattern — must match the backend's identifier validation */
+const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
+
+/** Maximum length for a policy tree name, enforced by the backend (k8s DNS-1123 subdomain) */
+export const POLICY_TREE_NAME_MAX_LENGTH = 40;
+
+/**
+ * Validates a policy tree name against RFC 1123 subdomain rules.
+ * Returns an error message string if invalid, or `true` if valid.
+ * Compatible with react-hook-form's `validate` option.
+ */
+export function validatePolicyTreeName(value: string): string | true {
+  if (value.length > POLICY_TREE_NAME_MAX_LENGTH) {
+    return `Must be at most ${POLICY_TREE_NAME_MAX_LENGTH} characters`;
+  }
+  if (!POLICY_TREE_NAME_PATTERN.test(value)) {
+    return 'Must be lowercase alphanumeric, dashes or dots, and start/end with an alphanumeric character (e.g. "prometheus-prod")';
+  }
+  return true;
+}
+
 /**
  * Validates that a source selection has the required data based on the source type
  */

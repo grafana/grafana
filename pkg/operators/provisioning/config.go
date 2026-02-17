@@ -57,9 +57,11 @@ type ControllerConfig struct {
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	repositoryFactory     repository.Factory
-	RepositoryFactoryFunc func() (repository.Factory, error)
+	repositoryExtras      []repository.Extra
+	RepositoryExtrasFunc  func() ([]repository.Extra, error)
 	connectionFactory     connection.Factory
-	ConnectionFactoryFunc func() (connection.Factory, error)
+	connectionExtras      []connection.Extra
+	ConnectionExtrasFunc  func() ([]connection.Extra, error)
 	healthMetricsRecorder controller.HealthMetricsRecorder
 	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
@@ -424,23 +426,20 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		return c.repositoryFactory, nil
 	}
 
-	if c.RepositoryFactoryFunc != nil {
-		repositoryFactory, err := c.RepositoryFactoryFunc()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get repository factory: %w", err)
-		}
-		c.repositoryFactory = repositoryFactory
-		return repositoryFactory, nil
+	extras, err := c.RepositoryExtras()
+	if err != nil {
+		return nil, err
 	}
 
-	decryptSvc, err := c.DecryptService()
-	if err != nil {
-		return nil, fmt.Errorf("setup decrypt service: %w", err)
+	// Build enabled types from the extras
+	enabledTypes := make(map[provisioning.RepositoryType]struct{})
+	for _, extra := range extras {
+		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	repositoryFactory, err := setupRepoFactory(c.Settings, repository.ProvideDecrypter(decryptSvc), c.provisioningClient, c.Registry())
+	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras)
 	if err != nil {
-		return nil, fmt.Errorf("setup repository factory: %w", err)
+		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
 
 	c.repositoryFactory = repositoryFactory
@@ -453,23 +452,20 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return c.connectionFactory, nil
 	}
 
-	if c.ConnectionFactoryFunc != nil {
-		connectionFactory, err := c.ConnectionFactoryFunc()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get connection factory: %w", err)
-		}
-		c.connectionFactory = connectionFactory
-		return connectionFactory, nil
+	extras, err := c.ConnectionExtras()
+	if err != nil {
+		return nil, err
 	}
 
-	decryptSvc, err := c.DecryptService()
-	if err != nil {
-		return nil, fmt.Errorf("setup decrypt service: %w", err)
+	// Build enabled types from the extras
+	enabledTypes := make(map[provisioning.ConnectionType]struct{})
+	for _, extra := range extras {
+		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	connectionFactory, err := setupConnectionFactory(c.Settings, connection.ProvideDecrypter(decryptSvc))
+	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
 	if err != nil {
-		return nil, fmt.Errorf("setup connection factory: %w", err)
+		return nil, fmt.Errorf("create connection factory: %w", err)
 	}
 
 	c.connectionFactory = connectionFactory
@@ -508,30 +504,36 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 	return c.urlProvider, nil
 }
 
-func setupRepoFactory(
-	cfg *setting.Cfg,
-	decrypter repository.Decrypter,
-	_ *client.Clientset,
-	registry prometheus.Registerer,
-) (repository.Factory, error) {
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
+	if c.repositoryExtras != nil {
+		return c.repositoryExtras, nil
+	}
+
+	if c.RepositoryExtrasFunc != nil {
+		extras, err := c.RepositoryExtrasFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository extras: %w", err)
+		}
+		c.repositoryExtras = extras
+		return extras, nil
+	}
+
+	// Default OSS implementation
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("get decrypt service: %w", err)
+	}
+	decrypter := repository.ProvideDecrypter(decryptSvc)
+
+	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
+	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
 		repoTypes = []string{"github"}
 	}
 
-	// TODO: This depends on the different flavor of Grafana
-	// https://github.com/grafana/git-ui-sync-project/issues/495
 	extras := make([]repository.Extra, 0)
-	alreadyRegistered := make(map[provisioning.RepositoryType]struct{})
-
 	for _, t := range repoTypes {
-		if _, ok := alreadyRegistered[provisioning.RepositoryType(t)]; ok {
-			continue
-		}
-		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
-
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
 			extras = append(extras, gitrepo.Extra(decrypter))
@@ -539,57 +541,55 @@ func setupRepoFactory(
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
 				return nil, fmt.Errorf("home_path is required in [operator] section for local repository type")
 			}
-
 			permittedPrefixes := operatorSec.Key("local_permitted_prefixes").Strings("|")
 			if len(permittedPrefixes) == 0 {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
-
-			extras = append(extras, local.Extra(
-				homePath,
-				permittedPrefixes,
-			))
+			extras = append(extras, local.Extra(homePath, permittedPrefixes))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
 	}
 
-	repoFactory, err := repository.ProvideFactory(alreadyRegistered, extras)
-	if err != nil {
-		return nil, fmt.Errorf("create repository factory: %w", err)
-	}
-
-	return repoFactory, nil
+	c.repositoryExtras = extras
+	return extras, nil
 }
 
-func setupConnectionFactory(
-	cfg *setting.Cfg,
-	decrypter connection.Decrypter,
-) (connection.Factory, error) {
-	// For now, only support GitHub connections
-	// TODO: Add support for other connection types
+func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
+	if c.connectionExtras != nil {
+		return c.connectionExtras, nil
+	}
+
+	if c.ConnectionExtrasFunc != nil {
+		extras, err := c.ConnectionExtrasFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get connection extras: %w", err)
+		}
+		c.connectionExtras = extras
+		return extras, nil
+	}
+
+	// Default OSS implementation
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("get decrypt service: %w", err)
+	}
+	decrypter := connection.ProvideDecrypter(decryptSvc)
+
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 	}
-	enabledTypes := map[provisioning.ConnectionType]struct{}{
-		provisioning.GithubConnectionType: {},
-	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
-	if err != nil {
-		return nil, fmt.Errorf("create connection factory: %w", err)
-	}
-
-	return connectionFactory, nil
+	c.connectionExtras = extras
+	return extras, nil
 }
 
 func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypt.DecryptService, error) {

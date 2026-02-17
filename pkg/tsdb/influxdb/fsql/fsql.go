@@ -65,6 +65,8 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusNotFound, backend.ErrorSourceDownstream, errStr)
 				case codes.Unavailable:
 					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(http.StatusServiceUnavailable, backend.ErrorSourceDownstream, errStr)
+				case codes.Unauthenticated:
+					tRes.Responses[q.RefID] = backend.ErrDataResponseWithSource(backend.StatusUnauthorized, backend.ErrorSourceDownstream, errStr)
 				default:
 					tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, errStr)
 				}

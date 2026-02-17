@@ -1359,11 +1359,11 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(ctx)
 	require.NoError(t, err)
-	require.Equal(t, []apimodels.Receiver{
+	require.Equal(t, []alertingModels.ReceiverStatus{
 		{
 			Active:       true,
 			Name:         "empty-receiver",
-			Integrations: []apimodels.Integration{},
+			Integrations: []alertingModels.IntegrationStatus{},
 		},
 	}, rcvs)
 }

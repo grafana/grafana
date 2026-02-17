@@ -116,7 +116,7 @@ export function Drawer({
         },
       }}
       aria-label={typeof title === 'string' ? selectors.components.Drawer.General.title(title) : undefined}
-      aria-labelledby={typeof title !== 'string' ? titleId : undefined}
+      aria-labelledby={title ? titleId : undefined}
       width={''}
       motion={{
         motionAppear: true,
@@ -149,7 +149,7 @@ export function Drawer({
             </div>
             {typeof title === 'string' ? (
               <Stack direction="column">
-                <Text element="h3" truncate>
+                <Text element="h3" id={titleId} truncate>
                   {title}
                 </Text>
                 {subtitle && (

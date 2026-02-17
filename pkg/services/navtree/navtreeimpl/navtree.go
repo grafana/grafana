@@ -540,6 +540,17 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNotificationHistoryGlobal) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text:     "Notifications",
+			SubTitle: "View a history of all notifications sent from your Grafana-managed alert rules",
+			Id:       "alerts-notifications",
+			Url:      s.cfg.AppSubURL + "/alerting/notifications-history",
+			Icon:     "bell",
+		})
+	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
 		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)

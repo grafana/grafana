@@ -295,10 +295,9 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 }
 
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
-	g, _ := plugins.GetDatasourceGroupNameFromPluginID(ds.Type)
 	return &queryV0.DataSourceConnection{
 		Title:      ds.Name,
-		APIGroup:   g,
+		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		APIVersion: "v0alpha1", // TODO, get this from the plugin
 		Name:       ds.UID,
 		Plugin:     ds.Type,

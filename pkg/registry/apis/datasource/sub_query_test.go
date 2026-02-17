@@ -44,6 +44,11 @@ func (m mockClient) QueryData(ctx context.Context, req *backend.QueryDataRequest
 	return nil, fmt.Errorf("mock error")
 }
 
+func (m mockClient) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	*m.lastCalledWithHeaders = req.Headers
+	return fmt.Errorf("mock error")
+}
+
 func (m mockClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return nil
 }
