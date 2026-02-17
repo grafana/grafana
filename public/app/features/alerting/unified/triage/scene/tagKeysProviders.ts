@@ -6,7 +6,9 @@ import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, sceneGrap
 import { DATASOURCE_UID, METRIC_NAME } from '../constants';
 
 const COMMON_GROUP = 'Common';
+const FREQUENT_GROUP = 'Frequent';
 const ALL_GROUP = 'All';
+const TOP_LABEL_COUNT = 5;
 const collator = new Intl.Collator();
 
 /** Labels promoted to the top of the GroupBy dropdown */
@@ -21,6 +23,19 @@ const FILTER_PROMOTED: MetricFindValue[] = [
 
 /** Labels that should never appear in dropdowns */
 const EXCLUDED = new Set(['__name__']);
+
+/** Internal/structural labels to exclude from frequency counting */
+const INTERNAL_LABELS = new Set([
+  '__name__',
+  'alertname',
+  'alertstate',
+  'folderUID',
+  'from',
+  'grafana_alertstate',
+  'grafana_folder',
+  'grafana_rule_uid',
+  'orgID',
+]);
 
 /** Query used to scope label lookups to the alerting metric */
 const metricQuery: PromQuery = { refId: 'keys', expr: METRIC_NAME };
@@ -59,6 +74,40 @@ async function fetchTagValues(timeRange: TimeRange, key: string): Promise<Metric
 }
 
 /**
+ * Fetch series for GRAFANA_ALERTS and return the top N label keys
+ * ordered by how many instances carry each label.
+ */
+async function fetchTopLabelKeys(timeRange: TimeRange): Promise<string[]> {
+  const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
+
+  if (!('getResource' in ds) || typeof ds.getResource !== 'function') {
+    return [];
+  }
+
+  const response = await ds.getResource('api/v1/series', {
+    'match[]': METRIC_NAME,
+    start: String(timeRange.from.unix()),
+    end: String(timeRange.to.unix()),
+  });
+
+  const series: Array<Record<string, string>> = response?.data ?? [];
+  const counts = new Map<string, number>();
+
+  for (const s of series) {
+    for (const key of Object.keys(s)) {
+      if (!INTERNAL_LABELS.has(key)) {
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+  }
+
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, TOP_LABEL_COUNT)
+    .map(([key]) => key);
+}
+
+/**
  * Fetch tag keys from the datasource, exclude promoted and hidden labels,
  * and return promoted labels first followed by the rest alphabetically.
  */
@@ -66,18 +115,27 @@ async function buildTagKeysResult(
   timeRange: TimeRange,
   promoted: MetricFindValue[]
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
-  const dsKeys = await fetchTagKeys(timeRange);
-  const promotedValues = new Set(promoted.map((p) => String(p.value)));
+  const [dsKeys, topKeys] = await Promise.all([fetchTagKeys(timeRange), fetchTopLabelKeys(timeRange)]);
 
+  const promotedValues = new Set(promoted.map((p) => String(p.value)));
+  const topKeysSet = new Set(topKeys);
+
+  // Build "Frequent" group from top keys (excluding any already in promoted)
+  const frequent = topKeys
+    .filter((key) => !promotedValues.has(key))
+    .map((key) => ({ value: key, text: key, group: FREQUENT_GROUP }));
+
+  // Remaining go to "All" — exclude promoted, frequent, and hidden
+  const excludeFromAll = new Set([...promotedValues, ...topKeysSet, ...EXCLUDED]);
   const remaining = dsKeys
     .filter((k) => {
       const val = String(k.value ?? k.text);
-      return !promotedValues.has(val) && !EXCLUDED.has(val);
+      return !excludeFromAll.has(val);
     })
     .sort((a, b) => collator.compare(a.text, b.text))
     .map((k) => ({ ...k, group: ALL_GROUP }));
 
-  return { replace: true, values: [...promoted, ...remaining] };
+  return { replace: true, values: [...promoted, ...frequent, ...remaining] };
 }
 
 /**
