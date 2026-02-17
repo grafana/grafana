@@ -132,7 +132,6 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
         data-menu-open={menuOpen || undefined}
         type="button"
         aria-label={ariaLabel}
-        onClick={alwaysVisible ? (e) => e.stopPropagation() : undefined}
       >
         <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
       </button>
