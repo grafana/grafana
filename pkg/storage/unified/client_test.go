@@ -50,20 +50,12 @@ func TestUnifiedStorageClient(t *testing.T) {
 			require.NoError(t, err)
 
 			testCallAllMethods(client)
-			// health check should be called at least once by the gRPC client's built-in health checking
-			require.GreaterOrEqual(t, resourceServer.Calls["/grpc.health.v1.Health/Watch"], 1, "health check was not called")
-			// every application method should hit resource server exactly once
+			// every method should hit resource server exactly once
 			for method, count := range resourceServer.Calls {
-				if strings.HasPrefix(method, "/grpc.health.v1.Health/") {
-					continue
-				}
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 			}
-			// no application hits to the index server in this case
-			for method := range indexServer.Calls {
-				if strings.HasPrefix(method, "/grpc.health.v1.Health/") {
-					continue
-				}
+			// no hits to the index server in this case
+			for range indexServer.Calls {
 				require.FailNow(t, "index server was called when it should have not")
 			}
 		})
@@ -92,22 +84,13 @@ func TestUnifiedStorageClient(t *testing.T) {
 			require.NoError(t, err)
 
 			testCallAllMethods(client)
-			// health check should be called at least once on both servers
-			require.GreaterOrEqual(t, resourceServer.Calls["/grpc.health.v1.Health/Watch"], 1, "resource server health check was not called")
-			require.GreaterOrEqual(t, indexServer.Calls["/grpc.health.v1.Health/Watch"], 1, "index server health check was not called")
-			// only resource store methods on the resource server
+			// only resource store methods in this case
 			for method, count := range resourceServer.Calls {
-				if strings.HasPrefix(method, "/grpc.health.v1.Health/") {
-					continue
-				}
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceStore"))
 			}
-			// index server should only have search methods
+			// index server methods should be called here
 			for method, count := range indexServer.Calls {
-				if strings.HasPrefix(method, "/grpc.health.v1.Health/") {
-					continue
-				}
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceIndex") || strings.Contains(method, "resource.ManagedObjectIndex"))
 			}

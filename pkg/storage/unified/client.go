@@ -16,7 +16,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	_ "google.golang.org/grpc/health"
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/authlib/types"
@@ -324,8 +323,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
-	// Use health checks to be notified on graceful shutdown and avoid sending requests to unhealthy servers.
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin", "healthCheckConfig": {"serviceName": ""}}`))
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.
