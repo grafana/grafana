@@ -16,6 +16,7 @@ const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
 	DashboardResource = "dashboards.dashboard.grafana.app"
+	ShortURLResource  = "shorturls.shorturl.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -23,6 +24,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
 	FolderResource:    false,
 	DashboardResource: false,
+	ShortURLResource:  false,
 }
 
 // AutoMigratedUnifiedResources maps resources that support auto-migration

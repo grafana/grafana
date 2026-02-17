@@ -5,6 +5,7 @@ import {
   PublicationContext,
   SubscriptionErrorContext,
   SubscribedContext,
+  UnsubscribedContext,
 } from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
 
@@ -101,9 +102,12 @@ export class CentrifugeLiveChannel<T = any> {
         }
         this.sendStatus(ctx.data);
       })
-      .on('unsubscribed', () => {
+      .on('unsubscribed', (ctx: UnsubscribedContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+        if (ctx.code >= 100) {
+          this.currentStatus.error = ctx.reason;
+        }
         this.sendStatus();
       })
       .on('subscribing', () => {

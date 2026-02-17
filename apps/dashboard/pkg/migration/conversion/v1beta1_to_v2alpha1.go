@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -22,35 +23,61 @@ import (
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
 func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSourceIndexProvider) string {
+	ctx, span := TracingStart(ctx, "dashboard.conversion.get_default_datasource")
+	defer span.End()
+
 	const defaultType = "grafana"
 
 	if provider == nil {
+		span.SetAttributes(attribute.String("datasource.type", defaultType), attribute.String("reason", "provider_nil"))
 		return defaultType
 	}
 
 	datasources := provider.Index(ctx)
 	if defaultDS := datasources.GetDefault(); defaultDS != nil {
+		span.SetAttributes(
+			attribute.String("datasource.type", defaultDS.Type),
+			attribute.String("datasource.uid", defaultDS.UID),
+			attribute.String("datasource.name", defaultDS.Name),
+		)
 		return defaultDS.Type
 	}
 
+	span.SetAttributes(attribute.String("datasource.type", defaultType), attribute.String("reason", "no_default_found"))
 	return defaultType
 }
 
 // getDatasourceTypeByUID gets the datasource type by UID using the datasource provider
 func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemaversion.DataSourceIndexProvider) string {
+	ctx, span := TracingStart(ctx, "dashboard.conversion.get_datasource_by_uid",
+		attribute.String("datasource.uid", uid),
+	)
+	defer span.End()
+
 	if uid == "" {
+		span.SetAttributes(attribute.String("lookup.result", "fallback_to_default"))
 		return getDefaultDatasourceType(ctx, provider)
 	}
 
 	if provider == nil {
+		span.SetAttributes(
+			attribute.String("datasource.type", "grafana"),
+			attribute.String("lookup.result", "provider_nil"),
+		)
 		return "grafana"
 	}
 
 	dsIndex := provider.Index(ctx)
 	if ds := dsIndex.LookupByUID(uid); ds != nil {
+		span.SetAttributes(
+			attribute.String("datasource.type", ds.Type),
+			attribute.String("datasource.name", ds.Name),
+			attribute.String("lookup.result", "found"),
+		)
 		return ds.Type
 	}
 
+	span.SetAttributes(attribute.String("lookup.result", "not_found_fallback_to_default"))
 	return getDefaultDatasourceType(ctx, provider)
 }
 
@@ -97,19 +124,41 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	// Prepare context with namespace and service identity
-	// The datasource provider is already wrapped with caching at registration time
-	ctx, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
+	// get context with namespace and with tracing, merge them
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctxWithNamespace, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
 	if err != nil {
-		// If context preparation fails, return error to be handled by wrapper
-		// The wrapper will set status and handle gracefully
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
+	}
+	if ctxWithNamespace != nil {
+		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
+			ctx = request.WithNamespace(ctx, ns)
+		}
+	}
+
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v1beta1_to_v2alpha1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+	)
+	defer span.End()
+
+	if in.Spec.Object != nil {
+		schemaVer := schemaversion.GetSchemaVersion(in.Spec.Object)
+		span.SetAttributes(attribute.Int("source.schema_version", schemaVer))
 	}
 
 	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProvider, leIndexProvider)
 }
 
 func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	ctx, span := TracingStart(ctx, "dashboard.conversion.spec_v1beta1_to_v2alpha1")
+	defer span.End()
+
 	// Parse the unstructured spec into a dashboard JSON structure
 	dashboardJSON, ok := in.Object["dashboard"]
 	if !ok {
@@ -196,6 +245,13 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 		return fmt.Errorf("failed to transform annotations: %w", err)
 	}
 	out.Annotations = annotations
+
+	span.SetAttributes(
+		attribute.Int("conversion.elements_count", len(out.Elements)),
+		attribute.Int("conversion.variables_count", len(out.Variables)),
+		attribute.Int("conversion.annotations_count", len(out.Annotations)),
+		attribute.Int("conversion.links_count", len(out.Links)),
+	)
 
 	return nil
 }
@@ -2190,21 +2246,22 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		// Only process template variables - other string values are not supported in V2 format
 		queryDatasourceUID = dsStr
 	}
+	// Apply panel ref when panel has a concrete UID (non-empty, not mixed) and query has no ref or differs (same rule as frontend).
+	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
+	applyPanelRef := panelHasUID &&
+		(queryDatasourceUID == "" && queryDatasourceType == "" ||
+			(queryDatasourceUID != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
 
-	// Use panel datasource if target datasource is missing or empty
-	if queryDatasourceUID == "" && queryDatasourceType == "" && panelDatasource != nil {
-		// Only use panel datasource if it's not a mixed datasource
-		// Mixed datasources should not be propagated to individual queries
-		if panelDatasource.Uid != nil && *panelDatasource.Uid != "-- Mixed --" {
-			if panelDatasource.Type != nil {
-				queryDatasourceType = *panelDatasource.Type
-			}
-			queryDatasourceUID = *panelDatasource.Uid
-		} else if panelDatasource.Type != nil && *panelDatasource.Type == "datasource" {
-			// Handle case where panel datasource has type "datasource" but no UID
+	if applyPanelRef {
+		if panelDatasource.Type != nil {
 			queryDatasourceType = *panelDatasource.Type
-			queryDatasourceUID = resolveGrafanaDatasourceUID(*panelDatasource.Type, "")
 		}
+		queryDatasourceUID = *panelDatasource.Uid
+	} else if panelDatasource != nil && panelDatasource.Type != nil && *panelDatasource.Type == "datasource" &&
+		(queryDatasourceUID == "" && queryDatasourceType == "") {
+		// Handle case where panel datasource has type "datasource" but no UID
+		queryDatasourceType = *panelDatasource.Type
+		queryDatasourceUID = resolveGrafanaDatasourceUID(*panelDatasource.Type, "")
 	}
 
 	// Build query spec by excluding known fields

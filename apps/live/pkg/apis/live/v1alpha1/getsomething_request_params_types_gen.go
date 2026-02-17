@@ -10,3 +10,8 @@ type GetSomethingRequestParams struct {
 func NewGetSomethingRequestParams() *GetSomethingRequestParams {
 	return &GetSomethingRequestParams{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetSomethingRequestParams.
+func (GetSomethingRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.live.pkg.apis.live.v1alpha1.GetSomethingRequestParams"
+}

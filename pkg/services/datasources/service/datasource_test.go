@@ -1552,6 +1552,9 @@ func TestIntegrationService_getConnections(t *testing.T) {
 			{JSONData: plugins.JSONData{
 				ID: "graphite",
 			}},
+			{JSONData: plugins.JSONData{
+				ID: "another-datasource",
+			}},
 		},
 	}
 	features := featuremgmt.WithFeatures()
@@ -1572,7 +1575,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		OrgID: 1,
 		Name:  "BBB",
 		UID:   "bbb",
-		Type:  "graphite",
+		Type:  "another-datasource",
 	})
 	require.NoError(t, err)
 	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
@@ -1600,7 +1603,6 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		require.NoError(t, err)
 
 		jj, _ := json.MarshalIndent(res, "", "  ")
-		//fmt.Printf("%s", string(jj))
 		require.JSONEq(t, `{
 			"kind": "DataSourceConnectionList",
 			"apiVersion": "query.grafana.app/v0alpha1",
@@ -1615,9 +1617,9 @@ func TestIntegrationService_getConnections(t *testing.T) {
 				{
 					"title": "BBB",
 					"name": "bbb",
-					"group": "graphite.datasource.grafana.app",
+					"group": "another-datasource.datasource.grafana.app",
 					"version": "v0alpha1",
-					"plugin": "graphite"
+					"plugin": "another-datasource"
 				},
 				{
 					"title": "CCC",
@@ -1645,9 +1647,9 @@ func TestIntegrationService_getConnections(t *testing.T) {
 				{
 					"title": "BBB",
 					"name": "bbb",
-					"group": "graphite.datasource.grafana.app",
+					"group": "another-datasource.datasource.grafana.app",
 					"version": "v0alpha1",
-					"plugin": "graphite"
+					"plugin": "another-datasource"
 				}
 			]
 		}`, string(jj))

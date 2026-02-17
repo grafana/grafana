@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
@@ -23,8 +22,6 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	playlistv0 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -50,14 +48,6 @@ import (
 var (
 	tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
 )
-
-type MigrateOptions struct {
-	Namespace   string
-	Resources   []schema.GroupResource
-	WithHistory bool // only applies to dashboards
-	OnlyCount   bool // just count the values
-	Progress    func(count int, msg string)
-}
 
 type dashboardRow struct {
 	// The numeric version for this dashboard
@@ -93,28 +83,15 @@ type dashboardSqlAccess struct {
 	log         log.Logger
 }
 
-// ProvideMigratorDashboardAccessor creates a DashboardAccess specifically for migration purposes.
-// This provider is used by Wire DI and only includes the minimal dependencies needed for migrations.
-func ProvideMigratorDashboardAccessor(
+func ProvideMigrator(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
-) MigrationDashboardAccessor {
-	return newMigratorAccess(sql, provisioning, accessControl)
+) Migrator {
+	return NewMigratorAccess(sql, provisioning, accessControl)
 }
 
-// ProvidePlaylistMigrator creates a PlaylistMigrator for migration purposes.
-// This is wired separately from MigrationDashboardAccessor so that playlist
-// migrations are decoupled from the dashboard accessor interface.
-func ProvidePlaylistMigrator(
-	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.StubProvisioningService,
-	accessControl accesscontrol.AccessControl,
-) PlaylistMigrator {
-	return newMigratorAccess(sql, provisioning, accessControl)
-}
-
-func newMigratorAccess(
+func NewMigratorAccess(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
@@ -220,67 +197,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 	}, err
 }
 
-// CountResources counts resources without migrating them
-func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
-	sql, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ns, err := claims.ParseNamespace(opts.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	orgId := ns.OrgID
-	rsp := &resourcepb.BulkResponse{}
-	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, res := range opts.Resources {
-			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
-			case "folder.grafana.app/folders":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = folders.GROUP
-				summary.Resource = folders.RESOURCE
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
-
-			case "dashboard.grafana.app/librarypanels":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = dashboardV1.GROUP
-				summary.Resource = dashboardV1.LIBRARY_PANEL_RESOURCE
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
-					" WHERE org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
-
-			case "dashboard.grafana.app/dashboards":
-				summary := &resourcepb.BulkResponse_Summary{}
-				summary.Group = dashboardV1.GROUP
-				summary.Resource = dashboardV1.DASHBOARD_RESOURCE
-				rsp.Summary = append(rsp.Summary, summary)
-
-				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
-				if err != nil {
-					return err
-				}
-
-				// Also count history
-				_, err = sess.SQL(`SELECT COUNT(*)
-						FROM `+sql.Table("dashboard_version")+` as dv
-						JOIN `+sql.Table("dashboard")+`         as dd
-						ON dd.id = dv.dashboard_id
-						WHERE org_id=?`, orgId).Get(&summary.History)
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return rsp, nil
-}
-
 // MigrateDashboards handles the dashboard migration logic
-func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{
 		OrgID:         orgId,
 		Limit:         100000000,
@@ -372,7 +290,7 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 }
 
 // MigrateFolders handles the folder migration logic
-func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -455,7 +373,7 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 }
 
 // MigrateLibraryPanels handles the library panel migration logic
-func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
@@ -500,137 +418,6 @@ func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int
 		}
 	}
 	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
-	return nil
-}
-
-// MigratePlaylists handles the playlist migration logic
-func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	opts.Progress(-1, "migrating playlists...")
-	rows, err := a.ListPlaylists(ctx, orgId)
-	if rows != nil {
-		defer func() {
-			_ = rows.Close()
-		}()
-	}
-	if err != nil {
-		return err
-	}
-
-	// Group playlist items by playlist ID while preserving order
-	type playlistData struct {
-		id        int64
-		uid       string
-		name      string
-		interval  string
-		items     []playlistv0.PlaylistItem
-		createdAt int64
-		updatedAt int64
-	}
-
-	playlistIndex := make(map[int64]int) // maps playlist ID to index in playlists slice
-	playlists := []*playlistData{}
-	var currentID int64
-	var orgID int64
-	var uid, name, interval string
-	var createdAt, updatedAt int64
-	var itemType, itemValue sql.NullString
-
-	count := 0
-	for rows.Next() {
-		err = rows.Scan(&currentID, &orgID, &uid, &name, &interval, &createdAt, &updatedAt, &itemType, &itemValue)
-		if err != nil {
-			return err
-		}
-
-		// Get or create playlist entry
-		idx, exists := playlistIndex[currentID]
-		var pl *playlistData
-		if !exists {
-			pl = &playlistData{
-				id:        currentID,
-				uid:       uid,
-				name:      name,
-				interval:  interval,
-				items:     []playlistv0.PlaylistItem{},
-				createdAt: createdAt,
-				updatedAt: updatedAt,
-			}
-			playlistIndex[currentID] = len(playlists)
-			playlists = append(playlists, pl)
-		} else {
-			pl = playlists[idx]
-		}
-
-		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
-		if itemType.Valid && itemValue.Valid {
-			pl.items = append(pl.items, playlistv0.PlaylistItem{
-				Type:  playlistv0.PlaylistItemType(itemType.String),
-				Value: itemValue.String,
-			})
-		}
-	}
-
-	if err = rows.Err(); err != nil {
-		return err
-	}
-
-	// Convert to K8s objects and send to stream (order is preserved)
-	for _, pl := range playlists {
-		playlist := &playlistv0.Playlist{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: playlistv0.GroupVersion.String(),
-				Kind:       "Playlist",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              pl.uid,
-				Namespace:         opts.Namespace,
-				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
-			},
-			Spec: playlistv0.PlaylistSpec{
-				Title:    pl.name,
-				Interval: pl.interval,
-				Items:    pl.items,
-			},
-		}
-
-		// Set updated timestamp if different from created
-		if pl.updatedAt != pl.createdAt {
-			meta, err := utils.MetaAccessor(playlist)
-			if err != nil {
-				return err
-			}
-			updatedTime := time.UnixMilli(pl.updatedAt)
-			meta.SetUpdatedTimestamp(&updatedTime)
-		}
-
-		body, err := json.Marshal(playlist)
-		if err != nil {
-			return err
-		}
-
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     "playlist.grafana.app",
-				Resource:  "playlists",
-				Name:      pl.uid,
-			},
-			Value:  body,
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-
-		opts.Progress(count, fmt.Sprintf("%s (%d)", pl.name, len(req.Value)))
-		count++
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				err = nil
-			}
-			return err
-		}
-	}
-	opts.Progress(-2, fmt.Sprintf("finished playlists... (%d)", len(playlists)))
 	return nil
 }
 
@@ -1327,30 +1114,4 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 
 func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("not implemented")
-}
-
-func (a *dashboardSqlAccess) ListPlaylists(ctx context.Context, orgID int64) (*sql.Rows, error) {
-	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListPlaylists")
-	defer span.End()
-
-	helper, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req := newPlaylistQueryReq(helper, &PlaylistQuery{
-		OrgID: orgID,
-	})
-
-	rawQuery, err := sqltemplate.Execute(sqlQueryPlaylists, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPlaylists.Name(), err)
-	}
-
-	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
-	if err != nil && rows != nil {
-		_ = rows.Close()
-		return nil, err
-	}
-	return rows, err
 }
