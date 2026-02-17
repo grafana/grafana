@@ -33,7 +33,7 @@ You can also configure Git Sync using `grafanactl`. Since Git Sync configuration
 
 To set up Git Sync with `grafanactl`, follow these steps:
 
-1. Understand requirements, known issues, and limitations [before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#before-you-begin)
+1. Understand [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
 1. [Create the repository CRD](#create-the-repository-crd)
 1. [Push the repository CRD to Grafana](#push-the-repository-crd-to-grafana)
 1. [Manage repository resources](#manage-repository-resources)
@@ -42,12 +42,14 @@ To set up Git Sync with `grafanactl`, follow these steps:
 For more information, refer to the following documents:
 
 - [`grafanactl` documentation](https://grafana.github.io/grafanactl/)
-- [Repository CRD Reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-setup/)
-- [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
+- [Repository CRD Reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/)
+- [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources/)
 
 ## Create the repository CRD
 
-Create a `repository.yaml` file defining your Git Sync configuration:
+### Connect with a GitHub Personal Access Token
+
+If you're connecting Git Sync with a GitHub Personal Access Token, create a `repository.yaml` file defining your Git Sync configuration:
 
 ```yaml
 apiVersion: provisioning.grafana.app/v0alpha1
@@ -87,6 +89,35 @@ Replace the placeholders with your values:
 Only `target: folder` is currently supported for Git Sync.
 
 {{< /admonition >}}
+
+### Connect with GitHub App
+
+If you're connecting Git Sync with GitHub App, create a `repository.yaml` file defining your Git Sync configuration:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: <CONNECTION_NAME>
+  namespace: default
+spec:
+  title: <REPOSITORY_TITLE>
+  type: github
+  github:
+    appID: "<GITHUB_APP_ID>"
+    installationID: "<GITHUB_INSTALL_ID>"
+secure:
+  privateKey:
+    create: "<GITHUB_PRIVATE_KEY"
+```    
+
+Replace the placeholders with your values:
+
+- _`<CONNECTION_NAME>`_: Unique identifier for this GitHub App connection
+- _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
+- _`<GITHUB_APP_ID>`_: GitHub App unique identifier
+- _`<GITHUB_INSTALL_ID>`_: GitHUb App installation id
+- _`<GITHUB_PRIVATE_KEY>`_: GitHub Private Key
 
 ### Configuration parameters
 
