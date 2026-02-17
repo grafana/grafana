@@ -59,7 +59,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
         <div className={styles.content}>
           <QuerySidebarCollapsableHeader
             label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-            headerAction={<AddCardButton alwaysVisible />}
+            headerAction={<AddCardButton variant="query" alwaysVisible />}
           >
             <DraggableList
               droppableId="query-sidebar-queries"

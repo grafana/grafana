@@ -43,6 +43,8 @@ export interface ContentHeaderProps {
   cardType: QueryEditorType;
   pendingExpression?: boolean;
   onCancelPendingExpression?: () => void;
+  pendingTransformation?: boolean;
+  onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
@@ -78,6 +80,8 @@ export function ContentHeader({
   cardType,
   pendingExpression,
   onCancelPendingExpression,
+  pendingTransformation,
+  onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
@@ -100,6 +104,22 @@ export function ContentHeader({
         </div>
         <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingExpression}>
           <Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>
+        </Button>
+      </div>
+    );
+  }
+
+  if (pendingTransformation) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.leftSection}>
+          <Icon name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation].icon} size="sm" />
+          <Text weight="light" variant="body" color="secondary">
+            <Trans i18nKey="query-editor-next.header.pending-transformation">Select a Transformation</Trans>
+          </Text>
+        </div>
+        <Button variant="secondary" fill="text" size="sm" icon="times" onClick={onCancelPendingTransformation}>
+          <Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>
         </Button>
       </div>
     );
@@ -170,8 +190,15 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  const { selectedQuery, selectedTransformation, cardType, pendingExpression, setPendingExpression } =
-    useQueryEditorUIContext();
+  const {
+    selectedQuery,
+    selectedTransformation,
+    cardType,
+    pendingExpression,
+    setPendingExpression,
+    pendingTransformation,
+    setPendingTransformation,
+  } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
@@ -183,6 +210,8 @@ export function ContentHeaderSceneWrapper({
       cardType={cardType}
       pendingExpression={!!pendingExpression}
       onCancelPendingExpression={() => setPendingExpression(null)}
+      pendingTransformation={!!pendingTransformation}
+      onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}

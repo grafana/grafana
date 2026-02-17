@@ -20,6 +20,10 @@ export interface PendingExpression {
   insertAfter: string;
 }
 
+export interface PendingTransformation {
+  insertAfter?: string;
+}
+
 export interface DatasourceState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
@@ -78,6 +82,9 @@ export interface QueryEditorUIState {
   pendingExpression: PendingExpression | null;
   setPendingExpression: (pending: PendingExpression | null) => void;
   finalizePendingExpression: (type: ExpressionQueryType) => void;
+  pendingTransformation: PendingTransformation | null;
+  setPendingTransformation: (pending: PendingTransformation | null) => void;
+  finalizePendingTransformation: (transformationId: string) => void;
 }
 
 export interface QueryEditorActions {

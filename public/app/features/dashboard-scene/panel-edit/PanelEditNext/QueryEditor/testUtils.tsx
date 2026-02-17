@@ -101,6 +101,9 @@ export const mockUIStateBase = {
   pendingExpression: null,
   setPendingExpression: jest.fn(),
   finalizePendingExpression: jest.fn(),
+  pendingTransformation: null,
+  setPendingTransformation: jest.fn(),
+  finalizePendingTransformation: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -181,6 +184,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
+    pendingTransformation: null,
+    setPendingTransformation: jest.fn(),
+    finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     ...uiStateOverrides,

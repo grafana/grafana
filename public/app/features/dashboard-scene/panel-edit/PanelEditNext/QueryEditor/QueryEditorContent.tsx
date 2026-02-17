@@ -11,15 +11,16 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
-  const { queryOptions, showingDatasourceHelp, pendingExpression } = useQueryEditorUIContext();
+  const { queryOptions, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
   const { isQueryOptionsOpen } = queryOptions;
+  const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
 
   return (
     <div className={styles.container}>
       <ContentHeaderSceneWrapper />
-      {!pendingExpression && showingDatasourceHelp && <DatasourceHelpPanel />}
+      {!hasPendingPicker && showingDatasourceHelp && <DatasourceHelpPanel />}
       <QueryEditorBody />
-      {!pendingExpression && !isQueryOptionsOpen && <QueryEditorFooter />}
+      {!hasPendingPicker && !isQueryOptionsOpen && <QueryEditorFooter />}
     </div>
   );
 }

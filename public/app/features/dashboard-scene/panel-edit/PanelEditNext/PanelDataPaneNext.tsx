@@ -303,7 +303,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return { transformations: undefined, transformer: undefined };
   }
 
-  public addTransformation = (transformationId: string, afterIndex?: number) => {
+  public addTransformation = (transformationId: string, afterIndex?: number): number | undefined => {
     const transformer = this.getSceneDataTransformer();
     if (!transformer) {
       return;
@@ -315,6 +315,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     transformations.splice(insertAt, 0, newConfig);
     transformer.setState({ transformations });
     transformer.reprocessTransformations();
+    return insertAt;
   };
 
   public reorderTransformations = (transformations: DataTransformerConfig[]) => {

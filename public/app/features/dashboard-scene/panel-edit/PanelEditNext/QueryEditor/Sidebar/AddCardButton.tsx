@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, standardTransformersRegistry } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -10,25 +10,31 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { QUERY_EDITOR_COLORS } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
+  if (variant === 'transformation') {
+    return afterId
+      ? t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', { id: afterId })
+      : t('query-editor-next.sidebar.add-transformation', 'Add transformation');
+  }
+
+  return afterId
+    ? t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })
+    : t('query-editor-next.sidebar.add-query-or-expression', 'Add query or expression');
+}
+
 interface AddCardButtonProps {
-  /** What kind of item to add. Determines the menu contents. Default: 'query'. */
-  variant?: 'query' | 'transformation';
-  /** Insert position. For 'query' variant this is a refId; for 'transformation' it is a transformId.
-      When omitted, the new item appends to the end of its section. */
+  variant: 'query' | 'transformation';
   afterId?: string;
-  /** When true, renders as an always-visible inline button (for section headings).
-      When false/omitted, renders as the existing hover-to-show absolute-positioned button. */
   alwaysVisible?: boolean;
 }
 
-export const AddCardButton = ({ variant = 'query', afterId, alwaysVisible = false }: AddCardButtonProps) => {
-  const styles = useStyles2(getStyles, { alwaysVisible, variant });
+export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCardButtonProps) => {
+  const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
-  const { addQuery, addTransformation } = useActionsContext();
-  const { setSelectedQuery, setPendingExpression } = useQueryEditorUIContext();
+  const { addQuery } = useActionsContext();
+  const { setSelectedQuery, setPendingExpression, setPendingTransformation } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -87,33 +93,35 @@ export const AddCardButton = ({ variant = 'query', afterId, alwaysVisible = fals
     [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
   );
 
-  const transformationMenu = useMemo(() => {
-    const collator = new Intl.Collator();
-    const allTransformations = standardTransformersRegistry.list().sort((a, b) => collator.compare(a.name, b.name));
+  const handleTransformationClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (alwaysVisible) {
+        e.stopPropagation();
+      }
+      setPendingTransformation({ insertAfter: afterId });
+    },
+    [afterId, alwaysVisible, setPendingTransformation]
+  );
 
+  const ariaLabel = getButtonAriaLabel(variant, afterId);
+
+  if (variant === 'transformation') {
     return (
-      <Menu>
-        {allTransformations.map((item) => (
-          <Menu.Item key={item.id} label={item.name} onClick={() => addTransformation(item.id, afterId)} />
-        ))}
-      </Menu>
+      <button
+        className={styles.button}
+        data-add-button={!alwaysVisible || undefined}
+        type="button"
+        aria-label={ariaLabel}
+        onClick={handleTransformationClick}
+      >
+        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+      </button>
     );
-  }, [addTransformation, afterId]);
-
-  const menu = variant === 'transformation' ? transformationMenu : queryMenu;
-
-  const ariaLabel =
-    variant === 'transformation'
-      ? afterId
-        ? t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', { id: afterId })
-        : t('query-editor-next.sidebar.add-transformation', 'Add transformation')
-      : afterId
-        ? t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })
-        : t('query-editor-next.sidebar.add-query-or-expression', 'Add query or expression');
+  }
 
   return (
     <Dropdown
-      overlay={menu}
+      overlay={queryMenu}
       placement={alwaysVisible ? 'bottom-start' : 'right-start'}
       offset={alwaysVisible ? [0, theme.spacing.gridSize * 0.5] : [theme.spacing.gridSize, 0]}
       onVisibleChange={handleMenuVisibleChange}
@@ -132,47 +140,10 @@ export const AddCardButton = ({ variant = 'query', afterId, alwaysVisible = fals
   );
 };
 
-function getStyles(
-  theme: GrafanaTheme2,
-  { alwaysVisible, variant }: { alwaysVisible: boolean; variant: 'query' | 'transformation' }
-) {
-  if (alwaysVisible) {
-    const bgColor = variant === 'transformation' ? QUERY_EDITOR_COLORS.transformation : QUERY_EDITOR_COLORS.query;
-
-    return {
-      button: css({
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: theme.spacing(2),
-        height: theme.spacing(2),
-        borderRadius: theme.shape.radius.sm,
-        border: 'none',
-        background: bgColor,
-        color: theme.colors.text.maxContrast,
-        cursor: 'pointer',
-        padding: 0,
-
-        '&:hover': {
-          filter: 'brightness(1.2)',
-        },
-
-        '&:focus-visible': {
-          outline: `2px solid ${theme.colors.primary.border}`,
-          outlineOffset: '2px',
-        },
-      }),
-    };
-  }
-
+function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
   return {
     button: css({
-      position: 'absolute',
-      top: `calc(100% + ${theme.spacing(0.25)})`,
-      left: theme.spacing(-2.5),
-      transform: 'translateY(-50%)',
-      zIndex: 1,
-      display: 'flex',
+      display: alwaysVisible ? 'inline-flex' : 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       width: theme.spacing(2),
@@ -183,24 +154,35 @@ function getStyles(
       color: theme.colors.primary.contrastText,
       cursor: 'pointer',
       padding: 0,
-      opacity: 0,
-      pointerEvents: 'none',
 
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity', 'background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
+      // Hover-button positioning & hidden-by-default state (revealed by SidebarCard hover)
+      ...(!alwaysVisible && {
+        position: 'absolute' as const,
+        top: `calc(100% + ${theme.spacing(0.25)})`,
+        left: theme.spacing(-2.5),
+        transform: 'translateY(-50%)',
+        zIndex: 1,
+        opacity: 0,
+        pointerEvents: 'none' as const,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create(['opacity', 'background-color'], {
+            duration: theme.transitions.duration.short,
+          }),
+        },
+      }),
 
       '&:hover': {
         background: theme.colors.primary.shade,
       },
 
       '&:focus-visible': {
-        opacity: 1,
-        pointerEvents: 'auto',
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
+        ...(!alwaysVisible && {
+          opacity: 1,
+          pointerEvents: 'auto' as const,
+        }),
       },
     }),
   };
