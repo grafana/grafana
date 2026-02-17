@@ -8,7 +8,6 @@ import {
   ExplorePanelsState,
   FieldConfigSource,
   PanelData,
-  TimeRange,
   urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -27,7 +26,6 @@ import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 export function ExploreLogsTable(props: {
   eventBus: EventBus;
   data: PanelData;
-  timeRange: TimeRange;
   timeZone: 'utc' | 'browser' | string;
   buildLinkToLogLine: BuildLinkToLogLine;
   panelState: ExplorePanelsState | undefined;
@@ -91,7 +89,6 @@ export function ExploreLogsTable(props: {
       <LogsTable
         data={props.data}
         id={0}
-        timeRange={props.timeRange}
         timeZone={props.timeZone}
         options={{
           ...logsTablePanelDefaultOptions,

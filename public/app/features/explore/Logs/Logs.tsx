@@ -1103,7 +1103,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
-              timeRange={props.range}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
               externalOptions={{

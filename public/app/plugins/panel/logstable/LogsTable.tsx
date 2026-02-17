@@ -40,13 +40,12 @@ import {
   OnLogsTableOptionsChange,
 } from './types';
 
-interface LogsTablePanelProps extends PanelProps<Options> {}
+interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
 export const LogsTable = ({
   data,
   width,
   height,
-  timeRange,
   fieldConfig,
   options,
   eventBus,
@@ -191,7 +190,6 @@ export const LogsTable = ({
             width={width}
             height={height}
             id={id}
-            timeRange={timeRange}
             timeZone={timeZone}
             options={{
               sortOrder: LogsSortOrder.Descending,

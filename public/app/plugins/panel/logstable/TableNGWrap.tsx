@@ -26,7 +26,7 @@ import { TablePanel } from '../table/TablePanel';
 import { Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {
+interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
@@ -34,7 +34,6 @@ interface Props extends PanelProps<Options> {
 
 export function TableNGWrap({
   timeZone,
-  timeRange,
   id,
   data,
   options,
@@ -119,10 +118,10 @@ export function TableNGWrap({
         sortByBehavior={'managed'}
         initialRowIndex={initialRowIndex}
         data={data}
+        timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         id={id}
-        timeRange={timeRange}
         timeZone={timeZone}
         options={{ ...options }}
         transparent={transparent}

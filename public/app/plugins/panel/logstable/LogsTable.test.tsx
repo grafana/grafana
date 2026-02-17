@@ -6,7 +6,6 @@ import {
   AbsoluteTimeRange,
   EventBus,
   FieldConfigSource,
-  getDefaultTimeRange,
   LogSortOrderChangeEvent,
   LogsSortOrder,
   ScopedVars,
@@ -59,7 +58,6 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTable>>, options?
     <LogsTable
       data={getPanelData()}
       id={0}
-      timeRange={getDefaultTimeRange()}
       timeZone={'UTC'}
       options={{
         ...defaultOptions,
