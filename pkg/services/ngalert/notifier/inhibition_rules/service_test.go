@@ -45,8 +45,8 @@ var (
 	}
 
 	testImportedRule = definitions.InhibitionRule{
-		Name:       "test-mimir-inhibit-0",
-		UID:        "dGVzdC1taW1pci1pbmhpYml0LTA",
+		Name:       "test-mimir-imported-inhibition-rule-0000",
+		UID:        "dGVzdC1taW1pci1pbXBvcnRlZC1pbmhpYml0aW9uLXJ1bGUtMDAwMA",
 		Version:    "0c8f497a54e04d8b",
 		Provenance: definitions.Provenance(models.ProvenanceConvertedPrometheus),
 		Origin:     models.ResourceOriginImported,
@@ -135,7 +135,7 @@ func TestService_GetInhibitionRules(t *testing.T) {
 			}
 
 			rules, err := sut.GetInhibitionRules(ctx, orgID)
-			require.ErrorIs(t, tc.expErr, err)
+			require.ErrorIs(t, err, tc.expErr)
 			require.Equal(t, tc.expRules, rules)
 		})
 	}
@@ -253,7 +253,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			}
 
 			result, err := sut.UpdateInhibitionRule(ctx, tc.ruleName, tc.updatedRule, orgID)
-			require.ErrorIs(t, tc.expErr, err)
+			require.ErrorIs(t, err, tc.expErr)
 			require.Equal(t, tc.expRule, result)
 
 			// if not errors, ensure only updated rule is returned in list after update
@@ -303,7 +303,7 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 			}
 
 			err := sut.DeleteInhibitionRule(ctx, tc.ruleName, orgID, models.ProvenanceAPI, "")
-			require.ErrorIs(t, tc.expErr, err)
+			require.ErrorIs(t, err, tc.expErr)
 
 			// if no error expected, ensure deleted rule is not returned in list after deletion
 			if tc.expErr == nil {
