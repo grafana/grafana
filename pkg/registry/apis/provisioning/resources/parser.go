@@ -160,7 +160,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
-		return nil, NewResourceValidationError(errors.New("cannot declare folders within files"))
+		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist
