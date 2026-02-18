@@ -307,3 +307,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-22,functionalSharedPreferences,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-02-25,managedPluginsV2,experimental,@grafana/plugins-platform-backend,false,false,false
+2026-02-25,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false

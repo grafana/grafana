@@ -2475,6 +2475,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "rememberUserOrgForSso",
+			Description:  "Remember the last viewed organization for users using SSO",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "true", // enabled by default
+		},
 	}
 )
 

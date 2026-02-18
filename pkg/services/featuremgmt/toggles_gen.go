@@ -845,4 +845,8 @@ const (
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
+
+	// FlagRememberUserOrgForSso
+	// Remember the last viewed organization for users using SSO
+	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
 )

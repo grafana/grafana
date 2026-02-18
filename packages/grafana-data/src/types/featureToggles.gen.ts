@@ -1562,4 +1562,9 @@ export interface FeatureToggles {
   * @default false
   */
   managedPluginsV2?: boolean;
+  /**
+  * Remember the last viewed organization for users using SSO
+  * @default true
+  */
+  rememberUserOrgForSso?: boolean;
 }

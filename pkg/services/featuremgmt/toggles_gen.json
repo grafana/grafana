@@ -3686,6 +3686,20 @@
     },
     {
       "metadata": {
+        "name": "rememberUserOrgForSso",
+        "resourceVersion": "1772028086169",
+        "creationTimestamp": "2026-02-25T14:01:26Z"
+      },
+      "spec": {
+        "description": "Remember the last viewed organization for users using SSO",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-04-03T16:53:38Z"
