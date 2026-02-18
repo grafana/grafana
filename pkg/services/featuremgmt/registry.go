@@ -2400,6 +2400,14 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "frontendServiceUseSettingsService",
+			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 	}
 )
 
