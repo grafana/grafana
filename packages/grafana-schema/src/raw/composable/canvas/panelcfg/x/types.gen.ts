@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.4.0-pre";
+export const pluginVersion = "12.4.1";
 
 export enum HorizontalConstraint {
   Center = 'center',
