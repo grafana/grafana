@@ -17,6 +17,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanel
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -113,6 +114,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       const rowsManager = sceneGraph.findByKey(model, start.source.droppableId);
       if (rowsManager instanceof RowsLayoutManager) {
         rowsManager.forceSelectRow(start.draggableId);
+      }
+    }
+    if (start.type === 'TAB') {
+      const tabsManager = sceneGraph.findByKey(model, start.source.droppableId);
+      if (tabsManager instanceof TabsLayoutManager) {
+        tabsManager.forceSelectTab(start.draggableId);
       }
     }
   };
