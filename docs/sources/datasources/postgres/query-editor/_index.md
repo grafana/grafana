@@ -36,7 +36,7 @@ The following components will help you build a PostgreSQL query:
 
 - **Format** - Select the query result format from the drop-down. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`. Refer to [Time series queries](#time-series-queries) for more information.
 - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
-- **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+** sign. Click the **garbage can icon** to remove data operations.
+- **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+** sign. Click the **X** sign to remove data operations.
 - **Column** - Select a column on which to run the aggregation.
 - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 - **Filter** - Toggle to add filters.
