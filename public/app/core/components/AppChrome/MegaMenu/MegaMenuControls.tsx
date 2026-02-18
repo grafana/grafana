@@ -1,20 +1,16 @@
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 
 import { store, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Stack, Input, Icon, IconButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
-export const MegaMenuControls = ({
-  onToggleAllSections,
-  onFilterChange,
-}: {
-  onToggleAllSections: (expanded: boolean) => void;
-  onFilterChange: (filter: string) => void;
-}) => {
+export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: string) => void }) => {
+  const [isAnythingExpanded, setIsAnythingExpanded] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const navTree = useSelector((state) => state.navBarTree);
   const toggleAllSections = (tree: NavModelItem[], expanded: boolean) => {
+    setIsAnythingExpanded(expanded);
     tree.forEach((item) => {
       if (item.children) {
         toggleAllSections(item.children, expanded);
@@ -27,17 +23,15 @@ export const MegaMenuControls = ({
     });
   };
 
-  const isAnythingExpanded = useMemo(() => {
-    return navTree.some((item) => Boolean(store.get(`grafana.navigation.expanded[${item.id}]`)));
-  }, [navTree]);
+  store.subscribe('grafana.navigation.expanded-state-change', () => {
+    setIsAnythingExpanded(navTree.some((item) => Boolean(store.get(`grafana.navigation.expanded[${item.id}]`))));
+  });
 
   const expandAllSections = () => {
     toggleAllSections(navTree, true);
-    onToggleAllSections(true);
   };
   const collapseAllSections = () => {
     toggleAllSections(navTree, false);
-    onToggleAllSections(false);
   };
 
   const handleExpandCollapse = () => {
