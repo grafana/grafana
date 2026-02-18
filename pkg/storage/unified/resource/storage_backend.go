@@ -313,19 +313,14 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		if b.garbageCollection.Interval > 0 {
 			jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
-			select {
-			case <-time.After(jitter):
-			}
+			<-time.After(jitter)
 		}
 
 		ticker := time.NewTicker(b.garbageCollection.Interval)
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
-			}
+		for range ticker.C {
+			_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 		}
 	}()
 
