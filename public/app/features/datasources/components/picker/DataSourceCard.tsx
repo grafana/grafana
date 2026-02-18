@@ -67,6 +67,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       cursor: 'pointer',
       backgroundColor: 'transparent',
       padding: theme.spacing(1),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
