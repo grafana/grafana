@@ -19,7 +19,6 @@ type ManagedInhibitionRules map[string]*InhibitionRule
 // It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.
 type InhibitionRule struct {
 	Name        string `json:"name" yaml:"name"`
-	UID         string `json:"uid" yaml:"uid"`
 	InhibitRule `json:",inline" yaml:",inline"`
 	Version     string                `json:"version,omitempty"`
 	Provenance  Provenance            `json:"provenance,omitempty"`
@@ -30,7 +29,6 @@ func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error
 	// First, manually unmarshal our own fields
 	var temp struct {
 		Name       string                `yaml:"name"`
-		UID        string                `yaml:"uid"`
 		Provenance Provenance            `yaml:"provenance,omitempty"`
 		Origin     models.ResourceOrigin `yaml:"origin,omitempty"`
 		Version    string                `yaml:"version,omitempty"`
@@ -46,7 +44,6 @@ func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error
 
 	// Set our fields
 	ir.Name = temp.Name
-	ir.UID = temp.UID
 	ir.Provenance = temp.Provenance
 	ir.Origin = temp.Origin
 	ir.Version = temp.Version
@@ -60,7 +57,7 @@ func (ir *InhibitionRule) UnmarshalJSON(b []byte) error {
 
 // ResourceID returns the UID for provenance tracking.
 func (ir InhibitionRule) ResourceID() string {
-	return ir.UID
+	return ir.Name
 }
 
 // ResourceType returns the resource type for provenance tracking.

@@ -21,7 +21,6 @@ import (
 var (
 	testGrafanaRule = definitions.InhibitionRule{
 		Name:       "managed-rule-1",
-		UID:        "bWFuYWdlZC1ydWxlLTE",
 		Version:    "43170b20451b343a",
 		Provenance: definitions.Provenance(models.ProvenanceNone),
 		Origin:     models.ResourceOriginGrafana,
@@ -46,7 +45,6 @@ var (
 
 	testImportedRule = definitions.InhibitionRule{
 		Name:       "test-mimir-imported-inhibition-rule-0000",
-		UID:        "dGVzdC1taW1pci1pbXBvcnRlZC1pbmhpYml0aW9uLXJ1bGUtMDAwMA",
 		Version:    "0c8f497a54e04d8b",
 		Provenance: definitions.Provenance(models.ProvenanceConvertedPrometheus),
 		Origin:     models.ResourceOriginImported,

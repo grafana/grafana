@@ -304,7 +304,6 @@ receivers:
 		require.Equal(t, definitions.ManagedInhibitionRules{
 			"test-imported-inhibition-rule-0000000000": {
 				Name:       "test-imported-inhibition-rule-0000000000",
-				UID:        "dGVzdC1pbXBvcnRlZC1pbmhpYml0aW9uLXJ1bGUtMDAwMDAwMDAwMA",
 				Version:    "8ea121175ec5f716",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",
@@ -338,7 +337,6 @@ receivers:
 			},
 			"test-imported-inhibition-rule-0000000001": {
 				Name:       "test-imported-inhibition-rule-0000000001",
-				UID:        "dGVzdC1pbXBvcnRlZC1pbmhpYml0aW9uLXJ1bGUtMDAwMDAwMDAwMQ",
 				Version:    "74cb0d8b8dcff9f0",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",

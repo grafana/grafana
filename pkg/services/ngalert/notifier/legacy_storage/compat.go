@@ -225,16 +225,14 @@ func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, proven
 		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
 	}
 
-	uid := NameToUid(name)
-	// imported inhibition rules have purposefully long names/uid's to ensure no conflict with non-imported ones
-	if origin != models.ResourceOriginImported && len(uid) > ualert.UIDMaxLength {
+	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
+	if origin != models.ResourceOriginImported && len(name) > ualert.UIDMaxLength {
 		return nil, fmt.Errorf("inhibition rule name is too long (generated UID exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
 	ir := &apimodels.InhibitionRule{
 		Name:        name,
 		InhibitRule: rule,
-		UID:         uid,
 		Provenance:  provenance,
 		Origin:      origin,
 	}
