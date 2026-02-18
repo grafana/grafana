@@ -278,8 +278,9 @@ type (
 
 type MergeResult struct {
 	definition.MergeResult
-	Identifier string
-	ExtraRoute *Route
+	Identifier        string
+	ExtraRoute        *Route
+	ExtraInhibitRules []config.InhibitRule
 }
 
 func (m MergeResult) LogContext() []any {
@@ -839,9 +840,10 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
 
 	return MergeResult{
-		MergeResult: m,
-		Identifier:  mimirCfg.Identifier,
-		ExtraRoute:  route,
+		MergeResult:       m,
+		Identifier:        mimirCfg.Identifier,
+		ExtraRoute:        route,
+		ExtraInhibitRules: mcfg.InhibitRules,
 	}, nil
 }
 

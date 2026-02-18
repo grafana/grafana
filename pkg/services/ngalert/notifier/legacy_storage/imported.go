@@ -164,11 +164,15 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 		return nil, nil
 	}
 
-	scopedRules := definition.MergeInhibitRules(nil, importedRules, config.Matchers{managedRouteMatcher(e.identifier)})
+	return BuildManagedInhibitionRules(e.identifier, importedRules)
+}
+
+func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (definitions.ManagedInhibitionRules, error) {
+	scopedRules := definition.MergeInhibitRules(nil, rules, config.Matchers{managedRouteMatcher(identifier)})
 
 	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
 	for i, rule := range scopedRules {
-		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", e.identifier)
+		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
 
 		intFmt := "%d"
 		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength >= 0 {
