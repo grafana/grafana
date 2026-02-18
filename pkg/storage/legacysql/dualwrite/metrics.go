@@ -12,7 +12,7 @@ type Metrics struct {
 func ProvideMetrics(reg prometheus.Registerer) *Metrics {
 	return &Metrics{
 		ModeMismatchCounter: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "mode_mismatch_total",
+			Name: "dualwriter_mode_mismatch_total",
 			Help: "Number of times the MigrationStatusReader mode disagrees with the current dual writer mode at startup.",
 		}, []string{"resource", "current_mode", "new_mode"}),
 	}
