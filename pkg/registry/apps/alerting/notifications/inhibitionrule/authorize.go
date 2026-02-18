@@ -62,14 +62,14 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 		fallthrough
 	case "update":
 		if uid == "" {
-			return deny(err)
+			return authorizer.DecisionDeny, "", nil
 		}
 		if err := ac.AuthorizeUpdateByUID(ctx, user, uid); err != nil {
 			return deny(err)
 		}
 	case "delete":
 		if uid == "" {
-			return deny(err)
+			return authorizer.DecisionDeny, "", nil
 		}
 		if err := ac.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
 			return deny(err)
