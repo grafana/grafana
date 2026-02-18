@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { PresetsSupplierContext, VisualizationSuggestion } from '@grafana/data';
+import { FieldColorModeId, PresetsSupplierContext, VisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig, GraphGradientMode, LineInterpolation, VisibilityMode } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
@@ -62,6 +62,9 @@ const smoothPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => (
         showPoints: VisibilityMode.Always,
         pointSize: 6,
       },
+      color: {
+        mode: FieldColorModeId.PaletteClassic,
+      },
     },
     overrides: [],
   },
@@ -81,6 +84,9 @@ const areaPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
         lineInterpolation: LineInterpolation.Smooth,
         showPoints: VisibilityMode.Auto,
         pointSize: 4,
+      },
+      color: {
+        mode: FieldColorModeId.PaletteClassic,
       },
     },
     overrides: [],
@@ -102,6 +108,10 @@ const stepPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
         showPoints: VisibilityMode.Auto,
         pointSize: 1,
       },
+      color: {
+        mode: FieldColorModeId.ContinuousPurples,
+        seriesBy: 'max',
+      },
     },
     overrides: [],
   },
@@ -122,6 +132,10 @@ const stepFilledPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> 
         showPoints: VisibilityMode.Auto,
         pointSize: 1,
       },
+      color: {
+        mode: FieldColorModeId.ContinuousMagma,
+        seriesBy: 'max',
+      },
     },
     overrides: [],
   },
@@ -141,6 +155,11 @@ const stepHuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
         lineInterpolation: LineInterpolation.StepBefore,
         showPoints: VisibilityMode.Auto,
         pointSize: 1,
+      },
+      color: {
+        mode: FieldColorModeId.Fixed,
+        fixedColor: '#d0d0d0',
+        seriesBy: 'max',
       },
     },
     overrides: [],
