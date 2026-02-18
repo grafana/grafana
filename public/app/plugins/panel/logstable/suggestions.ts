@@ -12,14 +12,11 @@ import { FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 import { Options } from './options/types';
 
 function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore | undefined {
-  console.log('getTableSuggestionScore', dataSummary);
   if (dataSummary.hasPreferredVisualisationType('logs')) {
-    console.log('hasPreferredVisualisationType');
     return VisualizationSuggestionScore.Best;
   }
 
   if (dataSummary.hasDataFrameType(DataFrameType.LogLines)) {
-    console.log('hasDataFrameType');
     return VisualizationSuggestionScore.Best;
   }
 
