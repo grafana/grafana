@@ -56,8 +56,6 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
@@ -211,25 +209,31 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
 function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
   const panels: VizPanel[] = [];
 
-  // Repeated panels are not part of `layout.getVizPanels()`; they are stored on the repeater item state.
-  const repeaters = sceneGraph.findAllObjects(
-    scene.getRoot(),
-    (obj) => obj instanceof DashboardGridItem || obj instanceof AutoGridItem
-  );
+  const repeaters = sceneGraph.findAllObjects(scene.getRoot(), (obj) => {
+    const state = obj.state;
+    if (state === null || typeof state !== 'object') {
+      return false;
+    }
+
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    return Array.isArray(repeatedPanels) && repeatedPanels.length > 0;
+  });
 
   for (const repeater of repeaters) {
-    if (repeater instanceof DashboardGridItem) {
-      if (repeater.state.repeatedPanels?.length) {
-        panels.push(...repeater.state.repeatedPanels);
-      }
+    const state = repeater.state;
+    if (state === null || typeof state !== 'object') {
       continue;
     }
 
-    if (repeater instanceof AutoGridItem) {
-      if (repeater.state.repeatedPanels?.length) {
-        panels.push(...repeater.state.repeatedPanels);
-      }
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    if (!Array.isArray(repeatedPanels)) {
       continue;
+    }
+
+    for (const panel of repeatedPanels) {
+      if (panel instanceof VizPanel) {
+        panels.push(panel);
+      }
     }
   }
 
