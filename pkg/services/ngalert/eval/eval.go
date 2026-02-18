@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -94,12 +95,13 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 }
 
 // Evaluate evaluates the condition and converts the response to Results
-func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
-	response, err := r.EvaluateRaw(ctx, now)
+func (r *conditionEvaluator) Evaluate(ctx context.Context, scheduledAt time.Time) (Results, error) {
+	start := time.Now()
+	response, err := r.EvaluateRaw(ctx, scheduledAt)
 	if err != nil {
 		return nil, err
 	}
-	return EvaluateAlert(response, r.condition, now), nil
+	return EvaluateAlert(response, r.condition, scheduledAt, start), nil
 }
 
 type evaluatorImpl struct {
@@ -123,9 +125,9 @@ func NewEvaluatorFactory(
 }
 
 // EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
-func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
+func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, scheduledAt time.Time, evalStart time.Time) Results {
 	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
-	return evaluateExecutionResult(execResults, now)
+	return evaluateExecutionResult(execResults, scheduledAt, evalStart)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -692,19 +694,22 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
+func evaluateExecutionResult(execResults ExecutionResults, scheduledAt time.Time, evalStart time.Time) Results {
 	evalResults := make([]Result, 0)
+	// EvaluationDuration is calculated from evalStart (when evaluation actually began) rather than scheduledAt
+	// (when it was scheduled to begin) to exclude any delays from scheduling jitter or retry attempts.
+	duration := time.Since(evalStart)
 
 	appendErrRes := func(e error) {
-		evalResults = append(evalResults, NewResultFromError(e, ts, time.Since(ts)))
+		evalResults = append(evalResults, NewResultFromError(e, scheduledAt, duration))
 	}
 
 	appendNoData := func(labels data.Labels) {
 		evalResults = append(evalResults, Result{
 			State:              NoData,
 			Instance:           labels,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
+			EvaluatedAt:        scheduledAt,
+			EvaluationDuration: duration,
 		})
 	}
 
@@ -768,7 +773,14 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-		r := buildResult(f, val, ts)
+		r := Result{
+			Instance:           f.Fields[0].Labels,
+			EvaluatedAt:        scheduledAt,
+			EvaluationDuration: duration,
+			EvaluationString:   extractEvalString(f),
+			Values:             extractValues(f),
+			State:              stateFromVal(val),
+		}
 
 		evalResults = append(evalResults, r)
 	}
@@ -782,8 +794,8 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 				Result{
 					State:              Error,
 					Instance:           res.Instance,
-					EvaluatedAt:        ts,
-					EvaluationDuration: time.Since(ts),
+					EvaluatedAt:        scheduledAt,
+					EvaluationDuration: duration,
 					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
 				},
 			}
@@ -794,23 +806,14 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	return evalResults
 }
 
-func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
-	r := Result{
-		Instance:           f.Fields[0].Labels,
-		EvaluatedAt:        ts,
-		EvaluationDuration: time.Since(ts),
-		EvaluationString:   extractEvalString(f),
-		Values:             extractValues(f),
+func stateFromVal(val *float64) State {
+	if val == nil {
+		return NoData
 	}
-	switch {
-	case val == nil:
-		r.State = NoData
-	case *val == 0:
-		r.State = Normal
-	default:
-		r.State = Alerting
+	if *val == 0 {
+		return Normal
 	}
-	return r
+	return Alerting
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.

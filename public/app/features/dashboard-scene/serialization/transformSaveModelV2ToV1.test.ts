@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
 

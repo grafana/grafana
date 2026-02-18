@@ -1,5 +1,5 @@
 import { config } from '../../config';
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getFeatureFlagClient } from '../../internal/openFeature';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import type { PluginMetasResponse } from './types';
@@ -9,7 +9,7 @@ function getApiVersion(): string {
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
-  if (!evaluateBooleanFlag('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     const result = { items: [] };
     return result;
   }
@@ -25,4 +25,8 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 
 export function initPluginMetas(): Promise<PluginMetasResponse> {
   return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
+}
+
+export function refetchPluginMetas(): Promise<PluginMetasResponse> {
+  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] }, invalidate: true });
 }

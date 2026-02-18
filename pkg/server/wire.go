@@ -482,6 +482,7 @@ var wireBasicSet = wire.NewSet(
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
+	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

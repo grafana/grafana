@@ -15,6 +15,11 @@ func NewCreateCheckBody() *CreateCheckBody {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CreateCheckBody.
+func (CreateCheckBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckBody"
+}
+
 // +k8s:openapi-gen=true
 type CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown struct {
 	PanelTitle         string   `json:"panelTitle"`
@@ -31,6 +36,11 @@ func NewCreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown() *CreateCheckV1a
 	return &CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown{
 		MissingMetrics: []string{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown.
+func (CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown"
 }
 
 // +k8s:openapi-gen=true
@@ -54,12 +64,8 @@ func NewCreateCheckV1alpha1BodyDatasourceResults() *CreateCheckV1alpha1BodyDatas
 		QueryBreakdown: []CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown{},
 	}
 }
-func (CreateCheckBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckBody"
-}
-func (CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckV1alpha1BodyDatasourceResultsQueryBreakdown"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateCheckV1alpha1BodyDatasourceResults.
 func (CreateCheckV1alpha1BodyDatasourceResults) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckV1alpha1BodyDatasourceResults"
 }

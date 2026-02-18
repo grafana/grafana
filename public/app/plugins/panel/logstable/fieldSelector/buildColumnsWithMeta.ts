@@ -10,8 +10,6 @@ export interface LogsFrameFields {
   timeField: FieldWithIndex;
 }
 
-// @todo adapted from the deprecated table
-// @todo LOG_LINE_BODY_FIELD_NAME, ___OTEL_LOG_ATTRIBUTES___
 export const buildColumnsWithMeta = (
   logsFrameFields: LogsFrameFields,
   dataFrame: DataFrame,
@@ -52,7 +50,6 @@ export const buildColumnsWithMeta = (
         return acc;
       }, 0);
 
-      // @todo rename percentOfLinesWithLabel before normalization
       labelCardinality.set(fieldName, {
         percentOfLinesWithLabel: countOfValues,
         active: false,
@@ -110,9 +107,11 @@ export const buildColumnsWithMeta = (
   // If nothing is selected, then select the default columns
   if (displayedFields.length === 0) {
     if (logsFrameFields?.bodyField?.name) {
+      pendingLabelState[logsFrameFields.bodyField.name].index = 1;
       pendingLabelState[logsFrameFields.bodyField.name].active = true;
     }
     if (logsFrameFields?.timeField?.name) {
+      pendingLabelState[logsFrameFields.timeField.name].index = 0;
       pendingLabelState[logsFrameFields.timeField.name].active = true;
     }
   }
