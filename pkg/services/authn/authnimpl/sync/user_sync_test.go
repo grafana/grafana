@@ -946,7 +946,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 		},
 		{
-			name: "sync - identity org not populated from user",
+			name: "sync - identity org not populated from user when rememberUserOrgForSso is disabled",
 			fields: fields{
 				userService:     userService,
 				authInfoService: authFakeNil,
