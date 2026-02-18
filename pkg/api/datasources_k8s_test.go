@@ -138,6 +138,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 					featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
 					featuremgmt.FlagQueryService,
 					featuremgmt.FlagQueryServiceWithConnections,
+					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 				),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: &mockDirectRestConfigProvider{host: "http://localhost", transport: &mockRoundTripper{statusCode: tt.statusCode, responseBody: tt.responseBody}},

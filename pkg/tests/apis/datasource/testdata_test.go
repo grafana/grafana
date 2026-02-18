@@ -40,8 +40,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
+			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -198,11 +199,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Method: "GET",
 			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
 		}, nil)
-		// endpoint is disabled currently because it has not been
-		// sufficiently tested.
-		// for more info see pkg/registry/apis/datasource/sub_resource.go
-		require.Equal(t, int32(501), raw.Status.Code)
-		// require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
+		require.Equal(t, http.StatusOK, raw.Response.StatusCode)
+		require.Contains(t, string(raw.Body), "Hello world from test datasource!")
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -222,8 +220,9 @@ func TestIntegrationTestDatasourceAccess(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
-				featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
+				featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+				featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"datasources.grafana-testdata-datasource.datasource.grafana.app": {

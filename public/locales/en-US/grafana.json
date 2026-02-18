@@ -11729,6 +11729,8 @@
     },
     "user-invite-form": {
       "back": "Back",
+      "disabled-message": "This form is no longer in use. To invite a new user, please click the button to manage invitations externally.",
+      "disabled-title": "Externally managed users",
       "label-email-or-username": "Email or username",
       "label-name": "Name",
       "label-send-invite-email": "Send invite email",
@@ -13294,7 +13296,8 @@
       "alerts_other": "Alerts ({{count}})",
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "data-mode": "Data Mode",
+      "footer-items_one": "{{count}} item",
+      "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"

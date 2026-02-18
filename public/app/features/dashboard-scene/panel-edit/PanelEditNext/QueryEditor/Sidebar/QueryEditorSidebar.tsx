@@ -16,6 +16,7 @@ import {
 import { AlertIndicator } from './AlertIndicator';
 import { AlertsView } from './AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
+import { SidebarFooter } from './SidebarFooter';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
@@ -78,11 +79,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           )}
         </div>
       </ScrollContainer>
-      <div className={styles.footer}>
-        <Text weight="medium" variant="bodySmall">
-          {t('query-editor-next.sidebar.data-mode', 'Data Mode')}
-        </Text>
-      </div>
+      <SidebarFooter />
     </div>
   );
 });
@@ -104,11 +101,6 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
-    }),
-    footer: css({
-      marginTop: 'auto',
-      background: QUERY_EDITOR_COLORS.card.headerBg,
-      padding: theme.spacing(1, 1.5),
     }),
   };
 }
