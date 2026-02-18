@@ -37,6 +37,13 @@ var bootErrorMetric = promauto.NewCounter(prometheus.CounterOpts{
 	Help:      "Total number of frontend boot errors",
 })
 
+var settingsFetchMetric = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Subsystem: "frontend",
+	Name:      "settings_fetch_total",
+	Help:      "Total number of settings service fetch attempts from the request config middleware",
+}, []string{"status"}) // status: "success" or "error"
+
 type frontendService struct {
 	*services.BasicService
 	cfg          *setting.Cfg

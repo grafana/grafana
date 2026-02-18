@@ -65,7 +65,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"url"},
 		},
 		{
-			name: "invalid URL format - non-HTTPS",
+			name: "valid HTTP URL for local development",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -77,9 +77,13 @@ func TestValidate(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
 			},
-			expectedError: true,
-			errorContains: []string{"URL must start with https://"},
+			expectedError: false,
 		},
 		{
 			name: "valid github.com repository",
