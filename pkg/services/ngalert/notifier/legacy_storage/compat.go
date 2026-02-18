@@ -221,13 +221,17 @@ func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, proven
 		return nil, fmt.Errorf("inhibition rule name must not be empty")
 	}
 
+	if strings.Contains(name, ":") {
+		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
+	}
+
 	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
 		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
 	}
 
 	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
 	if origin != models.ResourceOriginImported && len(name) > ualert.UIDMaxLength {
-		return nil, fmt.Errorf("inhibition rule name is too long (generated UID exceeds %d characters)", ualert.UIDMaxLength)
+		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
 	ir := &apimodels.InhibitionRule{
