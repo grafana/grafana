@@ -38,17 +38,26 @@ enum PageTypes {
   GroupSync = 'groupsync',
 }
 
-const PAGES = new Set(Object.values(PageTypes));
-function isPage(value: string): value is PageTypes {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return PAGES.has(value as PageTypes);
+function getPageType(page: string | undefined): PageTypes | undefined {
+  switch (page) {
+    case PageTypes.Members:
+      return PageTypes.Members;
+    case PageTypes.Settings:
+      return PageTypes.Settings;
+    case PageTypes.Folders:
+      return PageTypes.Folders;
+    case PageTypes.GroupSync:
+      return PageTypes.GroupSync;
+    default:
+      return undefined;
+  }
 }
 
 const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
-    (_state: StoreState, pageName: string) => pageName,
-    (_state: StoreState, _pageName: string, teamUid: string) => teamUid,
+    (_state: StoreState, pageName: PageTypes) => pageName,
+    (_state: StoreState, _pageName: PageTypes, teamUid: string) => teamUid,
   ],
   (navIndex, pageName, teamUid) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
@@ -67,8 +76,7 @@ const TeamPages = memo(() => {
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
     defaultPage = PageTypes.Settings;
   }
-  const pageName = page ?? defaultPage;
-  let currentPage = isPage(pageName) ? pageName : defaultPage;
+  let currentPage = getPageType(page) ?? defaultPage;
   if (currentPage === PageTypes.Folders && !config.featureToggles.teamFolders) {
     currentPage = defaultPage;
   }
