@@ -15,6 +15,7 @@ import (
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -104,10 +105,29 @@ func TestCreateProvider(t *testing.T) {
 				}
 			}
 
-			tokenExchangeMiddleware := TestingTokenExchangeMiddleware(tokenExchangeClient)
-			httpClient, err := createHTTPClient(tokenExchangeMiddleware)
+			authConfig := features.TokenExchangeConfig{
+				TokenExchanger: tokenExchangeClient,
+				Namespace:      "*", // Use wildcard namespace for tests
+				Audiences:      []string{features.FeaturesProviderAudience},
+			}
+
+			httpClient, err := features.CreateAuthenticatedHTTPClient(
+				authConfig,
+				features.HTTPClientOptions{InsecureSkipVerify: true},
+			)
 			require.NoError(t, err, "failed to create features-service http client")
-			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClient)
+
+			// Create provider based on type
+			var provider openfeature.FeatureProvider
+			switch tc.cfg.ProviderType {
+			case setting.FeaturesServiceProviderType:
+				provider, err = newFeaturesServiceProvider(tc.cfg.URL.String(), httpClient)
+			case setting.OFREPProviderType:
+				provider, err = newOFREPProvider(tc.cfg.URL.String(), httpClient)
+			default:
+				// Static provider with standard flags
+				provider, err = CreateStaticProviderWithStandardFlags(nil)
+			}
 			require.NoError(t, err)
 
 			err = openfeature.SetProviderAndWait(provider)

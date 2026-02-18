@@ -2,139 +2,93 @@ package featuremgmt
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
-	"time"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
-
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 )
 
-const (
-	featuresProviderAudience = "features.grafana.app"
-)
-
-// OpenFeatureConfig holds configuration for initializing OpenFeature
-type OpenFeatureConfig struct {
-	// ProviderType is either "static", "features-service", or "ofrep"
-	ProviderType setting.OpenFeatureProviderType
-	// URL is the remote provider's URL (required for features-service + OFREP providers)
-	URL *url.URL
-	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
-	HTTPClient *http.Client
-	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]memprovider.InMemoryFlag
-	// TargetingKey is used for evaluation context
-	TargetingKey string
-	// ContextAttrs are additional attributes for evaluation context
-	ContextAttrs map[string]any
-}
-
-// InitOpenFeature initializes OpenFeature with the provided configuration
-func InitOpenFeature(config OpenFeatureConfig) error {
-	// For remote providers, ensure we have a URL
-	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
-		return fmt.Errorf("URL is required for remote providers")
-	}
-
-	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
-	if err != nil {
-		return err
-	}
-
-	if err = openfeature.SetProviderAndWait(p); err != nil {
-		return fmt.Errorf("failed to set global feature provider: %s, %w", config.ProviderType, err)
-	}
-
-	contextAttrs := make(map[string]any)
-	for k, v := range config.ContextAttrs {
-		contextAttrs[k] = v
-	}
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(config.TargetingKey, contextAttrs))
-
-	return nil
-}
-
-// InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg
+// InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg.
+// This is the main entry point for Grafana production code to initialize OpenFeature.
 func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
+	// Phase 1: Read configuration
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
 
-	var httpcli *http.Client
-	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
-		var m *TokenExchangeMiddleware
+	contextAttrs := buildContextAttrs(cfg)
 
-		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
-			m, err = NewTokenExchangeMiddleware(cfg)
-			if err != nil {
-				return fmt.Errorf("failed to create token exchange middleware: %w", err)
-			}
-		}
-
-		httpcli, err = createHTTPClient(m)
-		if err != nil {
-			return err
-		}
+	// Phase 2: Create provider based on type
+	var provider openfeature.FeatureProvider
+	switch cfg.OpenFeature.ProviderType {
+	case features.FeaturesServiceProviderType, features.OFREPProviderType:
+		provider, err = createRemoteProvider(cfg)
+	default: // Static provider
+		provider, err = CreateStaticProviderWithStandardFlags(confFlags)
+	}
+	if err != nil {
+		return err
 	}
 
+	// Phase 3: Initialize OpenFeature
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
+		return fmt.Errorf("failed to set feature provider: %w", err)
+	}
+
+	openfeature.SetEvaluationContext(
+		openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, contextAttrs),
+	)
+	return nil
+}
+
+// CreateStaticProviderWithStandardFlags creates a static provider with both
+// Grafana's standard flags and user-provided flags merged together.
+// This is useful for tests and internal Grafana code that needs static providers.
+func CreateStaticProviderWithStandardFlags(userFlags map[string]memprovider.InMemoryFlag) (openfeature.FeatureProvider, error) {
+	return newStaticProvider(userFlags, standardFeatureFlags)
+}
+
+// buildContextAttrs extracts context attributes from Grafana configuration.
+func buildContextAttrs(cfg *setting.Cfg) map[string]any {
 	contextAttrs := make(map[string]any)
 	for k, v := range cfg.OpenFeature.ContextAttrs {
 		contextAttrs[k] = v
 	}
-
-	return InitOpenFeature(OpenFeatureConfig{
-		ProviderType: cfg.OpenFeature.ProviderType,
-		URL:          cfg.OpenFeature.URL,
-		HTTPClient:   httpcli,
-		StaticFlags:  confFlags,
-		TargetingKey: cfg.OpenFeature.TargetingKey,
-		ContextAttrs: contextAttrs,
-	})
+	return contextAttrs
 }
 
-func createProvider(
-	providerType setting.OpenFeatureProviderType,
-	u *url.URL,
-	staticFlags map[string]memprovider.InMemoryFlag,
-	httpClient *http.Client,
-) (openfeature.FeatureProvider, error) {
-	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
-		if u == nil || u.String() == "" {
-			return nil, fmt.Errorf("feature provider url is required for FeaturesServiceProviderType + OFREPProviderType")
+// createRemoteProvider creates a remote OpenFeature provider (OFREP or FeaturesService).
+func createRemoteProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error) {
+	// Build authentication config if needed
+	var authConfig *features.TokenExchangeConfig
+	if cfg.OpenFeature.ProviderType == features.FeaturesServiceProviderType {
+		tokenExchanger, namespace, err := setupTokenExchange(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup token exchange: %w", err)
 		}
 
-		if providerType == setting.FeaturesServiceProviderType {
-			return newFeaturesServiceProvider(u.String(), httpClient)
-		}
-
-		if providerType == setting.OFREPProviderType {
-			return newOFREPProvider(u.String(), httpClient)
+		authConfig = &features.TokenExchangeConfig{
+			TokenExchanger: tokenExchanger,
+			Namespace:      namespace,
+			Audiences:      []string{features.FeaturesProviderAudience},
 		}
 	}
 
-	return newStaticProvider(staticFlags, standardFeatureFlags)
-}
-
-func createHTTPClient(m *TokenExchangeMiddleware) (*http.Client, error) {
-	options := sdkhttpclient.Options{
-		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
-		Timeouts: &sdkhttpclient.TimeoutOptions{
-			Timeout: 10 * time.Second,
-		},
-	}
-	if m != nil {
-		options.Middlewares = append(options.Middlewares, m.New([]string{featuresProviderAudience}))
-	}
-
-	httpcli, err := sdkhttpclient.NewProvider().New(options)
+	// Create HTTP client
+	httpcli, err := features.CreateHTTPClientForProvider(
+		cfg.OpenFeature.ProviderType,
+		authConfig,
+		features.HTTPClientOptions{InsecureSkipVerify: true},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create http client for openfeature: %w", err)
+		return nil, err
 	}
 
-	return httpcli, nil
+	// Create provider from HTTP client
+	if cfg.OpenFeature.ProviderType == features.FeaturesServiceProviderType {
+		return newFeaturesServiceProvider(cfg.OpenFeature.URL.String(), httpcli)
+	}
+	return newOFREPProvider(cfg.OpenFeature.URL.String(), httpcli)
 }

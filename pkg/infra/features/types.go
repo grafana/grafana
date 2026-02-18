@@ -17,8 +17,6 @@ const (
 
 // OpenFeatureConfig holds configuration for initializing OpenFeature with remote providers
 type OpenFeatureConfig struct {
-	// ProviderType is either "features-service" or "ofrep"
-	ProviderType OpenFeatureProviderType
 	// URL is the remote provider's URL (required)
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (required for authenticated providers)

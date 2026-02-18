@@ -16,7 +16,6 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 		return fmt.Errorf("URL is required for remote providers")
 	}
 
-	// Create OFREP provider (works for both FeaturesServiceProviderType and OFREPProviderType)
 	provider, err := NewOFREPProvider(config.URL.String(), config.HTTPClient)
 	if err != nil {
 		return fmt.Errorf("failed to create provider: %w", err)
@@ -24,7 +23,7 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 
 	// Set the provider globally and wait for it to be ready
 	if err := openfeature.SetProviderAndWait(provider); err != nil {
-		return fmt.Errorf("failed to set global feature provider: %s, %w", config.ProviderType, err)
+		return fmt.Errorf("failed to set global feature provider: %w", err)
 	}
 
 	// Set up evaluation context with targeting key and additional attributes
