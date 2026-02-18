@@ -7,7 +7,6 @@ import { DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
-import { setVariablesAction } from 'app/features/explore/state/variables';
 import { deserializeVariables } from 'app/features/explore/state/variablesSerialization';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -82,15 +81,9 @@ export function initializeFromURL(
             panelsState,
             eventBridge: new EventBusSrv(),
             compact: !!compact,
+            variables: urlVariables && urlVariables.length > 0 ? deserializeVariables(urlVariables) : undefined,
           })
-        )
-          .unwrap()
-          .then((result) => {
-            if (urlVariables && urlVariables.length > 0) {
-              dispatch(setVariablesAction({ exploreId, variables: deserializeVariables(urlVariables) }));
-            }
-            return result;
-          });
+        ).unwrap();
       })
     );
 

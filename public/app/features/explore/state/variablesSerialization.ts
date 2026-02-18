@@ -54,7 +54,7 @@ export function deserializeVariables(urlVars: ExploreUrlVariable[]): SceneVariab
   return urlVars
     .filter((v) => v.name && typeof v.name === 'string')
     .map((v) => {
-      return new CustomVariable({
+      const variable = new CustomVariable({
         name: v.name,
         label: v.label,
         description: v.description ?? undefined,
@@ -66,5 +66,8 @@ export function deserializeVariables(urlVars: ExploreUrlVariable[]): SceneVariab
         value: v.value ?? '',
         text: v.text ?? '',
       });
+      const options = variable.transformCsvStringToOptions(v.query || '', false);
+      variable.setState({ options });
+      return variable;
     });
 }

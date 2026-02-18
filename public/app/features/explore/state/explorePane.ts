@@ -11,6 +11,7 @@ import {
   ExploreCorrelationHelperData,
   EventBusExtended,
 } from '@grafana/data';
+import { SceneVariable } from '@grafana/scenes';
 import { CorrelationData } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
@@ -23,7 +24,7 @@ import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
-import { variablesReducer } from './variables';
+import { setVariablesAction, variablesReducer } from './variables';
 //
 // Actions and Payloads
 //
@@ -150,6 +151,7 @@ export interface InitializeExploreOptions {
   eventBridge: EventBusExtended;
   queryLibraryRef?: string;
   compact: boolean;
+  variables?: SceneVariable[];
 }
 
 /**
@@ -173,6 +175,7 @@ export const initializeExplore = createAsyncThunk(
       correlationHelperData,
       eventBridge,
       queryLibraryRef,
+      variables,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
@@ -203,6 +206,10 @@ export const initializeExplore = createAsyncThunk(
     }
 
     dispatch(updateTime({ exploreId }));
+
+    if (variables && variables.length > 0) {
+      dispatch(setVariablesAction({ exploreId, variables }));
+    }
 
     if (instance) {
       const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);

@@ -55,6 +55,11 @@ export function syncFromURL(
             dispatch(setQueriesAction({ exploreId, queries: withUniqueRefIds(queries) }));
           }
 
+          if (update.variables && urlPane.variables !== undefined) {
+            const variables = urlPane.variables.length > 0 ? deserializeVariables(urlPane.variables) : [];
+            dispatch(setVariablesAction({ exploreId, variables }));
+          }
+
           if (update.queries || update.range) {
             await dispatch(cancelQueries(exploreId));
             dispatch(runQueries({ exploreId }));
@@ -62,11 +67,6 @@ export function syncFromURL(
 
           if (update.panelsState && panelsState) {
             dispatch(changePanelsStateAction({ exploreId, panelsState }));
-          }
-
-          if (update.variables && urlPane.variables !== undefined) {
-            const variables = urlPane.variables.length > 0 ? deserializeVariables(urlPane.variables) : [];
-            dispatch(setVariablesAction({ exploreId, variables }));
           }
         });
     } else {

@@ -7,7 +7,7 @@ import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ConstantVariable, CustomVariable, SceneVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { ConstantVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
 import {
   defaultIntervals,
   PageToolbar,
@@ -66,7 +66,8 @@ interface Props {
   isContentOutlineOpen: boolean;
 }
 
-function ExploreVariableSelectCustom({ variable }: { variable: CustomVariable }) {
+function ExploreVariableSelectCustom({ variable, exploreId }: { variable: CustomVariable; exploreId: string }) {
+  const dispatch = useDispatch();
   const { value, options, name } = variable.useState();
   return (
     <Select
@@ -76,6 +77,7 @@ function ExploreVariableSelectCustom({ variable }: { variable: CustomVariable })
       onChange={(selected) => {
         if (selected.value !== undefined) {
           variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
+          dispatch(runQueries({ exploreId }));
         }
       }}
       width="auto"
@@ -121,15 +123,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     setVariables((variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable)));
   }, [variableSet]);
 
-  useEffect(() => {
-    if (!variableSet) {
-      return;
-    }
-    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
-      dispatch(runQueries({ exploreId }));
-    });
-    return () => sub.unsubscribe();
-  }, [variableSet, dispatch, exploreId]);
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -318,7 +311,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           ),
           ...variables.map((variable) =>
             variable instanceof CustomVariable ? (
-              <ExploreVariableSelectCustom key={`var-${variable.state.name}`} variable={variable} />
+              <ExploreVariableSelectCustom key={`var-${variable.state.name}`} variable={variable} exploreId={exploreId} />
             ) : (
               <ExploreVariableSelectGeneric key={`var-${variable.state.name}`} variable={variable} />
             )
