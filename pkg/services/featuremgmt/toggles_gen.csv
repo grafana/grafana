@@ -299,3 +299,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-02-18,flameGraphWithCallTree,experimental,@grafana/observability-traces-and-profiling,false,false,true

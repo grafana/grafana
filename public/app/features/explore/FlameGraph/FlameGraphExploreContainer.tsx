@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { DataFrame, GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
-import { reportInteraction, config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -26,6 +26,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
         data={props.dataFrames[0]}
         stickyHeader={true}
         getTheme={() => config.theme2}
+        enableNewUI={config.featureToggles.flameGraphWithCallTree}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
         onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}
