@@ -1147,7 +1147,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 }
               }}
               onFieldConfigChange={function (config: FieldConfigSource): void {
-                throw new Error('onFieldConfigChange not implemented.');
+                // @todo save field overrides somewhere (e.g. column widths)
               }}
               onChangeTimeRange={onChangeTime}
             />
