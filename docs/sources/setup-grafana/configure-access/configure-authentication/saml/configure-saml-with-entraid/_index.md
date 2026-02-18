@@ -9,26 +9,26 @@ labels:
     - cloud
     - enterprise
 menuTitle: Configure SAML with Entra ID
-title: Configure SAML authentication with Entra ID
+title: Configure SAML authentication with Microsoft Entra ID
 weight: 570
 ---
 
 # Configure SAML with Microsoft Entra ID
 
-Grafana supports user authentication through Microsoft Entra ID. This topic shows you how to configure SAML authentication in Grafana with [Entra ID](https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id).
+Grafana supports user authentication through [Microsoft Entra ID](https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id).
 
 {{< admonition type="note" >}}
-If an Entra ID user belongs to more than 150 groups, a Graph API endpoint is used instead.
 
-Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use the Entra ID connector.
+Starting in Grafana v11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
 
-As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
+Grafana versions 11.1 and below do not support fetching groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, use the Entra ID connector.
 
 Related links:
 
 - [Entra ID SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - [Configure a Graph API application in Entra ID](#configure-a-graph-api-application-in-entra-id)
-  {{< /admonition >}}
+
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -46,7 +46,7 @@ $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -no
 
 This will generate a `key.pem` and `cert.pem` file that you can use for the `private_key_path` and `certificate_path` configuration options.
 
-## Add Microsoft Entra SAML Toolkit from the gallery
+## Add the Microsoft Entra SAML Toolkit from the gallery
 
 > Taken from https://learn.microsoft.com/en-us/entra/identity/saas-apps/saml-toolkit-tutorial#add-microsoft-entra-saml-toolkit-from-the-gallery
 
@@ -84,7 +84,7 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 1. Select **Add**.
 1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/).
 
-## Configure SAML assertions when using SCIM provisioning
+## Configure SAML assertions to use SCIM provisioning
 
 In order to verify the logged in user is the same user that was provisioned through Entra ID, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
 
@@ -98,6 +98,14 @@ In order to verify the logged in user is the same user that was provisioned thro
    - Source attribute: `user.objectId`
 1. **Save** the current configuration.
 
+## Adjust you user mapping configuration to utilize the Entra ID URI
+
+If the default URI claims do not work, you need to adjust your user mapping to the following:
+
+- Name attribute = http://schemas.microsoft.com/identity/claims/displayname
+- Login attribute = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+- Email attribute = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+
 ## Configure a Graph API application in Entra ID
 
 While an Entra ID tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Entra ID and grant it the necessary permissions.
@@ -108,7 +116,7 @@ While an Entra ID tenant can be configured in Grafana via SAML, some additional 
 
 ### Create a new App registration
 
-This app registration will be used as a Service Account to retrieve more information about the user from the Entra ID.
+This app registration is used as a Service Account to retrieve more information about the Entra ID user.
 
 1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Entra ID account.
 1. In the left-hand navigation pane, select the Microsoft Entra ID service, and then select **App registrations**.
@@ -141,3 +149,4 @@ The following table shows what the permissions look like from the Entra ID porta
 {{< figure src="/media/docs/IAM/image.png" caption="Screen shot of the permissions listed in Entra ID for the App registration" >}}
 
 To test that Graph API has the correct permissions, refer to the [Troubleshoot Graph API calls](../troubleshoot-saml/#troubleshoot-graph-api-calls) section.
+
