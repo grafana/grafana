@@ -115,7 +115,14 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
+
+	// Searching for ruleUID before JSON parsing can dramatically improve performance.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
+	}
+
+	logql += ` | json`
 
 	// Add ruleUID filter as JSON line filter if specified.
 	if query.RuleUID != nil && *query.RuleUID != "" {
