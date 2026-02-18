@@ -93,7 +93,7 @@ import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
-import { getDefaultSortBy } from './utils/table/logsTable';
+import { getDefaultTableSortBy } from './utils/table/logsTable';
 import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
@@ -216,10 +216,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const tableSortByDefaultStringFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.sortBy);
   const [tableSortBy, setTableSortBy] = useState<TableSortByFieldState[]>(
-    // @todo cast as unknown and narrow type
-    tableSortByDefaultStringFromStorage
-      ? JSON.parse(tableSortByDefaultStringFromStorage)
-      : getDefaultSortBy(props.logsFrames?.[tableFrameIndex], logsSortOrder)
+    getDefaultTableSortBy(tableSortByDefaultStringFromStorage, props.logsFrames, tableFrameIndex, logsSortOrder)
   );
 
   const fieldSelectorWidthFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth);
