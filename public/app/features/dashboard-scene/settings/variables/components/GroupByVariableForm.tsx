@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, Box, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -48,22 +48,20 @@ export function GroupByVariableForm({
   );
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.group-by-variable-form.group-by-options">Group by options</Trans>
         </VariableLegend>
       )}
 
-      <Box marginBottom={2}>
-        <EditorField
-          label={t('dashboard-scene.group-by-variable-form.label-data-source', 'Data source')}
-          htmlFor="data-source-picker"
-          tooltip={infoText}
-        >
-          <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
-        </EditorField>
-      </Box>
+      <EditorField
+        label={t('dashboard-scene.group-by-variable-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+        tooltip={infoText}
+      >
+        <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+      </EditorField>
 
       {!datasourceSupported ? (
         <Alert
@@ -72,6 +70,7 @@ export function GroupByVariableForm({
             'This data source does not support group by variables'
           )}
           severity="warning"
+          bottomSpacing={0}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText}
         />
       ) : null}
@@ -88,6 +87,7 @@ export function GroupByVariableForm({
               'Provide dimensions as CSV: {{name}}, {{value}}',
               { name: 'dimensionName', value: 'dimensionId' }
             )}
+            noMargin
           >
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
@@ -128,6 +128,6 @@ export function GroupByVariableForm({
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
         />
       )}
-    </>
+    </Stack>
   );
 }

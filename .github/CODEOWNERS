@@ -106,7 +106,7 @@
 /apps/dashvalidator/ @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
-/pkg/apis/query @grafana/grafana-datasources-core-services
+/pkg/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
@@ -229,8 +229,8 @@
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-backend
 /devenv/dashboards.yaml @grafana/dashboards-squad
-/devenv/datasources.yaml @grafana/grafana-backend-group
-/devenv/datasources_docker.yaml @grafana/grafana-backend-group
+/devenv/datasources.yaml @grafana/data-sources
+/devenv/datasources_docker.yaml @grafana/data-sources
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad

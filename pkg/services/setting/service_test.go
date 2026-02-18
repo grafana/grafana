@@ -9,7 +9,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/synctest"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -17,6 +20,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/util/flowcontrol"
 )
 
 func TestRemoteSettingService_ListAsIni(t *testing.T) {
@@ -702,6 +706,52 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 
 	sb.WriteString(`]}`)
 	return sb.String()
+}
+
+func TestInstrumentedRateLimiter(t *testing.T) {
+	t.Run("should increment counter when Wait blocks beyond threshold", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			counter := prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "test_throttle_total",
+			})
+
+			// QPS=1 and Burst=1: first call passes immediately, second must wait ~1s
+			rl := &instrumentedRateLimiter{
+				RateLimiter: flowcontrol.NewTokenBucketRateLimiter(1, 1),
+				waitCounter: counter,
+			}
+
+			ctx := t.Context()
+
+			// First Wait should not block (burst token available)
+			require.NoError(t, rl.Wait(ctx))
+			assert.Equal(t, float64(0), testutil.ToFloat64(counter))
+
+			// Second Wait blocks; synctest advances fake time past the token refill
+			require.NoError(t, rl.Wait(ctx))
+			assert.Equal(t, float64(1), testutil.ToFloat64(counter))
+		})
+	})
+
+	t.Run("should not increment counter when Wait is fast", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			counter := prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "test_throttle_total_fast",
+			})
+
+			// High QPS so Wait never blocks significantly
+			rl := &instrumentedRateLimiter{
+				RateLimiter: flowcontrol.NewTokenBucketRateLimiter(1000, 100),
+				waitCounter: counter,
+			}
+
+			ctx := t.Context()
+			for i := 0; i < 10; i++ {
+				require.NoError(t, rl.Wait(ctx))
+			}
+			assert.Equal(t, float64(0), testutil.ToFloat64(counter))
+		})
+	})
 }
 
 // Benchmark tests for streaming JSON parser

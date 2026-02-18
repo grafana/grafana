@@ -17,11 +17,13 @@ import {
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
+import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
@@ -97,34 +99,68 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    // Get datasource ref from queryRunner or infer from first query
-    // TODO: Add fallback to last-used datasource from localStorage for parity with PanelDataQueriesTab
-    const dsRef = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
-    if (!dsRef) {
-      this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
-      return;
-    }
-
     try {
-      const dsSettings = getDataSourceSrv().getInstanceSettings(dsRef);
-      if (!dsSettings) {
+      let datasource: DataSourceApi | undefined;
+      let dsSettings: DataSourceInstanceSettings | undefined;
+
+      // Get datasource ref from queryRunner or infer from first query
+      let datasourceToLoad = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
+
+      // Fallback to last-used datasource from localStorage (parity with PanelDataQueriesTab)
+      if (!datasourceToLoad) {
+        const dashboard = getDashboardSceneFor(this);
+        const dashboardUid = dashboard.state.uid ?? '';
+        const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid);
+
+        if (lastUsedDatasource?.datasourceUid) {
+          dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource.datasourceUid });
+          if (dsSettings) {
+            datasource = await getDataSourceSrv().get({
+              uid: lastUsedDatasource.datasourceUid,
+              type: dsSettings.type,
+            });
+
+            queryRunner.setState({
+              datasource: {
+                ...getDataSourceRef(dsSettings),
+                uid: lastUsedDatasource.datasourceUid,
+              },
+            });
+          }
+        }
+      } else {
+        datasource = await getDataSourceSrv().get(datasourceToLoad);
+        dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+      }
+
+      if (datasource && dsSettings) {
+        this.setState({ datasource, dsSettings, dsError: undefined });
+        storeLastUsedDataSourceInLocalStorage(getDataSourceRef(dsSettings) || { default: true });
+      } else {
+        this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
+      }
+    } catch (err) {
+      console.error('Failed to load datasource:', err);
+
+      // Fallback to default datasource (parity with PanelDataQueriesTab)
+      try {
+        const datasource = await getDataSourceSrv().get(config.defaultDatasource);
+        const dsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+
+        if (datasource && dsSettings) {
+          this.setState({ datasource, dsSettings, dsError: undefined });
+          queryRunner.setState({
+            datasource: getDataSourceRef(dsSettings),
+          });
+        }
+      } catch (fallbackErr) {
+        console.error('Failed to load default datasource:', fallbackErr);
         this.setState({
           datasource: undefined,
           dsSettings: undefined,
-          dsError: new Error(`Datasource settings not found for ${dsRef.uid}`),
+          dsError: err instanceof Error ? err : new Error('Failed to load datasource'),
         });
-        return;
       }
-
-      const datasource = await getDataSourceSrv().get(dsRef);
-      this.setState({ datasource, dsSettings, dsError: undefined });
-    } catch (err) {
-      console.error('Failed to load datasource:', err);
-      this.setState({
-        datasource: undefined,
-        dsSettings: undefined,
-        dsError: err instanceof Error ? err : new Error('Failed to load datasource'),
-      });
     }
   }
 
@@ -266,6 +302,21 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     return { transformations: undefined, transformer: undefined };
   }
+
+  public addTransformation = (transformationId: string, afterIndex?: number): number | undefined => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+
+    const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
+    const newConfig: DataTransformerConfig = { id: transformationId, options: {} };
+    const insertAt = afterIndex !== undefined ? afterIndex + 1 : transformations.length;
+    transformations.splice(insertAt, 0, newConfig);
+    transformer.setState({ transformations });
+    transformer.reprocessTransformations();
+    return insertAt;
+  };
 
   public reorderTransformations = (transformations: DataTransformerConfig[]) => {
     const transformer = this.getSceneDataTransformer();

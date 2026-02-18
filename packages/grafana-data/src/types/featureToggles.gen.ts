@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -1512,4 +1517,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
 }
