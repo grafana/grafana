@@ -425,7 +425,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		settings, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -443,7 +443,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		_, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		_, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Equal(t, "next-page-token", continueToken)
@@ -457,7 +457,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 0)
@@ -488,7 +488,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -515,7 +515,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 1)
@@ -531,7 +531,7 @@ func TestToIni(t *testing.T) {
 			{Section: "server", Key: "http_port", Value: "3000"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -545,7 +545,7 @@ func TestToIni(t *testing.T) {
 	t.Run("should handle empty settings list", func(t *testing.T) {
 		var settings []*Setting
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -559,7 +559,7 @@ func TestToIni(t *testing.T) {
 			{Section: "auth", Key: "disable_signout_menu", Value: "true"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.True(t, result.HasSection("auth"))
@@ -714,7 +714,7 @@ func BenchmarkParseSettingList(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 
@@ -726,7 +726,7 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 

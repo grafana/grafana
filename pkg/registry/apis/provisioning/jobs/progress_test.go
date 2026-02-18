@@ -526,7 +526,7 @@ func TestJobProgressRecorderResetResults(t *testing.T) {
 	recorder.mu.RUnlock()
 
 	// Reset results
-	recorder.ResetResults()
+	recorder.ResetResults(false)
 
 	// Verify data is cleared
 	recorder.mu.RLock()

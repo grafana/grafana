@@ -10,7 +10,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -27,7 +26,7 @@ import (
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type ContactPointService struct {
@@ -210,7 +209,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 
 	if !receiverFound {
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
-			Receiver: config.Receiver{
+			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
 			},
 			PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
@@ -381,7 +380,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if fullRemoval && name != "" {
-			used, err := ecp.notificationSettingsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+			used, err := ecp.notificationSettingsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, ReceiverName: name})
 			if err != nil {
 				return fmt.Errorf("failed to query alert rules for reference to the contact point '%s': %w", name, err)
 			}
@@ -501,7 +500,7 @@ groupLoop:
 
 				// Doesn't exist? Create a new group just for the receiver.
 				newGroup := &apimodels.PostableApiReceiver{
-					Receiver: config.Receiver{
+					Receiver: apimodels.Receiver{
 						Name: target.Name,
 					},
 					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
