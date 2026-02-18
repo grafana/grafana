@@ -1279,6 +1279,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardFiltersOverview",
+        "resourceVersion": "1771412613032",
+        "creationTimestamp": "2026-02-18T11:03:33Z"
+      },
+      "spec": {
+        "description": "Enables the dashboard filters overview pane",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardLevelTimeMacros",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-07-31T09:49:07Z",
