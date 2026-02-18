@@ -4,12 +4,20 @@ import { screen, render, testWithLicenseFeatures, waitFor } from 'test/test-util
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
+import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
+import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import TeamPages from './TeamPages';
 
+jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
+  ...jest.requireActual('app/api/clients/dashboard/v0alpha1'),
+  useSearchDashboardsAndFoldersQuery: jest.fn(),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
+const useSearchDashboardsAndFoldersQueryMock = useSearchDashboardsAndFoldersQuery as jest.Mock;
 
 const setup = (propOverrides: { teamUid?: string; pageName?: string } = {}) => {
   const pageName = propOverrides.pageName ?? 'members';
@@ -23,6 +31,18 @@ const setup = (propOverrides: { teamUid?: string; pageName?: string } = {}) => {
 };
 
 describe('TeamPages', () => {
+  const originalTeamFoldersToggle = config.featureToggles.teamFolders;
+
+  beforeEach(() => {
+    config.featureToggles.teamFolders = true;
+    useSearchDashboardsAndFoldersQueryMock.mockClear();
+    useSearchDashboardsAndFoldersQueryMock.mockReturnValue({ data: { hits: [] }, isLoading: false });
+  });
+
+  afterEach(() => {
+    config.featureToggles.teamFolders = originalTeamFoldersToggle;
+  });
+
   it('should render settings and preferences page', async () => {
     setup({
       pageName: 'settings',
@@ -53,5 +73,24 @@ describe('TeamPages', () => {
       });
       expect(await screen.findByRole('heading', { name: /external group sync/i })).toBeInTheDocument();
     });
+  });
+
+  it('should render team-owned folders page', async () => {
+    useSearchDashboardsAndFoldersQueryMock.mockReturnValue({
+      data: {
+        hits: [{ name: 'team-folder-1', title: 'Team Folder', resource: 'folder', folder: 'general' }],
+      },
+      isLoading: false,
+    });
+
+    setup({
+      pageName: 'folders',
+    });
+
+    expect(await screen.findByRole('link', { name: 'Team Folder' })).toHaveAttribute(
+      'href',
+      '/dashboards/f/team-folder-1'
+    );
+    expect(screen.getByText(/Parent folder: Dashboards/i)).toBeInTheDocument();
   });
 });
