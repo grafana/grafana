@@ -40,8 +40,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
+			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -219,8 +220,9 @@ func TestIntegrationTestDatasourceAccess(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
-				featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
+				featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+				featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"datasources.grafana-testdata-datasource.datasource.grafana.app": {
