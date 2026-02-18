@@ -1,7 +1,7 @@
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
-import { DashboardLink, DataSourceRef, VariableHide } from '@grafana/schema';
-import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { DashboardLink, DataSourceRef } from '@grafana/schema';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -33,30 +33,32 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
   // Default variables
   for (const ds of datasources) {
     if (ds.getDefaultVariables) {
+      const ref = ds.getRef();
       const dsVariables = ds.getDefaultVariables();
+
       if (dsVariables && dsVariables.length) {
         defaultVariables.push(
-          ...dsVariables.map((v) => ({
-            ...v,
-            // Putting under the dashbaord controls menu by default
-            hide: VariableHide.inControlsMenu,
-            source: {
+          ...dsVariables.map((v) => {
+            v.spec.source = {
               type: 'datasource' as const,
-              ref: { group: ds.getRef().type },
-            },
-          }))
+              ref: { group: ref.type },
+            };
+            v.spec.hide = 'inControlsMenu';
+
+            return v;
+          })
         );
       }
     }
 
     // Default links
     if (ds.getDefaultLinks) {
+      const ref = ds.getRef();
       const dsLinks = ds.getDefaultLinks();
+
       if (dsLinks && dsLinks.length) {
         defaultLinks.push(
           ...dsLinks.map((l) => {
-            const ref = ds.getRef();
-
             return {
               ...l,
               isDefault: true,

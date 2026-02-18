@@ -204,7 +204,7 @@ export function transformSaveModelSchemaV2ToScene(
       editable: dashboard.editable,
       preload: dashboard.preload,
       isDirty: false,
-      links: [...dashboard.links, ...(options?.defaultLinks ?? [])],
+      links: [...(options?.defaultLinks ?? []), ...dashboard.links],
       meta,
       tags: dashboard.tags,
       title: dashboard.title,
@@ -324,6 +324,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
+    source: variable.spec.source,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
     const ds = getDataSourceForQuery(

@@ -57,7 +57,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
   }
 
   return new SceneVariableSet({
-    variables: [...variableObjects, ...defaultVariableObjects],
+    variables: [...defaultVariableObjects, ...variableObjects],
   });
 }
 
