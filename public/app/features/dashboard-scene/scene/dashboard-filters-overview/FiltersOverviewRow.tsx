@@ -207,13 +207,13 @@ const getRowStyles = (theme: GrafanaTheme2) => {
         width: '100%',
         paddingLeft: 0,
         paddingRight: 0,
-        borderRadius: 0,
+        borderRadius: 'unset',
       },
       '&& > * > *': {
-        borderRadius: 0,
+        borderRadius: 'unset',
       },
       '&& input': {
-        borderRadius: 0,
+        borderRadius: 'unset',
       },
     }),
     valueCell: css({
@@ -224,16 +224,16 @@ const getRowStyles = (theme: GrafanaTheme2) => {
       '&& > *': {
         width: '100%',
         paddingLeft: 0,
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
       },
       '&& > * > *': {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
       },
       '&& input': {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
       },
     }),
     groupByCell: css({
