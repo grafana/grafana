@@ -44,11 +44,8 @@ export type MuteTiming = MuteTimeInterval & {
   metadata?: ObjectMeta;
 };
 
-/** Alias for generated kuberenetes Alerting API Server type */
-type TimeIntervalV0Alpha1 = TimeInterval;
-
 /** Parse kubernetes API response into a Mute Timing */
-const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) => {
+const parseK8sTimeInterval: (item: TimeInterval) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
     ...spec,
