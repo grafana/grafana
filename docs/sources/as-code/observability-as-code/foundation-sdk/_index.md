@@ -23,7 +23,7 @@ The Grafana Foundation SDK is a set of tools, types, and libraries that let you 
 - **Enhance version control:** Track changes seamlessly using standard version control systems like Git.
 - **Automate deployments:** Integrate dashboard provisioning into your CI/CD pipelines for consistent and repeatable setups.
 
-The SDK supports multiple programming languages, including Go, TypeScript, Python, PHP, and Java, so you can choose the one that best fits your development environment. Refer to Tthe [Grafana Foundation SDK](https://github.com/grafana/grafana-foundation-sdk) GitHub repository for further details.
+The SDK supports multiple programming languages, including Go, TypeScript, Python, PHP, and Java, so you can choose the one that best fits your development environment. Refer to the [Grafana Foundation SDK](https://github.com/grafana/grafana-foundation-sdk) GitHub repository for further details.
 
 {{< youtube id="_OKQoABmg0Q" >}}
 
@@ -31,7 +31,7 @@ The SDK supports multiple programming languages, including Go, TypeScript, Pytho
 
 Here's a quick overview of how the Grafana Foundation SDK works:
 
-- **Composable builder pattern:** The SDK uses a chainable builder pattern to let you define dashboards fluently. You start with a `DashboardBuilder`, then add panels, queries, and other components step by step.
+- **Composable builder pattern:** You can chain different builder blocks to define dashboards fluently. You start with a `DashboardBuilder`, then add panels, queries, and other components step by step.
 - **Safe strong typing:** Everything in the SDK is strongly typed. This gives you autocompletion in your IDE, catches mistakes early, and helps ensure you're always using valid configuration values.
 - **Configuration with structured options:** When a configuration get complex (like data reduction or display settings), the SDK uses typed option builders to keep things readable, predictable, and easy to control.
 
@@ -187,7 +187,7 @@ After you've defined your dashboard as code, build the final dashboard represent
 With the JSON payload, you can:
 
 - **Manually import:** Paste into Grafana’s dashboard import feature.
-- **Automate:** Use [Grafana's API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/), the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/grafana-cli/), or [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync) to programmatically upload the dashboard JSON.
+- **Automate:** Use the [Grafana API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/), the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/grafana-cli/), or [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync) to programmatically upload the dashboard JSON.
 
 ## Explore a real-world example
 
@@ -206,4 +206,4 @@ Now that you understand the basics of using the Grafana Foundation SDK, here are
 - **Explore more features:** Check out the [full API reference](https://grafana.github.io/grafana-foundation-sdk/) to learn about advanced dashboard configurations.
 - **Version control your dashboards:** Store your dashboard code in a Git repository to track changes over time.
 - **Automate dashboard provisioning with CI/CD:** [Integrate the SDK into your CI/CD pipeline](./dashboard-automation) to deploy dashboards automatically.
-- **Learn about [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync)**, which lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code. 
+- **Learn about [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync)**, which lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code.

@@ -101,4 +101,3 @@ new stat.PanelBuilder().reduceOptions(new common.ReduceDataOptionsBuilder().calc
 {{< /code >}}
 
 By using option builders, you don't need to manually construct deeply nested configuration objects. Instead, the SDK gives you a typed and guided API that mirrors a dashboards internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
-

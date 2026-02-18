@@ -23,9 +23,9 @@ Managing Grafana dashboards manually can be inefficient and error-prone. With th
 
 ## Why automate?
 
-Automating Grafana dashboard deployment eliminates the need for manual dashboard creation and updates, ensuring that dashboards remain consistent across environments. 
+Automating Grafana dashboard deployment eliminates the need for manual dashboard creation and updates, ensuring that dashboards remain consistent across environments.
 
-By defending dashboards as code and managing them through CI/CD such as GitHub Actions, you will gain full version control, making it easy to track changes over time and roll back if needed. This also prevents duplication, as the workflow intelligently checks whether a dashboard exists before deciding to create or update it. 
+By defending dashboards as code and managing them through CI/CD such as GitHub Actions, you will gain full version control, making it easy to track changes over time and roll back if needed. This also prevents duplication, as the workflow intelligently checks whether a dashboard exists before deciding to create or update it.
 
 With this fully automated CI/CD pipeline, you can focus on improving your dashboards rather than manually uploading JSON files to Grafana.
 
@@ -44,7 +44,7 @@ By the end, you'll be able to provision your dashboard as code, and every change
 
 ## 1. Generate the dashboard JSON
 
-Before deploying a dashboard, [define it as code using the Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/#create-a-dashboard/). 
+Before deploying a dashboard, [define it as code using the Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/#create-a-dashboard/).
 
 Since Grafana exposes a Kubernetes resource compatible API, you need to make some changes to the code to output the dashboard JSON in the appropriate format.
 
@@ -255,5 +255,3 @@ Verify these variables are configured in your repository under **Settings > Secu
 - `secrets.GRAFANA_TOKEN`: Grafana API token
 
 This action ensures that every push to `main` will regenerate and deploy your latest dashboard definition to Grafana.
-
-
