@@ -70,7 +70,7 @@ export const TimeIntervalsTable = () => {
   }
 
   return (
-    <Stack direction="column" gap={3}>
+    <Stack direction="column" gap={1}>
       <Stack direction="row" alignItems="center">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.time-intervals.description">
