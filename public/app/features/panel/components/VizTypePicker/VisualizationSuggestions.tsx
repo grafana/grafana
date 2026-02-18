@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
-import { useAsyncRetry, useMeasure } from 'react-use';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAsyncRetry } from 'react-use';
 
 import {
   GrafanaTheme2,
@@ -9,7 +9,6 @@ import {
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -18,11 +17,10 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
 import { getAllPanelPluginMeta } from '../../state/util';
-import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
-import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { VizTypeChangeDetails } from './types';
 
@@ -74,7 +72,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
-  const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
@@ -91,32 +88,24 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return PANEL_STATES.EXISTING_PANEL;
   }, [isUnconfiguredPanel, isNewPanel]);
 
-  const suggestionsByVizType = useMemo(() => {
+  const suggestionsByVizType = useMemo((): VisualizationCardGridGroup[] => {
     const meta = getAllPanelPluginMeta();
     const record: Record<string, PanelPluginMeta> = {};
     for (const m of meta) {
       record[m.id] = m;
     }
 
-    const result: Array<[PanelPluginMeta | undefined, PanelPluginVisualizationSuggestion[]]> = [];
+    const result: VisualizationCardGridGroup[] = [];
     let currentVizType: PanelPluginMeta | undefined = undefined;
     for (const suggestion of suggestions || []) {
       const vizType = record[suggestion.pluginId];
       if (!currentVizType || currentVizType.id !== vizType?.id) {
         currentVizType = vizType;
-        result.push([vizType, []]);
+        result.push({ meta: vizType, items: [] });
       }
-      result[result.length - 1][1].push(suggestion);
+      result[result.length - 1].items.push(suggestion);
     }
     return result;
-  }, [suggestions]);
-
-  const suggestionIndexMap = useMemo(() => {
-    const map = new Map<string, number>();
-    suggestions?.forEach((suggestion, index) => {
-      map.set(suggestion.hash, index);
-    });
-    return map;
   }, [suggestions]);
 
   const applySuggestion = useCallback(
@@ -232,78 +221,21 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           </div>
         </Alert>
       )}
-      <div className={styles.grid}>
-        {isNewVizSuggestionsEnabled
-          ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
-              <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
-                <div className={styles.vizTypeHeader}>
-                  <Text variant="body" weight="medium">
-                    {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
-                    {vizType?.name ||
-                      t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
-                  </Text>
-                </div>
-                {vizTypeSuggestions?.map((suggestion, index) => {
-                  const isCardSelected = suggestionHash === suggestion.hash;
-                  const suggestionIndex = suggestionIndexMap.get(suggestion.hash) ?? -1;
-                  return (
-                    <div
-                      key={suggestion.hash}
-                      className={styles.cardContainer}
-                      tabIndex={0}
-                      role="button"
-                      aria-pressed={isCardSelected}
-                      onKeyDown={(ev) => {
-                        if (ev.key === 'Enter' || ev.key === ' ') {
-                          ev.preventDefault();
-                          applySuggestion(suggestion, suggestionIndex);
-                        }
-                      }}
-                      ref={index === 0 ? firstCardRef : undefined}
-                    >
-                      {isCardSelected && (
-                        <Button
-                          // rather than allow direct focus, we handle keyboard events in the card.
-                          tabIndex={-1}
-                          variant="primary"
-                          size={'md'}
-                          className={styles.applySuggestionButton}
-                          data-testid={selectors.components.VisualizationPreview.confirm(suggestion.name)}
-                          aria-label={t(
-                            'panel.visualization-suggestions.edit-aria-label',
-                            'Edit {{suggestionName}} visualization',
-                            { suggestionName: suggestion.name }
-                          )}
-                          onClick={() => applySuggestion(suggestion, suggestionIndex, false, true)}
-                        >
-                          {t('panel.visualization-suggestions.edit', 'Edit')}
-                        </Button>
-                      )}
-                      <VisualizationSuggestionCard
-                        data={data}
-                        suggestion={suggestion}
-                        width={width}
-                        isSelected={isCardSelected}
-                        onClick={() => applySuggestion(suggestion, suggestionIndex)}
-                      />
-                    </div>
-                  );
-                })}
-              </Fragment>
-            ))
-          : suggestions?.map((suggestion, index) => (
-              <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-                <VisualizationSuggestionCard
-                  key={index}
-                  data={data}
-                  suggestion={suggestion}
-                  width={width}
-                  tabIndex={index}
-                  onClick={() => applySuggestion(suggestion, index)}
-                />
-              </div>
-            ))}
-      </div>
+      <VisualizationCardGrid
+        groups={isNewVizSuggestionsEnabled ? suggestionsByVizType : undefined}
+        items={!isNewVizSuggestionsEnabled ? suggestions : undefined}
+        data={data!}
+        selectedItemKey={suggestionHash}
+        onItemClick={(item, index) => applySuggestion(item, index)}
+        onItemApply={(item, index) => applySuggestion(item, index, false, true)}
+        getItemKey={(item) => item.hash}
+        buttonLabel={t('panel.visualization-suggestions.edit', 'Edit')}
+        getButtonAriaLabel={(item) =>
+          t('panel.visualization-suggestions.edit-aria-label', 'Edit {{suggestionName}} visualization', {
+            suggestionName: item.name,
+          })
+        }
+      />
     </>
   );
 }
@@ -334,13 +266,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       fontStyle: 'italic',
     }),
-    grid: css({
-      display: 'grid',
-      gridGap: theme.spacing(1),
-      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
-      marginBottom: theme.spacing(1),
-      justifyContent: 'space-evenly',
-    }),
     emptyStateWrapper: css({
       display: 'flex',
       flexDirection: 'column',
@@ -353,33 +278,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     emptyStateIcon: css({
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing(2),
-    }),
-    cardContainer: css({
-      position: 'relative',
-    }),
-    vizTypeHeader: css({
-      gridColumn: '1 / -1',
-      marginBottom: theme.spacing(0.5),
-      marginTop: theme.spacing(2),
-      '&:first-of-type': {
-        marginTop: 0,
-      },
-    }),
-    vizTypeLogo: css({
-      filter: 'grayscale(100%)',
-      maxHeight: `${theme.typography.body.lineHeight}em`,
-      width: `${theme.typography.body.lineHeight}em`,
-      alignItems: 'center',
-      display: 'inline-block',
-      marginRight: theme.spacing(1),
-    }),
-    applySuggestionButton: css({
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: 10,
-      padding: theme.spacing(0, 2),
     }),
   };
 };
