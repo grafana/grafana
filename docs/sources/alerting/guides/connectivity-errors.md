@@ -209,8 +209,6 @@ As described previously, you can control the error-handling behavior for Grafana
 
 When using the default behavior, a single connectivity error will likely trigger multiple `DatasourceError` alerts.
 
-These alerts are separate from the original alerts—they’re not just a different state of the original alert. They fire immediately, ignore the pending period, and don’t inherit all the labels. This can catch you off guard if you expect them to behave like the original alerts.
-
 Consider not treating these alerts in the same way as the original alerts, and implement dedicated strategies for their notifications:
 
 - Reduce duplicate notifications by grouping `DatasourceError` alerts. Use the `datasource_uid` label to group errors from the same data source.

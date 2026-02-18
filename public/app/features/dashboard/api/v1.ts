@@ -1,7 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -272,6 +272,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 

@@ -23,6 +23,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
   return (
     <>
       <Field
+        noMargin
         label={t('table.image-cell-options-editor.label-alt-text', 'Alt text')}
         description={t(
           'table.image-cell-options-editor.description-alt-text',
@@ -33,6 +34,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
       </Field>
 
       <Field
+        noMargin
         label={t('table.image-cell-options-editor.label-title-text', 'Title text')}
         description={t(
           'table.image-cell-options-editor.description-title-text',

@@ -154,7 +154,6 @@ When Grafana triggers a [NoData alert](ref:no-data-and-error-alerts), it creates
 
 - They use a dedicated `alertname: DatasourceNoData`.
 - They don’t inherit all the labels from the original alert instances.
-- They trigger immediately, ignoring the pending period.
 
 Because of this, `DatasourceNoData` alerts might require a dedicated setup to handle their notifications. For general recommendations, see [Reduce redundant DatasourceError alerts](ref:connectivity-errors-reduce-alert-fatigue) — similar practices can apply to _NoData_ alerts.
 

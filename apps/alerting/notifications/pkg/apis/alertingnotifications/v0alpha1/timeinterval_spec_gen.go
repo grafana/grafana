@@ -17,6 +17,11 @@ func NewTimeIntervalInterval() *TimeIntervalInterval {
 	return &TimeIntervalInterval{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for TimeIntervalInterval.
+func (TimeIntervalInterval) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalInterval"
+}
+
 // +k8s:openapi-gen=true
 type TimeIntervalTimeRange struct {
 	StartTime string `json:"start_time"`
@@ -26,6 +31,11 @@ type TimeIntervalTimeRange struct {
 // NewTimeIntervalTimeRange creates a new TimeIntervalTimeRange object.
 func NewTimeIntervalTimeRange() *TimeIntervalTimeRange {
 	return &TimeIntervalTimeRange{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for TimeIntervalTimeRange.
+func (TimeIntervalTimeRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalTimeRange"
 }
 
 // +k8s:openapi-gen=true
@@ -40,12 +50,8 @@ func NewTimeIntervalSpec() *TimeIntervalSpec {
 		TimeIntervals: []TimeIntervalInterval{},
 	}
 }
-func (TimeIntervalInterval) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalInterval"
-}
-func (TimeIntervalTimeRange) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalTimeRange"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for TimeIntervalSpec.
 func (TimeIntervalSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalSpec"
 }

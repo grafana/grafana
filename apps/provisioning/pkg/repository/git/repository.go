@@ -151,8 +151,8 @@ func isValidGitURL(gitURL string) bool {
 		return false
 	}
 
-	// Must be HTTPS
-	if parsed.Scheme != "https" {
+	// Must be HTTPS or HTTP (HTTP allowed for local development)
+	if parsed.Scheme != "https" && parsed.Scheme != "http" {
 		return false
 	}
 
@@ -174,6 +174,16 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	ctx, _ = r.withGitContext(ctx, "")
 
 	t := string(r.config.Spec.Type)
+
+	// In case the branch is empty
+	if r.GetCurrentBranch() == "" {
+		branch, err := r.GetDefaultBranch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		r.SetBranch(branch)
+	}
 
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
 		detail := "not authorized"

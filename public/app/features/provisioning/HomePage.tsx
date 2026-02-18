@@ -59,8 +59,8 @@ export default function HomePage() {
       },
       {
         value: 'getting-started',
-        label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
-        title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
+        label: t('provisioning.home-page.tab-getting-started', 'Get started'),
+        title: t('provisioning.home-page.tab-getting-started-title', 'Get started'),
       },
     ],
     []

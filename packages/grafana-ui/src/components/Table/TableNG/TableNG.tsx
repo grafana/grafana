@@ -2,7 +2,18 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, useEffect, type JSX } from 'react';
+import {
+  CSSProperties,
+  type JSX,
+  Key,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -24,7 +35,7 @@ import {
   FieldType,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -48,6 +59,7 @@ import {
   useColWidths,
   useFilteredRows,
   useHeaderHeight,
+  useManagedSort,
   usePaginatedRows,
   useRowHeight,
   useScrollbarWidth,
@@ -63,19 +75,19 @@ import {
   getTooltipStyles,
 } from './styles';
 import {
+  CellRootRenderer,
+  FromFieldsResult,
+  InspectCellProps,
+  TableCellStyleOptions,
+  TableColumn,
   TableNGProps,
   TableRow,
   TableSummaryRow,
-  TableColumn,
-  InspectCellProps,
-  TableCellStyleOptions,
-  FromFieldsResult,
-  CellRootRenderer,
 } from './types';
 import {
   applySort,
-  canFieldBeColorized,
   calculateFooterHeight,
+  canFieldBeColorized,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -89,14 +101,15 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getSummaryCellTextAlign,
   getVisibleFields,
+  IS_SAFARI_26,
   isCellInspectEnabled,
+  parseStyleJson,
   predicateByName,
+  rowKeyGetter,
   shouldTextOverflow,
   shouldTextWrap,
-  getSummaryCellTextAlign,
-  parseStyleJson,
-  IS_SAFARI_26,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -113,7 +126,6 @@ export function TableNG(props: TableNGProps) {
     frozenColumns = 0,
     getActions = () => [],
     height,
-    initialSortBy,
     maxRowHeight: _maxRowHeight,
     noHeader,
     onCellFilterAdded,
@@ -125,8 +137,10 @@ export function TableNG(props: TableNGProps) {
     transparent,
     width,
     initialRowIndex,
+    sortBy,
+    sortByBehavior = 'initial',
   } = props;
-
+  const uniqueId = useId();
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
@@ -181,11 +195,14 @@ export function TableNG(props: TableNGProps) {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
+  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy: sortBy });
+
+  useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
+  const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing
 
@@ -260,12 +277,8 @@ export function TableNG(props: TableNGProps) {
       gridRef.current.scrollToCell({
         rowIdx,
       });
-      // Select the first cell so there's something visually different about the row
-      gridRef.current.selectCell({
-        rowIdx,
-        idx: 0,
-      });
       setScrollToIndex(undefined);
+      setSelectedRows(new Set<string>([rowKeyGetter(sortedRows[rowIdx])]));
     }
   }, [scrollToIndex, sortedRows]);
 
@@ -361,7 +374,7 @@ export function TableNG(props: TableNGProps) {
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
       sortable: false,
-      name: '',
+      name: t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows'),
       field: {
         name: '',
         type: FieldType.other,
@@ -378,11 +391,14 @@ export function TableNG(props: TableNGProps) {
         return args.type === 'ROW' && args.row.__depth === 1 ? data.fields.length : 1;
       },
       renderCell: ({ row }) => {
+        const rowId = `${uniqueId}-nested-table-${row.__index}`;
+
         if (row.__depth === 0) {
           const rowIdx = row.__index;
 
           return (
             <RowExpander
+              rowId={rowId}
               isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
                 if (expandedRows.has(rowIdx)) {
@@ -416,21 +432,39 @@ export function TableNG(props: TableNGProps) {
         }
 
         return (
-          <DataGrid<TableRow, TableSummaryRow>
-            {...commonDataGridProps}
-            className={clsx(styles.grid, styles.gridNested)}
-            headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
-            headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
-            columns={nestedColumnsMatrix[row.__index].columns}
-            rows={expandedRecords}
-            renderers={renderers}
-          />
+          <div id={rowId}>
+            <DataGrid<TableRow, TableSummaryRow>
+              {...commonDataGridProps}
+              className={clsx(styles.grid, styles.gridNested)}
+              headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+              headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
+              columns={nestedColumnsMatrix[row.__index].columns}
+              rows={expandedRecords}
+              renderers={renderers}
+            />
+          </div>
         );
+      },
+      renderHeaderCell(props) {
+        return <div className="sr-only">{props.column.name}</div>;
       },
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     }),
-    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles, nestedFramesFieldName]
+    [
+      styles.cellNested,
+      styles.grid,
+      styles.gridNested,
+      styles.headerRow,
+      styles.displayNone,
+      styles.noDataNested,
+      data.fields.length,
+      uniqueId,
+      nestedFramesFieldName,
+      sortColumns,
+      commonDataGridProps,
+      expandedRows,
+    ]
   );
 
   const fromFields = useCallback(
@@ -829,12 +863,17 @@ export function TableNG(props: TableNGProps) {
 
   let rendered = (
     <>
-      <DataGrid<TableRow, TableSummaryRow>
+      <DataGrid<TableRow, TableSummaryRow, string>
         {...commonDataGridProps}
+        role={hasNestedFrames ? 'treegrid' : 'grid'}
         ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        rowKeyGetter={rowKeyGetter}
+        isRowSelectionDisabled={() => initialRowIndex !== undefined}
+        selectedRows={selectedRows}
+        onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
@@ -962,5 +1001,7 @@ const renderRowFactory =
       }
     }
 
-    return <Row key={key} {...props} {...handlers} aria-expanded={!!row.data && isExpanded} />;
+    return (
+      <Row key={key} aria-level={row.__index + 1} aria-expanded={!!row.data && isExpanded} {...props} {...handlers} />
+    );
   };

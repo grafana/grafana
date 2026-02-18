@@ -1,5 +1,5 @@
 import { escapeRegex } from '@grafana/data';
-import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
+import { BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
 import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {
   initializeFaro,
@@ -10,7 +10,7 @@ import {
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -47,20 +47,6 @@ export class GrafanaJavascriptAgentBackend
 
     if (options.tracingInstrumentalizationEnabled) {
       instrumentations.push(new TracingInstrumentation());
-    }
-
-    if (evaluateBooleanFlag('faroSessionReplay', false)) {
-      instrumentations.push(
-        new ReplayInstrumentation({
-          maskAllInputs: true,
-          maskTextSelector: '*',
-          collectFonts: false,
-          inlineImages: false,
-          inlineStylesheet: false,
-          recordCanvas: false,
-          recordCrossOriginIframes: false,
-        })
-      );
     }
 
     const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];
@@ -110,7 +96,54 @@ export class GrafanaJavascriptAgentBackend
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
     };
 
-    initializeFaro(grafanaJavaScriptAgentOptions);
+    const faro = initializeFaro(grafanaJavaScriptAgentOptions);
+
+    if (faro && getFeatureFlagClient().getBooleanValue('faroSessionReplay', false)) {
+      this.initReplayAfterDomRendered(faro);
+    }
+  }
+
+  /**
+   * Defer rrweb session replay until React has committed its initial render.
+   *
+   * rrweb's record() takes a full DOM snapshot on start and then tracks
+   * incremental mutations. If it starts before React renders, the snapshot
+   * captures an empty #reactRoot and the entire first render arrives as one
+   * massive mutation batch — which triggers a known rrweb bug where the
+   * MutationBuffer.emit() addList silently drops nodes it cannot resolve.
+   * Those dropped nodes later surface as "[replayer] Node with id 'X' not found."
+   *
+   * By observing #reactRoot for its first child, we start rrweb only after
+   * React has committed, so the snapshot contains the real UI and the
+   * problematic initial mutation batch never occurs.
+   */
+  private initReplayAfterDomRendered(faro: Faro): void {
+    const addReplay = () => {
+      faro.instrumentations.add(
+        new ReplayInstrumentation({
+          maskAllInputs: true,
+          maskTextSelector: '*',
+          collectFonts: false,
+          inlineImages: false,
+          inlineStylesheet: false,
+          recordCanvas: false,
+          recordCrossOriginIframes: false,
+        })
+      );
+    };
+
+    const reactRoot = document.getElementById('reactRoot');
+    if (reactRoot && reactRoot.childNodes.length > 0) {
+      requestAnimationFrame(addReplay);
+      return;
+    }
+
+    const observer = new MutationObserver((_mutations, obs) => {
+      obs.disconnect();
+      requestAnimationFrame(addReplay);
+    });
+
+    observer.observe(reactRoot ?? document.body, { childList: true });
   }
 
   // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API

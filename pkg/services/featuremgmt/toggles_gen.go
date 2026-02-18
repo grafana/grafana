@@ -199,6 +199,14 @@ const (
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
 
+	// FlagDatasourcesRerouteLegacyCRUDAPIs
+	// Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesRerouteLegacyCRUDAPIs = "datasourcesRerouteLegacyCRUDAPIs"
+
+	// FlagDatasourcesApiServerEnableResourceEndpoint
+	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -254,10 +262,6 @@ const (
 	// FlagAuditLoggingAppPlatform
 	// Enable audit logging with Kubernetes under app platform
 	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
-
-	// FlagSecretsManagementAppPlatform
-	// Enable the secrets management API and services under app platform
-	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
 	// FlagSecretsManagementAppPlatformUI
 	// Enable the secrets management app platform UI
@@ -806,7 +810,27 @@ const (
 	// Redirects the request to teams related endpoints to the app platform API
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
+	// FlagKubernetesTeamSync
+	// Use the new APIs for syncing users to teams
+	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAlertingIgnorePendingForNoDataAndError
+	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
+
+	// FlagAlertingNotificationHistoryRuleViewer
+	// Enables the notification history tab in the rule viewer
+	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagAlertingNotificationHistoryGlobal
+	// Enables the notification history global menu item viewer
+	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagReact19
+	// Whether to use the new React 19 runtime
+	FlagReact19 = "react19"
 )

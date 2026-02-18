@@ -37,7 +37,7 @@ export function QueryEditorDetailsSidebar() {
 
   const realMaxDataPoints = data?.request?.maxDataPoints;
   const realInterval = data?.request?.interval;
-  const minIntervalOnDs = datasource?.interval ?? t('query-editor.details-sidebar.no-limit', 'No limit');
+  const minIntervalOnDs = datasource?.interval ?? t('query-editor-next.details-sidebar.no-limit', 'No limit');
   const showCacheTimeout = dsSettings?.meta.queryOptions?.cacheTimeout;
   const showCacheTTL = dsSettings?.cachingConfig?.enabled;
 
@@ -110,10 +110,10 @@ export function QueryEditorDetailsSidebar() {
           className={styles.header}
           onClick={handleCloseSidebar}
           aria-expanded={true}
-          aria-label={t('query-editor.details-sidebar.collapse', 'Collapse query options sidebar')}
+          aria-label={t('query-editor-next.details-sidebar.collapse', 'Collapse query options sidebar')}
         >
           <span className={styles.headerText}>
-            <Trans i18nKey="query-editor.details-sidebar.title">Query Options</Trans>
+            <Trans i18nKey="query-editor-next.details-sidebar.title">Query Options</Trans>
           </span>
         </Button>
         <div className={styles.content}>
