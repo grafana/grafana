@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -309,7 +310,11 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
 	}
 
-	s.log.Debug("AzureADToken fetchToken completed")
+	if token.ExpiresIn > 0 {
+		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+	}
+
+	s.log.Debug("AzureADToken fetchToken completed", "access_token", token.AccessToken, "refresh_token", token.RefreshToken, "expiry", token.Expiry)
 	return token.WithExtra(rawResponse), nil
 }
 

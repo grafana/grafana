@@ -1502,10 +1502,11 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		s.Endpoint.TokenURL = server.URL
 
 		// Create a token source with an expired token
+		now := time.Now()
 		token := &oauth2.Token{
 			AccessToken:  "old-access-token",
 			RefreshToken: "old-refresh-token",
-			Expiry:       time.Now().Add(-time.Hour),
+			Expiry:       now.Add(-time.Hour),
 		}
 
 		// Create a context with the mock client
@@ -1517,7 +1518,7 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "new-access-token", newToken.AccessToken)
 		assert.Equal(t, "new-refresh-token", newToken.RefreshToken)
-		assert.EqualValues(t, 3600, newToken.ExpiresIn)
+		assert.EqualValues(t, now.Add(time.Hour), newToken.Expiry)
 	})
 
 	t.Run("error when workload token file does not exist", func(t *testing.T) {
