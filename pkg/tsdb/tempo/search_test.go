@@ -255,3 +255,48 @@ func TestTransformSpanSearchResponse_MissingDynamicAttributeUsesNil(t *testing.T
 	assert.Equal(t, "GET", *(frames[0].Fields[6].At(0).(*string)))
 	assert.True(t, frames[0].Fields[6].NilAt(1))
 }
+
+func TestTransformSpanSearchResponse_NoSpanAttributes(t *testing.T) {
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "test-service-name",
+		RootTraceName:     "test-root-trace-name",
+		StartTimeUnixNano: 1000,
+		SpanSets: []*tempopb.SpanSet{{
+			Spans: []*tempopb.Span{
+				{
+					SpanID:            "test-span-id-1",
+					Name:              "test-span-name-1",
+					StartTimeUnixNano: 2000,
+					DurationNanos:     3000,
+				},
+				{
+					SpanID:            "test-span-id-2",
+					Name:              "test-span-name-2",
+					StartTimeUnixNano: 3000,
+					DurationNanos:     4000,
+				},
+			},
+		}},
+	}}}
+
+	frames, err := transformSpanSearchResponse(pCtx, resp)
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.Equal(t, 2, frames[0].Rows())
+	require.Len(t, frames[0].Fields, 7)
+
+	assert.Equal(t, "traceIdHidden", frames[0].Fields[0].Name)
+	assert.Equal(t, "traceService", frames[0].Fields[1].Name)
+	assert.Equal(t, "traceName", frames[0].Fields[2].Name)
+	assert.Equal(t, "spanID", frames[0].Fields[3].Name)
+	assert.Equal(t, "time", frames[0].Fields[4].Name)
+	assert.Equal(t, "name", frames[0].Fields[5].Name)
+	assert.Equal(t, "duration", frames[0].Fields[6].Name)
+
+	assert.Equal(t, "test-span-id-1", frames[0].Fields[3].At(0))
+	assert.Equal(t, "test-span-id-2", frames[0].Fields[3].At(1))
+	assert.Equal(t, 3000.0, frames[0].Fields[6].At(0))
+	assert.Equal(t, 4000.0, frames[0].Fields[6].At(1))
+}
