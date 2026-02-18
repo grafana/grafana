@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -95,7 +94,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
-				Format:        backend.QueryResponseFormat_JSON, // encode directly in the plugin
+				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
 			}, newChunkedWriter(w)); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
 			}
@@ -139,8 +138,12 @@ func isRequestingChunkedResponse(accept string) bool {
 
 func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10)
-	return backend.NewChunkedDataWriter(true, // force JSON
+	return backend.NewChunkedDataWriter(backend.DataFrameFormat_JSON,
 		func(chunk *pluginv2.QueryChunkedDataResponse) error {
+			if chunk.Format != pluginv2.DataFrameFormat_JSON {
+				return fmt.Errorf("expected json format")
+			}
+
 			s.WriteRaw("data: ")
 			s.WriteObjectStart()
 			s.WriteObjectField("refId")
@@ -153,18 +156,6 @@ func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
 			}
 
 			if chunk.Frame != nil {
-				// Make sure it is JSON (currently always Arrow so this raw client is just extra work!)
-				if chunk.Frame[0] != '{' {
-					frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-					if err != nil {
-						return err
-					}
-					chunk.Frame, err = frame.MarshalJSON()
-					if err != nil {
-						return err
-					}
-				}
-
 				s.WriteMore()
 				s.WriteObjectField("frame")
 				s.WriteRaw(string(chunk.Frame)) // must not contain newlines!
