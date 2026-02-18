@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
+import { Field, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { CustomCellRendererProps, MaybeWrapWithLink, useStyles2 } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../constants';
@@ -17,6 +17,7 @@ export function LogsTableCustomCellRenderer(props: {
   supportsPermalink: boolean;
 }) {
   const { logsFrame, buildLinkToLog, options, supportsPermalink } = props;
+  const { field, value, rowIndex } = props.cellProps;
   const cellPadding =
     options.showInspectLogLine && options.showCopyLogLink
       ? ROW_ACTION_BUTTON_WIDTH
@@ -33,10 +34,28 @@ export function LogsTableCustomCellRenderer(props: {
         buildLinkToLog={supportsPermalink && options.showCopyLogLink ? buildLinkToLog : undefined}
         showInspectLogLine={options.showInspectLogLine ?? true}
       />
+
       <span className={styles.firstColumnCell}>
-        {props.cellProps.field.display?.(props.cellProps.value).text ?? String(props.cellProps.value)}
+        <AutoCell field={field} value={field.display?.(value).text ?? String(value)} rowIdx={rowIndex} />
       </span>
     </>
+  );
+}
+
+export interface AutoCellProps {
+  field: Field;
+  value: string;
+  rowIdx: number;
+}
+
+// Copy pasta from packages/grafana-ui/src/components/Table/TableNG/Cells/AutoCell.tsx
+function AutoCell({ value, field, rowIdx }: AutoCellProps) {
+  const displayValue = field.display!(value);
+  const formattedValue = formattedValueToString(displayValue);
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+      {formattedValue}
+    </MaybeWrapWithLink>
   );
 }
 
