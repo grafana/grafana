@@ -332,6 +332,8 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	return nil
 }
 
+// runGarbageCollection identifies deleted resources that are safe
+// to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
@@ -339,28 +341,39 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 
 	deletedByKey := map[string]int64{}
 
+	// get group and resources
 	groupResources, err := b.dataStore.getGroupResources(ctx)
 	if err != nil {
 		b.log.Error("failed to list group resources for garbage collection", "error", err)
 		return deletedByKey
 	}
 
+	// for each pair of group and resource
 	for _, gr := range groupResources {
+		// this function will return a map with the number of deleted entries for this group and resource
 		resourceKey := gr.Group + "/" + gr.Resource
-		resourceCutoff := b.garbageCollectionCutoffTimestamp(gr.Group, gr.Resource, cutoffTimeStamp)
 		totalDeleted := int64(0)
 
+		// get the cutoff timestamp for this resource, allowing for resource-specific cutoff logic (e.g. different retention for dashboards)
+		resourceCutoff := b.garbageCollectionCutoffTimestamp(gr.Group, gr.Resource, cutoffTimeStamp)
+		if !isSnowflake(resourceCutoff) {
+			resourceCutoff = rvmanager.SnowflakeFromRV(resourceCutoff)
+		}
+
+		// get the start and end keys for the list operation based on the resource prefix
+		// for example, for datashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
+		// and the end key will be "unified/data/dashboard.grafana.app/dashboards0"
 		key := ListRequestKey{
 			Group:    gr.Group,
 			Resource: gr.Resource,
 		}
-
 		prefix := key.Prefix()
 		startKey := prefix
 		endKey := PrefixRangeEnd(prefix)
 
 		for {
-			deleted, nextKey, err := b.garbageCollectBatch(ctx, gr.Group, gr.Resource, resourceCutoff, b.garbageCollection.BatchSize, startKey, endKey)
+			// garbageCollectBatch will return the number of deleted entries, the number of rows processed, and the next end key for pagination
+			deleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, gr.Group, gr.Resource, resourceCutoff, b.garbageCollection.BatchSize, startKey, endKey)
 			if err != nil {
 				b.log.Error("garbage collection failed",
 					"group", gr.Group,
@@ -368,11 +381,29 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 					"error", err)
 				break
 			}
-			startKey = nextKey
-			totalDeleted += deleted
-			if deleted < int64(b.garbageCollection.BatchSize) {
+
+			// if there are no more entries to process, break the loop
+			if rowsProcessed == 0 {
 				break
 			}
+
+			// Parse and get the next end key to ensure we can continue paginating. If we can't parse it, we should stop to avoid an infinite loop.
+			nk, err := ParseKey(nextEndKey)
+			if err != nil {
+				b.log.Error("failed to parse nextEndKey '%s': %s", nextEndKey, err)
+				break
+			}
+			key = ListRequestKey{
+				Group:     gr.Group,
+				Resource:  gr.Resource,
+				Namespace: nk.Namespace,
+				Name:      nk.Name,
+			}
+			endKey = key.Prefix()
+
+			totalDeleted += deleted
+
+			// wait a second between batches to avoid overwhelming the datastore
 			select {
 			case <-time.After(time.Second):
 			}
@@ -391,40 +422,49 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 	return deletedByKey
 }
 
-func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int, startKey, endKey string) (int64, string, error) {
+// garbageCollectBatch scans batches of entries in the datastore for a given group+resource,
+// identifies deleted resources that are safe to be fully removed, and deletes all their keys.
+// It returns the number of deleted entries, the number of rows processed, and the next end key for pagination.
+func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int, startKey, endKey string) (int64, int64, string, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
 	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
 	defer span.End()
 
 	candidates := []string{}
 
-	nextStartKey := startKey
+	nextEndKey := endKey
+
+	rowsProcessed := int64(0)
 
 	// traverse all keys in descending order of resource version,
 	// for deleted keys with resource version older than the cutoff,
 	// check if the resource is not present in the datastore
+	// we will scan a fixed number of rows (batchSize) and look for candidates to delete
 	for dataKey, err := range b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
 		StartKey: startKey,
 		EndKey:   endKey,
+		Limit:    int64(batchSize),
 		Sort:     kv.SortOrderDesc}) {
 
 		if err != nil {
 			b.log.Error("failed to list collection before delete: %s", err)
-			return 0, "", err
+			return 0, 0, "", err
 		}
 
+		rowsProcessed++
+
+		// parse the datakey to get the action and resource version
 		dk, err := ParseKey(dataKey)
 		if err != nil {
 			b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
 			continue
 		}
 
-		resourceCutoffSnowflake := cutoffTimestamp
-		if !isSnowflake(cutoffTimestamp) {
-			resourceCutoffSnowflake = rvmanager.SnowflakeFromRV(cutoffTimestamp)
-		}
+		// update the next end key for pagination. We will use this to continue scanning in the next batch
+		nextEndKey = dataKey
 
-		if dk.Action == DataActionDeleted && dk.ResourceVersion < resourceCutoffSnowflake {
+		// if the action is deleted and the resource version is older than the cutoff, we will check if the resource is still present in the datastore
+		if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
 			// ensure that the resource is not present in the datastore
 			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 				Group:     dk.Group,
@@ -437,6 +477,7 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 				continue
 			}
 
+			// we are expecting a not found error, if we get a different error, log it and skip deletion to be safe
 			if !errors.Is(err, ErrNotFound) {
 				b.log.Error("failed to get the latest resource key for datakey '%s': %s", dk, err)
 				continue
@@ -444,45 +485,57 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 
 			// if we get a not found, then we can delete resource history entries for this resource
 			candidates = append(candidates, dataKey)
-			if len(candidates) >= b.garbageCollection.BatchSize {
-				break
+		}
+	}
+
+	// if there are candidates to delete, we will batch delete them.
+	// We will do this in a separate loop to avoid holding locks on
+	// the datastore while we are scanning for candidates
+	if rowsProcessed > 0 && len(candidates) > 0 {
+		keysToDelete := []string{}
+
+		// traverse the candidate list and for each candidate, we will get all keys
+		// for the same resource (same group, resource, namespace, name) and add them
+		// to the delete list
+		for _, dataKey := range candidates {
+			dk, err := ParseKey(dataKey)
+			if err != nil {
+				b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
+				continue
+			}
+
+			// get the keys for the same resource
+			for currDK, _ := range b.dataStore.Keys(ctx, ListRequestKey{
+				Group:     dk.Group,
+				Resource:  dk.Resource,
+				Namespace: dk.Namespace,
+				Name:      dk.Name,
+			}, SortOrderAsc) {
+				keysToDelete = append(keysToDelete, currDK.String())
 			}
 		}
-	}
 
-	keysToDelete := []string{}
-	for _, dataKey := range candidates {
-		dk, err := ParseKey(dataKey)
-		if err != nil {
-			b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
-			continue
+		for _, key := range keysToDelete {
+			b.log.Info("garbage collection",
+				"key to delete", key,
+			)
 		}
 
-		fmt.Printf("candidate dataKey: %+v\n", dataKey)
-		for currDK, _ := range b.dataStore.Keys(ctx, ListRequestKey{
-			Group:     dk.Group,
-			Resource:  dk.Resource,
-			Namespace: dk.Namespace,
-			Name:      dk.Name,
-		}, SortOrderAsc) {
-			keysToDelete = append(keysToDelete, currDK.String())
-			nextStartKey = currDK.String()
-		}
+		// if not in dry run mode, batch delete the keys and return the number of deleted entries
+		if !b.garbageCollection.DryRun {
+			err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+			if err != nil {
+				b.log.Error("failed to batch delete keys: %s", err)
+				return 0, 0, "", err
+			}
 
-		fmt.Printf("keysToDelete: %+v\n", keysToDelete)
+			return int64(len(keysToDelete)), rowsProcessed, nextEndKey, nil
+		} else {
+			b.log.Info("garbage collection not deleting any keys because dry run mode is enabled")
+		}
 	}
 
-	if !b.garbageCollection.DryRun {
-		err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
-		if err != nil {
-			b.log.Error("failed to batch delete keys: %s", err)
-			return 0, "", err
-		}
-
-		return int64(len(keysToDelete)), nextStartKey, nil
-	}
-
-	return 0, "", nil
+	return 0, rowsProcessed, nextEndKey, nil
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
