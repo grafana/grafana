@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { byTestId } from 'testing-library-selector';
 
@@ -36,6 +36,21 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('GroupByVariableForm', () => {
+  beforeAll(() => {
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 200,
+        height: 200,
+        x: 0,
+        y: 0,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      })),
+    });
+  });
+
   const onDataSourceChangeMock = jest.fn();
   const onDefaultOptionsChangeMock = jest.fn();
   const onAllowCustomValueChangeMock = jest.fn();
@@ -165,13 +180,11 @@ describe('GroupByVariableForm', () => {
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    const combobox = screen.getByLabelText('Default value');
+    const combobox = screen.getByRole('combobox');
     await user.click(combobox);
 
-    await waitFor(() => {
-      expect(screen.getByText('job')).toBeInTheDocument();
-      expect(screen.getByText('instance')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('option', { name: 'job' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'instance' })).toBeInTheDocument();
   });
 
   it('should render only datasource picker and alert when not supported', async () => {
