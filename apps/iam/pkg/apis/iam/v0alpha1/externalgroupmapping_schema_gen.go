@@ -5,13 +5,37 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaExternalGroupMapping = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewExternalGroupMapping(), &ExternalGroupMappingList{}, resource.WithKind("ExternalGroupMapping"),
-		resource.WithPlural("externalgroupmappings"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("externalgroupmappings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.teamRef.name",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*ExternalGroupMapping)
+				if !ok {
+					return "", errors.New("provided object must be of type *ExternalGroupMapping")
+				}
+
+				return cast.Spec.TeamRef.Name, nil
+			},
+		},
+			{
+				FieldSelector: "spec.externalGroupId",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*ExternalGroupMapping)
+					if !ok {
+						return "", errors.New("provided object must be of type *ExternalGroupMapping")
+					}
+
+					return cast.Spec.ExternalGroupId, nil
+				},
+			},
+		}))
 	kindExternalGroupMapping = resource.Kind{
 		Schema: schemaExternalGroupMapping,
 		Codecs: map[resource.KindEncoding]resource.Codec{

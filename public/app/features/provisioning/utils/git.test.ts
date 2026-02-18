@@ -127,7 +127,7 @@ describe('buildRepoUrl', () => {
       ).toBe('https://bitbucket.org/workspace/repo/src/main');
     });
 
-    it('builds generic git href with tree segment', () => {
+    it('builds generic git href without tree segment', () => {
       expect(
         getRepoHrefForProvider(
           spec({
@@ -135,7 +135,7 @@ describe('buildRepoUrl', () => {
             git: { url: 'https://git.example.com/owner/repo.git', branch: 'main' },
           })
         )
-      ).toBe('https://git.example.com/owner/repo/tree/main');
+      ).toBe('https://git.example.com/owner/repo');
     });
   });
 
