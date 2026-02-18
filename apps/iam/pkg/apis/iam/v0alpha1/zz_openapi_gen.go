@@ -92,6 +92,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		UserList{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		UserSpec{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		UserStatus{}.OpenAPIModelName():                                                                   schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
+		UserTeamSyncStatus{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref),
 	}
 }
 
@@ -3713,8 +3714,42 @@ func schema_pkg_apis_iam_v0alpha1_UserStatus(ref common.ReferenceCallback) commo
 							Format:  "int64",
 						},
 					},
+					"teamSync": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(UserTeamSyncStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"lastSeenAt"},
+			},
+		},
+		Dependencies: []string{
+			UserTeamSyncStatus{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"lastSyncAt": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"state", "lastSyncAt"},
 			},
 		},
 	}
