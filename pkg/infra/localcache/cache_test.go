@@ -16,13 +16,13 @@ func TestExclusiveSet(t *testing.T) {
 	var truth int
 	var mu sync.RWMutex
 	const maxDelay = int(10 * time.Millisecond)
-	read := func() any {
+	read := func() (any, error) {
 		mu.RLock()
 		ret := truth
 		mu.RUnlock()
 
 		time.Sleep(time.Duration(rand.Intn(maxDelay)))
-		return ret
+		return ret, nil
 	}
 	write := func(n int) {
 		mu.Lock()

@@ -36,11 +36,17 @@ func New(defaultExpiration, cleanupInterval time.Duration) *CacheService {
 	}
 }
 
-func (s *CacheService) ExclusiveSet(key string, getValue func() any, dur time.Duration) {
+func (s *CacheService) ExclusiveSet(key string, getValue func() (any, error), dur time.Duration) error {
 	unlock := s.Lock(key)
 	defer unlock()
 
-	s.Set(key, getValue(), dur)
+	v, err := getValue()
+	if err != nil {
+		return err
+	}
+
+	s.Set(key, v, dur)
+	return nil
 }
 
 func (s *CacheService) ExclusiveDelete(key string) {

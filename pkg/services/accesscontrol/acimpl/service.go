@@ -351,11 +351,14 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 
 	var permissions []accesscontrol.Permission
 	var err error
-	getValue := func() any {
+	getValue := func() (any, error) {
 		permissions, err = getPermissionsFn(ctx)
-		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+		if err != nil {
+			return nil, err
+		}
 
-		return permissions
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+		return permissions, nil
 	}
 
 	s.cache.ExclusiveSet(key, getValue, cacheTTL)
