@@ -29,24 +29,24 @@ By defending dashboards as code and managing them through CI/CD such as GitHub A
 
 With this fully automated CI/CD pipeline, you can focus on improving your dashboards rather than manually uploading JSON files to Grafana.
 
-## Overview
-
-This guide shows you how to:
-
-- Generate a Grafana dashboard as code
-- Format it for Kubernetes-style deployment
-- Use GitHub Actions to deploy the dashboard
-- Verify and update the dashboard
-
-By the end, you'll be able to provision your dashboard as code, and every change to your dashboard will be automatically created or updated in your Grafana instance without manual intervention.
-
 {{< youtube id="cFnO8kVOaAI" >}}
 
 You can find the full example source code in the [Introduction to the Foundation SDK](https://github.com/grafana/intro-to-foundation-sdk/tree/main/github-actions-example) GitHib repository.
 
+## Overview
+
+This guide shows you how to:
+
+1. Generate a Grafana dashboard as code and format it for Kubernetes-style deployment
+2. Use GitHub Actions to deploy, verify, and update the dashboard
+
+By the end, you'll be able to provision your dashboard as code, and every change to your dashboard will be automatically created or updated in your Grafana instance without manual intervention.
+
 ## 1. Generate the dashboard JSON
 
-Before deploying a dashboard, [define it as code using the Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/#create-a-dashboard/). Since Grafana exposes a Kubernetes resource compatible API, you need to make some changes to the code to output the dashboard JSON in the appropriate format.
+Before deploying a dashboard, [define it as code using the Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/#create-a-dashboard/). 
+
+Since Grafana exposes a Kubernetes resource compatible API, you need to make some changes to the code to output the dashboard JSON in the appropriate format.
 
 This script:
 
@@ -152,7 +152,7 @@ console.log(`Dashboard JSON:\n${}`);
 
 ## 2. Automate deployment with GitHub Actions
 
-Next, set up GitHub Actions to automate the deployment of a Grafana dashboard using the Foundation SDK and the `grafanactl` CLI tool to:
+Next, set up GitHub Actions to automate the deployment of a Grafana dashboard using the Foundation SDK and the [`grafanactl` CLI tool](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) to:
 
 - Extract the dashboard name from `dashboard.json`
 - Check if the dashboard already exists within our Grafana instance
@@ -217,7 +217,7 @@ jobs:
 
 ### 1. Checkout and set up Go
 
-The first few steps:
+To set up Go:
 
 - Check out the repository to access the project code.
 - Install Go 1.24.6 using the `actions/setup-go` action.
@@ -225,15 +225,15 @@ The first few steps:
 
 ### 2. Download and install `grafanactl`
 
-This step downloads the `grafanactl` CLI from GitHub using a version defined in `vars.GRAFANACTL_VERSION`. It unpacks the tarball, makes it executable, and moves it to a location in the system `PATH`.
+Next, download the `grafanactl` CLI from GitHub using the version defined in `vars.GRAFANACTL_VERSION`. It unpacks the tarball, makes it executable, and moves it to a location in the system `PATH`.
 
 ### 3. Generate the dashboard JSON
 
-Runs the dashboard generator (`main.go`) from the `./github-actions-example` directory. This should produce a `dashboard.json` file that contains the Grafana dashboard definition.
+Next, run the dashboard generator (`main.go`) from the `./github-actions-example` director to produce a `dashboard.json` file that contains the Grafana dashboard definition.
 
 ### 4. Deploy the dashboard with `grafanactl`
 
-If `dashboard.json` exists, it is deployed to your Grafana instance using:
+If `dashboard.json` already exists, it is deployed to your Grafana instance using:
 
 ```bash
 grafanactl resources push dashboards --path ./dashboard.json
@@ -247,7 +247,7 @@ This command authenticates against Grafana using the following environment varia
 
 ### GitHub variables and secrets used
 
-These are configured in your repository under **Settings → Security → Secrets and variables → Actions**:
+Verify these variables are configured in your repository under **Settings > Security > Secrets and variables > Actions**:
 
 - `vars.GRAFANACTL_VERSION`: Version of `grafanactl` to install
 - `vars.GRAFANA_SERVER`: The URL of your Grafana instance
