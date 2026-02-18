@@ -34,17 +34,27 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Client Certificate",
       "aria-label-client-id": "Client ID",
       "aria-label-client-secret": "Client Secret",
+      "aria-label-private-key": "Private Key",
+      "aria-label-private-key-password": "Private Key Password",
       "aria-label-symbol-client-secret": "Client Secret",
+      "aria-label-symbol-private-key-password": "Private Key Password",
       "aria-label-tenant-id": "Tenant ID",
       "label-azure-cloud": "Azure Cloud",
+      "label-client-certificate": "Client Certificate",
       "label-client-id": "Application (client) ID",
       "label-client-secret": "Client Secret",
+      "label-private-key": "Private Key",
+      "label-private-key-password": "Private Key Password",
       "label-symbol-client-secret": "Client Secret",
+      "label-symbol-private-key-password": "Private Key Password",
       "label-tenant-id": "Directory (tenant) ID",
       "placeholder-symbol-client-secret": "configured",
-      "reset-symbol-client-secret": "Reset"
+      "placeholder-symbol-private-key-password": "configured",
+      "reset-symbol-client-secret": "Reset",
+      "reset-symbol-private-key-password": "Reset"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} raw query",
