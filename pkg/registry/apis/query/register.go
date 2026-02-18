@@ -55,9 +55,6 @@ type QueryAPIBuilder struct {
 	legacyDatasourceLookup service.LegacyDataSourceLookup
 	connections            datasourceV0.DataSourceConnectionProvider
 	reportStatus           func(context.Context, int)
-
-	// TODO: remove this after all traffic is moved from `query.grafana.app` to `datasource.grafana.app`
-	AsDeprecatedQueryService bool
 }
 
 func NewQueryAPIBuilder(
@@ -171,9 +168,6 @@ func RegisterAPIService(
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	if b.AsDeprecatedQueryService { // Used by MT query service
-		return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
-	}
 	return datasourceV0.SchemeGroupVersion
 }
 
