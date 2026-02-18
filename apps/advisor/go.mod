@@ -35,6 +35,7 @@ replace (
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
+	github.com/grafana/grafana/apps/example => ../example
 	github.com/grafana/grafana/apps/folder => ../folder
 	github.com/grafana/grafana/apps/iam => ../iam
 	github.com/grafana/grafana/apps/live => ../live
@@ -43,6 +44,7 @@ replace (
 	github.com/grafana/grafana/apps/plugins => ../plugins
 	github.com/grafana/grafana/apps/preferences => ../preferences
 	github.com/grafana/grafana/apps/provisioning => ../provisioning
+	github.com/grafana/grafana/apps/quotas => ../quotas
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl

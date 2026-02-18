@@ -42,7 +42,7 @@ export function ExpressionTypePicker() {
 const getStyles = (theme: GrafanaTheme2) => ({
   grid: css({
     display: 'grid',
-    gridGap: theme.spacing(1),
+    gap: theme.spacing(1),
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
   }),
   image: css({

@@ -56,6 +56,10 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
   };
 
+  if (cardType === QueryEditorType.Alert) {
+    return null;
+  }
+
   return (
     <Stack gap={1} alignItems="center">
       <WarningBadges />
