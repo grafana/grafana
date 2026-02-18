@@ -86,4 +86,43 @@ describe('computeTopLabels', () => {
     expect(result[0].count).toBe(15);
     expect(result[0].values).toHaveLength(10);
   });
+
+  it('should return all labels when maxKeys is Infinity', () => {
+    const series: Array<Record<string, string>> = [
+      { team: 'a', env: 'prod', region: 'us', service: 'api', severity: 'critical', rare: 'x' },
+      { team: 'b', env: 'prod', region: 'eu', service: 'web', severity: 'warn' },
+      { team: 'c', env: 'staging', region: 'us', service: 'api' },
+      { team: 'd', env: 'prod' },
+      { team: 'e' },
+    ];
+
+    const result = computeTopLabels(series, Infinity, Infinity);
+
+    // Should include all 6 label keys, not just top 5
+    expect(result).toHaveLength(6);
+    expect(result.map((r) => r.key)).toEqual(['team', 'env', 'region', 'service', 'severity', 'rare']);
+  });
+
+  it('should return all values when maxValues is Infinity', () => {
+    const series = Array.from({ length: 15 }, (_, i) => ({ host: `host-${i}` }));
+
+    const result = computeTopLabels(series, Infinity, Infinity);
+
+    expect(result[0].key).toBe('host');
+    expect(result[0].count).toBe(15);
+    expect(result[0].values).toHaveLength(15);
+  });
+
+  it('should respect custom maxKeys and maxValues limits', () => {
+    const series: Array<Record<string, string>> = [
+      { a: '1', b: '1', c: '1' },
+      { a: '2', b: '2', c: '2' },
+      { a: '3', b: '3' },
+    ];
+
+    const result = computeTopLabels(series, 2, 2);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].values).toHaveLength(2);
+  });
 });
