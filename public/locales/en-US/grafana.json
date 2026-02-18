@@ -14469,6 +14469,14 @@
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
     },
+    "presets": {
+      "area": "Area",
+      "default": "Default",
+      "smooth": "Smooth",
+      "step": "Step",
+      "step-filled": "Step filled",
+      "step-hue": "Step hue"
+    },
     "span-nulls-editor": {
       "gaps-options": {
         "label-always": "Always",
