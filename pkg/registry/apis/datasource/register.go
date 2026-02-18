@@ -39,8 +39,9 @@ var (
 )
 
 type DataSourceAPIBuilderConfig struct {
-	LoadQueryTypes bool
-	UseDualWriter  bool
+	LoadQueryTypes         bool
+	UseDualWriter          bool
+	EnableResourceEndpoint bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -106,8 +107,9 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes: features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:  features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 			},
 		)
 		if err != nil {
@@ -246,7 +248,10 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	ds := b.datasourceResourceInfo
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
-	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+
+	if b.cfg.EnableResourceEndpoint {
+		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+	}
 
 	// FIXME: temporarily register both "datasources" and "connections" query paths
 	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query

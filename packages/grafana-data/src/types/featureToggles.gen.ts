@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
