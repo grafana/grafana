@@ -396,9 +396,9 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
     "re-resizable": "6.11.2",
-    "react": "19.2.1",
+    "react": "19.2.4",
     "react-diff-viewer-continued": "^3.4.0",
-    "react-dom": "19.2.1",
+    "react-dom": "19.2.4",
     "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
@@ -471,8 +471,8 @@
     "nodemailer": "7.0.12",
     "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch",
     "pretty-format/react-is": "19.0.0",
-    "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "workspaces": {
     "packages": [

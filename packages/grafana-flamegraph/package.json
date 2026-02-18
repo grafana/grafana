@@ -57,7 +57,7 @@
     "@leeoniya/ufuzzy": "1.0.19",
     "d3": "^7.8.5",
     "lodash": "^4.17.23",
-    "react": "19.2.0",
+    "react": "19.2.4",
     "react-use": "17.6.0",
     "react-virtualized-auto-sizer": "1.0.26",
     "tinycolor2": "1.6.0",
