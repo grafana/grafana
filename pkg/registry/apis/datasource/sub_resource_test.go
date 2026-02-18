@@ -34,6 +34,10 @@ func (m *resourceMockClient) CallResource(ctx context.Context, req *backend.Call
 	return nil
 }
 
+func (m *resourceMockClient) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return nil
+}
+
 func (m *resourceMockClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return nil, nil
 }
