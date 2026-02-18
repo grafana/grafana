@@ -6,7 +6,7 @@ const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const { EnvironmentPlugin } = require('webpack');
+const { EnvironmentPlugin, NormalModuleReplacementPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
@@ -75,6 +75,11 @@ module.exports = (env = {}) =>
           },
 
     plugins: [
+      // Replace any imports of test libraries with empty modules to prevent them from being bundled
+      // TODO figure out where these are being included, stop that from happening and remove this
+      new NormalModuleReplacementPlugin(/@testing-library/, (resource) => {
+        resource.request = require.resolve('./empty.js');
+      }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
