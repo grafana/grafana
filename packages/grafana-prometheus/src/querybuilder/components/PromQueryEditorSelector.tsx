@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -44,6 +44,11 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
+
+  // Track whether the query was loaded with an existing expression (from a panel/dashboard).
+  // If it was, we hide the "Kick start your query" button.
+  // For new queries (no initial expression), we keep showing the button even after the user starts typing.
+  const loadedWithExpr = useRef(!!props.query.expr);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -118,7 +123,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        {!query.expr && (
+        {!loadedWithExpr.current && (
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
