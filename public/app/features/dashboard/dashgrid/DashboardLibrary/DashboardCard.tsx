@@ -94,6 +94,7 @@ function DashboardCardComponent({
         context: [templateContext],
         autoSend: true,
       });
+      // these both closes the modal and redirects the user the the template dashboard url
       onClose?.();
       onClick?.(true);
     }

@@ -78,7 +78,7 @@ export function buildTemplateContextData(
     datasource: kind === 'suggested_dashboard' && isGnet ? dashboard.datasource : undefined,
     panelTypes: isGnet ? dashboard.panelTypeSlugs : undefined,
     author: isGnet ? dashboard.orgName || dashboard.userName : undefined,
-    instructions: `Use the following template details to create the dashboard: ${buildInstructions()}.`,
+    instructions: `Use the following template details to create the dashboard: ${buildInstructions()}`,
   };
 }
 
