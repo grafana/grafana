@@ -68,18 +68,24 @@ interface Props {
 
 function ExploreVariableSelectCustom({ variable, exploreId }: { variable: CustomVariable; exploreId: string }) {
   const dispatch = useDispatch();
-  const { value, options, name } = variable.useState();
+  const { value, options, name, allowCustomValue } = variable.useState();
+  const currentValue = String(value);
+  const selectOptions = options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }));
+  if (currentValue && !selectOptions.some((o) => o.value === currentValue)) {
+    selectOptions.push({ label: currentValue, value: currentValue });
+  }
   return (
     <Select
       prefix={`$${name}`}
-      value={String(value)}
-      options={options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }))}
+      value={currentValue}
+      options={selectOptions}
       onChange={(selected) => {
         if (selected.value !== undefined) {
           variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
           dispatch(runQueries({ exploreId }));
         }
       }}
+      allowCustomValue={allowCustomValue}
       width="auto"
     />
   );

@@ -31,7 +31,7 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
   const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(() => {
     if (computedInitialView === 'editor') {
       const name = getNextAvailableId('custom', variableSet.state.variables);
-      const variable = new CustomVariable({ name });
+      const variable = new CustomVariable({ name, allowCustomValue: true });
       dispatch(addSceneVariableAction({ exploreId, variable }));
       return variable;
     }
@@ -80,7 +80,7 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
 
   const onAddFromList = useCallback(() => {
     const name = getNextAvailableId('custom', variableSet.state.variables);
-    const variable = new CustomVariable({ name });
+    const variable = new CustomVariable({ name, allowCustomValue: true });
     dispatch(addSceneVariableAction({ exploreId, variable }));
     setEditingVariable(variable);
     setView('editor');
