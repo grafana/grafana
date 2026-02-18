@@ -29,6 +29,7 @@ export const ConnectStep = memo(function ConnectStep() {
     options: repositoryRefsOptions,
     loading: isRefsLoading,
     error: refsError,
+    defaultBranch,
   } = useGetRepositoryRefs({
     repositoryType: type,
     repositoryName: repositoryName,
@@ -37,45 +38,14 @@ export const ConnectStep = memo(function ConnectStep() {
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
 
-  // Track if we've already auto-selected a branch
   const hasAutoSelectedRef = useRef(false);
 
-  // Auto-select branch when refs are loaded for the first time
   useEffect(() => {
-    // Only auto-select if:
-    // 1. We haven't already auto-selected
-    // 2. We have branch options
-    // 3. No branch is currently selected
-    // 4. Not loading
-    if (
-      hasAutoSelectedRef.current ||
-      !repositoryRefsOptions ||
-      repositoryRefsOptions.length === 0 ||
-      isRefsLoading ||
-      getValues('repository.branch')
-    ) {
-      return;
-    }
-
-    // Get all branch names
-    const branchNames = repositoryRefsOptions.map((opt) => opt.value);
-
-    // Priority: main > master > first alphabetically
-    let selectedBranch: string | undefined;
-    if (branchNames.includes('main')) {
-      selectedBranch = 'main';
-    } else if (branchNames.includes('master')) {
-      selectedBranch = 'master';
-    } else {
-      // Sort alphabetically and take the first
-      selectedBranch = [...branchNames].sort()[0];
-    }
-
-    if (selectedBranch) {
-      setValue('repository.branch', selectedBranch);
+    if (!hasAutoSelectedRef.current && defaultBranch && !getValues('repository.branch')) {
+      setValue('repository.branch', defaultBranch);
       hasAutoSelectedRef.current = true;
     }
-  }, [repositoryRefsOptions, isRefsLoading, getValues, setValue]);
+  }, [defaultBranch, getValues, setValue]);
 
   return (
     <Stack direction="column" gap={2}>
