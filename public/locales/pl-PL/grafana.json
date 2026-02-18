@@ -605,6 +605,12 @@
       "title-restore-version": "Przywróć wersję",
       "title-restoring-alertmanager-configuration": "Przywracanie konfiguracji menedżera alertów"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sortuj",
       "label-filter-placeholder-search-alerts-by-labels": "Szukaj alertów według etykiet",
@@ -1692,14 +1698,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_few": "",
         "will-import-rules-count_many": "",
@@ -1716,8 +1714,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1727,6 +1723,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1745,16 +1742,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1821,7 +1809,15 @@
         "target-datasource-description": "Wybierz źródło danych, do którego zaimportowane reguły będą wysyłać zapytania. Upewnij się, że wskaźniki używane w zaimportowanych regułach są dostępne w tym źródle danych.",
         "target-datasource-required": "Wybierz docelowe źródło danych"
       },
-      "yaml-error": "Nie udało się przetworzyć pliku YAML: {{error}}"
+      "yaml-error": "Nie udało się przetworzyć pliku YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_few": "",
+      "renamed-intervals_many": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_few": "",
+      "renamed-receivers_many": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2683,6 +2679,13 @@
       "resample-to": "Zmień próbkowanie na",
       "upsample": "Zwiększ próbkowanie"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Trasa"
     },
@@ -2911,8 +2914,8 @@
       },
       "rulerrule-loading-error": "Nie udało się załadować reguły",
       "toggle": {
-        "go-back-to-old-look": "Wróć do wcześniejszego wyglądu",
-        "try-out-the-new-look": "Wypróbuj nowy wygląd!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Nieznany typ reguły"
     },
@@ -9894,12 +9897,16 @@
       },
       "inspect-drawer-title": "Sprawdź wartość",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Brak danych"
       },
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
       "sparkline": {
         "no-data": "b.d."
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -12793,6 +12800,7 @@
       "loading-finished-job": "Wczytywanie zakończonego zadania…",
       "no-job-found": "Nie znaleziono zadania",
       "no-job-found-message": "Zadanie mogło zostać usunięte lub nie można go pobrać. Anuluj bieżący proces i zacznij od początku.",
+      "retry-action": "",
       "starting": "Uruchamianie…",
       "status": {
         "title-error-running-job": "Błąd uruchamiania zadania",
@@ -12863,6 +12871,7 @@
       "source-code": "Kod źródłowy"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Tylko do odczytu",
       "settings": "Ustawienia",
       "view": "Wyświetl"
@@ -12991,8 +13000,9 @@
       "label-pending-step": "Oczekujący krok"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatyczne operacje pull wyłączone",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Usuwanie",
+      "disabled": "",
       "error": "Błąd",
       "pending": "Oczekuje",
       "pulling": "Operacja pull",
@@ -13370,6 +13380,8 @@
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13386,7 +13398,10 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
         "tooltip": ""
