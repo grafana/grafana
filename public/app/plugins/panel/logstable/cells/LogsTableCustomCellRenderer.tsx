@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { Field, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
-import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
+import { Field, formattedValueToString, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import { CustomCellRendererProps, useStyles2, useTheme2 } from '@grafana/ui';
 import { MaybeWrapWithLink } from '@grafana/ui/internal';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -51,7 +51,16 @@ export interface AutoCellProps {
 
 // Copy pasta from packages/grafana-ui/src/components/Table/TableNG/Cells/AutoCell.tsx
 function AutoCell({ value, field, rowIdx }: AutoCellProps) {
-  const displayValue = field.display!(value);
+  const theme = useTheme2();
+  const display =
+    field.display ??
+    getDisplayProcessor({
+      field,
+      theme,
+    });
+
+  const displayValue = display(value);
+
   const formattedValue = formattedValueToString(displayValue);
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>

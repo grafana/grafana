@@ -1,7 +1,7 @@
 import { DataFrameType, FieldType, LogsSortOrder, toDataFrame } from '@grafana/data';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 
-import { getDefaultSortBy } from './logsTable';
+import { getDefaultTableSortBy } from './logsTable';
 
 const testLogsDataFrame = [
   toDataFrame({
@@ -27,19 +27,47 @@ const testLogsDataFrame = [
   }),
 ];
 
-describe('getDefaultSortBy', () => {
+describe('getDefaultTableSortBy', () => {
   it('should return default sort', () => {
-    expect(getDefaultSortBy(testLogsDataFrame[0], LogsSortOrder.Descending)).toEqual([
+    expect(getDefaultTableSortBy('', testLogsDataFrame[0], LogsSortOrder.Descending)).toEqual([
       {
         displayName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         desc: true,
       },
     ]);
 
-    expect(getDefaultSortBy(testLogsDataFrame[0], LogsSortOrder.Ascending)).toEqual([
+    expect(getDefaultTableSortBy('', testLogsDataFrame[0], LogsSortOrder.Ascending)).toEqual([
       {
         displayName: LOGS_DATAPLANE_TIMESTAMP_NAME,
         desc: false,
+      },
+    ]);
+  });
+
+  it('should return sort from local storage', () => {
+    expect(
+      getDefaultTableSortBy(
+        JSON.stringify([{ displayName: 'timestamp', desc: false }]),
+        testLogsDataFrame[0],
+        LogsSortOrder.Descending
+      )
+    ).toEqual([
+      {
+        displayName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+        desc: false,
+      },
+    ]);
+
+    expect(
+      getDefaultTableSortBy(
+        JSON.stringify([{ displayName: 'foo', desc: true }]),
+        testLogsDataFrame[0],
+        LogsSortOrder.Descending
+      )
+    ).toEqual([
+      {
+        displayName: 'foo',
+        desc: true,
       },
     ]);
   });

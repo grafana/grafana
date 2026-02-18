@@ -106,6 +106,8 @@ describe('LogsTableCustomCellRenderer', () => {
     });
 
     it('Should inspect body if body is not selected', async () => {
+      // Something is complaining about invalid timezone, ignore it for now
+      jest.spyOn(console, 'warn').mockImplementation();
       // Remove body from data frame passed to the table (but it should be in the logs frame)
       const dataFrame: DataFrame = { ...testLogsDataFrame[0], fields: [testLogsDataFrame[0].fields[0]] };
       render(

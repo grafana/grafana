@@ -214,9 +214,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     return 0;
   }, [props.logsFrames, props.panelState?.logs?.refId]);
 
-  const tableSortByDefaultStringFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.sortBy);
+  const tableSortByDefaultStringFromStorage: string = store.get(LOGS_TABLE_SETTING_KEYS.sortBy);
   const [tableSortBy, setTableSortBy] = useState<TableSortByFieldState[]>(
-    getDefaultTableSortBy(tableSortByDefaultStringFromStorage, props.logsFrames, tableFrameIndex, logsSortOrder)
+    getDefaultTableSortBy(tableSortByDefaultStringFromStorage, props?.logsFrames?.[tableFrameIndex], logsSortOrder)
   );
 
   const fieldSelectorWidthFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth);

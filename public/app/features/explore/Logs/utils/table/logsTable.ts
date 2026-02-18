@@ -15,8 +15,7 @@ function getDefaultSortBy(dataFrame: DataFrame | undefined, logsSortOrder: LogsS
 
 export const getDefaultTableSortBy = (
   tableSortByDefaultStringFromStorage: string,
-  logsFrames: DataFrame[] | undefined,
-  tableFrameIndex: number,
+  dataFrame: DataFrame | undefined,
   logsSortOrder: LogsSortOrder
 ): TableSortByFieldState[] => {
   if (tableSortByDefaultStringFromStorage) {
@@ -39,5 +38,5 @@ export const getDefaultTableSortBy = (
     }
   }
 
-  return getDefaultSortBy(logsFrames?.[tableFrameIndex], logsSortOrder);
+  return getDefaultSortBy(dataFrame, logsSortOrder);
 };
