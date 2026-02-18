@@ -825,4 +825,8 @@ const (
 	// FlagAlertingNotificationHistoryGlobal
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagReact19
+	// Whether to use the new React 19 runtime
+	FlagReact19 = "react19"
 )
