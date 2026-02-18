@@ -44,6 +44,52 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"folder:admin": {
+			Title:       "folder Admin",
+			Description: "Allows all actions on Folders",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Folder",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"folder:editor": {
+			Title:       "folder Editor",
+			Description: "Create, Read, Update, and Delete Folders",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Folder",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"folder:reader": {
+			Title:       "folder Reader",
+			Description: "Read Folders",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Folder",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"folder:reader",
+		},
+		Editor: []string{
+			"folder:editor",
+		},
+		Admin: []string{
+			"folder:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -116,4 +162,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

@@ -18,6 +18,7 @@ manifest: {
         namespaced: {
           "/something": {
             "GET": {
+              name: "getSomething"
               response: {
 								namespace: string
 								message: string

@@ -129,6 +129,68 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"dashboard:admin": {
+			Title:       "dashboard Admin",
+			Description: "Allows all actions on Dashboardsand Snapshots",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dashboard",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Dashboard/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Snapshot",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"dashboard:editor": {
+			Title:       "dashboard Editor",
+			Description: "Create, Read, Update, and Delete Dashboardsand Snapshots",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dashboard",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "Snapshot",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"dashboard:reader": {
+			Title:       "dashboard Reader",
+			Description: "Read Dashboardsand Snapshots",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dashboard",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "Snapshot",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"dashboard:reader",
+		},
+		Editor: []string{
+			"dashboard:editor",
+		},
+		Admin: []string{
+			"dashboard:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -205,4 +267,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

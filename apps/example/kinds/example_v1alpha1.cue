@@ -66,6 +66,7 @@ examplev1alpha1: exampleKind & {
             // GET request handler. A subresource route can have multiple methods attached to it. 
             // Allowed values are GET, POST, PUT, DELETE, PATCH, HEAD, and OPTIONS
             "GET": {
+                name: "getFoo"
                 // The response type for the GET /foo method. This will generate a go type, and will also be used for the OpenAPI definition for the route.
                 response: {
                     message: string

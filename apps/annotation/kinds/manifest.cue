@@ -14,6 +14,7 @@ v0alpha1: {
         namespaced: {
             "/tags": {
                 "GET": {
+                    name: "getTags"
                     response: {
                         tags: [...{
                             tag: string

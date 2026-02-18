@@ -644,6 +644,188 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"iam:admin": {
+			Title:       "iam Admin",
+			Description: "Allows all actions on ExternalGroupMappings, ResourcePermissions, Users, Teams, ServiceAccounts, GlobalRoles, GlobalRoleBindings, CoreRoles, Roles, RoleBindings, TeamBindings, and TeamLBACRules",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "GlobalRole",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "GlobalRoleBinding",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "CoreRole",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Role",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "RoleBinding",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "ResourcePermission",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "User",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "User/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Team",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "TeamBinding",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "TeamLBACRule",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "ServiceAccount",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "ExternalGroupMapping",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"iam:editor": {
+			Title:       "iam Editor",
+			Description: "Create, Read, Update, and Delete ExternalGroupMappings, ResourcePermissions, Users, Teams, ServiceAccounts, GlobalRoles, GlobalRoleBindings, CoreRoles, Roles, RoleBindings, TeamBindings, and TeamLBACRules",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "GlobalRole",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "GlobalRoleBinding",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "CoreRole",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "Role",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "RoleBinding",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "ResourcePermission",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "User",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "Team",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "TeamBinding",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "TeamLBACRule",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "ServiceAccount",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "ExternalGroupMapping",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"iam:reader": {
+			Title:       "iam Reader",
+			Description: "Read ExternalGroupMappings, ResourcePermissions, Users, Teams, ServiceAccounts, GlobalRoles, GlobalRoleBindings, CoreRoles, Roles, RoleBindings, TeamBindings, and TeamLBACRules",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "GlobalRole",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "GlobalRoleBinding",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "CoreRole",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "Role",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "RoleBinding",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "ResourcePermission",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "User",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "Team",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "TeamBinding",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "TeamLBACRule",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "ServiceAccount",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "ExternalGroupMapping",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"iam:reader",
+		},
+		Editor: []string{
+			"iam:editor",
+		},
+		Admin: []string{
+			"iam:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -736,4 +918,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

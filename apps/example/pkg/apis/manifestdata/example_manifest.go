@@ -277,6 +277,60 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"example:admin": {
+			Title:       "example Admin",
+			Description: "Allows all actions on Examples",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Example",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Example/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Example/custom",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"example:editor": {
+			Title:       "example Editor",
+			Description: "Create, Read, Update, and Delete Examples",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Example",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"example:reader": {
+			Title:       "example Reader",
+			Description: "Read Examples",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Example",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"example:reader",
+		},
+		Editor: []string{
+			"example:editor",
+		},
+		Admin: []string{
+			"example:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -356,4 +410,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

@@ -60,6 +60,72 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"plugins:admin": {
+			Title:       "plugins Admin",
+			Description: "Allows all actions on Metasand Plugins",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Plugin",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Plugin/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Meta",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Meta/status",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"plugins:editor": {
+			Title:       "plugins Editor",
+			Description: "Create, Read, Update, and Delete Metasand Plugins",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Plugin",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "Meta",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"plugins:reader": {
+			Title:       "plugins Reader",
+			Description: "Read Metasand Plugins",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Plugin",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "Meta",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"plugins:reader",
+		},
+		Editor: []string{
+			"plugins:editor",
+		},
+		Admin: []string{
+			"plugins:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -133,4 +199,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

@@ -429,6 +429,56 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"alerting-historian:admin": {
+			Title:       "alerting-historian Admin",
+			Description: "Allows all actions on Dummys",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dummy",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Dummy/status",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"alerting-historian:editor": {
+			Title:       "alerting-historian Editor",
+			Description: "Create, Read, Update, and Delete Dummys",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dummy",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"alerting-historian:reader": {
+			Title:       "alerting-historian Reader",
+			Description: "Read Dummys",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Dummy",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"alerting-historian:reader",
+		},
+		Editor: []string{
+			"alerting-historian:editor",
+		},
+		Admin: []string{
+			"alerting-historian:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -506,4 +556,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }
