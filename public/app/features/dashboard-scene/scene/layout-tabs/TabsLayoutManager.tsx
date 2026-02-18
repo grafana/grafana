@@ -149,18 +149,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    // Ensure clone globally unique keys for tabs in repeated rows by prefixing with ancestor key
-    // TODO: https://github.com/grafana/grafana/issues/118343
-    // This can be removed if https://github.com/grafana/scenes/issues/1363 is implemented.
-    const clone = this.clone({
-      key: `${ancestorKey}-${this.state.key}`,
-    });
-    clone.state.tabs.forEach((tab) => {
-      tab.setState({
-        key: `${ancestorKey}-${tab.state.key}`,
-      });
-    });
-    return clone;
+    return this.clone();
   }
 
   public getOutlineChildren() {
