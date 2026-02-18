@@ -518,6 +518,32 @@ describe('Logs', () => {
   });
   describe('with table panel visualisation', () => {
     let originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
+    let origResizeObserver = global.ResizeObserver;
+
+    beforeEach(() => {
+      origResizeObserver = global.ResizeObserver;
+      // Mock ResizeObserver
+      global.ResizeObserver = class ResizeObserver {
+        constructor(callback: unknown) {
+          // Store the callback
+          this.callback = callback;
+        }
+        callback: unknown;
+        observe() {
+          // Do nothing
+        }
+        unobserve() {
+          // Do nothing
+        }
+        disconnect() {
+          // Do nothing
+        }
+      };
+    });
+
+    afterEach(() => {
+      global.ResizeObserver = origResizeObserver;
+    });
 
     beforeAll(() => {
       originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
@@ -528,7 +554,7 @@ describe('Logs', () => {
       config.featureToggles.logsTablePanel = originalVisualisationTypeValue;
     });
 
-    it('should show show table', async () => {
+    it('should show table', async () => {
       setup({
         panelState: {
           logs: {
@@ -536,12 +562,12 @@ describe('Logs', () => {
           },
         },
       });
-      waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
       const logs = screen.queryByTestId('logRows');
       expect(logs).not.toBeInTheDocument();
     });
 
-    it('should show show logs', async () => {
+    it('should show logs', async () => {
       setup({
         panelState: {
           logs: {
@@ -549,9 +575,11 @@ describe('Logs', () => {
           },
         },
       });
-      waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+
+      await waitFor(() => expect(screen.getByText('Download')).toBeInTheDocument());
       const logs = await screen.findByTestId('logRows');
       expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
     });
   });
 });
