@@ -71,6 +71,14 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      const trimmedName = event.currentTarget.value.trim();
+      const error = validateQueryName(trimmedName);
+
+      if (error) {
+        setValidationError(error);
+        return;
+      }
+
       onEndEditName(event.currentTarget.value);
     } else if (event.key === 'Escape') {
       event.stopPropagation(); // Prevent going all the way back to the dashboard scene
