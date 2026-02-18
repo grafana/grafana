@@ -40,7 +40,7 @@ func TestExclusiveSet(t *testing.T) {
 		wg.Go(func() {
 			<-start
 			if _, ok := cache.Get(key); !ok {
-				cache.ExclusiveSet(key, read, time.Minute)
+				require.NoError(t, cache.ExclusiveSet(key, read, time.Minute))
 			}
 		})
 
@@ -58,7 +58,7 @@ func TestExclusiveSet(t *testing.T) {
 	// which would delete the cache entry.
 	_, ok := cache.Get(key)
 	if !ok {
-		cache.ExclusiveSet(key, read, time.Minute)
+		require.NoError(t, cache.ExclusiveSet(key, read, time.Minute))
 	}
 
 	cached, ok := cache.Get(key)

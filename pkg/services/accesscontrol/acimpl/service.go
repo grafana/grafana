@@ -350,8 +350,8 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 
 	var permissions []accesscontrol.Permission
-	var err error
 	getValue := func() (any, error) {
+		var err error
 		permissions, err = getPermissionsFn(ctx)
 		if err != nil {
 			return nil, err
@@ -361,8 +361,11 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 		return permissions, nil
 	}
 
-	s.cache.ExclusiveSet(key, getValue, cacheTTL)
-	return permissions, err
+	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
