@@ -568,7 +568,10 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		provisionedPerms, err := api.getAllPermissionsFromLegacy(context.Background(), "stack-123-org-1", "dashboard-123", permissionFilter{
+			excludeManaged:   true,
+			excludeInherited: true,
+		})
 
 		require.NoError(t, err)
 		require.Len(t, provisionedPerms, 2, "should return only provisioned permissions")
@@ -587,6 +590,142 @@ func TestGetProvisionedPermissions(t *testing.T) {
 		assert.False(t, provisionedPerms[1].IsManaged, "provisioned permission should not be managed")
 		assert.False(t, provisionedPerms[1].IsInherited, "provisioned permission should not be inherited")
 	})
+}
+
+// TestGetAllPermissionsFromLegacy tests the unified legacy permission retrieval function
+func TestGetAllPermissionsFromLegacy(t *testing.T) {
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+	// Create a mock store with all permission types
+	mockStore := &mockResourcePermissionStore{
+		permissions: []accesscontrol.ResourcePermission{
+			// Managed, not inherited
+			{
+				UserID:      1,
+				UserLogin:   "managed-user",
+				Actions:     []string{"dashboards:read", "dashboards:write"},
+				IsManaged:   true,
+				IsInherited: false,
+			},
+			// Inherited, not managed
+			{
+				UserID:      2,
+				UserLogin:   "inherited-user",
+				Actions:     []string{"dashboards:read"},
+				IsManaged:   false,
+				IsInherited: true,
+			},
+			// Provisioned (not managed, not inherited)
+			{
+				UserID:      3,
+				UserLogin:   "provisioned-user",
+				Actions:     []string{"dashboards:read", "dashboards:write"},
+				IsManaged:   false,
+				IsInherited: false,
+			},
+			// Managed and inherited (edge case)
+			{
+				UserID:      4,
+				UserLogin:   "managed-inherited-user",
+				Actions:     []string{"dashboards:read"},
+				IsManaged:   true,
+				IsInherited: true,
+			},
+		},
+	}
+
+	api := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store: mockStore,
+			options: Options{
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				APIGroup:          dashboardv1.APIGroup,
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+					"Edit": {"dashboards:read", "dashboards:write"},
+				},
+			},
+			actions:     []string{"dashboards:read", "dashboards:write"},
+			permissions: []string{"Edit", "View"},
+			license:     license,
+		},
+	}
+
+	tests := []struct {
+		name           string
+		filter         permissionFilter
+		expectedCount  int
+		expectedLogins []string
+	}{
+		{
+			name: "only managed permissions",
+			filter: permissionFilter{
+				onlyManaged: true,
+			},
+			expectedCount:  2,
+			expectedLogins: []string{"managed-user", "managed-inherited-user"},
+		},
+		{
+			name: "only inherited permissions",
+			filter: permissionFilter{
+				onlyInherited: true,
+			},
+			expectedCount:  2,
+			expectedLogins: []string{"inherited-user", "managed-inherited-user"},
+		},
+		{
+			name: "managed but not inherited",
+			filter: permissionFilter{
+				onlyManaged:      true,
+				excludeInherited: true,
+			},
+			expectedCount:  1,
+			expectedLogins: []string{"managed-user"},
+		},
+		{
+			name: "inherited but not managed",
+			filter: permissionFilter{
+				excludeManaged: true,
+				onlyInherited:  true,
+			},
+			expectedCount:  1,
+			expectedLogins: []string{"inherited-user"},
+		},
+		{
+			name: "provisioned (not managed, not inherited)",
+			filter: permissionFilter{
+				excludeManaged:   true,
+				excludeInherited: true,
+			},
+			expectedCount:  1,
+			expectedLogins: []string{"provisioned-user"},
+		},
+		{
+			name:           "all permissions (no filters)",
+			filter:         permissionFilter{},
+			expectedCount:  4,
+			expectedLogins: []string{"managed-user", "inherited-user", "provisioned-user", "managed-inherited-user"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			perms, err := api.getAllPermissionsFromLegacy(context.Background(), "stack-123-org-1", "dashboard-123", tt.filter)
+
+			require.NoError(t, err)
+			assert.Len(t, perms, tt.expectedCount, "unexpected number of permissions")
+
+			actualLogins := make([]string, len(perms))
+			for i, perm := range perms {
+				actualLogins[i] = perm.UserLogin
+			}
+			assert.ElementsMatch(t, tt.expectedLogins, actualLogins, "unexpected permission logins")
+		})
+	}
 }
 
 // TestGetResourcePermissionsFromK8s_AdminRole tests that Admin role is added when access control enforcement is disabled
@@ -757,17 +896,21 @@ type mockResourcePermissionStore struct {
 }
 
 func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
-	// Apply ExcludeManaged filter if set (to match real store behavior)
-	if query.ExcludeManaged {
-		var filtered []accesscontrol.ResourcePermission
-		for _, perm := range m.permissions {
-			if !perm.IsManaged {
-				filtered = append(filtered, perm)
-			}
+	var filtered []accesscontrol.ResourcePermission
+
+	for _, perm := range m.permissions {
+		// Apply managed filters
+		if query.OnlyManaged && !perm.IsManaged {
+			continue
 		}
-		return filtered, nil
+		if query.ExcludeManaged && perm.IsManaged {
+			continue
+		}
+
+		filtered = append(filtered, perm)
 	}
-	return m.permissions, nil
+
+	return filtered, nil
 }
 
 func (m *mockResourcePermissionStore) SetUserResourcePermission(ctx context.Context, orgID int64, user accesscontrol.User, cmd SetResourcePermissionCommand, hook UserResourceHookFunc) (*accesscontrol.ResourcePermission, error) {

@@ -52,17 +52,22 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, user *user.Sign
 		return nil, err
 	}
 
+	dto := make(getResourcePermissionsResponse, 0)
 	resourcePermName := a.buildResourcePermissionName(resourceID)
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
 
-	dto := make(getResourcePermissionsResponse, 0)
-
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("failed to get resource permission from k8s: %w", err)
-	}
-
-	if unstructuredObj != nil {
+		a.logger.Warn("Failed to get managed permissions from k8s, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		managedDTO, fallbackErr := a.getAllPermissionsFromLegacy(ctx, namespace, resourceID, permissionFilter{
+			onlyManaged:      true,
+			excludeInherited: true,
+		})
+		if fallbackErr != nil {
+			return nil, fmt.Errorf("failed to get managed permissions from both k8s and legacy: %w", err)
+		}
+		dto = append(dto, managedDTO...)
+	} else if unstructuredObj != nil {
 		var resourcePerm iamv0.ResourcePermission
 		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &resourcePerm); err != nil {
 			return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
@@ -77,20 +82,24 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, user *user.Sign
 
 	inheritedDTO, err := a.GetInheritedPermissions(ctx, user, namespace, resourceID, dynamicClient)
 	if err != nil {
-		a.logger.Warn("Failed to get inherited permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-		inheritedDTO, err = a.getInheritedPermissionsFromLegacy(ctx, namespace, resourceID)
+		a.logger.Warn("Failed to get inherited permissions from k8s, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		inheritedDTO, err = a.getAllPermissionsFromLegacy(ctx, namespace, resourceID, permissionFilter{
+			onlyInherited: true,
+		})
 		if err != nil {
-			a.logger.Warn("Failed to get inherited permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+			a.logger.Warn("Failed to get inherited permissions from legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 		}
 	}
 	if err == nil {
 		dto = append(dto, inheritedDTO...)
 	}
 
-	// Get provisioned permissions from legacy API
-	provisionedDTO, err := a.getProvisionedPermissions(ctx, namespace, resourceID)
+	provisionedDTO, err := a.getAllPermissionsFromLegacy(ctx, namespace, resourceID, permissionFilter{
+		excludeManaged:   true,
+		excludeInherited: true,
+	})
 	if err != nil {
-		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		a.logger.Warn("Failed to get provisioned permissions from legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 	} else {
 		dto = append(dto, provisionedDTO...)
 	}
@@ -307,9 +316,14 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, reqUser *user.S
 	return allInheritedPermissions, nil
 }
 
-// getProvisionedPermissions retrieves provisioned permissions from the legacy SQL database
-// These are permissions that are neither managed (from K8s) nor inherited
-func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+type permissionFilter struct {
+	onlyManaged      bool
+	excludeManaged   bool
+	onlyInherited    bool
+	excludeInherited bool
+}
+
+func (a *api) getAllPermissionsFromLegacy(ctx context.Context, namespace string, resourceID string, filter permissionFilter) (getResourcePermissionsResponse, error) {
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
@@ -321,8 +335,8 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		Resource:             a.service.options.Resource,
 		ResourceID:           resourceID,
 		ResourceAttribute:    a.service.options.ResourceAttribute,
-		OnlyManaged:          false,
-		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
+		OnlyManaged:          filter.onlyManaged,
+		ExcludeManaged:       filter.excludeManaged,
 		EnforceAccessControl: false,
 		User:                 nil,
 	})
@@ -330,80 +344,23 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
 	}
 
-	var provisionedPermissions []accesscontrol.ResourcePermission
+	var filtered []accesscontrol.ResourcePermission
 	for _, perm := range legacyPermissions {
-		if !perm.IsInherited {
-			provisionedPermissions = append(provisionedPermissions, perm)
+		if filter.onlyInherited && !perm.IsInherited {
+			continue
 		}
+		if filter.excludeInherited && perm.IsInherited {
+			continue
+		}
+		filtered = append(filtered, perm)
 	}
 
-	// Convert to DTOs
-	dto := make(getResourcePermissionsResponse, 0, len(provisionedPermissions))
-	for _, p := range provisionedPermissions {
-		if permission := a.service.MapActions(p); permission != "" {
-			teamAvatarUrl := ""
-			if p.TeamID != 0 {
-				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)
-			}
-
-			dto = append(dto, resourcePermissionDTO{
-				ID:               p.ID,
-				RoleName:         p.RoleName,
-				UserID:           p.UserID,
-				UserUID:          p.UserUID,
-				UserLogin:        p.UserLogin,
-				UserAvatarUrl:    dtos.GetGravatarUrl(a.cfg, p.UserEmail),
-				Team:             p.Team,
-				TeamID:           p.TeamID,
-				TeamUID:          p.TeamUID,
-				TeamAvatarUrl:    teamAvatarUrl,
-				BuiltInRole:      p.BuiltInRole,
-				Actions:          p.Actions,
-				Permission:       permission,
-				IsManaged:        false,
-				IsInherited:      false,
-				IsServiceAccount: p.IsServiceAccount,
-			})
-		}
-	}
-
-	return dto, nil
+	return a.convertLegacyPermissionsToDTO(filtered), nil
 }
 
-func (a *api) buildResourcePermissionName(resourceID string) string {
-	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceID)
-}
-
-func (a *api) getInheritedPermissionsFromLegacy(ctx context.Context, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
-	namespaceInfo, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
-	}
-	orgID := namespaceInfo.OrgID
-
-	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
-		Actions:              a.service.actions,
-		Resource:             a.service.options.Resource,
-		ResourceID:           resourceID,
-		ResourceAttribute:    a.service.options.ResourceAttribute,
-		OnlyManaged:          false,
-		ExcludeManaged:       false,
-		EnforceAccessControl: false,
-		User:                 nil,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
-	}
-
-	var inheritedPermissions []accesscontrol.ResourcePermission
-	for _, perm := range legacyPermissions {
-		if perm.IsInherited {
-			inheritedPermissions = append(inheritedPermissions, perm)
-		}
-	}
-
-	dto := make(getResourcePermissionsResponse, 0, len(inheritedPermissions))
-	for _, p := range inheritedPermissions {
+func (a *api) convertLegacyPermissionsToDTO(permissions []accesscontrol.ResourcePermission) getResourcePermissionsResponse {
+	dto := make(getResourcePermissionsResponse, 0, len(permissions))
+	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamID != 0 {
@@ -425,13 +382,16 @@ func (a *api) getInheritedPermissionsFromLegacy(ctx context.Context, namespace s
 				Actions:          p.Actions,
 				Permission:       permission,
 				IsManaged:        p.IsManaged,
-				IsInherited:      true,
+				IsInherited:      p.IsInherited,
 				IsServiceAccount: p.IsServiceAccount,
 			})
 		}
 	}
+	return dto
+}
 
-	return dto, nil
+func (a *api) buildResourcePermissionName(resourceID string) string {
+	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceID)
 }
 
 // Write operations
