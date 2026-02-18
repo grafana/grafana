@@ -112,9 +112,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					},
 				},
 				"secure": map[string]any{
-					// "aaa": map[string]any{
-					// 	"remove": true, // remove does not really remove in legacy!
-					// },
+					"aaa": map[string]any{
+						"remove": true,
+					},
 					"ccc": map[string]any{
 						"create": "CCC", // add a third value
 					},
@@ -132,7 +132,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.NoError(t, err)
 
 		keys := slices.Collect(maps.Keys(secure))
-		require.ElementsMatch(t, []string{"aaa", "bbb", "ccc"}, keys)
+		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys)
 	})
 
 	t.Run("list", func(t *testing.T) {
