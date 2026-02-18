@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { useLocalStorage } from 'react-use';
 
-import { FeatureState, GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { FeatureState, GrafanaTheme2, NavModelItem, store, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -12,7 +11,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
-import { hasChildMatch } from './utils';
+import { getSectionExpanded, hasChildMatch, setSectionExpanded } from './utils';
 
 interface Props {
   link: NavModelItem;
@@ -32,10 +31,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
-  const [sectionExpanded, setSectionExpanded] = useLocalStorage(
-    `grafana.navigation.expanded[${link.id}]`,
-    Boolean(hasActiveChild)
-  );
+  // Track state internally so we correctly rerender when the store is updated
+  // Otherwise we wouldn't keep up to date with the localStorage
+  const [sectionExpanded, setInternalExpandState] = useState(getSectionExpanded(link));
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
 
@@ -44,9 +42,17 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   // expand parent sections if child is active
   useEffect(() => {
     if (hasActiveChild) {
-      setSectionExpanded(true);
+      setSectionExpanded(link, true);
+      setInternalExpandState(true);
     }
-  }, [hasActiveChild, location, menuIsDocked, setSectionExpanded]);
+  }, [hasActiveChild, location, menuIsDocked, link]);
+
+  useEffect(() => {
+    store.subscribe(`grafana.navigation.expanded[${link.id}]`, () => {
+      setInternalExpandState(getSectionExpanded(link));
+      store.set(`grafana.navigation.expanded-state-change`, new Date().getTime());
+    });
+  }, [link]);
 
   // scroll active element into center if it's offscreen
   useEffect(() => {
@@ -121,7 +127,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                     })
               }
               className={styles.collapseButton}
-              onClick={() => setSectionExpanded(!sectionExpanded)}
+              onClick={() => setSectionExpanded(link, !sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}
               size="md"
               variant="secondary"
