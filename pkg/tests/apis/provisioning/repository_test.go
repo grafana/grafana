@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +27,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -71,16 +72,25 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			returnedRepo := unstructuredToRepository(t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 
-			// A viewer should not be able to see the same thing
+			// A viewer should be able to read the repository
 			var statusCode int
 			rsp := helper.ViewerREST.Get().
 				Namespace("default").
 				Resource("repositories").
 				Name(name).
 				Do(context.Background())
-			require.Error(t, rsp.Error())
+			require.NoError(t, rsp.Error(), "viewer should be able to read repository")
 			rsp.StatusCode(&statusCode)
-			require.Equal(t, http.StatusForbidden, statusCode)
+			require.Equal(t, http.StatusOK, statusCode)
+
+			viewerOutput, err := rsp.Get()
+			require.NoError(t, err, "should get repository object")
+			viewerUnstruct, ok := viewerOutput.(*unstructured.Unstructured)
+			require.True(t, ok, "expecting unstructured object")
+
+			// Verify viewer gets the same repository data
+			viewerRepo := unstructuredToRepository(t, viewerUnstruct)
+			require.Equal(t, expectedRepo.Spec, viewerRepo.Spec, "viewer should see same repository spec")
 
 			// Viewer can see file listing
 			rsp = helper.AdminREST.Get().
@@ -172,6 +182,39 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
+	// Viewer can list repositories
+	t.Run("viewer can list repositories", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			rsp := helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Do(context.Background())
+			if !assert.NoError(collect, rsp.Error(), "viewer should be able to list repositories") {
+				return
+			}
+
+			repos := &unstructured.UnstructuredList{}
+			err := rsp.Into(repos)
+			if !assert.NoError(collect, err, "should parse repository list") {
+				return
+			}
+
+			// Should see the repositories created in this test
+			assert.Len(collect, repos.Items, len(inputFiles), "viewer should see all repositories")
+
+			// Verify each repository has expected data
+			for _, repo := range repos.Items {
+				name := repo.GetName()
+				assert.NotEmpty(collect, name, "repository should have a name")
+
+				spec, found, err := unstructured.NestedMap(repo.Object, "spec")
+				assert.NoError(collect, err, "should have spec")
+				assert.True(collect, found, "spec should be found")
+				assert.NotEmpty(collect, spec, "spec should not be empty")
+			}
+		}, time.Second*10, time.Millisecond*100, "Expected viewer to list repositories")
+	})
+
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			report := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
@@ -232,6 +275,24 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				return localTmp
 			}(),
 			expectedErr: "cannot have both remove and release orphan resources finalizers",
+		},
+		{
+			name: "should error if unknown finalizer is set",
+			repo: func() *unstructured.Unstructured {
+				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+					"Name":        "repo-with-unknown-finalizer",
+					"SyncEnabled": true,
+				})
+
+				// Setting an unknown finalizer
+				localTmp.SetFinalizers([]string{
+					repository.CleanFinalizer,
+					"unknown.finalizer.example.com",
+				})
+
+				return localTmp
+			}(),
+			expectedErr: "unknown finalizer: unknown.finalizer.example.com",
 		},
 		{
 			name: "should succeed with repository with no token but referencing Connection",
@@ -297,15 +358,46 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "should accept GitHub Enterprise URL",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-github-enterprise",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "GitHub Enterprise Repository",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.enterprise.example.com/org/repo",
+						"branch": "main",
+					},
+					"workflows": []string{},
+				},
+				"secure": map[string]any{
+					"token": map[string]any{
+						"create": "someToken",
+					},
+				},
+			}},
+		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
-			if testCase.expectedErr == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.ErrorContains(t, err, testCase.expectedErr)
-			}
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+				if testCase.expectedErr == "" {
+					require.NoError(collect, err)
+				} else {
+					require.Error(collect, err)
+					require.ErrorContains(collect, err, testCase.expectedErr)
+				}
+			}, waitTimeoutDefault, waitIntervalDefault)
 		})
 	}
 
@@ -384,6 +476,57 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 		createdRepo := unstructuredToRepository(t, created)
 		require.Equal(t, int64(10), createdRepo.Spec.Sync.IntervalSeconds, "interval should be updated with default value")
+	})
+
+	t.Run("should automatically add finalizers during creation", func(t *testing.T) {
+		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+			"Name":        "repo-auto-finalizers",
+			"SyncEnabled": false,
+		})
+
+		// Verify the template doesn't have finalizers set (or set them explicitly to nil)
+		r.SetFinalizers(nil)
+
+		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+
+		// Verify finalizers were automatically added by the mutator
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be automatically added")
+		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+	})
+
+	t.Run("should re-add finalizers when removed during update", func(t *testing.T) {
+		// Create a repository with finalizers
+		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+			"Name":        "repo-update-finalizers",
+			"SyncEnabled": false,
+		})
+
+		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be present after creation")
+		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			storedRepo, err := helper.Repositories.Resource.Get(ctx, "repo-update-finalizers", metav1.GetOptions{})
+			require.NoError(t, err, "repository retrieve should succeed")
+
+			// Update the repository and try to remove finalizers
+			storedRepo.SetFinalizers([]string{})
+			updated, err := helper.Repositories.Resource.Update(ctx, storedRepo, metav1.UpdateOptions{})
+			require.NoError(collect, err, "repository update should succeed")
+
+			// Verify finalizers were re-added by the mutator
+			updatedRepo := unstructuredToRepository(t, updated)
+			require.NotEmpty(collect, updatedRepo.Finalizers, "finalizers should be re-added after update")
+			require.Contains(collect, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+			require.Contains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+		}, waitTimeoutDefault, waitIntervalDefault)
 	})
 }
 
@@ -849,6 +992,26 @@ spec:
 		name, _, _ := unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
 		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
 	})
+
+	t.Run("folder not allowed", func(t *testing.T) {
+		code := 0
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "folder.json").
+			Body([]byte(`apiVersion: folder.grafana.app/v1beta1
+kind: Folder
+metadata:
+  name: someFolder
+spec:
+  title: Test Folder
+`)).Do(ctx).StatusCode(&code)
+		require.Error(t, result.Error(), "should return error")
+		require.Contains(t, result.Error().Error(), "cannot declare folders through files")
+		require.Equal(t, http.StatusBadRequest, code, "expect bad request result")
+	})
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
@@ -1267,11 +1430,13 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
-		c, err := helper.Connections.Resource.Get(ctx, "test-connection", metav1.GetOptions{})
+		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		conn := unstructuredToConnection(t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
@@ -1300,7 +1465,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				"branch": "main",
 			},
 			"connection": map[string]any{
-				"name": "test-connection",
+				"name": connectionName,
 			},
 		},
 	}}
@@ -1428,11 +1593,13 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		},
 	}}
 
-	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	connectionName := c.GetName()
+
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, "test-connection-invalid-repo", metav1.DeleteOptions{})
+		_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
 	})
 
 	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1456,7 +1623,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "non-existent-branch-12345", // This branch doesn't exist
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1525,7 +1692,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 					"branch": "main",
 				},
 				"connection": map[string]any{
-					"name": "test-connection-invalid-repo",
+					"name": connectionName,
 				},
 			},
 		}}
@@ -1792,5 +1959,220 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 			require.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "repo should be reconciled")
 			require.Equal(collect, defaultBranchName, repo.Spec.GitHub.Branch, "default branch should be set")
 		}, 30*time.Second, 1*time.Second, "repository should have default branch")
+	})
+}
+
+func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !extensions.IsEnterprise {
+		t.Skip("Skipping integration test when not enterprise")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("GitLab repository can be created and reconciled", func(t *testing.T) {
+		token := base64.StdEncoding.EncodeToString([]byte("test-gitlab-token"))
+
+		repository := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-gitlab-repo",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test GitLab Repository",
+				"type":  string(provisioning.GitLabRepositoryType),
+				"gitlab": map[string]any{
+					"url":    "https://gitlab.com/test/repo.git",
+					"branch": "main",
+					"path":   "dashboards",
+				},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{
+					"create": token,
+				},
+			},
+		}}
+
+		// CREATE
+		created, err := helper.Repositories.Resource.Create(ctx, repository, metav1.CreateOptions{})
+		require.NoError(t, err, "failed to create GitLab repository")
+		require.NotNil(t, created)
+
+		repoName := created.GetName()
+		require.NotEmpty(t, repoName, "repository name should not be empty")
+
+		// Cleanup
+		defer func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		}()
+
+		// READ
+		output, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to read back GitLab repository")
+		assert.Equal(t, repoName, output.GetName(), "name should be equal")
+
+		spec := output.Object["spec"].(map[string]any)
+		assert.Equal(t, string(provisioning.GitLabRepositoryType), spec["type"], "type should be gitlab")
+
+		// Get typed client for status checks
+		restConfig := helper.Org1.Admin.NewRestConfig()
+		provClient, err := clientset.NewForConfig(restConfig)
+		require.NoError(t, err, "failed to create provisioning client")
+		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
+
+		// Wait for reconciliation - controller should process the resource
+		// With fake credentials, the git operations will fail, but reconciliation should happen
+		require.Eventually(t, func() bool {
+			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Check that controller has reconciled (ObservedGeneration matches Generation)
+			// and that health check was attempted (Checked > 0)
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled by controller")
+
+		// Verify reconciliation status
+		reconciled, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Controller should have set ObservedGeneration - this proves reconciliation happened
+		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
+			"controller should have reconciled the repository")
+
+		// Health check should have been attempted - proves the controller processed it
+		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
+			"health check should have been attempted")
+
+		// Should have a ready condition - proves status was updated
+		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "should have ready condition")
+
+		t.Logf("GitLab repository reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
+			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
+	})
+
+	t.Run("Bitbucket repository can be and reconciled", func(t *testing.T) {
+		token := base64.StdEncoding.EncodeToString([]byte("test-bitbucket-token"))
+
+		repository := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-bitbucket-repo",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Bitbucket Repository",
+				"type":  string(provisioning.BitbucketRepositoryType),
+				"bitbucket": map[string]any{
+					"url":    "https://bitbucket.org/workspace/repo.git",
+					"branch": "main",
+					"path":   "dashboards",
+				},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{
+					"create": token,
+				},
+			},
+		}}
+
+		// CREATE
+		created, err := helper.Repositories.Resource.Create(ctx, repository, metav1.CreateOptions{})
+		require.NoError(t, err, "failed to create Bitbucket repository")
+		require.NotNil(t, created)
+
+		repoName := created.GetName()
+		require.NotEmpty(t, repoName, "repository name should not be empty")
+
+		// Cleanup
+		defer func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		}()
+
+		// READ
+		output, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to read back Bitbucket repository")
+		assert.Equal(t, repoName, output.GetName(), "name should be equal")
+
+		spec := output.Object["spec"].(map[string]any)
+		assert.Equal(t, string(provisioning.BitbucketRepositoryType), spec["type"], "type should be bitbucket")
+
+		// Get typed client for status checks
+		restConfig := helper.Org1.Admin.NewRestConfig()
+		provClient, err := clientset.NewForConfig(restConfig)
+		require.NoError(t, err, "failed to create provisioning client")
+		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
+
+		// Wait for reconciliation
+		require.Eventually(t, func() bool {
+			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled by controller")
+
+		// Verify reconciliation status
+		reconciled, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
+			"controller should have reconciled the repository")
+		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
+			"health check should have been attempted")
+
+		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "should have ready condition")
+
+		t.Logf("Bitbucket repository reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
+			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
+	})
+
+	t.Run("All repository types are supported", func(t *testing.T) {
+		// List all supported repository types
+
+		supportedTypes := []provisioning.RepositoryType{
+			provisioning.GitHubRepositoryType,
+			provisioning.GitLabRepositoryType,
+			provisioning.BitbucketRepositoryType,
+			provisioning.GitRepositoryType,
+			provisioning.LocalRepositoryType,
+		}
+
+		for _, repoType := range supportedTypes {
+			t.Run(string(repoType), func(t *testing.T) {
+				// We just check that we can create the object without factory errors
+				// Validation errors are expected if configuration is missing/invalid
+				repo := &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": "provisioning.grafana.app/v0alpha1",
+					"kind":       "Repository",
+					"metadata": map[string]any{
+						"generateName": "test-",
+						"namespace":    "default",
+					},
+					"spec": map[string]any{
+						"title": "Test Repository",
+						"type":  string(repoType),
+					},
+				}}
+
+				// Try to create - we expect validation error, not "type not supported"
+				_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+				if err != nil {
+					// Should be a validation error, not "type not supported"
+					assert.NotContains(t, err.Error(), "is not supported",
+						"type %s should be supported by factory", repoType)
+				}
+			})
+		}
 	})
 }

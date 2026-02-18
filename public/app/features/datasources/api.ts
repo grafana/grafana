@@ -12,12 +12,12 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 export interface K8sMetadata {
   name: string;
   namespace: string;
-  uid: string;
+  uid?: string;
   resourceVersion: string;
-  generation: number;
-  creationTimestamp: string;
-  labels: Map<string, string>;
-  annotations: Map<string, string>;
+  generation?: number;
+  creationTimestamp?: string;
+  labels: { [key: string]: string };
+  annotations: { [key: string]: string };
 }
 
 export interface DatasourceInstanceK8sSpec {
@@ -27,6 +27,7 @@ export interface DatasourceInstanceK8sSpec {
   url: string;
   basicAuth: boolean;
   basicAuthUser: string;
+  isDefault?: boolean;
 }
 
 export interface DatasourceAccessK8s {
@@ -40,6 +41,7 @@ export interface DataSourceSettingsK8s {
   apiVersion: string;
   metadata: K8sMetadata;
   spec: DatasourceInstanceK8sSpec;
+  secure?: Record<string, Record<string, string>>;
 }
 
 export const getDataSourceK8sGroup = (uid: string): string => {
@@ -54,28 +56,61 @@ export const getDataSourceK8sGroup = (uid: string): string => {
   return '';
 };
 
-export const getDataSourceFromK8sAPI = async (k8sName: string, stackId: string) => {
-  // TODO: read this from backend.
-  let k8sVersion = 'v0alpha1';
-  let k8sGroup = getDataSourceK8sGroup(k8sName);
-  if (k8sGroup === '') {
-    throw Error(`Could not find data source group with uid: "${k8sName}"`);
+export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
+  dsSettings: DataSourceSettings,
+  namespace: string,
+  version: string
+): DataSourceSettingsK8s => {
+  let k8sMetadata: K8sMetadata = {
+    name: dsSettings.uid,
+    namespace: namespace,
+    resourceVersion: 'fortytwo',
+    labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
+    annotations: {},
+  };
+  let k8sSpec: DatasourceInstanceK8sSpec = {
+    access: dsSettings.access,
+    jsonData: dsSettings.jsonData,
+    title: dsSettings.name,
+    url: dsSettings.url,
+    basicAuth: dsSettings.basicAuth,
+    basicAuthUser: dsSettings.basicAuthUser,
+    isDefault: dsSettings.isDefault,
+  };
+  let dsK8sSettings: DataSourceSettingsK8s = {
+    kind: 'DataSource',
+    metadata: k8sMetadata,
+    spec: k8sSpec,
+    apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
+  };
+  if (dsSettings.secureJsonData) {
+    dsK8sSettings.secure = {};
+    for (let [k, v] of Object.entries(dsSettings.secureJsonData)) {
+      let value = { create: v };
+      if (isRecordOfString(value)) {
+        dsK8sSettings.secure[k] = value;
+      }
+    }
   }
+  return dsK8sSettings;
+};
 
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<DataSourceSettingsK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${stackId}/datasources/${k8sName}`,
-      showErrorAlert: false,
-    })
-  );
-  if (!response.ok) {
-    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
+function isRecordOfString(value: unknown): value is Record<string, string> {
+  if (value === null) {
+    return false;
   }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  return true;
+}
 
-  let dsK8sSettings = response.data;
-  let labels = new Map(Object.entries(dsK8sSettings.metadata.labels));
-  let id = parseInt(labels.get('grafana.app/deprecatedInternalID') || '', 10);
+export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
+  dsK8sSettings: DataSourceSettingsK8s
+): DataSourceSettings => {
+  // TODO: remove this once we figure out what code is using the deprecated
+  // id field.
+  let id = parseInt(dsK8sSettings.metadata.labels['grafana.app/deprecatedInternalID'] || '', 10);
   let dsSettings: DataSourceSettings = {
     id: id,
     uid: dsK8sSettings.metadata.name,
@@ -90,17 +125,44 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, stackId: string) 
     database: '',
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
-    isDefault: false,
+    isDefault: dsK8sSettings.spec.isDefault ? true : false,
     jsonData: dsK8sSettings.spec.jsonData,
     secureJsonFields: {},
     readOnly: false,
     withCredentials: false,
   };
+  if (dsK8sSettings.secure) {
+    for (let k of Object.keys(dsK8sSettings.secure)) {
+      dsSettings.secureJsonFields[k] = true;
+    }
+  }
+  return dsSettings;
+};
 
+export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+  // TODO: read this from backend.
+  let k8sVersion = 'v0alpha1';
+  let k8sGroup = getDataSourceK8sGroup(k8sName);
+  if (k8sGroup === '') {
+    throw Error(`Could not find data source group with uid: "${k8sName}"`);
+  }
+
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<DataSourceSettingsK8s>({
+      method: 'GET',
+      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`,
+      showErrorAlert: false,
+    })
+  );
+  if (!response.ok) {
+    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
+  }
+
+  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(response.data);
   const accessResponse = await lastValueFrom(
     getBackendSrv().fetch<DatasourceAccessK8s>({
       method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${stackId}/datasources/${k8sName}/access`,
+      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}/access`,
       showErrorAlert: false,
     })
   );
@@ -114,7 +176,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, stackId: string) 
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (config.featureToggles.queryServiceWithConnections) {
+  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 
@@ -140,6 +202,23 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = (dataSource: DataSourceSettings) => {
+  if (config.featureToggles.queryServiceWithConnections) {
+    let k8sVersion = 'v0alpha1';
+    let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
+      dataSource,
+      config.namespace,
+      k8sVersion
+    );
+    return getBackendSrv().put(
+      `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
+      dsK8sSettings,
+      {
+        showErrorAlert: false,
+        showSuccessAlert: false,
+        validatePath: true,
+      }
+    );
+  }
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
   return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {

@@ -2,6 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import {
+  useGetDashboardByUidQuery,
+  useGetLibraryElementByUidQuery,
+} from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -10,7 +14,6 @@ import { getSvgSize } from '@grafana/ui/internal';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { LocalPlugin } from '../../plugins/admin/types';
-import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
 import { iconNameForResource } from './resourceInfo';
 import { ResourceTableItem } from './types';

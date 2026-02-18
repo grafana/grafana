@@ -228,6 +228,10 @@ func (o *Snapshot) DeepCopyInto(dst *Snapshot) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Snapshot) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Snapshot{}
 
@@ -279,6 +283,10 @@ func (o *SnapshotList) DeepCopy() *SnapshotList {
 
 func (o *SnapshotList) DeepCopyInto(dst *SnapshotList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (SnapshotList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotList"
 }
 
 // Interface compliance compile-time check

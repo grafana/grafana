@@ -285,10 +285,12 @@ describe('Virtualization', () => {
       expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME], 'ms')).toEqual([
         {
           field: 'timestamp',
+          internal: true,
           width: 23,
         },
         {
           field: 'level',
+          internal: true,
           width: 4,
         },
         {
@@ -306,10 +308,22 @@ describe('Virtualization', () => {
       expect(virtualization.calculateFieldDimensions([log], [], 'ns')).toEqual([
         {
           field: 'timestamp',
+          internal: true,
           width: 29,
         },
         {
           field: 'level',
+          internal: true,
+          width: 4,
+        },
+      ]);
+    });
+
+    test('Skips timestamp if not passed', () => {
+      expect(virtualization.calculateFieldDimensions([log], [])).toEqual([
+        {
+          field: 'level',
+          internal: true,
           width: 4,
         },
       ]);

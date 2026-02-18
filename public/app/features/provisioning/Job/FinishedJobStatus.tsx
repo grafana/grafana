@@ -7,6 +7,7 @@ import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/
 import { StepStatusInfo } from '../Wizard/types';
 
 import { JobContent } from './JobContent';
+import { getJobMessages } from './getJobMessage';
 
 export interface FinishedJobProps {
   jobUid: string;
@@ -51,15 +52,23 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
     }
 
     if (finishedQuery.isSuccess && job?.status) {
-      const { state, message, errors } = job.status;
+      const { state } = job.status;
+      const messages = getJobMessages(job.status);
 
       if (state === 'error') {
+        const warningInfo = messages.warning
+          ? {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: messages.warning,
+            }
+          : undefined;
         onStatusChange?.({
           status: 'error',
           error: {
             title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
-            message: errors?.length ? errors : message,
+            message: messages.error,
           },
+          warning: warningInfo,
         });
       } else if (state === 'success') {
         onStatusChange?.({
@@ -73,7 +82,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
           status: 'warning',
           warning: {
             title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-            message: errors?.length ? errors : message,
+            message: messages.warning,
           },
         });
       }

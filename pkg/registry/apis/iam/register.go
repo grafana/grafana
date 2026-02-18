@@ -36,7 +36,6 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -148,6 +148,7 @@ func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
+	roleBindingsStorage RoleBindingStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
@@ -165,6 +166,7 @@ func NewAPIService(
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
+	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -176,7 +178,7 @@ func NewAPIService(
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
-		roleBindingsStorage:        noopstorage.ProvideStorageBackend(), // TODO: add a proper storage backend
+		roleBindingsStorage:        roleBindingsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		accessClient:               accessClient,
@@ -223,6 +225,10 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return roleAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "rolebindings" {
+					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
@@ -411,7 +417,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
+		b.features, b.accessClient)
 
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -558,17 +565,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
 ) error {
-	coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.CoreRoleInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// write to zanzana on unified storage writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
 		h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
-		coreRoleStore.AfterCreate = h.AfterRoleCreate
-		coreRoleStore.AfterDelete = h.AfterRoleDelete
-		coreRoleStore.BeginUpdate = h.BeginRoleUpdate
+		uniStore.AfterCreate = h.AfterRoleCreate
+		uniStore.AfterDelete = h.AfterRoleDelete
+		uniStore.BeginUpdate = h.BeginRoleUpdate
 	}
+
+	var coreRoleStore storewrapper.K8sStorage = uniStore
+
+	if b.coreRolesStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.CoreRoleInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		coreRoleStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
+	}
+
 	storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 	return nil
 }
@@ -579,16 +609,39 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
 ) error {
-	roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.RoleBindingInfo, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	// write to zanzana on unified storage writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
-		roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
-		roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
-		roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
+		uniStore.AfterCreate = b.AfterRoleBindingCreate
+		uniStore.AfterDelete = b.AfterRoleBindingDelete
+		uniStore.BeginUpdate = b.BeginRoleBindingUpdate
 	}
+
+	var roleBindingStore storewrapper.K8sStorage = uniStore
+
+	if b.roleBindingsStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.RoleBindingInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		roleBindingStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
+	}
+
 	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	return nil
 }
@@ -603,37 +656,33 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	if err != nil {
 		return err
 	}
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = uniStore
 
-	if b.resourcePermissionsStorage == nil {
-		// No legacy storage configured, nothing more to do
-		return nil
-	}
-
-	legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
-	if err != nil {
-		return err
-	}
-
-	// Register the hooks for Zanzana sync
-	// FIXME: The hooks are registered on the legacy store
-	// Once we fully migrate to unified storage, we can move these hooks to the unified store
+	// trigger zanzana hooks on unistore writes
 	if enableZanzanaSync {
 		b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
-		legacyStore.AfterCreate = b.AfterResourcePermissionCreate
-		legacyStore.BeginUpdate = b.BeginResourcePermissionUpdate
-		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
+		uniStore.AfterCreate = b.AfterResourcePermissionCreate
+		uniStore.BeginUpdate = b.BeginResourcePermissionUpdate
+		uniStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
-	if err != nil {
-		return err
-	}
+	var regStoreDW storewrapper.K8sStorage = uniStore
 
-	// Not ideal, the alternative is to wrap both stores that dualwrite uses
-	regStoreDW, ok := dw.(storewrapper.K8sStorage)
-	if !ok {
-		return fmt.Errorf("expected RegistryStoreDualWrite, got %T", dw)
+	if b.resourcePermissionsStorage != nil {
+		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		regStoreDW, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
 
 	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
