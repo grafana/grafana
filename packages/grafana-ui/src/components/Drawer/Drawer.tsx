@@ -130,6 +130,8 @@ export function Drawer({
         motionAppear: true,
         motionName: styles.maskMotion,
       }}
+      // this is handled by floating-ui
+      autoFocus={false}
     >
       <FocusScope restoreFocus contain autoFocus>
         <div
