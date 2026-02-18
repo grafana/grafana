@@ -23,7 +23,7 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { useSearchDashboardsAndFoldersQuery, useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -66,10 +66,12 @@ const TeamList = () => {
   const [sort, setSort] = useState<string>();
   const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
-  const { data: foldersData } = useSearchDashboardsAndFoldersQuery(
-    { type: 'folder' },
+  const { data: singleFolderCheck } = useSearchDashboardsAndFoldersQuery(
+    { type: 'folder', limit: 1 },
     { skip: !config.featureToggles.teamFolders }
   );
+
+  const [triggerFullFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
