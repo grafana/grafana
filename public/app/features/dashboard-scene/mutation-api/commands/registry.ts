@@ -5,6 +5,7 @@
  * The MutationExecutor iterates over ALL_COMMANDS generically.
  */
 
+import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
@@ -14,10 +15,12 @@ import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
+import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
 import { updateVariableCommand } from './updateVariable';
@@ -39,6 +42,9 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateTabCommand,
   moveTabCommand,
   movePanelCommand,
+  addPanelCommand,
+  updatePanelCommand,
+  removePanelCommand,
 ];
 
 /** All valid command names. */
