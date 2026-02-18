@@ -33,9 +33,9 @@ func TestIsValidGitURL(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "invalid HTTP URL",
+			name: "valid HTTP URL for local development",
 			url:  "http://git.example.com/owner/repo.git",
-			want: false,
+			want: true,
 		},
 		{
 			name: "missing scheme",
