@@ -55,15 +55,9 @@ var PathRewriters = []filters.PathRewriter{
 		ReplaceFunc: func(matches []string) string {
 			result := "/apis/datasource.grafana.app/v0alpha1" + matches[1]
 			if strings.HasSuffix(matches[1], "/query") {
-				result += "/name"
+				result += "/name" // same as the rewrite pattern below
 			}
 			return result
-		},
-	},
-	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
-		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
 		},
 	},
 	{
