@@ -24,8 +24,8 @@ class AxeA11yReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    const axeA11yAnnotation = result.annotations.find((a) => a.type === 'axe-a11y');
-    if (!axeA11yAnnotation) {
+    const axeReports = result.attachments.filter((a) => a.name.startsWith('axe-'));
+    if (axeReports.length === 0) {
       return;
     }
 
@@ -34,27 +34,30 @@ class AxeA11yReporter implements Reporter {
       .filter((s) => s.trim())
       .join(' > ');
 
-    this.reports[testName] = null; // Initialize with null to indicate report is expected but not yet parsed
+    this.reports[testName] = []; // Initialize with null to indicate report is expected but not yet parsed
 
-    const reportJson = axeA11yAnnotation.description;
-    if (!reportJson) {
-      console.error(`No report found inside "axe-a11y" annotation for test ${testName}`);
-      return;
-    }
+    for (const report of axeReports) {
+      const reportJson = report.body?.toString();
+      if (!reportJson) {
+        console.warn(`Axe a11y report for "${testName}" has no body.`);
+        continue;
+      }
 
-    // TODO: should we have a mode where we write out whether the passing report has higher thresholds than it needs,
-    // or whether a rule is being excluded that doesn't need to be? This would help identify opportunities to improve our accessibility
-    // over time by tightening thresholds and re-enabling rules. Maybe it's like a "verbose mode."
-    try {
-      const axeA11yReport: AxeResults = JSON.parse(reportJson);
-      this.reports[testName] = axeA11yReport;
-      this.violations.push(
-        ...axeA11yReport.violations.map((violation) => ({ testName, location: test.location, violation }))
-      );
-      this.failedTests += result.status === 'failed' ? 1 : 0;
-    } catch (e) {
-      console.error(`Failed to parse axe-a11y report JSON for test ${test.title}:`, e);
-      return;
+      // TODO: should we have a mode where we write out whether the passing report has higher thresholds than it needs,
+      // or whether a rule is being excluded that doesn't need to be? This would help identify opportunities to improve our accessibility
+      // over time by tightening thresholds and re-enabling rules. Maybe it's like a "verbose mode."
+      try {
+        const axeA11yReport: AxeResults = JSON.parse(reportJson);
+        this.reports[testName] = this.reports[testName] ?? [];
+        this.reports[testName].push(axeA11yReport);
+        this.violations.push(
+          ...axeA11yReport.violations.map((violation) => ({ testName, location: test.location, violation }))
+        );
+        this.failedTests += result.status === 'failed' ? 1 : 0;
+      } catch (e) {
+        console.error(`Failed to parse axe-a11y report JSON for test ${test.title}:`, e);
+        return;
+      }
     }
   }
 

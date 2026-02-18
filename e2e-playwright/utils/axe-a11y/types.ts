@@ -15,5 +15,5 @@ export interface AxeA11yReport {
     violationsCount: number;
   };
   violations: AxeA11yReportViolation[];
-  rawReports: Record<string, AxeResults | null>;
+  rawReports: Record<string, AxeResults[] | null>;
 }
