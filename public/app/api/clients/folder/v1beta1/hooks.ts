@@ -185,13 +185,13 @@ export function useGetFolderQueryFacade(uid?: string) {
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
   const params = !uid ? skipToken : { name: uid };
+  const skipLegacyCall = (isVirtualFolder && shouldUseAppPlatformAPI) || !uid;
 
   // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
   // for the access control metadata yet, and so we still take it from the old api.
   // see https://github.com/grafana/identity-access-team/issues/1103
-  const legacyFolderResult = useGetFolderQueryLegacy(
-    uid ? { folderUID: uid, accesscontrol: true, isLegacyCall: true } : skipToken
-  );
+  const legacyFolderParam = skipLegacyCall ? skipToken : { folderUID: uid, accesscontrol: true, isLegacyCall: true };
+  const legacyFolderResult = useGetFolderQueryLegacy(legacyFolderParam);
   let resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
   // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
   // stitch the responses this way and access can actually return different response based on the grafana setup.
