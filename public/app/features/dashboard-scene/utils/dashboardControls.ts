@@ -61,8 +61,6 @@ export const loadDefaultControlsFromDatasources = async (refs: DataSourceRef[]) 
           ...dsLinks.map((l) => {
             return {
               ...l,
-              isDefault: true,
-              parentDatasourceRef: ref,
               // Putting under the dashboard-controls menu by default
               placement: 'inControlsMenu' as const,
               source: {

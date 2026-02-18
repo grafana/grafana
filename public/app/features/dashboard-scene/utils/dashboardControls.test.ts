@@ -1,13 +1,13 @@
 import { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DashboardLink, DataSourceRef, VariableHide } from '@grafana/schema';
+import { DashboardLink, DataSourceRef } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultDataQueryKind,
   defaultVizConfigSpec,
   defaultSpec as defaultDashboardV2Spec,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDTO } from 'app/types/dashboard';
 
@@ -285,6 +285,7 @@ describe('dashboardControls', () => {
         type: 'prometheus',
         getDefaultVariables: () => [mockVariable1],
         getDefaultLinks: undefined,
+        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
       });
 
       const mockDs2 = createMockDatasource({
@@ -292,6 +293,7 @@ describe('dashboardControls', () => {
         type: 'loki',
         getDefaultVariables: () => [mockVariable2],
         getDefaultLinks: undefined,
+        getRef: jest.fn(() => ({ uid: 'ds-2', type: 'loki' })),
       });
 
       const mockSrv = createMockDataSourceSrv({
@@ -313,20 +315,24 @@ describe('dashboardControls', () => {
       expect(result.defaultVariables).toHaveLength(2);
       expect(result.defaultVariables[0]).toMatchObject({
         ...mockVariable1,
-        hide: VariableHide.inControlsMenu,
-        source: {
-          uid: 'ds-1',
-          sourceId: 'prometheus',
-          sourceType: 'datasource',
+        spec: {
+          ...mockVariable1.spec,
+          hide: 'inControlsMenu',
+          source: {
+            type: 'datasource',
+            ref: { group: 'prometheus' },
+          },
         },
       });
       expect(result.defaultVariables[1]).toMatchObject({
         ...mockVariable2,
-        hide: VariableHide.inControlsMenu,
-        source: {
-          uid: 'ds-2',
-          sourceId: 'loki',
-          sourceType: 'datasource',
+        spec: {
+          ...mockVariable2.spec,
+          hide: 'inControlsMenu',
+          source: {
+            type: 'datasource',
+            ref: { group: 'loki' },
+          },
         },
       });
       expect(result.defaultLinks).toEqual([]);
@@ -355,24 +361,18 @@ describe('dashboardControls', () => {
       expect(result.defaultLinks).toHaveLength(2);
       expect(result.defaultLinks[0]).toMatchObject({
         ...mockLink1,
-        isDefault: true,
-        parentDatasourceRef: { uid: 'ds-1', type: 'prometheus' },
         placement: 'inControlsMenu',
         source: {
-          uid: 'ds-1',
-          sourceId: 'prometheus',
-          sourceType: 'datasource',
+          type: 'datasource',
+          ref: { group: 'prometheus' },
         },
       });
       expect(result.defaultLinks[1]).toMatchObject({
         ...mockLink2,
-        isDefault: true,
-        parentDatasourceRef: { uid: 'ds-1', type: 'prometheus' },
         placement: 'inControlsMenu',
         source: {
-          uid: 'ds-1',
-          sourceId: 'prometheus',
-          sourceType: 'datasource',
+          type: 'datasource',
+          ref: { group: 'prometheus' },
         },
       });
     });
