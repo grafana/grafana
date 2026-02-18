@@ -15,12 +15,6 @@ var (
 		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesRead), // Action for inhibition rules. UID scope.
 	)
 
-	// Asserts read-only access to all inhibition rules.
-	readAllInhibitionRulesEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesRead, models.ScopeInhibitionRulesAll),
-	)
-
 	// Asserts read-only access to a specific inhibition rule.
 	readInhibitionRuleEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
@@ -35,12 +29,6 @@ var (
 		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesWrite), // Action for inhibition rules. UID scope.
 	)
 
-	// Asserts write access to all inhibition rules.
-	writeAllInhibitionRulesEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesWrite, models.ScopeInhibitionRulesAll),
-	)
-
 	// Asserts write access to a specific inhibition rule.
 	writeInhibitionRuleEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
@@ -48,18 +36,6 @@ var (
 			ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesWrite, models.ScopeInhibitionRulesProvider.GetResourceScopeUID(uid)),
 		)
 	}
-
-	// Asserts pre-conditions for delete access to inhibition rules. If this evaluates to false, the user cannot delete any inhibition rules.
-	deleteInhibitionRulesPreConditionsEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),                 // Global action for all AM config. Org scope.
-		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesDelete), // Action for inhibition rules. UID scope.
-	)
-
-	// Asserts delete access to all inhibition rules.
-	deleteAllInhibitionRulesEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-		ac.EvalPermission(ac.ActionAlertingNotificationsInhibitionRulesDelete, models.ScopeInhibitionRulesAll),
-	)
 
 	// Asserts delete access to a specific inhibition rule.
 	deleteInhibitionRuleEval = func(uid string) ac.Evaluator {
