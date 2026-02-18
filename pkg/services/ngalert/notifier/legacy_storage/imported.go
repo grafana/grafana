@@ -171,8 +171,8 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", e.identifier)
 
 		intFmt := "%d"
-		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength > 0 {
-			intFmt = fmt.Sprintf("%%0%dd", padLength)
+		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength >= 0 {
+			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 

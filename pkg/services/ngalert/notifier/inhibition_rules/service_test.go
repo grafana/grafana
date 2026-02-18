@@ -44,7 +44,7 @@ var (
 	}
 
 	testImportedRule = definitions.InhibitionRule{
-		Name:       "test-mimir-imported-inhibition-rule-0000",
+		Name:       "test-mimir-imported-inhibition-rule-00000",
 		Version:    "0c8f497a54e04d8b",
 		Provenance: definitions.Provenance(models.ProvenanceConvertedPrometheus),
 		Origin:     models.ResourceOriginImported,

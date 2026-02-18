@@ -302,8 +302,8 @@ receivers:
 		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
 		require.Equal(t, definitions.ManagedInhibitionRules{
-			"test-imported-inhibition-rule-0000000000": {
-				Name:       "test-imported-inhibition-rule-0000000000",
+			"test-imported-inhibition-rule-00000000000": {
+				Name:       "test-imported-inhibition-rule-00000000000",
 				Version:    "8ea121175ec5f716",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",
@@ -335,8 +335,8 @@ receivers:
 					Equal: []string{"cluster"},
 				},
 			},
-			"test-imported-inhibition-rule-0000000001": {
-				Name:       "test-imported-inhibition-rule-0000000001",
+			"test-imported-inhibition-rule-00000000001": {
+				Name:       "test-imported-inhibition-rule-00000000001",
 				Version:    "74cb0d8b8dcff9f0",
 				Provenance: "converted_prometheus",
 				Origin:     "imported",
