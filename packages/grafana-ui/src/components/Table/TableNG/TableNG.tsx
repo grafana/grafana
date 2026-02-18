@@ -3,6 +3,7 @@ import 'react-data-grid/lib/styles.css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
+  AriaAttributes,
   CSSProperties,
   type JSX,
   Key,
@@ -1001,7 +1002,12 @@ const renderRowFactory =
       }
     }
 
-    return (
-      <Row key={key} aria-level={row.__index + 1} aria-expanded={!!row.data && isExpanded} {...props} {...handlers} />
-    );
+    const a11yProps: AriaAttributes = {
+      'aria-level': row.__index + 1,
+    };
+    if (row.data) {
+      a11yProps['aria-expanded'] = isExpanded;
+    }
+
+    return <Row key={key} {...props} {...handlers} {...a11yProps} />;
   };
