@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -64,9 +63,17 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	))
 	defer span.End()
 
+	teamDTO, err := tapi.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return response.Error(http.StatusNotFound, "Team not found", err)
+	}
+
 	var (
 		namespace = c.Namespace
-		teamName  = strconv.FormatInt(teamID, 10)
+		teamUID   = teamDTO.UID
 	)
 
 	teamBindingClient, err := tapi.teamBindingClientFactory.GetClient(c)
@@ -91,7 +98,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		ctx,
 		namespace,
 		resource.ListOptions{
-			FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamName)},
+			FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", teamUID)},
 		})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list existing team bindings", err)
@@ -112,7 +119,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		ctx,
 		teamBindingClient,
 		namespace,
-		teamName,
+		teamUID,
 		adminEmails,
 		iamv0alpha1.TeamBindingTeamPermissionAdmin,
 	); err != nil {
@@ -123,7 +130,7 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 		ctx,
 		teamBindingClient,
 		namespace,
-		teamName,
+		teamUID,
 		memberEmails,
 		iamv0alpha1.TeamBindingTeamPermissionMember,
 	); err != nil {
@@ -178,21 +185,15 @@ func (tapi *TeamAPI) processExistingBindings(
 	)
 
 	for _, binding := range existingBindings.Items {
-		userID, err := strconv.ParseInt(binding.Spec.Subject.Name, 10, 64)
+		usr, err := tapi.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: binding.Spec.Subject.Name})
 		if err != nil {
-			tapi.logger.Warn("Invalid user ID in TeamBinding", "subject", binding.Spec.Subject.Name)
-			continue
-		}
-
-		user, err := tapi.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-		if err != nil {
-			tapi.logger.Warn("Failed to get user", "userID", userID, "error", err)
+			tapi.logger.Warn("Failed to get user", "userUID", binding.Spec.Subject.Name, "error", err)
 			continue
 		}
 
 		wasAdmin, adminUpdate := checkAndCreateBindingUpdate(
 			binding,
-			user.Email,
+			usr.Email,
 			adminEmails,
 			iamv0alpha1.TeamBindingTeamPermissionAdmin,
 		)
@@ -205,7 +206,7 @@ func (tapi *TeamAPI) processExistingBindings(
 
 		wasMember, memberUpdate := checkAndCreateBindingUpdate(
 			binding,
-			user.Email,
+			usr.Email,
 			memberEmails,
 			iamv0alpha1.TeamBindingTeamPermissionMember,
 		)
@@ -243,7 +244,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 	ctx context.Context,
 	teamBindingClient *iamv0alpha1.TeamBindingClient,
 	namespace string,
-	teamName string,
+	teamUID string,
 	userEmails map[string]struct{},
 	permission iamv0alpha1.TeamBindingTeamPermission,
 ) error {
@@ -260,14 +261,14 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
-				Name:      fmt.Sprintf("tb-%s-%d", teamName, user.ID),
+				Name:      fmt.Sprintf("tb-%s-%s", teamUID, user.UID),
 			},
 			Spec: iamv0alpha1.TeamBindingSpec{
 				Subject: iamv0alpha1.TeamBindingspecSubject{
-					Name: strconv.FormatInt(user.ID, 10),
+					Name: user.UID,
 				},
 				TeamRef: iamv0alpha1.TeamBindingTeamRef{
-					Name: teamName,
+					Name: teamUID,
 				},
 				Permission: permission,
 				External:   false,
