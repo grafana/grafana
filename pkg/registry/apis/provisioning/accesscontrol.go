@@ -152,7 +152,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin), string(org.RoleEditor)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	// Historic Jobs
@@ -168,7 +168,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin), string(org.RoleEditor)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	// Settings - granted to Viewer (accessible by all logged-in users)
