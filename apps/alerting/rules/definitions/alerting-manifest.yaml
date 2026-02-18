@@ -3,9 +3,46 @@ kind: AppManifest
 metadata:
   name: alerting
 spec:
+  appDisplayName: ""
   appName: alerting
   group: rules.alerting.grafana.app
   preferredVersion: v0alpha1
+  roleBindings:
+    admin:
+    - alerting:admin
+    editor:
+    - alerting:editor
+    viewer:
+    - alerting:reader
+  roles:
+    alerting:admin:
+      description: Allows all actions on AlertRulesand RecordingRules
+      kinds:
+      - kind: AlertRule
+        permissionSet: admin
+      - kind: AlertRule/status
+        permissionSet: admin
+      - kind: RecordingRule
+        permissionSet: admin
+      - kind: RecordingRule/status
+        permissionSet: admin
+      title: alerting Admin
+    alerting:editor:
+      description: Create, Read, Update, and Delete AlertRulesand RecordingRules
+      kinds:
+      - kind: AlertRule
+        permissionSet: editor
+      - kind: RecordingRule
+        permissionSet: editor
+      title: alerting Editor
+    alerting:reader:
+      description: Read AlertRulesand RecordingRules
+      kinds:
+      - kind: AlertRule
+        permissionSet: viewer
+      - kind: RecordingRule
+        permissionSet: viewer
+      title: alerting Reader
   versions:
   - kinds:
     - admission:

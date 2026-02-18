@@ -8,6 +8,7 @@ routes: {
 		// more schema-friendly API.
 		"/alertstate/history": {
 			"GET": {
+				name: "getAlertStateHistory"
 				response: {
 					body: [string]: _
 				}
@@ -18,6 +19,7 @@ routes: {
 		// Query notification history.
 		"/notification/query": {
 			"POST": {
+				name: "createNotificationQuery"
 				request: {
 					body: #NotificationQuery
 				}
