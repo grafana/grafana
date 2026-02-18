@@ -33,12 +33,6 @@ func NewTester(validators ...Validator) Tester {
 func (t *Tester) Test(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
 	cfg := repo.Config()
 
-	// HACK: Set a default finalizer for test requests to bypass finalizer validation
-	// Test requests don't actually create resources, so finalizers aren't meaningful here
-	if len(cfg.Finalizers) == 0 {
-		cfg.Finalizers = []string{CleanFinalizer}
-	}
-
 	for _, validator := range t.validators {
 		list := validator.Validate(ctx, cfg)
 		if len(list) > 0 {
