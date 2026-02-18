@@ -68,7 +68,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@b002b6ecfcabe6ac0e2c6cba1bcc779eb34ac51f # v9
         with:
-          version: v2.5.0
+          version: v2.9.0
           args: |
             --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
           install-mode: binary
