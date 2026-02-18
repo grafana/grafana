@@ -18,14 +18,13 @@ export interface Props {
 
 export function VisualizationPresets({ presets, data, suggestion, onPreview, onApply, onSkip }: Props) {
   const styles = useStyles2(getStyles);
-  const [selectedPresetName, setSelectedPresetName] = useState<string | null>(null);
+  const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
 
-  // PanelPluginVisualizationSuggestion
   const presetSuggestions = useMemo((): PanelPluginVisualizationSuggestion[] => {
-    return presets.map((preset) => ({
+    return presets.map((preset, index) => ({
       ...suggestion,
       name: preset.name!,
-      hash: preset.name!,
+      hash: `preset-${index}`, // @TODO
       description: preset.description,
       options: preset.options ?? suggestion.options,
       fieldConfig: preset.fieldConfig ?? suggestion.fieldConfig,
@@ -35,7 +34,7 @@ export function VisualizationPresets({ presets, data, suggestion, onPreview, onA
 
   const handlePresetClick = useCallback(
     (presetSuggestion: PanelPluginVisualizationSuggestion, index: number) => {
-      setSelectedPresetName(presetSuggestion.name);
+      setSelectedPresetIndex(index);
       onPreview(presets[index]);
     },
     [onPreview, presets]
@@ -62,14 +61,13 @@ export function VisualizationPresets({ presets, data, suggestion, onPreview, onA
       <VisualizationCardGrid
         items={presetSuggestions}
         data={data}
-        selectedItemKey={selectedPresetName}
+        selectedItemKey={presetSuggestions[selectedPresetIndex]?.hash ?? null}
         onItemClick={handlePresetClick}
         onItemApply={handleApplyClick}
-        getItemKey={(item) => item.name}
+        getItemKey={(item) => item.hash}
         buttonLabel={t('panel.presets.edit', 'Edit')}
         getButtonAriaLabel={(item) =>
           t('panel.presets.edit-aria-label', 'Edit with {{presetName}} preset', {
-            // @TODO: maybe not name?
             presetName: item.name,
           })
         }
