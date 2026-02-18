@@ -2019,6 +2019,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingAlertsActivityBanner",
+			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
@@ -2382,7 +2391,16 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-		}}
+		},
+		{
+			Name:         "react19",
+			Description:  "Whether to use the new React 19 runtime",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+	}
 )
 
 //go:embed toggles_gen.json

@@ -151,13 +151,9 @@ export const DashboardInteractions = {
   trackPastePanelClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
   },
-  trackRemoveRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_row' });
+  trackDeleteDashboardElement(elementType: string) {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
   },
-  trackRemoveTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
-  },
-
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },
