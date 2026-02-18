@@ -2,12 +2,17 @@
  * ADD_TAB command
  *
  * Add a new tab to the dashboard layout. If the target parent is not a
- * TabsLayout, converts it (delegates to existing TabsLayoutManager logic).
+ * TabsLayout, converts it first:
+ *   - RowsLayout: each row becomes a tab (via createFromLayout), then the
+ *     new tab is appended.
+ *   - Other layouts (e.g. grid): the existing content is placed inside the
+ *     requested tab so no extra "New tab" appears.
  */
 
 import { z } from 'zod';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
@@ -38,35 +43,60 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
       let tabsManager: TabsLayoutManager;
       let wasConverted = false;
+      let newTabIndex: number;
 
       if (targetLayout instanceof TabsLayoutManager) {
+        // Already tabs -- just insert the new empty tab
         tabsManager = targetLayout;
+
+        const newTab = new TabItem({
+          layout: DefaultGridLayoutManager.fromVizPanels([]),
+          title: tab.spec.title,
+        });
+
+        const currentTabs = [...tabsManager.state.tabs];
+        newTabIndex =
+          position !== undefined && position >= 0 && position <= currentTabs.length ? position : currentTabs.length;
+        currentTabs.splice(newTabIndex, 0, newTab);
+        tabsManager.setState({ tabs: currentTabs });
       } else {
-        // Convert to TabsLayout -- wrap existing layout in a tab
         const layoutParent = targetLayout.parent;
         if (!layoutParent || !isLayoutParent(layoutParent)) {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        tabsManager = TabsLayoutManager.createFromLayout(targetLayout);
+        if (targetLayout instanceof RowsLayoutManager) {
+          // Rows convert into meaningful tabs; add the requested tab separately
+          tabsManager = TabsLayoutManager.createFromLayout(targetLayout);
+
+          const newTab = new TabItem({
+            layout: DefaultGridLayoutManager.fromVizPanels([]),
+            title: tab.spec.title,
+          });
+
+          const currentTabs = [...tabsManager.state.tabs];
+          newTabIndex =
+            position !== undefined && position >= 0 && position <= currentTabs.length ? position : currentTabs.length;
+          currentTabs.splice(newTabIndex, 0, newTab);
+          tabsManager.setState({ tabs: currentTabs });
+        } else {
+          // Grid or other flat layout: place existing content inside the
+          // requested tab so we don't create a stray "New tab".
+          targetLayout.clearParent();
+          const newTab = new TabItem({
+            layout: targetLayout,
+            title: tab.spec.title,
+          });
+
+          tabsManager = new TabsLayoutManager({ tabs: [newTab] });
+          newTabIndex = 0;
+        }
+
         layoutParent.switchLayout(tabsManager);
         wasConverted = true;
       }
 
-      // Create the new tab
-      const newTab = new TabItem({
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-        title: tab.spec.title,
-      });
-
-      // Insert at position or append
-      const currentTabs = [...tabsManager.state.tabs];
-      const insertIndex =
-        position !== undefined && position >= 0 && position <= currentTabs.length ? position : currentTabs.length;
-      currentTabs.splice(insertIndex, 0, newTab);
-      tabsManager.setState({ tabs: currentTabs });
-
-      const newPath = parentPath === '/' ? `/tabs/${insertIndex}` : `${parentPath}/tabs/${insertIndex}`;
+      const newPath = parentPath === '/' ? `/tabs/${newTabIndex}` : `${parentPath}/tabs/${newTabIndex}`;
 
       const warnings: string[] = [];
       if (wasConverted) {

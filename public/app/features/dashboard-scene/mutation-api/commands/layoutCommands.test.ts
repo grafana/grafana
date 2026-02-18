@@ -148,6 +148,46 @@ function buildRowsSceneWithPanels(): MutableDashboardScene {
   return scene as unknown as MutableDashboardScene;
 }
 
+/**
+ * Builds a scene with a grid body that has a LayoutParent mock,
+ * allowing layout conversion (e.g., grid -> tabs).
+ */
+function buildGridSceneWithLayoutParent(panels: VizPanel[] = []): MutableDashboardScene {
+  const body = DefaultGridLayoutManager.fromVizPanels(panels);
+
+  const state: Record<string, unknown> = {
+    uid: 'test-dash',
+    isEditing: false,
+    body,
+  };
+
+  const mockLayoutParent = {
+    switchLayout: jest.fn((newLayout: DefaultGridLayoutManager) => {
+      state.body = newLayout;
+    }),
+  };
+
+  // Simulate the scene tree: set the body's parent to a LayoutParent
+  // so that layout conversion can call layoutParent.switchLayout().
+  (body as unknown as { _parent: unknown })._parent = mockLayoutParent;
+
+  const scene = {
+    state,
+    serializer: mockSerializer(),
+    canEditDashboard: jest.fn(() => true),
+    onEnterEditMode: jest.fn(() => {
+      state.isEditing = true;
+    }),
+    forceRender: jest.fn(),
+    setState: jest.fn((partial: Record<string, unknown>) => {
+      Object.assign(state, partial);
+    }),
+  };
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return scene as unknown as MutableDashboardScene;
+}
+
 describe('Layout mutation commands', () => {
   let originalToggle: boolean | undefined;
 
@@ -705,6 +745,53 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+    });
+
+    it('converts grid to tabs with only the requested tab (no extra "New tab")', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const scene = buildGridSceneWithLayoutParent([panelA]);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Monitoring' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.warnings).toBeDefined();
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body).toBeInstanceOf(TabsLayoutManager);
+      expect(body.state.tabs).toHaveLength(1);
+      expect(body.state.tabs[0].state.title).toBe('Monitoring');
+
+      // Existing panel should be inside the new tab
+      const tabPanels = body.state.tabs[0].getLayout().getVizPanels();
+      expect(tabPanels).toHaveLength(1);
+      expect(tabPanels[0].state.title).toBe('Panel A');
+    });
+
+    it('converts grid to tabs with empty grid - single tab only', async () => {
+      const scene = buildGridSceneWithLayoutParent([]);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Overview' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body).toBeInstanceOf(TabsLayoutManager);
+      expect(body.state.tabs).toHaveLength(1);
+      expect(body.state.tabs[0].state.title).toBe('Overview');
     });
 
     it('returns error when adding a tab to a GridLayout without a LayoutParent', async () => {
