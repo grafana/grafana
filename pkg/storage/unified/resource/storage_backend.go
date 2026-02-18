@@ -438,7 +438,6 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 		EndKey:   endKey,
 		Limit:    int64(batchSize),
 		Sort:     kv.SortOrderDesc}) {
-
 		if err != nil {
 			b.log.Error("failed to list collection before delete: %s", err)
 			return 0, 0, "", err
