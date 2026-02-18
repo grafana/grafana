@@ -39,7 +39,7 @@
     "@types/react": "19.2.7",
     "@types/systemjs": "6.15.3",
     "jest": "^29.6.4",
-    "react": "19.2.0",
+    "react": "19.2.4",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.2"

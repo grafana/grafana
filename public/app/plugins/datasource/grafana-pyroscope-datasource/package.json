@@ -13,8 +13,8 @@
     "lodash": "^4.17.23",
     "monaco-editor": "0.34.1",
     "prismjs": "1.30.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-use": "17.6.0",
     "rxjs": "7.8.2",
     "tslib": "2.8.1"

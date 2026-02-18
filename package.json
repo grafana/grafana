@@ -397,10 +397,10 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
     "re-resizable": "6.11.2",
-    "react": "19.2.1",
+    "react": "19.2.4",
     "react-18": "npm:react@^18.0.0",
     "react-diff-viewer-continued": "^3.4.0",
-    "react-dom": "19.2.1",
+    "react-dom": "19.2.4",
     "react-dom-18": "npm:react-dom@^18.0.0",
     "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
@@ -437,7 +437,7 @@
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
-    "swagger-ui-react": "5.30.3",
+    "swagger-ui-react": "5.31.1",
     "symbol-observable": "4.0.0",
     "systemjs": "6.15.1",
     "tslib": "2.8.1",
@@ -463,7 +463,7 @@
     "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "3.3.0",
+    "swagger-ui-react/dompurify": "3.3.1",
     "refractor/prismjs": "^1.27.0",
     "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
     "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
@@ -474,8 +474,8 @@
     "nodemailer": "7.0.12",
     "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch",
     "pretty-format/react-is": "19.0.0",
-    "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "workspaces": {
     "packages": [

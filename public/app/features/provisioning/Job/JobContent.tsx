@@ -10,18 +10,20 @@ import ProgressBar from '../Shared/ProgressBar';
 import { StepStatusInfo } from '../Wizard/types';
 
 import { JobSummary } from './JobSummary';
+import { getJobMessages } from './getJobMessage';
 
 export interface JobContentProps {
   jobType: 'sync' | 'delete' | 'move';
   job?: Job;
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange }: JobContentProps) {
+export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
   const errorSetRef = useRef(false);
 
-  const { state, message, progress, summary, errors } = job?.status || {};
+  const { state, message, progress, summary } = job?.status || {};
   const repoName = job?.metadata?.labels?.['provisioning.grafana.app/repository'];
   const pullRequestURL = job?.status?.url?.newPullRequestURL;
 
@@ -35,30 +37,45 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       case 'success':
         onStatusChange?.({ status: 'success' });
         break;
-      case 'warning':
+      case 'warning': {
         if (!errorSetRef.current) {
+          const messages = getJobMessages(job?.status ?? {});
           onStatusChange?.({
             status: 'warning',
             warning: {
               title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-              message: errors?.length ? errors : message,
+              message: messages.warning,
             },
           });
           errorSetRef.current = true;
         }
         break;
-      case 'error':
+      }
+      case 'error': {
         if (!errorSetRef.current) {
+          const messages = getJobMessages(job?.status ?? {});
+          const warningInfo = messages.warning
+            ? {
+                title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+                message: messages.warning,
+              }
+            : undefined;
           onStatusChange?.({
             status: 'error',
             error: {
               title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
-              message: errors?.length ? errors : message,
+              message: messages.error,
+            },
+            warning: warningInfo,
+            action: onRetry && {
+              label: t('provisioning.job-status.retry-action', 'Retry'),
+              onClick: onRetry,
             },
           });
           errorSetRef.current = true;
         }
         break;
+      }
       case 'working':
       case 'pending':
         onStatusChange?.({ status: 'running' });
@@ -66,7 +83,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       default:
         break;
     }
-  }, [state, message, errors, onStatusChange]);
+  }, [state, message, job, onStatusChange, onRetry]);
 
   if (!job?.status) {
     return null;
