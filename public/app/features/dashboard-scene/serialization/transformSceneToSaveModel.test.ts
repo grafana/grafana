@@ -203,7 +203,7 @@ describe('transformSceneToSaveModel', () => {
             {
               ...NEW_LINK,
               title: 'Link 2',
-              source: { uid: '123456', sourceId: 'prometheus', sourceType: 'datasource' },
+              source: { type: 'datasource', ref: { group: 'loki' } },
             },
           ],
         } as DashboardDataDTO,
@@ -267,9 +267,8 @@ describe('transformSceneToSaveModel', () => {
 
                 // This marks that the variable was registered by a datasource
                 source: {
-                  uid: '123456',
-                  sourceId: 'prometheus',
-                  sourceType: 'datasource',
+                  type: 'datasource',
+                  ref: { group: 'loki' },
                 },
               },
             ],
