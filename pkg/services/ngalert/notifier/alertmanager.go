@@ -14,7 +14,6 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
 	alertingTemplates "github.com/grafana/alerting/templates"
-	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
@@ -357,7 +356,7 @@ func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *Aggregat
 	}
 }
 
-func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
+func (am *alertmanager) aggregateInhibitMatchers(rules []apimodels.InhibitRule, amu *AggregateMatchersUsage) {
 	for _, r := range rules {
 		amu.Matchers += len(r.SourceMatchers)
 		amu.Matchers += len(r.TargetMatchers)
