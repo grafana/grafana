@@ -1,7 +1,7 @@
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 /**
@@ -18,8 +18,22 @@ export function useSelectedQueryDatasource(
     }
 
     try {
-      // If query has datasource, use it; otherwise fall back to panel datasource
-      const dsRef = selectedQuery.datasource || (panelDsSettings ? getDataSourceRef(panelDsSettings) : undefined);
+      // If query has explicit datasource, use it; otherwise fall back to panel datasource
+      let dsRef = selectedQuery.datasource;
+
+      if (!dsRef && panelDsSettings) {
+        // Special handling for Mixed datasource:
+        // Mixed is a meta-datasource that delegates to per-query datasources. It has no QueryEditor component.
+        // Normally, all queries in a Mixed panel should have explicit datasources, but edge cases exist
+        // (legacy dashboards, transition states). Fall back to default datasource to allow editing.
+        // Matches behavior in resolveNewQueryDatasource.
+        if (panelDsSettings.meta.mixed) {
+          const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+          dsRef = defaultDs ? getDataSourceRef(defaultDs) : undefined;
+        } else {
+          dsRef = getDataSourceRef(panelDsSettings);
+        }
+      }
 
       if (!dsRef) {
         return undefined;
@@ -37,7 +51,12 @@ export function useSelectedQueryDatasource(
       console.error('Failed to load datasource for selected query:', err);
       return undefined;
     }
-  }, [selectedQuery?.datasource?.uid, selectedQuery?.datasource?.type, panelDsSettings?.uid]);
+  }, [
+    selectedQuery?.datasource?.uid,
+    selectedQuery?.datasource?.type,
+    panelDsSettings?.uid,
+    panelDsSettings?.meta.mixed,
+  ]);
 
   return {
     selectedQueryDsData: selectedQueryDsData ?? null,

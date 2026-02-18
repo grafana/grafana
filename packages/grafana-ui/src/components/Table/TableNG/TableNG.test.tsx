@@ -394,7 +394,7 @@ describe('TableNG', () => {
       async (desc) => {
         const { container } = render(
           <TableNG
-            initialSortBy={[
+            sortBy={[
               {
                 displayName: 'Category',
                 desc,
@@ -416,6 +416,104 @@ describe('TableNG', () => {
         expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       }
     );
+  });
+
+  describe('TableNG::sortBy', () => {
+    it.each([true, false])('should set initial sort', async (desc) => {
+      render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId(desc ? 'icon-arrow-down' : 'icon-arrow-up')).toBeVisible();
+    });
+    it('should not update sort on rerender if not managed', async () => {
+      const { rerender } = render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: true,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+
+      rerender(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: false,
+            },
+          ]}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+    });
+    it('should manage sort', async () => {
+      const { rerender } = render(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: true,
+            },
+          ]}
+          sortByBehavior={'managed'}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-down')).toBeVisible();
+
+      rerender(
+        <TableNG
+          sortBy={[
+            {
+              displayName: 'Column B',
+              desc: false,
+            },
+          ]}
+          sortByBehavior={'managed'}
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+
+      expect(screen.getByTitle('Column B')).toBeVisible();
+      expect(screen.getByTestId('icon-arrow-up')).toBeVisible();
+    });
   });
 
   describe('Basic TableNG rendering', () => {
@@ -455,10 +553,10 @@ describe('TableNG', () => {
         expect(screen.getByText(text)).toBeInTheDocument();
       });
 
-      const grid = container.querySelector('[role="grid"]');
+      const grid = container.querySelector('[role="treegrid"]');
       expect(grid).toBeInTheDocument();
 
-      const expandIcons = container.querySelectorAll('svg[aria-label="Expand row"]');
+      const expandIcons = container.querySelectorAll('[aria-label="Expand row"]');
       expect(expandIcons.length).toBeGreaterThan(0);
     });
 
@@ -481,7 +579,7 @@ describe('TableNG', () => {
       const initialRowCount = initialRows.length;
 
       // Find the expand button
-      const expandButton = container.querySelector('svg[aria-label="Expand row"]');
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
       expect(expandButton).toBeInTheDocument();
 
       // Click the expand button

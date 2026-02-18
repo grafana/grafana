@@ -1,45 +1,43 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
-import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { EXPRESSION_ICON_MAP } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-function isExpressionType(
-  item: SelectableValue<ExpressionQueryType>
-): item is SelectableValue<ExpressionQueryType> & { value: ExpressionQueryType } {
-  return typeof item.value === 'string' && item.value in EXPRESSION_ICON_MAP;
-}
+function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
+  if (variant === 'transformation') {
+    return afterId
+      ? t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', { id: afterId })
+      : t('query-editor-next.sidebar.add-transformation', 'Add transformation');
+  }
 
-type MenuView = 'main' | 'expressionTypes';
+  return afterId
+    ? t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })
+    : t('query-editor-next.sidebar.add-query-or-expression', 'Add query or expression');
+}
 
 interface AddCardButtonProps {
-  /** The refId of the card this button belongs to; new items are inserted after it. */
-  afterRefId: string;
+  variant: 'query' | 'transformation';
+  afterId?: string;
+  alwaysVisible?: boolean;
 }
 
-export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
-  const styles = useStyles2(getStyles);
+export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCardButtonProps) => {
+  const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
-  const { setSelectedQuery } = useQueryEditorUIContext();
+  const { setSelectedQuery, setPendingExpression, setPendingTransformation } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<MenuView>('main');
-
-  const focusOnMount = useCallback((el: HTMLDivElement | null) => el?.focus(), []);
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
@@ -48,121 +46,97 @@ export const AddCardButton = ({ afterRefId }: AddCardButtonProps) => {
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
 
-  const addAndSelect = useCallback(
+  const addAndSelectQuery = useCallback(
     (query?: Partial<DataQuery>) => {
-      const newRefId = addQuery(query, afterRefId);
+      const newRefId = addQuery(query, afterId);
       if (newRefId) {
         const selectTarget: DataQuery = { refId: newRefId, hide: false };
         setSelectedQuery(selectTarget);
       }
     },
-    [addQuery, afterRefId, setSelectedQuery]
-  );
-
-  const addExpressionOfType = useCallback(
-    (type: ExpressionQueryType) => {
-      const baseQuery = expressionDatasource.newQuery();
-      const queryWithType = { ...baseQuery, type };
-      const queryWithDefaults = getDefaults(queryWithType);
-      addAndSelect(queryWithDefaults);
-    },
-    [addAndSelect]
+    [addQuery, afterId, setSelectedQuery]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
     setMenuOpen(visible);
-    if (!visible) {
-      setMenuView('main');
-    }
   }, []);
 
-  const menus: Record<MenuView, React.ReactElement> = useMemo(
-    () => ({
-      main: (
-        <Menu key="main">
+  const queryMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('query-editor-next.sidebar.add-query', 'Add query')}
+          icon="question-circle"
+          onClick={() => addAndSelectQuery()}
+        />
+        {queryLibraryEnabled && canReadQueries && (
           <Menu.Item
-            label={t('query-editor-next.sidebar.add-query', 'Add query')}
-            icon="question-circle"
-            onClick={() => addAndSelect()}
+            label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
+            icon="book-open"
+            onClick={() =>
+              openDrawer({
+                onSelectQuery: (query) => addAndSelectQuery(query),
+                options: { context: CoreApp.PanelEditor },
+              })
+            }
           />
-          {queryLibraryEnabled && canReadQueries && (
-            <Menu.Item
-              label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
-              icon="book-open"
-              onClick={() =>
-                openDrawer({
-                  onSelectQuery: (query) => addAndSelect(query),
-                  options: { context: CoreApp.PanelEditor },
-                })
-              }
-            />
-          )}
-          <Menu.Item
-            label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
-            icon="calculator-alt"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuView('expressionTypes');
-            }}
-          />
-        </Menu>
-      ),
-      expressionTypes: (
-        <Menu key="expressionTypes" ref={focusOnMount}>
-          <Menu.Item
-            label={t('query-editor-next.sidebar.back', 'Back')}
-            icon="arrow-left"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuView('main');
-            }}
-          />
-          <Menu.Divider />
-          {expressionTypes.filter(isExpressionType).map((item) => (
-            <Menu.Item
-              key={item.value}
-              label={item.label ?? ''}
-              icon={EXPRESSION_ICON_MAP[item.value]}
-              onClick={() => addExpressionOfType(item.value)}
-            />
-          ))}
-        </Menu>
-      ),
-    }),
-    [addAndSelect, addExpressionOfType, canReadQueries, focusOnMount, openDrawer, queryLibraryEnabled]
+        )}
+        <Menu.Item
+          label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+          icon="calculator-alt"
+          onClick={() => {
+            setPendingExpression({ insertAfter: afterId ?? '' });
+          }}
+        />
+      </Menu>
+    ),
+    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
   );
+
+  const handleTransformationClick = useCallback(() => {
+    setPendingTransformation({ insertAfter: afterId });
+  }, [afterId, setPendingTransformation]);
+
+  const ariaLabel = getButtonAriaLabel(variant, afterId);
+
+  if (variant === 'transformation') {
+    return (
+      <button
+        className={styles.button}
+        data-add-button={!alwaysVisible || undefined}
+        type="button"
+        aria-label={ariaLabel}
+        onClick={handleTransformationClick}
+      >
+        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+      </button>
+    );
+  }
 
   return (
     <Dropdown
-      overlay={menus[menuView]}
-      placement="right-start"
-      offset={[theme.spacing.gridSize, 0]}
+      overlay={queryMenu}
+      placement={alwaysVisible ? 'bottom-start' : 'right-start'}
+      offset={alwaysVisible ? [0, theme.spacing.gridSize * 0.5] : [theme.spacing.gridSize, 0]}
       onVisibleChange={handleMenuVisibleChange}
     >
       <button
         className={styles.button}
-        data-add-button
+        data-add-button={!alwaysVisible || undefined}
         data-menu-open={menuOpen || undefined}
         type="button"
-        aria-label={t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterRefId })}
+        aria-label={ariaLabel}
       >
-        <Icon name="plus" size="md" />
+        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
       </button>
     </Dropdown>
   );
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
   return {
     button: css({
-      position: 'absolute',
-      top: '100%',
-      left: 0,
-      transform: 'translate(-100%, 0)',
-      zIndex: 1,
-      display: 'flex',
+      display: alwaysVisible ? 'inline-flex' : 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       width: theme.spacing(2),
@@ -173,24 +147,35 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.primary.contrastText,
       cursor: 'pointer',
       padding: 0,
-      opacity: 0,
-      pointerEvents: 'none',
 
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity', 'background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
+      // Hover-button positioning & hidden-by-default state (revealed by SidebarCard hover)
+      ...(!alwaysVisible && {
+        position: 'absolute' as const,
+        top: `calc(100% + ${theme.spacing(0.25)})`,
+        left: theme.spacing(-2.5),
+        transform: 'translateY(-50%)',
+        zIndex: 1,
+        opacity: 0,
+        pointerEvents: 'none' as const,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create(['opacity', 'background-color'], {
+            duration: theme.transitions.duration.short,
+          }),
+        },
+      }),
 
       '&:hover': {
         background: theme.colors.primary.shade,
       },
 
       '&:focus-visible': {
-        opacity: 1,
-        pointerEvents: 'auto',
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
+        ...(!alwaysVisible && {
+          opacity: 1,
+          pointerEvents: 'auto' as const,
+        }),
       },
     }),
   };

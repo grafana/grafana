@@ -23,82 +23,6 @@ menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
 last_reviewed: 2025-12-04
-refs:
-  configure-grafana-feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  configure-grafana-azure-auth:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-  configure-grafana-azure:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  configure-grafana-azure-auth-scopes:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-  configure-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-  query-editor-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
-  template-variables-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-  alerting-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
-  troubleshooting-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
-  annotations-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
 ---
 
 # Azure Monitor data source
@@ -128,21 +52,21 @@ The Azure Monitor data source supports the following Azure services:
 
 The following documents will help you get started with the Azure Monitor data source:
 
-- [Configure the Azure Monitor data source](ref:configure-azure-monitor) - Set up authentication and connect to Azure
-- [Azure Monitor query editor](ref:query-editor-azure-monitor) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
-- [Template variables](ref:template-variables-azure-monitor) - Create dynamic dashboards with Azure Monitor variables
-- [Alerting](ref:alerting-azure-monitor) - Create alert rules using Azure Monitor data
-- [Troubleshooting](ref:troubleshooting-azure-monitor) - Solve common configuration and query errors
+- [Configure the Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) - Set up authentication and connect to Azure
+- [Azure Monitor query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/) - Create and edit queries for Metrics, Logs, Traces, and Resource Graph
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/) - Create dynamic dashboards with Azure Monitor variables
+- [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) - Create alert rules using Azure Monitor data
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/) - Solve common configuration and query errors
 
 ## Additional features
 
 After you have configured the Azure Monitor data source, you can:
 
-- Add [Annotations](ref:annotations-azure-monitor) to overlay Azure log events on your graphs.
-- Configure and use [Template variables](ref:template-variables-azure-monitor) for dynamic dashboards.
-- Add [Transformations](ref:transform-data) to manipulate query results.
-- Set up [Alerting](ref:alerting-azure-monitor) and recording rules using Metrics, Logs, Traces, and Resource Graph queries.
-- Use [Explore](ref:explore) to investigate your Azure data without building a dashboard.
+- Add [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/) to overlay Azure log events on your graphs.
+- Configure and use [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/) for dynamic dashboards.
+- Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
+- Set up [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) and recording rules using Metrics, Logs, Traces, and Resource Graph queries.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate your Azure data without building a dashboard.
 
 ## Pre-built dashboards
 

@@ -106,7 +106,7 @@
 /apps/dashvalidator/ @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
-/pkg/apis/query @grafana/grafana-datasources-core-services
+/pkg/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
@@ -229,11 +229,12 @@
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-backend
 /devenv/dashboards.yaml @grafana/dashboards-squad
-/devenv/datasources.yaml @grafana/grafana-backend-group
-/devenv/datasources_docker.yaml @grafana/grafana-backend-group
+/devenv/datasources.yaml @grafana/data-sources
+/devenv/datasources_docker.yaml @grafana/data-sources
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
+/devenv/secrets/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
@@ -948,6 +949,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
+/public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
@@ -1278,7 +1280,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
-/.github/workflows/verify-kinds.yml @grafana/grafana-app-platform-squad
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
 /.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
