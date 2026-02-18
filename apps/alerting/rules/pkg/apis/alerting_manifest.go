@@ -99,71 +99,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"alerting:admin": {
-			Title:       "alerting Admin",
-			Description: "Allows all actions on AlertRulesand RecordingRules",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "AlertRule",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "AlertRule/status",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "RecordingRule",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "RecordingRule/status",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"alerting:editor": {
-			Title:       "alerting Editor",
-			Description: "Create, Read, Update, and Delete AlertRulesand RecordingRules",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "AlertRule",
-					PermissionSet: strPtr("editor"),
-				},
-				{
-					Kind:          "RecordingRule",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"alerting:reader": {
-			Title:       "alerting Reader",
-			Description: "Read AlertRulesand RecordingRules",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "AlertRule",
-					PermissionSet: strPtr("viewer"),
-				},
-				{
-					Kind:          "RecordingRule",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"alerting:reader",
-		},
-		Editor: []string{
-			"alerting:editor",
-		},
-		Admin: []string{
-			"alerting:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -238,7 +177,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

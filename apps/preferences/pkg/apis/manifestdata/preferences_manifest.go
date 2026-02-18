@@ -57,51 +57,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"preferences:admin": {
-			Title:       "preferences Admin",
-			Description: "Allows all actions on Preferences",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Preferences",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"preferences:editor": {
-			Title:       "preferences Editor",
-			Description: "Create, Read, Update, and Delete Preferences",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Preferences",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"preferences:reader": {
-			Title:       "preferences Reader",
-			Description: "Read Preferences",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Preferences",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"preferences:reader",
-		},
-		Editor: []string{
-			"preferences:editor",
-		},
-		Admin: []string{
-			"preferences:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -175,7 +134,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

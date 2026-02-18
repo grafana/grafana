@@ -7,42 +7,7 @@ spec:
   appName: alerting
   group: rules.alerting.grafana.app
   preferredVersion: v0alpha1
-  roleBindings:
-    admin:
-    - alerting:admin
-    editor:
-    - alerting:editor
-    viewer:
-    - alerting:reader
-  roles:
-    alerting:admin:
-      description: Allows all actions on RecordingRulesand AlertRules
-      kinds:
-      - kind: AlertRule
-        permissionSet: admin
-      - kind: AlertRule/status
-        permissionSet: admin
-      - kind: RecordingRule
-        permissionSet: admin
-      - kind: RecordingRule/status
-        permissionSet: admin
-      title: alerting Admin
-    alerting:editor:
-      description: Create, Read, Update, and Delete RecordingRulesand AlertRules
-      kinds:
-      - kind: AlertRule
-        permissionSet: editor
-      - kind: RecordingRule
-        permissionSet: editor
-      title: alerting Editor
-    alerting:reader:
-      description: Read RecordingRulesand AlertRules
-      kinds:
-      - kind: AlertRule
-        permissionSet: viewer
-      - kind: RecordingRule
-        permissionSet: viewer
-      title: alerting Reader
+  roleBindings: {}
   versions:
   - kinds:
     - admission:

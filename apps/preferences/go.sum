@@ -57,8 +57,8 @@ github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grafana/grafana-app-sdk v0.51.1 h1:k8U2vXkm6QhmVhUUo09XvJ9HTKbZxisJuQQBqOZS9I8=
-github.com/grafana/grafana-app-sdk v0.51.1/go.mod h1:Mxjs1lizHtH9I7DXadZsLnYWdg43NAxazYtiXhzEAZo=
+github.com/grafana/grafana-app-sdk v0.51.2 h1:H4QNct+RQ4+5RnXApwo9k+uf/d+YVdn6kSG5N+IpIBI=
+github.com/grafana/grafana-app-sdk v0.51.2/go.mod h1:Mxjs1lizHtH9I7DXadZsLnYWdg43NAxazYtiXhzEAZo=
 github.com/grafana/grafana-app-sdk/logging v0.50.4 h1:ACIqNOZkBT2WyVfNpdWo5og0rI4EHZNH16KHJ1BWX+E=
 github.com/grafana/grafana-app-sdk/logging v0.50.4/go.mod h1:RKAy6LaGkWcnmyq3JW+9C4v7TEicBXYllH8vtjsLnJk=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h1:Meoq0neEejGlmclgCInZM7EXl3Dw27zlGGwvEmJwvaY=

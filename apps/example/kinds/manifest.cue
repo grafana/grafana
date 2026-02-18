@@ -30,6 +30,7 @@ manifest: {
 			// }
 		]
 	}
+	roles: {}
 }
 
 v0alpha1: {

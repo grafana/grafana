@@ -95,55 +95,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"shorturl:admin": {
-			Title:       "shorturl Admin",
-			Description: "Allows all actions on ShortURLs",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "ShortURL",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "ShortURL/status",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"shorturl:editor": {
-			Title:       "shorturl Editor",
-			Description: "Create, Read, Update, and Delete ShortURLs",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "ShortURL",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"shorturl:reader": {
-			Title:       "shorturl Reader",
-			Description: "Read ShortURLs",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "ShortURL",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"shorturl:reader",
-		},
-		Editor: []string{
-			"shorturl:editor",
-		},
-		Admin: []string{
-			"shorturl:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -219,7 +174,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

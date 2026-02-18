@@ -100,55 +100,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"playlist:admin": {
-			Title:       "playlist Admin",
-			Description: "Allows all actions on Playlists",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Playlist",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "Playlist/status",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"playlist:editor": {
-			Title:       "playlist Editor",
-			Description: "Create, Read, Update, and Delete Playlists",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Playlist",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"playlist:reader": {
-			Title:       "playlist Reader",
-			Description: "Read Playlists",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Playlist",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"playlist:reader",
-		},
-		Editor: []string{
-			"playlist:editor",
-		},
-		Admin: []string{
-			"playlist:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -223,7 +178,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

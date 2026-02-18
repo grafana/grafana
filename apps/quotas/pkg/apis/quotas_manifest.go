@@ -138,36 +138,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"quotas:admin": {
-			Title:       "quotas Admin",
-			Description: "Allows all actions on ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-		"quotas:editor": {
-			Title:       "quotas Editor",
-			Description: "Create, Read, Update, and Delete ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-		"quotas:reader": {
-			Title:       "quotas Reader",
-			Description: "Read ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"quotas:reader",
-		},
-		Editor: []string{
-			"quotas:editor",
-		},
-		Admin: []string{
-			"quotas:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 

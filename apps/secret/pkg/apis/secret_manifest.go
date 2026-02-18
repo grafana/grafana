@@ -48,71 +48,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"secret:admin": {
-			Title:       "secret Admin",
-			Description: "Allows all actions on SecureValuesand Keepers",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "SecureValue",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "SecureValue/status",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "Keeper",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "Keeper/status",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"secret:editor": {
-			Title:       "secret Editor",
-			Description: "Create, Read, Update, and Delete SecureValuesand Keepers",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "SecureValue",
-					PermissionSet: strPtr("editor"),
-				},
-				{
-					Kind:          "Keeper",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"secret:reader": {
-			Title:       "secret Reader",
-			Description: "Read SecureValuesand Keepers",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "SecureValue",
-					PermissionSet: strPtr("viewer"),
-				},
-				{
-					Kind:          "Keeper",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"secret:reader",
-		},
-		Editor: []string{
-			"secret:editor",
-		},
-		Admin: []string{
-			"secret:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -187,7 +126,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

@@ -529,87 +529,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"alerting-notifications:admin": {
-			Title:       "alerting-notifications Admin",
-			Description: "Allows all actions on Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Receiver",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "RoutingTree",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "TemplateGroup",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "TimeInterval",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"alerting-notifications:editor": {
-			Title:       "alerting-notifications Editor",
-			Description: "Create, Read, Update, and Delete Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Receiver",
-					PermissionSet: strPtr("editor"),
-				},
-				{
-					Kind:          "RoutingTree",
-					PermissionSet: strPtr("editor"),
-				},
-				{
-					Kind:          "TemplateGroup",
-					PermissionSet: strPtr("editor"),
-				},
-				{
-					Kind:          "TimeInterval",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"alerting-notifications:reader": {
-			Title:       "alerting-notifications Reader",
-			Description: "Read Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Receiver",
-					PermissionSet: strPtr("viewer"),
-				},
-				{
-					Kind:          "RoutingTree",
-					PermissionSet: strPtr("viewer"),
-				},
-				{
-					Kind:          "TemplateGroup",
-					PermissionSet: strPtr("viewer"),
-				},
-				{
-					Kind:          "TimeInterval",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"alerting-notifications:reader",
-		},
-		Editor: []string{
-			"alerting-notifications:editor",
-		},
-		Admin: []string{
-			"alerting-notifications:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -692,7 +615,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

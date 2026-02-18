@@ -30,6 +30,7 @@ manifest: {
 			}
 		}
 	}
+	roles: {}
 }
 
 // Schema definitions for integration type schema endpoint response

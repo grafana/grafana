@@ -57,51 +57,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"collections:admin": {
-			Title:       "collections Admin",
-			Description: "Allows all actions on Stars",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Stars",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"collections:editor": {
-			Title:       "collections Editor",
-			Description: "Create, Read, Update, and Delete Stars",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Stars",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"collections:reader": {
-			Title:       "collections Reader",
-			Description: "Read Stars",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Stars",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"collections:reader",
-		},
-		Editor: []string{
-			"collections:editor",
-		},
-		Admin: []string{
-			"collections:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -175,7 +134,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

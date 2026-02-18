@@ -128,55 +128,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"annotation:admin": {
-			Title:       "annotation Admin",
-			Description: "Allows all actions on Annotations",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Annotation",
-					PermissionSet: strPtr("admin"),
-				},
-				{
-					Kind:          "Annotation/status",
-					PermissionSet: strPtr("admin"),
-				},
-			},
-			Routes: []string{},
-		},
-		"annotation:editor": {
-			Title:       "annotation Editor",
-			Description: "Create, Read, Update, and Delete Annotations",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Annotation",
-					PermissionSet: strPtr("editor"),
-				},
-			},
-			Routes: []string{},
-		},
-		"annotation:reader": {
-			Title:       "annotation Reader",
-			Description: "Read Annotations",
-			Kinds: []app.ManifestRoleKind{
-				{
-					Kind:          "Annotation",
-					PermissionSet: strPtr("viewer"),
-				},
-			},
-			Routes: []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"annotation:reader",
-		},
-		Editor: []string{
-			"annotation:editor",
-		},
-		Admin: []string{
-			"annotation:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
@@ -252,7 +207,4 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
-}
-func strPtr(s string) *string {
-	return &s
 }

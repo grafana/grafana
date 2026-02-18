@@ -284,36 +284,10 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
-	Roles: map[string]app.ManifestRole{
-		"dashvalidator:admin": {
-			Title:       "dashvalidator Admin",
-			Description: "Allows all actions on ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-		"dashvalidator:editor": {
-			Title:       "dashvalidator Editor",
-			Description: "Create, Read, Update, and Delete ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-		"dashvalidator:reader": {
-			Title:       "dashvalidator Reader",
-			Description: "Read ",
-			Kinds:       []app.ManifestRoleKind{},
-			Routes:      []string{},
-		},
-	},
 	RoleBindings: &app.ManifestRoleBindings{
-		Viewer: []string{
-			"dashvalidator:reader",
-		},
-		Editor: []string{
-			"dashvalidator:editor",
-		},
-		Admin: []string{
-			"dashvalidator:admin",
-		},
+		Viewer: []string{},
+		Editor: []string{},
+		Admin:  []string{},
 	},
 }
 
