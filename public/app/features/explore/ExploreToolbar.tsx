@@ -63,6 +63,16 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
   }),
+  toolbarOverrides: css({
+    '& > div:first-child': {
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+    },
+    '& > div:first-child > nav > div': {
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+    },
+  }),
 });
 
 interface Props {
@@ -265,6 +275,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <PageToolbar
+        className={styles.toolbarOverrides}
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         data-testid={selectors.pages.Explore.toolbar.bar}
         leftItems={[
