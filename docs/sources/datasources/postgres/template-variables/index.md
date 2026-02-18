@@ -50,20 +50,17 @@ SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
 
 ### Key/value variables
 
-You can create a key/value variable using a query that returns two columns named `__text` and `__value`.
+You can create a key/value variable so the drop-down shows a user-friendly label (for example, hostname) while panel queries use a different value (for example, ID). Use the variable editor’s **Value field** and **Text field** at the bottom of the query section to specify which query columns supply the value and the label. Your query can use any column names; you do not need `__value` or `__text` in the SQL.
 
-- The `__text` column defines the label shown in the drop-down.
-- The `__value` column defines the value passed to panel queries.
-
-This is useful when you want to display a user-friendly label (like a hostname) but use a different underlying value (like an ID).
-
-Note that the values in the `__text` column should be unique. If there are duplicates, Grafana uses only the first matching entry.
-
-You can also use different column names and map them in the variable editor: in the variable query editor, set **Value Field** and **Text Field** to your column names instead of using `__value` and `__text`.
+Example: run a query that returns `hostname` and `id`, then set **Text field** to `hostname` and **Value field** to `id`.
 
 ```sql
-SELECT hostname AS __text, id AS __value FROM host
+SELECT hostname, id FROM host
 ```
+
+Note that the values in the text column should be unique. If there are duplicates, Grafana uses only the first matching entry.
+
+Alternatively, you can use the legacy approach: return columns named `__text` and `__value` in your query (for example, `SELECT hostname AS __text, id AS __value FROM host`).
 
 ### Nested variables
 
@@ -93,20 +90,20 @@ You can create a multi-property variable with either **Type: Custom** or **Type:
 
 - **Type: Custom** – In **Custom options** > **JSON**, paste your own JSON array with the mapping. Each object in the array can have any number of properties; use `text` and `value` for the label and value shown in the drop-down, and add additional properties as needed. For the JSON format and examples, refer to [Multi-property custom variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#multi-property-custom-variables) in Add and manage variables.
 
-- **Type: Query** – Write a SQL query that returns multiple columns. Use `__text` and `__value` for the label and value shown in the drop-down (as in key/value variables). Add one column per property you want to reference. Each column name becomes a property name. In panels and queries, reference a property with `${varName.columnName}`.
+- **Type: Query** – Write a SQL query that returns multiple columns. In the variable editor, set **Value field** and **Text field** to the columns that supply the value and the label for the drop-down. Add one column per property you want to reference; each column name becomes a property name. In panels and queries, reference a property with `${varName.columnName}`.
 
-**Example (Type: Query):** A variable named `env` that lists environments with different identifiers per cloud:
+**Example (Type: Query):** A variable named `env` that lists environments with different identifiers per cloud. In the variable editor, set **Text field** to `name` and **Value field** to `id`.
 
 ```sql
 SELECT
-  name AS __text,
-  id AS __value,
+  name,
+  id,
   aws_identifier AS env_aws,
   azure_identifier AS env_azure
 FROM environments
 ```
 
-In a panel query you might use `$env.env_aws` for an AWS-related query and `$env.env_azure` for an Azure-related query. For more on the concept, refer to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#configure-multi-property-variables) in Add and manage variables.
+In a panel query you might use `$env.env_aws` for an AWS-related query and `$env.env_azure` for an Azure-related query. For more on the concept, refer to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#configure-multi-property-variables) in [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
 ## Use variables in queries
 

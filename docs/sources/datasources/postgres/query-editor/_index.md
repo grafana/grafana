@@ -24,8 +24,6 @@ You can open the PostgreSQL query editor from the [Explore page](https://grafana
 A default database must be configured in the data source settings. If none is set, or it is removed, the data source will not run queries until a database is configured again.
 {{< /admonition >}}
 
-{{< figure src="/static/img/docs/screenshot-postgres-query-editor.png" class="docs-image--no-shadow" caption="PostgreSQL query builder" >}}
-
 ## PostgreSQL query editor components
 
 The PostgreSQL query editor has two modes: **Builder** and **Code**.

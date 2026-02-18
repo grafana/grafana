@@ -26,7 +26,7 @@ For general information about annotations, refer to [Annotate visualizations](ht
 
 Before creating PostgreSQL annotations, ensure you have:
 
-- A PostgreSQL data source configured in Grafana.
+- [A configured PostgreSQL data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/).
 - Tables containing event data with timestamp fields.
 - Read access to the tables containing your events.
 
