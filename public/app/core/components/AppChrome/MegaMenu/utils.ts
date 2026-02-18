@@ -75,7 +75,6 @@ export const enrichWithInteractionTracking = (
 };
 
 export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
-  debugger;
   return Boolean(
     itemToCheck.children?.some((child) => {
       if (child === searchItem) {
@@ -92,7 +91,6 @@ export const getActiveItem = (
   currentPage: NavModelItem,
   url?: string
 ): NavModelItem | undefined => {
-  debugger;
   const { id, parentItem } = currentPage;
 
   // special case for the home page
