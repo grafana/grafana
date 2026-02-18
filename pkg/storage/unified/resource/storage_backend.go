@@ -500,7 +500,7 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 			}
 
 			// get the keys for the same resource
-			for currDK, _ := range b.dataStore.Keys(ctx, ListRequestKey{
+			for currDK := range b.dataStore.Keys(ctx, ListRequestKey{
 				Group:     dk.Group,
 				Resource:  dk.Resource,
 				Namespace: dk.Namespace,
