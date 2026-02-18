@@ -747,6 +747,9 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 		})
 		if err != nil {
 			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			if status != backend.SubscribeStreamStatusOK {
+				return centrifuge.SubscribeReply{}, subscribeStatusToCentrifugeError(status)
+			}
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
 	}
@@ -873,6 +876,17 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 	}
 	logger.Debug("Publication successful", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 	return centrifugeReply, nil
+}
+
+func subscribeStatusToCentrifugeError(status backend.SubscribeStreamStatus) *centrifuge.Error {
+	switch status {
+	case backend.SubscribeStreamStatusNotFound:
+		return centrifuge.ErrorUnknownChannel
+	case backend.SubscribeStreamStatusPermissionDenied:
+		return centrifuge.ErrorPermissionDenied
+	default:
+		return centrifuge.ErrorInternal
+	}
 }
 
 func subscribeStatusToHTTPError(status backend.SubscribeStreamStatus) (int, string) {
