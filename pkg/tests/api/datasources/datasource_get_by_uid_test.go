@@ -466,7 +466,7 @@ func runPutTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 			{
 				// Both read and write permissions are needed because k8s-reroute mode
 				// requires read permission to lookup the connection before updating
-				Actions:           []string{datasources.ActionRead, datasources.ActionWrite},
+				Actions:           []string{datasources.ActionWrite},
 				Resource:          "datasources",
 				ResourceAttribute: "uid",
 				ResourceID:        "*",
