@@ -4,6 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,4 +128,199 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, mapping)
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
+}
+
+// TestMapper_AnnotationSubresource_Scope tests that the annotations subresource uses dashboard scope format
+func TestMapper_AnnotationSubresource_Scope(t *testing.T) {
+	mapper := NewMapperRegistry()
+
+	mapping, ok := mapper.Get("dashboard.grafana.app", "dashboards/annotations")
+	require.True(t, ok, "annotations subresource should be registered")
+	require.NotNil(t, mapping)
+
+	tests := []struct {
+		name          string
+		identifier    string
+		expectedScope string
+	}{
+		{
+			name:          "scope for specific dashboard uses dashboard scope format",
+			identifier:    "test-dashboard-123",
+			expectedScope: "dashboards:uid:test-dashboard-123",
+		},
+		{
+			name:          "scope with wildcard uses dashboard scope format",
+			identifier:    "*",
+			expectedScope: "dashboards:uid:*",
+		},
+		{
+			name:          "scope with empty identifier",
+			identifier:    "",
+			expectedScope: "dashboards:uid:",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			scope := mapping.Scope(tt.identifier)
+			assert.Equal(t, tt.expectedScope, scope)
+		})
+	}
+
+	t.Run("prefix is dashboard scope prefix", func(t *testing.T) {
+		prefix := mapping.Prefix()
+		assert.Equal(t, "dashboards:uid:", prefix)
+	})
+
+	t.Run("resource name is dashboards for scoping", func(t *testing.T) {
+		resource := mapping.Resource()
+		assert.Equal(t, "dashboards", resource, "annotation subresource should use dashboard resource for scoping")
+	})
+
+	t.Run("has folder support", func(t *testing.T) {
+		assert.True(t, mapping.HasFolderSupport(), "annotations should support folder inheritance")
+	})
+
+	t.Run("does not skip scope on create", func(t *testing.T) {
+		assert.False(t, mapping.SkipScope(utils.VerbCreate), "annotations should not skip scope check on create")
+	})
+}
+
+// TestService_AnnotationSubresource_ScopeHandling tests that annotation permissions use dashboard scope
+func TestService_AnnotationSubresource_ScopeHandling(t *testing.T) {
+	tests := []struct {
+		name        string
+		permissions []accesscontrol.Permission
+		expected    map[string]bool
+	}{
+		{
+			name: "annotations:create permission uses dashboard scope",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:create",
+					Scope:      "dashboards:uid:test-dashboard",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "test-dashboard",
+				},
+			},
+			expected: map[string]bool{
+				"dashboards:uid:test-dashboard": true,
+			},
+		},
+		{
+			name: "annotations permission on folder scope for dashboard inheritance",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:create",
+					Scope:      "folders:uid:parent-folder",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent-folder",
+				},
+			},
+			expected: map[string]bool{
+				"folders:uid:parent-folder": true,
+			},
+		},
+		{
+			name: "wildcard annotations permission is normalized to wildcard",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "annotations:write",
+					Scope:      "dashboards:uid:*",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "*",
+				},
+			},
+			expected: map[string]bool{
+				"*": true, // Wildcard is normalized to just "*"
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setupAnnotationService()
+			scopeMap := s.getScopeMap(tt.permissions)
+			assert.Equal(t, tt.expected, scopeMap)
+		})
+	}
+}
+
+// TestMapper_AnnotationSubresource_Integration tests the mapper integration for resolving subresources
+func TestMapper_AnnotationSubresource_Integration(t *testing.T) {
+	mapper := NewMapperRegistry()
+
+	tests := []struct {
+		name           string
+		group          string
+		resource       string
+		subresource    string
+		verb           string
+		expectedAction string
+		shouldError    bool
+	}{
+		{
+			name:           "annotations subresource resolves correctly",
+			group:          "dashboard.grafana.app",
+			resource:       "dashboards",
+			subresource:    "annotations",
+			verb:           utils.VerbCreate,
+			expectedAction: "annotations:create",
+			shouldError:    false,
+		},
+		{
+			name:           "no subresource resolves to dashboard action",
+			group:          "dashboard.grafana.app",
+			resource:       "dashboards",
+			subresource:    "",
+			verb:           utils.VerbGet,
+			expectedAction: "dashboards:read",
+			shouldError:    false,
+		},
+		{
+			name:        "invalid subresource returns no mapping",
+			group:       "dashboard.grafana.app",
+			resource:    "dashboards",
+			subresource: "invalid",
+			verb:        utils.VerbCreate,
+			shouldError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var resourceKey string
+			if tt.subresource != "" {
+				resourceKey = tt.resource + "/" + tt.subresource
+			} else {
+				resourceKey = tt.resource
+			}
+
+			translation, ok := mapper.Get(tt.group, resourceKey)
+
+			if tt.shouldError {
+				assert.False(t, ok, "should not find mapping for invalid subresource")
+				return
+			}
+
+			require.True(t, ok, "should find mapping")
+			require.NotNil(t, translation)
+
+			action, ok := translation.Action(tt.verb)
+			require.True(t, ok, "verb should map to action")
+			assert.Equal(t, tt.expectedAction, action)
+		})
+	}
+}
+
+// setupAnnotationService creates a service with just the mapper for simple tests
+func setupAnnotationService() *Service {
+	return &Service{
+		mapper: NewMapperRegistry(),
+		logger: log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
+	}
 }
