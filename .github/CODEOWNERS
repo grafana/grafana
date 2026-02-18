@@ -765,6 +765,10 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
+# @grafana/openapi
+/packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
+
+
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
