@@ -48,7 +48,9 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
     onFilterChange(filter);
   };
 
-  const tooltip = isAnythingExpanded ? 'Collapse all sections' : 'Expand all sections';
+  const tooltip = isAnythingExpanded
+    ? t('navigation.megamenu.collapse-all-sections', 'Collapse all sections')
+    : t('navigation.megamenu.expand-all-sections', 'Expand all sections');
   const iconName = isAnythingExpanded ? 'angle-up' : 'angle-down';
   return (
     <Box padding={1} paddingLeft={2}>
