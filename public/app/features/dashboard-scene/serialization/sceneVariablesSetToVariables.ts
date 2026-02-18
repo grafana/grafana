@@ -607,5 +607,5 @@ export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): A
 }
 
 export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system';
+  return variable.state.type !== 'system' && variable.state.source === undefined;
 }
