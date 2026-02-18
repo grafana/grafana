@@ -7,7 +7,6 @@ type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecords []LogsDrilldownDefau
 
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord struct {
-	DsUid  string   `json:"dsUid"`
 	Labels []string `json:"labels"`
 }
 

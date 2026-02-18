@@ -2341,13 +2341,9 @@
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord": {
         "type": "object",
         "required": [
-          "dsUid",
           "labels"
         ],
         "properties": {
-          "dsUid": {
-            "type": "string"
-          },
           "labels": {
             "type": "array",
             "items": {
