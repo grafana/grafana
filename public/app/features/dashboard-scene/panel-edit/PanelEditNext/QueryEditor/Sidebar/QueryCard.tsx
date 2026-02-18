@@ -27,7 +27,6 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
 
   return (
     <SidebarCard
-      config={QUERY_EDITOR_TYPE_CONFIG[editorType]}
       id={query.refId}
       isSelected={isSelected}
       item={item}

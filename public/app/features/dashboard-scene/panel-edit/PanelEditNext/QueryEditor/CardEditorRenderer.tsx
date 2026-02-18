@@ -1,5 +1,6 @@
 import { QueryEditorType } from '../constants';
 
+import { AlertEditorRenderer } from './AlertEditorRenderer';
 import { ExpressionTypePicker } from './Body/ExpressionTypePicker';
 import { TransformationTypePicker } from './Body/TransformationTypePicker';
 import { useQueryEditorUIContext } from './QueryEditorContext';
@@ -15,6 +16,10 @@ export function CardEditorRenderer() {
 
   if (pendingTransformation) {
     return <TransformationTypePicker />;
+  }
+
+  if (cardType === QueryEditorType.Alert) {
+    return <AlertEditorRenderer />;
   }
 
   if (cardType === QueryEditorType.Transformation) {
