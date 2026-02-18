@@ -50,6 +50,16 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
+	{ // Migrate query.grafana.app to datasource.grafana.app
+		Pattern: regexp.MustCompile(`/apis/query.grafana.app/v0alpha1(.*$)`),
+		ReplaceFunc: func(matches []string) string {
+			result := "/apis/datasource.grafana.app/v0alpha1" + matches[1]
+			if strings.HasSuffix(matches[1], "/query") {
+				result += "/name"
+			}
+			return result
+		},
+	},
 	{
 		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
 		ReplaceFunc: func(matches []string) string {
@@ -66,12 +76,6 @@ var PathRewriters = []filters.PathRewriter{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
-		},
-	},
-	{ // Migrate query.grafana.app to datasource.grafana.app
-		Pattern: regexp.MustCompile(`/apis/query.grafana.app/v0alpha1(.*$)`),
-		ReplaceFunc: func(matches []string) string {
-			return "/apis/datasource.grafana.app/v0alpha1" + matches[1]
 		},
 	},
 }
