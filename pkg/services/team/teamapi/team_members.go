@@ -186,7 +186,6 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 	}
 	orgID := c.GetOrgID()
 
-	// Validate the team
 	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
 	if resp != nil {
 		return resp
