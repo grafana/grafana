@@ -11729,6 +11729,8 @@
     },
     "user-invite-form": {
       "back": "Back",
+      "disabled-message": "This form is no longer in use. To invite a new user, please click the button to manage invitations externally.",
+      "disabled-title": "Externally managed users",
       "label-email-or-username": "Email or username",
       "label-name": "Name",
       "label-send-invite-email": "Send invite email",
