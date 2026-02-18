@@ -31,6 +31,12 @@ export class ReportRenderReadinessObserver implements performanceUtils.ScenePerf
       window.__grafana_report_render_duration = data.duration;
     }
   };
+  onQueryComplete = (data: performanceUtils.QueryPerformanceData): void => {
+    // Determine which event is relevant
+    console.log('onQueryComplete', data);
+    window.__grafana_report_query_complete = true;
+    window.__grafana_report_query_duration = data.duration;
+  };
 }
 
 let instance: ReportRenderReadinessObserver | null = null;
