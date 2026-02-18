@@ -162,7 +162,7 @@ Next, set up GitHub Actions to automate the deployment of a Grafana dashboard us
 The following GitHub Action configuration assumes you are using a Go-based dashboard generator. If you're using one of the other languages that the Foundation SDK supports, modify the **Generate Dashboard JSON** step accordingly.
 {{< /admonition >}}
 
-`.github/workflows/deploy-dashboard.yml`
+The `.github/workflows/deploy-dashboard.yml` deploy workflow looks like:
 
 ```yaml
 name: Deploy Grafana Dashboard

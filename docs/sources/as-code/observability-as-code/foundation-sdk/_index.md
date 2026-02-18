@@ -37,7 +37,9 @@ Here's a quick overview of how the Grafana Foundation SDK works:
 
 As you build more advanced dashboards, you’ll work with additional builders and types to support richer functionality.
 The SDK supports not just panels and queries, but also variables, thresholds, field overrides, transformations, and more.
-Refer to [the full API reference](https://grafana.github.io/grafana-foundation-sdk/) to explore what's possible. Read on to see these concepts in action.
+Refer to [the full API reference](https://grafana.github.io/grafana-foundation-sdk/) to explore what's possible.
+
+Refer to [Foundation SDK key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/foundation-sdk/foundation-sdk-key-concepts) for a more extensive explanation, and read on to see these concepts in action.
 
 ## Before you begin
 
@@ -206,4 +208,4 @@ Now that you understand the basics of using the Grafana Foundation SDK, here are
 - **Explore more features:** Check out the [full API reference](https://grafana.github.io/grafana-foundation-sdk/) to learn about advanced dashboard configurations.
 - **Version control your dashboards:** Store your dashboard code in a Git repository to track changes over time.
 - **Automate dashboard provisioning with CI/CD:** [Integrate the SDK into your CI/CD pipeline](./dashboard-automation) to deploy dashboards automatically.
-- **Learn about [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync)**, which lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code.
+- **Learn about [Grafana Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync)**, which lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code.
