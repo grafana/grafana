@@ -6,6 +6,7 @@ import { DataFrame, FieldConfigSource, transformDataFrame } from '@grafana/data'
 import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/LogDetailsBody';
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
@@ -97,7 +98,11 @@ const organizeFields = async (
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
-  for (const [idx, field] of displayedFields.entries()) {
+  for (let [idx, field] of displayedFields.entries()) {
+    // interop with logs panel
+    if (field === LOG_LINE_BODY_FIELD_NAME) {
+      field = bodyFieldName;
+    }
     indexByName[field] = idx;
     includeByName[field] = true;
   }
