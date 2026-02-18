@@ -9,7 +9,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ScrollContainer, useStyles2, Box, EmptyState } from '@grafana/ui';
+import { ScrollContainer, useStyles2, EmptyState } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -121,19 +121,29 @@ export const MegaMenu = memo(
     const onFilterChange = (filterValue: string) => {
       setMenuFilterValue(filterValue);
 
-      const initial: NavModelItem[] = [];
-      const filteredNavTree = rawNavTree.reduce((acc, item) => {
-        const thisItemHasMatches = navItemHasMatch(item, filterValue);
-        if (!thisItemHasMatches) {
+      const filterNavTree = (items: NavModelItem[], filter: string): NavModelItem[] => {
+        return items.reduce((acc: NavModelItem[], item) => {
+          const thisItemHasMatches = navItemHasMatch(item, filter);
+          let filteredChildren: NavModelItem[] | undefined = undefined;
+          if (item.children) {
+            filteredChildren = filterNavTree(item.children, filter);
+          }
+
+          if (!thisItemHasMatches && (!filteredChildren || filteredChildren.length === 0)) {
+            return acc;
+          }
+
+          const filteredItem: NavModelItem = {
+            ...item,
+            children: filteredChildren,
+          };
+
+          acc.push(filteredItem);
           return acc;
-        }
-        const filteredItem = {
-          ...item,
-          children: item.children?.filter((child) => navItemHasMatch(child, filterValue)),
-        };
-        acc.push(filteredItem);
-        return acc;
-      }, initial);
+        }, []);
+      };
+
+      const filteredNavTree = filterNavTree(rawNavTree, filterValue);
       setFilteredNavTree(filteredNavTree);
     };
 
@@ -143,27 +153,26 @@ export const MegaMenu = memo(
         <MegaMenuControls onFilterChange={onFilterChange} />
 
         <nav className={styles.content}>
+          {menuFilterValue && navItems.length === 0 && (
+            <EmptyState
+              hideImage
+              variant="not-found"
+              role="alert"
+              message={t('command-palette.empty-state.message', 'No results found')}
+            >
+              {isAssistantAvailable && (
+                <OpenAssistantButton
+                  origin="grafana/command-palette-empty-state"
+                  prompt={`Search for ${menuFilterValue}`}
+                  title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+                  onClick={() => setMenuFilterValue('')}
+                />
+              )}
+            </EmptyState>
+          )}
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.length === 0 && (
-                  <Box padding={1}>
-                    <EmptyState
-                      variant="not-found"
-                      role="alert"
-                      message={t('command-palette.empty-state.message', 'No results found')}
-                    >
-                      {isAssistantAvailable && (
-                        <OpenAssistantButton
-                          origin="grafana/command-palette-empty-state"
-                          prompt={`Search for ${menuFilterValue}`}
-                          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
-                          onClick={() => setMenuFilterValue('')}
-                        />
-                      )}
-                    </EmptyState>
-                  </Box>
-                )}
                 {navItems.map((link) => (
                   <MegaMenuItem
                     key={link.text}
