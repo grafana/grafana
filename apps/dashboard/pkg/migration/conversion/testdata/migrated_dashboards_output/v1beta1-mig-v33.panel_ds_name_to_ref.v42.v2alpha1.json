@@ -92,14 +92,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "loki",
                       "spec": {
                         "description": "Nested target should also migrate from string to object"
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
+                      "type": "loki",
+                      "uid": "non-default-test-ds-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -138,14 +138,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "elasticsearch",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "Target with existing object should remain unchanged"
                       }
                     },
                     "datasource": {
-                      "type": "elasticsearch",
-                      "uid": "existing-target-uid"
+                      "type": "prometheus",
+                      "uid": "existing-ref-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -289,14 +289,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "loki",
                       "spec": {
                         "description": "Valid string should migrate to object"
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
+                      "type": "loki",
+                      "uid": "non-default-test-ds-uid"
                     },
                     "refId": "B",
                     "hidden": false
@@ -306,14 +306,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "loki",
                       "spec": {
                         "description": "Non-existing datasource should be preserved as-is (migration returns nil)"
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
-                      "uid": "non-existing-ds"
+                      "type": "loki",
+                      "uid": "non-default-test-ds-uid"
                     },
                     "refId": "C",
                     "hidden": false
@@ -381,7 +381,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "existing-ref"
+                      "uid": "default-ds-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -391,14 +391,14 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "loki",
+                      "kind": "prometheus",
                       "spec": {
                         "description": "String target should migrate to object"
                       }
                     },
                     "datasource": {
-                      "type": "loki",
-                      "uid": "non-default-test-ds-uid"
+                      "type": "prometheus",
+                      "uid": "default-ds-uid"
                     },
                     "refId": "B",
                     "hidden": false
@@ -503,7 +503,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "also-missing-ds"
+                      "uid": "completely-missing-ds"
                     },
                     "refId": "A",
                     "hidden": false
