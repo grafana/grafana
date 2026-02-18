@@ -104,6 +104,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           <GenAIPanelDescriptionButton
             onGenerate={(description) => panel.setState({ description })}
             panel={vizPanelToPanel(panel)}
+            dashboard={transformSceneToSaveModel(dashboard)}
           />
         ),
       })
