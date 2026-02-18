@@ -113,6 +113,13 @@ var appManifestData = app.ManifestData{
 																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
 																	},
 																},
+																"labels": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Labels optionally filters the entries by matching alert labels.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
+																	},
+																},
 																"limit": {
 																	SchemaProps: spec.SchemaProps{
 																		Type:        []string{"integer"},

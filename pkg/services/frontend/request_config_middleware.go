@@ -37,13 +37,13 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 
 			// Fetch tenant-specific configuration if namespace is present
 			if namespace, ok := request.NamespaceFrom(ctx); ok {
-				if settingsService != nil {
+				if namespace != "" && settingsService != nil {
 					// Fetch tenant overrides for relevant sections only
 					selector := metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
-							Values:   []string{"security"}, // TODO: get correct list
+							Values:   []string{"security", "analytics"},
 						}, {
 							// don't return values from defaults.ini as they conflict with the services's own defaults
 							Key:      "source",
@@ -54,9 +54,11 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 
 					settings, err := settingsService.ListAsIni(ctx, selector)
 					if err != nil {
+						settingsFetchMetric.WithLabelValues("error").Inc()
 						logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
 						// Fall back to base config
 					} else {
+						settingsFetchMetric.WithLabelValues("success").Inc()
 						// Merge tenant overrides with base config
 						requestConfig.ApplyOverrides(settings, logger)
 					}
