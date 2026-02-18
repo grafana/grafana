@@ -254,18 +254,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
-    filterRow: css({
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingBottom: '8px',
-    }),
-    infoText: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-    }),
     emptyStateWrapper: css({
       display: 'flex',
       flexDirection: 'column',
