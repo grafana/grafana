@@ -16,12 +16,14 @@ import {
   Tooltip,
   Label,
   Stack,
+  Alert,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';
+import { getCanInviteUsersToOrg } from '../users/utils';
 
 const tooltipMessage = (
   <>
@@ -62,6 +64,7 @@ const defaultValues: FormModel = {
 
 export const UserInviteForm = () => {
   const dispatch = useDispatch();
+  const disabled = !getCanInviteUsersToOrg();
 
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
@@ -69,64 +72,83 @@ export const UserInviteForm = () => {
   };
 
   return (
-    <Form defaultValues={defaultValues} onSubmit={onSubmit}>
-      {({ register, control, errors }) => {
-        return (
-          <>
-            <FieldSet>
-              <Field
-                invalid={!!errors.loginOrEmail}
-                error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
-                label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
-              >
-                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-                <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
-              </Field>
-              <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>
-                <Input
-                  {...register('name')}
-                  placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
-                />
-              </Field>
-              <Field
-                invalid={!!errors.role}
-                label={
-                  <Label>
-                    <Stack gap={0.5}>
-                      <span>
-                        <Trans i18nKey="org.user-invite-form.role">Role</Trans>
-                      </span>
-                      {tooltipMessage && (
-                        <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
-                          <Icon name="info-circle" size="xs" />
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  </Label>
-                }
-              >
-                <Controller
-                  render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
-                  control={control}
-                  name="role"
-                />
-              </Field>
-              <Field label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}>
-                <Switch id="send-email-switch" {...register('sendEmail')} />
-              </Field>
-            </FieldSet>
-            <Stack>
-              <Button type="submit">
-                <Trans i18nKey="org.user-invite-form.submit">Submit</Trans>
-              </Button>
-              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')} variant="secondary">
-                <Trans i18nKey="org.user-invite-form.back">Back</Trans>
-              </LinkButton>
-            </Stack>
-          </>
-        );
-      }}
-    </Form>
+    <>
+      {disabled && (
+        <Alert severity="warning" title={t('org.user-invite-form.disabled-title', 'Externally managed users')}>
+          <Trans i18nKey="org.user-invite-form.disabled-message">
+            This form is no longer in use. To invite a new user, please click the button to manage invitations
+            externally.
+          </Trans>
+        </Alert>
+      )}
+
+      <Form defaultValues={defaultValues} onSubmit={onSubmit}>
+        {({ register, control, errors }) => {
+          return (
+            <>
+              <FieldSet>
+                <Field
+                  invalid={!!errors.loginOrEmail}
+                  error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
+                  label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
+                  disabled={disabled}
+                >
+                  {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                  <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
+                </Field>
+                <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')} disabled={disabled}>
+                  <Input
+                    {...register('name')}
+                    placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
+                  />
+                </Field>
+                <Field
+                  invalid={!!errors.role}
+                  label={
+                    <Label>
+                      <Stack gap={0.5}>
+                        <span>
+                          <Trans i18nKey="org.user-invite-form.role">Role</Trans>
+                        </span>
+                        {tooltipMessage && (
+                          <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
+                            <Icon name="info-circle" size="xs" />
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </Label>
+                  }
+                  disabled={disabled}
+                >
+                  <Controller
+                    render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
+                    control={control}
+                    name="role"
+                  />
+                </Field>
+                <Field
+                  label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}
+                  disabled={disabled}
+                >
+                  <Switch id="send-email-switch" {...register('sendEmail')} />
+                </Field>
+              </FieldSet>
+              <Stack>
+                <Button type="submit" disabled={disabled}>
+                  <Trans i18nKey="org.user-invite-form.submit">Submit</Trans>
+                </Button>
+                <LinkButton
+                  href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')}
+                  variant="secondary"
+                >
+                  <Trans i18nKey="org.user-invite-form.back">Back</Trans>
+                </LinkButton>
+              </Stack>
+            </>
+          );
+        }}
+      </Form>
+    </>
   );
 };
 

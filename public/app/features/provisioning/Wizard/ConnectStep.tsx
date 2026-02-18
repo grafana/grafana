@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
@@ -17,6 +17,7 @@ export const ConnectStep = memo(function ConnectStep() {
     formState: { errors },
     getValues,
     watch,
+    setValue,
   } = useFormContext<WizardFormData>();
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
@@ -28,6 +29,7 @@ export const ConnectStep = memo(function ConnectStep() {
     options: repositoryRefsOptions,
     loading: isRefsLoading,
     error: refsError,
+    defaultBranch,
   } = useGetRepositoryRefs({
     repositoryType: type,
     repositoryName: repositoryName,
@@ -35,6 +37,15 @@ export const ConnectStep = memo(function ConnectStep() {
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
+
+  const hasAutoSelectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAutoSelectedRef.current && defaultBranch && !getValues('repository.branch')) {
+      setValue('repository.branch', defaultBranch);
+      hasAutoSelectedRef.current = true;
+    }
+  }, [defaultBranch, getValues, setValue]);
 
   return (
     <Stack direction="column" gap={2}>
