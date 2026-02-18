@@ -1,19 +1,24 @@
-import { DataTransformerConfig } from '@grafana/data';
+import { AlertState, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { QueryEditorType } from '../constants';
+import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
 
-import { PendingExpression } from './QueryEditorContext';
+import { PendingExpression, PendingTransformation } from './QueryEditorContext';
 import { AlertRule, Transformation } from './types';
 
 export function getEditorType(
   card: DataQuery | Transformation | AlertRule | null,
-  pendingExpression?: PendingExpression | null
+  pendingExpression?: PendingExpression | null,
+  pendingTransformation?: PendingTransformation | null
 ): QueryEditorType {
   if (pendingExpression) {
     return QueryEditorType.Expression;
+  }
+
+  if (pendingTransformation) {
+    return QueryEditorType.Transformation;
   }
 
   if (!card) {
@@ -56,4 +61,24 @@ export const filterDataTransformerConfigs = (
 
 export function getTransformId(transformConfigId: string, index: number): string {
   return `${transformConfigId}-${index}`;
+}
+
+/**
+ * Gets the border color for a query editor card based on its type.
+ * For alerts, uses dynamic state-based color; otherwise uses static config color.
+ *
+ * @param theme - Grafana theme object
+ * @param editorType - The type of editor (Query, Expression, Transformation, Alert)
+ * @param alertState - Optional alert state (only used when editorType is Alert)
+ * @returns The border color string
+ */
+export function getEditorBorderColor(
+  theme: GrafanaTheme2,
+  editorType: QueryEditorType,
+  alertState?: AlertState | null
+): string {
+  if (editorType === QueryEditorType.Alert && alertState) {
+    return getAlertStateColor(theme, alertState);
+  }
+  return QUERY_EDITOR_TYPE_CONFIG[editorType].color;
 }
