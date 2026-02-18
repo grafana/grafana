@@ -5,12 +5,10 @@ export type LogsLogsDefaultLabelsRecords = LogsLogsDefaultLabelsRecord[];
 export const defaultLogsLogsDefaultLabelsRecords = (): LogsLogsDefaultLabelsRecords => ([]);
 
 export interface LogsLogsDefaultLabelsRecord {
-	dsUid: string;
 	labels: string[];
 }
 
 export const defaultLogsLogsDefaultLabelsRecord = (): LogsLogsDefaultLabelsRecord => ({
-	dsUid: "",
 	labels: [],
 });
 

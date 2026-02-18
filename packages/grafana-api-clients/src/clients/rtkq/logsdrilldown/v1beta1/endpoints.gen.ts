@@ -1019,7 +1019,6 @@ export type Status = {
 };
 export type Patch = object;
 export type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord = {
-  dsUid: string;
   labels: string[];
 };
 export type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecords =
