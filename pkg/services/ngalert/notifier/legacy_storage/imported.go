@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -167,8 +168,8 @@ func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibition
 	return BuildManagedInhibitionRules(e.identifier, importedRules)
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) (definitions.ManagedInhibitionRules, error) {
-	scopedRules := definition.MergeInhibitRules(nil, rules, config.Matchers{managedRouteMatcher(identifier)})
+func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitRule) (definitions.ManagedInhibitionRules, error) {
+	scopedRules := applyManagedRouteMatcher(identifier, rules)
 
 	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
 	for i, rule := range scopedRules {
@@ -188,4 +189,17 @@ func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule) 
 	}
 
 	return res, nil
+}
+
+func applyManagedRouteMatcher(identifier string, rules []definitions.InhibitRule) []definitions.InhibitRule {
+	result := make([]config.InhibitRule, 0, len(rules))
+	matcher := managedRouteMatcher(identifier)
+
+	for _, rule := range rules {
+		rule.SourceMatchers = append(rule.SourceMatchers, matcher)
+		rule.TargetMatchers = append(rule.TargetMatchers, matcher)
+		result = append(result, rule)
+	}
+
+	return result
 }
