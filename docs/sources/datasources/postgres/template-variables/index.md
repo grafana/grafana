@@ -86,7 +86,7 @@ SELECT hostname FROM host WHERE hostname LIKE '$__searchFilter'
 
 The PostgreSQL data source supports **multi-property variables**. Use them when the same logical concept has different identifiers in different contexts (for example, an environment called `dev` in one system and `development` in another). Instead of maintaining several variables in sync, you can map all of those values to one variable and reference the property you need in each panel or query.
 
-{{< figure alt="PostgreSQL multi-property variable example"  src="/media/docs/postgres/postgres-multi-prop-v12.3.png" >}}
+{{< figure alt="PostgreSQL multi-property variable example"  src="/media/docs/postgres/postgreSQL-multi-prop-variable-v12.3.png" >}}
 
 You can create a multi-property variable with either **Type: Custom** or **Type: Query**:
 
