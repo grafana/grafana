@@ -59,6 +59,10 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
 
       row.setState(updates);
 
+      if (spec.repeat !== undefined) {
+        row.onChangeRepeat(spec.repeat?.value || undefined);
+      }
+
       return {
         success: true,
         changes: [{ path, previousValue, newValue: updates }],

@@ -2,7 +2,8 @@
  * ADD_ROW command
  *
  * Add a new row to the dashboard layout. If the target parent is not a
- * RowsLayout, converts it (delegates to existing addNewRowTo logic).
+ * RowsLayout, the existing content is nested inside the requested row
+ * (preserving the original layout structure) rather than being flattened.
  */
 
 import { z } from 'zod';
@@ -12,7 +13,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
-import { resolveLayoutPath } from './layoutPathResolver';
+import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -38,38 +39,53 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
       let rowsManager: RowsLayoutManager;
       let wasConverted = false;
+      let newRowIndex: number;
+
+      validateNesting(parentPath, 'rows', targetLayout);
 
       if (targetLayout instanceof RowsLayoutManager) {
         rowsManager = targetLayout;
+
+        const newRow = new RowItem({
+          layout: DefaultGridLayoutManager.fromVizPanels([]),
+          title: row.spec.title,
+          collapse: row.spec.collapse,
+          hideHeader: row.spec.hideHeader,
+          fillScreen: row.spec.fillScreen,
+          repeatByVariable: row.spec.repeat?.value,
+        });
+
+        const currentRows = [...rowsManager.state.rows];
+        newRowIndex =
+          position !== undefined && position >= 0 && position <= currentRows.length ? position : currentRows.length;
+        currentRows.splice(newRowIndex, 0, newRow);
+        rowsManager.setState({ rows: currentRows });
       } else {
-        // Convert to RowsLayout -- wrap existing layout in a row
         const layoutParent = targetLayout.parent;
         if (!layoutParent || !isLayoutParent(layoutParent)) {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        rowsManager = RowsLayoutManager.createFromLayout(targetLayout);
+        // Nest the existing layout inside the requested row as-is,
+        // preserving its structure (tabs, grid, etc.).
+        targetLayout.clearParent();
+        const newRow = new RowItem({
+          layout: targetLayout,
+          title: row.spec.title,
+          collapse: row.spec.collapse,
+          hideHeader: row.spec.hideHeader,
+          fillScreen: row.spec.fillScreen,
+          repeatByVariable: row.spec.repeat?.value,
+        });
+
+        rowsManager = new RowsLayoutManager({ rows: [newRow] });
+        newRowIndex = 0;
+
         layoutParent.switchLayout(rowsManager);
         wasConverted = true;
       }
 
-      // Create the new row
-      const newRow = new RowItem({
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-        title: row.spec.title,
-        collapse: row.spec.collapse,
-        hideHeader: row.spec.hideHeader,
-        fillScreen: row.spec.fillScreen,
-      });
-
-      // Insert at position or append
-      const currentRows = [...rowsManager.state.rows];
-      const insertIndex =
-        position !== undefined && position >= 0 && position <= currentRows.length ? position : currentRows.length;
-      currentRows.splice(insertIndex, 0, newRow);
-      rowsManager.setState({ rows: currentRows });
-
-      const newPath = parentPath === '/' ? `/rows/${insertIndex}` : `${parentPath}/rows/${insertIndex}`;
+      const newPath = parentPath === '/' ? `/rows/${newRowIndex}` : `${parentPath}/rows/${newRowIndex}`;
 
       const warnings: string[] = [];
       if (wasConverted) {

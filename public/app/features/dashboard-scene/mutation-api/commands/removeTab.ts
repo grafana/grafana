@@ -30,7 +30,7 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const { path, movePanelsTo } = payload;
+      const { path, moveContentTo } = payload;
 
       const resolved = resolveLayoutPath(scene.state.body, path);
       if (!(resolved.item instanceof TabItem)) {
@@ -42,11 +42,10 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
         throw new Error(`Parent of "${path}" is not a TabsLayoutManager`);
       }
 
-      // Move panels if requested (uses helper that preserves panel IDs)
-      if (movePanelsTo) {
+      if (moveContentTo) {
         const panels = resolved.item.state.layout.getVizPanels();
         if (panels.length > 0) {
-          const targetResolved = resolveLayoutPath(scene.state.body, movePanelsTo);
+          const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo);
           movePanelsToLayout(panels, targetResolved.layoutManager);
         }
       }

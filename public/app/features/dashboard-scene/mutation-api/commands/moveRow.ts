@@ -69,7 +69,7 @@ export const moveRowCommand: MutationCommand<MoveRowPayload> = {
       destParent.setState({ rows: destRows });
 
       const basePath = toParent ?? path.substring(0, path.lastIndexOf('/rows/'));
-      const newPath = basePath === '' ? `/rows/${insertIndex}` : `${basePath}/rows/${insertIndex}`;
+      const newPath = basePath === '' || basePath === '/' ? `/rows/${insertIndex}` : `${basePath}/rows/${insertIndex}`;
 
       return {
         success: true,

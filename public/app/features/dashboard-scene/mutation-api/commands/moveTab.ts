@@ -68,7 +68,7 @@ export const moveTabCommand: MutationCommand<MoveTabPayload> = {
       destParent.setState({ tabs: destTabs });
 
       const basePath = toParent ?? path.substring(0, path.lastIndexOf('/tabs/'));
-      const newPath = basePath === '' ? `/tabs/${insertIndex}` : `${basePath}/tabs/${insertIndex}`;
+      const newPath = basePath === '' || basePath === '/' ? `/tabs/${insertIndex}` : `${basePath}/tabs/${insertIndex}`;
 
       return {
         success: true,

@@ -45,6 +45,10 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
 
       tab.setState(updates);
 
+      if (spec.repeat !== undefined) {
+        tab.onChangeRepeat(spec.repeat?.value || undefined);
+      }
+
       return {
         success: true,
         changes: [{ path, previousValue, newValue: updates }],

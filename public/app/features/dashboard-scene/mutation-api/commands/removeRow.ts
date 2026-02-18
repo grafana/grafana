@@ -30,7 +30,7 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const { path, movePanelsTo } = payload;
+      const { path, moveContentTo } = payload;
 
       // Resolve the row to remove
       const resolved = resolveLayoutPath(scene.state.body, path);
@@ -43,11 +43,10 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
         throw new Error(`Parent of "${path}" is not a RowsLayoutManager`);
       }
 
-      // Move panels if requested (uses helper that preserves panel IDs)
-      if (movePanelsTo) {
+      if (moveContentTo) {
         const panels = resolved.item.state.layout.getVizPanels();
         if (panels.length > 0) {
-          const targetResolved = resolveLayoutPath(scene.state.body, movePanelsTo);
+          const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo);
           movePanelsToLayout(panels, targetResolved.layoutManager);
         }
       }

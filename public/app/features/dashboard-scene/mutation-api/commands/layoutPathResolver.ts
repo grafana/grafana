@@ -13,6 +13,8 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
+type GroupType = 'rows' | 'tabs';
+
 export interface ResolvedPath {
   /** The layout manager at the resolved position (for "/" this is the root body). */
   layoutManager: DashboardLayoutManager;
@@ -112,13 +114,11 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
       }
 
       const row = rows[segment.index];
+      currentLayout = row.state.layout;
 
       if (isLast) {
         lastItem = row;
         lastIndex = segment.index;
-        currentLayout = row.state.layout;
-      } else {
-        currentLayout = row.state.layout;
       }
     } else {
       // tabs
@@ -149,13 +149,11 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
       }
 
       const tab = tabs[segment.index];
+      currentLayout = tab.state.layout;
 
       if (isLast) {
         lastItem = tab;
         lastIndex = segment.index;
-        currentLayout = tab.state.layout;
-      } else {
-        currentLayout = tab.state.layout;
       }
     }
   }
@@ -165,6 +163,61 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
     item: lastItem,
     index: lastIndex,
   };
+}
+
+/**
+ * Returns true if any direct child of a group layout has an inner layout
+ * that is itself a group (RowsLayoutManager or TabsLayoutManager).
+ */
+export function hasNestedGroups(layout: DashboardLayoutManager): boolean {
+  if (layout instanceof RowsLayoutManager) {
+    return layout.state.rows.some(
+      (r) => r.state.layout instanceof RowsLayoutManager || r.state.layout instanceof TabsLayoutManager
+    );
+  }
+  if (layout instanceof TabsLayoutManager) {
+    return layout.state.tabs.some(
+      (t) => t.state.layout instanceof RowsLayoutManager || t.state.layout instanceof TabsLayoutManager
+    );
+  }
+  return false;
+}
+
+/**
+ * Validate that adding a group layout (rows/tabs) at the given path
+ * won't violate nesting rules:
+ *  - Max 2 layers of group nesting (root group + one nested group)
+ *  - No same-type nesting (tabs-in-tabs, rows-in-rows)
+ */
+export function validateNesting(parentPath: string, addingType: GroupType, targetLayout: DashboardLayoutManager): void {
+  const segments = parsePathSegments(parentPath);
+
+  // Already 2+ segments deep -- adding another group would exceed the limit
+  if (segments.length >= 2) {
+    throw new Error(
+      `Cannot add ${addingType} at "${parentPath}": maximum nesting depth (2 group layers) would be exceeded.`
+    );
+  }
+
+  // 1 segment deep -- check for same-type nesting
+  if (segments.length === 1 && segments[0].type === addingType) {
+    throw new Error(`Cannot add ${addingType} inside ${addingType}: same-type nesting is not allowed.`);
+  }
+
+  // Root level -- if conversion is needed and target already has nested groups,
+  // wrapping it would create 3 layers
+  if (segments.length === 0) {
+    const isAlreadyTargetType =
+      (addingType === 'rows' && targetLayout instanceof RowsLayoutManager) ||
+      (addingType === 'tabs' && targetLayout instanceof TabsLayoutManager);
+
+    if (!isAlreadyTargetType && hasNestedGroups(targetLayout)) {
+      throw new Error(
+        `Cannot add ${addingType} at root: the current layout already contains nested groups, ` +
+          `which would exceed the maximum nesting depth (2 group layers).`
+      );
+    }
+  }
 }
 
 /**

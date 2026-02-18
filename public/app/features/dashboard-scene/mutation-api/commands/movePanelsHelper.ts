@@ -5,7 +5,7 @@
  * another without reassigning panel IDs.
  *
  * The standard `layout.addPanel()` path calls `getNextPanelId()` which
- * assigns a brand-new key to every panel. For `movePanelsTo` semantics we
+ * assigns a brand-new key to every panel. For `moveContentTo` semantics we
  * need to preserve identity so that the caller (and the elements map) can
  * still reference panels by their original keys.
  *
@@ -80,7 +80,7 @@ function resolveLeafLayout(layout: DashboardLayoutManager): DefaultGridLayoutMan
  * keys and grid positions.
  *
  * @param panels - VizPanels to relocate
- * @param targetLayout - The layout manager at the movePanelsTo path
+ * @param targetLayout - The layout manager at the moveContentTo path
  */
 export function movePanelsToLayout(panels: VizPanel[], targetLayout: DashboardLayoutManager): void {
   if (panels.length === 0) {

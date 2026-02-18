@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -27,6 +28,16 @@ jest.mock('../../edit-pane/shared', () => {
         props.perform();
       },
     },
+  };
+});
+
+jest.mock('../../utils/utils', () => {
+  const actual = jest.requireActual('../../utils/utils');
+  return {
+    ...actual,
+    getDashboardSceneFor: jest.fn(() => ({
+      state: { isEditing: true },
+    })),
   };
 });
 
@@ -149,12 +160,13 @@ function buildRowsSceneWithPanels(): MutableDashboardScene {
 }
 
 /**
- * Builds a scene with a grid body that has a LayoutParent mock,
- * allowing layout conversion (e.g., grid -> tabs).
+ * Builds a scene with a LayoutParent mock on the body, enabling
+ * layout conversion tests (e.g., grid -> tabs, rows -> tabs).
  */
-function buildGridSceneWithLayoutParent(panels: VizPanel[] = []): MutableDashboardScene {
-  const body = DefaultGridLayoutManager.fromVizPanels(panels);
-
+function buildSceneWithLayoutParent(
+  body: DefaultGridLayoutManager | RowsLayoutManager | TabsLayoutManager | AutoGridLayoutManager,
+  serializer = mockSerializer()
+): MutableDashboardScene {
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing: false,
@@ -162,18 +174,17 @@ function buildGridSceneWithLayoutParent(panels: VizPanel[] = []): MutableDashboa
   };
 
   const mockLayoutParent = {
-    switchLayout: jest.fn((newLayout: DefaultGridLayoutManager) => {
+    switchLayout: jest.fn((newLayout: unknown) => {
       state.body = newLayout;
     }),
+    publishEvent: jest.fn(),
   };
 
-  // Simulate the scene tree: set the body's parent to a LayoutParent
-  // so that layout conversion can call layoutParent.switchLayout().
   (body as unknown as { _parent: unknown })._parent = mockLayoutParent;
 
   const scene = {
     state,
-    serializer: mockSerializer(),
+    serializer,
     canEditDashboard: jest.fn(() => true),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
@@ -749,7 +760,7 @@ describe('Layout mutation commands', () => {
 
     it('converts grid to tabs with only the requested tab (no extra "New tab")', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
-      const scene = buildGridSceneWithLayoutParent([panelA]);
+      const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([panelA]));
       const executor = new MutationExecutor(scene);
 
       const result = await executor.execute({
@@ -775,7 +786,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('converts grid to tabs with empty grid - single tab only', async () => {
-      const scene = buildGridSceneWithLayoutParent([]);
+      const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([]));
       const executor = new MutationExecutor(scene);
 
       const result = await executor.execute({
@@ -792,6 +803,105 @@ describe('Layout mutation commands', () => {
       expect(body).toBeInstanceOf(TabsLayoutManager);
       expect(body.state.tabs).toHaveLength(1);
       expect(body.state.tabs[0].state.title).toBe('Overview');
+    });
+
+    it('converts rows to tabs by nesting rows inside the requested tab', async () => {
+      const row1 = new RowItem({
+        title: 'Row 1',
+        layout: DefaultGridLayoutManager.fromVizPanels([
+          new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' }),
+        ]),
+      });
+      const row2 = new RowItem({
+        title: 'Row 2',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const rowsBody = new RowsLayoutManager({ rows: [row1, row2] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Main' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body).toBeInstanceOf(TabsLayoutManager);
+      expect(body.state.tabs).toHaveLength(1);
+      expect(body.state.tabs[0].state.title).toBe('Main');
+
+      // The rows layout should be preserved inside the tab
+      const innerLayout = body.state.tabs[0].getLayout();
+      expect(innerLayout).toBeInstanceOf(RowsLayoutManager);
+      expect((innerLayout as RowsLayoutManager).state.rows).toHaveLength(2);
+    });
+
+    it('converts tabs to rows by nesting tabs inside the requested row', async () => {
+      const tab1 = new TabItem({
+        title: 'Tab 1',
+        layout: DefaultGridLayoutManager.fromVizPanels([
+          new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' }),
+        ]),
+      });
+      const tab2 = new TabItem({
+        title: 'Tab 2',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const tabsBody = new TabsLayoutManager({ tabs: [tab1, tab2] });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Main Row' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body).toBeInstanceOf(RowsLayoutManager);
+      expect(body.state.rows).toHaveLength(1);
+      expect(body.state.rows[0].state.title).toBe('Main Row');
+
+      // The tabs layout should be preserved inside the row
+      const innerLayout = body.state.rows[0].state.layout;
+      expect(innerLayout).toBeInstanceOf(TabsLayoutManager);
+      expect((innerLayout as TabsLayoutManager).state.tabs).toHaveLength(2);
+    });
+
+    it('converts grid to rows by nesting grid inside the requested row', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([panelA]));
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'First Row' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body).toBeInstanceOf(RowsLayoutManager);
+      expect(body.state.rows).toHaveLength(1);
+      expect(body.state.rows[0].state.title).toBe('First Row');
+
+      // The grid layout should be preserved inside the row
+      const innerLayout = body.state.rows[0].state.layout;
+      expect(innerLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(innerLayout.getVizPanels()).toHaveLength(1);
+      expect(innerLayout.getVizPanels()[0].state.title).toBe('Panel A');
     });
 
     it('returns error when adding a tab to a GridLayout without a LayoutParent', async () => {
@@ -824,8 +934,422 @@ describe('Layout mutation commands', () => {
     });
   });
 
-  describe('movePanelsTo on remove', () => {
-    it('moves panels when removing a row with movePanelsTo', async () => {
+  describe('nesting validation', () => {
+    it('rejects adding tabs inside tabs', async () => {
+      const innerTabs = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Inner Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const outerTabs = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Outer Tab', layout: innerTabs })],
+      });
+      const scene = buildSceneWithLayoutParent(outerTabs);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Bad Tab' } },
+          parentPath: '/tabs/0',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same-type nesting');
+    });
+
+    it('rejects adding rows inside rows', async () => {
+      const innerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Inner Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const outerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Outer Row', layout: innerRows })],
+      });
+      const scene = buildSceneWithLayoutParent(outerRows);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Bad Row' } },
+          parentPath: '/rows/0',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same-type nesting');
+    });
+
+    it('rejects adding tabs at root when rows already contain tabs', async () => {
+      const rowWithTabs = new RowItem({
+        title: 'Row With Tabs',
+        layout: new TabsLayoutManager({
+          tabs: [new TabItem({ title: 'Nested Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+        }),
+      });
+      const rowsBody = new RowsLayoutManager({ rows: [rowWithTabs] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Root Tab' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('nested groups');
+    });
+
+    it('rejects adding rows at root when tabs already contain rows', async () => {
+      const tabWithRows = new TabItem({
+        title: 'Tab With Rows',
+        layout: new RowsLayoutManager({
+          rows: [new RowItem({ title: 'Nested Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+        }),
+      });
+      const tabsBody = new TabsLayoutManager({ tabs: [tabWithRows] });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Root Row' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('nested groups');
+    });
+
+    it('allows adding rows inside tabs (valid 2 layers)', async () => {
+      const innerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Existing Row', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const tabsBody = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Tab A', layout: innerRows })],
+      });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Nested Row' } },
+          parentPath: '/tabs/0',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const rows = (tabsBody.state.tabs[0].state.layout as RowsLayoutManager).state.rows;
+      expect(rows).toHaveLength(2);
+      expect(rows[1].state.title).toBe('Nested Row');
+    });
+
+    it('allows adding tabs inside rows (valid 2 layers)', async () => {
+      const innerTabs = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Existing Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const rowsBody = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: innerTabs })],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Nested Tab' } },
+          parentPath: '/rows/0',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const tabs = (rowsBody.state.rows[0].state.layout as TabsLayoutManager).state.tabs;
+      expect(tabs).toHaveLength(2);
+      expect(tabs[1].state.title).toBe('Nested Tab');
+    });
+  });
+
+  describe('UPDATE_LAYOUT', () => {
+    it('changes rows to tabs at root', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [
+          new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+          new RowItem({ title: 'Row B', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'TabsLayout' },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body).toBeInstanceOf(TabsLayoutManager);
+      expect(body.state.tabs.map((t) => t.state.title)).toEqual(['Row A', 'Row B']);
+    });
+
+    it('changes tabs to rows at root', async () => {
+      const tabsBody = new TabsLayoutManager({
+        tabs: [
+          new TabItem({ title: 'Tab A', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+          new TabItem({ title: 'Tab B', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'RowsLayout' },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body).toBeInstanceOf(RowsLayoutManager);
+      expect(body.state.rows.map((r) => r.state.title)).toEqual(['Tab A', 'Tab B']);
+    });
+
+    it('changes GridLayout to AutoGridLayout', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const gridBody = DefaultGridLayoutManager.fromVizPanels([panelA]);
+      const scene = buildSceneWithLayoutParent(gridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'AutoGridLayout' },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      expect(body).toBeInstanceOf(AutoGridLayoutManager);
+      expect(body.getVizPanels()).toHaveLength(1);
+      expect(body.getVizPanels()[0].state.title).toBe('Panel A');
+    });
+
+    it('applies v2beta1 AutoGridLayout options during conversion', async () => {
+      const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
+      const scene = buildSceneWithLayoutParent(gridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: {
+          path: '/',
+          layoutType: 'AutoGridLayout',
+          options: { maxColumnCount: 4, columnWidthMode: 'wide', rowHeightMode: 'tall', fillScreen: true },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      expect(body).toBeInstanceOf(AutoGridLayoutManager);
+      expect(body.state.maxColumnCount).toBe(4);
+      expect(body.state.columnWidth).toBe('wide');
+      expect(body.state.rowHeight).toBe('tall');
+      expect(body.state.fillScreen).toBe(true);
+    });
+
+    it('maps custom columnWidthMode with columnWidth pixel value', async () => {
+      const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
+      const scene = buildSceneWithLayoutParent(gridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: {
+          path: '/',
+          layoutType: 'AutoGridLayout',
+          options: { columnWidthMode: 'custom', columnWidth: 500, rowHeightMode: 'custom', rowHeight: 300 },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      expect(body.state.columnWidth).toBe(500);
+      expect(body.state.rowHeight).toBe(300);
+    });
+
+    it('changes AutoGridLayout to GridLayout', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([panelA]));
+      const scene = buildSceneWithLayoutParent(autoGridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'GridLayout' },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      expect(body).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(body.getVizPanels()).toHaveLength(1);
+      expect(body.getVizPanels()[0].state.title).toBe('Panel A');
+    });
+
+    it('no-op when already target type and no options', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'RowsLayout' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expect.objectContaining({ path: '/', layoutType: 'RowsLayout' }));
+      expect(result.changes).toEqual([]);
+    });
+
+    it('no-op when layoutType is omitted and no options', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expect.objectContaining({ path: '/', layoutType: 'RowsLayout' }));
+      expect(result.changes).toEqual([]);
+    });
+
+    it('update-only mode: applies options to existing AutoGridLayout', async () => {
+      const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([]));
+      const scene = buildSceneWithLayoutParent(autoGridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: {
+          path: '/',
+          options: { maxColumnCount: 5, columnWidthMode: 'narrow', fillScreen: true },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as AutoGridLayoutManager;
+      expect(body).toBeInstanceOf(AutoGridLayoutManager);
+      expect(body.state.maxColumnCount).toBe(5);
+      expect(body.state.columnWidth).toBe('narrow');
+      expect(body.state.fillScreen).toBe(true);
+    });
+
+    it('rejects options on non-AutoGrid layout type', async () => {
+      const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
+      const scene = buildSceneWithLayoutParent(gridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: {
+          path: '/',
+          layoutType: 'RowsLayout',
+          options: { maxColumnCount: 4 },
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Options are only valid for AutoGridLayout');
+    });
+
+    it('rejects options on current RowsLayout when layoutType is omitted', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: {
+          path: '/',
+          options: { maxColumnCount: 4 },
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Options are only valid for AutoGridLayout');
+    });
+
+    it('rejects cross-category conversion', async () => {
+      const rowsBody = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'GridLayout' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same-category');
+    });
+
+    it('rejects conversion that would create same-type nesting via path', async () => {
+      const innerTabs = new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Inner Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+      });
+      const outerRows = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Outer Row', layout: innerTabs })],
+      });
+      const scene = buildSceneWithLayoutParent(outerRows);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/rows/0', layoutType: 'RowsLayout' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same-type nesting');
+    });
+
+    it('rejects conversion that would create same-type nesting via children', async () => {
+      const tabsBody = new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'Tab A',
+            layout: new RowsLayoutManager({
+              rows: [new RowItem({ title: 'Row Inside Tab', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
+            }),
+          }),
+          new TabItem({ title: 'Tab B', layout: DefaultGridLayoutManager.fromVizPanels([]) }),
+        ],
+      });
+      const scene = buildSceneWithLayoutParent(tabsBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', layoutType: 'RowsLayout' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same-type nesting');
+    });
+  });
+
+  describe('moveContentTo on remove', () => {
+    it('moves panels when removing a row with moveContentTo', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
       const row1 = new RowItem({
         title: 'Row 1',
@@ -855,7 +1379,7 @@ describe('Layout mutation commands', () => {
         type: 'REMOVE_ROW',
         payload: {
           path: '/rows/0',
-          movePanelsTo: '/rows/1',
+          moveContentTo: '/rows/1',
         },
       });
 
@@ -866,7 +1390,7 @@ describe('Layout mutation commands', () => {
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(1);
     });
 
-    it('preserves panel titles when moving via movePanelsTo', async () => {
+    it('preserves panel titles when moving via moveContentTo', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'CPU Usage', pluginId: 'timeseries' });
       const panelB = new VizPanel({ key: 'panel-2', title: 'Memory', pluginId: 'gauge' });
       const row1 = new RowItem({
@@ -895,7 +1419,7 @@ describe('Layout mutation commands', () => {
       const executor = new MutationExecutor(scene);
       const result = await executor.execute({
         type: 'REMOVE_ROW',
-        payload: { path: '/rows/0', movePanelsTo: '/rows/1' },
+        payload: { path: '/rows/0', moveContentTo: '/rows/1' },
       });
 
       expect(result.success).toBe(true);
@@ -940,7 +1464,7 @@ describe('Layout mutation commands', () => {
       const executor = new MutationExecutor(scene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
-        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+        payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
       });
 
       expect(result.success).toBe(true);
@@ -982,7 +1506,7 @@ describe('Layout mutation commands', () => {
       const executor = new MutationExecutor(scene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
-        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+        payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
       });
 
       expect(result.success).toBe(true);
@@ -991,10 +1515,10 @@ describe('Layout mutation commands', () => {
       expect(targetRows[0].state.layout.getVizPanels()[0].state.title).toBe('Panel A');
     });
 
-    it('fails when movePanelsTo targets an empty RowsLayout', async () => {
+    it('fails when moveContentTo targets an empty RowsLayout', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
 
-      // movePanelsTo targets "/" which is the RowsLayoutManager itself.
+      // moveContentTo targets "/" which is the RowsLayoutManager itself.
       // After removing /rows/0, the RowsLayout has no rows, so we can't place panels.
       // However, the move happens BEFORE the removal, so at this point rows[0] still exists.
       // Let's test with a scenario where the target is genuinely empty.
@@ -1025,7 +1549,7 @@ describe('Layout mutation commands', () => {
       const executor = new MutationExecutor(tabsScene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
-        payload: { path: '/tabs/0', movePanelsTo: '/tabs/1' },
+        payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
       });
 
       expect(result.success).toBe(false);
@@ -1049,6 +1573,120 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('insufficient permissions');
+    });
+  });
+
+  describe('repeat support', () => {
+    it('ADD_ROW passes repeat to RowItem', async () => {
+      const scene = buildRowsScene(['Existing']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'Repeated', repeat: { mode: 'variable', value: 'region' } } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body.state.rows[1].state.repeatByVariable).toBe('region');
+    });
+
+    it('ADD_TAB passes repeat to TabItem', async () => {
+      const scene = buildTabsScene(['Existing']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Repeated', repeat: { mode: 'variable', value: 'env' } } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body.state.tabs[1].state.repeatByVariable).toBe('env');
+    });
+
+    it('UPDATE_ROW sets repeat', async () => {
+      const scene = buildRowsScene(['Row A']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: { repeat: { mode: 'variable', value: 'cluster' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body.state.rows[0].state.repeatByVariable).toBe('cluster');
+    });
+
+    it('UPDATE_ROW clears repeat', async () => {
+      const row = new RowItem({
+        title: 'Repeated',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        repeatByVariable: 'cluster',
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: { repeat: { mode: 'variable', value: '' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(row.state.repeatByVariable).toBeUndefined();
+    });
+
+    it('UPDATE_TAB sets repeat', async () => {
+      const scene = buildTabsScene(['Tab A']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: {
+          path: '/tabs/0',
+          spec: { repeat: { mode: 'variable', value: 'env' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      expect(body.state.tabs[0].state.repeatByVariable).toBe('env');
+    });
+
+    it('UPDATE_TAB clears repeat', async () => {
+      const tab = new TabItem({
+        title: 'Repeated',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        repeatByVariable: 'env',
+      });
+      const body = new TabsLayoutManager({ tabs: [tab] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: {
+          path: '/tabs/0',
+          spec: { repeat: { mode: 'variable', value: '' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(tab.state.repeatByVariable).toBeUndefined();
     });
   });
 

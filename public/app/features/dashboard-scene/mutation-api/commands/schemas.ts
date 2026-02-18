@@ -441,29 +441,51 @@ export const gridPositionSchema = z
   })
   .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
 
+export const rowRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 RowRepeatOptions');
+
+export const tabRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 TabRepeatOptions');
+
 export const rowsLayoutRowSpecSchema = z.object({
   title: z.string().optional().describe('Row heading title'),
   collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
   hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
+  repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
 });
 
 export const partialRowSpecSchema = z
   .object({
-    title: z.string().optional(),
-    collapse: z.boolean().optional(),
-    hideHeader: z.boolean().optional(),
-    fillScreen: z.boolean().optional(),
+    title: z.string().optional().describe('Row heading title'),
+    collapse: z.boolean().optional().describe('Whether the row is collapsed'),
+    hideHeader: z.boolean().optional().describe('Hide the row header'),
+    fillScreen: z.boolean().optional().describe('Row fills viewport height'),
+    repeat: rowRepeatOptionsSchema
+      .optional()
+      .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
 export const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
+  repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
 });
 
 export const partialTabSpecSchema = z
   .object({
-    title: z.string().optional(),
+    title: z.string().optional().describe('Tab title'),
+    repeat: tabRepeatOptionsSchema
+      .optional()
+      .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
@@ -503,9 +525,9 @@ export const addRowPayloadSchema = z.object({
 
 export const removeRowPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")'),
-  movePanelsTo: layoutPathSchema
+  moveContentTo: layoutPathSchema
     .optional()
-    .describe('Path to another group to move contained panels to. Panels are deleted if omitted.'),
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
 });
 
 export const updateRowPayloadSchema = z.object({
@@ -535,9 +557,9 @@ export const addTabPayloadSchema = z.object({
 
 export const removeTabPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")'),
-  movePanelsTo: layoutPathSchema
+  moveContentTo: layoutPathSchema
     .optional()
-    .describe('Path to another group to move contained panels to. Panels are deleted if omitted.'),
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
 });
 
 export const updateTabPayloadSchema = z.object({
@@ -551,6 +573,39 @@ export const moveTabPayloadSchema = z.object({
     .optional()
     .describe('Path to the destination parent. Omit to reorder within the same parent.'),
   toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+});
+
+export const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
+
+export const autoGridOptionsSchema = z
+  .object({
+    maxColumnCount: z.number().optional().describe('Maximum number of columns'),
+    columnWidthMode: z
+      .enum(['narrow', 'standard', 'wide', 'custom'])
+      .optional()
+      .describe('Column width preset. Use "custom" with columnWidth for pixel values.'),
+    columnWidth: z
+      .number()
+      .optional()
+      .describe('Custom column width in pixels (only used when columnWidthMode is "custom")'),
+    rowHeightMode: z
+      .enum(['short', 'standard', 'tall', 'custom'])
+      .optional()
+      .describe('Row height preset. Use "custom" with rowHeight for pixel values.'),
+    rowHeight: z.number().optional().describe('Custom row height in pixels (only used when rowHeightMode is "custom")'),
+    fillScreen: z.boolean().optional().describe('Whether the grid fills the viewport height'),
+  })
+  .describe('Options for AutoGridLayout only. Rejected for other layout types.');
+
+export const updateLayoutPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
+  layoutType: layoutTypeSchema
+    .optional()
+    .describe(
+      'Target layout type. If omitted, keeps current type and just applies options. ' +
+        'Group conversions: RowsLayout <-> TabsLayout. Grid conversions: GridLayout <-> AutoGridLayout.'
+    ),
+  options: autoGridOptionsSchema.optional().describe('AutoGridLayout properties. Rejected for other layout types.'),
 });
 
 export const movePanelPayloadSchema = z.object({
@@ -588,4 +643,5 @@ export const payloads = {
   updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
   moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
   movePanel: movePanelPayloadSchema.describe('Move a panel to a different group or position'),
+  updateLayout: updateLayoutPayloadSchema.describe('Update the layout type and/or properties at a given path'),
 };
