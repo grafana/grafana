@@ -34,8 +34,9 @@ func setup(t *testing.T) *apis.K8sTestHelper {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
+			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 		},
 	})
 	t.Cleanup(helper.Shutdown)
