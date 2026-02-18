@@ -69,9 +69,7 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
             <IconButton
               name="times"
               tooltip={t('navigation.megamenu.clear-filter-tooltip', 'Clear filter')}
-              onClick={() => {
-                return handleFilterChange('');
-              }}
+              onClick={() => handleFilterChange('')}
             />
           )}
         </Stack>
