@@ -21,9 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
-	clientrest "k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -273,71 +271,12 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
-	var clientFactory resources.ClientFactory
-	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
-		if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler mode is mt")
-		}
-		if cfg.ZanzanaReconciler.IAMAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler mode is mt")
-		}
-
-		grpcAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-		token := grpcAuthSection.Key("token").MustString("")
-		tokenExchangeURL := grpcAuthSection.Key("token_exchange_url").MustString("")
-
-		if token == "" || tokenExchangeURL == "" {
-			return nil, fmt.Errorf("token and token_exchange_url must be set in [grpc_client_authentication] when reconciler is enabled")
-		}
-
-		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            token,
-			TokenExchangeURL: tokenExchangeURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create token exchange client: %w", err)
-		}
-
-		// Build per-group REST configs with group-specific audiences
-		apiServerURLs := map[string]string{
-			"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
-			"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
-		}
-
-		configProviders := make(map[string]apiserver.RestConfigProvider)
-		for group, url := range apiServerURLs {
-			// Each API group gets its own audience for proper token scoping
-			audienceProvider := clientauth.NewStaticAudienceProvider(group)
-			namespaceProvider := clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)
-
-			restConfig := &clientrest.Config{
-				Host:    url,
-				APIPath: "/apis",
-				TLSClientConfig: clientrest.TLSClientConfig{
-					Insecure: cfg.ZanzanaReconciler.TLSInsecure,
-				},
-				WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
-					tokenExchangeClient,
-					audienceProvider,
-					namespaceProvider,
-				),
-			}
-
-			configProviders[group] = apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
-				return restConfig, nil
-			})
-		}
-
-		clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders)
-	}
-
 	s := &Zanzana{
-		cfg:           cfg,
-		features:      features,
-		logger:        log.New("zanzana.server"),
-		reg:           reg,
-		tracer:        tracer,
-		clientFactory: clientFactory,
+		cfg:      cfg,
+		features: features,
+		logger:   log.New("zanzana.server"),
+		reg:      reg,
+		tracer:   tracer,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -349,13 +288,12 @@ type Zanzana struct {
 	*services.BasicService
 
 	cfg           *setting.Cfg
-	zanzanaServer zanzana.Server
+	zanzanaServer zanzana.ServerInternal
 	logger        log.Logger
 	tracer        tracing.Tracer
 	handle        grpcserver.Provider
 	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
-	clientFactory resources.ClientFactory
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -429,21 +367,8 @@ func (z *Zanzana) running(ctx context.Context) error {
 
 	if z.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		go func() {
-			reconcilerLogger := log.New("zanzana.mt-reconciler")
-			rec := reconciler.NewReconciler(
-				z.zanzanaServer.(*zServer.Server),
-				z.clientFactory,
-				reconciler.Config{
-					Workers:        z.cfg.ZanzanaReconciler.Workers,
-					Interval:       z.cfg.ZanzanaReconciler.Interval,
-					WriteBatchSize: z.cfg.ZanzanaReconciler.WriteBatchSize,
-					QueueSize:      z.cfg.ZanzanaReconciler.QueueSize,
-				},
-				reconcilerLogger,
-				z.tracer,
-			)
-			if err := rec.Run(ctx); err != nil {
-				reconcilerLogger.Error("reconciler stopped with error", "error", err)
+			if err := z.zanzanaServer.RunReconciler(ctx); err != nil {
+				z.logger.Error("reconciler stopped with error", "error", err)
 			}
 		}()
 	}

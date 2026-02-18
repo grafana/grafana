@@ -3,16 +3,17 @@ package reconciler
 import (
 	"fmt"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 )
 
 // TranslateFolderToTuples converts a Folder CRD to parent relationship tuples.
@@ -55,7 +56,7 @@ func TranslateRoleToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 		})
 	}
 
-	return server.RoleToTuples(role.Name, permissions)
+	return zanzana.RoleToTuples(role.Name, permissions)
 }
 
 // TranslateRoleBindingToTuples converts a RoleBinding CRD to assignee tuples.
@@ -70,7 +71,7 @@ func TranslateRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 
 	tuples := make([]*openfgav1.TupleKey, 0, len(rb.Spec.RoleRefs))
 	for _, roleRef := range rb.Spec.RoleRefs {
-		tuple, err := server.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
+		tuple, err := zanzana.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +96,7 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 
 	tuples := make([]*openfgav1.TupleKey, 0, len(rp.Spec.Permissions))
 	for _, perm := range rp.Spec.Permissions {
-		tuple, err := server.GetResourcePermissionWriteTuple(&authzextv1.CreatePermissionOperation{
+		tuple, err := zanzana.GetResourcePermissionWriteTuple(&authzextv1.CreatePermissionOperation{
 			Resource: resource,
 			Permission: &authzextv1.Permission{
 				Kind: string(perm.Kind),
@@ -120,7 +121,7 @@ func TranslateTeamBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 	}
 
 	// Use the shared server logic to create the tuple
-	tuple, err := server.GetTeamBindingTuple(tb.Spec.Subject.Name, tb.Spec.TeamRef.Name, string(tb.Spec.Permission))
+	tuple, err := zanzana.GetTeamBindingTuple(tb.Spec.Subject.Name, tb.Spec.TeamRef.Name, string(tb.Spec.Permission))
 	if err != nil {
 		return nil, err
 	}
