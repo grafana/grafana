@@ -7,6 +7,7 @@ import { FieldConfig as TableFieldConfig, Options as TableOptions } from '../tab
 
 import { LogsTable } from './LogsTable';
 import { defaultOptions, Options } from './panelcfg.gen';
+import { logstableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)
   .useFieldConfig({
@@ -54,4 +55,5 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: defaultOptions.showControls ?? false,
       });
-  });
+  })
+  .setSuggestionsSupplier(logstableSuggestionsSupplier);
