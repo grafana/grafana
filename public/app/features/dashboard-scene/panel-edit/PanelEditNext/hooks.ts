@@ -39,6 +39,7 @@ export function useHorizontalRatioResize({
   const containerWidthRef = useRef(containerWidth);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   ratioRef.current = ratio;
   containerWidthRef.current = containerWidth;
@@ -46,6 +47,13 @@ export function useHorizontalRatioResize({
   maxRatioRef.current = maxRatio;
 
   const handleRef = useCallback((handle: HTMLElement | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+
+    if (!handle) {
+      return;
+    }
+
     let startX = 0;
     let startRatio = 0;
     let totalWidth = 0;
@@ -71,14 +79,9 @@ export function useHorizontalRatioResize({
       document.addEventListener('mouseup', onMouseUp);
     };
 
-    if (handle?.nodeType === Node.ELEMENT_NODE) {
-      handle.addEventListener('mousedown', onMouseDown);
-    }
-
-    return () => {
-      if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.removeEventListener('mousedown', onMouseDown);
-      }
+    handle.addEventListener('mousedown', onMouseDown);
+    cleanupRef.current = () => {
+      handle.removeEventListener('mousedown', onMouseDown);
     };
   }, []);
 
@@ -109,6 +112,7 @@ export function useVerticalRatioResize({
   const containerHeightRef = useRef(containerHeight);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   ratioRef.current = ratio;
   containerHeightRef.current = containerHeight;
@@ -116,6 +120,13 @@ export function useVerticalRatioResize({
   maxRatioRef.current = maxRatio;
 
   const handleRef = useCallback((handle: HTMLElement | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+
+    if (!handle) {
+      return;
+    }
+
     let startY = 0;
     let startRatio = 0;
     let totalHeight = 0;
@@ -141,14 +152,9 @@ export function useVerticalRatioResize({
       document.addEventListener('mouseup', onMouseUp);
     };
 
-    if (handle?.nodeType === Node.ELEMENT_NODE) {
-      handle.addEventListener('mousedown', onMouseDown);
-    }
-
-    return () => {
-      if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.removeEventListener('mousedown', onMouseDown);
-      }
+    handle.addEventListener('mousedown', onMouseDown);
+    cleanupRef.current = () => {
+      handle.removeEventListener('mousedown', onMouseDown);
     };
   }, []);
 
