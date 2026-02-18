@@ -1,5 +1,5 @@
 ---
-description: Git Sync usage tiers, compatible providers, and known limitations.
+description: Git Sync usage tiers, compatible Git providers, and known limitations.
 keywords:
   - as code
   - as-code
