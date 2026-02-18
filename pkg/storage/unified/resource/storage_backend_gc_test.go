@@ -545,5 +545,4 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
 		// require.Len(t, trashResp.Items, 1)
 	})
-
 }
