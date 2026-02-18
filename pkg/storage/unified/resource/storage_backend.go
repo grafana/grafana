@@ -399,9 +399,7 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 			totalDeleted += deleted
 
 			// wait a second between batches to avoid overwhelming the datastore
-			select {
-			case <-time.After(time.Second):
-			}
+			<-time.After(time.Second)
 		}
 		if totalDeleted > 0 {
 			b.log.Info("garbage collection deleted history",
