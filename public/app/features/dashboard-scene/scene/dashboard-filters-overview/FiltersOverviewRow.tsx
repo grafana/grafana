@@ -187,43 +187,70 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
   labelCell: css({
     flex: '1 1 auto',
     minWidth: 0,
+    position: 'relative',
+    zIndex: 0,
+    '&:hover': {
+      zIndex: 1,
+    },
+    '&:focus-within': {
+      zIndex: 3,
+    },
   }),
   operatorCell: css({
     flex: '0 0 auto',
     width: theme.spacing(8),
+    marginLeft: -1,
+    position: 'relative',
+    zIndex: 0,
+    '&:hover': {
+      zIndex: 1,
+    },
+    '&:focus-within': {
+      zIndex: 3,
+    },
     '& > *': {
       width: '100%',
       paddingLeft: 0,
       paddingRight: 0,
-      borderRadius: 'unset !important',
-      '& input': {
-        borderRadius: 'unset !important',
-      },
+    },
+    // && doubles class specificity (0-2-0) to beat Combobox defaults (0-1-0)
+    '&& > *': {
+      borderRadius: 0,
+    },
+    '&& > * > *': {
+      borderRadius: 0,
+    },
+    '&& input': {
+      borderRadius: 0,
     },
   }),
   valueCell: css({
     flex: '0 0 auto',
     width: theme.spacing(26),
+    marginLeft: -1,
+    position: 'relative',
+    zIndex: 0,
+    '&:hover': {
+      zIndex: 1,
+    },
+    '&:focus-within': {
+      zIndex: 3,
+    },
     '& > *': {
       width: '100%',
       paddingLeft: 0,
-      borderTopLeftRadius: 'unset !important',
-      borderBottomLeftRadius: 'unset !important',
-      borderTopRightRadius: `${theme.shape.radius.default} !important`,
-      borderBottomRightRadius: `${theme.shape.radius.default} !important`,
-      '& input': {
-        borderTopLeftRadius: 'unset !important',
-        borderBottomLeftRadius: 'unset !important',
-        borderTopRightRadius: `${theme.shape.radius.default} !important`,
-        borderBottomRightRadius: `${theme.shape.radius.default} !important`,
-      },
-      // MultiCombobox: container > wrapper (has border radius)
-      '& > *': {
-        borderTopLeftRadius: 'unset !important',
-        borderBottomLeftRadius: 'unset !important',
-        borderTopRightRadius: `${theme.shape.radius.default} !important`,
-        borderBottomRightRadius: `${theme.shape.radius.default} !important`,
-      },
+    },
+    '&& > *': {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+    },
+    '&& > * > *': {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+    },
+    '&& input': {
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
     },
   }),
   groupByCell: css({
@@ -242,12 +269,13 @@ const getRowStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     fontSize: theme.typography.size.sm,
     backgroundColor: theme.colors.background.secondary,
+    border: `1px solid ${theme.components.input.borderColor}`,
     height: theme.spacing(theme.components.height.md),
     lineHeight: theme.spacing(theme.components.height.md),
     borderTopLeftRadius: theme.shape.radius.default,
     borderBottomLeftRadius: theme.shape.radius.default,
-    borderTopRightRadius: 'unset',
-    borderBottomRightRadius: 'unset',
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
     width: '100%',
     minWidth: 0,
     boxSizing: 'border-box',
