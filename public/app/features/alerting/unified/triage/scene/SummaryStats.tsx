@@ -1,14 +1,27 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { useQueryRunner } from '@grafana/scenes-react';
-import { Box, ErrorBoundaryAlert, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { AdHocFiltersVariable, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
+import {
+  Box,
+  Button,
+  Drawer,
+  ErrorBoundaryAlert,
+  Icon,
+  LoadingPlaceholder,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { VARIABLES } from '../constants';
+
 import { summaryInstanceCountQuery, summaryRuleCountQuery } from './queries';
-import { type TopLabel, useTopLabels } from './useTopLabels';
+import { type LabelValueCount, type TopLabel, useAllLabels, useTopLabels } from './useTopLabels';
 import { useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
@@ -127,6 +140,7 @@ function LabelTooltipContent({ label }: { label: TopLabel }) {
 function TopLabelsSection() {
   const styles = useStyles2(getTopLabelsStyles);
   const { topLabels, isLoading } = useTopLabels();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   if (isLoading || topLabels.length === 0) {
     return null;
@@ -145,8 +159,114 @@ function TopLabelsSection() {
             </button>
           </Tooltip>
         ))}
+        <button className={styles.moreBadge} type="button" onClick={() => setIsDrawerOpen(true)}>
+          <Trans i18nKey="alerting.triage.more-labels">More…</Trans>
+        </button>
       </Stack>
+      {isDrawerOpen && <AllLabelsDrawer onClose={() => setIsDrawerOpen(false)} />}
     </div>
+  );
+}
+
+interface AllLabelsDrawerProps {
+  onClose: () => void;
+}
+
+const DEFAULT_VISIBLE_LABELS = 12;
+const DEFAULT_VISIBLE_VALUES = 12;
+
+interface LabelValuesListProps {
+  values: LabelValueCount[];
+  onValueClick: (value: string) => void;
+}
+
+function LabelValuesList({ values, onValueClick }: LabelValuesListProps) {
+  const styles = useStyles2(getDrawerStyles);
+  const [expanded, setExpanded] = useState(false);
+
+  const visibleValues = expanded ? values : values.slice(0, DEFAULT_VISIBLE_VALUES);
+  const hasMore = values.length > DEFAULT_VISIBLE_VALUES;
+
+  return (
+    <div className={styles.valuesList}>
+      {visibleValues.map(({ value, count }) => (
+        <button key={value} type="button" className={styles.valueRow} onClick={() => onValueClick(value)}>
+          <span className={styles.valueName}>{value}</span>
+          <span className={styles.valueCount}>{count}</span>
+        </button>
+      ))}
+      {hasMore && !expanded && (
+        <Button variant="secondary" fill="text" onClick={() => setExpanded(true)}>
+          <Trans
+            i18nKey="alerting.triage.show-all-values"
+            values={{ count: values.length }}
+            defaults={'Show all ({{ count }})'}
+          />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function AllLabelsDrawer({ onClose }: AllLabelsDrawerProps) {
+  const styles = useStyles2(getDrawerStyles);
+  const { allLabels, isLoading } = useAllLabels();
+  const sceneContext = useSceneContext();
+  const [showAll, setShowAll] = useState(false);
+
+  const visibleLabels = showAll ? allLabels : allLabels.slice(0, DEFAULT_VISIBLE_LABELS);
+  const hasMore = allLabels.length > DEFAULT_VISIBLE_LABELS;
+
+  const handleValueClick = (key: string, value: string) => {
+    const filtersVariable = sceneGraph.lookupVariable(VARIABLES.filters, sceneContext);
+    if (filtersVariable instanceof AdHocFiltersVariable) {
+      const currentFilters = filtersVariable.state.filters;
+      const existingIndex = currentFilters.findIndex((f) => f.key === key);
+
+      const newFilter = { key, operator: '=', value };
+      const updatedFilters =
+        existingIndex >= 0
+          ? currentFilters.map((f, i) => (i === existingIndex ? { ...f, value } : f))
+          : [...currentFilters, newFilter];
+
+      filtersVariable.setState({ filters: updatedFilters });
+    }
+    onClose();
+  };
+
+  return (
+    <Drawer title={t('alerting.triage.all-labels-drawer-title', 'All labels')} size="sm" onClose={onClose}>
+      {isLoading ? (
+        <LoadingPlaceholder text={t('alerting.triage.loading-labels', 'Loading labels…')} />
+      ) : (
+        <div className={styles.drawerContent}>
+          {visibleLabels.map((label) => (
+            <div key={label.key} className={styles.labelSection}>
+              <div className={styles.labelHeader}>
+                {label.key}{' '}
+                <span className={styles.labelCount}>
+                  <Trans
+                    i18nKey="alerting.triage.label-instance-count"
+                    values={{ count: label.count }}
+                    defaults={'({{ count }} instances)'}
+                  />
+                </span>
+              </div>
+              <LabelValuesList values={label.values} onValueClick={(value) => handleValueClick(label.key, value)} />
+            </div>
+          ))}
+          {hasMore && !showAll && (
+            <Button variant="secondary" fill="text" onClick={() => setShowAll(true)}>
+              <Trans
+                i18nKey="alerting.triage.show-all-labels"
+                values={{ count: allLabels.length }}
+                defaults={'Show all ({{ count }})'}
+              />
+            </Button>
+          )}
+        </div>
+      )}
+    </Drawer>
   );
 }
 
@@ -309,5 +429,71 @@ const getTopLabelsStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
     },
+  }),
+  moreBadge: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: `${theme.spacing(0.25)} ${theme.spacing(1)}`,
+    backgroundColor: 'transparent',
+    border: `1px dashed ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.pill,
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+
+    '&:hover': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
+  }),
+});
+
+const getDrawerStyles = (theme: GrafanaTheme2) => ({
+  drawerContent: css({
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: theme.spacing(2),
+  }),
+  labelSection: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    paddingBottom: theme.spacing(1.5),
+  }),
+  labelHeader: css({
+    fontWeight: theme.typography.fontWeightBold,
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(0.5),
+  }),
+  labelCount: css({
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeightRegular,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  valuesList: css({
+    display: 'flex',
+    flexDirection: 'column' as const,
+  }),
+  valueRow: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    borderRadius: theme.shape.radius.default,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textAlign: 'left' as const,
+
+    '&:hover': {
+      backgroundColor: theme.colors.action.hover,
+    },
+  }),
+  valueName: css({
+    color: theme.colors.text.primary,
+  }),
+  valueCount: css({
+    color: theme.colors.text.secondary,
+    fontVariantNumeric: 'tabular-nums',
   }),
 });
