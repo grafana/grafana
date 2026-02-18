@@ -18,4 +18,5 @@ var Artifacts = map[string]artifacts.Initializer{
 	"storybook":         artifacts.StorybookInitializer,
 	"msi":               artifacts.MSIInitializer,
 	"version":           artifacts.VersionInitializer,
+	"catalog-plugins":   artifacts.CatalogPluginsInitializer,
 }
