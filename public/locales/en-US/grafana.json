@@ -8346,7 +8346,6 @@
       "delete-confirm": "Delete",
       "delete-title": "Delete variable",
       "title-edit-variable": "Edit variable",
-      "title-select-type": "Select variable type",
       "title-variables": "Variables"
     },
     "variable-list": {
@@ -8357,10 +8356,6 @@
       "header-definition": "Definition",
       "header-variable": "Variable",
       "new-variable": "New variable"
-    },
-    "variable-type-selection": {
-      "cancel": "Cancel",
-      "constant-description": "A hidden constant variable, useful for metric prefixes in shared queries"
     }
   },
   "export": {
