@@ -53,7 +53,9 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 			return deny(err)
 		}
 	case "list":
-		return authorizer.DecisionAllow, "", nil // Always allow listing, rules are filtered downstream.
+		if err := ac.AuthorizeReadSome(ctx, user); err != nil {
+			return deny(err)
+		}
 	case "create":
 		if err := ac.AuthorizeCreate(ctx, user); err != nil {
 			return deny(err)
