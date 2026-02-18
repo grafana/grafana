@@ -46,6 +46,8 @@ composableKinds: DataQuery: {
 				annotations?: bool
 				// If set to true, exemplars will be requested
 				includeExemplars: bool | *false
+				// Specifies the query profile id selectors.
+				profileIdSelector?: [...string]
 			}
 		}]
 		lenses: []
