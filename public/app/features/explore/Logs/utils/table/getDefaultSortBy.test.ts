@@ -13,7 +13,7 @@ const testLogsDataFrame = [
       {
         name: LOGS_DATAPLANE_BODY_NAME,
         type: FieldType.string,
-        values: ['log 1', 'log 2'], // Add display function
+        values: ['log 1', 'log 2'],
       },
       {
         name: 'labels',
