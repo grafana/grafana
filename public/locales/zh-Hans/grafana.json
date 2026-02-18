@@ -596,6 +596,12 @@
       "title-restore-version": "恢复版本",
       "title-restoring-alertmanager-configuration": "恢复 Alertmanager 配置"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "排序",
       "label-filter-placeholder-search-alerts-by-labels": "按标签搜索警报",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1791,7 +1791,9 @@
         "target-datasource-description": "选择将由导入的规则查询的数据源。确保导入规则中使用的指标在此数据源中可用。",
         "target-datasource-required": "请选择一个目标数据源"
       },
-      "yaml-error": "解析 YAML 文件失败：{{error}}"
+      "yaml-error": "解析 YAML 文件失败：{{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2634,13 @@
       "resample-to": "重新采样为",
       "upsample": "升高采样"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "路由"
     },
@@ -2860,8 +2869,8 @@
       },
       "rulerrule-loading-error": "加载规则失败",
       "toggle": {
-        "go-back-to-old-look": "恢复旧外观",
-        "try-out-the-new-look": "试试新外观！"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "未知规则类型"
     },
@@ -9759,12 +9768,16 @@
       },
       "inspect-drawer-title": "检查值",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "无数据"
       },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
       "sparkline": {
         "no-data": "无数据"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -12607,6 +12620,7 @@
       "loading-finished-job": "正在加载已完成的作业...",
       "no-job-found": "未找到作业",
       "no-job-found-message": "作业可能已被删除或无法检索。取消当前进程，然后重新开始。",
+      "retry-action": "",
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
@@ -12677,6 +12691,7 @@
       "source-code": "源代码"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "只读",
       "settings": "设置",
       "view": "查看"
@@ -12805,8 +12820,9 @@
       "label-pending-step": "待处理步骤"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "自动拉取已禁用",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "正在删除",
+      "disabled": "",
       "error": "错误",
       "pending": "待处理",
       "pulling": "正在拉取",
@@ -13181,6 +13197,8 @@
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,7 +13215,10 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
         "tooltip": ""

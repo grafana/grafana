@@ -203,6 +203,10 @@ const (
 	// Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesRerouteLegacyCRUDAPIs = "datasourcesRerouteLegacyCRUDAPIs"
 
+	// FlagDatasourcesApiServerEnableResourceEndpoint
+	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -825,6 +829,10 @@ const (
 	// FlagAlertingNotificationHistoryGlobal
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagReact19
+	// Whether to use the new React 19 runtime
+	FlagReact19 = "react19"
 
 	// FlagLogsTablePanel
 	// Enables the logs tableNG panel to replace existing tableRT
