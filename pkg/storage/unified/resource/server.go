@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -1790,21 +1789,11 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 // resourceVersionTime extracts the timestamp embedded in a resource version.
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
-// Unix timestamps (SQL backend). The function distinguishes them by magnitude:
-//   - Snowflake IDs for recent dates are > 1e17
-//   - Microsecond timestamps for recent dates are in the 1e14–1e16 range
-//
-// Returns the zero time if the value doesn't match either format.
+// Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
-	switch {
-	case rv > 1e17:
-		ms := snowflake.ID(rv).Time()
-		return time.Unix(0, ms*int64(time.Millisecond))
-
-	case rv > 1e14:
-		return time.UnixMicro(rv)
-
-	default:
-		return time.Time{}
+	micro := rv
+	if isSnowflake(rv) {
+		micro = rvmanager.RVFromSnowflake(rv)
 	}
+	return time.UnixMicro(micro)
 }

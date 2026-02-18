@@ -769,8 +769,7 @@ func Test_resourceVersionTime(t *testing.T) {
 	tests := []struct {
 		name      string
 		rv        int64
-		wantZero  bool
-		wantClose time.Time // if not zero, must be within 1s of this
+		wantClose time.Time
 	}{
 		{
 			name:      "snowflake ID",
@@ -783,35 +782,30 @@ func Test_resourceVersionTime(t *testing.T) {
 			wantClose: refTime,
 		},
 		{
-			name:     "zero",
-			rv:       0,
-			wantZero: true,
+			name:      "zero",
+			rv:        0,
+			wantClose: time.UnixMicro(0),
 		},
 		{
-			name:     "negative",
-			rv:       -1,
-			wantZero: true,
+			name:      "negative",
+			rv:        -1,
+			wantClose: time.UnixMicro(-1),
 		},
 		{
-			name:     "small positive (not a timestamp)",
-			rv:       12345,
-			wantZero: true,
+			name:      "small positive",
+			rv:        12345,
+			wantClose: time.UnixMicro(12345),
 		},
 		{
-			name:     "sequential counter (too small for microseconds)",
-			rv:       1000000,
-			wantZero: true,
+			name:      "sequential counter",
+			rv:        1000000,
+			wantClose: time.UnixMicro(1000000),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := resourceVersionTime(tt.rv)
-			if tt.wantZero {
-				require.True(t, got.IsZero(), "expected zero time, got %v", got)
-				return
-			}
-			require.False(t, got.IsZero(), "expected non-zero time")
 			diff := got.Sub(tt.wantClose).Abs()
 			require.Less(t, diff, time.Second,
 				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)
