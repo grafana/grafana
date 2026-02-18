@@ -1,4 +1,4 @@
-import { act, render, waitFor, screen } from '@testing-library/react';
+import { act, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { MetricFindValue, VariableSupportType } from '@grafana/data';
@@ -104,12 +104,13 @@ describe('GroupByVariableEditor', () => {
   it('should render provided default values as inputs', async () => {
     const { renderer } = await setup(undefined, { value: ['job', 'instance'], text: ['job', 'instance'] });
 
-    await waitFor(() => {
-      const inputs = renderer.getAllByLabelText('Default value');
-      expect(inputs).toHaveLength(2);
-      expect(inputs[0]).toHaveValue('job');
-      expect(inputs[1]).toHaveValue('instance');
-    });
+    const section = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
+    );
+    const inputs = within(section).getAllByRole('combobox');
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toHaveValue('job');
+    expect(inputs[1]).toHaveValue('instance');
   });
 
   it('should update variable defaultValue when adding a default value', async () => {
@@ -162,8 +163,15 @@ async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value:
     defaultOptions,
     defaultValue,
   });
+  const renderer = render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
   return {
-    renderer: await act(() => render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />)),
+    renderer,
     variable,
     user: userEvent.setup(),
     mocks: { onRunQuery },
