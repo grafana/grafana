@@ -4,6 +4,7 @@ import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
 import { MuteTiming, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({
@@ -25,8 +26,8 @@ const TimeIntervalSelector = ({
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
 
-  // Filter to only show usable time intervals (canUse === 'true')
-  const availableTimings = data?.filter(isUsableTimeInterval) || [];
+  const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const availableTimings = isGrafanaAlertmanager ? data?.filter(isUsableTimeInterval) || [] : data || [];
   const timeIntervalOptions = availableTimings.map((value) => mapTimeInterval(value));
 
   return (
