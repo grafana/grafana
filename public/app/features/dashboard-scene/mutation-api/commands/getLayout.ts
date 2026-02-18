@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import type { DashboardScene } from '../../scene/DashboardScene';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 
 import { payloads } from './schemas';

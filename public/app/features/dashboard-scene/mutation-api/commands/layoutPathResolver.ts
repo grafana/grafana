@@ -87,7 +87,12 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
     if (segment.type === 'rows') {
       if (!(currentLayout instanceof RowsLayoutManager)) {
         const actualType = currentLayout.constructor.name;
-        const pathSoFar = '/' + segments.slice(0, i + 1).map((s) => `${s.type}/${s.index}`).join('/');
+        const pathSoFar =
+          '/' +
+          segments
+            .slice(0, i + 1)
+            .map((s) => `${s.type}/${s.index}`)
+            .join('/');
         throw new Error(
           `Invalid layout path "${path}": expected RowsLayoutManager at "${pathSoFar}" but found ${actualType}`
         );
@@ -95,7 +100,12 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
 
       const rows = currentLayout.state.rows;
       if (segment.index >= rows.length) {
-        const pathSoFar = '/' + segments.slice(0, i + 1).map((s) => `${s.type}/${s.index}`).join('/');
+        const pathSoFar =
+          '/' +
+          segments
+            .slice(0, i + 1)
+            .map((s) => `${s.type}/${s.index}`)
+            .join('/');
         throw new Error(
           `Invalid layout path "${path}": index ${segment.index} out of bounds at "${pathSoFar}" (${rows.length} rows)`
         );
@@ -114,7 +124,12 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
       // tabs
       if (!(currentLayout instanceof TabsLayoutManager)) {
         const actualType = currentLayout.constructor.name;
-        const pathSoFar = '/' + segments.slice(0, i + 1).map((s) => `${s.type}/${s.index}`).join('/');
+        const pathSoFar =
+          '/' +
+          segments
+            .slice(0, i + 1)
+            .map((s) => `${s.type}/${s.index}`)
+            .join('/');
         throw new Error(
           `Invalid layout path "${path}": expected TabsLayoutManager at "${pathSoFar}" but found ${actualType}`
         );
@@ -122,7 +137,12 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
 
       const tabs = currentLayout.state.tabs;
       if (segment.index >= tabs.length) {
-        const pathSoFar = '/' + segments.slice(0, i + 1).map((s) => `${s.type}/${s.index}`).join('/');
+        const pathSoFar =
+          '/' +
+          segments
+            .slice(0, i + 1)
+            .map((s) => `${s.type}/${s.index}`)
+            .join('/');
         throw new Error(
           `Invalid layout path "${path}": index ${segment.index} out of bounds at "${pathSoFar}" (${tabs.length} tabs)`
         );
@@ -169,7 +189,12 @@ export function resolveParentPath(
   }
 
   // Resolve all segments except the last one
-  const parentPath = '/' + segments.slice(0, -1).map((s) => `${s.type}/${s.index}`).join('/');
+  const parentPath =
+    '/' +
+    segments
+      .slice(0, -1)
+      .map((s) => `${s.type}/${s.index}`)
+      .join('/');
   const resolved = resolveLayoutPath(body, parentPath);
 
   return { parent: resolved.layoutManager, segment: lastSegment };

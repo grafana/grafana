@@ -557,9 +557,7 @@ export const movePanelPayloadSchema = z.object({
   element: elementReferenceSchema.describe('Element to move, identified by name'),
   toParent: layoutPathSchema
     .optional()
-    .describe(
-      'Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'
-    ),
+    .describe('Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'),
   position: gridPositionSchema
     .optional()
     .describe(

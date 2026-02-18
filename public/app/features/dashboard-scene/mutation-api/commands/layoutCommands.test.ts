@@ -906,24 +906,6 @@ describe('Layout mutation commands', () => {
 
     it('fails when movePanelsTo targets an empty RowsLayout', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
-      const row1 = new RowItem({
-        title: 'Row 1',
-        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
-      });
-      const body = new RowsLayoutManager({ rows: [row1] });
-      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
-      const scene = {
-        state,
-        serializer: mockSerializer(),
-        canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => {
-          state.isEditing = true;
-        }),
-        forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => {
-          Object.assign(state, partial);
-        }),
-      } as unknown as MutableDashboardScene;
 
       // movePanelsTo targets "/" which is the RowsLayoutManager itself.
       // After removing /rows/0, the RowsLayout has no rows, so we can't place panels.

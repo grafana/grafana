@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
