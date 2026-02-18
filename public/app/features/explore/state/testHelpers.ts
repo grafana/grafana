@@ -1,4 +1,5 @@
 import { TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
+import { SceneVariableSet } from '@grafana/scenes';
 import { defaultTimeZone } from '@grafana/schema';
 
 export const createDefaultInitialState = () => {
@@ -44,6 +45,7 @@ export const createDefaultInitialState = () => {
           },
           cache: [],
           richHistory: [],
+          variableSet: new SceneVariableSet({ variables: [] }),
           supplementaryQueries: {
             [SupplementaryQueryType.LogsVolume]: {
               enabled: true,
