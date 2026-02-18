@@ -92,7 +92,7 @@ Only `target: folder` is currently supported for Git Sync.
 
 ### Connect with GitHub App
 
-If you're connecting Git Sync with GitHub App, create a `repository.yaml` file defining your Git Sync configuration:
+If you're connecting Git Sync with GitHub App, create a `connection.yaml` file defining your Git Sync configuration:
 
 ```yaml
 apiVersion: provisioning.grafana.app/v0alpha1
