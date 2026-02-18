@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // NewStaticStorage -- temporary shim
@@ -25,9 +24,9 @@ func NewStaticStorage(
 }
 
 type staticService struct {
-	cfg             *setting.Cfg
-	statusReader    unifiedmigrations.MigrationStatusReader
-	mismatchCounter *prometheus.CounterVec
+	cfg          *setting.Cfg
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *Metrics
 }
 
 // Used in tests
@@ -78,8 +77,8 @@ func (m *staticService) logStorageModeComparison(gr schema.GroupResource, config
 	}
 
 	currentMode := storageModeFromConfigMode(configMode)
-	if currentMode != newMode && m.mismatchCounter != nil {
-		m.mismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
+	if currentMode != newMode && m.metrics != nil {
+		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
 	}
 
 	logger.Info("Storage mode comparison",

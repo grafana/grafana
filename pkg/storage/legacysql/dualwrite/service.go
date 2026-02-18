@@ -14,18 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var logger = log.New("dualwrite.service")
-
-func newModeMismatchCounter(reg prometheus.Registerer) *prometheus.CounterVec {
-	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-		Name: "mode_mismatch_total",
-		Help: "Number of times the MigrationStatusReader mode disagrees with the current dual writer mode at startup.",
-	}, []string{"resource", "current_mode", "new_mode"})
-}
 
 // fakeMigrator is a no-op implementation of UnifiedStorageMigrationService
 type fakeMigrator struct{}
@@ -87,7 +78,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	migrator unifiedmigrations.UnifiedStorageMigrationService,
 	statusReader unifiedmigrations.MigrationStatusReader,
-	reg prometheus.Registerer,
+	metrics *Metrics,
 ) (Service, error) {
 	// Ensure migrations have run before starting dualwrite
 	err := migrator.Run(context.Background())
@@ -95,15 +86,13 @@ func ProvideService(
 		return nil, fmt.Errorf("unable to start dualwrite service due to migration error: %w", err)
 	}
 
-	mismatchCounter := newModeMismatchCounter(reg)
-
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
 	if cfg != nil {
 		if !enabled {
-			return &staticService{cfg: cfg, statusReader: statusReader, mismatchCounter: mismatchCounter}, nil
+			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 		}
 
 		if cfg != nil {
@@ -112,7 +101,7 @@ func ProvideService(
 
 			// If both are fully on unified (Mode5), the dynamic service is not needed.
 			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-				return &staticService{cfg: cfg, statusReader: statusReader, mismatchCounter: mismatchCounter}, nil
+				return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 			}
 
 			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
@@ -126,17 +115,17 @@ func ProvideService(
 			db:     kv,
 			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 		},
-		enabled:         enabled,
-		statusReader:    statusReader,
-		mismatchCounter: mismatchCounter,
+		enabled:      enabled,
+		statusReader: statusReader,
+		metrics:      metrics,
 	}, nil
 }
 
 type service struct {
-	db              *keyvalueDB
-	enabled         bool
-	statusReader    unifiedmigrations.MigrationStatusReader
-	mismatchCounter *prometheus.CounterVec
+	db           *keyvalueDB
+	enabled      bool
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *Metrics
 }
 
 func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
@@ -297,8 +286,8 @@ func (m *service) logStorageModeComparison(gr schema.GroupResource, status Stora
 	}
 
 	currentMode := storageModeFromStatus(status)
-	if currentMode != newMode && m.mismatchCounter != nil {
-		m.mismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
+	if currentMode != newMode && m.metrics != nil {
+		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
 	}
 
 	logger.Info("Storage mode comparison",
