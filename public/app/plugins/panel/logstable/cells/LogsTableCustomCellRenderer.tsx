@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { Field, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
-import { CustomCellRendererProps, MaybeWrapWithLink, useStyles2 } from '@grafana/ui';
+import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
+import { MaybeWrapWithLink } from '@grafana/ui/internal';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../constants';
