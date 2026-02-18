@@ -200,6 +200,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultAlertingState: AlertingState = {
     alertRules: [],
     loading: false,
+    isDashboardSaved: true,
   };
 
   return {

@@ -22,7 +22,6 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
 
   return (
     <SidebarCard
-      config={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation]}
       isSelected={isSelected}
       id={transformation.transformId}
       item={item}

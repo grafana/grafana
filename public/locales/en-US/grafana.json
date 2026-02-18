@@ -13214,6 +13214,10 @@
       "show-transformation-help": "Show transformation help",
       "transformation-debug": "Debug"
     },
+    "alerts": {
+      "no-alerts": "No alert rules for this panel",
+      "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
       "body-transformation": "Removing one transformation may break others.",
@@ -13255,6 +13259,7 @@
       "query-options": "Query Options"
     },
     "header": {
+      "alert": "Alert",
       "expression": "Expression",
       "pending-expression": "Select an Expression",
       "pending-expression-cancel": "Cancel",
@@ -13282,8 +13287,11 @@
       "add-transformation-below": "Add transformation below {{id}}",
       "alert-indicator": {
         "button-label": "View alert rules",
-        "tooltip": "View alert rules"
+        "button-label-hide": "Hide alert rules",
+        "close": "Close"
       },
+      "alerts_one": "Alerts ({{count}})",
+      "alerts_other": "Alerts ({{count}})",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "data-mode": "Data Mode",
