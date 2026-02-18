@@ -25,7 +25,7 @@ const FILTER_PROMOTED: MetricFindValue[] = [
 const EXCLUDED = new Set(['__name__']);
 
 /** Internal/structural labels to exclude from frequency counting */
-const INTERNAL_LABELS = new Set([
+export const INTERNAL_LABELS = new Set([
   '__name__',
   'alertname',
   'alertstate',
