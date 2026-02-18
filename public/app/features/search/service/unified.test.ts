@@ -168,9 +168,10 @@ describe('Unified Storage Searcher', () => {
     const results = toDashboardResults(mockResponse, 'errors_today');
 
     expect(results.length).toBe(2);
-    const sprinklesField = results.fields[10];
-    expect(sprinklesField.name).toBe('errors_today');
-    expect(sprinklesField.values).toEqual([1, 2]); // this also tests the hits original order is preserved
+    const sprinklesField = results.fields.find((f) => f.name === 'errors_today');
+    expect(sprinklesField).toBeDefined();
+    expect(sprinklesField!.name).toBe('errors_today');
+    expect(sprinklesField!.values).toEqual([1, 2]); // this also tests the hits original order is preserved
     expect(results.meta?.custom?.sortBy).toBe('errors_today');
   });
 
