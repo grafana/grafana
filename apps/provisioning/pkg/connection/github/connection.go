@@ -60,7 +60,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
-			logger.Info("JWT token generation failed during connection test", "appID", c.obj.Spec.GitHub.AppID, "error", err)
+			logger.Info("JWT token generation failed during connection test", "appID", c.obj.Spec.GitHub.AppID)
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -84,7 +84,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 		if err != nil {
 			// Error parsing JWT token means the given private key is invalid
-			logger.Info("JWT token parsing failed during connection test", "error", err)
+			logger.Info("JWT token parsing failed during connection test", "appID", c.obj.Spec.GitHub.AppID)
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
