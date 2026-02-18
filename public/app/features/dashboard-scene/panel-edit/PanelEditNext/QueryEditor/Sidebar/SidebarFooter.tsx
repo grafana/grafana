@@ -4,17 +4,26 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS } from '../../constants';
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import {
+  useAlertingContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
+  const { alertRules } = useAlertingContext();
+  const { cardType } = useQueryEditorUIContext();
   const styles = useStyles2(getStyles);
 
-  const total = queries.length + transformations.length;
-  const hidden =
-    queries.filter((q) => q.hide).length + transformations.filter((t) => t.transformConfig.disabled).length;
+  const isAlertView = cardType === QueryEditorType.Alert;
+  const total = isAlertView ? alertRules.length : queries.length + transformations.length;
+  const hidden = isAlertView
+    ? 0
+    : queries.filter((q) => q.hide).length + transformations.filter((t) => t.transformConfig.disabled).length;
   const visible = total - hidden;
 
   return (
@@ -22,20 +31,22 @@ export function SidebarFooter() {
       <Text weight="medium" variant="bodySmall">
         {t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total })}
       </Text>
-      <Stack direction="row" alignItems="center" gap={2}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Icon name="eye" size="sm" className={styles.icon} />
-          <Text weight="medium" variant="bodySmall">
-            {visible}
-          </Text>
+      {!isAlertView && (
+        <Stack direction="row" alignItems="center" gap={2}>
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Icon name="eye" size="sm" className={styles.icon} />
+            <Text weight="medium" variant="bodySmall">
+              {visible}
+            </Text>
+          </Stack>
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Icon name="eye-slash" size="sm" className={styles.icon} />
+            <Text weight="medium" variant="bodySmall">
+              {hidden}
+            </Text>
+          </Stack>
         </Stack>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Icon name="eye-slash" size="sm" className={styles.icon} />
-          <Text weight="medium" variant="bodySmall">
-            {hidden}
-          </Text>
-        </Stack>
-      </Stack>
+      )}
     </div>
   );
 }
