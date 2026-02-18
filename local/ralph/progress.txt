@@ -304,3 +304,13 @@ Started: Tue Feb 17 14:02:44 CET 2026
   - When using `variable.Component`, value changes go through `model.changeValueTo()` which fires `SceneVariableValueChangedEvent` — subscribe to this on the `SceneVariableSet` instead of manually dispatching `runQueries` in onChange
   - The `SceneVariableSet` must be activated via `.activate()` for events to propagate — set this up in a `useEffect` with cleanup
 ---
+
+## 2026-02-18 - US-018
+- Fixed bug: clicking Split now copies variables to the new split pane
+- Files changed:
+  - `public/app/features/explore/state/main.ts` - Added import for `serializeVariableSet`/`deserializeVariables`; in `splitOpen` thunk, clone origin pane's variables via serialize/deserialize round-trip and pass them to `createNewSplitOpenPane`
+- **Learnings for future iterations:**
+  - `splitOpen` in `main.ts` is the thunk that creates the split pane — it copies queries, range, panelsState but any new pane state fields need to be explicitly added here
+  - `initializeExplore` already supports `variables?: SceneVariable[]` in its options — just pass them through
+  - Use serialize/deserialize round-trip (`serializeVariableSet` → `deserializeVariables`) to deep-clone SceneVariable instances, ensuring pane independence
+---

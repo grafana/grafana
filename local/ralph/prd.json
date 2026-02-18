@@ -300,6 +300,21 @@
       "priority": 17,
       "passes": true,
       "notes": "Replaced ExploreVariableSelectCustom and ExploreVariableSelectGeneric with a single ExploreVariableSelector using ControlsLabel + variable.Component pattern from dashboard-scene/scene/VariableControls.tsx."
+    },
+    {
+      "id": "US-018",
+      "title": "Copy variables to split pane on split",
+      "description": "As a user, when I click Split in Explore, I want my variables to be copied to the new split pane so I don't lose them.",
+      "acceptanceCriteria": [
+        "Clicking Split copies all variables from the origin pane to the new split pane",
+        "Variables in the split pane are independent copies (changing a value in one pane does not affect the other)",
+        "Selected values are preserved in the cloned variables",
+        "Typecheck passes",
+        "All tests pass"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "The splitOpen thunk in main.ts was missing the variables parameter when calling createNewSplitOpenPane. Fixed by serializing/deserializing the origin pane's variableSet to create independent clones."
     }
   ]
 }
