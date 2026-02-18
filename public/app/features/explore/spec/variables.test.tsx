@@ -132,7 +132,7 @@ describe('Explore: variables integration', () => {
       expect(scopedVars).toHaveProperty('env');
       expect(scopedVars['env']).toEqual(expect.objectContaining({ value: 'prod' }));
 
-      expect(screen.queryByText('$env')).not.toBeInTheDocument();
+      expect(screen.queryByText('env')).not.toBeInTheDocument();
     });
 
     it('changing a variable value dispatches runQueries with updated ScopedVars', async () => {
@@ -155,7 +155,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$job')).toBeInTheDocument();
+        expect(screen.getByText('job')).toBeInTheDocument();
       });
 
       const paneState = store.getState().explore.panes[exploreId]!;
@@ -259,11 +259,11 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$region')).toBeInTheDocument();
+        expect(screen.getByText('region')).toBeInTheDocument();
       });
     });
 
-    it('toolbar Select prefix shows $variableName', async () => {
+    it('toolbar shows variable name as label', async () => {
       const { store } = setupExplore();
 
       await waitForExplore();
@@ -275,7 +275,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$myVar')).toBeInTheDocument();
+        expect(screen.getByText('myVar')).toBeInTheDocument();
       });
     });
 
@@ -291,7 +291,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$env')).toBeInTheDocument();
+        expect(screen.getByText('env')).toBeInTheDocument();
       });
 
       // Verify the variable starts with value 'dev' and can be updated via setState (as the Select onChange does)
@@ -321,7 +321,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$testVar')).toBeInTheDocument();
+        expect(screen.getByText('testVar')).toBeInTheDocument();
       });
 
       await waitFor(() => {
@@ -347,7 +347,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$testVar')).toBeInTheDocument();
+        expect(screen.getByText('testVar')).toBeInTheDocument();
       });
 
       expect(screen.queryByRole('button', { name: /edit variable/i })).not.toBeInTheDocument();
@@ -365,10 +365,10 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$empty')).toBeInTheDocument();
+        expect(screen.getByText('empty')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('$empty')).toBeInTheDocument();
+      expect(screen.getByText('empty')).toBeInTheDocument();
     });
   });
 
@@ -385,7 +385,7 @@ describe('Explore: variables integration', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('$env')).toBeInTheDocument();
+        expect(screen.getByText('env')).toBeInTheDocument();
       });
 
       const paneState = store.getState().explore.panes[exploreId]!;

@@ -7,12 +7,18 @@ import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ConstantVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
+import {
+  ConstantVariable,
+  ControlsLabel,
+  SceneVariable,
+  SceneVariableState,
+  SceneVariableValueChangedEvent,
+  useSceneObjectState,
+} from '@grafana/scenes';
 import {
   defaultIntervals,
   PageToolbar,
   RefreshPicker,
-  Select,
   SetInterval,
   ToolbarButton,
   ButtonGroup,
@@ -66,45 +72,31 @@ interface Props {
   isContentOutlineOpen: boolean;
 }
 
-function ExploreVariableSelectCustom({ variable, exploreId }: { variable: CustomVariable; exploreId: string }) {
-  const dispatch = useDispatch();
-  const { value, options, name, allowCustomValue } = variable.useState();
-  const currentValue = String(value);
-  const selectOptions = options.map((o) => ({ label: String(o.label) || '(empty)', value: String(o.value) }));
-  if (currentValue && !selectOptions.some((o) => o.value === currentValue)) {
-    selectOptions.push({ label: currentValue, value: currentValue });
-  }
+function ExploreVariableSelector({ variable }: { variable: SceneVariable }) {
+  const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
+  const styles = useStyles2(getVariableStyles);
+  const labelOrName = state.label || state.name;
+  const elementId = `var-${state.key}`;
+
   return (
-    <Select
-      prefix={`$${name}`}
-      value={currentValue}
-      options={selectOptions}
-      onChange={(selected) => {
-        if (selected.value !== undefined) {
-          variable.setState({ value: selected.value, text: selected.label ?? String(selected.value) });
-          dispatch(runQueries({ exploreId }));
-        }
-      }}
-      allowCustomValue={allowCustomValue}
-      width="auto"
-    />
+    <div className={styles.container}>
+      <ControlsLabel htmlFor={elementId} isLoading={state.loading} label={labelOrName} description={state.description ?? undefined} />
+      <variable.Component model={variable} />
+    </div>
   );
 }
 
-function ExploreVariableSelectGeneric({ variable }: { variable: SceneVariable }) {
-  const { name } = variable.useState();
-  const currentValue = String(variable.getValue());
-  const currentText = variable.getValueText?.() ?? currentValue;
-  return (
-    <Select
-      prefix={`$${name}`}
-      value={currentValue}
-      options={[{ label: currentText || '(empty)', value: currentValue }]}
-      onChange={() => {}}
-      width="auto"
-    />
-  );
-}
+const getVariableStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
+    '> :nth-child(2)': {
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
+    },
+  }),
+});
 
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
@@ -128,6 +120,20 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   useEffect(() => {
     setVariables((variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable)));
   }, [variableSet]);
+
+  useEffect(() => {
+    if (!variableSet) {
+      return;
+    }
+    const deactivate = variableSet.activate();
+    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      dispatch(runQueries({ exploreId }));
+    });
+    return () => {
+      sub.unsubscribe();
+      deactivate();
+    };
+  }, [variableSet, dispatch, exploreId]);
 
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
@@ -315,13 +321,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
             </ToolbarButton>
           ),
-          ...variables.map((variable) =>
-            variable instanceof CustomVariable ? (
-              <ExploreVariableSelectCustom key={`var-${variable.state.name}`} variable={variable} exploreId={exploreId} />
-            ) : (
-              <ExploreVariableSelectGeneric key={`var-${variable.state.name}`} variable={variable} />
-            )
-          ),
+          ...variables.map((variable) => (
+            <ExploreVariableSelector key={`var-${variable.state.name}`} variable={variable} />
+          )),
         ].filter(Boolean)}
         forceShowLeftItems
       >
