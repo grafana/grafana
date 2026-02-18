@@ -40,14 +40,14 @@ func (s *CacheService) ExclusiveSet(key string, getValue func() any, dur time.Du
 	unlock := s.Lock(key)
 	defer unlock()
 
-	s.Cache.Set(key, getValue(), dur)
+	s.Set(key, getValue(), dur)
 }
 
 func (s *CacheService) ExclusiveDelete(key string) {
 	unlock := s.Lock(key)
 	defer unlock()
 
-	s.Cache.Delete(key)
+	s.Delete(key)
 }
 
 // Lock locks the entry associated with the given key, returning the function

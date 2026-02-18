@@ -56,12 +56,12 @@ func TestExclusiveSet(t *testing.T) {
 
 	// It is still possible that the last operation to be performed was a write,
 	// which would delete the cache entry.
-	cached, ok := cache.Get(key)
+	_, ok := cache.Get(key)
 	if !ok {
 		cache.ExclusiveSet(key, read, time.Minute)
 	}
 
-	cached, ok = cache.Get(key)
+	cached, ok := cache.Get(key)
 	require.True(t, ok, "value should be cached")
 	require.Equal(t, truth, cached)
 
