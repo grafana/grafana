@@ -114,6 +114,7 @@ import {
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
+type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -202,6 +203,37 @@ export function TableNG(props: TableNGProps) {
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
+  const onCellClick: OnCellClick = useCallback(
+    ({ column, row }, ev) => {
+      // we attach field to the column, but it doesn't
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const field = (column as unknown as TableColumn).field;
+
+      // let the click event through for the expander column, since it has its own click handler for expanding/collapsing rows.
+      if (column.key === EXPANDED_COLUMN_KEY) {
+        return;
+      }
+
+      if (
+        ev.target instanceof HTMLElement &&
+        // this walks up the tree to find either a faux link wrapper or the cell root
+        // it then only proceeds if we matched the faux link wrapper
+        ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+      ) {
+        const rowIdx = row.__index;
+        setTooltipState({
+          coords: {
+            clientX: ev.clientX,
+            clientY: ev.clientY,
+          },
+          links: getCellLinks(field, rowIdx),
+          actions: getCellActions(field, rowIdx),
+        });
+        ev.preventGridDefault();
+      }
+    },
+    [getCellActions]
+  );
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
@@ -432,6 +464,8 @@ export function TableNG(props: TableNGProps) {
           );
         }
 
+        const nestedColumns = nestedColumnsMatrix[row.__index].columns;
+
         return (
           <div id={rowId}>
             <DataGrid<TableRow, TableSummaryRow>
@@ -439,9 +473,10 @@ export function TableNG(props: TableNGProps) {
               className={clsx(styles.grid, styles.gridNested)}
               headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
               headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
-              columns={nestedColumnsMatrix[row.__index].columns}
+              columns={nestedColumns}
               rows={expandedRecords}
               renderers={renderers}
+              onCellClick={onCellClick}
             />
           </div>
         );
@@ -465,6 +500,7 @@ export function TableNG(props: TableNGProps) {
       sortColumns,
       commonDataGridProps,
       expandedRows,
+      onCellClick,
     ]
   );
 
@@ -877,31 +913,9 @@ export function TableNG(props: TableNGProps) {
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
-          // Note: could be column.field; JS says yes, but TS says no!
-          const field = columns[column.idx].field;
-
-          if (
-            target instanceof HTMLElement &&
-            // this walks up the tree to find either a faux link wrapper or the cell root
-            // it then only proceeds if we matched the faux link wrapper
-            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
-          ) {
-            const rowIdx = row.__index;
-            setTooltipState({
-              coords: {
-                clientX,
-                clientY,
-              },
-              links: getCellLinks(field, rowIdx),
-              actions: getCellActions(field, rowIdx),
-            });
-
-            preventGridDefault();
-          }
-        }}
+        onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
-          // if top-left cell, use default browser tabbing and
+          // if top-left cell, use default browser tabbing
           if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
             event.preventGridDefault();
             gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
