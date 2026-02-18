@@ -79,8 +79,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-28,panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true
 2025-12-08,perPanelFiltering,experimental,@grafana/dashboards-squad,false,false,true
-2026-01-27,dashboardFiltersOverview,preview,@grafana/dashboards-squad,false,false,true
-2026-01-27,dashboardLayout,preview,@grafana/dashboards-squad,false,false,false
 2023-11-03,panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-02-16,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true

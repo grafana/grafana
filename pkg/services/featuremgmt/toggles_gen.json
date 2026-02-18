@@ -1281,7 +1281,8 @@
       "metadata": {
         "name": "dashboardFiltersOverview",
         "resourceVersion": "1769520282387",
-        "creationTimestamp": "2026-01-27T13:24:42Z"
+        "creationTimestamp": "2026-01-27T13:24:42Z",
+        "deletionTimestamp": "2026-02-18T10:57:53Z"
       },
       "spec": {
         "description": "Enables the dashboard filters overview pane",
@@ -1295,7 +1296,8 @@
       "metadata": {
         "name": "dashboardLayout",
         "resourceVersion": "1769514339132",
-        "creationTimestamp": "2026-01-27T11:45:39Z"
+        "creationTimestamp": "2026-01-27T11:45:39Z",
+        "deletionTimestamp": "2026-02-18T10:57:53Z"
       },
       "spec": {
         "description": "Enables new dashboard layouts",
