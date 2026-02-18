@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/web"
@@ -25,9 +26,9 @@ func TestSetTeamMembershipsViaK8s_Success(t *testing.T) {
 		adminEmail     = "admin@example.com"
 		memberEmail    = "member@example.com"
 		oldMemberEmail = "old-member@example.com"
-		adminUserID    = int64(10)
-		memberUserID   = int64(20)
-		oldMemberID    = int64(30)
+		adminUserUID   = "user-admin-uid"
+		memberUserUID  = "user-member-uid"
+		oldMemberUID   = "user-old-uid"
 	)
 
 	s := setupTest(t)
@@ -36,22 +37,22 @@ func TestSetTeamMembershipsViaK8s_Success(t *testing.T) {
 		Admins:  []string{adminEmail},
 		Members: []string{memberEmail},
 	}
-	s.mockUserExists(adminEmail, adminUserID)
-	s.mockUserExists(memberEmail, memberUserID)
+	s.mockUserExists(adminEmail, adminUserUID)
+	s.mockUserExists(memberEmail, memberUserUID)
 
-	s.mockUserExistsForGetByID(oldMemberID, oldMemberEmail)
+	s.mockUserExistsForGetByUID(oldMemberUID, oldMemberEmail)
 
 	existingBindings := &iamv0alpha1.TeamBindingList{
 		Items: []iamv0alpha1.TeamBinding{
-			s.createExistingBinding(oldMemberID, iamv0alpha1.TeamBindingTeamPermissionMember),
+			s.createExistingBinding(oldMemberUID, iamv0alpha1.TeamBindingTeamPermissionMember),
 		},
 	}
 	s.mockListBindings(existingBindings)
 
-	s.mockCreateBinding(adminUserID, iamv0alpha1.TeamBindingTeamPermissionAdmin, nil)
-	s.mockCreateBinding(memberUserID, iamv0alpha1.TeamBindingTeamPermissionMember, nil)
+	s.mockCreateBinding(adminUserUID, iamv0alpha1.TeamBindingTeamPermissionAdmin, nil)
+	s.mockCreateBinding(memberUserUID, iamv0alpha1.TeamBindingTeamPermissionMember, nil)
 
-	oldBindingName := fmt.Sprintf("tb-%s-%d", s.teamName, oldMemberID)
+	oldBindingName := fmt.Sprintf("tb-%s-%s", s.teamUID, oldMemberUID)
 	s.mockDeleteBinding(oldBindingName)
 
 	resp := s.tapi.setTeamMembershipsViaK8s(s.reqContext, s.teamID, cmd)
@@ -169,11 +170,12 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 type testSetup struct {
 	ctx               context.Context
 	teamID            int64
+	teamUID           string
 	orgID             int64
 	namespace         string
-	teamName          string
 	mockResClient     *mockResourceClient
 	mockUserSvc       *usertest.MockService
+	mockTeamSvc       *teamtest.FakeService
 	teamBindingClient *iamv0alpha1.TeamBindingClient
 	tapi              *TeamAPI
 	reqContext        *contextmodel.ReqContext
@@ -182,10 +184,17 @@ type testSetup struct {
 func setupTest(t *testing.T) *testSetup {
 	ctx := context.Background()
 	teamID := int64(1)
+	teamUID := "team-test-uid"
 	orgID := int64(1)
 
 	mockResClient := new(mockResourceClient)
 	mockUserSvc := usertest.NewMockService(t)
+	mockTeamSvc := &teamtest.FakeService{
+		ExpectedTeamDTO: &team.TeamDTO{
+			ID:  teamID,
+			UID: teamUID,
+		},
+	}
 	teamBindingClient := iamv0alpha1.NewTeamBindingClient(mockResClient)
 
 	mockFactory := NewMockTeamBindingClientFactory(t)
@@ -194,6 +203,7 @@ func setupTest(t *testing.T) *testSetup {
 	tapi := &TeamAPI{
 		teamBindingClientFactory: mockFactory,
 		userService:              mockUserSvc,
+		teamService:              mockTeamSvc,
 		logger:                   log.NewNopLogger(),
 	}
 
@@ -212,57 +222,57 @@ func setupTest(t *testing.T) *testSetup {
 	return &testSetup{
 		ctx:               ctx,
 		teamID:            teamID,
+		teamUID:           teamUID,
 		orgID:             orgID,
 		namespace:         fmt.Sprintf("org-%d", orgID),
-		teamName:          fmt.Sprintf("%d", teamID),
 		mockResClient:     mockResClient,
 		mockUserSvc:       mockUserSvc,
+		mockTeamSvc:       mockTeamSvc,
 		teamBindingClient: teamBindingClient,
 		tapi:              tapi,
 		reqContext:        reqContext,
 	}
 }
 
-func (s *testSetup) mockUserExists(email string, userID int64) {
+func (s *testSetup) mockUserExists(email string, userUID string) {
 	s.mockUserSvc.On("GetByEmail", mock.Anything, &user.GetUserByEmailQuery{Email: email}).
-		Return(&user.User{ID: userID, Email: email}, nil)
+		Return(&user.User{UID: userUID, Email: email}, nil)
 }
 
-func (s *testSetup) mockUserExistsForGetByID(userID int64, email string) {
-	s.mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: userID}).
-		Return(&user.User{ID: userID, Email: email}, nil)
+func (s *testSetup) mockUserExistsForGetByUID(userUID string, email string) {
+	s.mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: userUID}).
+		Return(&user.User{UID: userUID, Email: email}, nil)
 }
 
 func (s *testSetup) mockListBindings(bindings *iamv0alpha1.TeamBindingList) {
 	s.mockResClient.On("List", mock.Anything, s.namespace, mock.MatchedBy(func(opts resource.ListOptions) bool {
-		return len(opts.FieldSelectors) == 1 && opts.FieldSelectors[0] == fmt.Sprintf("spec.teamRef.name=%s", s.teamName)
+		return len(opts.FieldSelectors) == 1 && opts.FieldSelectors[0] == fmt.Sprintf("spec.teamRef.name=%s", s.teamUID)
 	})).Return(bindings, nil)
 }
 
-func (s *testSetup) mockCreateBinding(userID int64, permission iamv0alpha1.TeamBindingTeamPermission, returnErr error) *iamv0alpha1.TeamBinding {
+func (s *testSetup) mockCreateBinding(userUID string, permission iamv0alpha1.TeamBindingTeamPermission, returnErr error) *iamv0alpha1.TeamBinding {
 	binding := &iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("tb-%s-%d", s.teamName, userID),
+			Name:      fmt.Sprintf("tb-%s-%s", s.teamUID, userUID),
 			Namespace: s.namespace,
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			Subject: iamv0alpha1.TeamBindingspecSubject{
-				Name: fmt.Sprintf("%d", userID),
+				Name: userUID,
 			},
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
-				Name: s.teamName,
+				Name: s.teamUID,
 			},
 			Permission: permission,
 			External:   false,
 		},
 	}
 
-	userIDStr := fmt.Sprintf("%d", userID)
 	s.mockResClient.On("Create", mock.Anything, mock.MatchedBy(func(id resource.Identifier) bool {
 		return id.Namespace == s.namespace
 	}), mock.MatchedBy(func(obj resource.Object) bool {
 		if b, ok := obj.(*iamv0alpha1.TeamBinding); ok {
-			return b.Spec.Subject.Name == userIDStr && b.Spec.Permission == permission
+			return b.Spec.Subject.Name == userUID && b.Spec.Permission == permission
 		}
 		return false
 	}), resource.CreateOptions{}).Return(binding, returnErr).Once()
@@ -277,18 +287,18 @@ func (s *testSetup) mockDeleteBinding(bindingName string) {
 	}, resource.DeleteOptions{}).Return(nil).Once()
 }
 
-func (s *testSetup) createExistingBinding(userID int64, permission iamv0alpha1.TeamBindingTeamPermission) iamv0alpha1.TeamBinding {
+func (s *testSetup) createExistingBinding(userUID string, permission iamv0alpha1.TeamBindingTeamPermission) iamv0alpha1.TeamBinding {
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("tb-%s-%d", s.teamName, userID),
+			Name:      fmt.Sprintf("tb-%s-%s", s.teamUID, userUID),
 			Namespace: s.namespace,
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			Subject: iamv0alpha1.TeamBindingspecSubject{
-				Name: fmt.Sprintf("%d", userID),
+				Name: userUID,
 			},
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
-				Name: s.teamName,
+				Name: s.teamUID,
 			},
 			Permission: permission,
 		},
