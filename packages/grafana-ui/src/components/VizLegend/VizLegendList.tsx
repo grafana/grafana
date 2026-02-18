@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -23,6 +24,7 @@ export const VizLegendList = <T extends unknown>({
   placement,
   className,
   readonly,
+  limit = 0,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
@@ -39,6 +41,8 @@ export const VizLegendList = <T extends unknown>({
     );
   }
 
+  let limitedItems = useMemo(() => (limit > 0 ? items.slice(0, limit) : items), [items, limit]);
+
   const getItemKey = (item: VizLegendItem<T>) => `${item.getItemKey ? item.getItemKey() : item.label}`;
 
   switch (placement) {
@@ -49,14 +53,14 @@ export const VizLegendList = <T extends unknown>({
 
       return (
         <div className={cx(styles.rightWrapper, className)}>
-          <List items={items} renderItem={renderItem} getItemKey={getItemKey} />
+          <List items={limitedItems} renderItem={renderItem} getItemKey={getItemKey} />
         </div>
       );
     }
     case 'bottom':
     default: {
-      const leftItems = items.filter((item) => item.yAxis === 1);
-      const rightItems = items.filter((item) => item.yAxis !== 1);
+      const leftItems = limitedItems.filter((item) => item.yAxis === 1);
+      const rightItems = limitedItems.filter((item) => item.yAxis !== 1);
 
       const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
