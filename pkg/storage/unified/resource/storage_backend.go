@@ -351,9 +351,6 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 
 		// get the cutoff timestamp for this resource, allowing for resource-specific cutoff logic (e.g. different retention for dashboards)
 		resourceCutoff := b.garbageCollectionCutoffTimestamp(gr.Group, gr.Resource, cutoffTimeStamp)
-		if !isSnowflake(resourceCutoff) {
-			resourceCutoff = rvmanager.SnowflakeFromRV(resourceCutoff)
-		}
 
 		// get the start and end keys for the list operation based on the resource prefix
 		// for example, for datashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -422,6 +419,10 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
 	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
 	defer span.End()
+
+	if !isSnowflake(cutoffTimestamp) {
+		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
+	}
 
 	candidates := []string{}
 
