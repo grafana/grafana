@@ -599,6 +599,12 @@
       "title-restore-version": "Restaurar versión",
       "title-restoring-alertmanager-configuration": "Restaurando la configuración de Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Ordenar",
       "label-filter-placeholder-search-alerts-by-labels": "Buscar alertas por etiquetas",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1801,7 +1797,11 @@
         "target-datasource-description": "Seleccione la fuente de datos que consultarán las reglas importadas. Asegúrese de que las métricas utilizadas en las reglas importadas estén disponibles en esta fuente de datos.",
         "target-datasource-required": "Seleccione una fuente de datos de destino"
       },
-      "yaml-error": "Error al analizar el archivo YAML: {{error}}"
+      "yaml-error": "Error al analizar el archivo YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2649,13 @@
       "resample-to": "Remuestrear a",
       "upsample": "Aumentar tamaño"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Enrutamiento"
     },
@@ -2877,8 +2884,8 @@
       },
       "rulerrule-loading-error": "Error al cargar la regla",
       "toggle": {
-        "go-back-to-old-look": "Volver a la diseño anterior",
-        "try-out-the-new-look": "¡Prueba el nuevo diseño!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Tipo de regla desconocido"
     },
@@ -9804,12 +9811,16 @@
       },
       "inspect-drawer-title": "Inspeccionar valor",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Sin datos"
       },
       "no-values-label": "Sin valores",
       "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
       "sparkline": {
         "no-data": "no hay datos"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -12669,6 +12680,7 @@
       "loading-finished-job": "Cargando trabajo finalizado...",
       "no-job-found": "Ningún trabajo encontrado",
       "no-job-found-message": "Es posible que el trabajo se haya eliminado o que no se haya podido recuperar. Cancela el proceso actual y vuelve a empezar.",
+      "retry-action": "",
       "starting": "Empezando...",
       "status": {
         "title-error-running-job": "Error al ejecutar el trabajo",
@@ -12739,6 +12751,7 @@
       "source-code": "Código fuente"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Solo lectura",
       "settings": "Configuración",
       "view": "Vista"
@@ -12867,8 +12880,9 @@
       "label-pending-step": "Paso pendiente"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Extracción automática desactivada",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Eliminando",
+      "disabled": "",
       "error": "Error",
       "pending": "Pendiente",
       "pulling": "Extrayendo",
@@ -13244,6 +13258,8 @@
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,7 +13276,10 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
         "tooltip": ""
