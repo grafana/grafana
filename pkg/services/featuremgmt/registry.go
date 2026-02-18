@@ -953,6 +953,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardTemplatesAssistantButton",
+			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,

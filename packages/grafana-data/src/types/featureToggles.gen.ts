@@ -609,6 +609,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
