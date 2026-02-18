@@ -27,7 +27,8 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
-function getContent(result: React.ReactElement) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getContent(result: React.ReactElement<any>) {
   return result.props.children.props.children[0];
 }
 
