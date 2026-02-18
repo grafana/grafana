@@ -13,7 +13,7 @@ env:
 
 jobs:
   dashboard-schema-v2-e2e:
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     continue-on-error: true
     if: github.event.pull_request.draft == false
     steps:

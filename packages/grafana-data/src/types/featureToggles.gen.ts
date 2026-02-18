@@ -429,6 +429,11 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
+  * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
+  * @default false
+  */
+  reportingV2Layouts?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
@@ -1278,6 +1283,11 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
+  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
+  * @default false
+  */
+  alertingAlertsActivityBanner?: boolean;
+  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */
@@ -1502,4 +1512,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
 }

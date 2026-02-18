@@ -71,6 +71,12 @@ const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
   },
 });
 
+const defaultStep1Props = {
+  canImport: true,
+  dryRunState: 'idle' as const,
+  onTriggerDryRun: jest.fn(),
+};
+
 describe('Step1AlertmanagerResources', () => {
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
@@ -81,7 +87,7 @@ describe('Step1AlertmanagerResources', () => {
     it('should render permission warning when canImport=false', () => {
       render(
         <TestWrapper>
-          <Step1Content canImport={false} />
+          <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
 
@@ -92,7 +98,7 @@ describe('Step1AlertmanagerResources', () => {
     it('should render Policy Tree Name field', () => {
       render(
         <TestWrapper>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -103,7 +109,7 @@ describe('Step1AlertmanagerResources', () => {
     it('should render source selection (YAML/datasource)', () => {
       render(
         <TestWrapper>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -121,7 +127,7 @@ describe('Step1AlertmanagerResources', () => {
     it('should render YAML file upload field when YAML source selected', () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -132,7 +138,7 @@ describe('Step1AlertmanagerResources', () => {
     it('should render datasource picker when datasource source selected', () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -241,7 +247,7 @@ describe('Step1AlertmanagerResources', () => {
       const user = userEvent.setup();
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -259,7 +265,7 @@ describe('Step1AlertmanagerResources', () => {
       const user = userEvent.setup();
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: 'my-custom-name' }}>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
@@ -289,7 +295,7 @@ describe('Step1AlertmanagerResources', () => {
       const user = userEvent.setup();
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
-          <Step1Content canImport={true} />
+          <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
