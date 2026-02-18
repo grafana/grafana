@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,32 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+// ReadinessNotifier is a thread-safe mechanism for operators to signal
+// that they have completed initialization and are ready to serve.
+type ReadinessNotifier struct {
+	ready atomic.Bool
+}
+
+// NewReadinessNotifier creates a new ReadinessNotifier in a not-ready state.
+func NewReadinessNotifier() *ReadinessNotifier {
+	return &ReadinessNotifier{}
+}
+
+// SetReady marks the operator as ready. This is safe to call from any goroutine.
+func (r *ReadinessNotifier) SetReady() {
+	r.ready.Store(true)
+}
+
+// SetNotReady marks the operator as not ready. This is safe to call from any goroutine.
+func (r *ReadinessNotifier) SetNotReady() {
+	r.ready.Store(false)
+}
+
+// IsReady returns true if the operator has signaled readiness.
+func (r *ReadinessNotifier) IsReady() bool {
+	return r.ready.Load()
+}
 
 type instrumentationService struct {
 	*services.BasicService
