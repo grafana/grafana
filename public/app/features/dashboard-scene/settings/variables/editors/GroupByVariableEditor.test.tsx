@@ -22,6 +22,11 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
+const mockGetTagKeys = jest.fn().mockReturnValue([
+  { text: 'job', value: 'job' },
+  { text: 'instance', value: 'instance' },
+]);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -32,11 +37,10 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
-      getTagKeys: () => [],
+      getTagKeys: mockGetTagKeys,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
-    getTagKeys: () => [],
   }),
 }));
 
@@ -89,6 +93,39 @@ describe('GroupByVariableEditor', () => {
     expect(variable.state.defaultOptions).toEqual(undefined);
   });
 
+  it('should fetch tag keys from datasource', async () => {
+    await setup();
+
+    await waitFor(() => {
+      expect(mockGetTagKeys).toHaveBeenCalledWith({ filters: [] });
+    });
+  });
+
+  it('should render provided default values as inputs', async () => {
+    const { renderer } = await setup(undefined, { value: ['job', 'instance'], text: ['job', 'instance'] });
+
+    await waitFor(() => {
+      const inputs = renderer.getAllByLabelText('Default value');
+      expect(inputs).toHaveLength(2);
+      expect(inputs[0]).toHaveValue('job');
+      expect(inputs[1]).toHaveValue('instance');
+    });
+  });
+
+  it('should update variable defaultValue when adding a default value', async () => {
+    const { renderer, variable, user } = await setup();
+
+    await waitFor(() => {
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+      ).toBeInTheDocument();
+    });
+
+    await user.click(renderer.getByRole('button', { name: 'Add default value' }));
+
+    expect(variable.state.defaultValue).toEqual({ value: [''], text: [''] });
+  });
+
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
     const variable = new GroupByVariable({
       name: 'test',
@@ -115,7 +152,7 @@ describe('GroupByVariableEditor', () => {
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[]) {
+async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value: string[]; text: string[] }) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',
@@ -123,6 +160,7 @@ async function setup(defaultOptions?: MetricFindValue[]) {
     label: 'Group By',
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
     defaultOptions,
+    defaultValue,
   });
   return {
     renderer: await act(() => render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />)),
