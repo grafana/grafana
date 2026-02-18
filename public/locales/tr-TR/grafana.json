@@ -599,6 +599,12 @@
       "title-restore-version": "Sürümü geri yükle",
       "title-restoring-alertmanager-configuration": "Alertmanager yapılandırması geri yükleniyor"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sırala",
       "label-filter-placeholder-search-alerts-by-labels": "Etiketlere göre uyarı ara",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1801,7 +1797,11 @@
         "target-datasource-description": "İçe aktarılan kurallar tarafından sorgulanacak veri kaynağını seçin. İçe aktarılan kurallarda kullanılan metriklerin bu veri kaynağında mevcut olduğundan emin olun.",
         "target-datasource-required": "Lütfen hedef veri kaynağı seçin"
       },
-      "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}"
+      "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2649,13 @@
       "resample-to": "Şuna yeniden örnekle:",
       "upsample": "Örneklemeyi artır"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Yönlendirme"
     },
@@ -2877,8 +2884,8 @@
       },
       "rulerrule-loading-error": "Kural yüklenemedi",
       "toggle": {
-        "go-back-to-old-look": "Eski görünüme geri dön",
-        "try-out-the-new-look": "Yeni görünüme göz atın!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Bilinmeyen kural türü"
     },
@@ -9804,12 +9811,16 @@
       },
       "inspect-drawer-title": "Değeri incele",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Veri yok"
       },
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
       "sparkline": {
         "no-data": "veri yok"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -12669,6 +12680,7 @@
       "loading-finished-job": "Tamamlanan iş yükleniyor...",
       "no-job-found": "İş bulunamadı",
       "no-job-found-message": "İş silinmiş veya getirilememiş olabilir.  Mevcut işlemi iptal edin ve yeniden başlayın.",
+      "retry-action": "",
       "starting": "Başlatılıyor...",
       "status": {
         "title-error-running-job": "İş çalıştırılırken hata oluştu",
@@ -12739,6 +12751,7 @@
       "source-code": "Kaynak kodu"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "",
       "settings": "Ayarlar",
       "view": "Görüntüle"
@@ -12867,8 +12880,9 @@
       "label-pending-step": "Bekleyen adım"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Otomatik çekme devre dışı bırakıldı",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Siliniyor",
+      "disabled": "",
       "error": "Hata",
       "pending": "Bekliyor",
       "pulling": "Çekiliyor",
@@ -13244,6 +13258,8 @@
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,7 +13276,10 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
         "tooltip": ""

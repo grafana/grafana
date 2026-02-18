@@ -596,6 +596,12 @@
       "title-restore-version": "Pulihkan versi",
       "title-restoring-alertmanager-configuration": "Memulihkan konfigurasi Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Urutkan",
       "label-filter-placeholder-search-alerts-by-labels": "Cari peringatan berdasarkan label",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1791,7 +1791,9 @@
         "target-datasource-description": "Pilih sumber data yang akan diminta oleh aturan yang diimpor. Pastikan metrik yang digunakan dalam aturan yang diimpor tersedia di sumber data ini.",
         "target-datasource-required": "Pilih sumber data target"
       },
-      "yaml-error": "Gagal mengurai file YAML: {{error}}"
+      "yaml-error": "Gagal mengurai file YAML: {{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2634,13 @@
       "resample-to": "Sampel ulang ke",
       "upsample": "Tingkatkan sample"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Perutean"
     },
@@ -2860,8 +2869,8 @@
       },
       "rulerrule-loading-error": "Gagal memuat aturan",
       "toggle": {
-        "go-back-to-old-look": "Kembali ke tampilan lama",
-        "try-out-the-new-look": "Coba tampilan baru!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Jenis aturan tidak diketahui"
     },
@@ -9759,12 +9768,16 @@
       },
       "inspect-drawer-title": "Periksa nilai",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Tidak ada data"
       },
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
       "sparkline": {
         "no-data": "tidak ada data"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -12607,6 +12620,7 @@
       "loading-finished-job": "Memuat pekerjaan yang sudah selesai...",
       "no-job-found": "Tidak ada pekerjaan yang ditemukan",
       "no-job-found-message": "Pekerjaan mungkin telah dihapus atau tidak dapat diambil. Batalkan proses saat ini dan mulai lagi.",
+      "retry-action": "",
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
@@ -12677,6 +12691,7 @@
       "source-code": "Kode sumber"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Hanya baca",
       "settings": "Pengaturan",
       "view": "Lihat"
@@ -12805,8 +12820,9 @@
       "label-pending-step": "Langkah tertunda"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Penarikan otomatis dinonaktifkan",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Menghapus",
+      "disabled": "",
       "error": "Kesalahan",
       "pending": "Tertunda",
       "pulling": "Menarik",
@@ -13181,6 +13197,8 @@
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,7 +13215,10 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
         "tooltip": ""
