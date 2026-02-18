@@ -1,14 +1,12 @@
-import { css } from '@emotion/css';
 import { createSelector } from '@reduxjs/toolkit';
-import { memo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Link, List, Text, useStyles2 } from '@grafana/ui';
+import { Column, InteractiveTable, Text, TextLink } from '@grafana/ui';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -131,7 +129,6 @@ const TeamPages = memo(() => {
 TeamPages.displayName = 'TeamPages';
 
 function TeamFolders({ teamUid }: { teamUid: string }) {
-  const styles = useStyles2(getStyles);
   const ownerReference = `iam.grafana.app/Team/${teamUid}`;
   const { data, isLoading } = useSearchDashboardsAndFoldersQuery(
     { ownerReference: [ownerReference], type: 'folder' },
@@ -139,57 +136,65 @@ function TeamFolders({ teamUid }: { teamUid: string }) {
   );
 
   const folders = data?.hits ?? [];
+  const columns: Array<Column<DashboardHit>> = useMemo(
+    () => [
+      {
+        id: 'title',
+        header: t('teams.team-pages.team-folders.table.name', 'Name'),
+        cell: ({ row: { original } }) => (
+          <TextLink
+            color="primary"
+            inline={false}
+            href={`/dashboards/f/${original.name}`}
+            title={t('teams.team-pages.team-folders.open-folder', 'Open folder')}
+          >
+            {original.title}
+          </TextLink>
+        ),
+      },
+      {
+        id: 'folder',
+        header: t('teams.team-pages.team-folders.table.parent-folder', 'Parent folder'),
+        cell: ({ row: { original } }) => <ParentFolderCell parentUid={original.folder} />,
+      },
+    ],
+    []
+  );
 
-  if (isLoading) {
-    return (
-      <>
-        <Skeleton />
-        <Skeleton />
-        <Skeleton />
-      </>
-    );
-  }
+  const skeletonData: DashboardHit[] = useMemo(
+    () =>
+      new Array(3).fill(null).map((_, index) => ({
+        name: `loading-folder-${index}`,
+        resource: 'folder',
+        title: t('teams.team-pages.team-folders.loading', 'Loading...'),
+      })),
+    []
+  );
 
-  if (!folders.length) {
+  if (!isLoading && !folders.length) {
     return <Text color="secondary">{t('teams.team-pages.team-folders.empty', 'No folders owned by this team')}</Text>;
   }
 
   return (
-    <List
-      items={folders}
-      getItemKey={(folder) => folder.name}
-      className={styles.list}
-      renderItem={(folder) => <TeamFolderListItem folder={folder} />}
+    <InteractiveTable
+      columns={columns}
+      data={isLoading ? skeletonData : folders}
+      getRowId={(folder) => folder.name}
+      pageSize={25}
     />
   );
 }
 
-function TeamFolderListItem({ folder }: { folder: DashboardHit }) {
-  const parentUid = folder.folder;
+function ParentFolderCell({ parentUid }: { parentUid?: string }) {
   const shouldFetchParent = Boolean(parentUid && parentUid !== GENERAL_FOLDER_UID);
   const { data: parentFolder, isLoading } = useGetFolderQueryFacade(shouldFetchParent ? parentUid : undefined);
 
+  if (isLoading) {
+    return <Skeleton width={100} />;
+  }
+
   const parentTitle = parentUid === GENERAL_FOLDER_UID ? GENERAL_FOLDER_TITLE : parentFolder?.title;
-
-  return (
-    <div>
-      <Link href={`/dashboards/f/${folder.name}`}>{folder.title}</Link>
-      <Text variant="bodySmall" color="secondary">
-        {t('teams.team-pages.team-folders.parent-folder', 'Parent folder')}:{' '}
-        {isLoading ? t('teams.team-pages.team-folders.loading', 'Loading...') : (parentTitle ?? '-')}
-      </Text>
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    list: css({
-      '> li': {
-        marginBottom: theme.spacing(1),
-      },
-    }),
-  };
+  return <>{parentTitle ?? '-'}</>;
 }
 
 export default TeamPages;
