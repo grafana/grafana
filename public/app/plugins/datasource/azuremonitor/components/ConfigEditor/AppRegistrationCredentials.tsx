@@ -1,14 +1,14 @@
 import { ChangeEvent } from 'react';
 
-import { AzureClientSecretCredentials, AzureCredentials } from '@grafana/azure-sdk';
+import { AzureClientCertificateCredentials, AzureClientSecretCredentials, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Select, Input, Button } from '@grafana/ui';
+import { Button, Field, Input, SecretTextArea, Select } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 
 export interface AppRegistrationCredentialsProps {
-  credentials: AzureClientSecretCredentials;
+  credentials: AzureClientSecretCredentials | AzureClientCertificateCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
@@ -41,22 +41,6 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
     onCredentialsChange(updated);
   };
 
-  const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const updated: AzureCredentials = {
-      ...credentials,
-      clientSecret: event.target.value,
-    };
-    onCredentialsChange(updated);
-  };
-
-  const onClientSecretReset = () => {
-    const updated: AzureCredentials = {
-      ...credentials,
-      clientSecret: '',
-    };
-    onCredentialsChange(updated);
-  };
-
   return (
     <>
       {azureCloudOptions && (
@@ -65,6 +49,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
           data-testid={selectors.components.configEditor.azureCloud.input}
           htmlFor="azure-cloud-type"
           disabled={disabled}
+          noMargin
         >
           <Select
             inputId="azure-cloud-type"
@@ -83,6 +68,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         htmlFor="tenant-id"
         invalid={credentials.authType === 'clientsecret' && !credentials.tenantId}
         error={'Tenant ID is required'}
+        noMargin
       >
         <Input
           aria-label={t('components.app-registration-credentials.aria-label-tenant-id', 'Tenant ID')}
@@ -101,6 +87,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         htmlFor="client-id"
         invalid={credentials.authType === 'clientsecret' && !credentials.clientId}
         error={'Client ID is required'}
+        noMargin
       >
         <Input
           className="width-30"
@@ -112,12 +99,60 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
           disabled={disabled}
         />
       </Field>
+      {credentials.authType === 'clientsecret' && (
+        <AppRegistrationClientSecretCredentials
+          disabled={disabled || false}
+          credentials={credentials}
+          onCredentialsChange={onCredentialsChange}
+        />
+      )}
+      {credentials.authType === 'clientcertificate' && (
+        <AppRegistrationClientCertificateCredentials
+          disabled={disabled || false}
+          credentials={credentials}
+          onCredentialsChange={onCredentialsChange}
+        />
+      )}
+    </>
+  );
+};
+
+const AppRegistrationClientSecretCredentials = ({
+  disabled,
+  credentials,
+  onCredentialsChange,
+}: {
+  disabled: boolean;
+  credentials: AzureClientSecretCredentials;
+  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
+}) => {
+  const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const updated: AzureClientSecretCredentials = {
+      ...credentials,
+      authType: 'clientsecret',
+      clientSecret: event.target.value,
+    };
+    onCredentialsChange(updated);
+  };
+
+  const onClientSecretReset = () => {
+    const updated: AzureClientSecretCredentials = {
+      ...credentials,
+      authType: 'clientsecret',
+      clientSecret: '',
+    };
+    onCredentialsChange(updated);
+  };
+
+  return (
+    <>
       {!disabled &&
         (typeof credentials.clientSecret === 'symbol' ? (
           <Field
             label={t('components.app-registration-credentials.label-symbol-client-secret', 'Client Secret')}
             htmlFor="client-secret"
             required
+            noMargin
           >
             <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
               <Input
@@ -145,6 +180,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
             htmlFor="client-secret"
             invalid={!credentials.clientSecret}
             error={'Client secret is required'}
+            noMargin
           >
             <Input
               className="width-30"
@@ -154,6 +190,170 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
               value={credentials.clientSecret || ''}
               onChange={onClientSecretChange}
               id="client-secret"
+              disabled={disabled}
+            />
+          </Field>
+        ))}
+    </>
+  );
+};
+
+const AppRegistrationClientCertificateCredentials = ({
+  disabled,
+  credentials,
+  onCredentialsChange,
+}: {
+  disabled: boolean;
+  credentials: AzureClientCertificateCredentials;
+  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
+}) => {
+  const onClientCertificateChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      clientCertificate: event.target.value,
+    };
+    onCredentialsChange(updated);
+  };
+
+  const onClientCertificateReset = () => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      clientCertificate: '',
+    };
+    onCredentialsChange(updated);
+  };
+  const onPrivateKeyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      privateKey: event.target.value,
+    };
+    onCredentialsChange(updated);
+  };
+
+  const onPrivateKeyReset = () => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      privateKey: '',
+    };
+    onCredentialsChange(updated);
+  };
+  const onPrivateKeyPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      privateKeyPassword: event.target.value,
+    };
+    onCredentialsChange(updated);
+  };
+
+  const onPrivateKeyPasswordReset = () => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      privateKeyPassword: '',
+    };
+    onCredentialsChange(updated);
+  };
+
+  return (
+    <>
+      {!disabled && (
+        <Field
+          label={t('components.app-registration-credentials.label-client-certificate', 'Client Certificate')}
+          data-testid={selectors.components.configEditor.clientCertificate.input}
+          required
+          htmlFor="client-certificate"
+          invalid={!credentials.clientCertificate}
+          error={'Client certificate is required'}
+          noMargin
+        >
+          <SecretTextArea
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            placeholder="-----BEGIN CERTIFICATE-----"
+            cols={45}
+            rows={7}
+            className="width-30"
+            aria-label={t(
+              'components.app-registration-credentials.aria-label-client-certificate',
+              'Client Certificate'
+            )}
+            onChange={onClientCertificateChange}
+            id="client-certificate"
+            disabled={disabled}
+            isConfigured={typeof credentials.clientCertificate === 'symbol'}
+            onReset={onClientCertificateReset}
+          />
+        </Field>
+      )}
+      {!disabled && (
+        <Field
+          label={t('components.app-registration-credentials.label-private-key', 'Private Key')}
+          data-testid={selectors.components.configEditor.privateKey.input}
+          required
+          htmlFor="private-key"
+          invalid={!credentials.privateKey}
+          error={'Private key is required'}
+          noMargin
+        >
+          <SecretTextArea
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            placeholder="-----BEGIN PRIVATE KEY-----"
+            cols={45}
+            rows={7}
+            className="width-30"
+            aria-label={t('components.app-registration-credentials.aria-label-private-key', 'Private Key')}
+            onChange={onPrivateKeyChange}
+            id="private-key"
+            disabled={disabled}
+            isConfigured={typeof credentials.privateKey === 'symbol'}
+            onReset={onPrivateKeyReset}
+          />
+        </Field>
+      )}
+      {!disabled &&
+        (typeof credentials.privateKeyPassword === 'symbol' ? (
+          <Field
+            label={t(
+              'components.app-registration-credentials.label-symbol-private-key-password',
+              'Private Key Password'
+            )}
+            htmlFor="private-key-password"
+            noMargin
+          >
+            <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+              <Input
+                aria-label={t(
+                  'components.app-registration-credentials.aria-label-symbol-private-key-password',
+                  'Private Key Password'
+                )}
+                placeholder={t(
+                  'components.app-registration-credentials.placeholder-symbol-private-key-password',
+                  'configured'
+                )}
+                disabled={true}
+                data-testid={'private-key-password'}
+              />
+              <Button variant="secondary" type="button" onClick={onPrivateKeyPasswordReset} disabled={disabled}>
+                <Trans i18nKey="components.app-registration-credentials.reset-symbol-private-key-password">Reset</Trans>
+              </Button>
+            </div>
+          </Field>
+        ) : (
+          <Field
+            label={t('components.app-registration-credentials.label-private-key-password', 'Private Key Password')}
+            data-testid={selectors.components.configEditor.privateKeyPassword.input}
+            htmlFor="private-key-password"
+            noMargin
+          >
+            <Input
+              className="width-30"
+              aria-label={t(
+                'components.app-registration-credentials.aria-label-private-key-password',
+                'Private Key Password'
+              )}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              value={credentials.privateKeyPassword || ''}
+              onChange={onPrivateKeyPasswordChange}
+              id="private-key-password"
               disabled={disabled}
             />
           </Field>
