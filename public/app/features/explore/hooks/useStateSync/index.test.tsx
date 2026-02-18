@@ -7,11 +7,10 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataQuery, DataSourceApi, UrlQueryMap } from '@grafana/data';
 import { HistoryWrapper, setDataSourceSrv, DataSourceSrv } from '@grafana/runtime';
+import { CustomVariable } from '@grafana/scenes';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
-
-import { CustomVariable } from '@grafana/scenes';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
 import { updateQueryLibraryRefAction } from '../../state/explorePane';

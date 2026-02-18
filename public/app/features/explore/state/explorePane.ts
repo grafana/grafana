@@ -11,8 +11,8 @@ import {
   ExploreCorrelationHelperData,
   EventBusExtended,
 } from '@grafana/data';
-import { SceneVariable } from '@grafana/scenes';
 import { CorrelationData } from '@grafana/runtime';
+import { SceneVariable } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';

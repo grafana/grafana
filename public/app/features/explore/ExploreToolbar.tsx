@@ -123,13 +123,10 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     shallowEqual
   );
   const variableSet = useSelector((state: StoreState) => state.explore.panes[exploreId]?.variableSet);
-  const [variables, setVariables] = useState(() =>
-    (variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable))
+  const variables = useMemo(
+    () => (variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable)),
+    [variableSet]
   );
-
-  useEffect(() => {
-    setVariables((variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable)));
-  }, [variableSet]);
 
   useEffect(() => {
     if (!variableSet) {
