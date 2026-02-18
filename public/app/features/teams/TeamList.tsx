@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { SortingRule } from 'react-table';
 
-import { Folder, useLazyListFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -23,6 +23,7 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
+import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -65,7 +66,10 @@ const TeamList = () => {
   const [sort, setSort] = useState<string>();
   const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
-  const [fetchFolders] = useLazyListFolderQuery();
+  const { data: foldersData } = useSearchDashboardsAndFoldersQuery(
+    { type: 'folder' },
+    { skip: !config.featureToggles.teamFolders }
+  );
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
@@ -204,14 +208,12 @@ const TeamList = () => {
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
 
-          const showDeleteModal = async () => {
-            let ownedFolders: Folder[] = [];
-            if (config.featureToggles.teamFolders) {
-              const { data: folderData } = await fetchFolders({});
-              ownedFolders =
-                folderData?.items.filter((folder) =>
-                  folder.metadata.ownerReferences?.some((ref) => ref.uid === original.uid)
-                ) || [];
+          const showDeleteModal = () => {
+            let ownedFolders: DashboardHit[] = [];
+            if (foldersData?.hits) {
+              ownedFolders = foldersData.hits.filter((folder) =>
+                folder.ownerReferences?.includes(`iam.grafana.app/Team/${original.uid}`)
+              );
             }
 
             reportInteraction('grafana_teams_list_delete_button_clicked', {
@@ -264,7 +266,7 @@ const TeamList = () => {
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, fetchFolders]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, foldersData]
   );
 
   return (
