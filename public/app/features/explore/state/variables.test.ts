@@ -1,8 +1,4 @@
-import {
-  CustomVariable,
-  SceneVariableSet,
-  SceneVariableValueChangedEvent,
-} from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, SceneVariableValueChangedEvent } from '@grafana/scenes';
 
 import { getNextAvailableId } from '../../dashboard-scene/settings/variables/utils';
 
@@ -30,10 +26,7 @@ describe('explore variables state management', () => {
       const state = makeExplorePaneState();
       const variable = new CustomVariable({ name: 'test', query: 'a,b,c' });
 
-      const newState = variablesReducer(
-        state,
-        addSceneVariableAction({ exploreId: 'left', variable })
-      );
+      const newState = variablesReducer(state, addSceneVariableAction({ exploreId: 'left', variable }));
 
       expect(newState.variableSet.state.variables).toHaveLength(1);
       const added = newState.variableSet.state.variables[0];
@@ -41,7 +34,6 @@ describe('explore variables state management', () => {
       expect(added.state.name).toBe('test');
       expect((added as CustomVariable).state.query).toBe('a,b,c');
     });
-
   });
 
   describe('auto-generated names', () => {
@@ -59,10 +51,7 @@ describe('explore variables state management', () => {
     });
 
     it('should skip taken names', () => {
-      const variables = [
-        new CustomVariable({ name: 'custom0' }),
-        new CustomVariable({ name: 'custom1' }),
-      ];
+      const variables = [new CustomVariable({ name: 'custom0' }), new CustomVariable({ name: 'custom1' })];
 
       const nextName = getNextAvailableId('custom', variables);
       expect(nextName).toBe('custom2');
@@ -76,10 +65,7 @@ describe('explore variables state management', () => {
         variableSet: new SceneVariableSet({ variables: [variable] }),
       });
 
-      const newState = variablesReducer(
-        state,
-        removeVariableAction({ exploreId: 'left', name: 'toRemove' })
-      );
+      const newState = variablesReducer(state, removeVariableAction({ exploreId: 'left', name: 'toRemove' }));
 
       expect(newState.variableSet.state.variables).toHaveLength(0);
     });
@@ -93,10 +79,7 @@ describe('explore variables state management', () => {
         variableSet: new SceneVariableSet({ variables: [variable] }),
       });
 
-      const newState = variablesReducer(
-        state,
-        removeVariableAction({ exploreId: 'left', name: 'nonExistent' })
-      );
+      const newState = variablesReducer(state, removeVariableAction({ exploreId: 'left', name: 'nonExistent' }));
 
       expect(newState.variableSet.state.variables).toHaveLength(1);
       expect(newState.variableSet.state.variables[0].state.name).toBe('existing');

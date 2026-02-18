@@ -25,8 +25,7 @@ export function ExploreVariableEditor({ exploreId, variableSet, initialView: ini
   const variables = variableSet.state.variables;
   const hasVariables = variables.length > 0;
 
-  const computedInitialView: DrawerView =
-    initialViewProp === 'list' && hasVariables ? 'list' : 'editor';
+  const computedInitialView: DrawerView = initialViewProp === 'list' && hasVariables ? 'list' : 'editor';
   const [view, setView] = useState<DrawerView>(computedInitialView);
   const [editingVariable, setEditingVariable] = useState<SceneVariable | null>(() => {
     if (computedInitialView === 'editor') {

@@ -7,11 +7,7 @@ import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafan
 import { ConstantVariable, CustomVariable, TextBoxVariable } from '@grafana/scenes';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import {
-  addSceneVariableAction,
-  buildExploreVariableScopedVars,
-  removeVariableAction,
-} from '../state/variables';
+import { addSceneVariableAction, buildExploreVariableScopedVars, removeVariableAction } from '../state/variables';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
@@ -159,9 +155,7 @@ describe('Explore: variables integration', () => {
       });
 
       const paneState = store.getState().explore.panes[exploreId]!;
-      const addedVar = paneState.variableSet.state.variables.find(
-        (v) => v.state.name === 'job'
-      ) as CustomVariable;
+      const addedVar = paneState.variableSet.state.variables.find((v) => v.state.name === 'job') as CustomVariable;
       expect(addedVar).toBeDefined();
 
       await act(async () => {
@@ -296,9 +290,7 @@ describe('Explore: variables integration', () => {
 
       // Verify the variable starts with value 'dev' and can be updated via setState (as the Select onChange does)
       const paneState = store.getState().explore.panes[exploreId]!;
-      const addedVar = paneState.variableSet.state.variables.find(
-        (v) => v.state.name === 'env'
-      ) as CustomVariable;
+      const addedVar = paneState.variableSet.state.variables.find((v) => v.state.name === 'env') as CustomVariable;
       expect(String(addedVar.getValue())).toBe('dev');
 
       // Simulate selecting 'staging' via the Select onChange handler
@@ -389,9 +381,7 @@ describe('Explore: variables integration', () => {
       });
 
       const paneState = store.getState().explore.panes[exploreId]!;
-      const addedVar = paneState.variableSet.state.variables.find(
-        (v) => v.state.name === 'env'
-      ) as CustomVariable;
+      const addedVar = paneState.variableSet.state.variables.find((v) => v.state.name === 'env') as CustomVariable;
 
       // Rapidly change values
       await act(async () => {

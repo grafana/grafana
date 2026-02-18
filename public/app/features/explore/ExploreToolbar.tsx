@@ -90,7 +90,12 @@ function ExploreVariableSelector({ variable }: { variable: SceneVariable }) {
 
   return (
     <div className={styles.container}>
-      <ControlsLabel htmlFor={elementId} isLoading={state.loading} label={labelOrName} description={state.description ?? undefined} />
+      <ControlsLabel
+        htmlFor={elementId}
+        isLoading={state.loading}
+        label={labelOrName}
+        description={state.description ?? undefined}
+      />
       <variable.Component model={variable} />
     </div>
   );
