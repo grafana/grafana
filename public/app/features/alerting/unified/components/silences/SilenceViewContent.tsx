@@ -2,6 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
 
+import { createReturnTo } from '../../hooks/useReturnTo';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 
 import { Matchers } from './Matchers';
@@ -16,6 +17,11 @@ interface SilenceViewContentProps {
 export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewContentProps) {
   const { matchers = [], comment, createdBy, startsAt, endsAt, metadata } = silence;
   const filteredMatchers = matchers.filter((m) => m.name !== MATCHER_ALERT_RULE_UID);
+  const returnTo = createReturnTo();
+
+  const alertRuleHref = metadata?.rule_uid
+    ? `/alerting/grafana/${metadata.rule_uid}/view?${new URLSearchParams({ returnTo }).toString()}`
+    : '';
 
   return (
     <Stack direction="column" gap={2}>
@@ -24,7 +30,7 @@ export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewConte
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="alerting.silence-view.alert-rule">Alert rule</Trans>
           </Text>
-          <TextLink href={`/alerting/grafana/${metadata.rule_uid}/view`}>{metadata.rule_title}</TextLink>
+          <TextLink href={alertRuleHref}>{metadata.rule_title}</TextLink>
         </Stack>
       )}
 
