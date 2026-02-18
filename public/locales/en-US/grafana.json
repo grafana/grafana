@@ -11842,6 +11842,12 @@
       "title-click-to-close": "Click again to close this section",
       "tooltip-delete": "Delete"
     },
+    "presets": {
+      "edit": "Edit",
+      "edit-aria-label": "Edit with {{presetName}} preset",
+      "select-style": "Select a style",
+      "skip": "Skip"
+    },
     "visualization-suggestions": {
       "edit": "Edit",
       "edit-aria-label": "Edit {{suggestionName}} visualization",

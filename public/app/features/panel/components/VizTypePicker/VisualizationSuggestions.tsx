@@ -5,9 +5,9 @@ import { useAsyncRetry } from 'react-use';
 import {
   GrafanaTheme2,
   PanelData,
-  PanelModel,
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
+  VisualizationSuggestion,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -16,6 +16,7 @@ import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
+import { getPresetsForPanel } from '../../presets/getPresets';
 import { getAllPanelPluginMeta } from '../../state/util';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
@@ -27,9 +28,10 @@ import { VizTypeChangeDetails } from './types';
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   data?: PanelData;
-  panel?: PanelModel;
+  vizPanel?: VizPanel;
   searchQuery?: string;
   isNewPanel?: boolean;
+  onShowPresets?: (suggestion: PanelPluginVisualizationSuggestion, presets: VisualizationSuggestion[]) => void;
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
@@ -64,7 +66,7 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
   return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, data, panel, searchQuery, isNewPanel }: Props) {
+export function VisualizationSuggestions({ onChange, data, vizPanel, searchQuery, isNewPanel, onShowPresets }: Props) {
   const styles = useStyles2(getStyles);
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
@@ -74,7 +76,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
-  const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
+  const isUnconfiguredPanel = vizPanel?.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID;
 
   const panelState = useMemo((): PanelState => {
     if (isUnconfiguredPanel) {
@@ -109,7 +111,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   }, [suggestions]);
 
   const applySuggestion = useCallback(
-    (
+    async (
       suggestion: PanelPluginVisualizationSuggestion,
       suggestionIndex: number,
       isAutoSelected = false,
@@ -122,6 +124,19 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           panelState,
           suggestionIndex: suggestionIndex + 1,
         });
+
+        if (config.featureToggles.vizPresets && onShowPresets && vizPanel) {
+          try {
+            console.log('getPresetsForPanel');
+            const presetsResult = await getPresetsForPanel(suggestion.pluginId, vizPanel);
+            if (presetsResult.presets && presetsResult.presets.length > 0) {
+              onShowPresets(suggestion, presetsResult.presets);
+              return;
+            }
+          } catch (error) {
+            console.error('Failed to load presets:', error);
+          }
+        }
       } else {
         VizSuggestionsInteractions.suggestionPreviewed({
           pluginId: suggestion.pluginId,
@@ -141,7 +156,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         fromSuggestions: true,
       });
     },
-    [onChange, panelState]
+    [onChange, panelState, onShowPresets, vizPanel]
   );
 
   useEffect(() => {
