@@ -4102,6 +4102,19 @@
     },
     {
       "metadata": {
+        "name": "react19",
+        "resourceVersion": "1771410986209",
+        "creationTimestamp": "2026-02-18T10:36:26Z"
+      },
+      "spec": {
+        "description": "Whether to use the new React 19 runtime",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "recentlyViewedDashboards",
         "resourceVersion": "1770896695157",
         "creationTimestamp": "2025-12-10T16:28:19Z",
