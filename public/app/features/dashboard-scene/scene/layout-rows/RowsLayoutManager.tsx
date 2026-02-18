@@ -23,7 +23,13 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import {
+  createEmptyLayoutFrom,
+  generateUniqueTitle,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+  ungroupLayout,
+} from '../layouts-shared/utils';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
@@ -278,22 +284,23 @@ export class RowsLayoutManager
   public removeRow(row: RowItem, skipUndo?: boolean) {
     const rowsBeforeRemoval = [...this.state.rows];
     const rowsAfterRemoval = rowsBeforeRemoval.filter((r) => r !== row);
-    const layoutParent = this.parent!;
-    if (!isLayoutParent(layoutParent)) {
-      throw new Error('Parent layout is not a LayoutParent');
+    const parent = this.parent!;
+    if (!isLayoutParent(parent)) {
+      throw new Error('Parent object is not a LayoutParent');
     }
-    const thisLayout = this;
 
     const perform = () => {
       if (!rowsAfterRemoval.length) {
-        layoutParent.switchLayout(DefaultGridLayoutManager.fromVizPanels([]));
+        parent.switchLayout(createEmptyLayoutFrom(row.getLayout()));
       } else {
         this.setState({ rows: rowsAfterRemoval });
       }
     };
+
+    const thisLayout = this;
     const undo = () => {
       if (!rowsAfterRemoval.length) {
-        layoutParent.switchLayout(thisLayout);
+        parent.switchLayout(thisLayout);
       } else {
         this.setState({ rows: rowsBeforeRemoval });
       }
