@@ -102,12 +102,9 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
         path: spec.bitbucket?.path,
       });
     case 'git':
-      return buildRepoUrl({
-        baseUrl: spec.git?.url,
-        branch: spec.git?.branch,
-        providerSegments: ['tree'],
-        path: spec.git?.path,
-      });
+      // Generic git repositories don't have a standard URL pattern
+      // Just return the base URL without branch/path segments
+      return spec.git?.url ? buildCleanBaseUrl(spec.git.url) : undefined;
     default:
       return undefined;
   }
