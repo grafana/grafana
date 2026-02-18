@@ -1,35 +1,70 @@
-import { render, screen } from 'test/test-utils';
+import { useLocation } from 'react-router-dom-v5-compat';
+import { getWrapper, render, screen } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { configureStore } from 'app/store/configureStore';
 
+import { AppChromeService } from '../AppChromeService';
+
 import { MegaMenu } from './MegaMenu';
 
-const setup = () => {
-  const navBarTree: NavModelItem[] = [
-    {
-      text: 'Section name',
-      id: 'section',
-      url: 'section',
-      children: [
-        {
-          text: 'Child1',
-          id: 'child1',
-          url: 'section/child1',
-          children: [{ text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1' }],
-        },
-        { text: 'Child2', id: 'child2', url: 'section/child2' },
-      ],
-    },
-    {
-      text: 'Profile',
-      id: 'profile',
-      url: 'profile',
-    },
-  ];
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: jest.fn().mockReturnValue({ pathname: '/' }),
+}));
+
+const grandchild1 = { text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1' };
+
+const child1 = {
+  text: 'Child1',
+  id: 'child1',
+  url: 'section/child1',
+  children: [grandchild1],
+};
+
+const child2 = { text: 'Child2', id: 'child2', url: 'section/child2' };
+
+const navBarTree: NavModelItem[] = [
+  {
+    text: 'Section name',
+    id: 'section',
+    url: 'section',
+    children: [child1, child2],
+  },
+  {
+    text: 'Profile',
+    id: 'profile',
+    url: 'profile',
+  },
+];
+
+const setup = (sectionNav?: NavModelItem) => {
+  const chromeService = new AppChromeService();
+  if (sectionNav) {
+    // Megamenu matching has some special logic regarding URLs - we need to set to something other than `/`
+    // otherwise the tests will always think we're on the home page
+    // and we won't match the section correctly when checking for initial active items/expanded state
+    (useLocation as jest.Mock).mockReturnValue({ pathname: sectionNav.url });
+    chromeService.update({
+      sectionNav: { node: sectionNav, main: { text: '' } },
+    });
+  }
+
   const store = configureStore({ navBarTree });
-  return render(<MegaMenu onClose={() => {}} />, { store });
+
+  const wrapper = getWrapper({
+    renderWithRouter: true,
+    grafanaContext: {
+      chrome: chromeService,
+    },
+    store,
+  });
+
+  return render(<MegaMenu onClose={() => {}} />, {
+    wrapper,
+    preloadedState: { navBarTree },
+  });
 };
 
 describe('MegaMenu', () => {
@@ -65,8 +100,8 @@ describe('MegaMenu', () => {
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 
-  fdescribe('mega menu controls', () => {
-    describe('expand/collapse all sections', () => {
+  describe('mega menu controls', () => {
+    describe('expand/collapse', () => {
       it('should expand and collapse all sections', async () => {
         const allExpectedChildItems = ['Child1', 'Grandchild1', 'Child2'];
 
@@ -86,6 +121,32 @@ describe('MegaMenu', () => {
         allExpectedChildItems.forEach((item) => {
           expect(screen.queryByText(item)).not.toBeInTheDocument();
         });
+      });
+
+      it('expand and collapses individual section', async () => {
+        const { user } = setup();
+
+        expect(screen.queryByText('Child1')).not.toBeInTheDocument();
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+
+        expect(screen.getByText('Child1')).toBeInTheDocument();
+
+        await user.click(await screen.findByRole('button', { name: 'Collapse section: Section name' }));
+
+        expect(screen.queryByText('Child1')).not.toBeInTheDocument();
+      });
+
+      it('starts with section expanded if a child is already expanded', async () => {
+        setup(child1);
+
+        expect(await screen.findByText('Child1')).toBeInTheDocument();
+      });
+
+      it('starts with section expanded if a nested child is already expanded', async () => {
+        setup(grandchild1);
+
+        expect(await screen.findByText('Grandchild1')).toBeInTheDocument();
       });
     });
 
