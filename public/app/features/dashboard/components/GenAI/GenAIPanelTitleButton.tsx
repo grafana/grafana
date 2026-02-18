@@ -1,6 +1,10 @@
+import { PanelData } from '@grafana/data';
 import { Dashboard, Panel } from '@grafana/schema';
 
+import { AssistantGenerationButton } from './AssistantGeneration';
 import { GenAIButton } from './GenAIButton';
+import { buildAssistantTitlePrompt } from './assistantContext';
+import { useGenerationProvider } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
 
@@ -8,6 +12,7 @@ interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
   panel: Panel;
   dashboard: Dashboard;
+  data?: PanelData;
 }
 
 const PANEL_TITLE_CHAR_LIMIT = 50;
@@ -17,10 +22,28 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Your goal is to write short, descriptive, and concise panel title.' +
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
-export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPanelTitleButtonProps) => {
+export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard, data }: GenAIPanelTitleButtonProps) => {
+  const { provider, isLoading } = useGenerationProvider();
+
+  if (isLoading || provider === 'none') {
+    return null;
+  }
+
+  if (provider === 'assistant') {
+    return (
+      <AssistantGenerationButton
+        getPrompt={() => buildAssistantTitlePrompt(panel, dashboard, data)}
+        onGenerate={onGenerate}
+        eventTrackingSrc={EventTrackingSrc.panelTitle}
+        toggleTipTitle={'Improve your panel title'}
+      />
+    );
+  }
+
+  // LLM plugin
   return (
     <GenAIButton
-      messages={() => getMessages(panel, dashboard)}
+      messages={() => getLLMMessages(panel, dashboard)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
       toggleTipTitle={'Improve your panel title'}
@@ -28,8 +51,17 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPan
   );
 };
 
-function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
+function getLLMMessages(panel: Panel, dashboard: Dashboard): Message[] {
   const panelString = getFilteredPanelString(panel);
+  const parts: string[] = [];
+
+  if (dashboard.title != null && dashboard.title !== '') {
+    parts.push(`The panel is part of a dashboard with the title: ${dashboard.title}`);
+  }
+  if (dashboard.description != null && dashboard.description !== '') {
+    parts.push(`The panel is part of a dashboard with the description: ${dashboard.description}`);
+  }
+  parts.push(`Use this JSON object which defines the panel: ${panelString}`);
 
   return [
     {
@@ -37,10 +69,7 @@ function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
       role: Role.system,
     },
     {
-      content:
-        `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
-        `The panel is part of a dashboard with the description: ${dashboard.description}\n` +
-        `Use this JSON object which defines the panel: ${panelString}`,
+      content: parts.join('\n'),
       role: Role.user,
     },
   ];

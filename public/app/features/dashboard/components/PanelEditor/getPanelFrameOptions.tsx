@@ -61,6 +61,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             onGenerate={setPanelTitle}
             panel={panel.getSaveModel()}
             dashboard={dashboard.getSaveModelClone()}
+            data={props.data}
           />
         ),
       })
@@ -82,7 +83,12 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
+          <GenAIPanelDescriptionButton
+            onGenerate={setPanelDescription}
+            panel={panel.getSaveModel()}
+            dashboard={dashboard.getSaveModelClone()}
+            data={props.data}
+          />
         ),
       })
     )
