@@ -84,7 +84,13 @@ export function useWizardNavigation({
         workflowsEnabled: getWorkflows(formData.repository),
         ...(repoType === 'github' && { githubAuthType }),
       });
-      navigate(PROVISIONING_URL);
+      // Navigate to repository status page instead of listing page
+      const repoName = formData.repositoryName;
+      if (repoName) {
+        navigate(`${PROVISIONING_URL}/${repoName}`);
+      } else {
+        navigate(PROVISIONING_URL);
+      }
     } else {
       let nextStepIndex = currentStepIndex + 1;
 

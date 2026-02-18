@@ -23,6 +23,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"k8s.io/component-base/metrics/legacyregistry"
 
+	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -392,17 +394,21 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
+	require.NoError(t, err)
+	backendService := backend.(services.Service)
+	require.NotNil(t, backendService)
+	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 	server, err := sql.NewResourceServer(sql.ServerOptions{
-		DB:             nil,
-		Cfg:            cfg,
-		Tracer:         tracer,
-		Reg:            nil,
-		AccessClient:   nil,
-		SearchOptions:  searchOpts,
-		StorageMetrics: nil,
-		IndexMetrics:   nil,
-		Features:       features,
-		QOSQueue:       nil,
+		Backend:       backend,
+		Cfg:           cfg,
+		Tracer:        tracer,
+		Reg:           nil,
+		AccessClient:  nil,
+		SearchOptions: searchOpts,
+		IndexMetrics:  nil,
+		Features:      features,
+		QOSQueue:      nil,
 	})
 	require.NoError(t, err)
 
