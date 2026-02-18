@@ -110,6 +110,7 @@ TableFooterOptions: {
   reducers?: [...string]
 } @cuetsy(kind="interface")
 
+// Note that public/app/plugins/panel/table/panelcfg.cue contains a deprecated copy of these options
 TableOptions: {
   // Represents the index of the selected frame
   frameIndex: number | *0

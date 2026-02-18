@@ -26,3 +26,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 export function initPluginMetas(): Promise<PluginMetasResponse> {
   return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
 }
+
+export function refetchPluginMetas(): Promise<PluginMetasResponse> {
+  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] }, invalidate: true });
+}
