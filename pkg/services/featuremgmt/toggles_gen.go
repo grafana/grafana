@@ -833,4 +833,8 @@ const (
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
+
+	// FlagRememberUserOrgForSso
+	// Remember the last viewed organization for users using SSO
+	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
 )
