@@ -87,7 +87,6 @@ test('routeToK8sSubRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         receiver: 'receiver2',
         matchers: [{ label: 'label2', type: '!=', value: 'value2' }],
         routes: undefined,

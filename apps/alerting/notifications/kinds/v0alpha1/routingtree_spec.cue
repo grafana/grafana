@@ -22,7 +22,7 @@ RouteTreeSpec: {
 #Route: {
 	receiver?: string
 	matchers?: [...#Matcher]
-	continue: bool
+	continue?: bool
 
 	group_by?: [...string]
 	mute_time_intervals?: [...string]

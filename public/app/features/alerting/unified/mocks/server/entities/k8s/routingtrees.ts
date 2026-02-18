@@ -43,7 +43,6 @@ const mapRoute = (route: Route): RoutingTreeRoute => {
   const { match, match_re, object_matchers, routes, receiver, ...rest } = route;
   return {
     ...rest,
-    continue: rest.continue ?? false,
     // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
     receiver: receiver || '',
     matchers: normalisedMatchers,
@@ -128,7 +127,6 @@ const getDefaultRoutingTreeMap = () =>
           },
           {
             // Inherit.
-            continue: false,
             matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }],
           },
         ],
@@ -146,11 +144,11 @@ const getDefaultRoutingTreeMap = () =>
         },
         routes: [
           // Many top-level routes.
-          { continue: false, matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }] },
-          { continue: false, matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'critical' }] },
-          { continue: false, matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'info' }] },
-          { continue: false, matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'debug' }] },
-          { continue: false, matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'unknown' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'critical' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'info' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'debug' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'unknown' }] },
         ],
       }),
     ],
@@ -167,23 +165,18 @@ const getDefaultRoutingTreeMap = () =>
         routes: [
           // Deeply nested route.
           {
-            continue: false,
             matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'one' }],
             routes: [
               {
-                continue: false,
                 matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'two' }],
                 routes: [
                   {
-                    continue: false,
                     matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'three' }],
                     routes: [
                       {
-                        continue: false,
                         matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'four' }],
                         routes: [
                           {
-                            continue: false,
                             matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'five' }],
                           },
                         ],

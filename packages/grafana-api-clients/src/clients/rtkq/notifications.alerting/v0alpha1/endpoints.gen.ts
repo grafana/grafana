@@ -1416,7 +1416,7 @@ export type RoutingTreeMatcher = {
 };
 export type RoutingTreeRoute = {
   active_time_intervals?: string[];
-  continue: boolean;
+  continue?: boolean;
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
