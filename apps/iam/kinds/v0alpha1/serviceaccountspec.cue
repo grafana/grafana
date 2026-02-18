@@ -7,4 +7,4 @@ ServiceAccountSpec: {
     title: string
 }
 
-OrgRole: "None" | "Viewer" | "Editor" | "Admin" @cuetsy(kind="enum")
+OrgRole: "None" | "Viewer" | "Editor" | "Admin"
