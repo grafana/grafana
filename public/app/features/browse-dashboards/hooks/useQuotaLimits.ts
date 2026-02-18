@@ -1,0 +1,76 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo } from 'react';
+
+import { useGetUsageQuery } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { config } from '@grafana/runtime';
+
+const WARNING_THRESHOLD = 0.85;
+
+export type QuotaState = 'ok' | 'nearing' | 'at_limit';
+
+export interface ResourceStatus {
+  kind: 'dashboards' | 'folders';
+  state: QuotaState;
+  usage: number;
+  limit: number;
+}
+
+interface QuotaUsageResponse {
+  usage: number;
+  limit: number;
+}
+
+function isQuotaUsageResponse(data: unknown): data is QuotaUsageResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'usage' in data &&
+    'limit' in data &&
+    typeof data.usage === 'number' &&
+    typeof data.limit === 'number'
+  );
+}
+
+function getQuotaState(usage: number, limit: number): QuotaState {
+  if (limit <= 0) {
+    return 'ok';
+  }
+  if (usage >= limit) {
+    return 'at_limit';
+  }
+  if (usage / limit >= WARNING_THRESHOLD) {
+    return 'nearing';
+  }
+  return 'ok';
+}
+
+function buildResourceStatus(data: unknown, kind: ResourceStatus['kind']): ResourceStatus | null {
+  if (!isQuotaUsageResponse(data)) {
+    return null;
+  }
+  const state = getQuotaState(data.usage, data.limit);
+  return state === 'ok' ? null : { kind, state, usage: data.usage, limit: data.limit };
+}
+
+export function useQuotaLimits() {
+  const featureEnabled = Boolean(config.featureToggles.kubernetesUnifiedStorageQuotas);
+  const dashboardQuery = useGetUsageQuery(
+    featureEnabled ? { group: 'dashboard.grafana.app', resource: 'dashboards' } : skipToken
+  );
+  const folderQuery = useGetUsageQuery(
+    featureEnabled ? { group: 'folder.grafana.app', resource: 'folders' } : skipToken
+  );
+
+  const isLoading = dashboardQuery.isLoading || folderQuery.isLoading;
+  const hasError = Boolean(dashboardQuery.error && folderQuery.error);
+
+  const resources = useMemo(
+    () =>
+      [buildResourceStatus(dashboardQuery.data, 'dashboards'), buildResourceStatus(folderQuery.data, 'folders')].filter(
+        (r): r is ResourceStatus => r !== null
+      ),
+    [dashboardQuery.data, folderQuery.data]
+  );
+
+  return { resources, isLoading, hasError, featureEnabled };
+}
