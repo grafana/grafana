@@ -642,8 +642,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
-	if hs.Cfg.EnableGzip {
-		m.UseMiddleware(middleware.Gziper())
+	if hs.Cfg.EnableCompression {
+		m.UseMiddleware(middleware.Compressor())
 	}
 
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
