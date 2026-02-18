@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { IconName } from '@grafana/data';
+import { AlertState, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Stack, Tooltip } from '@grafana/ui';
 
@@ -10,15 +10,17 @@ export interface ActionItem {
   name: string;
   type: QueryEditorType;
   isHidden: boolean;
+  /** Alert state for dynamic styling (only used when type is Alert) */
+  alertState?: AlertState | null;
 }
 
 interface ActionsProps {
   contentHeader?: boolean;
   handleResetFocus?: () => void;
   item: ActionItem;
-  onDelete: () => void;
+  onDelete?: () => void;
   onDuplicate?: () => void;
-  onToggleHide: () => void;
+  onToggleHide?: () => void;
 }
 
 interface ActionButtonConfig {
@@ -53,6 +55,10 @@ export function Actions({
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!onDelete) {
+        return;
+      }
+
       handleResetFocus?.();
 
       if (requiresDeleteConfirmation) {
@@ -65,6 +71,10 @@ export function Actions({
   );
 
   const handleConfirmDelete = useCallback(() => {
+    if (!onDelete) {
+      return;
+    }
+
     onDelete();
     setShowDeleteConfirmation(false);
     handleResetFocus?.();
@@ -87,7 +97,7 @@ export function Actions({
             onDuplicate();
           },
         },
-        {
+        onToggleHide && {
           id: 'toggle-hide',
           icon: item.isHidden ? 'eye-slash' : 'eye',
           label: item.isHidden ? labels.show : labels.hide,
@@ -96,14 +106,24 @@ export function Actions({
             onToggleHide();
           },
         },
-        {
+        onDelete && {
           id: 'delete',
           icon: 'trash-alt',
           label: labels.remove,
           onClick: handleDelete,
         },
       ].filter((btn): btn is ActionButtonConfig => Boolean(btn)),
-    [labels, item.isHidden, handleDelete, onDuplicate, onToggleHide]
+    [
+      onDuplicate,
+      labels.duplicate,
+      labels.show,
+      labels.hide,
+      labels.remove,
+      onToggleHide,
+      item.isHidden,
+      onDelete,
+      handleDelete,
+    ]
   );
 
   return (
