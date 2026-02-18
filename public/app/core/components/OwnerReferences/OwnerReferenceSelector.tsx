@@ -1,3 +1,4 @@
+import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useEffect, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
@@ -32,14 +33,15 @@ export const OwnerReferenceSelector = ({
 
   useEffect(() => {
     if (defaultTeamUid) {
-      getTeam({ name: defaultTeamUid }, true)
-        .unwrap()
-        .then((team) => {
+      getTeam({ name: defaultTeamUid }, true).then((query) => {
+        if (query.status === QueryStatus.fulfilled) {
           setSelectedTeam({
-            label: team.spec.title,
-            value: team.metadata.name!,
+            label: query.data.spec.title,
+            value: query.data.metadata.name!,
           });
-        });
+        }
+        // We ignore errors here as we handle them with the useLazyGetTeamQuery call
+      });
     }
   }, [defaultTeamUid, getTeam]);
 
