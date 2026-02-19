@@ -415,6 +415,7 @@ export function routeToK8sSubRoute(route: Route): RoutingTreeRoute {
   const { object_matchers, ...rest } = route;
   return {
     ...rest,
+    continue: route.continue ?? false,
     receiver: route.receiver ?? undefined,
     matchers: object_matchers?.map(([label, type, value]) => ({
       label,
