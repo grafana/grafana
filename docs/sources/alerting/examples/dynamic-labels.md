@@ -284,7 +284,7 @@ This setup reproduces label flapping and shows how dynamic label values affect a
    {{< figure src="/media/docs/alerting/example-dynamic-labels-alert-history-page.png" max-width="750px" caption="You can find multiple transitions over time as the label value fluctuates." >}}
 
    {{< admonition type="tip" >}}
-   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-labels)**.
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-label/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-labels)**.
 
    Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
    {{< /admonition >}}
@@ -329,4 +329,4 @@ Here's a list of additional resources related to this example:
 - [Stale alert instances](ref:stale-alert-instances) – Understand how Grafana resolves and removes stale alert instances.
 - [Handle missing data](ref:missing-data-guide) – Learn how Grafana distinguishes between missing series and `NoData`.
 - [Notification policies and routing](ref:notification-policies) – Create multiple notification policies to route alerts based on label values like `severity` or `team`.
-- [Dynamic label example in Grafana Play](https://play.grafana.org/alerting/grafana/eep7oslk5u680e/view) - View this example in Grafana Play to explore alert instances and state transitions with dynamic labels.
+- [Dynamic label example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-label/view?tech=docs&pg=alerting-examples&plcmt=learn-more&cta=alert-dynamic-labels) - View this example in Grafana Play to explore alert instances and state transitions with dynamic labels.

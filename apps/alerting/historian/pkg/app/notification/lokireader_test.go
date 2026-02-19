@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
 )
@@ -134,7 +135,7 @@ func TestBuildQuery(t *testing.T) {
 			query: Query{
 				RuleUID: stringPtr("test-rule-uid"),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -143,7 +144,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID:  stringPtr("test-rule-uid"),
 				Receiver: stringPtr("email-receiver"),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -152,7 +153,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Status:  createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | status = "firing"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | status = "firing"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -161,7 +162,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error = ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -170,7 +171,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeError),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error != ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error != ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -181,7 +182,7 @@ func TestBuildQuery(t *testing.T) {
 				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusResolved),
 				Outcome:  outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -231,6 +232,65 @@ func TestBuildQuery(t *testing.T) {
 			name: "query with invalid group operator",
 			query: Query{
 				GroupLabels: &Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with alert label matcher",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with many alert label matchers",
+			query: Query{
+				Labels: &Matchers{
+					{Type: "=", Label: "severity", Value: "critical"},
+					{Type: "!=", Label: "env", Value: "test"},
+					{Type: "=~", Label: "team", Value: "platform.*"},
+					{Type: "!~", Label: "region", Value: "us-.*"},
+				},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical" | alert_labels_env != "test"`+
+				` | alert_labels_team =~ "platform.*" | alert_labels_region !~ "us-.*"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with both group labels and alert labels",
+			query: Query{
+				GroupLabels: &Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+				Labels:      &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | groupLabels_alertname = "HighCPU" | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with invalid alert label with space",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "seve rity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label starting with number",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "1severity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label with attempted injection",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "\" = \"inject\"", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label operator",
+			query: Query{
+				Labels: &Matchers{{Type: "|=", Label: "severity", Value: "critical"}},
 			},
 			experr: ErrInvalidQuery,
 		},

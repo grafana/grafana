@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  AdHocFilterWithLabels,
   behaviors,
   ConstantVariable,
   CustomVariable,
@@ -44,7 +45,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -298,7 +299,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -312,6 +313,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
+
+    // Separate filters by origin - filters with origin go to originFilters, others go to filters
+    const originFilters: AdHocFilterWithLabels[] = [];
+    const filters: AdHocFilterWithLabels[] = [];
+    variable.spec.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,
       type: 'adhoc',
@@ -320,7 +327,8 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       datasource: ds,
       applyMode: 'auto',
-      filters: variable.spec.filters ?? [],
+      filters,
+      originFilters,
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
@@ -469,6 +477,9 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
+      defaultValue: variable.spec.defaultValue
+        ? { value: variable.spec.defaultValue.value, text: variable.spec.defaultValue.text }
+        : undefined,
     });
   } else if (variable.kind === defaultSwitchVariableKind().kind) {
     return new SwitchVariable({

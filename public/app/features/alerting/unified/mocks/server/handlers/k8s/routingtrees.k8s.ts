@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { RoutingTree, RoutingTreeList } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   deleteRoutingTree,
   getRoutingTree,
@@ -8,17 +9,11 @@ import {
   setRoutingTree,
 } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
-import {
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
-  ListNamespacedRoutingTreeApiResponse,
-} from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/errors';
 
 import { ROOT_ROUTE_NAME } from '../../../../utils/k8s/constants';
 
-const wrapRoutingTreeResponse: (
-  routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[]
-) => ListNamespacedRoutingTreeApiResponse = (routes) => ({
+const wrapRoutingTreeResponse: (routes: RoutingTree[]) => RoutingTreeList = (routes) => ({
   kind: 'RoutingTree',
   metadata: {},
   items: routes,
@@ -43,7 +38,7 @@ const HTTP_RESPONSE_CONFLICT: ApiMachineryError = {
 };
 
 const updateNamespacedRoutingTreeHandler = () =>
-  http.put<{ namespace: string; name: string }, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree>(
+  http.put<{ namespace: string; name: string }, RoutingTree>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`,
     async ({ params: { name }, request }) => {
       const updatedRoutingTree = await request.json();
@@ -69,14 +64,27 @@ const getNamespacedRoutingTreeHandler = () =>
   );
 
 const createNamespacedRoutingTreeHandler = () =>
-  http.post<
-    { namespace: string; name: string },
-    ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
-  >(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async ({ params: { name }, request }) => {
-    const routingTree = await request.json();
-    setRoutingTree(name, routingTree);
-    return HttpResponse.json(routingTree);
-  });
+  http.post<{ namespace: string }, RoutingTree>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`,
+    async ({ request }) => {
+      const routingTree = (await request.json()) as RoutingTree;
+      const name = routingTree.metadata?.name;
+      if (!name) {
+        return HttpResponse.json({ message: 'Route name is required' }, { status: 400 });
+      }
+      if (getRoutingTree(name)) {
+        return HttpResponse.json(
+          {
+            ...HTTP_RESPONSE_CONFLICT,
+            message: 'Route with this name already exists. Use a different name or update an existing one.',
+          },
+          { status: 409 }
+        );
+      }
+      setRoutingTree(name, routingTree);
+      return HttpResponse.json(routingTree);
+    }
+  );
 
 const deleteNamespacedRoutingTreeHandler = () =>
   http.delete<{ namespace: string; name: string }>(

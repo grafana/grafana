@@ -82,6 +82,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
+| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
@@ -95,6 +96,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `newGauge`                        | Enable new gauge visualization                                                                         |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
+| `vizPresets`                      | Enable visualization presets                                                                           |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |

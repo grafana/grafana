@@ -36,7 +36,6 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -148,6 +148,7 @@ func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
+	roleBindingsStorage RoleBindingStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
@@ -165,6 +166,7 @@ func NewAPIService(
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
+	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -176,7 +178,7 @@ func NewAPIService(
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
-		roleBindingsStorage:        noopstorage.ProvideStorageBackend(), // TODO: add a proper storage backend
+		roleBindingsStorage:        roleBindingsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		accessClient:               accessClient,
@@ -223,6 +225,13 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return roleAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "rolebindings" {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
@@ -411,7 +420,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
+		b.features, b.accessClient)
 
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -522,7 +532,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	extGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
-	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, extGroupMappingResource, opts.OptsGetter)
+
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.ExternalGroupMappingKind()),
+	}
+	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme,
+		extGroupMappingResource, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -530,7 +545,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(
 	var extGroupMappingStore storewrapper.K8sStorage = extGroupMappingUniStore
 
 	if b.externalGroupMappingStorage != nil {
-		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
+		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage, selectableFieldsOpts)
 		if err != nil {
 			return err
 		}
@@ -575,7 +590,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
 	var coreRoleStore storewrapper.K8sStorage = uniStore
 
 	if b.coreRolesStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		legacyStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -618,7 +633,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	var roleBindingStore storewrapper.K8sStorage = uniStore
 
 	if b.roleBindingsStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+		legacyStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -661,7 +676,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	var regStoreDW storewrapper.K8sStorage = uniStore
 
 	if b.resourcePermissionsStorage != nil {
-		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage, grafanaregistry.SelectableFieldsOptions{})
 		if err != nil {
 			return err
 		}
@@ -809,7 +824,8 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
-	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}
+	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
+	routes = append(routes, b.display.GetAPIRoutes(defs))
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }
@@ -976,7 +992,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 }
 
 func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
-	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (*registry.Store, error) {
+	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend, selectableFieldsOpts grafanaregistry.SelectableFieldsOptions) (*registry.Store, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend:      storageBackend,
 		Reg:          reg,
@@ -993,7 +1009,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	client := resource.NewLocalResourceClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
-	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err
 }
 

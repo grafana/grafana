@@ -222,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
 		ctx := c.Req.Context()
 		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			var children []*navtree.NavLink
+			children := make([]*navtree.NavLink, 0, 1)
 			// setup guide (a submenu item under Home)
 			children = append(children, &navtree.NavLink{
 				Id:         "home-setup-guide",
@@ -539,6 +539,17 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Icon:     "history",
 			})
 		}
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNotificationHistoryGlobal) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text:     "Notifications",
+			SubTitle: "View a history of all notifications sent from your Grafana-managed alert rules",
+			Id:       "alerts-notifications",
+			Url:      s.cfg.AppSubURL + "/alerting/notifications-history",
+			Icon:     "bell",
+		})
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {

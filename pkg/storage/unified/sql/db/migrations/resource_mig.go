@@ -65,7 +65,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	}
 
-	tables := []migrator.Table{resource_table, resource_history_table}
+	tables := []migrator.Table{resource_table, resource_history_table} //nolint:prealloc
 
 	// tables = append(tables, migrator.Table{
 	// 	Name: "resource_label_set",
@@ -230,6 +230,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Type: migrator.IndexType,
 		Name: "IDX_resource_history_resource_action_version_name",
 	}))
+
+	mg.AddMigration("Fix small resource versions", &SmallRVFixMigration{})
 
 	return marker
 }
