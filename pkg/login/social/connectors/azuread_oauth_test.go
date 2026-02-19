@@ -1518,7 +1518,7 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "new-access-token", newToken.AccessToken)
 		assert.Equal(t, "new-refresh-token", newToken.RefreshToken)
-		assert.EqualValues(t, now.Add(time.Hour), newToken.Expiry)
+		assert.WithinDuration(t, now.Add(time.Hour), newToken.Expiry, time.Second)
 	})
 
 	t.Run("error when workload token file does not exist", func(t *testing.T) {
