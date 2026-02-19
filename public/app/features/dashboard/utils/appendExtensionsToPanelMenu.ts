@@ -13,7 +13,7 @@ export type AppendToPanelMenuOpts = {
   extensionsSubmenuName: string;
 };
 
-export function appenExtensionsToPanelMenu(options: AppendToPanelMenuOpts): void {
+export function appendExtensionsToPanelMenu(options: AppendToPanelMenuOpts): void {
   const { rootMenu, extensions, reservedNames, extensionsSubmenuName } = options;
 
   const submenuGroups = groupBySubmenu(extensions, reservedNames, extensionsSubmenuName);
@@ -75,6 +75,10 @@ function groupBySubmenu(
   reservedNames: Set<string>,
   extensionsSubmenuName: string
 ): Record<string, PanelMenuItem> {
+  const initialBucket: Record<string, PanelMenuItem> = {
+    [EXTENSIONS_CATEGORY]: createExtensionsGroup(extensionsSubmenuName),
+  };
+
   return extensions.reduce<Record<string, PanelMenuItem>>((bucket, extension) => {
     const group = getGroupForExtensionLink(extension);
     const item = extensionLinkToPanelMenuItem(extension);
@@ -84,7 +88,7 @@ function groupBySubmenu(
     if (!groupName) {
       return appendTo(bucket, {
         item,
-        createGroup: createExtensionsGroup(extensionsSubmenuName),
+        createGroup: () => bucket[EXTENSIONS_CATEGORY],
         key: EXTENSIONS_CATEGORY,
       });
     }
@@ -106,7 +110,7 @@ function groupBySubmenu(
       if (!truncatedName && reservedNames.has(truncatedName)) {
         return appendTo(bucket, {
           item,
-          createGroup: createExtensionsGroup(extensionsSubmenuName),
+          createGroup: () => bucket[EXTENSIONS_CATEGORY],
           key: EXTENSIONS_CATEGORY,
         });
       }
@@ -128,14 +132,14 @@ function groupBySubmenu(
     return appendTo(bucket, {
       item,
       createGroup: () => ({
-        text: groupName,
+        text: truncateTitle(groupName, 25),
         iconClassName: group?.icon,
         type: 'submenu',
         subMenu: [],
       }),
       key: `${EXTENSIONS_CATEGORY}/${groupName}`,
     });
-  }, {});
+  }, initialBucket);
 }
 
 function extensionLinkToPanelMenuItem(extension: PluginExtensionLink): PanelMenuItem {
@@ -148,13 +152,13 @@ function extensionLinkToPanelMenuItem(extension: PluginExtensionLink): PanelMenu
   };
 }
 
-function createExtensionsGroup(extensionsSubmenuName: string): () => PanelMenuItem {
-  return () => ({
+function createExtensionsGroup(extensionsSubmenuName: string): PanelMenuItem {
+  return {
     text: extensionsSubmenuName,
     iconClassName: 'plug',
     type: 'submenu',
     subMenu: [],
-  });
+  };
 }
 
 function createRootGroup(): PanelMenuItem {

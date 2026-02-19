@@ -1,6 +1,6 @@
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
 
-import { appenExtensionsToPanelMenu, AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
+import { appendExtensionsToPanelMenu, AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
 
 const ROOT_CATEGORY = '${root}';
 
@@ -37,7 +37,7 @@ function findExtensionsSubmenu(rootMenu: PanelMenuItem[]): PanelMenuItem | undef
 describe('appenExtensionsToPanelMenu', () => {
   it('does nothing when extensions is empty', () => {
     const rootMenu: PanelMenuItem[] = [];
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions: [] }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions: [] }));
     expect(rootMenu).toHaveLength(0);
   });
 
@@ -48,7 +48,7 @@ describe('appenExtensionsToPanelMenu', () => {
       createLink({ title: 'Declare incident 2', path: '/a/declare', group: { name: 'Incidents' } }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0]).toMatchObject({
@@ -79,7 +79,7 @@ describe('appenExtensionsToPanelMenu', () => {
       createLink({ title: 'Root action 2', path: '/root/2', group: { name: ROOT_CATEGORY } }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(2);
     expect(rootMenu[0]).toMatchObject({ text: 'Root action', href: '/root/1' });
@@ -96,7 +96,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0]).toMatchObject({
@@ -118,7 +118,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0]).toMatchObject({
@@ -141,7 +141,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(1);
     const extSub = findExtensionsSubmenu(rootMenu)!;
@@ -166,7 +166,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions, reservedNames: new Set(['']) }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions, reservedNames: new Set(['']) }));
 
     const extSub = findExtensionsSubmenu(rootMenu)!;
     expect(extSub).toBeDefined();
@@ -187,7 +187,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     const extSub = findExtensionsSubmenu(rootMenu)!;
     expect(extSub.subMenu![0]).toMatchObject({
@@ -211,7 +211,7 @@ describe('appenExtensionsToPanelMenu', () => {
       createLink({ title: 'Under Extensions', path: '/e' }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(3);
     expect(rootMenu[0]).toMatchObject({ text: 'Root item' });
@@ -230,7 +230,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu).toHaveLength(2);
     expect(findExtensionsSubmenu(rootMenu)).toBeUndefined();
@@ -241,7 +241,7 @@ describe('appenExtensionsToPanelMenu', () => {
     const longTitle = 'A'.repeat(30);
     const extensions = [createLink({ title: longTitle, path: '/long' })];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     const extSub = findExtensionsSubmenu(rootMenu)!;
     expect(extSub.subMenu![0].text).toBe('A'.repeat(22) + '...');
@@ -255,7 +255,7 @@ describe('appenExtensionsToPanelMenu', () => {
       createLink({ title: 'Whitespace group', path: '/c', group: { name: '   ' } }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     const extSub = findExtensionsSubmenu(rootMenu)!;
     expect(extSub.subMenu!.length).toBeGreaterThanOrEqual(3);
@@ -280,7 +280,7 @@ describe('appenExtensionsToPanelMenu', () => {
       }),
     ];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions }));
 
     expect(rootMenu[0]).toMatchObject({ text: 'Alpha' });
     expect(rootMenu[1]).toMatchObject({ text: 'Zebra' });
@@ -290,7 +290,7 @@ describe('appenExtensionsToPanelMenu', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [createLink({ title: 'Link', path: '/x' })];
 
-    appenExtensionsToPanelMenu(createOptions({ rootMenu, extensions, extensionsSubmenuName: 'Plugin actions' }));
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions, extensionsSubmenuName: 'Plugin actions' }));
 
     expect(rootMenu).toHaveLength(1);
     expect(rootMenu[0].text).toBe('Plugin actions');
