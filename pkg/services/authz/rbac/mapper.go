@@ -27,12 +27,6 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
-	// VerbForAction returns the K8s verb for the given RBAC action.
-	// If multiple verbs map to the same action, returns the first match.
-	// If no verb is found, returns empty string and false.
-	VerbForAction(action string) (string, bool)
-	// Resource returns the K8s resource name for this mapping.
-	Resource() string
 }
 
 type translation struct {
@@ -92,20 +86,6 @@ func (t translation) SkipScope(verb string) bool {
 	return false
 }
 
-// Reverse lookup: find which k8s verbs map to the RBAC action
-func (t translation) VerbForAction(action string) (string, bool) {
-	for verb, rbacAction := range t.verbMapping {
-		if rbacAction == action {
-			return verb, true
-		}
-	}
-	return "", false
-}
-
-func (t translation) Resource() string {
-	return t.resource
-}
-
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
@@ -113,8 +93,6 @@ type MapperRegistry interface {
 	Get(group, resource string) (Mapping, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
-	// GetGroups returns all registered group names
-	GetGroups() []string
 }
 
 type mapper map[string]map[string]translation
@@ -313,17 +291,6 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
-		"datasource.grafana.app": { // duplicate the query group here
-			"query": translation{
-				resource:  "datasources",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "datasources:query",
-				},
-				folderSupport:   false,
-				skipScopeOnVerb: nil,
-			},
-		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
 		},
@@ -401,12 +368,4 @@ func (m mapper) GetAll(group string) []Mapping {
 	}
 
 	return translations
-}
-
-func (m mapper) GetGroups() []string {
-	groups := make([]string, 0, len(m))
-	for group := range m {
-		groups = append(groups, group)
-	}
-	return groups
 }

@@ -272,7 +272,7 @@ func (s *standardStorageService) list(c *contextmodel.ReqContext) response.Respo
 }
 
 func (s *standardStorageService) getConfig(c *contextmodel.ReqContext) response.Response {
-	roots := make([]RootStorageMeta, 0) //nolint:prealloc
+	roots := make([]RootStorageMeta, 0)
 	orgId := c.GetOrgID()
 	t := s.tree
 	t.assureOrgIsInitialized(orgId)

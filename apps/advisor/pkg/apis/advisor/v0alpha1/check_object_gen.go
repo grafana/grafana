@@ -243,10 +243,6 @@ func (o *Check) DeepCopyInto(dst *Check) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (Check) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &Check{}
 
@@ -298,10 +294,6 @@ func (o *CheckList) DeepCopy() *CheckList {
 
 func (o *CheckList) DeepCopyInto(dst *CheckList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (CheckList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList"
 }
 
 // Interface compliance compile-time check

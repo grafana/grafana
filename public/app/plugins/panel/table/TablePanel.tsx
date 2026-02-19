@@ -25,23 +25,11 @@ import { Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {
   initialRowIndex?: number;
-  sortByBehavior?: 'initial' | 'managed';
 }
 
 export function TablePanel(props: Props) {
-  const {
-    data,
-    height,
-    width,
-    options,
-    fieldConfig,
-    id,
-    timeRange,
-    replaceVariables,
-    transparent,
-    initialRowIndex,
-    sortByBehavior = 'initial',
-  } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent, initialRowIndex } =
+    props;
 
   useMemo(() => {
     cacheFieldDisplayNames(data.series);
@@ -89,8 +77,7 @@ export function TablePanel(props: Props) {
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
-      sortByBehavior={sortByBehavior}
-      sortBy={options.sortBy}
+      initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}

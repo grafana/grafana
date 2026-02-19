@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1771247953198",
+        "resourceVersion": "1745998648052",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -328,14 +328,6 @@
                 "timeStep": 1000
               },
               "scenarioId": "predictable_pulse"
-            }
-          },
-          {
-            "name": "multiple series",
-            "saveModel": {
-              "scenarioId": "random_walk",
-              "seriesCount": 10,
-              "spread": 0.2
             }
           }
         ]

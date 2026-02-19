@@ -57,11 +57,9 @@ type ControllerConfig struct {
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	repositoryFactory     repository.Factory
-	repositoryExtras      []repository.Extra
-	RepositoryExtrasFunc  func() ([]repository.Extra, error)
+	RepositoryFactoryFunc func() (repository.Factory, error)
 	connectionFactory     connection.Factory
-	connectionExtras      []connection.Extra
-	ConnectionExtrasFunc  func() ([]connection.Extra, error)
+	ConnectionFactoryFunc func() (connection.Factory, error)
 	healthMetricsRecorder controller.HealthMetricsRecorder
 	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
@@ -332,12 +330,12 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 		return quotaGetter, nil
 	}
 
-	quotaStatus := provisioning.QuotaStatus{
-		MaxResourcesPerRepository: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
-		MaxRepositories:           c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	quotaLimits := quotas.QuotaLimits{
+		MaxResources:    c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
 	}
 
-	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaStatus)
+	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaLimits)
 
 	return c.quotaGetter, nil
 }
@@ -426,20 +424,23 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		return c.repositoryFactory, nil
 	}
 
-	extras, err := c.RepositoryExtras()
-	if err != nil {
-		return nil, err
+	if c.RepositoryFactoryFunc != nil {
+		repositoryFactory, err := c.RepositoryFactoryFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository factory: %w", err)
+		}
+		c.repositoryFactory = repositoryFactory
+		return repositoryFactory, nil
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.RepositoryType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
 
-	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras)
+	repositoryFactory, err := setupRepoFactory(c.Settings, repository.ProvideDecrypter(decryptSvc), c.provisioningClient, c.Registry())
 	if err != nil {
-		return nil, fmt.Errorf("create repository factory: %w", err)
+		return nil, fmt.Errorf("setup repository factory: %w", err)
 	}
 
 	c.repositoryFactory = repositoryFactory
@@ -452,20 +453,23 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return c.connectionFactory, nil
 	}
 
-	extras, err := c.ConnectionExtras()
-	if err != nil {
-		return nil, err
+	if c.ConnectionFactoryFunc != nil {
+		connectionFactory, err := c.ConnectionFactoryFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get connection factory: %w", err)
+		}
+		c.connectionFactory = connectionFactory
+		return connectionFactory, nil
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.ConnectionType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	connectionFactory, err := setupConnectionFactory(c.Settings, connection.ProvideDecrypter(decryptSvc))
 	if err != nil {
-		return nil, fmt.Errorf("create connection factory: %w", err)
+		return nil, fmt.Errorf("setup connection factory: %w", err)
 	}
 
 	c.connectionFactory = connectionFactory
@@ -504,36 +508,30 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 	return c.urlProvider, nil
 }
 
-func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
-	if c.repositoryExtras != nil {
-		return c.repositoryExtras, nil
-	}
-
-	if c.RepositoryExtrasFunc != nil {
-		extras, err := c.RepositoryExtrasFunc()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get repository extras: %w", err)
-		}
-		c.repositoryExtras = extras
-		return extras, nil
-	}
-
-	// Default OSS implementation
-	decryptSvc, err := c.DecryptService()
-	if err != nil {
-		return nil, fmt.Errorf("get decrypt service: %w", err)
-	}
-	decrypter := repository.ProvideDecrypter(decryptSvc)
-
-	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
+func setupRepoFactory(
+	cfg *setting.Cfg,
+	decrypter repository.Decrypter,
+	_ *client.Clientset,
+	registry prometheus.Registerer,
+) (repository.Factory, error) {
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
 		repoTypes = []string{"github"}
 	}
 
+	// TODO: This depends on the different flavor of Grafana
+	// https://github.com/grafana/git-ui-sync-project/issues/495
 	extras := make([]repository.Extra, 0)
+	alreadyRegistered := make(map[provisioning.RepositoryType]struct{})
+
 	for _, t := range repoTypes {
+		if _, ok := alreadyRegistered[provisioning.RepositoryType(t)]; ok {
+			continue
+		}
+		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
+
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
 			extras = append(extras, gitrepo.Extra(decrypter))
@@ -541,55 +539,57 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
 			}
+
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
 				return nil, fmt.Errorf("home_path is required in [operator] section for local repository type")
 			}
+
 			permittedPrefixes := operatorSec.Key("local_permitted_prefixes").Strings("|")
 			if len(permittedPrefixes) == 0 {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
-			extras = append(extras, local.Extra(homePath, permittedPrefixes))
+
+			extras = append(extras, local.Extra(
+				homePath,
+				permittedPrefixes,
+			))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
 	}
 
-	c.repositoryExtras = extras
-	return extras, nil
+	repoFactory, err := repository.ProvideFactory(alreadyRegistered, extras)
+	if err != nil {
+		return nil, fmt.Errorf("create repository factory: %w", err)
+	}
+
+	return repoFactory, nil
 }
 
-func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
-	if c.connectionExtras != nil {
-		return c.connectionExtras, nil
-	}
-
-	if c.ConnectionExtrasFunc != nil {
-		extras, err := c.ConnectionExtrasFunc()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get connection extras: %w", err)
-		}
-		c.connectionExtras = extras
-		return extras, nil
-	}
-
-	// Default OSS implementation
-	decryptSvc, err := c.DecryptService()
-	if err != nil {
-		return nil, fmt.Errorf("get decrypt service: %w", err)
-	}
-	decrypter := connection.ProvideDecrypter(decryptSvc)
-
+func setupConnectionFactory(
+	cfg *setting.Cfg,
+	decrypter connection.Decrypter,
+) (connection.Factory, error) {
+	// For now, only support GitHub connections
+	// TODO: Add support for other connection types
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 	}
+	enabledTypes := map[provisioning.ConnectionType]struct{}{
+		provisioning.GithubConnectionType: {},
+	}
 
-	c.connectionExtras = extras
-	return extras, nil
+	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	if err != nil {
+		return nil, fmt.Errorf("create connection factory: %w", err)
+	}
+
+	return connectionFactory, nil
 }
 
 func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypt.DecryptService, error) {

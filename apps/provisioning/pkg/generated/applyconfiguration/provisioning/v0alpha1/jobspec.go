@@ -11,22 +11,14 @@ import (
 // JobSpecApplyConfiguration represents a declarative configuration of the JobSpec type for use
 // with apply.
 type JobSpecApplyConfiguration struct {
-	Action *provisioningv0alpha1.JobAction `json:"action,omitempty"`
-	// The the repository reference (for now also in labels)
-	// This value is required, but will be popuplated from the job making the request
-	Repository *string `json:"repository,omitempty"`
-	// Pull request options
+	Action      *provisioningv0alpha1.JobAction          `json:"action,omitempty"`
+	Repository  *string                                  `json:"repository,omitempty"`
 	PullRequest *PullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
-	// Required when the action is `push`
-	Push *ExportJobOptionsApplyConfiguration `json:"push,omitempty"`
-	// Required when the action is `pull`
-	Pull *SyncJobOptionsApplyConfiguration `json:"pull,omitempty"`
-	// Required when the action is `migrate`
-	Migrate *MigrateJobOptionsApplyConfiguration `json:"migrate,omitempty"`
-	// Delete when the action is `delete`
-	Delete *DeleteJobOptionsApplyConfiguration `json:"delete,omitempty"`
-	// Move when the action is `move`
-	Move *MoveJobOptionsApplyConfiguration `json:"move,omitempty"`
+	Push        *ExportJobOptionsApplyConfiguration      `json:"push,omitempty"`
+	Pull        *SyncJobOptionsApplyConfiguration        `json:"pull,omitempty"`
+	Migrate     *MigrateJobOptionsApplyConfiguration     `json:"migrate,omitempty"`
+	Delete      *DeleteJobOptionsApplyConfiguration      `json:"delete,omitempty"`
+	Move        *MoveJobOptionsApplyConfiguration        `json:"move,omitempty"`
 }
 
 // JobSpecApplyConfiguration constructs a declarative configuration of the JobSpec type for use with

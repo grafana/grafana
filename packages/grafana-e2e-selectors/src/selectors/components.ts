@@ -689,9 +689,6 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
-      addAnnotationButton: {
-        '12.6.0': 'data-testid add annotation button',
-      },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
       },

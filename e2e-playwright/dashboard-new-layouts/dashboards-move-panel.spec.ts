@@ -6,6 +6,7 @@ const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 
 test.use({
   featureToggles: {
+    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,

@@ -17,11 +17,22 @@ labels:
 menuTitle: Annotations
 title: Azure Monitor annotations
 weight: 450
+refs:
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
 ---
 
 # Azure Monitor annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can use Azure Monitor Log Analytics queries to create annotations that mark important events, deployments, alerts, or other significant occurrences on your dashboards.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can use Azure Monitor Log Analytics queries to create annotations that mark important events, deployments, alerts, or other significant occurrences on your dashboards.
 
 ## Before you begin
 

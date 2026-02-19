@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -27,7 +26,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const {
     control,
     watch,
-    setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -52,14 +50,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     connections: githubConnections,
     error: connectionListError,
   } = useConnectionOptions(true);
-
-  const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
-
-  useEffect(() => {
-    if (hasNoConnections) {
-      setValue('githubAppMode', 'new');
-    }
-  }, [hasNoConnections, setValue]);
 
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
   const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);

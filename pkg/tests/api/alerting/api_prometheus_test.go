@@ -538,7 +538,7 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Should only return group-2 (team=frontend, 3 rules)
-		foundGroups := make([]string, 0, len(result.Data.RuleGroups))
+		foundGroups := []string{}
 		total := 0
 		for _, group := range result.Data.RuleGroups {
 			foundGroups = append(foundGroups, group.Name)
@@ -566,7 +566,7 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Should only return group-3 (team=platform matches plat.*)
-		foundGroups := make([]string, 0, len(result.Data.RuleGroups))
+		foundGroups := []string{}
 		total := 0
 		for _, group := range result.Data.RuleGroups {
 			foundGroups = append(foundGroups, group.Name)

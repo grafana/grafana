@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { usePanelPluginMeta } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
@@ -30,8 +30,7 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
     setShowDeletionModal(false);
   };
 
-  const { value: panelPluginMeta } = usePanelPluginMeta(libraryPanel.model.type);
-  const panelPlugin = panelPluginMeta ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
+  const panelPlugin = config.panels[libraryPanel.model.type] ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
 
   return (
     <>

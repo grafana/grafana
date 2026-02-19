@@ -14,10 +14,10 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Stars{}.OpenAPIModelName():         schema_pkg_apis_collections_v1alpha1_Stars(ref),
-		StarsList{}.OpenAPIModelName():     schema_pkg_apis_collections_v1alpha1_StarsList(ref),
-		StarsResource{}.OpenAPIModelName(): schema_pkg_apis_collections_v1alpha1_StarsResource(ref),
-		StarsSpec{}.OpenAPIModelName():     schema_pkg_apis_collections_v1alpha1_StarsSpec(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars":         schema_pkg_apis_collections_v1alpha1_Stars(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsList":     schema_pkg_apis_collections_v1alpha1_StarsList(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsResource": schema_pkg_apis_collections_v1alpha1_StarsResource(ref),
+		"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec":     schema_pkg_apis_collections_v1alpha1_StarsSpec(ref),
 	}
 }
 
@@ -44,14 +44,14 @@ func schema_pkg_apis_collections_v1alpha1_Stars(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Stars",
 							Default:     map[string]interface{}{},
-							Ref:         ref(StarsSpec{}.OpenAPIModelName()),
+							Ref:         ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec"),
 						},
 					},
 				},
@@ -59,7 +59,7 @@ func schema_pkg_apis_collections_v1alpha1_Stars(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			StarsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -86,7 +86,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -96,7 +96,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Stars{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars"),
 									},
 								},
 							},
@@ -107,7 +107,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			Stars{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.Stars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -171,7 +171,7 @@ func schema_pkg_apis_collections_v1alpha1_StarsSpec(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(StarsResource{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsResource"),
 									},
 								},
 							},
@@ -182,6 +182,6 @@ func schema_pkg_apis_collections_v1alpha1_StarsSpec(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			StarsResource{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1.StarsResource"},
 	}
 }

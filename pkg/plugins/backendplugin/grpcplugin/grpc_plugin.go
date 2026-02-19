@@ -16,7 +16,7 @@ import (
 
 type grpcPlugin struct {
 	descriptor     PluginDescriptor
-	clientFactory  func() (*plugin.Client, error)
+	clientFactory  func() *plugin.Client
 	client         *plugin.Client
 	pluginClient   *ClientV2
 	logger         log.Logger
@@ -43,15 +43,15 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 }
 
 func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) (*grpcPlugin, error) {
+	clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
+	if err != nil {
+		return nil, err
+	}
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
-		clientFactory: func() (*plugin.Client, error) {
-			clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
-			if err != nil {
-				return nil, err
-			}
-			return plugin.NewClient(clientConfig), nil
+		clientFactory: func() *plugin.Client {
+			return plugin.NewClient(clientConfig)
 		},
 		state: pluginStateNotStarted,
 	}, nil
@@ -71,12 +71,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 
 	p.state = pluginStateStartInit
 
-	var err error
-	p.client, err = p.clientFactory()
-	if err != nil {
-		p.state = pluginStateStartFail
-		return err
-	}
+	p.client = p.clientFactory()
 	rpcClient, err := p.client.Client()
 	if err != nil {
 		p.state = pluginStateStartFail

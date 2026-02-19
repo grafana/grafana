@@ -141,7 +141,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 }
 
 func sortedHits(unsorted model.HitList) model.HitList {
-	hits := make(model.HitList, 0, len(unsorted))
+	hits := make(model.HitList, 0)
 	hits = append(hits, unsorted...)
 
 	sort.Sort(hits)

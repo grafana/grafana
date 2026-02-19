@@ -174,7 +174,7 @@ func (b *Builder) applyFilters() (ordering string) {
 		b.params = append(b.params, groupParams...)
 	}
 
-	orderByCols := make([]string, 0, len(orders))
+	orderByCols := []string{}
 	for _, o := range orders {
 		orderByCols = append(orderByCols, b.Dialect.OrderBy(o))
 	}

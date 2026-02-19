@@ -150,10 +150,8 @@ type Cfg struct {
 	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
 	DataPath                              string
 	LogsPath                              string
+	PluginsPath                           string
 	EnterpriseLicensePath                 string
-	// PluginsPaths: list of paths where Grafana will look for plugins.
-	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
-	PluginsPaths []string
 
 	// Classic Provisioning settings
 	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
@@ -361,7 +359,6 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
-	KubernetesAnnotationsAppEnabled    bool
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -543,9 +540,8 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	ZanzanaClient     ZanzanaClientSettings
-	ZanzanaServer     ZanzanaServerSettings
-	ZanzanaReconciler ZanzanaReconcilerSettings
+	ZanzanaClient ZanzanaClientSettings
+	ZanzanaServer ZanzanaServerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -641,8 +637,6 @@ type Cfg struct {
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
-	// SimulatedNetworkLatency is used for testing only
-	SimulatedNetworkLatency time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -832,8 +826,6 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	cfg.KubernetesAnnotationsAppEnabled = section.Key("kubernetes_annotations_app_enabled").MustBool(false)
-
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
 		// ensure that the configuration does not exceed the respective column size
@@ -1227,8 +1219,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	bundledPlugins := valueAsString(iniFile.Section("paths"), "bundled_plugins", "data/plugins-bundled")
-	cfg.PluginsPaths = []string{makeAbsolute(plugins, cfg.HomePath), makeAbsolute(bundledPlugins, cfg.HomePath)}
+	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1610,7 +1601,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Home", "path", cfg.HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
-	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPaths)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + cfg.Env)
 }

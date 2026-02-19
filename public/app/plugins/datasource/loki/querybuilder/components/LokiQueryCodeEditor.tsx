@@ -1,4 +1,7 @@
-import { Stack } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
@@ -21,8 +24,10 @@ export function LokiQueryCodeEditor({
   showExplain,
   history,
 }: Props) {
+  const styles = useStyles2(getStyles);
+
   return (
-    <Stack direction="column" gap={0.5} maxWidth="100%">
+    <div className={styles.wrapper}>
       <LokiQueryField
         datasource={datasource}
         query={query}
@@ -35,6 +40,32 @@ export function LokiQueryCodeEditor({
         data-testid={testIds.editor}
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
-    </Stack>
+    </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      maxWidth: '100%',
+      '.gf-form': {
+        marginBottom: 0.5,
+      },
+    }),
+    buttonGroup: css({
+      border: `1px solid ${theme.colors.border.medium}`,
+      borderTop: 'none',
+      padding: theme.spacing(0.5, 0.5, 0.5, 0.5),
+      marginBottom: theme.spacing(0.5),
+      display: 'flex',
+      flexGrow: 1,
+      justifyContent: 'end',
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    hint: css({
+      color: theme.colors.text.disabled,
+      whiteSpace: 'nowrap',
+      cursor: 'help',
+    }),
+  };
+};

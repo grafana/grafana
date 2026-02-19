@@ -98,7 +98,7 @@ func ProvideSyncer(
 	if err != nil {
 		return nil, err
 	}
-	installRegistrar := install.NewInstallRegistrar(logging.DefaultLogger, clientGenerator)
+	installRegistrar := install.NewInstallRegistrar(clientGenerator)
 	namespaceMapper := request.GetNamespaceMapper(cfg)
 
 	return newSyncer(

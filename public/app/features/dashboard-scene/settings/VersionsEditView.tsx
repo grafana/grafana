@@ -3,9 +3,8 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
-import { Alert, Spinner, Stack } from '@grafana/ui';
+import { Spinner, Stack } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { AnnoKeyMessage, AnnoKeyUpdatedBy, AnnoKeyUpdatedTimestamp, Resource } from 'app/features/apiserver/types';
@@ -266,22 +265,10 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
     </>
   );
 
-  const isProvisioned = dashboard.isManagedRepository();
-
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      {isProvisioned ? (
-        <Alert title="" severity="info">
-          <Trans i18nKey="dashboard-settings.versions.provisioned-warning">
-            This dashboard is managed by a repository. Version history is not available for provisioned dashboards.
-          </Trans>
-        </Alert>
-      ) : viewMode === 'compare' ? (
-        viewModeCompare
-      ) : (
-        viewModeList
-      )}
+      {viewMode === 'compare' ? viewModeCompare : viewModeList}
     </Page>
   );
 }

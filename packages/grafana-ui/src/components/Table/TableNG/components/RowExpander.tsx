@@ -8,7 +8,7 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
-export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGProps) {
+export function RowExpander({ onCellExpand, isExpanded }: RowExpanderNGProps) {
   const styles = useStyles2(getStyles);
   function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
     if (e.key === ' ' || e.key === 'Enter') {
@@ -16,9 +16,6 @@ export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGPr
       onCellExpand(e);
     }
   }
-  const label = isExpanded
-    ? t('grafana-ui.row-expander-ng.aria-label-collapse', 'Collapse row')
-    : t('grafana-ui.row-expander.aria-label-expand', 'Expand row');
   return (
     <div
       role="button"
@@ -26,12 +23,18 @@ export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGPr
       className={styles.expanderCell}
       onClick={onCellExpand}
       onKeyDown={handleKeyDown}
-      aria-label={label}
       data-testid={selectors.components.Panels.Visualization.TableNG.RowExpander}
-      aria-expanded={isExpanded}
-      aria-controls={rowId}
     >
-      <Icon name={isExpanded ? 'angle-down' : 'angle-right'} size="lg" aria-hidden="true" />
+      <Icon
+        aria-label={
+          isExpanded
+            ? t('grafana-ui.row-expander-ng.aria-label-collapse', 'Collapse row')
+            : t('grafana-ui.row-expander.aria-label-expand', 'Expand row')
+        }
+        aria-expanded={isExpanded}
+        name={isExpanded ? 'angle-down' : 'angle-right'}
+        size="lg"
+      />
     </div>
   );
 }

@@ -70,7 +70,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		buckets[key]++
 
 		// Count rules with notification settings per org
-		if rule.NotificationSettings != nil {
+		if len(rule.NotificationSettings) > 0 {
 			orgsNfSettings[rule.OrgID]++
 		}
 

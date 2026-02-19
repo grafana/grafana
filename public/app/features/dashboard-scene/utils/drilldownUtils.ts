@@ -3,11 +3,11 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
+import { getDatasourceFromQueryRunner } from './utils';
 
 export function verifyDrilldownApplicability(
   sourceObject: SceneObject,
-  queriesDataSource: DataSourceRef | null | undefined,
+  queriesDataSource: DataSourceRef | undefined,
   drilldownDatasource: DataSourceRef | null,
   isApplicabilityEnabled?: boolean
 ): boolean {
@@ -29,8 +29,7 @@ export async function getDrilldownApplicability(
   }
 
   const datasource = getDatasourceFromQueryRunner(queryRunner);
-  // Use executed queries if available, otherwise fall back to configured queries
-  const queries = queryRunner.state.data?.request?.targets ?? queryRunner.state.queries;
+  const queries = queryRunner.state.data?.request?.targets;
 
   const ds = await getDataSourceSrv().get(datasource?.uid);
 

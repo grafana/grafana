@@ -3,16 +3,11 @@
 package v1alpha1
 
 // +k8s:openapi-gen=true
-type GetOtherResponse struct {
+type GetOther struct {
 	Message string `json:"message"`
 }
 
-// NewGetOtherResponse creates a new GetOtherResponse object.
-func NewGetOtherResponse() *GetOtherResponse {
-	return &GetOtherResponse{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for GetOtherResponse.
-func (GetOtherResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetOtherResponse"
+// NewGetOther creates a new GetOther object.
+func NewGetOther() *GetOther {
+	return &GetOther{}
 }

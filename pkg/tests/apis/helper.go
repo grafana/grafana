@@ -350,7 +350,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := make([]any, 0, len(v.Items))
+	clean := []any{}
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}
@@ -466,7 +466,6 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
-	Headers     map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -571,9 +570,6 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
-	}
-	for k, v := range params.Headers {
-		req.Header.Set(k, v)
 	}
 
 	rsp, err := sharedHTTPClient.Do(req)

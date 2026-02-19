@@ -11,9 +11,7 @@ import (
 // SecureValuesApplyConfiguration represents a declarative configuration of the SecureValues type for use
 // with apply.
 type SecureValuesApplyConfiguration struct {
-	// Token used to connect the configured repository
-	Token *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
-	// Some webhooks (including github) require a secret key value
+	Token         *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
 	WebhookSecret *commonv0alpha1.InlineSecureValue `json:"webhookSecret,omitempty"`
 }
 

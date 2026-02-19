@@ -30,8 +30,4 @@ func (o *GetSearchTeamsRequestParamsObject) DeepCopyInto(dst *GetSearchTeamsRequ
 	_ = resource.CopyObjectInto(&dstGetSearchTeamsRequestParams, &o.GetSearchTeamsRequestParams)
 }
 
-func (GetSearchTeamsRequestParamsObject) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsRequestParamsObject"
-}
-
 var _ runtime.Object = NewGetSearchTeamsRequestParamsObject()

@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -24,21 +21,15 @@ type datasourceIndexProvider struct {
 // This is more efficient than GetDataSourceInfo + NewDatasourceIndex as it avoids
 // creating an intermediate slice and iterates over the datasources only once.
 func (d *datasourceIndexProvider) Index(ctx context.Context) *schemaversion.DatasourceIndex {
-	ctx, span := tracing.Start(ctx, "dashboard.datasource_index.build")
-	defer span.End()
-
 	// Extract namespace info from context to get OrgID
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		span.SetAttributes(attribute.String("error", "namespace_info_not_available"))
 		// If namespace info is not available, return empty index
 		return &schemaversion.DatasourceIndex{
 			ByName: make(map[string]*schemaversion.DataSourceInfo),
 			ByUID:  make(map[string]*schemaversion.DataSourceInfo),
 		}
 	}
-
-	span.SetAttributes(attribute.Int64("org_id", nsInfo.OrgID))
 
 	// Use GetDataSources with OrgID query
 	query := datasources.GetDataSourcesQuery{
@@ -47,15 +38,11 @@ func (d *datasourceIndexProvider) Index(ctx context.Context) *schemaversion.Data
 	dataSources, err := d.datasourceService.GetDataSources(ctx, &query)
 
 	if err != nil {
-		span.SetAttributes(attribute.String("error", err.Error()))
-		span.RecordError(err)
 		return &schemaversion.DatasourceIndex{
 			ByName: make(map[string]*schemaversion.DataSourceInfo),
 			ByUID:  make(map[string]*schemaversion.DataSourceInfo),
 		}
 	}
-
-	span.SetAttributes(attribute.Int("datasources.count", len(dataSources)))
 
 	// Build index directly without intermediate slice allocation
 	// Single iteration over datasources populates all maps
@@ -98,22 +85,14 @@ type libraryElementIndexProvider struct {
 }
 
 func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context) []schemaversion.LibraryElementInfo {
-	ctx, span := tracing.Start(ctx, "dashboard.library_element_index.build")
-	defer span.End()
-
 	if l.libraryElementService == nil {
-		span.SetAttributes(attribute.String("error", "service_nil"))
 		return []schemaversion.LibraryElementInfo{}
 	}
 
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		span.SetAttributes(attribute.String("error", "namespace_info_not_available"))
-		span.RecordError(err)
 		return []schemaversion.LibraryElementInfo{}
 	}
-
-	span.SetAttributes(attribute.Int64("org_id", nsInfo.OrgID))
 
 	user := &identity.StaticRequester{
 		OrgID:   nsInfo.OrgID,
@@ -131,8 +110,6 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 			Page:    page,
 		})
 		if err != nil {
-			span.SetAttributes(attribute.String("error", err.Error()))
-			span.RecordError(err)
 			return []schemaversion.LibraryElementInfo{}
 		}
 
@@ -165,11 +142,6 @@ func (l *libraryElementIndexProvider) GetLibraryElementInfo(ctx context.Context)
 			break
 		}
 	}
-
-	span.SetAttributes(
-		attribute.Int("library_elements.count", len(info)),
-		attribute.Int("library_elements.pages_fetched", page),
-	)
 
 	return info
 }

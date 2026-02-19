@@ -204,8 +204,10 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			Labels: map[string]string{
 				"key-label": "value-label",
 			},
-			IsPaused:             false,
-			NotificationSettings: util.Pointer(models.NotificationSettingsGen()()),
+			IsPaused: false,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: false,
@@ -249,8 +251,10 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			Labels: map[string]string{
 				"key-label": "value-label23",
 			},
-			IsPaused:             true,
-			NotificationSettings: util.Pointer(models.NotificationSettingsGen()()),
+			IsPaused: true,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: true,

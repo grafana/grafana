@@ -9,12 +9,9 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/prometheus/client_golang/prometheus"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -43,10 +40,8 @@ func ProvideAppInstaller(
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
+	features featuremgmt.FeatureToggles,
 ) (*AppInstaller, error) {
-	metrics.MustRegister(registerer)
-
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
 		if err := registerAccessControlRoles(accessControlService); err != nil {
@@ -54,15 +49,13 @@ func ProvideAppInstaller(
 		}
 	}
 
-	logger := logging.DefaultLogger.With("app", "plugins.app")
-
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	coreProvider := meta.NewCoreProvider(logger, func() (string, error) {
+	coreProvider := meta.NewCoreProvider(func() (string, error) {
 		return getPluginsPath(cfgProvider)
 	})
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager, false)
+	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager, false)
 	if err != nil {
 		return nil, err
 	}

@@ -80,7 +80,7 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 
 	req.Header.Del("Cookie")
 
-	sortedCookies := make([]string, 0, len(keepCookies))
+	sortedCookies := []string{}
 	for name := range keepCookies {
 		sortedCookies = append(sortedCookies, name)
 	}

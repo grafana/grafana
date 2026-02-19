@@ -1,12 +1,15 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { useBranchOptions } from '../hooks/useBranchOptions';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
+import { RepositoryField } from './components/RepositoryField';
+import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
@@ -17,47 +20,65 @@ export const ConnectStep = memo(function ConnectStep() {
     formState: { errors },
     getValues,
     watch,
-    setValue,
   } = useFormContext<WizardFormData>();
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryName = ''] = watch(['repositoryName']);
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', repositoryName = ''] = watch([
+    'repository.url',
+    'repository.token',
+    'repository.tokenUser',
+    'repositoryName',
+  ]);
   const isGitBased = isGitProvider(type);
+  const isGithubType = type === 'github';
 
+  // this hook fetches branches directly from the git provider
+  const {
+    options: branchOptions,
+    loading: branchesLoading,
+    error: branchesError,
+  } = useBranchOptions({
+    repositoryType: type,
+    repositoryUrl,
+    repositoryToken,
+    repositoryTokenUser,
+  });
+
+  // this hook returns branches from internal endpoint (only available for Github PAT and Github App)
   const {
     options: repositoryRefsOptions,
     loading: isRefsLoading,
     error: refsError,
-    defaultBranch,
   } = useGetRepositoryRefs({
     repositoryType: type,
-    repositoryName: repositoryName,
+    repositoryName: isGithubType ? repositoryName : undefined,
   });
 
+  const branches = isGithubType ? repositoryRefsOptions : branchOptions;
+  const isBranchesLoading = isGithubType ? isRefsLoading : branchesLoading;
+  const branchesErrorMsg = isGithubType ? refsError : branchesError;
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
 
-  const hasAutoSelectedRef = useRef(false);
-
-  useEffect(() => {
-    if (!hasAutoSelectedRef.current && defaultBranch && !getValues('repository.branch')) {
-      setValue('repository.branch', defaultBranch);
-      hasAutoSelectedRef.current = true;
-    }
-  }, [defaultBranch, getValues, setValue]);
-
   return (
     <Stack direction="column" gap={2}>
+      {isGitBased && type !== 'github' && (
+        <>
+          <RepositoryTokenInput />
+          <RepositoryField />
+        </>
+      )}
+
       {gitFields && (
         <>
           <Field
             noMargin
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
-            error={errors?.repository?.branch?.message || refsError}
+            error={errors?.repository?.branch?.message || branchesErrorMsg}
             required={gitFields.branchConfig.required}
-            invalid={Boolean(errors?.repository?.branch?.message || refsError)}
+            invalid={Boolean(errors?.repository?.branch?.message || branchesErrorMsg)}
           >
             <Controller
               name="repository.branch"
@@ -65,12 +86,12 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.branchConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
-                  invalid={Boolean(errors?.repository?.branch?.message || refsError)}
+                  invalid={Boolean(errors?.repository?.branch?.message || branchesErrorMsg)}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
-                  options={repositoryRefsOptions || []}
-                  loading={isRefsLoading}
-                  disabled={isRefsLoading}
+                  options={branches || []}
+                  loading={isBranchesLoading}
+                  disabled={isBranchesLoading}
                   createCustomValue
                   isClearable
                   {...field}

@@ -1,15 +1,13 @@
 import { useEffect, useState, useTransition } from 'react';
 
-import { DataFrame } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
-import { DEFAULT_FIELDS, VARIABLES } from '../constants';
+import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
 
 import { convertToWorkbenchRows } from './dataTransform';
-import { getWorkbenchQueries } from './queries';
-import { convertTimeRangeToDomain, useQueryFilter } from './utils';
+import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
@@ -24,7 +22,11 @@ export function WorkbenchRenderer() {
   const queryFilter = useQueryFilter();
 
   const runner = useQueryRunner({
-    queries: getWorkbenchQueries(countBy, queryFilter),
+    queries: [
+      getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${queryFilter}})`, {
+        format: 'table',
+      }),
+    ],
   });
   const { data } = runner.useState();
 
@@ -55,13 +57,9 @@ export function WorkbenchRenderer() {
       }
 
       const { series } = newState.data;
-      // Use the badge frame (instant query B) for tree building and instance counts.
-      // The badge query deduplicates instances at the PromQL level.
-      const badgeFrame = findBadgeFrame(series);
-
       // Use transition for non-blocking update
       startTransition(() => {
-        setRows(convertToWorkbenchRows(badgeFrame ? [badgeFrame] : series, currentGroupByKeys));
+        setRows(convertToWorkbenchRows(series, currentGroupByKeys));
       });
     };
 
@@ -89,14 +87,4 @@ export function WorkbenchRenderer() {
       hasActiveFilters={hasFiltersApplied}
     />
   );
-}
-
-/**
- * Finds the badge frame (instant query B) from the series.
- * When multiple queries share a query runner, the Prometheus plugin renames
- * the Value field to "Value #<refId>". We check both the frame's refId and
- * the field naming convention.
- */
-function findBadgeFrame(series: DataFrame[]): DataFrame | undefined {
-  return series.find((frame) => frame.refId === 'B' || frame.fields.some((f) => f.name === 'Value #B'));
 }

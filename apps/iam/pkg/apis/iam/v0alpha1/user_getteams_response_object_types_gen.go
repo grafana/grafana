@@ -9,33 +9,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type GetTeamsResponse struct {
+type GetTeams struct {
 	metav1.TypeMeta `json:",inline"`
 	GetTeamsBody    `json:",inline"`
 }
 
-func NewGetTeamsResponse() *GetTeamsResponse {
-	return &GetTeamsResponse{}
+func NewGetTeams() *GetTeams {
+	return &GetTeams{}
 }
 
 func (t *GetTeamsBody) DeepCopyInto(dst *GetTeamsBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *GetTeamsResponse) DeepCopyObject() runtime.Object {
-	dst := NewGetTeamsResponse()
+func (o *GetTeams) DeepCopyObject() runtime.Object {
+	dst := NewGetTeams()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *GetTeamsResponse) DeepCopyInto(dst *GetTeamsResponse) {
+func (o *GetTeams) DeepCopyInto(dst *GetTeams) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.GetTeamsBody.DeepCopyInto(&dst.GetTeamsBody)
 }
 
-func (GetTeamsResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsResponse"
-}
-
-var _ runtime.Object = NewGetTeamsResponse()
+var _ runtime.Object = NewGetTeams()

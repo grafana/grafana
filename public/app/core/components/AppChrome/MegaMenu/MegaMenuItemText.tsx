@@ -15,10 +15,9 @@ export interface Props {
   url: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
-  itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned }: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
@@ -55,8 +54,8 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
           onClick={() => onPin(url)}
           aria-label={
             isPinned
-              ? t('navigation.item.remove-bookmark', 'Remove {{itemName}} from Bookmarks', { itemName })
-              : t('navigation.item.add-bookmark', 'Add {{itemName}} to Bookmarks', { itemName })
+              ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')
+              : t('navigation.item.add-bookmark', 'Add to Bookmarks')
           }
         />
       )}

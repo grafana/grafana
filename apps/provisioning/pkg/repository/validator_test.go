@@ -43,9 +43,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "missing title",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{},
 				}
 			}(),
@@ -58,9 +55,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "sync enabled without target",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
@@ -79,8 +73,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "sql",
-						Finalizers: []string{CleanFinalizer},
+						Name: "sql",
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -100,9 +93,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched local config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.GitHubRepositoryType,
@@ -119,9 +109,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched github config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.LocalRepositoryType,
@@ -138,9 +125,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "github enabled when image rendering is not allowed",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.GitHubRepositoryType,
@@ -157,9 +141,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched git config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.LocalRepositoryType,
@@ -177,8 +158,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "sql",
-						Finalizers: []string{CleanFinalizer},
+						Name: "sql",
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -199,9 +179,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "branch workflow for non-github repository",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.LocalRepositoryType,
@@ -218,9 +195,6 @@ func TestValidator_Validate(t *testing.T) {
 			name: "invalid workflow in the list",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
-					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.GitHubRepositoryType,
@@ -271,25 +245,6 @@ func TestValidator_Validate(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "unknown finalizer: invalid-finalizer")
 			},
 		},
-		{
-			name: "no finalizers on resource not marked for deletion",
-			repository: func() *provisioning.Repository {
-				return &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{},
-					},
-					Spec: provisioning.RepositorySpec{
-						Title:     "Test Repo",
-						Type:      provisioning.GitHubRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-					},
-				}
-			}(),
-			expectedErrs: 1,
-			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "cannot have no finalizers set on resources not marked for deletion")
-			},
-		},
 	}
 
 	mockFactory := NewMockFactory(t)
@@ -335,10 +290,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "valid repository passes validation",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -351,10 +303,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "invalid repository fails validation",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					// Missing title
 					Type: provisioning.GitHubRepositoryType,
@@ -405,10 +354,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "forbids changing repository type on update",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitRepositoryType, // Changed from github
@@ -416,10 +362,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 			},
 			old: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -433,10 +376,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "forbids changing sync target after sync",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -444,10 +384,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 			},
 			old: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
-				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -506,10 +443,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	)
 
 	oldRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
-		},
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -522,10 +456,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	}
 
 	newRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
-		},
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -569,10 +500,7 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	)
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
-		},
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -603,10 +531,7 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	)
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
-		},
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,

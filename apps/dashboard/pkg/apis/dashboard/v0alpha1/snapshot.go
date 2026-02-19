@@ -15,10 +15,6 @@ type DashboardSnapshotWithDeleteKey struct {
 	DeleteKey string `json:"deleteKey,omitempty"`
 }
 
-func (DashboardSnapshotWithDeleteKey) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DashboardSnapshotWithDeleteKey"
-}
-
 // Each tenant, may have different sharing options
 // This is currently set using custom.ini, but multi-tenant support will need
 // to be managed differently
@@ -27,10 +23,6 @@ type SnapshotSharingOptions struct {
 	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
 	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
-}
-
-func (SnapshotSharingOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SnapshotSharingOptions"
 }
 
 // These are the values expected to be sent from an end user
@@ -58,10 +50,6 @@ type DashboardCreateCommand struct {
 	External bool `json:"external"`
 }
 
-func (DashboardCreateCommand) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DashboardCreateCommand"
-}
-
 // The create response
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardCreateResponse struct {
@@ -78,8 +66,4 @@ type DashboardCreateResponse struct {
 
 	// URL that will delete the response
 	DeleteURL string `json:"deleteUrl"`
-}
-
-func (DashboardCreateResponse) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DashboardCreateResponse"
 }

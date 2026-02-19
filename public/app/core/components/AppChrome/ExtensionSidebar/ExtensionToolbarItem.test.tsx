@@ -15,7 +15,6 @@ jest.mock('@grafana/data', () => ({
     get: jest.fn(),
     set: jest.fn(),
     delete: jest.fn(),
-    getObject: jest.fn().mockImplementation((_key: string, defaultValue: unknown) => defaultValue),
   },
 }));
 

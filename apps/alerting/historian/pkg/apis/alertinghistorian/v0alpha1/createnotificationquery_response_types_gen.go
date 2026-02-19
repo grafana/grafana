@@ -7,19 +7,19 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type CreateNotificationqueryNotificationEntry struct {
+type NotificationEntry struct {
 	// Timestamp is the time at which the notification attempt completed.
 	Timestamp time.Time `json:"timestamp"`
 	// Receiver is the receiver (contact point) title.
 	Receiver string `json:"receiver"`
 	// Status indicates if the notification contains one or more firing alerts.
-	Status CreateNotificationqueryNotificationStatus `json:"status"`
+	Status NotificationStatus `json:"status"`
 	// Outcome indicaes if the notificaion attempt was successful or if it failed.
-	Outcome CreateNotificationqueryNotificationOutcome `json:"outcome"`
+	Outcome NotificationOutcome `json:"outcome"`
 	// GroupLabels are the labels uniquely identifying the alert group within a route.
 	GroupLabels map[string]string `json:"groupLabels"`
 	// Alerts are the alerts grouped into the notification.
-	Alerts []CreateNotificationqueryNotificationEntryAlert `json:"alerts"`
+	Alerts []NotificationEntryAlert `json:"alerts"`
 	// Retry indicates if the attempt was a retried attempt.
 	Retry bool `json:"retry"`
 	// Error is the message returned by the contact point if delivery failed.
@@ -32,47 +32,32 @@ type CreateNotificationqueryNotificationEntry struct {
 	GroupKey string `json:"groupKey"`
 }
 
-// NewCreateNotificationqueryNotificationEntry creates a new CreateNotificationqueryNotificationEntry object.
-func NewCreateNotificationqueryNotificationEntry() *CreateNotificationqueryNotificationEntry {
-	return &CreateNotificationqueryNotificationEntry{
+// NewNotificationEntry creates a new NotificationEntry object.
+func NewNotificationEntry() *NotificationEntry {
+	return &NotificationEntry{
 		GroupLabels: map[string]string{},
-		Alerts:      []CreateNotificationqueryNotificationEntryAlert{},
+		Alerts:      []NotificationEntryAlert{},
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryNotificationEntry.
-func (CreateNotificationqueryNotificationEntry) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry"
-}
-
 // +k8s:openapi-gen=true
-type CreateNotificationqueryNotificationStatus string
+type NotificationStatus string
 
 const (
-	CreateNotificationqueryNotificationStatusFiring   CreateNotificationqueryNotificationStatus = "firing"
-	CreateNotificationqueryNotificationStatusResolved CreateNotificationqueryNotificationStatus = "resolved"
+	NotificationStatusFiring   NotificationStatus = "firing"
+	NotificationStatusResolved NotificationStatus = "resolved"
 )
 
-// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryNotificationStatus.
-func (CreateNotificationqueryNotificationStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
-}
-
 // +k8s:openapi-gen=true
-type CreateNotificationqueryNotificationOutcome string
+type NotificationOutcome string
 
 const (
-	CreateNotificationqueryNotificationOutcomeSuccess CreateNotificationqueryNotificationOutcome = "success"
-	CreateNotificationqueryNotificationOutcomeError   CreateNotificationqueryNotificationOutcome = "error"
+	NotificationOutcomeSuccess NotificationOutcome = "success"
+	NotificationOutcomeError   NotificationOutcome = "error"
 )
 
-// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryNotificationOutcome.
-func (CreateNotificationqueryNotificationOutcome) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
-}
-
 // +k8s:openapi-gen=true
-type CreateNotificationqueryNotificationEntryAlert struct {
+type NotificationEntryAlert struct {
 	Status      string            `json:"status"`
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
@@ -80,32 +65,22 @@ type CreateNotificationqueryNotificationEntryAlert struct {
 	EndsAt      time.Time         `json:"endsAt"`
 }
 
-// NewCreateNotificationqueryNotificationEntryAlert creates a new CreateNotificationqueryNotificationEntryAlert object.
-func NewCreateNotificationqueryNotificationEntryAlert() *CreateNotificationqueryNotificationEntryAlert {
-	return &CreateNotificationqueryNotificationEntryAlert{
+// NewNotificationEntryAlert creates a new NotificationEntryAlert object.
+func NewNotificationEntryAlert() *NotificationEntryAlert {
+	return &NotificationEntryAlert{
 		Labels:      map[string]string{},
 		Annotations: map[string]string{},
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryNotificationEntryAlert.
-func (CreateNotificationqueryNotificationEntryAlert) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
-}
-
 // +k8s:openapi-gen=true
-type CreateNotificationqueryResponse struct {
-	Entries []CreateNotificationqueryNotificationEntry `json:"entries"`
+type CreateNotificationquery struct {
+	Entries []NotificationEntry `json:"entries"`
 }
 
-// NewCreateNotificationqueryResponse creates a new CreateNotificationqueryResponse object.
-func NewCreateNotificationqueryResponse() *CreateNotificationqueryResponse {
-	return &CreateNotificationqueryResponse{
-		Entries: []CreateNotificationqueryNotificationEntry{},
+// NewCreateNotificationquery creates a new CreateNotificationquery object.
+func NewCreateNotificationquery() *CreateNotificationquery {
+	return &CreateNotificationquery{
+		Entries: []NotificationEntry{},
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryResponse.
-func (CreateNotificationqueryResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
 }

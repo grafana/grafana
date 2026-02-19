@@ -292,13 +292,15 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
-	if rule.NotificationSettings != nil {
+	if len(rule.NotificationSettings) > 0 {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		if err := validator.Validate(*rule.NotificationSettings); err != nil {
-			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
+			}
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -763,13 +765,15 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
-	if rule.NotificationSettings != nil {
+	if len(rule.NotificationSettings) > 0 {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		if err := validator.Validate(*rule.NotificationSettings); err != nil {
-			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
+			}
 		}
 	}
 	rule.Updated = time.Now()

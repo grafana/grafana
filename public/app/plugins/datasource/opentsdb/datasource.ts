@@ -175,10 +175,6 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     );
   }
 
-  applyTemplateVariables(query: OpenTsdbQuery, scopedVars: ScopedVars): OpenTsdbQuery {
-    return this.interpolateVariablesInQuery(query, scopedVars);
-  }
-
   annotationEvent(options: DataQueryRequest, annotation: OpenTsdbQuery): Promise<AnnotationEvent[]> {
     if (config.featureToggles.opentsdbBackendMigration) {
       const query: OpenTsdbQuery = {

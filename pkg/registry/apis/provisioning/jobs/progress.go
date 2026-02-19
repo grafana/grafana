@@ -105,11 +105,6 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
 	} else if result.Warning() != nil {
-		// Still track failed deletions in case we get a warning
-		if result.Action() == repository.FileActionDeleted {
-			r.failedDeletions = append(r.failedDeletions, result.Path())
-		}
-
 		shouldLogWarning = true
 		logWarning = result.Warning()
 	}
@@ -129,25 +124,17 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.maybeNotify(ctx)
 }
 
-// ResetResults will reset the results of the job.
-// If the keepWarnings flag is set to true, the summary will preserve the warnings in it.
-func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
+// ResetResults will reset the results of the job
+func (r *jobProgressRecorder) ResetResults() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.resultCount = 0
 	r.errorCount = 0
 	r.errors = nil
+	r.summaries = make(map[string]*provisioning.JobResourceSummary)
 	r.failedCreations = nil
 	r.failedDeletions = nil
-
-	summaries := make(map[string]*provisioning.JobResourceSummary)
-	for k, summary := range r.summaries {
-		if len(summary.Warnings) > 0 && keepWarnings {
-			summaries[k] = summary
-		}
-	}
-	r.summaries = summaries
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -312,7 +299,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	jobStatus.Errors = r.errors
 
 	// Extract warnings from summaries
-	warnings := make([]string, 0) //nolint:prealloc
+	warnings := make([]string, 0)
 	for _, summary := range summaries {
 		warnings = append(warnings, summary.Warnings...)
 	}

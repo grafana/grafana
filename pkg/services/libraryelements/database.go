@@ -302,8 +302,7 @@ func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedIn
 }
 
 // getLibraryElements gets a Library Element where param == value
-// tree can be nil, in which case folder info will be fetched individually
-func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser identity.Requester, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand, tree *folder.FolderTree) ([]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser identity.Requester, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand) ([]model.LibraryElementDTO, error) {
 	if len(params) < 1 {
 		return nil, fmt.Errorf("expected at least one parameter pair")
 	}
@@ -342,28 +341,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
-		var folderUID, folderTitle string
-		var cacheHit bool
-		if tree != nil {
-			var fd folder.FolderNode
-			fd, cacheHit = tree.GetByID(libraryElement.FolderID) // nolint:staticcheck
-			if cacheHit {
-				folderTitle = fd.Title
-				folderUID = fd.UID
-			}
-		}
-		// Fetch folder from service if tree is nil, or if it doesn't have the folder info (e.g. due to a recent creation)
-		if tree == nil || !cacheHit {
-			// nolint:staticcheck
-			f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
-			if err != nil {
-				return []model.LibraryElementDTO{}, err
-			}
-			folderTitle = f.Title
-			folderUID = f.UID
-			if f.ID == 0 { // nolint:staticcheck
-				folderUID = ac.GeneralFolderUID
-			}
+		// nolint:staticcheck
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
+		if err != nil {
+			return []model.LibraryElementDTO{}, err
 		}
 		var updatedModel json.RawMessage
 		if libraryElement.Kind == int64(model.PanelElement) {
@@ -374,6 +355,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
+		folderUID := f.UID
+		if f.ID == 0 { // nolint:staticcheck
+			folderUID = ac.GeneralFolderUID
+		}
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
@@ -387,7 +372,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 			Model:       updatedModel,
 			Version:     libraryElement.Version,
 			Meta: model.LibraryElementDTOMeta{
-				FolderName:          folderTitle,
+				FolderName:          f.Title,
 				FolderUID:           folderUID,
 				ConnectedDashboards: libraryElement.ConnectedDashboards,
 				Created:             libraryElement.Created,
@@ -410,9 +395,8 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
-// tree can be nil, in which case folder info will be fetched individually
-func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand, tree *folder.FolderTree) (model.LibraryElementDTO, error) {
-	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}}, l.features, cmd, tree)
+func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
+	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}}, l.features, cmd)
 	if err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -425,10 +409,11 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser identity.Requester, name string) ([]model.LibraryElementDTO, error) {
-	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features, model.GetLibraryElementCommand{
-		FolderName: dashboards.RootFolderName,
-		Name:       name,
-	}, nil)
+	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
+		model.GetLibraryElementCommand{
+			FolderName: dashboards.RootFolderName,
+			Name:       name,
+		})
 }
 
 // getAllLibraryElements gets all Library Elements.
@@ -498,22 +483,32 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		retDTOs := make([]model.LibraryElementDTO, 0)
-		// Get the folder tree filtered by user permissions (cached per user per request)
-		folderTree, err := l.treeCache.get(c, signedInUser)
+		// getting all folders a user can see
+		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
 		if err != nil {
 			return err
 		}
 
-		// Filter elements based on folder access using the tree
+		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
+		// Using a map for O(1) lookup instead of O(n) slice iteration
+		folderUIDSet := make(map[string]bool, len(fs)+2)
+		folderUIDSet["general"] = true
+		folderUIDSet[""] = true
+
+		folderMap := make(map[string]string, len(fs))
+		for _, f := range fs {
+			folderUIDSet[f.UID] = true
+			folderMap[f.UID] = f.Title
+		}
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
 			if !signedInUser.HasRole(org.RoleAdmin) {
-				if !folderTree.Contains(element.FolderUID) {
+				if !folderUIDSet[element.FolderUID] {
 					continue
 				}
 			}
-			title := folderTree.GetTitle(element.FolderUID)
-			if title == "" {
-				title = dashboards.RootFolderName
+			if folderMap[element.FolderUID] == "" {
+				folderMap[element.FolderUID] = dashboards.RootFolderName
 			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
@@ -528,7 +523,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				Model:       element.Model,
 				Version:     element.Version,
 				Meta: model.LibraryElementDTOMeta{
-					FolderName:          title,
+					FolderName:          folderMap[element.FolderUID],
 					FolderUID:           element.FolderUID,
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
@@ -582,7 +577,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if !signedInUser.HasRole(org.RoleAdmin) {
 			totalCount = 0
 			for _, element := range libraryElements {
-				if folderTree.Contains(element.FolderUID) {
+				if folderUIDSet[element.FolderUID] {
 					totalCount++
 				}
 			}

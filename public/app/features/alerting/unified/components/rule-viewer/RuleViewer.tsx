@@ -6,7 +6,6 @@ import { useMeasure } from 'react-use';
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   LinkButton,
@@ -77,7 +76,6 @@ import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
-import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
@@ -86,7 +84,6 @@ export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
-  Notifications = 'notifications',
   Routing = 'routing',
   Details = 'details',
   VersionHistory = 'version-history',
@@ -182,9 +179,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
           {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
             <History rule={rule.rulerRule} />
-          )}
-          {activeTab === ActiveTab.Notifications && rulerRuleType.grafana.rule(rule.rulerRule) && (
-            <Notifications rule={rule.rulerRule} />
           )}
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
@@ -490,15 +484,6 @@ function usePageNav(rule: CombinedRule) {
         },
         // alert state history is only available for Grafana managed alert rules
         hideFromTabs: !isGrafanaAlertRule,
-      },
-      {
-        text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
-        active: activeTab === ActiveTab.Notifications,
-        onClick: () => {
-          setActiveTab(ActiveTab.Notifications);
-        },
-        // notification history is only available for Grafana managed alert rules and requires feature toggles
-        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
       },
       {
         text: t('alerting.use-page-nav.page-nav.text.details', 'Details'),

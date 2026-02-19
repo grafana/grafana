@@ -184,10 +184,6 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
 
-	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
-	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
-	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
-
 	return response.Success("Data source deleted")
 }
 
@@ -274,10 +270,6 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
 
-	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
-	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
-	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      ds.ID,
@@ -326,10 +318,6 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 	}
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), dataSource.UID)
-
-	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
-	nameScope := datasources.ScopeProvider.GetResourceScopeName(dataSource.Name)
-	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",

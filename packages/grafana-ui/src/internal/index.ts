@@ -109,5 +109,3 @@ export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
-
-export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';

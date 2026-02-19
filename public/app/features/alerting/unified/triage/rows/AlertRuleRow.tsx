@@ -10,8 +10,7 @@ import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
-import { RowActions } from './InstanceCountBadges';
-import { OpenDrawerButton } from './OpenDrawerButton';
+import { OpenDrawerIconButton } from './OpenDrawerIconButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -46,14 +45,9 @@ export const AlertRuleRow = ({
         width={leftColumnWidth}
         title={<Text variant="body">{title}</Text>}
         actions={
-          <RowActions
-            counts={row.instanceCounts}
-            actionButton={
-              <OpenDrawerButton
-                aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
-                onClick={handleDrawerOpen}
-              />
-            }
+          <OpenDrawerIconButton
+            aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
+            onClick={handleDrawerOpen}
           />
         }
         metadata={

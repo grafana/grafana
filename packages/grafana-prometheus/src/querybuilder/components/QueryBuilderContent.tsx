@@ -72,7 +72,7 @@ export const QueryBuilderContent = memo<QueryBuilderContentProps>((props) => {
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
-      <OperationsEditorRow operationsLength={query.operations.length}>
+      <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

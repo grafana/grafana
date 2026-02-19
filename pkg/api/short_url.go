@@ -183,7 +183,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	value := &v1beta1.GetGotoResponse{}
+	value := &v1beta1.GetGoto{}
 	if err = json.Unmarshal(body, value); err != nil {
 		c.JsonApiErr(500, "unmarshal", err)
 		return

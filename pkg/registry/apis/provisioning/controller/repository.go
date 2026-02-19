@@ -561,10 +561,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
-	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to get quota status: %w", err)
-	}
+	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
 	if err != nil {
 		return fmt.Errorf("check repository quota: %w", err)

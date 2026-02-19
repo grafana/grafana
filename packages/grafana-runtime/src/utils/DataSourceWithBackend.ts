@@ -1,3 +1,4 @@
+import { OpenFeature } from '@openfeature/web-sdk';
 import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -21,7 +22,6 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
-import { getFeatureFlagClient } from '../internal/openFeature';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -215,7 +215,7 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+      const allowedTypes = OpenFeature.getClient().getObjectValue('datasources.querier.fe-allowed-types', {
         types: [],
       });
       if (isQueryServiceCompatible(datasources, allowedTypes)) {

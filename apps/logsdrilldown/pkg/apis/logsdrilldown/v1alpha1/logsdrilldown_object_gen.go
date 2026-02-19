@@ -243,10 +243,6 @@ func (o *LogsDrilldown) DeepCopyInto(dst *LogsDrilldown) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (LogsDrilldown) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldown"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &LogsDrilldown{}
 
@@ -298,10 +294,6 @@ func (o *LogsDrilldownList) DeepCopy() *LogsDrilldownList {
 
 func (o *LogsDrilldownList) DeepCopyInto(dst *LogsDrilldownList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (LogsDrilldownList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownList"
 }
 
 // Interface compliance compile-time check

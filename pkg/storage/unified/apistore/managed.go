@@ -94,10 +94,6 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		}
 		// TODO: check the kubectl+terraform resource
 		return nil
-
-	case utils.ManagerKindGrafana:
-		// Used for global role management.
-		return nil // Let the api admission hooks handle it
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
+    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,

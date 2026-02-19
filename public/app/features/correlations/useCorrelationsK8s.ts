@@ -53,7 +53,6 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
             transformations: transformationsFmt,
           },
         };
-
         return toEnrichedCorrelationData(queryCorr);
       } else {
         return undefined;

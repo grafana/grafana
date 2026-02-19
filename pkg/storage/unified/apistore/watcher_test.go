@@ -13,7 +13,6 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/apitesting"
@@ -145,13 +144,13 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 		require.NotNil(t, ret)
 		ctx := storagetesting.NewContext()
-		svc, ok := ret.(services.Service)
-		require.True(t, ok)
-		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+		err = ret.Init(ctx)
+		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:     ret,
 			Diagnostics: ret,
+			Lifecycle:   ret,
 		})
 		require.NoError(t, err)
 	default:

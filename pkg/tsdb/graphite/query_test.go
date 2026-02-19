@@ -175,11 +175,10 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -205,7 +204,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -215,7 +214,6 @@ func TestConvertResponses(t *testing.T) {
 				"name":   "alias(target)",
 			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -271,7 +269,7 @@ func TestConvertResponses(t *testing.T) {
 		refId := "A"
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -280,7 +278,6 @@ func TestConvertResponses(t *testing.T) {
 				"float":  "3.14",
 			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -306,7 +303,7 @@ func TestConvertResponses(t *testing.T) {
 		a := 50.0
 		b := 100.0
 		refId := "A"
-		expectedFrame := data.NewFrame("",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -316,7 +313,6 @@ func TestConvertResponses(t *testing.T) {
 				"name":   "alias(target)",
 			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
-		expectedFrame.RefID = refId
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
@@ -373,7 +369,6 @@ func TestRunQueryE2E(t *testing.T) {
 		serverResponse  string
 		serverStatus    int
 		queries         []backend.DataQuery
-		refIdTargetMap  map[string]string
 		expectError     bool
 		errorContains   string
 		multipleTargets map[string]string
@@ -460,22 +455,18 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "successful multiple queries",
 			serverStatus: 200,
 			multipleTargets: map[string]string{
-				"A": `[
+				"stats.counters.web.hits": `[
 					{
 						"target": "stats.counters.web.hits",
 						"datapoints": [[100, 1609459200], [150, 1609459260]]
 					}
 				]`,
-				"B": `[
+				"stats.counters.api.calls": `[
 					{
 						"target": "stats.counters.api.calls",
 						"datapoints": [[50, 1609459200], [75, 1609459260]]
 					}
 				]`,
-			},
-			refIdTargetMap: map[string]string{
-				"stats.counters.web.hits":  "A",
-				"stats.counters.api.calls": "B",
 			},
 			queries: []backend.DataQuery{
 				{
@@ -516,8 +507,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": ""
-							}`),
+						"target": ""
+					}`),
 				},
 			},
 			expectError:   true,
@@ -527,11 +518,11 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "mixed queries - some empty, some valid",
 			serverStatus: 200,
 			serverResponse: `[
-						{
-							"target": "stats.counters.web.hits",
-							"datapoints": [[100, 1609459200], [150, 1609459260]]
-						}
-					]`,
+				{
+					"target": "stats.counters.web.hits",
+					"datapoints": [[100, 1609459200], [150, 1609459260]]
+				}
+			]`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -541,8 +532,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": ""
-							}`),
+						"target": ""
+					}`),
 				},
 				{
 					RefID: "B",
@@ -552,8 +543,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": "stats.counters.web.hits"
-							}`),
+						"target": "stats.counters.web.hits"
+					}`),
 				},
 			},
 			expectError: false,
@@ -571,8 +562,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": "stats.counters.web.hits"
-							}`),
+						"target": "stats.counters.web.hits"
+					}`),
 				},
 			},
 			expectError:   true,
@@ -582,11 +573,11 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "server error response with HTML content",
 			serverStatus: 500,
 			serverResponse: `<body>
-		<h1>Internal Server Error</h1>
-		<p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>
-		<div>Error: Invalid metric path &#39;stats.invalid.metric&#39;</div>
-		Error: Target not found
-		</body>`,
+<h1>Internal Server Error</h1>
+<p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>
+<div>Error: Invalid metric path &#39;stats.invalid.metric&#39;</div>
+Error: Target not found
+</body>`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -596,8 +587,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": "stats.invalid.metric"
-							}`),
+						"target": "stats.invalid.metric"
+					}`),
 				},
 			},
 			expectError:   true,
@@ -616,8 +607,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": "stats.counters.web.hits"
-							}`),
+						"target": "stats.counters.web.hits"
+					}`),
 				},
 			},
 			expectError: true,
@@ -644,11 +635,11 @@ func TestRunQueryE2E(t *testing.T) {
 			name:         "interval format transformation",
 			serverStatus: 200,
 			serverResponse: `[
-						{
-							"target": "hitcount(stats.counters.web.hits, '1min')",
-							"datapoints": [[100, 1609459200], [150, 1609459260]]
-						}
-					]`,
+				{
+					"target": "hitcount(stats.counters.web.hits, '1min')",
+					"datapoints": [[100, 1609459200], [150, 1609459260]]
+				}
+			]`,
 			queries: []backend.DataQuery{
 				{
 					RefID: "A",
@@ -658,8 +649,8 @@ func TestRunQueryE2E(t *testing.T) {
 					},
 					MaxDataPoints: 1000,
 					JSON: []byte(`{
-								"target": "hitcount(stats.counters.web.hits, '1m')"
-							}`),
+						"target": "hitcount(stats.counters.web.hits, '1m')"
+					}`),
 				},
 			},
 			expectError: false,
@@ -678,7 +669,7 @@ func TestRunQueryE2E(t *testing.T) {
 				response := tt.serverResponse
 				if tt.multipleTargets != nil {
 					target := r.FormValue("target")
-					if targetResponse, ok := tt.multipleTargets[tt.refIdTargetMap[target]]; ok {
+					if targetResponse, ok := tt.multipleTargets[target]; ok {
 						response = targetResponse
 					}
 				}
@@ -739,8 +730,8 @@ func TestRunQueryE2E(t *testing.T) {
 				assert.NoError(t, err)
 				require.NotNil(t, result)
 
-				for refId, resp := range result.Responses {
-					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-%s.golden", testName, refId), &resp, false)
+				for refID, resp := range result.Responses {
+					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-RefID-%s.golden", testName, refID), &resp, false)
 				}
 			}
 		})

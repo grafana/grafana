@@ -26,5 +26,4 @@ manifest: {
 			}
 		}
 	}
-	roles: {}
 }

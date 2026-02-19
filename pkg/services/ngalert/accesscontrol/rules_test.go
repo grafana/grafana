@@ -85,7 +85,7 @@ func getReceiverScopesForRules(rules models.RulesGroup) []string {
 	scopesMap := map[string]struct{}{}
 	var result []string
 	for _, rule := range rules {
-		if ns := rule.ContactPointRouting(); ns != nil {
+		for _, ns := range rule.NotificationSettings {
 			scope := models.ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
 			if _, ok := scopesMap[scope]; ok {
 				continue
@@ -335,7 +335,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				deleteScopes := make([]string, 0, len(c.AffectedGroups))
+				var deleteScopes []string
 				for key := range c.AffectedGroups {
 					deleteScopes = append(deleteScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
 				}
@@ -521,8 +521,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
-					if cpr := cp.ContactPointRouting(); cpr != nil {
-						cpr.Receiver = "new-receiver"
+					for i := range cp.NotificationSettings {
+						cp.NotificationSettings[i].Receiver = "new-receiver"
 					}
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
@@ -651,7 +651,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should succeed if user has access to all namespaces", func(t *testing.T) {
 		rules := models.RuleGen.GenerateManyRef(1, 5)
-		namespaceScopes := make([]string, 0, len(rules))
+		namespaceScopes := make([]string, 0)
 		for _, rule := range rules {
 			namespaceScopes = append(namespaceScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
 		}

@@ -21,10 +21,7 @@ const SHOW_TIMESTAMP_LABEL_COPY = 'Show timestamps';
 const WRAP_LINES_LABEL_COPY = 'Wrap lines';
 const ENABLE_UNWRAPPED_COLUMNS_COPY = 'Enable columns';
 const DISABLE_UNWRAPPED_COLUMNS_COPY = 'Disable columns';
-const COLUMNS_NOT_SUPPORTED_COPY = 'Columns not supported';
-const COLUMNS_ENABLED_COPY = 'Columns enabled';
-const COLUMNS_DISABLED_COPY = 'Columns disabled';
-const COLUMNS_DISABLED_TOOLTIP_COPY = 'Columns are not supported with line wrapping enabled';
+const COLUMNS_DISABLED_COPY = 'Columns are not supported with line wrapping enabled';
 const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
 const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
@@ -364,8 +361,6 @@ describe('LogListControls', () => {
 
     expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(DISABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
-    expect(screen.getByText(COLUMNS_ENABLED_COPY)).toBeInTheDocument();
-    expect(screen.queryByText(COLUMNS_DISABLED_COPY)).not.toBeInTheDocument();
 
     rerender(
       <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns={false}>
@@ -375,8 +370,6 @@ describe('LogListControls', () => {
 
     expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
     expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
-    expect(screen.getByText(COLUMNS_DISABLED_COPY)).toBeInTheDocument();
-    expect(screen.queryByText(COLUMNS_ENABLED_COPY)).not.toBeInTheDocument();
 
     config.featureToggles.newLogsPanel = originalFlagState;
   });
@@ -391,8 +384,7 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
 
-    expect(screen.getByLabelText(COLUMNS_DISABLED_TOOLTIP_COPY)).toBeDisabled();
-    expect(screen.getByText(COLUMNS_NOT_SUPPORTED_COPY)).toBeInTheDocument();
+    expect(screen.getByLabelText(COLUMNS_DISABLED_COPY)).toBeDisabled();
 
     config.featureToggles.newLogsPanel = originalFlagState;
   });

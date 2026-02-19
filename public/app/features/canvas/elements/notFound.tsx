@@ -1,21 +1,17 @@
-import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
 
 import { CanvasElementItem, CanvasElementProps } from '../element';
 
 const NotFoundDisplay = memo(({ config }: CanvasElementProps) => {
-  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.container}>
+    <div>
       <Trans
         i18nKey="canvas.not-found-display.not-found"
         components={{ config: <pre>{JSON.stringify(config, null, 2)}</pre> }}
       >
-        <span className={styles.heading}>Not found: </span>
+        <h3>Not found: </h3>
         {'<config />'}
       </Trans>
     </div>
@@ -40,8 +36,3 @@ export const notFoundItem: CanvasElementItem = {
     config: {},
   }),
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({ background: theme.colors.background.canvas }),
-  heading: css({ ...theme.typography.h3 }),
-});

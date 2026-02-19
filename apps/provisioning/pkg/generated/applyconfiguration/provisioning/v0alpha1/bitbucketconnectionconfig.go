@@ -7,7 +7,6 @@ package v0alpha1
 // BitbucketConnectionConfigApplyConfiguration represents a declarative configuration of the BitbucketConnectionConfig type for use
 // with apply.
 type BitbucketConnectionConfigApplyConfiguration struct {
-	// App client ID
 	ClientID *string `json:"clientID,omitempty"`
 }
 

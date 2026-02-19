@@ -7,16 +7,10 @@ package v0alpha1
 // ExportJobOptionsApplyConfiguration represents a declarative configuration of the ExportJobOptions type for use
 // with apply.
 type ExportJobOptionsApplyConfiguration struct {
-	// Message to use when committing the changes in a single commit
 	Message *string `json:"message,omitempty"`
-	// The source folder (or empty) to export
-	Folder *string `json:"folder,omitempty"`
-	// FIXME: we should validate this in admission hooks
-	// Target branch for export (only git)
-	Branch *string `json:"branch,omitempty"`
-	// FIXME: we should validate this in admission hooks
-	// Prefix in target file system
-	Path *string `json:"path,omitempty"`
+	Folder  *string `json:"folder,omitempty"`
+	Branch  *string `json:"branch,omitempty"`
+	Path    *string `json:"path,omitempty"`
 }
 
 // ExportJobOptionsApplyConfiguration constructs a declarative configuration of the ExportJobOptions type for use with

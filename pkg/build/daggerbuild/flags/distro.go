@@ -28,7 +28,7 @@ var DynamicDistributions = []backend.Distribution{
 
 func DistroFlags() []pipeline.Flag {
 	// These distributions have specific options that set some stuff.
-	f := []pipeline.Flag{ //nolint:prealloc
+	f := []pipeline.Flag{
 		{
 			Name: string(backend.DistLinuxARMv6),
 			Options: map[pipeline.FlagOption]any{

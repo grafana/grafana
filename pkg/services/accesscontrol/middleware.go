@@ -146,8 +146,7 @@ func unauthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 		if !c.UseSessionStorageRedirect {
 			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 			return

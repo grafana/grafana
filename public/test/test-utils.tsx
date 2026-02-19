@@ -1,4 +1,3 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { Store } from '@reduxjs/toolkit';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -19,7 +18,6 @@ import {
   setChromeHeaderHeightHook,
   setLocationService,
 } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -88,17 +86,15 @@ const getWrapper = ({
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <Provider store={reduxStore}>
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <GrafanaContext.Provider value={context}>
-            <PotentialRouter>
-              <LocationServiceProvider service={locationService}>
-                <PotentialCompatRouter>
-                  <ModalsContextProvider>{children}</ModalsContextProvider>
-                </PotentialCompatRouter>
-              </LocationServiceProvider>
-            </PotentialRouter>
-          </GrafanaContext.Provider>
-        </OpenFeatureProvider>
+        <GrafanaContext.Provider value={context}>
+          <PotentialRouter>
+            <LocationServiceProvider service={locationService}>
+              <PotentialCompatRouter>
+                <ModalsContextProvider>{children}</ModalsContextProvider>
+              </PotentialCompatRouter>
+            </LocationServiceProvider>
+          </PotentialRouter>
+        </GrafanaContext.Provider>
       </Provider>
     );
   };

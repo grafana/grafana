@@ -243,10 +243,6 @@ func (o *Annotation) DeepCopyInto(dst *Annotation) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (Annotation) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.Annotation"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &Annotation{}
 
@@ -298,10 +294,6 @@ func (o *AnnotationList) DeepCopy() *AnnotationList {
 
 func (o *AnnotationList) DeepCopyInto(dst *AnnotationList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (AnnotationList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationList"
 }
 
 // Interface compliance compile-time check

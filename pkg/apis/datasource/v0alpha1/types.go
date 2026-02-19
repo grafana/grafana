@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1."
-
 // +k8s:deepcopy-gen=true
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -28,18 +26,10 @@ type HealthCheckResult struct {
 	Details *common.Unstructured `json:"details,omitempty"`
 }
 
-func (HealthCheckResult) OpenAPIModelName() string {
-	return OpenAPIPrefix + "HealthCheckResult"
-}
-
 // +k8s:deepcopy-gen=true
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DatasourceAccessInfo struct {
 	metav1.TypeMeta `json:",inline"`
 	Permissions     accesscontrol.Metadata
-}
-
-func (DatasourceAccessInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DatasourceAccessInfo"
 }

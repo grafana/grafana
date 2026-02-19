@@ -29,7 +29,7 @@ func setupFolders() []*openfgav1.TupleKey {
 func setupQueryFolders(t *testing.T, srv *Server) *Server {
 	t.Helper()
 
-	tuples := []*openfgav1.TupleKey{} //nolint:prealloc
+	tuples := []*openfgav1.TupleKey{}
 	tuples = append(tuples, setupFolders()...)
 
 	return setupOpenFGADatabase(t, srv, tuples)

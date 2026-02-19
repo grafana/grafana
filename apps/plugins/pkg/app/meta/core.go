@@ -33,16 +33,15 @@ type CoreProvider struct {
 	ttl             time.Duration
 	loader          pluginsLoader.Service
 	pluginsPathFunc func() (string, error)
-	logger          logging.Logger
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
-func NewCoreProvider(logger logging.Logger, pluginsPath func() (string, error)) *CoreProvider {
-	return NewCoreProviderWithTTL(logger, pluginsPath, defaultCoreTTL)
+func NewCoreProvider(pluginsPath func() (string, error)) *CoreProvider {
+	return NewCoreProviderWithTTL(pluginsPath, defaultCoreTTL)
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
-func NewCoreProviderWithTTL(logger logging.Logger, pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
+func NewCoreProviderWithTTL(pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
 	cfg := &config.PluginManagementCfg{
 		Features: config.Features{},
 	}
@@ -51,7 +50,6 @@ func NewCoreProviderWithTTL(logger logging.Logger, pluginsPathFunc func() (strin
 		ttl:             ttl,
 		loader:          createLoader(cfg),
 		pluginsPathFunc: pluginsPathFunc,
-		logger:          logger,
 	}
 }
 
@@ -82,7 +80,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 
 	if !p.initialized {
 		if err := p.loadPlugins(ctx); err != nil {
-			p.logger.WithContext(ctx).Error("Could not load core plugins", "error", err)
+			logging.FromContext(ctx).Warn("CoreProvider: could not load core plugins, will return ErrMetaNotFound for all lookups", "error", err)
 			// Mark as initialized even on failure so we don't keep trying
 			p.initialized = true
 			return nil, ErrMetaNotFound
@@ -107,7 +105,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	pluginsPath, err := p.pluginsPathFunc()
 	if err != nil {
-		p.logger.WithContext(ctx).Warn("Could not get core plugins path", "error", err)
+		logging.FromContext(ctx).Warn("CoreProvider: could not get plugins path", "error", err)
 		return err
 	}
 
@@ -118,7 +116,7 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	}
 
 	if len(loadedPlugins) == 0 {
-		p.logger.WithContext(ctx).Warn("No core plugins found during loading")
+		logging.FromContext(ctx).Warn("CoreProvider: no core plugins found during loading")
 		return nil
 	}
 

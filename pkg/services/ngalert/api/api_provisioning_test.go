@@ -2084,7 +2084,7 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	sut.policies = newFakeNotificationPolicyService(rev)
 	sut.routeService = routes.NewFakeService(rev)
 
-	policies := []string{legacy_storage.UserDefinedRoutingTreeName} //nolint:prealloc
+	policies := []string{legacy_storage.UserDefinedRoutingTreeName}
 	for policy := range policy_exports.Config().ManagedRoutes {
 		policies = append(policies, policy)
 	}

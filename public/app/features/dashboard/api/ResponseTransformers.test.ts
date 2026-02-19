@@ -8,8 +8,8 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,

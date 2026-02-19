@@ -7,7 +7,6 @@ package v0alpha1
 // MigrateJobOptionsApplyConfiguration represents a declarative configuration of the MigrateJobOptions type for use
 // with apply.
 type MigrateJobOptionsApplyConfiguration struct {
-	// Message to use when committing the changes in a single commit
 	Message *string `json:"message,omitempty"`
 }
 

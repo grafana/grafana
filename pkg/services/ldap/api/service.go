@@ -350,7 +350,7 @@ func splitName(name string) (string, string) {
 
 // fetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
 func (user *LDAPUserDTO) fetchOrgs(ctx context.Context, orga org.Service) error {
-	orgIds := make([]int64, 0, len(user.OrgRoles))
+	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
 		orgIds = append(orgIds, or.OrgId)

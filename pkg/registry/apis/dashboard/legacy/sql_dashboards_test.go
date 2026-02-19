@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
@@ -638,7 +637,7 @@ func TestMigrateDashboardsConfiguration(t *testing.T) {
 
 	t.Run("Migration options should configure query correctly", func(t *testing.T) {
 		// Test the migration configuration as used in real migration
-		opts := migrations.MigrateOptions{
+		opts := MigrateOptions{
 			WithHistory: true, // Migration includes history
 		}
 

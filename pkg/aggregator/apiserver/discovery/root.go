@@ -51,11 +51,7 @@ func (a *RootDiscoveryHandler) Handle(req *restful.Request, resp *restful.Respon
 		chain.ProcessFilter(req, resp)
 		return
 	}
-	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(
-		a.v1handler(chain),
-		a.v2handler(chain),
-		nil, // peerAggregatedHandler
-	)
+	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(a.v1handler(chain), a.v2handler(chain))
 	apisHandlerWithAggregationSupport.ServeHTTP(resp.ResponseWriter, req.Request)
 }
 

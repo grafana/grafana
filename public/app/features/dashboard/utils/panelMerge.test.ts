@@ -1,5 +1,5 @@
 import { PanelModel } from '@grafana/data';
-import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
+import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 
 import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture, createPanelSaveModel } from '../state/__fixtures__/dashboardFixtures';

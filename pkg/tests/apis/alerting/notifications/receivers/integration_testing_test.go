@@ -10,16 +10,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/resource"
-
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -147,8 +147,8 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 						{
 							Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
 							Resource:          models.ScopeReceiversRoot,
-							ResourceAttribute: "uid",
-							ResourceID:        models.NewReceiverScopeID,
+							ResourceAttribute: "type",
+							ResourceID:        alertingauthz.NewReceiverType,
 						},
 					})
 				}(),
@@ -388,8 +388,8 @@ func TestIntegrationTesting(t *testing.T) {
 		{
 			Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
 			Resource:          models.ScopeReceiversRoot,
-			ResourceAttribute: "uid",
-			ResourceID:        models.NewReceiverScopeID,
+			ResourceAttribute: "type",
+			ResourceID:        alertingauthz.NewReceiverType,
 		},
 	})
 
@@ -490,7 +490,7 @@ func TestIntegrationTesting(t *testing.T) {
 		adminClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
 
-		assertError := func(t *testing.T, predicate func(error) bool, resp *v0alpha1.CreateReceiverIntegrationTestResponse, err error) {
+		assertError := func(t *testing.T, predicate func(error) bool, resp *v0alpha1.CreateReceiverIntegrationTest, err error) {
 			t.Helper()
 			var d []byte
 			if resp != nil {

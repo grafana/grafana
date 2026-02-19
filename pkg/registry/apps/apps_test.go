@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvideAppInstallers_Table(t *testing.T) {
@@ -48,9 +47,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			cfg := &setting.Cfg{} // dummy cfg for test
 			got := ProvideAppInstallers(features,
-				cfg,
 				playlistInstaller,
 				pluginsInstaller,
 				nil, // live

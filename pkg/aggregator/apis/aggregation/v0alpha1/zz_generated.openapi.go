@@ -8,7 +8,6 @@
 package v0alpha1
 
 import (
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -48,7 +47,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref common.Ref
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -67,7 +66,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref common.Ref
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceSpec", "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceStatus", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceSpec", "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneServiceStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -97,7 +96,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceCondition(ref c
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Last time the condition transitioned from one status to another.",
-							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"reason": {
@@ -119,7 +118,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceCondition(ref c
 			},
 		},
 		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
@@ -146,7 +145,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref common
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -167,7 +166,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneService", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1.DataPlaneService", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -304,7 +303,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_QueryDataResponse(ref common.Re
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(backend.DataResponse{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana-plugin-sdk-go/backend.DataResponse"),
 									},
 								},
 							},
@@ -315,7 +314,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_QueryDataResponse(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			backend.DataResponse{}.OpenAPIModelName()},
+			"github.com/grafana/grafana-plugin-sdk-go/backend.DataResponse"},
 	}
 }
 

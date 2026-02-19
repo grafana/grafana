@@ -228,10 +228,6 @@ func (o *GlobalRoleBinding) DeepCopyInto(dst *GlobalRoleBinding) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (GlobalRoleBinding) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBinding"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &GlobalRoleBinding{}
 
@@ -283,10 +279,6 @@ func (o *GlobalRoleBindingList) DeepCopy() *GlobalRoleBindingList {
 
 func (o *GlobalRoleBindingList) DeepCopyInto(dst *GlobalRoleBindingList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (GlobalRoleBindingList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRoleBindingList"
 }
 
 // Interface compliance compile-time check

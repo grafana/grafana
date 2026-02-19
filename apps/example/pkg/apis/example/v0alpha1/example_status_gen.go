@@ -20,11 +20,6 @@ func NewExamplestatusOperatorState() *ExamplestatusOperatorState {
 	return &ExamplestatusOperatorState{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for ExamplestatusOperatorState.
-func (ExamplestatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExamplestatusOperatorState"
-}
-
 // +k8s:openapi-gen=true
 type ExampleStatus struct {
 	LastObservedGeneration int64 `json:"lastObservedGeneration"`
@@ -40,11 +35,6 @@ func NewExampleStatus() *ExampleStatus {
 	return &ExampleStatus{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for ExampleStatus.
-func (ExampleStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleStatus"
-}
-
 // +k8s:openapi-gen=true
 type ExampleStatusOperatorStateState string
 
@@ -53,8 +43,3 @@ const (
 	ExampleStatusOperatorStateStateInProgress ExampleStatusOperatorStateState = "in_progress"
 	ExampleStatusOperatorStateStateFailed     ExampleStatusOperatorStateState = "failed"
 )
-
-// OpenAPIModelName returns the OpenAPI model name for ExampleStatusOperatorStateState.
-func (ExampleStatusOperatorStateState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleStatusOperatorStateState"
-}

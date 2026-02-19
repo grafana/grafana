@@ -2,12 +2,9 @@ package migrator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/grafana/dskit/backoff"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -331,6 +328,19 @@ func (mg *Migrator) doMigration(ctx context.Context, m Migration) error {
 		sess = sess.Context(ctx)
 
 		err := mg.exec(ctx, m, sess)
+		// if we get an sqlite busy/locked error, sleep 100ms and try again
+		cnt := 0
+		for cnt < 3 && sqlite.IsBusyOrLocked(err) {
+			cnt++
+			logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
+			span.AddEvent("Database locked, sleeping then retrying",
+				trace.WithAttributes(attribute.String("error", err.Error())),
+				trace.WithAttributes(attribute.String("sql", sql)),
+			)
+			time.Sleep(100 * time.Millisecond)
+			err = mg.exec(ctx, m, sess)
+		}
+
 		if err != nil {
 			logger.Error("Exec failed", "error", err, "sql", sql)
 			record.Error = err.Error()
@@ -408,25 +418,6 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
-	b := backoff.New(context.Background(), backoff.Config{
-		MinBackoff: 100 * time.Millisecond,
-		MaxBackoff: time.Second,
-		MaxRetries: 10,
-	})
-
-	var lastErr error
-	for b.Ongoing() {
-		lastErr = mg.inTransaction(callback)
-		if !sqlite.IsBusyOrLocked(lastErr) {
-			break
-		}
-		mg.Logger.Info("Database locked on migration, retrying transaction", "error", lastErr)
-		b.Wait()
-	}
-	return errors.Join(lastErr, b.Err())
-}
-
-func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
@@ -438,6 +429,7 @@ func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
 		}
+
 		return err
 	}
 

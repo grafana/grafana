@@ -25,8 +25,6 @@ import (
     ruleUID?: string
     // GroupLabels optionally filters the entries by matching group labels.
     groupLabels?: #Matchers
-    // Labels optionally filters the entries by matching alert labels.
-    labels?: #Matchers
 }
 
 #NotificationQueryResult: {

@@ -26,12 +26,8 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
   if (!repo.spec?.sync?.enabled) {
     return {
       color: 'orange',
-      text: t('provisioning.status-badge.disabled', 'Disabled'),
+      text: t('provisioning.status-badge.automatic-pulling-disabled', 'Automatic pulling disabled'),
       icon: 'info-circle',
-      tooltip: t(
-        'provisioning.status-badge.automatic-pulling-disabled-tooltip',
-        'Automatic pulling disabled. Review your connection configuration to enable pulling.'
-      ),
     };
   }
 
@@ -44,9 +40,14 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
     };
   }
 
-  switch (repo.status.sync.state) {
+  // Sync state
+  switch (repo.status?.sync?.state) {
     case 'success':
-      return { icon: 'check', text: t('provisioning.status-badge.up-to-date', 'Up-to-date'), color: 'green' };
+      return {
+        icon: 'check',
+        text: t('provisioning.status-badge.up-to-date', 'Up-to-date'),
+        color: 'green',
+      };
     case 'warning':
       return {
         color: 'orange',
@@ -55,7 +56,11 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
       };
     case 'working':
     case 'pending':
-      return { color: 'darkgrey', text: t('provisioning.status-badge.pulling', 'Pulling'), icon: 'spinner' };
+      return {
+        color: 'darkgrey',
+        text: t('provisioning.status-badge.pulling', 'Pulling'),
+        icon: 'spinner',
+      };
     case 'error':
       return {
         color: 'red',

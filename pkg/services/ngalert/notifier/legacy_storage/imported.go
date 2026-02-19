@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -71,7 +72,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -98,9 +99,9 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	)
 
 	// Apply renames to imported intervals
-	result := make([]definitions.AmMuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	result := make([]config.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
 
-	pushRenamed := func(mt definitions.AmMuteTimeInterval) {
+	pushRenamed := func(mt config.MuteTimeInterval) {
 		if newName, renamed := renames[mt.Name]; renamed {
 			mt.Name = newName
 		}
@@ -108,7 +109,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	}
 
 	for _, ti := range importedTime {
-		pushRenamed(definitions.AmMuteTimeInterval(ti))
+		pushRenamed(config.MuteTimeInterval(ti))
 	}
 
 	for _, mti := range importedMute {

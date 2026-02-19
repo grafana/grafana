@@ -51,7 +51,10 @@ export const FeaturesList = ({
       <Text>
         <Trans i18nKey="provisioning.features-list.learn-more-documentation">
           Want to learn more? See our{' '}
-          <TextLink external href={'https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/'}>
+          <TextLink
+            external
+            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
+          >
             documentation
           </TextLink>
           .

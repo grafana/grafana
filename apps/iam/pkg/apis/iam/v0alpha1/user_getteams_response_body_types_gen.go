@@ -3,36 +3,26 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetTeamsUserTeam struct {
+type VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam struct {
 	User       string `json:"user"`
 	Team       string `json:"team"`
 	Permission string `json:"permission"`
 	External   bool   `json:"external"`
 }
 
-// NewGetTeamsUserTeam creates a new GetTeamsUserTeam object.
-func NewGetTeamsUserTeam() *GetTeamsUserTeam {
-	return &GetTeamsUserTeam{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for GetTeamsUserTeam.
-func (GetTeamsUserTeam) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsUserTeam"
+// NewVersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam creates a new VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam object.
+func NewVersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam() *VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam {
+	return &VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{}
 }
 
 // +k8s:openapi-gen=true
 type GetTeamsBody struct {
-	Items []GetTeamsUserTeam `json:"items"`
+	Items []VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam `json:"items"`
 }
 
 // NewGetTeamsBody creates a new GetTeamsBody object.
 func NewGetTeamsBody() *GetTeamsBody {
 	return &GetTeamsBody{
-		Items: []GetTeamsUserTeam{},
+		Items: []VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{},
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for GetTeamsBody.
-func (GetTeamsBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamsBody"
 }

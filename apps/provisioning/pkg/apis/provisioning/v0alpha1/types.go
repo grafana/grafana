@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-const OpenAPIPrefix = "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
-
 // When this code is changed, make sure to update the code generation.
 // As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
 // If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
@@ -23,10 +21,6 @@ type Repository struct {
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
-func (Repository) OpenAPIModelName() string {
-	return OpenAPIPrefix + "Repository"
-}
-
 type SecureValues struct {
 	// Token used to connect the configured repository
 	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
@@ -35,20 +29,12 @@ type SecureValues struct {
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 }
 
-func (SecureValues) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SecureValues"
-}
-
 func (v SecureValues) IsZero() bool {
 	return v.Token.IsZero() && v.WebhookSecret.IsZero()
 }
 
 type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
-}
-
-func (LocalRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "LocalRepositoryConfig"
 }
 
 // Workflow used for changes in the repository.
@@ -81,10 +67,6 @@ type GitHubRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (GitHubRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubRepositoryConfig"
-}
-
 type GitRepositoryConfig struct {
 	// The repository URL (e.g. `https://github.com/example/test.git`).
 	URL string `json:"url,omitempty"`
@@ -98,10 +80,6 @@ type GitRepositoryConfig struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path string `json:"path,omitempty"`
-}
-
-func (GitRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitRepositoryConfig"
 }
 
 type BitbucketRepositoryConfig struct {
@@ -119,10 +97,6 @@ type BitbucketRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (BitbucketRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "BitbucketRepositoryConfig"
-}
-
 type GitLabRepositoryConfig struct {
 	// The repository URL (e.g. `https://gitlab.com/example/test`).
 	URL string `json:"url,omitempty"`
@@ -136,17 +110,9 @@ type GitLabRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (GitLabRepositoryConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitLabRepositoryConfig"
-}
-
 // RepositoryType defines the types of Repository
 // +enum
 type RepositoryType string
-
-func (RepositoryType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryType"
-}
 
 // RepositoryType values
 const (
@@ -257,10 +223,6 @@ type ConnectionInfo struct {
 	Name string `json:"name"`
 }
 
-func (ConnectionInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionInfo"
-}
-
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
@@ -304,10 +266,6 @@ type RepositorySpec struct {
 	Connection *ConnectionInfo `json:"connection,omitempty"`
 }
 
-func (RepositorySpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositorySpec"
-}
-
 // SyncTargetType defines where we want all values to resolve
 // +enum
 type SyncTargetType string
@@ -341,10 +299,6 @@ type SyncOptions struct {
 	// The system defines a default value for this field, which will overwrite the
 	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
-}
-
-func (SyncOptions) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SyncOptions"
 }
 
 // The status of a Repository.
@@ -389,10 +343,6 @@ type RepositoryStatus struct {
 	Quota QuotaStatus `json:"quota,omitempty"`
 }
 
-func (RepositoryStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryStatus"
-}
-
 type SyncStatus struct {
 	// pending, running, success, error
 	State JobState `json:"state"`
@@ -420,10 +370,6 @@ type SyncStatus struct {
 	Incremental bool `json:"incremental,omitempty"`
 }
 
-func (SyncStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SyncStatus"
-}
-
 type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
@@ -431,17 +377,9 @@ type WebhookStatus struct {
 	LastEvent        int64    `json:"lastEvent,omitempty"`
 }
 
-func (WebhookStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "WebhookStatus"
-}
-
 type TokenStatus struct {
 	LastUpdated int64 `json:"lastUpdated,omitempty"`
 	Expiration  int64 `json:"expiration,omitempty"`
-}
-
-func (TokenStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "TokenStatus"
 }
 
 // QuotaStatus represents the quota limits configured for this repository.
@@ -456,10 +394,6 @@ type QuotaStatus struct {
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
 }
 
-func (QuotaStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "QuotaStatus"
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -469,17 +403,9 @@ type RepositoryList struct {
 	Items []Repository `json:"items"`
 }
 
-func (RepositoryList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryList"
-}
-
 // The kubernetes action required when loading a given resource
 // +enum
 type ResourceAction string
-
-func (ResourceAction) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceAction"
-}
 
 // ResourceAction values
 const (
@@ -520,10 +446,6 @@ type ResourceWrapper struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
-func (ResourceWrapper) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceWrapper"
-}
-
 type ResourceType struct {
 	Group    string `json:"group,omitempty"`
 	Version  string `json:"version,omitempty"`
@@ -532,10 +454,6 @@ type ResourceType struct {
 
 	// For non-k8s native formats, what did this start as
 	Classic ClassicFileType `json:"classic,omitempty"`
-}
-
-func (ResourceType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceType"
 }
 
 type ResourceObjects struct {
@@ -559,10 +477,6 @@ type ResourceObjects struct {
 	Upsert common.Unstructured `json:"upsert,omitempty"`
 }
 
-func (ResourceObjects) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceObjects"
-}
-
 type ResourceRepositoryInfo struct {
 	// The repository type
 	Type RepositoryType `json:"type"`
@@ -575,10 +489,6 @@ type ResourceRepositoryInfo struct {
 
 	// The name (identifier)
 	Name string `json:"name"`
-}
-
-func (ResourceRepositoryInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceRepositoryInfo"
 }
 
 type RepositoryURLs struct {
@@ -595,10 +505,6 @@ type RepositoryURLs struct {
 	CompareURL string `json:"compareURL,omitempty"`
 }
 
-func (RepositoryURLs) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryURLs"
-}
-
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FileList struct {
@@ -609,20 +515,12 @@ type FileList struct {
 	Items []FileItem `json:"items"`
 }
 
-func (FileList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "FileList"
-}
-
 type FileItem struct {
 	Path     string `json:"path"`
 	Size     int64  `json:"size,omitempty"`
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
-}
-
-func (FileItem) OpenAPIModelName() string {
-	return OpenAPIPrefix + "FileItem"
 }
 
 // Information we can get just from the file listing
@@ -635,10 +533,6 @@ type ResourceList struct {
 	Items []ResourceListItem `json:"items"`
 }
 
-func (ResourceList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceList"
-}
-
 type ResourceListItem struct {
 	Path     string `json:"path"`
 	Group    string `json:"group"`
@@ -649,10 +543,6 @@ type ResourceListItem struct {
 
 	Title  string `json:"title,omitempty"`
 	Folder string `json:"folder,omitempty"`
-}
-
-func (ResourceListItem) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceListItem"
 }
 
 // Information we can get just from the file listing
@@ -676,10 +566,6 @@ type ResourceStats struct {
 	Managed []ManagerStats `json:"managed,omitempty"`
 }
 
-func (ResourceStats) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceStats"
-}
-
 type ManagerStats struct {
 	// Manager kind
 	Kind utils.ManagerKind `json:"kind,omitempty"`
@@ -691,18 +577,10 @@ type ManagerStats struct {
 	Stats []ResourceCount `json:"stats"`
 }
 
-func (ManagerStats) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ManagerStats"
-}
-
 type ResourceCount struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
 	Count    int64  `json:"count"`
-}
-
-func (ResourceCount) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceCount"
 }
 
 // TestResults is the result of a test connection operation
@@ -721,10 +599,6 @@ type TestResults struct {
 
 	// Field related errors
 	Errors []ErrorDetails `json:"errors,omitempty"`
-}
-
-func (TestResults) OpenAPIModelName() string {
-	return OpenAPIPrefix + "TestResults"
 }
 
 // ErrorDetails describes an individual field error intended to help users identify and fix issues
@@ -759,10 +633,6 @@ type ErrorDetails struct {
 	// BadValue interface{} `json:"badValue,omitempty"`
 }
 
-func (ErrorDetails) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ErrorDetails"
-}
-
 // HistoryList is a list of versions of a resource
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HistoryList struct {
@@ -773,18 +643,10 @@ type HistoryList struct {
 	Items []HistoryItem `json:"items"`
 }
 
-func (HistoryList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "HistoryList"
-}
-
 type Author struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
 	AvatarURL string `json:"avatarURL,omitempty"`
-}
-
-func (Author) OpenAPIModelName() string {
-	return OpenAPIPrefix + "Author"
 }
 
 type HistoryItem struct {
@@ -793,10 +655,6 @@ type HistoryItem struct {
 	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
-}
-
-func (HistoryItem) OpenAPIModelName() string {
-	return OpenAPIPrefix + "HistoryItem"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -808,10 +666,6 @@ type RefList struct {
 	Items []RefItem `json:"items"`
 }
 
-func (RefList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RefList"
-}
-
 type RefItem struct {
 	// The name of the reference (branch or tag)
 	Name string `json:"name"`
@@ -819,8 +673,4 @@ type RefItem struct {
 	Hash string `json:"hash,omitempty"`
 	// The URL to the reference (branch or tag)
 	RefURL string `json:"refURL,omitempty"`
-}
-
-func (RefItem) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RefItem"
 }

@@ -20,11 +20,6 @@ func NewShortURLstatusOperatorState() *ShortURLstatusOperatorState {
 	return &ShortURLstatusOperatorState{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for ShortURLstatusOperatorState.
-func (ShortURLstatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLstatusOperatorState"
-}
-
 // +k8s:openapi-gen=true
 type ShortURLStatus struct {
 	// The last time the short URL was used, 0 is the initial value
@@ -41,11 +36,6 @@ func NewShortURLStatus() *ShortURLStatus {
 	return &ShortURLStatus{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for ShortURLStatus.
-func (ShortURLStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLStatus"
-}
-
 // +k8s:openapi-gen=true
 type ShortURLStatusOperatorStateState string
 
@@ -54,8 +44,3 @@ const (
 	ShortURLStatusOperatorStateStateInProgress ShortURLStatusOperatorStateState = "in_progress"
 	ShortURLStatusOperatorStateStateFailed     ShortURLStatusOperatorStateState = "failed"
 )
-
-// OpenAPIModelName returns the OpenAPI model name for ShortURLStatusOperatorStateState.
-func (ShortURLStatusOperatorStateState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLStatusOperatorStateState"
-}

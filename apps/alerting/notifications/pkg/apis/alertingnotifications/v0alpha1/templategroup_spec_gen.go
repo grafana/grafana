@@ -10,11 +10,6 @@ const (
 	TemplateGroupTemplateKindMimir   TemplateGroupTemplateKind = "mimir"
 )
 
-// OpenAPIModelName returns the OpenAPI model name for TemplateGroupTemplateKind.
-func (TemplateGroupTemplateKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupTemplateKind"
-}
-
 // +k8s:openapi-gen=true
 type TemplateGroupSpec struct {
 	Title   string                    `json:"title"`
@@ -27,9 +22,4 @@ func NewTemplateGroupSpec() *TemplateGroupSpec {
 	return &TemplateGroupSpec{
 		Kind: TemplateGroupTemplateKindGrafana,
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for TemplateGroupSpec.
-func (TemplateGroupSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupSpec"
 }

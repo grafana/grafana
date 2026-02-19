@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -10,23 +9,21 @@ import { VariableValueSelectWrapper } from './VariableControls';
 interface DrilldownControlsProps {
   adHocVar: AdHocFiltersVariable;
   groupByVar: GroupByVariable;
-  isEditing?: boolean;
 }
 
 /**
  * DrilldownControls renders the AdHoc and GroupBy variables in a single row above the other variables.
  */
-export function DrilldownControls({ adHocVar, groupByVar, isEditing }: DrilldownControlsProps) {
+export function DrilldownControls({ adHocVar, groupByVar }: DrilldownControlsProps) {
   const styles = useStyles2(getStyles);
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
 
   return (
     <div className={styles.drilldownRow}>
       <div className={styles.adHocContainer}>
-        <VariableValueSelectWrapper variable={adHocVar} isEditingNewLayouts={isEditingNewLayouts} />
+        <VariableValueSelectWrapper variable={adHocVar} />
       </div>
       <div className={styles.groupByContainer}>
-        <VariableValueSelectWrapper variable={groupByVar} isEditingNewLayouts={isEditingNewLayouts} />
+        <VariableValueSelectWrapper variable={groupByVar} />
       </div>
     </div>
   );

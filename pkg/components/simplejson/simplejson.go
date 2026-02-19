@@ -175,7 +175,8 @@ func (j *Json) SetPath(branch []string, val any) {
 	}
 	curr := j.data.(map[string]any)
 
-	for _, b := range branch[:len(branch)-1] {
+	for i := 0; i < len(branch)-1; i++ {
+		b := branch[i]
 		// key exists?
 		if _, ok := curr[b]; !ok {
 			n := make(map[string]any)

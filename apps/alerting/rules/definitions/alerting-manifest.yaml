@@ -1,9 +1,8 @@
-apiVersion: apps.grafana.app/v1alpha2
+apiVersion: apps.grafana.com/v1alpha2
 kind: AppManifest
 metadata:
   name: alerting
 spec:
-  appDisplayName: ""
   appName: alerting
   group: rules.alerting.grafana.app
   preferredVersion: v0alpha1
@@ -80,7 +79,9 @@ spec:
                 field which has no requirements on format
               type: string
             details:
-              additionalProperties: true
+              additionalProperties:
+                additionalProperties: {}
+                type: object
               description: details contains any extra information that is operator-specific
               type: object
             lastEvaluation:
@@ -202,7 +203,9 @@ spec:
           additionalProperties: false
           properties:
             additionalFields:
-              additionalProperties: true
+              additionalProperties:
+                additionalProperties: {}
+                type: object
               description: additionalFields is reserved for future use
               type: object
             operatorStates:
@@ -283,7 +286,9 @@ spec:
                 field which has no requirements on format
               type: string
             details:
-              additionalProperties: true
+              additionalProperties:
+                additionalProperties: {}
+                type: object
               description: details contains any extra information that is operator-specific
               type: object
             lastEvaluation:
@@ -357,7 +362,9 @@ spec:
           additionalProperties: false
           properties:
             additionalFields:
-              additionalProperties: true
+              additionalProperties:
+                additionalProperties: {}
+                type: object
               description: additionalFields is reserved for future use
               type: object
             operatorStates:

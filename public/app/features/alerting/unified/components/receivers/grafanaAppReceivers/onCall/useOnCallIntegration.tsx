@@ -263,8 +263,7 @@ export function useOnCallIntegration() {
 
         return {
           ...notifier,
-          // Only spread options if they exist (legacy API has them, new API doesn't)
-          ...(notifier.options && { options: enhanceOptions(notifier.options) }),
+          options: enhanceOptions(notifier.options),
           // Also enhance versions[].options so getOptionsForVersion() returns the enhanced options
           versions: notifier.versions?.map((version) => ({
             ...version,

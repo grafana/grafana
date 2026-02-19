@@ -6,6 +6,7 @@ import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
 test.use({
   featureToggles: {
+    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,

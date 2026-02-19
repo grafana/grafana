@@ -151,8 +151,6 @@ type UnifiedAlertingSettings struct {
 	AlertmanagerMaxTemplateOutputSize int64
 
 	BacktestingMaxEvaluations int
-
-	IgnorePendingForNoDataAndError bool
 }
 
 type RecordingRuleSettings struct {

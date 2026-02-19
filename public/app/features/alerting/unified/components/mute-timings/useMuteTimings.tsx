@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
 
 import { base64UrlEncode } from '@grafana/alerting';
-import {
-  API_GROUP,
-  API_VERSION,
-  ObjectMeta,
-  TimeInterval,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
+  IoK8SApimachineryPkgApisMetaV1ObjectMeta,
+} from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
   isK8sEntityProvisioned,
   isProvisionedResource,
@@ -20,6 +17,7 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
+import { getAPINamespace } from '../../../../../api/utils';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -30,10 +28,10 @@ import {
 
 const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 const {
-  useLazyListTimeIntervalQuery,
-  useCreateTimeIntervalMutation,
-  useReplaceTimeIntervalMutation,
-  useDeleteTimeIntervalMutation,
+  useLazyListNamespacedTimeIntervalQuery,
+  useCreateNamespacedTimeIntervalMutation,
+  useReplaceNamespacedTimeIntervalMutation,
+  useDeleteNamespacedTimeIntervalMutation,
 } = timeIntervalsApi;
 
 /**
@@ -42,11 +40,14 @@ const {
  * */
 export type MuteTiming = MuteTimeInterval & {
   id: string;
-  metadata?: ObjectMeta;
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
 };
 
+/** Alias for generated kuberenetes Alerting API Server type */
+type TimeIntervalV0Alpha1 = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+
 /** Parse kubernetes API response into a Mute Timing */
-const parseK8sTimeInterval: (item: TimeInterval) => MuteTiming = (item) => {
+const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
     ...spec,
@@ -86,7 +87,7 @@ const useAlertmanagerIntervals = () =>
   });
 
 const useGrafanaAlertmanagerIntervals = () =>
-  useLazyListTimeIntervalQuery({
+  useLazyListNamespacedTimeIntervalQuery({
     selectFromResult: ({ data, ...rest }) => {
       return {
         data: data?.items.map((item) => parseK8sTimeInterval(item)),
@@ -96,21 +97,6 @@ const useGrafanaAlertmanagerIntervals = () =>
   });
 
 /**
- * Imported time intervals (provenance: converted_prometheus) are marked with canUse: false
- * by the backend because they belong to external Mimir-kind resources and should not be
- * referenced in Grafana-managed routes or rules.
- */
-const isUsableTimeInterval = (timing: MuteTiming): boolean => {
-  const canUse = timing.metadata?.annotations?.[K8sAnnotations.CanUse];
-  return canUse === 'true';
-};
-
-interface UseMuteTimingsOptions extends BaseAlertmanagerArgs, Skippable {
-  /** When true, filters out intervals marked as non-usable (canUse: false). Defaults to false. */
-  filterUsable?: boolean;
-}
-
-/**
  * Depending on alertmanager source, fetches mute timings.
  *
  * If the alertmanager source is Grafana, and `alertingApiServer` feature toggle is enabled,
@@ -118,7 +104,7 @@ interface UseMuteTimingsOptions extends BaseAlertmanagerArgs, Skippable {
  *
  * Otherwise, fetches and parses from the alertmanager config API
  */
-export const useMuteTimings = ({ alertmanager, skip, filterUsable = false }: UseMuteTimingsOptions) => {
+export const useMuteTimings = ({ alertmanager, skip }: BaseAlertmanagerArgs & Skippable) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [getGrafanaTimeIntervals, intervalsResponse] = useGrafanaAlertmanagerIntervals();
@@ -129,19 +115,13 @@ export const useMuteTimings = ({ alertmanager, skip, filterUsable = false }: Use
       return;
     }
     if (useK8sApi) {
-      getGrafanaTimeIntervals({});
+      const namespace = getAPINamespace();
+      getGrafanaTimeIntervals({ namespace });
     } else {
       getAlertmanagerTimeIntervals(alertmanager);
     }
   }, [alertmanager, getAlertmanagerTimeIntervals, getGrafanaTimeIntervals, skip, useK8sApi]);
-
-  const response = useK8sApi ? intervalsResponse : configApiResponse;
-
-  if (filterUsable && useK8sApi && response.data) {
-    return { ...response, data: response.data.filter(isUsableTimeInterval) };
-  }
-
-  return response;
+  return useK8sApi ? intervalsResponse : configApiResponse;
 };
 
 type CreateUpdateMuteTimingArgs = { interval: MuteTimeInterval };
@@ -157,12 +137,15 @@ type CreateUpdateMuteTimingArgs = { interval: MuteTimeInterval };
 export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [createGrafanaTimeInterval] = useCreateTimeIntervalMutation();
+  const [createGrafanaTimeInterval] = useCreateNamespacedTimeIntervalMutation();
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
   const addToK8sAPI = useAsync(({ interval }: CreateUpdateMuteTimingArgs) => {
+    const namespace = getAPINamespace();
+
     return createGrafanaTimeInterval({
-      timeInterval: { apiVersion: `${API_GROUP}/${API_VERSION}`, kind: 'TimeInterval', metadata: {}, spec: interval },
+      namespace,
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: { metadata: {}, spec: interval },
     }).unwrap();
   });
 
@@ -181,7 +164,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [getGrafanaTimeInterval, k8sResponse] = useLazyListTimeIntervalQuery({
+  const [getGrafanaTimeInterval, k8sResponse] = useLazyListNamespacedTimeIntervalQuery({
     selectFromResult: ({ data, ...rest }) => {
       if (!data) {
         return { data, ...rest };
@@ -220,8 +203,9 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 
   useEffect(() => {
     if (useK8sApi) {
+      const namespace = getAPINamespace();
       getGrafanaTimeInterval(
-        { fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(nameToFind)]]) },
+        { namespace, fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(nameToFind)]]) },
         true
       );
     } else {
@@ -243,16 +227,17 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [replaceGrafanaTimeInterval] = useReplaceTimeIntervalMutation();
+  const [replaceGrafanaTimeInterval] = useReplaceNamespacedTimeIntervalMutation();
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
   const updateToK8sAPI = useAsync(
     async ({ interval, originalName }: CreateUpdateMuteTimingArgs & { originalName: string }) => {
+      const namespace = getAPINamespace();
+
       return replaceGrafanaTimeInterval({
         name: originalName,
-        timeInterval: {
-          apiVersion: `${API_GROUP}/${API_VERSION}`,
-          kind: 'TimeInterval',
+        namespace,
+        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: {
           spec: interval,
           metadata: { name: originalName },
         },
@@ -278,7 +263,7 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [updateConfiguration, _updateConfigurationRequestState] = useProduceNewAlertmanagerConfiguration();
-  const [deleteGrafanaTimeInterval] = useDeleteTimeIntervalMutation();
+  const [deleteGrafanaTimeInterval] = useDeleteNamespacedTimeIntervalMutation();
 
   const deleteFromAlertmanagerAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
     const action = deleteMuteTimingAction({ name });
@@ -286,7 +271,12 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   });
 
   const deleteFromK8sAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
-    await deleteGrafanaTimeInterval({ name }).unwrap();
+    const namespace = getAPINamespace();
+    await deleteGrafanaTimeInterval({
+      name,
+      namespace,
+      ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
+    }).unwrap();
   });
 
   return useK8sApi ? deleteFromK8sAPI : deleteFromAlertmanagerAPI;

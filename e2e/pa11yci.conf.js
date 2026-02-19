@@ -83,7 +83,7 @@ const config = {
     },
     {
       url: '${HOST}/datasources',
-      threshold: 2,
+      threshold: 0,
     },
     {
       url: '${HOST}/org/users',
@@ -95,7 +95,7 @@ const config = {
     },
     {
       url: '${HOST}/plugins',
-      threshold: 2,
+      threshold: 0,
     },
     {
       url: '${HOST}/org',

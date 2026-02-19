@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 const helpOptions = [
   { value: 0, label: 'Documentation', href: 'https://grafana.com/docs/grafana/latest' },
@@ -24,16 +24,17 @@ export const WelcomeBanner = () => {
           <Trans i18nKey="welcome.welcome-banner.need-help">Need help?</Trans>
         </h3>
         <div className={styles.helpLinks}>
-          {helpOptions.map((option, index) => (
-            <TextLink
-              key={`${option.label}-${index}`}
-              href={`${option.href}?utm_source=grafana_gettingstarted`}
-              external
-              inline={false}
-            >
-              {option.label}
-            </TextLink>
-          ))}
+          {helpOptions.map((option, index) => {
+            return (
+              <a
+                key={`${option.label}-${index}`}
+                className={styles.helpLink}
+                href={`${option.href}?utm_source=grafana_gettingstarted`}
+              >
+                {option.label}
+              </a>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -94,11 +95,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     helpLinks: css({
       display: 'flex',
       flexWrap: 'wrap',
-      gap: theme.spacing(2),
+    }),
+    helpLink: css({
+      marginRight: theme.spacing(2),
+      textDecoration: 'underline',
       textWrap: 'nowrap',
 
       [theme.breakpoints.down('sm')]: {
-        gap: theme.spacing(1),
+        marginRight: theme.spacing(1),
       },
     }),
   };

@@ -14,11 +14,10 @@ import (
 
 	unifiedStorage "github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana-app-sdk/simple"
 	quotasv0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type QuotasAppConfig struct {
@@ -62,7 +61,7 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 	}
 
 	writer.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetUsageResponse{
+	return json.NewEncoder(writer).Encode(quotasv0alpha1.GetUsage{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "quotas.grafana.com/v0alpha1",
 			Kind:       "Quotas",

@@ -90,12 +90,8 @@ export function TraceQLEditor(props: Props) {
           // Parse query that might already exist (e.g., after a page refresh)
           const model = editor.getModel();
           if (model) {
-            try {
-              const errorNodes = getErrorNodes(model.getValue());
-              setMarkers(monaco, model, errorNodes);
-            } catch (err) {
-              console.warn('TraceQL editor: failed to update syntax error markers', err);
-            }
+            const errorNodes = getErrorNodes(model.getValue());
+            setMarkers(monaco, model, errorNodes);
           }
 
           // Register callback for query changes
@@ -111,28 +107,21 @@ export function TraceQLEditor(props: Props) {
               window.clearTimeout(errorTimeoutId.current);
             }
 
-            try {
-              const errorNodes = getErrorNodes(model.getValue());
-              const cursorPosition = changeEvent.changes[0].rangeOffset;
+            const errorNodes = getErrorNodes(model.getValue());
+            const cursorPosition = changeEvent.changes[0].rangeOffset;
 
-              // Immediately updates the squiggles, in case the user fixed an error,
-              // excluding the error around the cursor position
-              setMarkers(
-                monaco,
-                model,
-                errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
-              );
+            // Immediately updates the squiggles, in case the user fixed an error,
+            // excluding the error around the cursor position
+            setMarkers(
+              monaco,
+              model,
+              errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
+            );
 
-              errorTimeoutId.current = window.setTimeout(() => {
-                try {
-                  setMarkers(monaco, model, errorNodes);
-                } catch (err) {
-                  console.warn('TraceQL editor: failed to update syntax error markers', err);
-                }
-              }, 500);
-            } catch (err) {
-              console.warn('TraceQL editor: failed to parse query for error highlighting', err);
-            }
+            // Show all errors after a short delay, to avoid flickering
+            errorTimeoutId.current = window.setTimeout(() => {
+              setMarkers(monaco, model, errorNodes);
+            }, 500);
           });
         }}
       />

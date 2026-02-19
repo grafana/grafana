@@ -69,7 +69,7 @@ func (r *APIGroupRunner) Init(ctx context.Context) error {
 }
 
 func (r *APIGroupRunner) GetBuilders() []AppBuilder {
-	builders := []AppBuilder{} //nolint:prealloc
+	builders := []AppBuilder{}
 	for _, g := range r.groups {
 		builders = append(builders, g.builders...)
 	}

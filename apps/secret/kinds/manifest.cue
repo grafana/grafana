@@ -8,5 +8,4 @@ manifest: {
 	versions: {
 		"v1beta1": v1beta1.manifest
 	}
-	roles: {}
 }

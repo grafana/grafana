@@ -4,14 +4,16 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
+import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 
-import { UsersExternalButton } from './UsersExternalButton';
 import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
-import { getCanInviteUsersToOrg } from './utils';
+import { getExternalUserMngLinkUrl } from './utils';
 
 export interface OwnProps {
   showInvites: boolean;
@@ -22,6 +24,8 @@ function mapStateToProps(state: StoreState) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
     pendingInvitesCount: selectTotal(state.invites),
+    externalUserMngLinkName: state.users.externalUserMngLinkName,
+    externalUserMngLinkUrl: state.users.externalUserMngLinkUrl,
   };
 }
 
@@ -34,6 +38,8 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const UsersActionBarUnconnected = ({
+  externalUserMngLinkName,
+  externalUserMngLinkUrl,
   searchQuery,
   pendingInvitesCount,
   changeSearchQuery,
@@ -44,6 +50,11 @@ export const UsersActionBarUnconnected = ({
     { label: t('users.users-action-bar-unconnected.options.label.users', 'Users'), value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
+  const canAddToOrg: boolean = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
+  // Show invite button in the following cases:
+  // 1) the instance is not a hosted Grafana instance (!config.externalUserMngInfo)
+  // 2) new basic auth users can be created for this instance (!config.disableLoginForm).
+  const showInviteButton: boolean = canAddToOrg && !(config.disableLoginForm && config.externalUserMngInfo);
 
   const onExternalUserMngClick = () => {
     reportInteraction('users_admin_actions_clicked', {
@@ -69,12 +80,21 @@ export const UsersActionBarUnconnected = ({
           <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
         </div>
       )}
-      {getCanInviteUsersToOrg() && (
+      {showInviteButton && (
         <LinkButton href="org/users/invite">
           <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
         </LinkButton>
       )}
-      <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />
+      {externalUserMngLinkUrl && (
+        <LinkButton
+          onClick={onExternalUserMngClick}
+          href={getExternalUserMngLinkUrl('manage-users')}
+          target="_blank"
+          rel="noopener"
+        >
+          {externalUserMngLinkName}
+        </LinkButton>
+      )}
     </div>
   );
 };

@@ -906,7 +906,9 @@ export type AlertRuleOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -917,7 +919,9 @@ export type AlertRuleOperatorState = {
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -1041,7 +1045,9 @@ export type RecordingRuleOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -1052,7 +1058,9 @@ export type RecordingRuleOperatorState = {
 export type RecordingRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */

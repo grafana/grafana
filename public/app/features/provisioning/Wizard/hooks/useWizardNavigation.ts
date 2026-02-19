@@ -9,6 +9,7 @@ import { Step } from '../Stepper';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
+  initialStep: WizardStep;
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
@@ -31,6 +32,7 @@ export interface UseWizardNavigationReturn {
 }
 
 export function useWizardNavigation({
+  initialStep,
   steps,
   canSkipSync,
   setStepStatusInfo,
@@ -41,10 +43,8 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  // local file provisioning has no auth type step
-  const [activeStep, setActiveStep] = useState<WizardStep>(repoType === 'local' ? 'connection' : 'authType');
-  // local file provisioning will always have the first step (authType) step completed since we skipped it
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>(() => (repoType === 'local' ? ['authType'] : []));
+  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
@@ -84,13 +84,7 @@ export function useWizardNavigation({
         workflowsEnabled: getWorkflows(formData.repository),
         ...(repoType === 'github' && { githubAuthType }),
       });
-      // Navigate to repository status page instead of listing page
-      const repoName = formData.repositoryName;
-      if (repoName) {
-        navigate(`${PROVISIONING_URL}/${repoName}`);
-      } else {
-        navigate(PROVISIONING_URL);
-      }
+      navigate(PROVISIONING_URL);
     } else {
       let nextStepIndex = currentStepIndex + 1;
 

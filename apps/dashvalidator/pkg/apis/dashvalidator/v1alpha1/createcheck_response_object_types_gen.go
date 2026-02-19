@@ -9,33 +9,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type CreateCheckResponse struct {
+type CreateCheck struct {
 	metav1.TypeMeta `json:",inline"`
 	CreateCheckBody `json:",inline"`
 }
 
-func NewCreateCheckResponse() *CreateCheckResponse {
-	return &CreateCheckResponse{}
+func NewCreateCheck() *CreateCheck {
+	return &CreateCheck{}
 }
 
 func (t *CreateCheckBody) DeepCopyInto(dst *CreateCheckBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *CreateCheckResponse) DeepCopyObject() runtime.Object {
-	dst := NewCreateCheckResponse()
+func (o *CreateCheck) DeepCopyObject() runtime.Object {
+	dst := NewCreateCheck()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *CreateCheckResponse) DeepCopyInto(dst *CreateCheckResponse) {
+func (o *CreateCheck) DeepCopyInto(dst *CreateCheck) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.CreateCheckBody.DeepCopyInto(&dst.CreateCheckBody)
 }
 
-func (CreateCheckResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckResponse"
-}
-
-var _ runtime.Object = NewCreateCheckResponse()
+var _ runtime.Object = NewCreateCheck()

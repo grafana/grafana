@@ -43,7 +43,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("Initialize secrets tables", &migrator.RawSQLMigration{})
 
-	tables := make([]migrator.Table, 0, 4)
+	tables := []migrator.Table{}
 
 	secureValueTable := migrator.Table{
 		Name: TableNameSecureValue,

@@ -21,6 +21,7 @@ const repeatOptions = [1, 2, 3, 4];
 
 test.use({
   featureToggles: {
+    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

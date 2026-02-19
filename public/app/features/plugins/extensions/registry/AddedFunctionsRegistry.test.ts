@@ -1,14 +1,22 @@
 import { firstValueFrom, take } from 'rxjs';
 
 import { AppPluginConfig } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
 import { basicApp } from '../test-fixtures/config.apps';
+import { isGrafanaDevMode } from '../utils';
 
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
+
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+
+  // Manually set the dev mode to false
+  // (to make sure that by default we are testing a production scneario)
+  isGrafanaDevMode: jest.fn().mockReturnValue(false),
+}));
 
 jest.mock('../logs/log', () => {
   const { createLogMock } = jest.requireActual('../logs/testUtils');
@@ -27,7 +35,7 @@ describe('addedFunctionsRegistry', () => {
 
   beforeEach(() => {
     resetLogMock(log);
-    config.buildInfo.env = 'production';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -592,7 +600,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should not register a function added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
     // Enabling dev mode
-    config.buildInfo.env = 'development';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const registry = await createRegistry();
     const fnConfig = {
@@ -615,7 +623,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should register a function added by core Grafana in dev-mode even if the meta-info is missing', async () => {
     // Enabling dev mode
-    config.buildInfo.env = 'development';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const registry = await createRegistry();
     const fnConfig = {
@@ -637,6 +645,9 @@ describe('addedFunctionsRegistry', () => {
   });
 
   it('should register a function added by a plugin in production mode even if the meta-info is missing', async () => {
+    // Production mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
     const registry = await createRegistry();
     const fnConfig = {
       title: 'Function 1',
@@ -658,7 +669,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should register a function added by a plugin in dev-mode if the meta-info is present', async () => {
     // Enabling dev mode
-    config.buildInfo.env = 'development';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const fnConfig = {
       title: 'Function 1',

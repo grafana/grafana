@@ -14,7 +14,7 @@ import (
 // ExampleGetFooHandler handles requests for the GET /foo subresource route
 func ExampleGetFooHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	message := "Hello, world!"
-	return json.NewEncoder(writer).Encode(v1alpha1.GetFooResponse{
+	return json.NewEncoder(writer).Encode(v1alpha1.GetFoo{
 		GetFooBody: v1alpha1.GetFooBody{
 			Message: message,
 		},
@@ -27,7 +27,7 @@ func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWrit
 	if request.URL.Query().Has("message") {
 		message = request.URL.Query().Get("message")
 	}
-	return json.NewEncoder(writer).Encode(v1alpha1.GetSomethingResponse{
+	return json.NewEncoder(writer).Encode(v1alpha1.GetSomething{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", v1alpha1.APIGroup, v1alpha1.APIVersion),
 		},
@@ -44,7 +44,7 @@ func GetOtherHandler(ctx context.Context, writer app.CustomRouteResponseWriter, 
 	if request.URL.Query().Has("message") {
 		message = request.URL.Query().Get("message")
 	}
-	return json.NewEncoder(writer).Encode(v1alpha1.GetOtherResponse{
+	return json.NewEncoder(writer).Encode(v1alpha1.GetOther{
 		Message: message,
 	})
 }

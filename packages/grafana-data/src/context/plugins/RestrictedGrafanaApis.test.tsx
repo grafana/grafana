@@ -12,15 +12,9 @@ const mockAlertRuleFormSchema = {
   safeParse: jest.fn((data: unknown) => ({ success: true, data })),
 };
 
-const mockDashboardMutationAPI = {
-  execute: jest.fn(async () => ({ success: true, changes: [] })),
-  getPayloadSchema: jest.fn(() => null),
-};
-
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
     alertingAlertRuleFormSchema: mockAlertRuleFormSchema,
-    dashboardMutationAPI: mockDashboardMutationAPI,
   };
 
   beforeEach(() => {

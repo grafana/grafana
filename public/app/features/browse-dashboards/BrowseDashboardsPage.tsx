@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -41,9 +41,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
-  const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
-  const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
+  const isRecentlyViewedEnabled = !folderUID && evaluateBooleanFlag('recentlyViewedDashboards', false);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -82,13 +80,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
 
     hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
+    const isExperimentTreatment = evaluateBooleanFlag('experimentRecentlyViewedDashboards', false);
 
     reportInteraction('dashboards_browse_list_viewed', {
       experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
       has_recently_viewed_component: isExperimentTreatment,
     });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();

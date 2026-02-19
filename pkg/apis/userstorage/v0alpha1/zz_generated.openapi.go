@@ -14,9 +14,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		UserStorage{}.OpenAPIModelName():     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
-		UserStorageList{}.OpenAPIModelName(): schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
-		UserStorageSpec{}.OpenAPIModelName(): schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage":     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
+		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageList": schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
+		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec": schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref),
 	}
 }
 
@@ -43,20 +43,20 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(UserStorageSpec{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			UserStorageSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -83,7 +83,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -93,7 +93,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(UserStorage{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage"),
 									},
 								},
 							},
@@ -104,7 +104,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			UserStorage{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 

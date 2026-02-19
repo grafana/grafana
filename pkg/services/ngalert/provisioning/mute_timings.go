@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"golang.org/x/exp/maps"
 
@@ -179,7 +180,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
-	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, definitions.TimeInterval(mt.MuteTimeInterval))
+	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -245,7 +246,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		// if the name of the time interval changed
 		if existingInterval.Name != mt.Name {
 			deleteTimeInterval(revision, existingInterval)
-			revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, definitions.TimeInterval(mt.MuteTimeInterval))
+			revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
 			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existingInterval.Name, mt.Name, models.Provenance(mt.Provenance))
 			if err != nil {
@@ -298,7 +299,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	}
 
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
-		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
@@ -309,7 +310,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	deleteTimeInterval(revision, existingInterval)
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		keys, err := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		if err != nil {
 			return err
 		}
@@ -384,7 +385,7 @@ func (svc *MuteTimingService) getMuteTimingByUID(ctx context.Context, revision *
 	return definitions.MuteTimeInterval{}, false, nil
 }
 
-func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.ConfigRevision) []definitions.AmMuteTimeInterval {
+func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.ConfigRevision) []config.MuteTimeInterval {
 	if !svc.includeImported {
 		return nil
 	}
@@ -404,22 +405,22 @@ func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.Confi
 	return intervals
 }
 
-func findByName(name string) func(definitions.AmMuteTimeInterval) bool {
-	return func(interval definitions.AmMuteTimeInterval) bool {
+func findByName(name string) func(config.MuteTimeInterval) bool {
+	return func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
 	}
 }
 
-func findByUID(uid string) func(definitions.AmMuteTimeInterval) bool {
-	return func(interval definitions.AmMuteTimeInterval) bool {
+func findByUID(uid string) func(config.MuteTimeInterval) bool {
+	return func(interval config.MuteTimeInterval) bool {
 		return legacy_storage.NameToUid(interval.Name) == uid
 	}
 }
 
-func getGrafanaTimeIntervals(rev *legacy_storage.ConfigRevision) []definitions.AmMuteTimeInterval {
-	result := make([]definitions.AmMuteTimeInterval, 0, len(rev.Config.AlertmanagerConfig.TimeIntervals)+len(rev.Config.AlertmanagerConfig.MuteTimeIntervals))
+func getGrafanaTimeIntervals(rev *legacy_storage.ConfigRevision) []config.MuteTimeInterval {
+	result := make([]config.MuteTimeInterval, 0, len(rev.Config.AlertmanagerConfig.TimeIntervals)+len(rev.Config.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.Config.AlertmanagerConfig.TimeIntervals {
-		result = append(result, definitions.AmMuteTimeInterval(interval))
+		result = append(result, config.MuteTimeInterval(interval))
 	}
 	return append(result, rev.Config.AlertmanagerConfig.MuteTimeIntervals...)
 }
@@ -429,7 +430,7 @@ func grafanaTimeIntervalExists(rev *legacy_storage.ConfigRevision, name string) 
 	return slices.IndexFunc(grafanaIntervals, findByName(name)) != -1
 }
 
-func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval definitions.AmMuteTimeInterval) {
+func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval config.MuteTimeInterval) {
 	for idx := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
 		if rev.Config.AlertmanagerConfig.MuteTimeIntervals[idx].Name == interval.Name {
 			rev.Config.AlertmanagerConfig.MuteTimeIntervals[idx] = interval
@@ -438,20 +439,20 @@ func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval definitions
 	}
 	for idx := range rev.Config.AlertmanagerConfig.TimeIntervals {
 		if rev.Config.AlertmanagerConfig.TimeIntervals[idx].Name == interval.Name {
-			rev.Config.AlertmanagerConfig.TimeIntervals[idx] = definitions.TimeInterval(interval)
+			rev.Config.AlertmanagerConfig.TimeIntervals[idx] = config.TimeInterval(interval)
 			return
 		}
 	}
 }
 
-func deleteTimeInterval(rev *legacy_storage.ConfigRevision, interval definitions.AmMuteTimeInterval) {
+func deleteTimeInterval(rev *legacy_storage.ConfigRevision, interval config.MuteTimeInterval) {
 	rev.Config.AlertmanagerConfig.MuteTimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.MuteTimeIntervals, findByName(interval.Name))
-	rev.Config.AlertmanagerConfig.TimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.TimeIntervals, func(i definitions.TimeInterval) bool {
+	rev.Config.AlertmanagerConfig.TimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.TimeIntervals, func(i config.TimeInterval) bool {
 		return i.Name == interval.Name
 	})
 }
 
-func calculateMuteTimeIntervalFingerprint(interval definitions.AmMuteTimeInterval) string {
+func calculateMuteTimeIntervalFingerprint(interval config.MuteTimeInterval) string {
 	sum := fnv.New64()
 
 	writeBytes := func(b []byte) {
@@ -506,7 +507,7 @@ func calculateMuteTimeIntervalFingerprint(interval definitions.AmMuteTimeInterva
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func (svc *MuteTimingService) checkOptimisticConcurrency(current definitions.AmMuteTimeInterval, provenance models.Provenance, desiredVersion string, action string) error {
+func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTimeInterval, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
@@ -553,7 +554,7 @@ func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context
 	return nil
 }
 
-func newMuteTimingInterval(interval definitions.AmMuteTimeInterval, provenance definitions.Provenance) definitions.MuteTimeInterval {
+func newMuteTimingInterval(interval config.MuteTimeInterval, provenance definitions.Provenance) definitions.MuteTimeInterval {
 	return definitions.MuteTimeInterval{
 		UID:              legacy_storage.NameToUid(interval.Name),
 		MuteTimeInterval: interval,

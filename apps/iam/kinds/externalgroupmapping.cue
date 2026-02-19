@@ -17,8 +17,4 @@ externalGroupMappingv0alpha1: externalGroupMappingKind & {
 	schema: {
 		spec: v0alpha1.ExternalGroupMappingSpec
 	}
-	SelectableFields: [
-		"spec.teamRef.name",
-		"spec.externalGroupId",
-	]
 }

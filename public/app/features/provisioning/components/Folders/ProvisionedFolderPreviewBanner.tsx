@@ -12,11 +12,11 @@ export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProp
   }
 
   if (prURL) {
-    return <PreviewBannerViewPR prURL={prURL} />;
+    return <PreviewBannerViewPR prParam={prURL} />;
   }
 
   if (newPrURL) {
-    return <PreviewBannerViewPR prURL={newPrURL} isNewPr />;
+    return <PreviewBannerViewPR prParam={newPrURL} isNewPr />;
   }
 
   if (repoURL) {

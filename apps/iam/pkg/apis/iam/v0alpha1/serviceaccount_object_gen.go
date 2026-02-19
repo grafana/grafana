@@ -228,10 +228,6 @@ func (o *ServiceAccount) DeepCopyInto(dst *ServiceAccount) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (ServiceAccount) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccount"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &ServiceAccount{}
 
@@ -283,10 +279,6 @@ func (o *ServiceAccountList) DeepCopy() *ServiceAccountList {
 
 func (o *ServiceAccountList) DeepCopyInto(dst *ServiceAccountList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (ServiceAccountList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ServiceAccountList"
 }
 
 // Interface compliance compile-time check

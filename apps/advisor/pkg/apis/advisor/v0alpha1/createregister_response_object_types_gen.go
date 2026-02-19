@@ -9,33 +9,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type CreateRegisterResponse struct {
+type CreateRegister struct {
 	metav1.TypeMeta    `json:",inline"`
 	CreateRegisterBody `json:",inline"`
 }
 
-func NewCreateRegisterResponse() *CreateRegisterResponse {
-	return &CreateRegisterResponse{}
+func NewCreateRegister() *CreateRegister {
+	return &CreateRegister{}
 }
 
 func (t *CreateRegisterBody) DeepCopyInto(dst *CreateRegisterBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *CreateRegisterResponse) DeepCopyObject() runtime.Object {
-	dst := NewCreateRegisterResponse()
+func (o *CreateRegister) DeepCopyObject() runtime.Object {
+	dst := NewCreateRegister()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *CreateRegisterResponse) DeepCopyInto(dst *CreateRegisterResponse) {
+func (o *CreateRegister) DeepCopyInto(dst *CreateRegister) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.CreateRegisterBody.DeepCopyInto(&dst.CreateRegisterBody)
 }
 
-func (CreateRegisterResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterResponse"
-}
-
-var _ runtime.Object = NewCreateRegisterResponse()
+var _ runtime.Object = NewCreateRegister()

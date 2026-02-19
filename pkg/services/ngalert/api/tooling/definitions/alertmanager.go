@@ -267,20 +267,9 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	Receiver                  = config.Receiver
-	Regexp                    = config.Regexp
-	Matchers                  = config.Matchers
-	MatchRegexps              = config.MatchRegexps
-	AmMuteTimeInterval        = config.MuteTimeInterval
-	TimeInterval              = config.TimeInterval
-	InhibitRule               = config.InhibitRule
 )
 
-type MergeResult struct {
-	definition.MergeResult
-	Identifier string
-	ExtraRoute *Route
-}
+type MergeResult definition.MergeResult
 
 func (m MergeResult) LogContext() []any {
 	if len(m.Receivers) == 0 && len(m.TimeIntervals) == 0 {
@@ -616,11 +605,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
+type Receiver = alertingmodels.ReceiverStatus
+
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
 	Body []alertingmodels.ReceiverStatus
 }
+
+type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -737,6 +730,10 @@ func (c ExtraConfiguration) Validate() error {
 		return errors.New("identifier is required")
 	}
 
+	if len(c.MergeMatchers) == 0 {
+		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
+	}
+
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
 			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
@@ -806,9 +803,7 @@ type PostableUserConfig struct {
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
 	if len(c.ExtraConfigs) == 0 {
 		return MergeResult{
-			MergeResult: definition.MergeResult{
-				Config: c.AlertmanagerConfig,
-			},
+			Config: c.AlertmanagerConfig,
 		}, nil
 	}
 	// support only one config for now
@@ -833,15 +828,7 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	if err != nil {
 		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
 	}
-
-	route := mcfg.Route
-	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
-
-	return MergeResult{
-		MergeResult: m,
-		Identifier:  mimirCfg.Identifier,
-		ExtraRoute:  route,
-	}, nil
+	return MergeResult(m), nil
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.

@@ -45,16 +45,14 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
-    // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
-    const paramValue = prUrl ?? repository?.url ?? '';
-
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue,
-      repoType: info.repoType,
-    });
-
-    navigate(url);
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
+      });
+      navigate(url);
+    }
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {

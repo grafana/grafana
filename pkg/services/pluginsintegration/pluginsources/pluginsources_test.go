@@ -22,7 +22,7 @@ func TestSources_List(t *testing.T) {
 		}
 
 		pCfg := &config.PluginManagementCfg{
-			PluginsPaths: []string{filepath.Join(testdata, "pluginRootWithDist")},
+			PluginsPath: filepath.Join(testdata, "pluginRootWithDist"),
 			PluginSettings: config.PluginSettings{
 				"foo": map[string]string{
 					"path": filepath.Join(testdata, "test-app"),
@@ -99,7 +99,7 @@ func TestSources_List(t *testing.T) {
 		}
 
 		pCfg := &config.PluginManagementCfg{
-			PluginsPaths: []string{filepath.Join(testdata, "symbolic-plugin-dirs")},
+			PluginsPath: filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
 
 		s := ProvideService(cfg, pCfg)

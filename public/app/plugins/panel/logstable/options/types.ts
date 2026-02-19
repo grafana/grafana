@@ -1,4 +1,4 @@
-import { TableOptions } from '@grafana/schema';
+import type { Options as TableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 

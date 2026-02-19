@@ -202,7 +202,7 @@ func (b *BaseDialect) CreateTableSQL(table *Table) string {
 	}
 
 	if len(pkList) > 1 {
-		quotedCols := make([]string, 0, len(pkList))
+		quotedCols := []string{}
 		for _, col := range pkList {
 			quotedCols = append(quotedCols, b.dialect.Quote(col))
 		}
@@ -232,7 +232,7 @@ func (b *BaseDialect) CreateIndexSQL(tableName string, index *Index) string {
 
 	idxName := index.XName(tableName)
 
-	quotedCols := make([]string, 0, len(index.Cols))
+	quotedCols := []string{}
 	for _, col := range index.Cols {
 		quotedCols = append(quotedCols, b.dialect.Quote(col))
 	}

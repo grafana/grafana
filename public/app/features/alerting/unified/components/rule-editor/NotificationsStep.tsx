@@ -20,7 +20,6 @@ import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/Simplifie
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
-import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -239,21 +238,15 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
     'name',
     'manualRouting',
   ]);
-
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-
   return (
-    <Stack direction="column" gap={2}>
-      {multiplePoliciesEnabled && <PolicyTreeSelector />}
-      <NotificationPreview
-        alertQueries={queries}
-        customLabels={labels}
-        condition={condition}
-        folder={folder}
-        alertName={alertName}
-        alertUid={alertUid}
-      />
-    </Stack>
+    <NotificationPreview
+      alertQueries={queries}
+      customLabels={labels}
+      condition={condition}
+      folder={folder}
+      alertName={alertName}
+      alertUid={alertUid}
+    />
   );
 }
 

@@ -595,7 +595,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -623,7 +623,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       display: 'flex',
       minWidth: 0,
-      paddingLeft: theme.spacing.x0_5,
       '& > h2': {
         minWidth: 0,
       },

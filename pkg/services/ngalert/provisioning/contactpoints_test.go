@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/slack"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -662,7 +663,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -676,7 +677,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -725,7 +726,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "new-receiver",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -739,7 +740,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -787,7 +788,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -806,7 +807,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -843,7 +844,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -862,7 +863,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -908,7 +909,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -922,7 +923,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -969,7 +970,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -988,7 +989,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1002,7 +1003,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-3",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1016,7 +1017,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-4",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1052,7 +1053,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1066,7 +1067,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1080,7 +1081,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-3",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1094,7 +1095,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-4",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1137,7 +1138,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1151,7 +1152,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1170,7 +1171,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "brand-new-group",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1209,7 +1210,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1223,7 +1224,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1242,7 +1243,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "brand-new-group",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1277,7 +1278,7 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*definitions.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-1",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1296,7 +1297,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
+							Receiver: config.Receiver{
 								Name: "receiver-2",
 							},
 							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1336,7 +1337,7 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
 						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1395,7 +1396,7 @@ func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
+					Receiver: config.Receiver{
 						Name: "receiver-1",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1409,7 +1410,7 @@ func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 					},
 				},
 				{
-					Receiver: definitions.Receiver{
+					Receiver: config.Receiver{
 						Name: "receiver-2",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1453,7 +1454,7 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
+					Receiver: config.Receiver{
 						Name: "receiver-1",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -1467,7 +1468,7 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 					},
 				},
 				{
-					Receiver: definitions.Receiver{
+					Receiver: config.Receiver{
 						Name: "receiver-2",
 					},
 					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{

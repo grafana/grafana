@@ -538,10 +538,10 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{Receiver: "receiver1"},
-					TimeIntervals: []definitions.TimeInterval{
+					TimeIntervals: []config.TimeInterval{
 						{Name: "time-interval-1"},
 					},
-					MuteTimeIntervals: []definitions.AmMuteTimeInterval{
+					MuteTimeIntervals: []config.MuteTimeInterval{
 						{Name: "mute-interval-1"},
 					},
 				},

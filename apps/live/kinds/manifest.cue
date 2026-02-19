@@ -33,5 +33,4 @@ manifest: {
 			}
     }
   }
-	roles: {}
 }

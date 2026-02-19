@@ -13,11 +13,6 @@ func NewExternalGroupMappingTeamRef() *ExternalGroupMappingTeamRef {
 	return &ExternalGroupMappingTeamRef{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for ExternalGroupMappingTeamRef.
-func (ExternalGroupMappingTeamRef) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingTeamRef"
-}
-
 // +k8s:openapi-gen=true
 type ExternalGroupMappingSpec struct {
 	TeamRef         ExternalGroupMappingTeamRef `json:"teamRef"`
@@ -29,9 +24,4 @@ func NewExternalGroupMappingSpec() *ExternalGroupMappingSpec {
 	return &ExternalGroupMappingSpec{
 		TeamRef: *NewExternalGroupMappingTeamRef(),
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ExternalGroupMappingSpec.
-func (ExternalGroupMappingSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec"
 }

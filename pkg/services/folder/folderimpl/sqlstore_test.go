@@ -572,7 +572,7 @@ func TestIntegrationGetParents(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		parentUIDs := make([]string, 0, len(parents))
+		parentUIDs := make([]string, 0)
 		for _, p := range parents {
 			assert.NotEmpty(t, p.URL)
 			parentUIDs = append(parentUIDs, p.UID)
@@ -1078,8 +1078,7 @@ func assertAncestorUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualAncestorsUIDs := make([]string, 0, 1+len(ancestors))
-	actualAncestorsUIDs = append(actualAncestorsUIDs, folder.GeneralFolderUID)
+	actualAncestorsUIDs := []string{folder.GeneralFolderUID}
 	for _, f := range ancestors {
 		actualAncestorsUIDs = append(actualAncestorsUIDs, f.UID)
 	}
@@ -1094,7 +1093,7 @@ func assertChildrenUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualChildrenUIDs := make([]string, 0, len(ancestors))
+	actualChildrenUIDs := make([]string, 0)
 	for _, f := range ancestors {
 		actualChildrenUIDs = append(actualChildrenUIDs, f.UID)
 	}

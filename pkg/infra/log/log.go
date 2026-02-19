@@ -93,7 +93,7 @@ func (lm *logManager) initialize(loggers []logWithFilters, levelStr string) {
 	lm.Swap(&compositeLogger{loggers: defaultLoggers})
 	lm.logFilters = loggers
 
-	loggersByName := make([]string, 0, len(lm.loggersByName))
+	loggersByName := []string{}
 	for k := range lm.loggersByName {
 		loggersByName = append(loggersByName, k)
 	}

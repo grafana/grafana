@@ -136,16 +136,14 @@
             {
               "key": "job",
               "operator": "=",
-              "value": "prometheus",
-              "origin": "dashboard"
+              "value": "prometheus"
             }
           ],
           "baseFilters": [
             {
               "key": "environment",
               "operator": "=",
-              "value": "production",
-              "origin": "dashboard"
+              "value": "production"
             }
           ],
           "hide": 0,
@@ -239,10 +237,6 @@
             "selected": true,
             "text": ["job", "instance"],
             "value": ["job", "instance"]
-          },
-          "defaultValue": {
-            "text": "defaultGroupBy",
-            "value": "defaultGroupBy"
           },
           "options": [
             {

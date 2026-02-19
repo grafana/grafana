@@ -171,15 +171,13 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore, err := authinfoimpl.ProvideStore(store, secretsService)
-			require.NoError(t, err)
+			authInfoStore := authinfoimpl.ProvideStore(store, secretsService)
 
 			// insert user_auth relationship
-			err = authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
+			err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
 				AuthModule: tc.authModule,
 				AuthId:     tc.setID,
 				UserId:     createdUser.ID,
-				UserUID:    createdUser.UID,
 			})
 			require.NoError(t, err)
 			if tc.secondModule != "" {
@@ -189,7 +187,6 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 					AuthModule: tc.secondModule,
 					AuthId:     tc.secondID,
 					UserId:     createdUser.ID,
-					UserUID:    createdUser.UID,
 				})
 				require.NoError(t, err)
 			}

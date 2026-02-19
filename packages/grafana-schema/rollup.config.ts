@@ -8,17 +8,22 @@ import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.part
 
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
-const typePaths = backwardsCompatibilityTypeNames();
+
+const [_, noderesolve, esbuild] = plugins;
 
 export default [
   {
     input: entryPoint,
     plugins,
-    output: [cjsOutput(pkg, 'grafana-schema'), esmOutput(pkg, 'grafana-schema')],
+    output: [
+      // Schema still uses publishConfig to define output directory.
+      // TODO: Migrate this package to use exports.
+      cjsOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.main) }),
+      esmOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.module) }),
+    ],
     treeshake: false,
   },
   {
-    // Files that should be exported but not included in the `entryPoint`.
     input: Object.fromEntries(
       glob
         .sync('src/raw/composable/**/*.ts')
@@ -28,44 +33,24 @@ export default [
         ])
     ),
     plugins: [
-      ...plugins,
+      noderesolve,
+      esbuild,
+      // Support @grafana/scenes that pulls in types from nested @grafana/schema files.
       copy({
         targets: [
           {
             src: 'dist/types/raw/composable/**/*.d.ts',
             dest: 'dist/esm/raw/composable',
-            rename: (_name, _extension, fullpath) => {
-              const typePath = typePaths[fullpath] || fullpath;
-              return typePath.split(path.sep).slice(4).join('/');
-            },
+            rename: (_name, _extension, fullpath) => fullpath.split(path.sep).slice(4).join('/'),
           },
         ],
         hook: 'writeBundle',
       }),
     ],
-    output: [
-      {
-        format: 'esm',
-        dir: path.dirname(pkg.module),
-        entryFileNames: '[name].mjs',
-      },
-      {
-        format: 'cjs',
-        dir: path.dirname(pkg.main),
-        entryFileNames: '[name].cjs',
-      },
-    ],
+    output: {
+      format: 'esm',
+      dir: path.dirname(pkg.publishConfig.module),
+    },
     treeshake: false,
   },
 ];
-
-function backwardsCompatibilityTypeNames(): Record<string, string> {
-  return Object.keys(pkg.exports).reduce<Record<string, string>>((map, key) => {
-    const typesPath = pkg.exports[key].types;
-    if (!typesPath) {
-      return map;
-    }
-    map[path.normalize(typesPath)] = `${path.normalize(key)}.d.ts`;
-    return map;
-  }, {});
-}

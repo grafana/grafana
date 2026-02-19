@@ -157,6 +157,7 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
+	lifecycle          LifecycleHooks
 	backendDiagnostics resourcepb.DiagnosticsServer
 }
 
@@ -308,7 +309,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
-	args := []any{ //nolint:prealloc
+	args := []any{
 		"operation", stats.operation,
 		"elapsedTime", elapsed,
 		"indexBuildTime", stats.indexBuildTime,
@@ -665,6 +666,7 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
+
 	return nil
 }
 
@@ -676,11 +678,22 @@ func (s *searchServer) stop() {
 
 // Init initializes the search server.
 func (s *searchServer) Init(ctx context.Context) error {
+	if s.lifecycle != nil {
+		if err := s.lifecycle.Init(ctx); err != nil {
+			return fmt.Errorf("failed to initialize lifecycle hooks: %w", err)
+		}
+	}
 	return s.init(ctx)
 }
 
 // Stop stops the search server.
 func (s *searchServer) Stop(ctx context.Context) error {
+	if s.lifecycle != nil {
+		err := s.lifecycle.Stop(ctx)
+		if err != nil {
+			return fmt.Errorf("service stopped with error: %w", err)
+		}
+	}
 	s.stop()
 	return nil
 }

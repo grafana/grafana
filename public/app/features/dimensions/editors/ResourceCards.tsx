@@ -49,7 +49,7 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
           ) : (
             <img src={card.imgUrl} alt="" className={styles.img} />
           )}
-          <span className={styles.text}>{card.label.slice(0, -4)}</span>
+          <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>
@@ -125,7 +125,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fill: theme.colors.text.primary,
   }),
   text: css({
-    ...theme.typography.h6,
     color: theme.colors.text.primary,
     whiteSpace: 'nowrap',
     fontSize: '12px',

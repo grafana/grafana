@@ -9,33 +9,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type GetTagsResponse struct {
+type GetTags struct {
 	metav1.TypeMeta `json:",inline"`
 	GetTagsBody     `json:",inline"`
 }
 
-func NewGetTagsResponse() *GetTagsResponse {
-	return &GetTagsResponse{}
+func NewGetTags() *GetTags {
+	return &GetTags{}
 }
 
 func (t *GetTagsBody) DeepCopyInto(dst *GetTagsBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *GetTagsResponse) DeepCopyObject() runtime.Object {
-	dst := NewGetTagsResponse()
+func (o *GetTags) DeepCopyObject() runtime.Object {
+	dst := NewGetTags()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *GetTagsResponse) DeepCopyInto(dst *GetTagsResponse) {
+func (o *GetTags) DeepCopyInto(dst *GetTags) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.GetTagsBody.DeepCopyInto(&dst.GetTagsBody)
 }
 
-func (GetTagsResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetTagsResponse"
-}
-
-var _ runtime.Object = NewGetTagsResponse()
+var _ runtime.Object = NewGetTags()

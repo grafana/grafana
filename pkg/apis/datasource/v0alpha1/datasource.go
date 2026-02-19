@@ -22,10 +22,6 @@ type DataSource struct {
 	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
 }
 
-func (DataSource) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DataSource"
-}
-
 // DsAccess represents how the datasource connects to the remote service
 // +k8s:openapi-gen=true
 // +enum
@@ -66,10 +62,6 @@ type GenericDataSourceSpec struct {
 	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 
-func (GenericDataSourceSpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GenericDataSourceSpec"
-}
-
 // +k8s:deepcopy-gen=true
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -78,8 +70,4 @@ type DataSourceList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []DataSource `json:"items"`
-}
-
-func (DataSourceList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DataSourceList"
 }

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -207,7 +206,6 @@ func TestListWithFieldSelectors(t *testing.T) {
 			queue:            scheduler.NewNoopQueue(),
 			queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
 			maxPageSizeBytes: 1024,
-			log:              log.NewNopLogger(),
 		}
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -374,7 +372,6 @@ func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBy
 		queue:            scheduler.NewNoopQueue(),
 		queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
 		maxPageSizeBytes: maxPageSizeBytes,
-		log:              log.NewNopLogger(),
 	}
 }
 

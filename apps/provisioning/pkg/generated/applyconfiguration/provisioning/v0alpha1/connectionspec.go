@@ -11,23 +11,13 @@ import (
 // ConnectionSpecApplyConfiguration represents a declarative configuration of the ConnectionSpec type for use
 // with apply.
 type ConnectionSpecApplyConfiguration struct {
-	// The connection display name (shown in the UI)
-	Title *string `json:"title,omitempty"`
-	// The connection description
-	Description *string `json:"description,omitempty"`
-	// The connection provider type
-	Type *provisioningv0alpha1.ConnectionType `json:"type,omitempty"`
-	// The connection URL
-	URL *string `json:"url,omitempty"`
-	// GitHub connection configuration
-	// Only applicable when provider is "github"
-	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
-	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
-	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
-	// Gitlab connection configuration
-	// Only applicable when provider is "gitlab"
-	Gitlab *GitlabConnectionConfigApplyConfiguration `json:"gitlab,omitempty"`
+	Title       *string                                      `json:"title,omitempty"`
+	Description *string                                      `json:"description,omitempty"`
+	Type        *provisioningv0alpha1.ConnectionType         `json:"type,omitempty"`
+	URL         *string                                      `json:"url,omitempty"`
+	GitHub      *GitHubConnectionConfigApplyConfiguration    `json:"github,omitempty"`
+	Bitbucket   *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
+	Gitlab      *GitlabConnectionConfigApplyConfiguration    `json:"gitlab,omitempty"`
 }
 
 // ConnectionSpecApplyConfiguration constructs a declarative configuration of the ConnectionSpec type for use with

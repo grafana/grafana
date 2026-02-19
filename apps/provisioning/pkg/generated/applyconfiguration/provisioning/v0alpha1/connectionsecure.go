@@ -11,16 +11,9 @@ import (
 // ConnectionSecureApplyConfiguration represents a declarative configuration of the ConnectionSecure type for use
 // with apply.
 type ConnectionSecureApplyConfiguration struct {
-	// PrivateKey is the reference to the private key used for GitHub App authentication.
-	// This value is stored securely and cannot be read back
-	PrivateKey *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
-	// ClientSecret is the reference to the secret used for other providers authentication,
-	// and Github on-behalf-of authentication.
-	// This value is stored securely and cannot be read back
+	PrivateKey   *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
 	ClientSecret *commonv0alpha1.InlineSecureValue `json:"clientSecret,omitempty"`
-	// Token is the reference of the token used to act as the Connection.
-	// This value is stored securely and cannot be read back
-	Token *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
+	Token        *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
 }
 
 // ConnectionSecureApplyConfiguration constructs a declarative configuration of the ConnectionSecure type for use with

@@ -17,7 +17,6 @@ export const MarkdownCellOptionsEditor = ({
 
   return (
     <Field
-      noMargin
       label={
         <Label
           description={t(

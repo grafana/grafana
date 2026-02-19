@@ -160,7 +160,6 @@ export const FilterPopup = memo(
               tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant={matchCase ? 'primary' : 'secondary'}
               onClick={() => setMatchCase((s) => !s)}
-              aria-pressed={matchCase}
               icon={'text-fields'}
             />
           </Stack>

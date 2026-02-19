@@ -40,9 +40,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
-			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
+			featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -112,9 +111,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					},
 				},
 				"secure": map[string]any{
-					"aaa": map[string]any{
-						"remove": true,
-					},
+					// "aaa": map[string]any{
+					// 	"remove": true, // remove does not really remove in legacy!
+					// },
 					"ccc": map[string]any{
 						"create": "CCC", // add a third value
 					},
@@ -132,7 +131,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.NoError(t, err)
 
 		keys := slices.Collect(maps.Keys(secure))
-		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys)
+		require.ElementsMatch(t, []string{"aaa", "bbb", "ccc"}, keys)
 	})
 
 	t.Run("list", func(t *testing.T) {
@@ -199,8 +198,11 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Method: "GET",
 			Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
 		}, nil)
-		require.Equal(t, http.StatusOK, raw.Response.StatusCode)
-		require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		// endpoint is disabled currently because it has not been
+		// sufficiently tested.
+		// for more info see pkg/registry/apis/datasource/sub_resource.go
+		require.Equal(t, int32(501), raw.Status.Code)
+		// require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -220,9 +222,8 @@ func TestIntegrationTestDatasourceAccess(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-				featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
-				featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the datasource api servers
+				featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"datasources.grafana-testdata-datasource.datasource.grafana.app": {

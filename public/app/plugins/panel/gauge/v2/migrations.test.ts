@@ -1,5 +1,5 @@
 import { PanelModel } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './migrations';
 

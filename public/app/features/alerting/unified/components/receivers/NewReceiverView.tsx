@@ -1,6 +1,5 @@
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
-import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -18,10 +17,8 @@ const NewReceiverView = () => {
 };
 
 function NewReceiverViewPage() {
-  const { navId, pageNav } = useContactPointsNav();
-
   return (
-    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
       <NewReceiverView />
     </AlertmanagerPageWrapper>
   );

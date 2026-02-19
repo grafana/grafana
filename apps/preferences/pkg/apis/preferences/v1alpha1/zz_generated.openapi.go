@@ -14,11 +14,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Preferences{}.OpenAPIModelName():                       schema_pkg_apis_preferences_v1alpha1_Preferences(ref),
-		PreferencesList{}.OpenAPIModelName():                   schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref),
-		PreferencesNavbarPreference{}.OpenAPIModelName():       schema_pkg_apis_preferences_v1alpha1_PreferencesNavbarPreference(ref),
-		PreferencesQueryHistoryPreference{}.OpenAPIModelName(): schema_pkg_apis_preferences_v1alpha1_PreferencesQueryHistoryPreference(ref),
-		PreferencesSpec{}.OpenAPIModelName():                   schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences":                       schema_pkg_apis_preferences_v1alpha1_Preferences(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesList":                   schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference":       schema_pkg_apis_preferences_v1alpha1_PreferencesNavbarPreference(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference": schema_pkg_apis_preferences_v1alpha1_PreferencesQueryHistoryPreference(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec":                   schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref),
 	}
 }
 
@@ -45,14 +45,14 @@ func schema_pkg_apis_preferences_v1alpha1_Preferences(ref common.ReferenceCallba
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Preferences",
 							Default:     map[string]interface{}{},
-							Ref:         ref(PreferencesSpec{}.OpenAPIModelName()),
+							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec"),
 						},
 					},
 				},
@@ -60,7 +60,7 @@ func schema_pkg_apis_preferences_v1alpha1_Preferences(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			PreferencesSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -87,7 +87,7 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -97,7 +97,7 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Preferences{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences"),
 									},
 								},
 							},
@@ -108,7 +108,7 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			Preferences{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -209,19 +209,19 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 					"queryHistory": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Explore query history preferences",
-							Ref:         ref(PreferencesQueryHistoryPreference{}.OpenAPIModelName()),
+							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference"),
 						},
 					},
 					"navbar": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Navigation preferences",
-							Ref:         ref(PreferencesNavbarPreference{}.OpenAPIModelName()),
+							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			PreferencesNavbarPreference{}.OpenAPIModelName(), PreferencesQueryHistoryPreference{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference"},
 	}
 }

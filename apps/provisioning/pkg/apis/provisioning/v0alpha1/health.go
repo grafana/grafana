@@ -4,10 +4,6 @@ package v0alpha1
 // +enum
 type HealthFailureType string
 
-func (HealthFailureType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "HealthFailureType"
-}
-
 const (
 	HealthFailureHook   HealthFailureType = "hook"
 	HealthFailureHealth HealthFailureType = "health"
@@ -81,8 +77,4 @@ type HealthStatus struct {
 	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
-}
-
-func (HealthStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "HealthStatus"
 }

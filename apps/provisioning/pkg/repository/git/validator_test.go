@@ -82,7 +82,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"invalid git URL format"},
 		},
 		{
-			name: "empty branch allowed for a pure git repository",
+			name: "empty branch not allowed for git repositories",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -91,14 +91,15 @@ func TestValidate(t *testing.T) {
 					Type: provisioning.GitRepositoryType,
 					Git: &provisioning.GitRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana.git",
-						Branch: "", // Empty branch should be valid for Git repositories
+						Branch: "", // Empty branch is not allowed for generic git repositories
 					},
 				},
 			},
-			expectedError: false,
+			expectedError: true,
+			errorContains: []string{"branch is required"},
 		},
 		{
-			name: "empty branch allowed for a github repository",
+			name: "empty branch allowed for github repositories",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",

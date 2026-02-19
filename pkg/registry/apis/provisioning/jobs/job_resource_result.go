@@ -3,7 +3,6 @@ package jobs
 import (
 	"errors"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,14 +17,11 @@ func isWarningError(err error) bool {
 
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
-	var quotaExceededErr *quotas.QuotaExceededError
 
 	switch {
 	case errors.As(err, &validationErr):
 		return true
 	case errors.As(err, &ownershipErr):
-		return true
-	case errors.As(err, &quotaExceededErr):
 		return true
 	default:
 		return false
@@ -129,8 +125,6 @@ func (b *jobResourceResultBuilder) WithAction(action repository.FileAction) *job
 
 // WithError sets the error associated with the resource operation.
 // If the error is classified as a warning error, it will be set as a warning instead of an error.
-// TODO: we should probably move the warning checks to the caller,
-// and have a clear separation between WithError and WithWarning
 func (b *jobResourceResultBuilder) WithError(err error) *jobResourceResultBuilder {
 	if err != nil && isWarningError(err) {
 		b.result.warning = err
@@ -139,15 +133,6 @@ func (b *jobResourceResultBuilder) WithError(err error) *jobResourceResultBuilde
 		b.result.err = err
 		b.result.warning = nil
 	}
-	return b
-}
-
-// WithWarning explicitly sets the error associated with the resource operation as a warning.
-func (b *jobResourceResultBuilder) WithWarning(err error) *jobResourceResultBuilder {
-	if err != nil {
-		b.result.warning = err
-	}
-
 	return b
 }
 

@@ -1,6 +1,6 @@
-import { RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 
+import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route } from '../../openapi/routesApi.gen';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
@@ -12,7 +12,7 @@ import {
 } from './useNotificationPolicyRoute';
 
 test('k8sSubRouteToRoute', () => {
-  const input: RoutingTreeRoute = {
+  const input: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route = {
     continue: false,
     group_by: ['label1'],
     group_interval: '5m',
@@ -23,7 +23,6 @@ test('k8sSubRouteToRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         receiver: 'receiver2',
         matchers: [{ label: 'label2', type: '!=', value: 'value2' }],
       },
@@ -43,7 +42,6 @@ test('k8sSubRouteToRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         name: 'test-name',
         receiver: 'receiver2',
         matchers: undefined,
@@ -76,7 +74,7 @@ test('routeToK8sSubRoute', () => {
     ],
   };
 
-  const expected: RoutingTreeRoute = {
+  const expected: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route = {
     continue: false,
     group_by: ['label1'],
     group_interval: '5m',
@@ -87,7 +85,6 @@ test('routeToK8sSubRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         receiver: 'receiver2',
         matchers: [{ label: 'label2', type: '!=', value: 'value2' }],
         routes: undefined,

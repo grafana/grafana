@@ -9,5 +9,3 @@ export const DEFAULT_REPOSITORY_TYPES: Array<'github' | 'local'> = ['github', 'l
 
 // TODO: use the limits from the API when they are available
 export const FREE_TIER_CONNECTION_LIMIT = 1;
-
-export const DEFAULT_BRANCH_NAMES = ['main', 'master'] as const;

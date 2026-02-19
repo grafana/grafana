@@ -14,24 +14,24 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		FindScopeDashboardBindingsResults{}.OpenAPIModelName(): schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
-		FindScopeNavigationsResults{}.OpenAPIModelName():       schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
-		FindScopeNodeChildrenResults{}.OpenAPIModelName():      schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
-		Scope{}.OpenAPIModelName():                             schema_pkg_apis_scope_v0alpha1_Scope(ref),
-		ScopeDashboardBinding{}.OpenAPIModelName():             schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
-		ScopeDashboardBindingList{}.OpenAPIModelName():         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
-		ScopeDashboardBindingSpec{}.OpenAPIModelName():         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref),
-		ScopeDashboardBindingStatus{}.OpenAPIModelName():       schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref),
-		ScopeFilter{}.OpenAPIModelName():                       schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
-		ScopeList{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
-		ScopeNavigation{}.OpenAPIModelName():                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
-		ScopeNavigationList{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
-		ScopeNavigationSpec{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
-		ScopeNavigationStatus{}.OpenAPIModelName():             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
-		ScopeNode{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
-		ScopeNodeList{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
-		ScopeNodeSpec{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
-		ScopeSpec{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeDashboardBindingsResults": schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNavigationsResults":       schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.FindScopeNodeChildrenResults":      schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.Scope":                             schema_pkg_apis_scope_v0alpha1_Scope(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding":             schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingList":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus":       schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeFilter":                       schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeList":                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation":                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationList":               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationSpec":               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationStatus":             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode":                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeList":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeSpec":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
+		"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeSpec":                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
 	}
 }
 
@@ -62,7 +62,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeDashboardBinding{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding"),
 									},
 								},
 							},
@@ -78,7 +78,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref common
 			},
 		},
 		Dependencies: []string{
-			ScopeDashboardBinding{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding"},
 	}
 }
 
@@ -109,7 +109,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref common.Refer
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNavigation{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation"),
 									},
 								},
 							},
@@ -125,7 +125,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			ScopeNavigation{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation"},
 	}
 }
 
@@ -152,7 +152,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -162,7 +162,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNode{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode"),
 									},
 								},
 							},
@@ -172,7 +172,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			ScopeNode{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -199,20 +199,20 @@ func schema_pkg_apis_scope_v0alpha1_Scope(ref common.ReferenceCallback) common.O
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeSpec{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			ScopeSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -239,26 +239,26 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref common.ReferenceCa
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeDashboardBindingSpec{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeDashboardBindingStatus{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			ScopeDashboardBindingSpec{}.OpenAPIModelName(), ScopeDashboardBindingStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec", "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -285,7 +285,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref common.Referen
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -295,7 +295,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeDashboardBinding{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding"),
 									},
 								},
 							},
@@ -305,7 +305,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			ScopeDashboardBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeDashboardBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -382,7 +382,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
 									},
 								},
 							},
@@ -404,7 +404,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
 									},
 								},
 							},
@@ -415,7 +415,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }
 
@@ -498,7 +498,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeList(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -508,7 +508,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeList(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Scope{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.Scope"),
 									},
 								},
 							},
@@ -518,7 +518,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeList(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			Scope{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.Scope", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -545,26 +545,26 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeNavigationSpec{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeNavigationStatus{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			ScopeNavigationSpec{}.OpenAPIModelName(), ScopeNavigationStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationSpec", "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -591,7 +591,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -601,7 +601,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNavigation{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation"),
 									},
 								},
 							},
@@ -611,7 +611,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			ScopeNavigation{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNavigation", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -709,7 +709,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
 									},
 								},
 							},
@@ -731,7 +731,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
 									},
 								},
 							},
@@ -742,7 +742,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }
 
@@ -769,20 +769,20 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNode(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ScopeNodeSpec{}.OpenAPIModelName()),
+							Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			ScopeNodeSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNodeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -809,7 +809,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -819,7 +819,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNode{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode"),
 									},
 								},
 							},
@@ -829,7 +829,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			ScopeNode{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeNode", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -953,7 +953,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ScopeFilter{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeFilter"),
 									},
 								},
 							},
@@ -964,6 +964,6 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			ScopeFilter{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1.ScopeFilter"},
 	}
 }

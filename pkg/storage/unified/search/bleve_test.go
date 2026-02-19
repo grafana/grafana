@@ -525,7 +525,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.NotNil(t, rsp.Facet)
 
 		// Sorted across two indexes
-		sorted := make([]string, 0, len(rsp.Results.Rows))
+		sorted := []string{}
 		for _, row := range rsp.Results.Rows {
 			sorted = append(sorted, string(row.Cells[0]))
 		}

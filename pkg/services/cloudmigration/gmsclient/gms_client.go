@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -58,7 +57,6 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
-	c.populateHeaderMetadata(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -100,7 +98,6 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
-	c.populateHeaderMetadata(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -150,7 +147,6 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
-	c.populateHeaderMetadata(req)
 
 	c.getStatusLastQueried = time.Now()
 	resp, err := c.httpClient.Do(req)
@@ -199,7 +195,6 @@ func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cl
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
-	c.populateHeaderMetadata(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -256,7 +251,6 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
-	c.populateHeaderMetadata(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -278,27 +272,6 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 			c.log.Error("closing request body", "err", err.Error())
 		}
 	}()
-}
-
-// populateHeaderMetadata sets HTTP request headers from build/settings metadata.
-func (c *gmsClientImpl) populateHeaderMetadata(req *http.Request) {
-	cfg := c.cfg
-	if cfg.BuildVersion != "" {
-		req.Header.Set("X-BUILD-VERSION", cfg.BuildVersion)
-	}
-	if cfg.BuildCommit != "" {
-		req.Header.Set("X-BUILD-COMMIT", cfg.BuildCommit)
-	}
-	if cfg.EnterpriseBuildCommit != "" {
-		req.Header.Set("X-ENTERPRISE-BUILD-COMMIT", cfg.EnterpriseBuildCommit)
-	}
-	if cfg.BuildBranch != "" {
-		req.Header.Set("X-BUILD-BRANCH", cfg.BuildBranch)
-	}
-	if cfg.BuildStamp != 0 {
-		req.Header.Set("X-BUILD-STAMP", strconv.FormatInt(cfg.BuildStamp, 10))
-	}
-	req.Header.Set("X-IS-ENTERPRISE", strconv.FormatBool(cfg.IsEnterprise))
 }
 
 func (c *gmsClientImpl) buildURL(clusterSlug, path string) (string, error) {

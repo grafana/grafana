@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { SceneDataState, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { DashboardLink, VariableHide } from '@grafana/schema';
 
@@ -13,17 +12,16 @@ export function getDashboardControlsVariables(variables: SceneVariable[]) {
   return variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
 }
 
-export function getDashboardControlsAnnotations(dataState: SceneDataState, isEditingNewLayouts?: boolean) {
+export function getDashboardControlsAnnotations(dataState: SceneDataState) {
   return (isDashboardDataLayerSetState(dataState) ? dataState.annotationLayers : []).filter(
-    (layer) => layer.state.placement === 'inControlsMenu' && (!layer.state.isHidden || isEditingNewLayouts)
+    (layer) => layer.state.placement === 'inControlsMenu' && !layer.state.isHidden
   );
 }
 
 export function getDashboardControls(dashboard: DashboardScene) {
   const variables = getDashboardControlsVariables(sceneGraph.getVariables(dashboard)?.state.variables);
   const links = getDashboardControlsLinks(dashboard.state.links);
-  const isEditingNewLayouts = dashboard.state.isEditing && config.featureToggles.dashboardNewLayouts;
-  const annotations = getDashboardControlsAnnotations(sceneGraph.getData(dashboard).state, isEditingNewLayouts);
+  const annotations = getDashboardControlsAnnotations(sceneGraph.getData(dashboard).state);
 
   return {
     variables,
@@ -34,15 +32,11 @@ export function getDashboardControls(dashboard: DashboardScene) {
 
 export function useDashboardControls(dashboard: DashboardScene) {
   const dashboardState = dashboard.useState();
-
   const variablesState = sceneGraph.getVariables(dashboard).useState();
-  const variables = getDashboardControlsVariables(variablesState.variables);
-
   const dataState = sceneGraph.getData(dashboard).useState();
   const links = getDashboardControlsLinks(dashboardState.links);
-
-  const isEditingNewLayouts = dashboardState.isEditing && config.featureToggles.dashboardNewLayouts;
-  const annotations = getDashboardControlsAnnotations(dataState, isEditingNewLayouts);
+  const variables = getDashboardControlsVariables(variablesState.variables);
+  const annotations = getDashboardControlsAnnotations(dataState);
 
   return {
     variables,

@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.secondary.main,
   }),
   alertManagerName: css({
-    width: 'fit-content',
+    with: 'fit-content',
   }),
   secondAlertManagerLine: css({
     height: '1px',

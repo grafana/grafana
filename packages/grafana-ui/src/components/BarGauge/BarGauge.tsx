@@ -152,9 +152,8 @@ export class BarGauge extends PureComponent<Props> {
       valueDisplayMode,
       isOverflow,
     } = this.props;
-    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperHeight } = calculateBarAndValueDimensions(
-      this.props
-    );
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
+      calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
@@ -178,23 +177,18 @@ export class BarGauge extends PureComponent<Props> {
     );
 
     const containerStyles: CSSProperties = {
+      width: `${wrapperWidth}px`,
       height: `${wrapperHeight}px`,
-      display: 'flex',
-    };
-
-    const cellsContainerStyles: CSSProperties = {
       display: 'flex',
     };
 
     if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
-      cellsContainerStyles.flexDirection = 'column-reverse';
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
       valueStyles.justifyContent = 'flex-end';
-      cellsContainerStyles.flexDirection = 'row';
     }
 
     const cells: JSX.Element[] = [];
@@ -227,7 +221,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={containerStyles}>
-        <div style={cellsContainerStyles}>{cells}</div>
+        {cells}
         {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
@@ -696,7 +690,7 @@ function getValueStyles(
   const styles: CSSProperties = {
     color,
     height: `${height}px`,
-    width: `${width}px`,
+    maxWidth: `${width}px`,
     display: 'flex',
     alignItems: 'center',
     textWrap: 'nowrap',

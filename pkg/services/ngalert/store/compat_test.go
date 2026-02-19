@@ -85,9 +85,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		compactResult, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:        true,
-			ExcludeContactPointRouting: true,
-			ExcludeMetadata:            true,
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: true,
+			ExcludeMetadata:             true,
 		})
 		require.NoError(t, err)
 
@@ -140,8 +140,8 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		require.NotNil(t, fullResult.Data[0].Model)
 
 		// Should have notification settings.
-		require.NotNil(t, fullResult.NotificationSettings)
-		require.Equal(t, "test-receiver", fullResult.NotificationSettings.ContactPointRouting.Receiver)
+		require.Len(t, fullResult.NotificationSettings, 1)
+		require.Equal(t, "test-receiver", fullResult.NotificationSettings[0].Receiver)
 
 		// Should have metadata (metadata is parsed from JSON to struct).
 		require.NotEqual(t, ngmodels.AlertRuleMetadata{}, fullResult.Metadata)
@@ -166,9 +166,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:        true,
-			ExcludeContactPointRouting: false,
-			ExcludeMetadata:            true,
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: false,
+			ExcludeMetadata:             true,
 		})
 		require.NoError(t, err)
 
@@ -178,8 +178,8 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		require.Empty(t, result.Data[0].RefID)
 
 		// Should have notification settings for filtering.
-		require.NotNil(t, result.NotificationSettings)
-		require.Equal(t, "test-receiver", result.NotificationSettings.ContactPointRouting.Receiver)
+		require.Len(t, result.NotificationSettings, 1)
+		require.Equal(t, "test-receiver", result.NotificationSettings[0].Receiver)
 
 		// Should not have metadata.
 		require.Equal(t, ngmodels.AlertRuleMetadata{}, result.Metadata)
@@ -204,9 +204,9 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 		}
 
 		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
-			ExcludeAlertQueries:        true,
-			ExcludeContactPointRouting: true,
-			ExcludeMetadata:            false,
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: true,
+			ExcludeMetadata:             false,
 		})
 		require.NoError(t, err)
 

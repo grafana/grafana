@@ -116,7 +116,7 @@ export function Drawer({
         },
       }}
       aria-label={typeof title === 'string' ? selectors.components.Drawer.General.title(title) : undefined}
-      aria-labelledby={title ? titleId : undefined}
+      aria-labelledby={typeof title !== 'string' ? titleId : undefined}
       width={''}
       motion={{
         motionAppear: true,
@@ -128,8 +128,6 @@ export function Drawer({
         motionAppear: true,
         motionName: styles.maskMotion,
       }}
-      // this is handled by floating-ui
-      autoFocus={false}
     >
       <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
         <div className={styles.container} ref={refs.setFloating}>
@@ -151,7 +149,7 @@ export function Drawer({
             </div>
             {typeof title === 'string' ? (
               <Stack direction="column">
-                <Text element="h3" id={titleId} truncate>
+                <Text element="h3" truncate>
                   {title}
                 </Text>
                 {subtitle && (

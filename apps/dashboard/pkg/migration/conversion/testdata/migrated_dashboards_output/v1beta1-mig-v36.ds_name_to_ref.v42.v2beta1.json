@@ -276,10 +276,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "elasticsearch",
                       "version": "v0",
                       "datasource": {
-                        "name": "unknown-nested-datasource"
+                        "name": "existing-target-uid"
                       },
                       "spec": {}
                     },
@@ -476,10 +476,10 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "elasticsearch",
                       "version": "v0",
                       "datasource": {
-                        "name": "existing-ref-uid"
+                        "name": "existing-target-uid"
                       },
                       "spec": {}
                     },
@@ -525,7 +525,7 @@
                       "group": "prometheus",
                       "version": "v0",
                       "datasource": {
-                        "name": "unknown-panel-datasource"
+                        "name": "unknown-target-datasource"
                       },
                       "spec": {}
                     },

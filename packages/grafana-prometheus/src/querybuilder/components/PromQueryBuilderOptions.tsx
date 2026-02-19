@@ -80,7 +80,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
     const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryTypeValue)!.label;
 
     return (
-      <Box backgroundColor={'secondary'} borderRadius="default">
+      <Box backgroundColor={'secondary'}>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
           <QueryOptionGroup
             title={t('grafana-prometheus.querybuilder.prom-query-builder-options.title-options', 'Options')}

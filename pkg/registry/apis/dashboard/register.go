@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -963,6 +964,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Add dashboard hits manually
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
 		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
@@ -970,9 +972,9 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		// Add any missing definitions
 		//-----------------------------
 		for _, k := range kinds {
-			key := refsBase + k
-			v := defs[key]
-			if oas.Components.Schemas[key] == nil {
+			v := defs[defsBase+k]
+			clean := strings.Replace(k, defsBase, refsBase, 1)
+			if oas.Components.Schemas[clean] == nil {
 				switch k {
 				case "SearchResults":
 					v.Schema.Properties["sortBy"] = *spec.RefProperty(
@@ -991,7 +993,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[k] = &v.Schema // use the short key (without the full package path)
+				oas.Components.Schemas[clean] = &v.Schema
 			}
 		}
 

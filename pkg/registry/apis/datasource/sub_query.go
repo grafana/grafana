@@ -12,8 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
+
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -30,7 +31,7 @@ var (
 
 func (r *subQueryREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &dsV0.QueryDataResponse{}
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}
@@ -44,7 +45,7 @@ func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subQueryREST) ProducesObject(verb string) interface{} {
-	return &dsV0.QueryDataResponse{}
+	return &query.QueryDataResponse{}
 }
 
 func (r *subQueryREST) ConnectMethods() []string {
@@ -96,7 +97,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
 			responder.Object(int(backend.StatusBadRequest),
-				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
 					"A": {
 						Error:       errors.New(e.LogMessage),
 						ErrorSource: backend.ErrorSourceDownstream,
@@ -111,8 +112,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			responder.Error(err)
 			return
 		}
-		responder.Object(dsV0.GetResponseCode(rsp),
-			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
+		responder.Object(query.GetResponseCode(rsp),
+			&query.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
 }

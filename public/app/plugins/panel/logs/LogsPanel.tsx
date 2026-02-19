@@ -25,6 +25,7 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
+  urlUtil,
   LogSortOrderChangeEvent,
   LoadingState,
   rangeUtil,
@@ -40,7 +41,6 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
-import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
@@ -137,10 +137,19 @@ interface LogsPanelProps extends PanelProps<Options> {
    * showLogAttributes?: boolean
    */
 }
+interface LogsPermalinkUrlState {
+  logs?: {
+    id?: string;
+  };
+}
+
 const noCommonLabels: Labels = {};
 
-export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
-  const {
+export const LogsPanel = ({
+  data,
+  timeZone,
+  fieldConfig,
+  options: {
     showControls,
     showFieldSelector,
     controlsStorageKey,
@@ -171,7 +180,11 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     timestampResolution,
     showLogAttributes,
     unwrappedColumns,
-  } = options;
+    ...options
+  },
+  height,
+  id,
+}: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
   const logsContainerRef = useRef<HTMLDivElement>(null);
@@ -406,30 +419,20 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index === -1) {
-        const newDisplayedFields = displayedFields?.concat(key);
-        setDisplayedFields(newDisplayedFields);
-        onOptionsChange({
-          ...options,
-          displayedFields: newDisplayedFields,
-        });
+        setDisplayedFields(displayedFields?.concat(key));
       }
     },
-    [displayedFields, onOptionsChange, options]
+    [displayedFields]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index !== undefined && index > -1) {
-        const newDisplayedFields = displayedFields?.filter((k) => key !== k);
-        setDisplayedFields(newDisplayedFields);
-        onOptionsChange({
-          ...options,
-          displayedFields: newDisplayedFields,
-        });
+        setDisplayedFields(displayedFields?.filter((k) => key !== k));
       }
     },
-    [displayedFields, onOptionsChange, options]
+    [displayedFields]
   );
 
   useEffect(() => {
@@ -788,6 +791,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
+
+function getLogsPanelState(): LogsPermalinkUrlState | undefined {
+  const urlParams = urlUtil.getUrlSearchParams();
+  const panelStateEncoded = urlParams?.panelState;
+  if (
+    panelStateEncoded &&
+    Array.isArray(panelStateEncoded) &&
+    panelStateEncoded?.length > 0 &&
+    typeof panelStateEncoded[0] === 'string'
+  ) {
+    try {
+      return JSON.parse(panelStateEncoded[0]);
+    } catch (e) {
+      console.error('error parsing logsPanelState', e);
+    }
+  }
+
+  return undefined;
+}
 
 async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not

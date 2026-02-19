@@ -2,8 +2,6 @@
 
 exports[`createKubernetesRoutingTreeSpec 1`] = `
 {
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-  "kind": "RoutingTree",
   "metadata": {
     "name": "user-defined",
     "resourceVersion": "abc123",

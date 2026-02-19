@@ -20,10 +20,6 @@ type Connection struct {
 	Status ConnectionStatus `json:"status,omitempty"`
 }
 
-func (Connection) OpenAPIModelName() string {
-	return OpenAPIPrefix + "Connection"
-}
-
 type ConnectionSecure struct {
 	// PrivateKey is the reference to the private key used for GitHub App authentication.
 	// This value is stored securely and cannot be read back
@@ -39,10 +35,6 @@ type ConnectionSecure struct {
 	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
 }
 
-func (ConnectionSecure) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionSecure"
-}
-
 func (v ConnectionSecure) IsZero() bool {
 	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
@@ -55,17 +47,9 @@ type GitHubConnectionConfig struct {
 	InstallationID string `json:"installationID"`
 }
 
-func (GitHubConnectionConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitHubConnectionConfig"
-}
-
 type BitbucketConnectionConfig struct {
 	// App client ID
 	ClientID string `json:"clientID"`
-}
-
-func (BitbucketConnectionConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "BitbucketConnectionConfig"
 }
 
 type GitlabConnectionConfig struct {
@@ -73,17 +57,9 @@ type GitlabConnectionConfig struct {
 	ClientID string `json:"clientID"`
 }
 
-func (GitlabConnectionConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitlabConnectionConfig"
-}
-
 // ConnectionType defines the types of Connection providers
 // +enum
 type ConnectionType string
-
-func (ConnectionType) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionType"
-}
 
 // ConnectionType values.
 const (
@@ -113,10 +89,6 @@ type ConnectionSpec struct {
 	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
 }
 
-func (ConnectionSpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionSpec"
-}
-
 // The status of a Connection.
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatus struct {
@@ -139,10 +111,6 @@ type ConnectionStatus struct {
 	Health HealthStatus `json:"health"`
 }
 
-func (ConnectionStatus) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionStatus"
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -150,10 +118,6 @@ type ConnectionList struct {
 
 	// +listType=atomic
 	Items []Connection `json:"items"`
-}
-
-func (ConnectionList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ConnectionList"
 }
 
 // ExternalRepositoryList lists repositories from an external git provider
@@ -164,10 +128,6 @@ type ExternalRepositoryList struct {
 
 	// +listType=atomic
 	Items []ExternalRepository `json:"items"`
-}
-
-func (ExternalRepositoryList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ExternalRepositoryList"
 }
 
 type ExternalRepository struct {
@@ -181,8 +141,4 @@ type ExternalRepository struct {
 	Owner string `json:"owner,omitempty"`
 	// URL of the repository
 	URL string `json:"url"`
-}
-
-func (ExternalRepository) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ExternalRepository"
 }

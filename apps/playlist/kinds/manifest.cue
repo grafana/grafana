@@ -24,5 +24,4 @@ manifest: {
 			]
 		}
 	}
-	roles: {}
 }

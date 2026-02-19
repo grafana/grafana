@@ -7,8 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1."
-
 // Similar to
 // https://dev-k8sref-io.web.app/docs/common-definitions/objectreference-/
 // ObjectReference contains enough information to let you inspect or modify the referred object.
@@ -34,10 +32,6 @@ type ObjectReference struct {
 
 	// Sepcific deployment of an object
 	UID types.UID `json:"uid,omitempty"`
-}
-
-func (ObjectReference) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ObjectReference"
 }
 
 func (r ObjectReference) ToOwnerReference() metav1.OwnerReference {

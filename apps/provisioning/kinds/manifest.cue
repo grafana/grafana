@@ -8,5 +8,4 @@ manifest: {
 		repository,
 		connection
 	]
-	roles: {}
 }

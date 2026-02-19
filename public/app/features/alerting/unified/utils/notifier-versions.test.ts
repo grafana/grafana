@@ -11,24 +11,6 @@ import {
   isLegacyVersion,
 } from './notifier-versions';
 
-// Helper to create a minimal NotificationChannelOption for testing
-function createOption(overrides: Partial<NotificationChannelOption> = {}): NotificationChannelOption {
-  return {
-    element: 'input',
-    inputType: 'text',
-    label: 'Default Option',
-    description: 'Default option description',
-    placeholder: '',
-    propertyName: 'defaultOption',
-    required: true,
-    secure: false,
-    showWhen: { field: '', is: '' },
-    validationRule: '',
-    dependsOn: '',
-    ...overrides,
-  };
-}
-
 // Helper to create a minimal NotifierDTO for testing
 function createNotifier(overrides: Partial<NotifierDTO> = {}): NotifierDTO {
   return {
@@ -36,7 +18,21 @@ function createNotifier(overrides: Partial<NotifierDTO> = {}): NotifierDTO {
     description: 'Test description',
     type: 'webhook',
     heading: 'Test heading',
-    options: [createOption()],
+    options: [
+      {
+        element: 'input',
+        inputType: 'text',
+        label: 'Default Option',
+        description: 'Default option description',
+        placeholder: '',
+        propertyName: 'defaultOption',
+        required: true,
+        secure: false,
+        showWhen: { field: '', is: '' },
+        validationRule: '',
+        dependsOn: '',
+      },
+    ],
     ...overrides,
   };
 }
@@ -346,42 +342,6 @@ describe('notifier-versions utilities', () => {
         ],
       });
       expect(getOptionsForVersion(notifier, 'v1')).toBe(defaultOptions);
-    });
-
-    it('should return empty array when notifier has no options and no versions', () => {
-      const notifier = createNotifier({ options: undefined, versions: undefined });
-      expect(getOptionsForVersion(notifier)).toEqual([]);
-    });
-
-    it('should return version options when notifier has no top-level options', () => {
-      const versionOptions = [createOption({ propertyName: 'url' })];
-      const notifier = createNotifier({
-        options: undefined,
-        versions: [createVersion({ version: 'v1', canCreate: true, options: versionOptions })],
-      });
-      expect(getOptionsForVersion(notifier)).toEqual(versionOptions);
-    });
-
-    it('should return version options for specific version when no top-level options', () => {
-      const v1Opts = [createOption({ propertyName: 'url' })];
-      const v2Opts = [createOption({ propertyName: 'webhook' })];
-      const notifier = createNotifier({
-        options: undefined,
-        versions: [
-          createVersion({ version: 'v1', options: v1Opts }),
-          createVersion({ version: 'v2', options: v2Opts }),
-        ],
-      });
-      expect(getOptionsForVersion(notifier, 'v2')).toEqual(v2Opts);
-    });
-
-    it('should return empty array when no top-level options and requested version not found', () => {
-      const v1Opts = [createOption({ propertyName: 'url' })];
-      const notifier = createNotifier({
-        options: undefined,
-        versions: [createVersion({ version: 'v1', options: v1Opts })],
-      });
-      expect(getOptionsForVersion(notifier, 'v999')).toEqual([]);
     });
   });
 

@@ -21,13 +21,13 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateRole:
-			tuples, err := RoleToTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
+			tuples, err := convertRoleToTuples(op.CreateRole.RoleName, op.CreateRole.Permissions)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuples...)
 		case *authzextv1.MutateOperation_DeleteRole:
-			tuples, err := RoleToTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
+			tuples, err := convertRoleToTuples(op.DeleteRole.RoleName, op.DeleteRole.Permissions)
 			if err != nil {
 				return err
 			}
@@ -50,9 +50,9 @@ func (s *Server) mutateRoles(ctx context.Context, store *storeInfo, operations [
 	return nil
 }
 
-// RoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
+// convertRoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
 // using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
-func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
+func convertRoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
 	// Convert to zanzana.RolePermission
 	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
 	for _, perm := range permissions {

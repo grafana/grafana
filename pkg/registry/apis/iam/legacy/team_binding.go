@@ -130,7 +130,6 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 		if len(res.Bindings) >= int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
-			break
 		}
 	}
 

@@ -235,7 +235,7 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 
 	if len(scopeFilters) > 0 {
 		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-			filters := make([]string, 0, len(scopeFilters))
+			var filters []string
 			for _, f := range scopeFilters {
 				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}
@@ -245,7 +245,7 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 
 	if len(model.AdhocFilters) > 0 {
 		span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-			var filters []string //nolint:prealloc
+			var filters []string
 			for _, f := range model.AdhocFilters {
 				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}

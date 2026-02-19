@@ -43,7 +43,7 @@ var GetAllHardCodedMetrics = func() []resources.ResourceResponse[resources.Metri
 }
 
 var GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
-	response := make([]string, 0, len(cloudWatchConsts.NamespaceMetricsMap))
+	response := []string{}
 	for key := range cloudWatchConsts.NamespaceMetricsMap {
 		response = append(response, key)
 	}

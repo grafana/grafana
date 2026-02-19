@@ -6,7 +6,6 @@ manifest: {
 	versions: {
 		"v0alpha1": v0alpha1Version
 	}
-	roles: {}
 }
 
 v0alpha1Version: {

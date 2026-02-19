@@ -60,6 +60,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   return (
     <Stack
       ref={ref}
+      tabIndex={-1}
       direction="row"
       gap={0.5}
       alignItems="center"

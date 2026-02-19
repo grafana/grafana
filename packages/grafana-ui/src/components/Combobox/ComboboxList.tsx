@@ -130,6 +130,7 @@ export const ComboboxList = <T extends string | number>({
                   index: virtualRow.index,
                   id: itemId,
                   'aria-describedby': groupHeaderId,
+                  disabled: item.infoOption,
                 })}
               >
                 {isMultiSelect && (

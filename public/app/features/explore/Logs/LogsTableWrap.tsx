@@ -516,8 +516,8 @@ export function LogsTableWrap(props: Props) {
             columnsWithMeta={columnsWithMeta}
             dataFrames={[currentDataFrame]}
             reorder={reorderColumn}
-            setWidth={setSidebarWidth}
-            width={sidebarWidth}
+            setSidebarWidth={setSidebarWidth}
+            sidebarWidth={sidebarWidth}
             toggle={toggleColumn}
           />
         </Resizable>

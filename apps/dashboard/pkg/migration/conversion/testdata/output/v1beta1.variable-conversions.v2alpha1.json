@@ -183,16 +183,14 @@
             {
               "key": "environment",
               "operator": "=",
-              "value": "production",
-              "origin": "dashboard"
+              "value": "production"
             }
           ],
           "filters": [
             {
               "key": "job",
               "operator": "=",
-              "value": "prometheus",
-              "origin": "dashboard"
+              "value": "prometheus"
             }
           ],
           "defaultKeys": [
@@ -285,10 +283,6 @@
           "datasource": {
             "type": "prometheus",
             "uid": "existing-ref-uid"
-          },
-          "defaultValue": {
-            "text": "defaultGroupBy",
-            "value": "defaultGroupBy"
           },
           "current": {
             "text": [

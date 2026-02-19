@@ -717,7 +717,7 @@ export type UpdateCheckTypeStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateRegisterApiResponse = /** status 200 OK */ CreateRegisterResponse;
+export type CreateRegisterApiResponse = /** status 200 OK */ CreateRegister;
 export type CreateRegisterApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -844,7 +844,9 @@ export type CheckOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -881,7 +883,9 @@ export type CheckReport = {
 export type CheckStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -977,7 +981,9 @@ export type CheckTypeOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -988,7 +994,9 @@ export type CheckTypeOperatorState = {
 export type CheckTypeStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -1013,7 +1021,7 @@ export type CheckTypeList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type CreateRegisterResponse = {
+export type CreateRegister = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */

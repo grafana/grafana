@@ -51,24 +51,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/jobs`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs', {
-        // The listJob query is always scoped to a single job via fieldSelector,
-        // so items will contain at most one entry. If items is empty, there's no
-        // cached job to update — activeJob is already undefined, so the existing
-        // FinishedJobStatus fallback handles it. We only need to set the error
-        // status when there IS a cached job that would otherwise appear stuck.
-        onError: (error, updateCachedData) => {
-          updateCachedData((draft) => {
-            if (draft.items?.[0]) {
-              draft.items[0].status = {
-                ...draft.items[0].status,
-                state: 'error',
-                message: String(error),
-              };
-            }
-          });
-        },
-      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs'),
     },
     listRepository: {
       query: ({ watch, ...queryArg }) => ({

@@ -263,12 +263,12 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
-                      "type": "prometheus",
-                      "uid": "unknown-nested-datasource"
+                      "type": "elasticsearch",
+                      "uid": "existing-target-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -454,12 +454,12 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "elasticsearch",
                       "spec": {}
                     },
                     "datasource": {
-                      "type": "prometheus",
-                      "uid": "existing-ref-uid"
+                      "type": "elasticsearch",
+                      "uid": "existing-target-uid"
                     },
                     "refId": "A",
                     "hidden": false
@@ -503,7 +503,7 @@
                     },
                     "datasource": {
                       "type": "prometheus",
-                      "uid": "unknown-panel-datasource"
+                      "uid": "unknown-target-datasource"
                     },
                     "refId": "A",
                     "hidden": false

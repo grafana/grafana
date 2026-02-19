@@ -1,6 +1,6 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetas, getPanelPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/internal';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
@@ -131,8 +131,7 @@ export async function getPluginLoadData(pluginId: string): Promise<SandboxPlugin
   }
 
   //find it in panels
-  const panels = await getPanelPluginMetas();
-  for (const panel of panels) {
+  for (const panel of Object.values(config.panels)) {
     if (panel.id === pluginId) {
       return panel;
     }

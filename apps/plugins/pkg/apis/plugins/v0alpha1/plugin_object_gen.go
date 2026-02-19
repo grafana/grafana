@@ -243,10 +243,6 @@ func (o *Plugin) DeepCopyInto(dst *Plugin) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (Plugin) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.Plugin"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &Plugin{}
 
@@ -298,10 +294,6 @@ func (o *PluginList) DeepCopy() *PluginList {
 
 func (o *PluginList) DeepCopyInto(dst *PluginList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (PluginList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginList"
 }
 
 // Interface compliance compile-time check

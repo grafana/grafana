@@ -13,7 +13,7 @@ export interface Props {
 }
 
 export function DataSourceTabPage({ uid, pageId }: Props) {
-  const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
+  const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav('settings');
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,

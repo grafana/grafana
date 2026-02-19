@@ -5,7 +5,6 @@ import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unif
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
-import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -45,12 +44,6 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Add to dashboard form',
         description: 'Add to dashboard form',
         component: AddToDashboardFormExposedComponent,
-      },
-      {
-        id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,
-        title: 'Prometheus query results',
-        description: 'Display Prometheus query results with Table/Raw toggle',
-        component: PrometheusQueryResultsContainer,
       },
       {
         id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,

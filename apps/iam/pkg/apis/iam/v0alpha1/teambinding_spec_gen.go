@@ -13,11 +13,6 @@ func NewTeamBindingspecSubject() *TeamBindingspecSubject {
 	return &TeamBindingspecSubject{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for TeamBindingspecSubject.
-func (TeamBindingspecSubject) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
-}
-
 // +k8s:openapi-gen=true
 type TeamBindingTeamRef struct {
 	// Name is the unique identifier for a team.
@@ -29,11 +24,6 @@ func NewTeamBindingTeamRef() *TeamBindingTeamRef {
 	return &TeamBindingTeamRef{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for TeamBindingTeamRef.
-func (TeamBindingTeamRef) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef"
-}
-
 // +k8s:openapi-gen=true
 type TeamBindingTeamPermission string
 
@@ -41,11 +31,6 @@ const (
 	TeamBindingTeamPermissionAdmin  TeamBindingTeamPermission = "admin"
 	TeamBindingTeamPermissionMember TeamBindingTeamPermission = "member"
 )
-
-// OpenAPIModelName returns the OpenAPI model name for TeamBindingTeamPermission.
-func (TeamBindingTeamPermission) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamPermission"
-}
 
 // +k8s:openapi-gen=true
 type TeamBindingSpec struct {
@@ -62,9 +47,4 @@ func NewTeamBindingSpec() *TeamBindingSpec {
 		Subject: *NewTeamBindingspecSubject(),
 		TeamRef: *NewTeamBindingTeamRef(),
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for TeamBindingSpec.
-func (TeamBindingSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec"
 }

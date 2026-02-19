@@ -1,6 +1,0 @@
-flagName:
-  variations:
-    enabled: true
-    disabled: false
-  defaultRule:
-    variation: disabled

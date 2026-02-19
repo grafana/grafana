@@ -89,7 +89,7 @@ type CreateReceiverIntegrationTestRequest struct {
 	Headers http.Header
 }
 
-func (c *ReceiverClient) CreateReceiverIntegrationTest(ctx context.Context, identifier resource.Identifier, request CreateReceiverIntegrationTestRequest) (*CreateReceiverIntegrationTestResponse, error) {
+func (c *ReceiverClient) CreateReceiverIntegrationTest(ctx context.Context, identifier resource.Identifier, request CreateReceiverIntegrationTestRequest) (*CreateReceiverIntegrationTest, error) {
 	body, err := json.Marshal(request.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
@@ -103,10 +103,10 @@ func (c *ReceiverClient) CreateReceiverIntegrationTest(ctx context.Context, iden
 	if err != nil {
 		return nil, err
 	}
-	cast := CreateReceiverIntegrationTestResponse{}
+	cast := CreateReceiverIntegrationTest{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateReceiverIntegrationTestResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateReceiverIntegrationTest: %w", err)
 	}
 	return &cast, nil
 }

@@ -164,8 +164,7 @@ describe('getDrilldownApplicability', () => {
     const payload = getApplicability.mock.calls[0][0];
     expect(payload.groupByKeys).toEqual(['region', 'instance']);
     expect(payload.filters).toEqual([]);
-    // Falls back to queryRunner.state.queries when request.targets is undefined
-    expect(payload.queries).toBe(queryRunner.state.queries);
+    expect(payload.queries).toBe(queryRunner.state.data?.request?.targets);
     expect(payload.timeRange).toBeDefined();
     expect(result).toBe(applicability);
   });

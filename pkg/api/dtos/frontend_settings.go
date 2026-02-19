@@ -78,9 +78,8 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled           bool  `json:"enabled"`
-	CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
-	DefaultTTLMs      int64 `json:"defaultTTLMs"`
+	Enabled           bool `json:"enabled"`
+	CleanCacheEnabled bool `json:"cleanCacheEnabled"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {
@@ -183,7 +182,6 @@ type FrontendSettingsDTO struct {
 	JwtUrlLogin          bool                             `json:"jwtUrlLogin"`
 	LiveEnabled          bool                             `json:"liveEnabled"`
 	LiveMessageSizeLimit int                              `json:"liveMessageSizeLimit"`
-	LiveNamespaced       bool                             `json:"liveNamespaced"`
 	AutoAssignOrg        bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`

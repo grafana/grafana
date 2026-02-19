@@ -14,16 +14,18 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		DescendantCounts{}.OpenAPIModelName():                                            schema_pkg_apis_folder_v1beta1_DescendantCounts(ref),
-		Folder{}.OpenAPIModelName():                                                      schema_pkg_apis_folder_v1beta1_Folder(ref),
-		FolderAccessInfo{}.OpenAPIModelName():                                            schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderClient":    schema_pkg_apis_folder_v1beta1_FolderClient(ref),
-		FolderInfo{}.OpenAPIModelName():                                                  schema_pkg_apis_folder_v1beta1_FolderInfo(ref),
-		FolderInfoList{}.OpenAPIModelName():                                              schema_pkg_apis_folder_v1beta1_FolderInfoList(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderJSONCodec": schema_pkg_apis_folder_v1beta1_FolderJSONCodec(ref),
-		FolderList{}.OpenAPIModelName():                                                  schema_pkg_apis_folder_v1beta1_FolderList(ref),
-		FolderSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_folder_v1beta1_FolderSpec(ref),
-		ResourceStats{}.OpenAPIModelName():                                               schema_pkg_apis_folder_v1beta1_ResourceStats(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.DescendantCounts": schema_pkg_apis_folder_v1beta1_DescendantCounts(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder":           schema_pkg_apis_folder_v1beta1_Folder(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderAccessInfo": schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderClient":     schema_pkg_apis_folder_v1beta1_FolderClient(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo":       schema_pkg_apis_folder_v1beta1_FolderInfo(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfoList":   schema_pkg_apis_folder_v1beta1_FolderInfoList(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderJSONCodec":  schema_pkg_apis_folder_v1beta1_FolderJSONCodec(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderList":       schema_pkg_apis_folder_v1beta1_FolderList(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderMetadata":   schema_pkg_apis_folder_v1beta1_FolderMetadata(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec":       schema_pkg_apis_folder_v1beta1_FolderSpec(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus":     schema_pkg_apis_folder_v1beta1_FolderStatus(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.ResourceStats":    schema_pkg_apis_folder_v1beta1_ResourceStats(ref),
 	}
 }
 
@@ -54,7 +56,7 @@ func schema_pkg_apis_folder_v1beta1_DescendantCounts(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ResourceStats{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.ResourceStats"),
 									},
 								},
 							},
@@ -65,7 +67,7 @@ func schema_pkg_apis_folder_v1beta1_DescendantCounts(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			ResourceStats{}.OpenAPIModelName()},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.ResourceStats"},
 	}
 }
 
@@ -92,14 +94,14 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Folder",
 							Default:     map[string]interface{}{},
-							Ref:         ref(FolderSpec{}.OpenAPIModelName()),
+							Ref:         ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec"),
 						},
 					},
 				},
@@ -107,7 +109,7 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			FolderSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -262,7 +264,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -280,7 +282,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(FolderInfo{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo"),
 									},
 								},
 							},
@@ -291,7 +293,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			FolderInfo{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -329,7 +331,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -339,7 +341,7 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Folder{}.OpenAPIModelName()),
+										Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder"),
 									},
 								},
 							},
@@ -350,7 +352,103 @@ func schema_pkg_apis_folder_v1beta1_FolderList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			Folder{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v1beta1_FolderMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "metadata contains embedded CommonMetadata and can be extended with custom string fields without external reference as using the CommonMetadata reference breaks thema codegen.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"updateTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"createdBy": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"creationTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"deletionTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"finalizers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"generation": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"updatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"updateTimestamp", "createdBy", "uid", "creationTimestamp", "finalizers", "resourceVersion", "generation", "updatedBy", "labels"},
+			},
+		},
 	}
 }
 
@@ -375,6 +473,17 @@ func schema_pkg_apis_folder_v1beta1_FolderSpec(ref common.ReferenceCallback) com
 					},
 				},
 				Required: []string{"title"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_folder_v1beta1_FolderStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Empty stub",
+				Type:        []string{"object"},
 			},
 		},
 	}

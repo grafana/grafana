@@ -216,7 +216,7 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
 	if prevFilters != nil {
 		filtersIface := prevFilters.([]any)
-		filters := make([]string, 0, len(filtersIface))
+		filters := []string{}
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
 		}

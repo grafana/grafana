@@ -21,7 +21,6 @@ import (
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingImages "github.com/grafana/alerting/images"
 	alertingNotify "github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,18 +40,26 @@ type fakeConfigStore struct {
 	historicConfigs map[int64][]*models.HistoricAlertConfiguration
 
 	// notificationSettings stores notification settings by orgID.
-	notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting
+	notificationSettings map[int64]map[models.AlertRuleKey][]models.NotificationSettings
 }
 
-func (f *fakeConfigStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
 	settings, ok := f.notificationSettings[q.OrgID]
 	if !ok {
 		return nil, nil
 	}
 	if q.ReceiverName != "" {
-		filteredSettings := make(map[models.AlertRuleKey]models.ContactPointRouting)
+		filteredSettings := make(map[models.AlertRuleKey][]models.NotificationSettings)
 		for key, notificationSettings := range settings {
-			if q.ReceiverName == notificationSettings.Receiver {
+			// Current semantics is that we only key entries where any of the settings match the receiver name.
+			var found bool
+			for _, setting := range notificationSettings {
+				if q.ReceiverName == setting.Receiver {
+					found = true
+					break
+				}
+			}
+			if found {
 				filteredSettings[key] = notificationSettings
 			}
 		}
@@ -242,7 +249,7 @@ func (n NoValidation) Validate(_ models.NotificationSettings) error {
 type RejectingValidation struct{}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
-	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
+	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
 }
 
 var errInvalidState = fmt.Errorf("invalid state")
@@ -422,7 +429,7 @@ type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
 	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListContactPointRoutingsFn             func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
@@ -440,15 +447,15 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 	return nil, nil, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
 	call := call{
-		Method: "ListContactPointRoutings",
+		Method: "ListNotificationSettings",
 		Args:   []interface{}{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
-	if f.ListContactPointRoutingsFn != nil {
-		return f.ListContactPointRoutingsFn(ctx, q)
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
 	}
 
 	// Default values when no function hook is provided

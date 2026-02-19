@@ -7,11 +7,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -24,7 +22,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
-	"k8s.io/client-go/util/flowcontrol"
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -48,10 +45,8 @@ var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafa
 const LogPrefix = "setting.service"
 
 const DefaultPageSize = int64(500)
-const DefaultQPS = float32(15)
-const DefaultBurst = 40
-const DefaultCacheTTL = 1 * time.Second
-const DefaultCacheMaxEntries = 1000
+const DefaultQPS = float32(10)
+const DefaultBurst = 25
 
 const (
 	ApiGroup   = "setting.grafana.app"
@@ -65,19 +60,14 @@ const defaultServiceName = "grafana"
 // refer to: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
 const otelServiceNameEnvVar = "OTEL_SERVICE_NAME"
 
-// longThrottleLatency defines the threshold for counting throttled requests.
-const longThrottleLatency = 50 * time.Millisecond
-
 var settingGroupVersion = schema.GroupVersion{
 	Group:   ApiGroup,
 	Version: apiVersion,
 }
 
-type clientMetrics struct {
-	listDuration             *prometheus.HistogramVec
-	listResultSize           prometheus.Histogram
-	rateLimiterThrottleTotal prometheus.Counter
-	cacheHitTotal            prometheus.Counter
+type remoteSettingServiceMetrics struct {
+	listDuration   *prometheus.HistogramVec
+	listResultSize *prometheus.HistogramVec
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -129,13 +119,10 @@ type Service interface {
 }
 
 type remoteSettingService struct {
-	restClient   *rest.RESTClient
-	log          logging.Logger
-	pageSize     int64
-	metrics      clientMetrics
-	cache        *expirable.LRU[string, []*Setting]  // nil when caching disabled
-	fetchMutexes *expirable.LRU[string, *sync.Mutex] // per-cache-key fetch locks
-	fetchMu      sync.Mutex                          // guards fetchMutexes get-or-create
+	restClient *rest.RESTClient
+	log        logging.Logger
+	pageSize   int64
+	metrics    remoteSettingServiceMetrics
 }
 
 var _ Service = (*remoteSettingService)(nil)
@@ -163,11 +150,6 @@ type Config struct {
 	// The UserAgent format is "settings-client <version> (<service_name>)".
 	// Falls back to the OTEL_SERVICE_NAME environment variable, then to "grafana".
 	ServiceName string
-	// CacheTTL sets the TTL for cached List results. Defaults to DefaultCacheTTL (1s).
-	// Set to -1 to disable caching.
-	CacheTTL time.Duration
-	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
-	CacheMaxEntries int
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -201,9 +183,8 @@ type settingListMetadata struct {
 // New creates a Service from the provided configuration.
 func New(config Config) (Service, error) {
 	log := logging.New(LogPrefix)
-	metrics := initMetrics()
 
-	restClient, err := getRestClient(config, log, metrics)
+	restClient, err := getRestClient(config, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create REST client: %w", err)
 	}
@@ -213,29 +194,11 @@ func New(config Config) (Service, error) {
 		pageSize = config.PageSize
 	}
 
-	cacheTTL := DefaultCacheTTL
-	if config.CacheTTL > 0 {
-		cacheTTL = config.CacheTTL
-	}
-	cacheMaxEntries := DefaultCacheMaxEntries
-	if config.CacheMaxEntries > 0 {
-		cacheMaxEntries = config.CacheMaxEntries
-	}
-
-	var cache *expirable.LRU[string, []*Setting]
-	var fetchMutexes *expirable.LRU[string, *sync.Mutex]
-	if config.CacheTTL >= 0 {
-		cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
-		fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
-	}
-
 	return &remoteSettingService{
-		restClient:   restClient,
-		log:          log,
-		pageSize:     pageSize,
-		metrics:      metrics,
-		cache:        cache,
-		fetchMutexes: fetchMutexes,
+		restClient: restClient,
+		log:        log,
+		pageSize:   pageSize,
+		metrics:    initMetrics(),
 	}, nil
 }
 
@@ -254,14 +217,14 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 	if err != nil {
 		return nil, err
 	}
-	iniFile, err := toIni(ctx, settings)
+	iniFile, err := toIni(settings)
 	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
 	return iniFile, nil
 }
 
-func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
+func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) ([]*Setting, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	ns := semconv.GrafanaNamespaceName(namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
@@ -274,77 +237,21 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 	log := s.log.FromContext(ctx).New(ns.Key, ns.Value, "function", "remoteSettingService.List", "traceId", span.SpanContext().TraceID())
 
 	startTime := time.Now()
-	var cacheHit bool
-	// Uses the named return oErr to determine success/error status.
-	// Cache-hit returns set cacheHit=true to skip duration observation,
-	// since sub-millisecond cache lookups would skew the remote-call histogram.
+	var status string
 	defer func() {
-		if cacheHit {
-			return
-		}
-		status := "success"
-		if oErr != nil {
-			status = "error"
-		}
-		s.metrics.listDuration.WithLabelValues(status).Observe(time.Since(startTime).Seconds())
+		duration := time.Since(startTime).Seconds()
+		s.metrics.listDuration.WithLabelValues(status).Observe(duration)
 	}()
 
 	selector, err := metav1.LabelSelectorAsSelector(&labelSelector)
 	if err != nil {
+		status = "error"
 		return nil, tracing.Error(span, err)
 	}
 	if selector.Empty() {
 		log.Debug("empty selector. Fetching all settings")
 	}
 
-	lSelector := selector.String()
-	cacheKey := namespace + "|" + lSelector
-
-	if s.cache != nil {
-		if cached, ok := s.cache.Get(cacheKey); ok {
-			cacheHit = true
-			s.metrics.cacheHitTotal.Inc()
-			return cached, nil
-		}
-	}
-
-	if s.cache != nil {
-		fetchMutex := s.getOrCreateFetchMutex(cacheKey)
-		fetchMutex.Lock()
-		defer fetchMutex.Unlock()
-
-		if cached, ok := s.cache.Get(cacheKey); ok {
-			cacheHit = true
-			s.metrics.cacheHitTotal.Inc()
-			return cached, nil
-		}
-	}
-
-	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.cache != nil {
-		s.cache.Add(cacheKey, allSettings)
-	}
-
-	return allSettings, nil
-}
-
-func (s *remoteSettingService) getOrCreateFetchMutex(key string) *sync.Mutex {
-	s.fetchMu.Lock()
-	defer s.fetchMu.Unlock()
-	if mu, ok := s.fetchMutexes.Get(key); ok {
-		return mu
-	}
-	mu := &sync.Mutex{}
-	s.fetchMutexes.Add(key, mu)
-	return mu
-}
-
-// fetch retrieves all settings from the remote service using paginated requests.
-func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSelector string, span trace.Span) ([]*Setting, error) {
 	// Pre-allocate with estimated capacity
 	allSettings := make([]*Setting, 0, s.pageSize*8)
 	var continueToken string
@@ -354,8 +261,9 @@ func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSel
 	for hasNext && totalPages < 1000 {
 		totalPages++
 
-		settings, nextToken, lErr := s.fetchPage(ctx, namespace, lSelector, continueToken)
+		settings, nextToken, lErr := s.fetchPage(ctx, namespace, selector.String(), continueToken)
 		if lErr != nil {
+			status = "error"
 			return nil, tracing.Error(span, lErr)
 		}
 
@@ -365,14 +273,14 @@ func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSel
 			hasNext = false
 		}
 	}
-	s.metrics.listResultSize.Observe(float64(len(allSettings)))
+
+	status = "success"
+	s.metrics.listResultSize.WithLabelValues(status).Observe(float64(len(allSettings)))
+
 	return allSettings, nil
 }
 
 func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSelector, continueToken string) ([]*Setting, string, error) {
-	ctx, span := tracer.Start(ctx, "remoteSettingService.fetchPage")
-	defer span.End()
-
 	req := s.restClient.Get().
 		Resource(resource).
 		Namespace(namespace).
@@ -391,14 +299,11 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 	}
 	defer func() { _ = stream.Close() }()
 
-	return parseSettingList(ctx, stream)
+	return parseSettingList(stream)
 }
 
 // parseSettingList parses a SettingList JSON response using token-by-token streaming.
-func parseSettingList(ctx context.Context, r io.Reader) ([]*Setting, string, error) {
-	_, span := tracer.Start(ctx, "remoteSettingService.parseSettingList")
-	defer span.End()
-
+func parseSettingList(r io.Reader) ([]*Setting, string, error) {
 	decoder := json.NewDecoder(r)
 	// Currently, first page may have a large number of items.
 	settings := make([]*Setting, 0, 1600)
@@ -483,10 +388,7 @@ func parseItems(decoder *json.Decoder) ([]*Setting, error) {
 	return settings, nil
 }
 
-func toIni(ctx context.Context, settings []*Setting) (*ini.File, error) {
-	_, span := tracer.Start(ctx, "remoteSettingService.toIni")
-	defer span.End()
-
+func toIni(settings []*Setting) (*ini.File, error) {
 	conf := ini.Empty()
 	for _, setting := range settings {
 		if !conf.HasSection(setting.Section) {
@@ -500,7 +402,7 @@ func toIni(ctx context.Context, settings []*Setting) (*ini.File, error) {
 	return conf, nil
 }
 
-func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RESTClient, error) {
+func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) {
 	if config.URL == "" {
 		return nil, fmt.Errorf("URL cannot be empty")
 	}
@@ -549,17 +451,12 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
-	// Create the rate limiter explicitly so we can wrap it with instrumentation
-	rateLimiter := &instrumentedRateLimiter{
-		RateLimiter: flowcontrol.NewTokenBucketRateLimiter(qps, burst),
-		waitCounter: m.rateLimiterThrottleTotal,
-	}
-
 	restConfig := &rest.Config{
 		Host:            config.URL,
 		TLSClientConfig: config.TLSClientConfig,
 		WrapTransport:   wrapTransport,
-		RateLimiter:     rateLimiter,
+		QPS:             qps,
+		Burst:           burst,
 		UserAgent:       userAgent,
 		// Configure for our API group
 		APIPath: "/apis",
@@ -593,26 +490,8 @@ func (a *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	return a.transport.RoundTrip(reqCopy)
 }
 
-// instrumentedRateLimiter wraps a flowcontrol.RateLimiter and increments a
-// Prometheus counter each time Wait() blocks for longer than longThrottleLatency.
-type instrumentedRateLimiter struct {
-	flowcontrol.RateLimiter
-	waitCounter prometheus.Counter
-}
-
-var _ flowcontrol.RateLimiter = (*instrumentedRateLimiter)(nil)
-
-func (r *instrumentedRateLimiter) Wait(ctx context.Context) error {
-	start := time.Now()
-	err := r.RateLimiter.Wait(ctx)
-	if time.Since(start) > longThrottleLatency {
-		r.waitCounter.Inc()
-	}
-	return err
-}
-
-func initMetrics() clientMetrics {
-	metrics := clientMetrics{
+func initMetrics() remoteSettingServiceMetrics {
+	metrics := remoteSettingServiceMetrics{
 		listDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace:                   "settings",
@@ -623,7 +502,7 @@ func initMetrics() clientMetrics {
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
-		listResultSize: prometheus.NewHistogram(
+		listResultSize: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace:                   "settings",
 				Subsystem:                   "service",
@@ -631,19 +510,8 @@ func initMetrics() clientMetrics {
 				Help:                        "Number of settings returned by remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
 			},
+			[]string{"status"}, // status: "success" or "error"
 		),
-		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "rate_limiter_throttle_total",
-			Help:      "Total number of requests that waited more than 50ms due to client-side rate limiting",
-		}),
-		cacheHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "list_settings_cache_hit_total",
-			Help:      "Total number of List cache hits",
-		}),
 	}
 	return metrics
 }
@@ -651,13 +519,9 @@ func initMetrics() clientMetrics {
 func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.listDuration.Describe(descs)
 	s.metrics.listResultSize.Describe(descs)
-	s.metrics.rateLimiterThrottleTotal.Describe(descs)
-	s.metrics.cacheHitTotal.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.listDuration.Collect(metrics)
 	s.metrics.listResultSize.Collect(metrics)
-	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
-	s.metrics.cacheHitTotal.Collect(metrics)
 }

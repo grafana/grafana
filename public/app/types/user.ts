@@ -82,6 +82,9 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
+  externalUserMngLinkUrl: string;
+  externalUserMngLinkName: string;
+  externalUserMngInfo: string;
   isLoading: boolean;
   rolesLoading?: boolean;
   page: number;

@@ -335,21 +335,12 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 
 	fullPath := safepath.Join(r.path, path)
 
-	var err error
 	if safepath.IsDir(path) {
 		// if it is a folder, delete all of its contents
-		err = os.RemoveAll(fullPath)
-	} else {
-		err = os.Remove(fullPath)
-	}
-	if err != nil {
-		if os.IsNotExist(err) {
-			return repository.ErrFileNotFound
-		}
-		return err
+		return os.RemoveAll(fullPath)
 	}
 
-	return nil
+	return os.Remove(fullPath)
 }
 
 func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {

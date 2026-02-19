@@ -511,7 +511,7 @@ func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
 }
 
 func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []DataSourceRef {
-	var referencedDs []DataSourceRef //nolint:prealloc
+	var referencedDs []DataSourceRef
 	for _, dsVariableRef := range dsVariableRefs {
 		variableName := getDataSourceVariableName(dsVariableRef)
 		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)

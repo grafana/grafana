@@ -1,7 +1,6 @@
 package fswebassets
 
 import (
-	"context"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -35,9 +34,8 @@ func getCDNRoot(cfg *setting.Cfg, license licensing.Licensing) string {
 }
 
 // New codepath for retrieving web assets URLs for the frontend-service
-func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (dtos.EntryPointAssets, error) {
-	assetsFilename := "assets-manifest.json"
-	assetsManifest, err := webassets.ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
+func GetWebAssets(cfg *setting.Cfg, license licensing.Licensing) (dtos.EntryPointAssets, error) {
+	assetsManifest, err := webassets.ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
 	if err != nil {
 		return dtos.EntryPointAssets{}, err
 	}

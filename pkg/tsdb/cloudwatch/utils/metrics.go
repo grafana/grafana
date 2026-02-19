@@ -26,7 +26,7 @@ func BatchDataQueriesByTimeRange(queries []backend.DataQuery) [][]backend.DataQu
 		timeToBatch[key] = append(timeToBatch[key], query)
 	}
 
-	finalBatches := make([][]backend.DataQuery, 0, len(timeToBatch))
+	finalBatches := [][]backend.DataQuery{}
 	for _, batch := range timeToBatch {
 		finalBatches = append(finalBatches, batch)
 	}

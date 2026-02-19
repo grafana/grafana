@@ -115,14 +115,7 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
-
-	// Searching for ruleUID before JSON parsing can dramatically improve performance.
-	if query.RuleUID != nil && *query.RuleUID != "" {
-		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
-	}
-
-	logql += ` | json`
+	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
 
 	// Add ruleUID filter as JSON line filter if specified.
 	if query.RuleUID != nil && *query.RuleUID != "" {
@@ -153,23 +146,6 @@ func buildQuery(query Query) (string, error) {
 				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
 			}
 			logql += fmt.Sprintf(` | groupLabels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
-		}
-	}
-
-	// Add alert labels filter if specified.
-	if query.Labels != nil {
-		for _, matcher := range *query.Labels {
-			// Validate the matcher close to where it is used to form the query,
-			// to reduce the risk of introducing a query injection bug.
-			if !validLabelKeyRegex.MatchString(matcher.Label) {
-				return "", fmt.Errorf("%w: alert label: %q", ErrInvalidQuery, matcher.Label)
-			}
-			switch matcher.Type {
-			case "=", "!=", "=~", "!~":
-			default:
-				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
-			}
-			logql += fmt.Sprintf(` | alert_labels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
 		}
 	}
 

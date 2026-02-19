@@ -112,7 +112,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	if opts.Ref == "" {
-		progress.ResetResults(false)
+		progress.ResetResults()
 		progress.SetMessage(ctx, "pull resources")
 
 		syncJob := provisioning.Job{

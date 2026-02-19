@@ -18,11 +18,6 @@ func NewCreateReceiverIntegrationTestRequestIntegration() *CreateReceiverIntegra
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestIntegration.
-func (CreateReceiverIntegrationTestRequestIntegration) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestIntegration"
-}
-
 type CreateReceiverIntegrationTestRequestAlert struct {
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
@@ -36,11 +31,6 @@ func NewCreateReceiverIntegrationTestRequestAlert() *CreateReceiverIntegrationTe
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestAlert.
-func (CreateReceiverIntegrationTestRequestAlert) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestAlert"
-}
-
 type CreateReceiverIntegrationTestRequestBody struct {
 	Integration CreateReceiverIntegrationTestRequestIntegration `json:"integration"`
 	Alert       CreateReceiverIntegrationTestRequestAlert       `json:"alert"`
@@ -52,9 +42,4 @@ func NewCreateReceiverIntegrationTestRequestBody() *CreateReceiverIntegrationTes
 		Integration: *NewCreateReceiverIntegrationTestRequestIntegration(),
 		Alert:       *NewCreateReceiverIntegrationTestRequestAlert(),
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestBody.
-func (CreateReceiverIntegrationTestRequestBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestBody"
 }

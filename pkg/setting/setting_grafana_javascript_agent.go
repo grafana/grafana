@@ -13,6 +13,7 @@ type GrafanaJavascriptAgent struct {
 	PerformanceInstrumentalizationEnabled bool   `json:"performanceInstrumentalizationEnabled"`
 	CSPInstrumentalizationEnabled         bool   `json:"cspInstrumentalizationEnabled"`
 	TracingInstrumentalizationEnabled     bool   `json:"tracingInstrumentalizationEnabled"`
+	WebVitalsAttributionEnabled           bool   `json:"webVitalsAttributionEnabled"`
 	BotFilterEnabled                      bool   `json:"botFilterEnabled"`
 }
 
@@ -31,6 +32,7 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		PerformanceInstrumentalizationEnabled: raw.Key("instrumentations_performance_enabled").MustBool(true),
 		CSPInstrumentalizationEnabled:         raw.Key("instrumentations_csp_enabled").MustBool(true),
 		TracingInstrumentalizationEnabled:     raw.Key("instrumentations_tracing_enabled").MustBool(true),
+		WebVitalsAttributionEnabled:           raw.Key("web_vitals_attribution_enabled").MustBool(true),
 		BotFilterEnabled:                      raw.Key("bot_filter_enabled").MustBool(false),
 	}
 }

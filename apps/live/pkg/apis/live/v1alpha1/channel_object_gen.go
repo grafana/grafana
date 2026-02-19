@@ -228,10 +228,6 @@ func (o *Channel) DeepCopyInto(dst *Channel) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (Channel) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.live.pkg.apis.live.v1alpha1.Channel"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &Channel{}
 
@@ -283,10 +279,6 @@ func (o *ChannelList) DeepCopy() *ChannelList {
 
 func (o *ChannelList) DeepCopyInto(dst *ChannelList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (ChannelList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.live.pkg.apis.live.v1alpha1.ChannelList"
 }
 
 // Interface compliance compile-time check

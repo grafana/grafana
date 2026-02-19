@@ -1293,7 +1293,7 @@ func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle
 	requireStatusCode(t, http.StatusAccepted, status, raw)
 }
 
-func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertAlertmanagerResponse {
+func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertPrometheusResponse {
 	t.Helper()
 
 	resp, status, body := a.RawConvertPrometheusPostAlertmanagerConfig(t, amCfg, headers)
@@ -1302,7 +1302,7 @@ func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg a
 	return resp
 }
 
-func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertAlertmanagerResponse, int, string) {
+func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
 	t.Helper()
 
 	path := "%s/api/convert/api/v1/alerts"
@@ -1328,7 +1328,7 @@ func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCf
 		req.Header.Set(key, value)
 	}
 
-	return sendRequestJSON[apimodels.ConvertAlertmanagerResponse](t, req, http.StatusAccepted)
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 }
 
 func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.AlertmanagerUserConfig {

@@ -11,7 +11,6 @@ import {
   useHeaderHeight,
   useRowHeight,
   useReducerEntries,
-  useManagedSort,
 } from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext } from './utils';
@@ -93,63 +92,6 @@ describe('TableNG hooks', () => {
     });
 
     it.todo('should handle nested frames');
-  });
-
-  describe('useManagedSort', () => {
-    it('Should not update if sortBy is undefined', () => {
-      const setSortColumns = jest.fn();
-      renderHook(() =>
-        useManagedSort({
-          sortBy: undefined,
-          sortByBehavior: 'managed',
-          setSortColumns,
-        })
-      );
-
-      expect(setSortColumns).toHaveBeenCalledTimes(0);
-    });
-
-    it.each([true, false])('Should not update if behavior is managed', (desc) => {
-      const setSortColumns = jest.fn();
-      renderHook(() =>
-        useManagedSort({
-          sortBy: [
-            {
-              displayName: 'Alice',
-              desc,
-            },
-          ],
-          sortByBehavior: 'managed',
-          setSortColumns,
-        })
-      );
-
-      expect(setSortColumns).toHaveBeenCalledTimes(1);
-      expect(setSortColumns).toHaveBeenCalledWith([
-        {
-          columnKey: 'Alice',
-          direction: desc ? 'DESC' : 'ASC',
-        },
-      ]);
-    });
-
-    it.each([true, false])('Should not update if behavior is initial', (desc) => {
-      const setSortColumns = jest.fn();
-      renderHook(() =>
-        useManagedSort({
-          sortBy: [
-            {
-              displayName: 'Alice',
-              desc,
-            },
-          ],
-          sortByBehavior: 'initial',
-          setSortColumns,
-        })
-      );
-
-      expect(setSortColumns).toHaveBeenCalledTimes(0);
-    });
   });
 
   describe('useSortedRows', () => {

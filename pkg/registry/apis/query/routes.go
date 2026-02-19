@@ -9,14 +9,14 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
+	sqlSchemas := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResponseSQLSchemas"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -70,7 +70,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		return routes
 	}
 
-	searchResults := defs[queryV1.OpenAPIPrefix+"DataSourceConnectionList"].Schema
+	searchResults := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList"].Schema
 	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
 		Path: "connections",
 		Spec: &spec3.PathProps{

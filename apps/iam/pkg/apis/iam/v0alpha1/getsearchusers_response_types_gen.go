@@ -3,7 +3,7 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type GetSearchUsersUserHit struct {
+type UserHit struct {
 	Name          string  `json:"name"`
 	Title         string  `json:"title"`
 	Login         string  `json:"login"`
@@ -15,33 +15,23 @@ type GetSearchUsersUserHit struct {
 	Score         float64 `json:"score"`
 }
 
-// NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.
-func NewGetSearchUsersUserHit() *GetSearchUsersUserHit {
-	return &GetSearchUsersUserHit{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersUserHit.
-func (GetSearchUsersUserHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
+// NewUserHit creates a new UserHit object.
+func NewUserHit() *UserHit {
+	return &UserHit{}
 }
 
 // +k8s:openapi-gen=true
-type GetSearchUsersResponse struct {
-	Offset    int64                   `json:"offset"`
-	TotalHits int64                   `json:"totalHits"`
-	Hits      []GetSearchUsersUserHit `json:"hits"`
-	QueryCost float64                 `json:"queryCost"`
-	MaxScore  float64                 `json:"maxScore"`
+type GetSearchUsers struct {
+	Offset    int64     `json:"offset"`
+	TotalHits int64     `json:"totalHits"`
+	Hits      []UserHit `json:"hits"`
+	QueryCost float64   `json:"queryCost"`
+	MaxScore  float64   `json:"maxScore"`
 }
 
-// NewGetSearchUsersResponse creates a new GetSearchUsersResponse object.
-func NewGetSearchUsersResponse() *GetSearchUsersResponse {
-	return &GetSearchUsersResponse{
-		Hits: []GetSearchUsersUserHit{},
+// NewGetSearchUsers creates a new GetSearchUsers object.
+func NewGetSearchUsers() *GetSearchUsers {
+	return &GetSearchUsers{
+		Hits: []UserHit{},
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersResponse.
-func (GetSearchUsersResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersResponse"
 }

@@ -11,5 +11,3 @@ export {
 } from './fixtures/scopes';
 export { default as allHandlers } from './handlers/all-handlers';
 export { default as scopeHandlers } from './handlers/apis/scope.grafana.app/v0alpha1/handlers';
-
-export { setTestFlags, getTestFeatureFlagClient } from './utilities/featureFlags';

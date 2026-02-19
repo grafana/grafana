@@ -1,5 +1,5 @@
 import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
-import { mockTimeRange } from '@grafana/plugin-ui/test';
+import { mockTimeRange } from '@grafana/plugin-ui';
 import { setTemplateSrv } from '@grafana/runtime';
 import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { TemplateSrv } from 'app/features/templating/template_srv';

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,11 +51,11 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			testCallAllMethods(client)
 			// every method should hit resource server exactly once
-			for method, count := range resourceServer.getCalls() {
+			for method, count := range resourceServer.Calls {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 			}
 			// no hits to the index server in this case
-			for range indexServer.getCalls() {
+			for range indexServer.Calls {
 				require.FailNow(t, "index server was called when it should have not")
 			}
 		})
@@ -86,12 +85,12 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			testCallAllMethods(client)
 			// only resource store methods in this case
-			for method, count := range resourceServer.getCalls() {
+			for method, count := range resourceServer.Calls {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceStore"))
 			}
 			// index server methods should be called here
-			for method, count := range indexServer.getCalls() {
+			for method, count := range indexServer.Calls {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceIndex") || strings.Contains(method, "resource.ManagedObjectIndex"))
 			}
@@ -161,7 +160,6 @@ func createTestGrpcServer(t *testing.T, address string) *testServer {
 type testServer struct {
 	resource.ResourceServer
 	Calls map[string]int
-	mu    sync.Mutex
 	s     *grpc.Server
 }
 
@@ -172,30 +170,13 @@ func newTestServer() *testServer {
 }
 
 func (s *testServer) resetCalls() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.Calls = make(map[string]int)
-}
-
-func (s *testServer) getCalls() map[string]int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	calls := make(map[string]int, len(s.Calls))
-	for method, count := range s.Calls {
-		calls[method] = count
-	}
-
-	return calls
 }
 
 func (s *testServer) handler(srv interface{}, serverStream grpc.ServerStream) error {
 	fullMethodName, ok := grpc.MethodFromServerStream(serverStream)
 	if ok {
-		s.mu.Lock()
 		s.Calls[fullMethodName]++
-		s.mu.Unlock()
 	}
 	return nil
 }

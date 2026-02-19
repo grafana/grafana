@@ -47,9 +47,8 @@ The decrypters field is an allowlist that lets the secure value know which servi
 
 Currently available decrypters:
 
-- `k6-cloud` (for Grafana Cloud k6)
-- `provisioning.grafana.app` (for GitSync/Provisioning)
 - `synthetic-monitoring` (for Synthetic Monitoring checks)
+- `provisioning.grafana.app` (for GitSync/Provisioning)
 
 ## Create a secure value
 

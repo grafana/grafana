@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/definition"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -37,11 +36,6 @@ var (
 		msgAlertmanagerMultipleExtraConfigsUnsupported,
 		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
 	)
-
-	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
-		errutil.WithPublic(
-			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
-		))
 )
 
 type UnknownReceiverError struct {
@@ -392,83 +386,59 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
 	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
-	dryRun bool,
-) (definition.RenameResources, error) {
+) error {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to get current configuration: %w", err)
+		return fmt.Errorf("failed to get current configuration: %w", err)
 	}
 
 	cfg, err := Load([]byte(currentCfg.AlertmanagerConfiguration))
 	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
+		return fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
 	}
 
 	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
 	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("failed to apply extra configuration: %w", err)
-	}
-
-	if len(cfg.ManagedRoutes) > 0 {
-		for _, c := range cfg.ExtraConfigs {
-			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
-				return definition.RenameResources{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-			}
-		}
-	}
-
-	merge, err := cfg.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return definition.RenameResources{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
-	}
-
-	if dryRun {
-		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
-		return merge.RenameResources, nil
+		return fmt.Errorf("failed to apply extra configuration: %w", err)
 	}
 
 	am, err := moa.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
-			return definition.RenameResources{}, err
+			return err
 		}
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
 		moa.logger.Error("Unable to save and apply alertmanager configuration with extra config", "error", err, "org", org)
-		return definition.RenameResources{}, AlertmanagerConfigRejectedError{err}
+		return AlertmanagerConfigRejectedError{err}
 	}
 
 	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org)
-	return merge.RenameResources, nil
+	return nil
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error) {
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig definitions.ExtraConfiguration) error {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
-		if !replace {
-			// for now we validate that after the update there will be just one extra config.
-			for _, c := range configs {
-				if c.Identifier != extraConfig.Identifier {
-					return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-				}
+		// for now we validate that after the update there will be just one extra config.
+		for _, c := range configs {
+			if c.Identifier != extraConfig.Identifier {
+				return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
 			}
 		}
+
 		return []definitions.ExtraConfiguration{extraConfig}, nil
 	}
 
-	renamed, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
+	err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
 	if err != nil {
-		return definition.RenameResources{}, err
+		return err
 	}
 
-	if dryRun {
-		moa.logger.Info("Dry run: validated alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
-	} else {
-		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
-	}
-	return renamed, nil
+	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+	return nil
 }
 
 // DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
@@ -483,8 +453,7 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 		return filtered, nil
 	}
 
-	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, false)
-	return err
+	return moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc)
 }
 
 // assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.

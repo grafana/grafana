@@ -20,7 +20,7 @@ import (
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -295,9 +295,10 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 }
 
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
+	g, _ := plugins.GetDatasourceGroupNameFromPluginID(ds.Type)
 	return &queryV0.DataSourceConnection{
 		Title:      ds.Name,
-		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
+		APIGroup:   g,
 		APIVersion: "v0alpha1", // TODO, get this from the plugin
 		Name:       ds.UID,
 		Plugin:     ds.Type,

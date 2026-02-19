@@ -86,7 +86,7 @@ type GetGroupsRequest struct {
 	Headers http.Header
 }
 
-func (c *TeamClient) GetGroups(ctx context.Context, identifier resource.Identifier, request GetGroupsRequest) (*GetGroupsResponse, error) {
+func (c *TeamClient) GetGroups(ctx context.Context, identifier resource.Identifier, request GetGroupsRequest) (*GetGroups, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/groups",
 		Verb:    "GET",
@@ -95,10 +95,10 @@ func (c *TeamClient) GetGroups(ctx context.Context, identifier resource.Identifi
 	if err != nil {
 		return nil, err
 	}
-	cast := GetGroupsResponse{}
+	cast := GetGroups{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGroupsResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGroups: %w", err)
 	}
 	return &cast, nil
 }
@@ -107,7 +107,7 @@ type GetMembersRequest struct {
 	Headers http.Header
 }
 
-func (c *TeamClient) GetMembers(ctx context.Context, identifier resource.Identifier, request GetMembersRequest) (*GetMembersResponse, error) {
+func (c *TeamClient) GetMembers(ctx context.Context, identifier resource.Identifier, request GetMembersRequest) (*GetMembers, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/members",
 		Verb:    "GET",
@@ -116,10 +116,10 @@ func (c *TeamClient) GetMembers(ctx context.Context, identifier resource.Identif
 	if err != nil {
 		return nil, err
 	}
-	cast := GetMembersResponse{}
+	cast := GetMembers{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetMembersResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetMembers: %w", err)
 	}
 	return &cast, nil
 }

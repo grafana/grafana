@@ -11,8 +11,3 @@ type CreateRegisterBody struct {
 func NewCreateRegisterBody() *CreateRegisterBody {
 	return &CreateRegisterBody{}
 }
-
-// OpenAPIModelName returns the OpenAPI model name for CreateRegisterBody.
-func (CreateRegisterBody) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CreateRegisterBody"
-}

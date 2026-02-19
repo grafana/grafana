@@ -6,19 +6,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
-	GROUP   = "datasource.grafana.app"
+	GROUP   = "*.datasource.grafana.app"
 	VERSION = "v0alpha1"
-)
-
-var (
-	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )
 
 var DataSourceResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
@@ -43,11 +37,4 @@ var DataSourceResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			}, nil
 		},
 	},
-)
-
-var QueryTypeDefinitionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"querytypes", "querytype", "QueryTypeDefinition",
-	func() runtime.Object { return &QueryTypeDefinition{} },
-	func() runtime.Object { return &QueryTypeDefinitionList{} },
-	utils.TableColumns{}, // default table converter
 )

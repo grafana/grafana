@@ -143,7 +143,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               type="button"
               className="pointer"
               onClick={() => {
-                DashboardInteractions.trackDeleteDashboardElement('row');
+                DashboardInteractions.trackRemoveRowClick();
                 this.onDelete();
               }}
               aria-label={t('dashboard.unthemed-dashboard-row.aria-label-delete-row', 'Delete row')}

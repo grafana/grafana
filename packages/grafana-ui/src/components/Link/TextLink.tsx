@@ -61,9 +61,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
     if (external) {
       return (
-        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles.wrapper}>
+        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
           {children}
-          <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />
+          <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>
       );
     }
@@ -71,9 +71,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const strippedUrl = locationUtil.stripBaseFromUrl(validUrl);
 
     return (
-      <Link ref={ref} href={strippedUrl} {...rest} className={styles.wrapper}>
+      <Link ref={ref} href={strippedUrl} {...rest} className={styles}>
         {children}
-        {icon && <Icon className={styles.icon} name={icon} size={svgSizes[variant] || 'md'} />}
+        {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>
     );
   }
@@ -88,34 +88,31 @@ export const getLinkStyles = (
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color']
 ) => {
-  return {
-    icon: css({
-      marginLeft: '0.25em',
-      verticalAlign: 'text-bottom',
-    }),
-    wrapper: css([
-      variant && {
-        ...theme.typography[variant],
-      },
-      weight && {
-        fontWeight: customWeight(weight, theme),
-      },
-      color && {
-        color: theme.colors.text[color],
-      },
-      {
-        textDecoration: 'none',
-        '&:hover': {
-          textDecoration: 'underline',
-          color: theme.colors.text.link,
-        },
-      },
-      inline && {
+  return css([
+    variant && {
+      ...theme.typography[variant],
+    },
+    weight && {
+      fontWeight: customWeight(weight, theme),
+    },
+    color && {
+      color: theme.colors.text[color],
+    },
+    {
+      alignItems: 'center',
+      gap: '0.25em',
+      display: 'inline-flex',
+      textDecoration: 'none',
+      '&:hover': {
         textDecoration: 'underline',
-        '&:hover': {
-          textDecoration: 'none',
-        },
+        color: theme.colors.text.link,
       },
-    ]),
-  };
+    },
+    inline && {
+      textDecoration: 'underline',
+      '&:hover': {
+        textDecoration: 'none',
+      },
+    },
+  ]);
 };

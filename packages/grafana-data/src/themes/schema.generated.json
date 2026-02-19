@@ -294,9 +294,6 @@
           },
           "additionalProperties": false
         },
-        "scrollbar": {
-          "type": "string"
-        },
         "hoverFactor": {
           "type": "number"
         },

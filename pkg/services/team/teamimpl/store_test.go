@@ -319,7 +319,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
 
-				teamIds := make([]int64, 0, len(allTeamsQueryResult.Teams))
+				teamIds := make([]int64, 0)
 				for _, team := range allTeamsQueryResult.Teams {
 					teamIds = append(teamIds, team.ID)
 				}

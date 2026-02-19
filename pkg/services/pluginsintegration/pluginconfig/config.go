@@ -23,7 +23,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 
 	return config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
-		cfg.PluginsPaths,
+		cfg.PluginsPath,
 		extractPluginSettings(settingProvider),
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,

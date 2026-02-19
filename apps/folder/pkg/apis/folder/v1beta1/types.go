@@ -6,8 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const OpenAPIPrefix = "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1."
-
 // FolderInfoList returns a list of folder references (parents or children)
 // Unlike FolderList, each item is not a full k8s object
 // +k8s:deepcopy-gen=true
@@ -19,10 +17,6 @@ type FolderInfoList struct {
 	// +listType=map
 	// +listMapKey=uid
 	Items []FolderInfo `json:"items"`
-}
-
-func (FolderInfoList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "FolderInfoList"
 }
 
 // FolderInfo briefly describes a folder -- unlike a folder resource,
@@ -44,10 +38,6 @@ type FolderInfo struct {
 	Detached bool `json:"detached,omitempty"`
 }
 
-func (FolderInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "FolderInfo"
-}
-
 // Access control information for the current user
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -60,10 +50,6 @@ type FolderAccessInfo struct {
 	CanDelete bool `json:"canDelete"`
 }
 
-func (FolderAccessInfo) OpenAPIModelName() string {
-	return OpenAPIPrefix + "FolderAccessInfo"
-}
-
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DescendantCounts struct {
@@ -72,18 +58,10 @@ type DescendantCounts struct {
 	Counts []ResourceStats `json:"counts"`
 }
 
-func (DescendantCounts) OpenAPIModelName() string {
-	return OpenAPIPrefix + "DescendantCounts"
-}
-
 type ResourceStats struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
 	Count    int64  `json:"count"`
-}
-
-func (ResourceStats) OpenAPIModelName() string {
-	return OpenAPIPrefix + "ResourceStats"
 }
 
 func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*DescendantCounts, error) {
@@ -91,3 +69,6 @@ func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*Descendant
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &res)
 	return &res, err
 }
+
+// Empty stub
+type FolderStatus struct{}

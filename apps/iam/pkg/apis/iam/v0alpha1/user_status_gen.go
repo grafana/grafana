@@ -11,8 +11,3 @@ type UserStatus struct {
 func NewUserStatus() *UserStatus {
 	return &UserStatus{}
 }
-
-// OpenAPIModelName returns the OpenAPI model name for UserStatus.
-func (UserStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserStatus"
-}

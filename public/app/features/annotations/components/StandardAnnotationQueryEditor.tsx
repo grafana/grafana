@@ -30,14 +30,12 @@ export interface Props {
   datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
   onChange: (annotation: AnnotationQuery<DataQuery>) => void;
-  disableSavedQueries?: boolean;
 }
 
 interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
   skipNextVerification?: boolean;
-  showResults?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -50,10 +48,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   componentDidUpdate(oldProps: Props) {
     if (this.props.annotation !== oldProps.annotation && !shouldUseLegacyRunner(this.props.datasource)) {
       this.verifyDataSource();
-    }
-
-    if (this.props.datasource.uid !== oldProps.datasource.uid) {
-      this.setState({ response: undefined, showResults: false });
     }
   }
 
@@ -121,11 +115,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       running: false,
       response,
     });
-  };
-
-  onTestQuery = () => {
-    this.setState({ showResults: true });
-    this.onRunQuery();
   };
 
   onQueryChange = (target: DataQuery) => {
@@ -215,7 +204,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   renderStatus() {
-    const { response, running, showResults } = this.state;
+    const { response, running } = this.state;
+
+    if (!response) {
+      return null;
+    }
 
     return (
       <>
@@ -228,7 +221,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
               data-testid={selectors.components.Annotations.editor.testButton}
               variant="secondary"
               size="xs"
-              onClick={this.onTestQuery}
+              onClick={this.onRunQuery}
             >
               <Trans i18nKey="annotations.standard-annotation-query-editor.test-annotation-query">
                 Test annotation query
@@ -237,16 +230,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           )}
         </div>
         <Space v={2} layout="block" />
-        {showResults && response && (
-          <Alert
-            data-testid={selectors.components.Annotations.editor.resultContainer}
-            severity={this.getStatusSeverity(response)}
-            title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
-            onRemove={() => this.setState({ showResults: false })}
-          >
-            {this.renderStatusText(response, running)}
-          </Alert>
-        )}
+        <Alert
+          data-testid={selectors.components.Annotations.editor.resultContainer}
+          severity={this.getStatusSeverity(response)}
+          title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
+        >
+          {this.renderStatusText(response, running)}
+        </Alert>
       </>
     );
   }
@@ -318,7 +308,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
           <AnnotationQueryEditorActionsWrapper
-            disableSavedQueries={this.props.disableSavedQueries}
             annotation={annotation}
             datasource={datasource}
             onQueryReplace={this.onQueryReplace}

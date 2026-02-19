@@ -31,15 +31,11 @@ export interface AmRootRouteFormProps {
   onSubmit: (route: Partial<FormAmRoute>) => void;
   route: RouteWithID;
   showNameField?: boolean;
-  existingPolicyNames?: string[];
-  nameError?: string;
 }
 
 export const AmRootRouteForm = ({
   actionButtons,
   alertManagerSourceName,
-  existingPolicyNames,
-  nameError,
   onSubmit,
   route,
   showNameField,
@@ -76,8 +72,8 @@ export const AmRootRouteForm = ({
               'alerting.am-root-route-form.description-unique-routing',
               'A unique name for the routing tree'
             )}
-            invalid={!!(nameError ?? errors.name?.message)}
-            error={nameError ?? errors.name?.message}
+            invalid={!!errors.name}
+            error={errors.name?.message}
           >
             <Input
               {...register('name', {
@@ -85,12 +81,6 @@ export const AmRootRouteForm = ({
                 validate: (value) => {
                   if (!value || value.trim().length === 0) {
                     return t('alerting.am-root-route-form.validate-name', 'Name is required');
-                  }
-                  if (existingPolicyNames?.includes(value.trim())) {
-                    return t(
-                      'alerting.am-root-route-form.validate-name-duplicate',
-                      'A notification policy with this name already exists'
-                    );
                   }
                   return true;
                 },

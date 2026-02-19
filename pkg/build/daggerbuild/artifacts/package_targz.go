@@ -30,9 +30,6 @@ var (
 		arguments.GoVersion,
 		arguments.ViceroyVersion,
 		arguments.YarnCacheDirectory,
-
-		// Optional catalog plugins to bundle
-		arguments.CatalogPlugins,
 	}
 	TargzFlags = flags.JoinFlags(
 		flags.StdPackageFlags(),
@@ -59,7 +56,6 @@ type Tarball struct {
 	Backend        *pipeline.Artifact
 	Frontend       *pipeline.Artifact
 	BundledPlugins *pipeline.Artifact
-	CatalogPlugins *pipeline.Artifact // Optional: plugins downloaded from grafana.com catalog
 }
 
 func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
@@ -128,14 +124,7 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 	cgoEnabled := !cgoDisabled
-
-	// Get catalog plugins (optional)
-	catalogPlugins, err := arguments.GetCatalogPlugins(ctx, state)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, goModCache, goBuildCache, static, wireTag, tags, goVersion, viceroyVersion, experiments, cgoEnabled, catalogPlugins)
+	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, goModCache, goBuildCache, static, wireTag, tags, goVersion, viceroyVersion, experiments, cgoEnabled)
 }
 
 // NewTarball returns a properly initialized Tarball artifact.
@@ -160,7 +149,6 @@ func NewTarball(
 	viceroyVersion string,
 	experiments []string,
 	cgoEnabled bool,
-	catalogPlugins []arguments.CatalogPluginSpec,
 ) (*pipeline.Artifact, error) {
 	backendArtifact, err := NewBackend(ctx, log, artifact, &NewBackendOpts{
 		Name:           name,
@@ -191,16 +179,6 @@ func NewTarball(
 		return nil, err
 	}
 
-	// Create catalog plugins artifact if plugins were specified
-	var catalogPluginsArtifact *pipeline.Artifact
-	if len(catalogPlugins) > 0 {
-		log.Info("Creating catalog plugins artifact", "plugins", len(catalogPlugins))
-		catalogPluginsArtifact, err = NewCatalogPlugins(ctx, log, artifact, catalogPlugins, distro, version)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	tarball := &Tarball{
 		Name:         name,
 		Distribution: distro,
@@ -214,7 +192,6 @@ func NewTarball(
 		Backend:        backendArtifact,
 		Frontend:       frontendArtifact,
 		BundledPlugins: bundledPluginsArtifact,
-		CatalogPlugins: catalogPluginsArtifact,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -287,14 +264,6 @@ func (t *Tarball) BuildFile(ctx context.Context, b *dagger.Container, opts *pipe
 		targz.NewMappedDir("plugins-bundled", pluginsDir),
 	}
 
-	if t.CatalogPlugins != nil {
-		catalogDir, err := opts.Store.Directory(ctx, t.CatalogPlugins)
-		if err != nil {
-			return nil, err
-		}
-		directories = append(directories, targz.NewMappedDir("data/plugins-bundled", catalogDir))
-	}
-
 	root := fmt.Sprintf("grafana-%s", version)
 
 	return targz.Build(
@@ -339,17 +308,11 @@ func (t *Tarball) VerifyDirectory(ctx context.Context, client *dagger.Client, di
 }
 
 func (t *Tarball) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
-	deps := []*pipeline.Artifact{
+	return []*pipeline.Artifact{
 		t.Backend,
 		t.Frontend,
 		t.BundledPlugins,
-	}
-
-	if t.CatalogPlugins != nil {
-		deps = append(deps, t.CatalogPlugins)
-	}
-
-	return deps, nil
+	}, nil
 }
 
 func (t *Tarball) Filename(ctx context.Context) (string, error) {

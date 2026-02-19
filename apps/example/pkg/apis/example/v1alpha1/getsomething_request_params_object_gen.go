@@ -30,8 +30,4 @@ func (o *GetSomethingRequestParamsObject) DeepCopyInto(dst *GetSomethingRequestP
 	_ = resource.CopyObjectInto(&dstGetSomethingRequestParams, &o.GetSomethingRequestParams)
 }
 
-func (GetSomethingRequestParamsObject) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomethingRequestParamsObject"
-}
-
 var _ runtime.Object = NewGetSomethingRequestParamsObject()

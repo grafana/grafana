@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import { capitalize, filter, uniqBy } from 'lodash';
+import { filter, uniqBy } from 'lodash';
+import pluralize from 'pluralize';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, QueryResultMetaNotice } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
@@ -25,22 +27,26 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
   const styles = useStyles2(getStyles);
 
   const color = type === 'warning' ? 'orange' : 'blue';
-  const icon = type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+  const icon = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
   return (
     <Badge
       color={color}
       icon={icon}
-      text={notices.length}
+      text={
+        <Trans
+          i18nKey="query-editor.header.warning-badges.text"
+          values={{ count: notices.length, type: pluralize(type, notices.length) }}
+        >
+          {'{{count}} {{type}}'}
+        </Trans>
+      }
       tooltip={
-        <div className={styles.noticeContainer}>
-          {capitalize(type)}
-          <ol className={styles.noticeList}>
-            {notices.map(({ text }, index) => (
-              <li key={index}>{text}</li>
-            ))}
-          </ol>
-        </div>
+        <ul className={styles.noticeList}>
+          {notices.map(({ text }, index) => (
+            <li key={index}>{text}</li>
+          ))}
+        </ul>
       }
     />
   );
@@ -97,11 +103,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   noticeList: css({
     margin: 0,
     paddingLeft: theme.spacing(2),
-  }),
-  noticeContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
   }),
 });

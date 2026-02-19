@@ -332,7 +332,7 @@ export type UpdateShortUrlApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetShortUrlGotoApiResponse = /** status 200 OK */ GetGotoResponse;
+export type GetShortUrlGotoApiResponse = /** status 200 OK */ GetGoto;
 export type GetShortUrlGotoApiArg = {
   /** name of the ResourceCallOptions */
   name: string;
@@ -497,7 +497,9 @@ export type ShortUrlOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -508,7 +510,9 @@ export type ShortUrlOperatorState = {
 export type ShortUrlStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** The last time the short URL was used, 0 is the initial value */
   lastSeenAt: number;
@@ -590,7 +594,7 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GetGotoResponse = {
+export type GetGoto = {
   url: string;
 };
 export const {

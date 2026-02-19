@@ -6,7 +6,6 @@ import {
   migrateFromParentRowIndexToNestedFrames,
   migrateHiddenFields,
   migrateTextWrapToFieldLevel,
-  tableMigrationHandler,
   tablePanelChangedHandler,
 } from './migrations';
 
@@ -308,27 +307,6 @@ describe('Table Migrations', () => {
         ],
       },
     ]);
-  });
-
-  it('does not throw if overrides are undefined', () => {
-    const panel = {
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-      },
-    } as unknown as PanelModel;
-
-    tableMigrationHandler(panel);
-
-    expect(panel).toEqual({
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
-    });
   });
 
   it('migrates DataFrame[] from format using meta.custom.parentRowIndex to format using FieldType.nestedFrames', () => {

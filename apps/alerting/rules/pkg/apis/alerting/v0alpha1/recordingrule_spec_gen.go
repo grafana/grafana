@@ -12,11 +12,6 @@ func NewRecordingRuleIntervalTrigger() *RecordingRuleIntervalTrigger {
 	return &RecordingRuleIntervalTrigger{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for RecordingRuleIntervalTrigger.
-func (RecordingRuleIntervalTrigger) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleIntervalTrigger"
-}
-
 // +k8s:openapi-gen=true
 type RecordingRulePromDuration string
 
@@ -27,11 +22,6 @@ type RecordingRuleTemplateString string
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
 type RecordingRuleExpressionMap map[string]RecordingRuleExpression
-
-// OpenAPIModelName returns the OpenAPI model name for RecordingRuleExpressionMap.
-func (RecordingRuleExpressionMap) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpressionMap"
-}
 
 // +k8s:openapi-gen=true
 type RecordingRuleExpression struct {
@@ -53,11 +43,6 @@ func NewRecordingRuleExpression() *RecordingRuleExpression {
 	return &RecordingRuleExpression{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for RecordingRuleExpression.
-func (RecordingRuleExpression) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpression"
-}
-
 // +k8s:openapi-gen=true
 type RecordingRuleRelativeTimeRange struct {
 	From RecordingRulePromDurationWMillis `json:"from"`
@@ -67,11 +52,6 @@ type RecordingRuleRelativeTimeRange struct {
 // NewRecordingRuleRelativeTimeRange creates a new RecordingRuleRelativeTimeRange object.
 func NewRecordingRuleRelativeTimeRange() *RecordingRuleRelativeTimeRange {
 	return &RecordingRuleRelativeTimeRange{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for RecordingRuleRelativeTimeRange.
-func (RecordingRuleRelativeTimeRange) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange"
 }
 
 // +k8s:openapi-gen=true
@@ -96,9 +76,4 @@ func NewRecordingRuleSpec() *RecordingRuleSpec {
 	return &RecordingRuleSpec{
 		Trigger: *NewRecordingRuleIntervalTrigger(),
 	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for RecordingRuleSpec.
-func (RecordingRuleSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleSpec"
 }

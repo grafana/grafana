@@ -48,10 +48,10 @@ type ResourceServer interface {
 
 // SearchServer implements the search-related gRPC services
 type SearchServer interface {
+	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
 	resourcepb.DiagnosticsServer
-	ResourceServerStopper
 }
 
 type ResourceServerStopper interface {
@@ -257,13 +257,15 @@ type ResourceServerOptions struct {
 	SecureValues secrets.InlineSecureValueSupport
 
 	// Callbacks for startup and shutdown
+	Lifecycle LifecycleHooks
+
 	// Get the current time in unix millis
 	Now func() int64
 
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	StorageMetrics *StorageMetrics
+	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -299,6 +301,7 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
+	searchServer.lifecycle = opts.Lifecycle
 	searchServer.backendDiagnostics = opts.Diagnostics
 
 	// Initialize the search server
@@ -369,10 +372,11 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		access:                         opts.AccessClient,
 		secure:                         opts.SecureValues,
 		writeHooks:                     opts.WriteHooks,
+		lifecycle:                      opts.Lifecycle,
 		now:                            opts.Now,
 		ctx:                            ctx,
 		cancel:                         cancel,
-		storageMetrics:                 opts.StorageMetrics,
+		storageMetrics:                 opts.storageMetrics,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
@@ -436,6 +440,7 @@ type server struct {
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
+	lifecycle        LifecycleHooks
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
@@ -466,6 +471,14 @@ type server struct {
 // Init implements ResourceServer.
 func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
+		// Call lifecycle hooks
+		if s.lifecycle != nil {
+			err := s.lifecycle.Init(ctx)
+			if err != nil {
+				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
+			}
+		}
+
 		// initialize tenant overrides service
 		if s.initErr == nil && s.overridesService != nil {
 			s.initErr = s.overridesService.init(ctx)
@@ -492,6 +505,13 @@ func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
 	var stopFailed bool
+	if s.lifecycle != nil {
+		err := s.lifecycle.Stop(ctx)
+		if err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopped with error: %w", err)
+		}
+	}
 
 	if s.search != nil {
 		s.search.stop()
@@ -1060,10 +1080,8 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
-//nolint:gocyclo
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
 
 	// The history + trash queries do not yet support additional filters
@@ -1106,10 +1124,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.useFieldSelectorSearch(req) {
 		// If we get here, we're doing list with selectable fields. Let's do search instead, since
 		// we index all selectable fields, and fetch resulting documents one by one.
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-		if s.storageMetrics != nil {
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
-		}
 		return s.listWithFieldSelectors(ctx, req)
 	}
 
@@ -1199,10 +1213,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
-	gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-	if s.storageMetrics != nil {
-		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
-	}
 	return rsp, err
 }
 

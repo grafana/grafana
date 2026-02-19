@@ -34,7 +34,6 @@ import (
 var (
 	RuleMuts     = AlertRuleMutators{}
 	NSMuts       = NotificationSettingsMutators{}
-	CPRMuts      = ContactPointRoutingMutators{}
 	InstanceMuts = AlertInstanceMutators{}
 	RuleGen      = &AlertRuleGenerator{
 		mutators: []AlertRuleMutator{
@@ -98,9 +97,9 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		panelID = &p
 	}
 
-	var ns *NotificationSettings
+	var ns []NotificationSettings
 	if rand.Int63()%2 == 0 {
-		ns = util.Pointer(NotificationSettingsGen()())
+		ns = append(ns, NotificationSettingsGen()())
 	}
 
 	var updatedBy *UserUID
@@ -546,17 +545,12 @@ func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int6
 
 func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = util.Pointer(ns())
+		rule.NotificationSettings = []NotificationSettings{ns()}
 	}
 }
 func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = &ns
-	}
-}
-func (a *AlertRuleMutators) WithContactPointRouting(ns ContactPointRouting) AlertRuleMutator {
-	return func(rule *AlertRule) {
-		rule.NotificationSettings = &NotificationSettings{ContactPointRouting: &ns}
+		rule.NotificationSettings = []NotificationSettings{ns}
 	}
 }
 
@@ -999,9 +993,9 @@ func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstan
 
 type Mutator[T any] func(*T)
 
-// CopyContactPointRouting creates a deep copy of ContactPointRouting.
-func CopyContactPointRouting(ns ContactPointRouting, mutators ...Mutator[ContactPointRouting]) ContactPointRouting {
-	c := ContactPointRouting{
+// CopyNotificationSettings creates a deep copy of NotificationSettings.
+func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
+	c := NotificationSettings{
 		Receiver: ns.Receiver,
 	}
 	if ns.GroupWait != nil {
@@ -1031,10 +1025,10 @@ func CopyContactPointRouting(ns ContactPointRouting, mutators ...Mutator[Contact
 	return c
 }
 
-// ContactPointRoutingGen generates ContactPointRouting using a base and mutators.
-func ContactPointRoutingGen(mutators ...Mutator[ContactPointRouting]) func() ContactPointRouting {
-	return func() ContactPointRouting {
-		c := ContactPointRouting{
+// NotificationSettingsGen generates NotificationSettings using a base and mutators.
+func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
+	return func() NotificationSettings {
+		c := NotificationSettings{
 			Receiver:            util.GenerateShortUID(),
 			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
 			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
@@ -1050,16 +1044,16 @@ func ContactPointRoutingGen(mutators ...Mutator[ContactPointRouting]) func() Con
 	}
 }
 
-type ContactPointRoutingMutators struct{}
+type NotificationSettingsMutators struct{}
 
-func (n ContactPointRoutingMutators) WithReceiver(receiver string) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
+func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
 		ns.Receiver = receiver
 	}
 }
 
-func (n ContactPointRoutingMutators) WithGroupWait(groupWait *time.Duration) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
+func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
 		if groupWait == nil {
 			ns.GroupWait = nil
 			return
@@ -1069,8 +1063,8 @@ func (n ContactPointRoutingMutators) WithGroupWait(groupWait *time.Duration) Mut
 	}
 }
 
-func (n ContactPointRoutingMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
+func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
 		if groupInterval == nil {
 			ns.GroupInterval = nil
 			return
@@ -1080,8 +1074,8 @@ func (n ContactPointRoutingMutators) WithGroupInterval(groupInterval *time.Durat
 	}
 }
 
-func (n ContactPointRoutingMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
+func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
 		if repeatInterval == nil {
 			ns.RepeatInterval = nil
 			return
@@ -1091,112 +1085,21 @@ func (n ContactPointRoutingMutators) WithRepeatInterval(repeatInterval *time.Dur
 	}
 }
 
-func (n ContactPointRoutingMutators) WithGroupBy(groupBy ...string) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
-		ns.GroupBy = groupBy
-	}
-}
-
-func (n ContactPointRoutingMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
-		ns.MuteTimeIntervals = muteTimeIntervals
-	}
-}
-
-func (n ContactPointRoutingMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[ContactPointRouting] {
-	return func(ns *ContactPointRouting) {
-		ns.ActiveTimeIntervals = activeTimeIntervals
-	}
-}
-
-// CopyNotificationSettings creates a deep copy of NotificationSettings.
-func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
-	c := NotificationSettings{}
-	if ns.ContactPointRouting != nil {
-		c.ContactPointRouting = util.Pointer(CopyContactPointRouting(*ns.ContactPointRouting))
-	}
-	for _, mutator := range mutators {
-		mutator(&c)
-	}
-	return c
-}
-
-// NotificationSettingsGen generates NotificationSettings using a base and mutators.
-func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
-	return func() NotificationSettings {
-		c := ContactPointRoutingGen()()
-		ns := NotificationSettings{
-			ContactPointRouting: &c,
-		}
-		for _, mutator := range mutators {
-			mutator(&ns)
-		}
-		return ns
-	}
-}
-
-type NotificationSettingsMutators struct{}
-
-func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithReceiver(receiver)(ns.ContactPointRouting)
-	}
-}
-
-func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithGroupWait(groupWait)(ns.ContactPointRouting)
-	}
-}
-
-func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithGroupInterval(groupInterval)(ns.ContactPointRouting)
-	}
-}
-
-func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithRepeatInterval(repeatInterval)(ns.ContactPointRouting)
-	}
-}
-
 func (n NotificationSettingsMutators) WithGroupBy(groupBy ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithGroupBy(groupBy...)(ns.ContactPointRouting)
+		ns.GroupBy = groupBy
 	}
 }
 
 func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithMuteTimeIntervals(muteTimeIntervals...)(ns.ContactPointRouting)
+		ns.MuteTimeIntervals = muteTimeIntervals
 	}
 }
 
 func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		if ns.ContactPointRouting == nil {
-			ns.ContactPointRouting = &ContactPointRouting{}
-		}
-		CPRMuts.WithActiveTimeIntervals(activeTimeIntervals...)(ns.ContactPointRouting)
+		ns.ActiveTimeIntervals = activeTimeIntervals
 	}
 }
 

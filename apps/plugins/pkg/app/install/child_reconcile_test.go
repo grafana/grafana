@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -81,7 +80,7 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			metaManager := meta.NewProviderManager(mockProv)
 
 			mockReg := newMockPluginRegistrar()
-			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+			reconciler := NewChildPluginReconciler(metaManager, mockReg)
 
 			plugin := &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +182,7 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 			metaManager := meta.NewProviderManager(mockProv)
 
 			mockReg := newMockPluginRegistrar()
-			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+			reconciler := NewChildPluginReconciler(metaManager, mockReg)
 
 			plugin := &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
@@ -243,7 +242,7 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 			metaManager := meta.NewProviderManager(mockProv)
 
 			mockReg := newMockPluginRegistrar()
-			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+			reconciler := NewChildPluginReconciler(metaManager, mockReg)
 
 			plugin := &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
@@ -355,7 +354,7 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 				}
 			}
 
-			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+			reconciler := NewChildPluginReconciler(metaManager, mockReg)
 
 			plugin := &pluginsv0alpha1.Plugin{
 				ObjectMeta: metav1.ObjectMeta{
@@ -422,7 +421,7 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	metaManager := meta.NewProviderManager(mockProv)
 
 	mockReg := newMockPluginRegistrar()
-	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+	reconciler := NewChildPluginReconciler(metaManager, mockReg)
 
 	plugin := &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{

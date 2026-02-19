@@ -7,41 +7,27 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-// MigrateOptions contains configuration for a resource migration operation.
-type MigrateOptions struct {
-	Namespace   string
-	Resources   []schema.GroupResource
-	WithHistory bool // only applies to dashboards
-	Progress    func(count int, msg string)
-}
-
-// MigrationTableLocker abstracts locking of legacy database tables during migration.
-type MigrationTableLocker interface {
-	// LockMigrationTables locks legacy tables during migration to prevent concurrent updates.
-	LockMigrationTables(ctx context.Context, tables []string) (func(context.Context) error, error)
-}
 
 // Read from legacy and write into unified storage
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
-	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
+	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	tableLocker    MigrationTableLocker
+	legacy.MigrationDashboardAccessor
 	streamProvider streamProvider
 	client         resource.SearchClient
 	log            log.Logger
@@ -50,10 +36,10 @@ type unifiedMigration struct {
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+func buildCollectionSettings(opts legacy.MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
 		key := buildResourceKey(res, opts.Namespace, registry)
@@ -68,20 +54,20 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
 	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
 
-// This can migrate Folders, Dashboards, LibraryPanels and Playlists
+// This can migrate Folders, Dashboards and LibraryPanels
 func ProvideUnifiedMigrator(
-	sql legacysql.LegacyDatabaseProvider,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
-		&legacyTableLocker{sql: sql},
+		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
@@ -90,22 +76,22 @@ func ProvideUnifiedMigrator(
 }
 
 func newUnifiedMigrator(
-	tableLocker MigrationTableLocker,
+	dashboardAccess legacy.MigrationDashboardAccessor,
 	streamProvider streamProvider,
 	client resource.SearchClient,
 	log log.Logger,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		tableLocker:    tableLocker,
-		streamProvider: streamProvider,
-		client:         client,
-		log:            log,
-		registry:       registry,
+		MigrationDashboardAccessor: dashboardAccess,
+		streamProvider:             streamProvider,
+		client:                     client,
+		log:                        log,
+		registry:                   registry,
 	}
 }
 
-func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
+func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -118,16 +104,9 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	lockTables := m.lockTablesForResources(opts.Resources)
-	unlockTables, err := m.tableLocker.LockMigrationTables(ctx, lockTables)
-	if err != nil {
-		return nil, err
+	if opts.OnlyCount {
+		return m.CountResources(ctx, opts)
 	}
-	defer func() {
-		if err := unlockTables(ctx); err != nil {
-			m.log.Error("error unlocking legacy tables", "error", err, "namespace", opts.Namespace)
-		}
-	}()
 
 	stream, err := m.streamProvider.createStream(ctx, opts, m.registry)
 	if err != nil {
@@ -252,19 +231,4 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	}
 
 	return nil
-}
-
-func (m *unifiedMigration) lockTablesForResources(resources []schema.GroupResource) []string {
-	tables := make([]string, 0, len(resources))
-	seen := make(map[string]struct{})
-	for _, res := range resources {
-		for _, table := range m.registry.GetLockTables(res) {
-			if _, ok := seen[table]; ok {
-				continue
-			}
-			seen[table] = struct{}{}
-			tables = append(tables, table)
-		}
-	}
-	return tables
 }

@@ -6,10 +6,7 @@ package v0alpha1
 
 // DataPlaneServiceStatusApplyConfiguration represents a declarative configuration of the DataPlaneServiceStatus type for use
 // with apply.
-//
-// DataPlaneServiceStatus contains derived information about a remote DataPlaneService.
 type DataPlaneServiceStatusApplyConfiguration struct {
-	// Current service state of DataPlaneService.
 	Conditions []DataPlaneServiceConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 

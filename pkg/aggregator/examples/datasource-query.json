@@ -6,7 +6,7 @@
             "range": true,
             "datasource": {
                 "type": "prometheus",
-                "uid": "gdev-prometheus"
+                "uid": "example"
             },
             "editorMode": "code",
             "legendFormat": "__auto",

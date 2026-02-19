@@ -12,17 +12,17 @@ type Query = v0alpha1.CreateNotificationqueryRequestBody
 
 type Matchers = v0alpha1.CreateNotificationqueryRequestMatchers
 
-type QueryResult = v0alpha1.CreateNotificationqueryResponse
+type QueryResult = v0alpha1.CreateNotificationquery
 
-type Status = v0alpha1.CreateNotificationqueryNotificationStatus
+type Status = v0alpha1.NotificationStatus
 
-type Outcome = v0alpha1.CreateNotificationqueryNotificationOutcome
+type Outcome = v0alpha1.NotificationOutcome
 
 const (
-	OutcomeSuccess = v0alpha1.CreateNotificationqueryNotificationOutcomeSuccess
-	OutcomeError   = v0alpha1.CreateNotificationqueryNotificationOutcomeError
+	OutcomeSuccess = v0alpha1.NotificationOutcomeSuccess
+	OutcomeError   = v0alpha1.NotificationOutcomeError
 )
 
-type Entry = v0alpha1.CreateNotificationqueryNotificationEntry
+type Entry = v0alpha1.NotificationEntry
 
-type EntryAlert = v0alpha1.CreateNotificationqueryNotificationEntryAlert
+type EntryAlert = v0alpha1.NotificationEntryAlert

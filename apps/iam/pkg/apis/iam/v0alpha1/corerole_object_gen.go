@@ -228,10 +228,6 @@ func (o *CoreRole) DeepCopyInto(dst *CoreRole) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (CoreRole) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRole"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &CoreRole{}
 
@@ -283,10 +279,6 @@ func (o *CoreRoleList) DeepCopy() *CoreRoleList {
 
 func (o *CoreRoleList) DeepCopyInto(dst *CoreRoleList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (CoreRoleList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRoleList"
 }
 
 // Interface compliance compile-time check

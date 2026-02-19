@@ -1,6 +1,9 @@
 package setting
 
 import (
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -13,6 +16,10 @@ type RBACSettings struct {
 	ResetBasicRoles bool
 	// RBAC single organization. This configuration option is subject to change.
 	SingleOrganization bool
+	// If zanzana feature toggle is enabled this controls how often we
+	// run the zanzana reconciliation loop.
+	ZanzanaReconciliationInterval time.Duration
+
 	// set of resources that should generate managed permissions when created
 	resourcesWithPermissionsOnCreation map[string]struct{}
 
@@ -41,6 +48,12 @@ func (cfg *Cfg) readRBACSettings() {
 	s.resourcesWithWildcardSeed = map[string]struct{}{}
 	for _, resource := range resources {
 		s.resourcesWithWildcardSeed[resource] = struct{}{}
+	}
+
+	var err error
+	s.ZanzanaReconciliationInterval, err = gtime.ParseDuration(rbac.Key("zanzana_reconciliation_interval").MustString("1h"))
+	if err != nil {
+		s.ZanzanaReconciliationInterval = 1 * time.Hour
 	}
 
 	cfg.RBAC = s

@@ -121,7 +121,7 @@ func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 }
 
 func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) string {
-	statements := make([]string, 0, len(columns))
+	var statements = []string{}
 
 	for _, col := range columns {
 		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SQLType(col))

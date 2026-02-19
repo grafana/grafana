@@ -34,7 +34,7 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -63,7 +63,13 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
+import {
+  createCacheKey,
+  filterLogRowsByIndex,
+  getCorrelationsData,
+  getDatasourceUIDs,
+  getResultsFromCache,
+} from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -348,7 +354,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           newQuery.refId === oldQuery.refId &&
           newQuery.datasource?.uid !== oldQuery.datasource?.uid
         ) {
-          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
+          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
+          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
           dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }

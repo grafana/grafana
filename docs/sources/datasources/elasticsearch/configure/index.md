@@ -15,6 +15,37 @@ labels:
 menuTitle: Configure
 title: Configure the Elasticsearch data source
 weight: 200
+refs:
+  administration-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  supported-expressions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level
+  query-and-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  provisioning-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/#provision-the-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch/configure/#provision-the-data-source
+  configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled
+  provisioning-grafana:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
 ---
 
 # Configure the Elasticsearch data source
@@ -22,8 +53,8 @@ weight: 200
 Grafana ships with built-in support for Elasticsearch.
 You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
+Administrators can also [configure the data source via YAML](ref:provisioning-data-source) with Grafana's provisioning system.
 
 ## Before you begin
 
@@ -98,7 +129,7 @@ If you use an AWS Identity and Access Management (IAM) policy to control access 
 
 For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled).
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](ref:configuration).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
 For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
@@ -190,7 +221,7 @@ Configure which fields the data source uses for log messages and log levels.
 
 - **Message field name** - The field that contains the log message content.
 
-- **Level field name** - The field that contains log level or severity information. When specified, Grafana uses this field to determine the log level and color-code each log line. If the log doesn't have a level field, Grafana tries to match the content against [supported expressions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level). If Grafana can't determine the log level, it displays as unknown.
+- **Level field name** - The field that contains log level or severity information. When specified, Grafana uses this field to determine the log level and color-code each log line. If the log doesn't have a level field, Grafana tries to match the content against [supported expressions](ref:supported-expressions). If Grafana can't determine the log level, it displays as unknown.
 
 ### Data links
 
@@ -221,7 +252,7 @@ Once you have configured your Elasticsearch data source options, click **Save & 
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-grafana).
 
 {{< admonition type="note" >}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).

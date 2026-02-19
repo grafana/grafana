@@ -25,10 +25,6 @@ type RepositoryViewList struct {
 	Items []RepositoryView `json:"items"`
 }
 
-func (RepositoryViewList) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryViewList"
-}
-
 type RepositoryView struct {
 	// The k8s name for this repository
 	Name string `json:"name"`
@@ -53,8 +49,4 @@ type RepositoryView struct {
 
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
-}
-
-func (RepositoryView) OpenAPIModelName() string {
-	return OpenAPIPrefix + "RepositoryView"
 }

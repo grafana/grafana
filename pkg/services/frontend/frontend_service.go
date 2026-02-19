@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -36,13 +37,6 @@ var bootErrorMetric = promauto.NewCounter(prometheus.CounterOpts{
 	Name:      "boot_errors_total",
 	Help:      "Total number of frontend boot errors",
 })
-
-var settingsFetchMetric = promauto.NewCounterVec(prometheus.CounterOpts{
-	Namespace: "grafana",
-	Subsystem: "frontend",
-	Name:      "settings_fetch_total",
-	Help:      "Total number of settings service fetch attempts from the request config middleware",
-}, []string{"status"}) // status: "success" or "error"
 
 type frontendService struct {
 	*services.BasicService
@@ -62,8 +56,12 @@ type frontendService struct {
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
+	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
+	if err != nil {
+		return nil, err
+	}
 
-	index, err := NewIndexProvider(cfg, license, hooksService)
+	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
 	if err != nil {
 		return nil, err
 	}

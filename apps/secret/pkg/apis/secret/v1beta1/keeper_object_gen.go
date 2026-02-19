@@ -243,10 +243,6 @@ func (o *Keeper) DeepCopyInto(dst *Keeper) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (Keeper) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.Keeper"
-}
-
 // Interface compliance compile-time check
 var _ resource.Object = &Keeper{}
 
@@ -298,10 +294,6 @@ func (o *KeeperList) DeepCopy() *KeeperList {
 
 func (o *KeeperList) DeepCopyInto(dst *KeeperList) {
 	resource.CopyObjectInto(dst, o)
-}
-
-func (KeeperList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperList"
 }
 
 // Interface compliance compile-time check
