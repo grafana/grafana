@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Box, Button, Stack, Text } from '@grafana/ui';
+import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -22,6 +22,8 @@ interface EmptyTransformationsProps {
   data: DataFrame[];
   datasourceUid?: string;
   queries?: DataQuery[];
+  compactMode?: boolean;
+  showIllustrations?: boolean;
 }
 
 const TRANSFORMATION_IDS = [
@@ -63,6 +65,8 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
+  const compactMode = props.compactMode ?? false;
+  const showIllustrations = props.showIllustrations ?? true;
 
   // Get transformations from registry
   const transformations = useMemo(() => {
@@ -101,6 +105,55 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     config.featureToggles.sqlExpressions &&
     hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
 
+  if (compactMode) {
+    return (
+      <Stack direction="column" gap={2}>
+        {(hasAddTransformation || hasGoToQueries) && (
+          <Grid columns={3} gap={1}>
+            {showSqlCard && (
+              <SqlExpressionCard
+                name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
+                description={t(
+                  'dashboard-scene.empty-transformations-message.sql-transformation-description',
+                  'Manipulate your data using MySQL-like syntax'
+                )}
+                imageUrl={showIllustrations ? (config.theme2.isDark ? sqlDarkImage : sqlLightImage) : undefined}
+                onClick={handleSqlTransformationClick}
+                testId="transform-with-sql-card"
+                fullWidth
+                showNewBadge
+              />
+            )}
+            {hasAddTransformation &&
+              transformations.map((transform) => (
+                <TransformationCard
+                  key={transform.id}
+                  transform={transform}
+                  onClick={handleTransformationClick}
+                  showIllustrations={showIllustrations}
+                  showPluginState={false}
+                  showTags={false}
+                  data={props.data}
+                  fullWidth
+                />
+              ))}
+          </Grid>
+        )}
+        <div>
+          <Button
+            icon="plus"
+            variant="primary"
+            size="md"
+            onClick={handleShowMoreClick}
+            data-testid={selectors.components.Transforms.addTransformationButton}
+          >
+            <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
+          </Button>
+        </div>
+      </Stack>
+    );
+  }
+
   return (
     <Box padding={2}>
       <Stack direction="column" alignItems="start" gap={2}>
@@ -137,7 +190,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   key={transform.id}
                   transform={transform}
                   onClick={handleTransformationClick}
-                  showIllustrations={true}
+                  showIllustrations={showIllustrations}
                   showPluginState={false}
                   showTags={false}
                   data={props.data}

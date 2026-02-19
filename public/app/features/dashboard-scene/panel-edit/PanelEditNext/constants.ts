@@ -190,3 +190,5 @@ export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; l
   [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
   [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
 };
+
+export const VIEW_ALL_VALUE = 'viewAll';
