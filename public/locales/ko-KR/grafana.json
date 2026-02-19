@@ -11675,6 +11675,8 @@
     },
     "user-invite-form": {
       "back": "뒤로",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "이메일 또는 사용자 이름",
       "label-name": "이름",
       "label-send-invite-email": "초대 이메일 전송",
@@ -13153,6 +13155,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13194,6 +13200,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13221,14 +13228,16 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "{{id}} 카드 선택",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
-      "transformations": "변환"
+      "transformations": "변환",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

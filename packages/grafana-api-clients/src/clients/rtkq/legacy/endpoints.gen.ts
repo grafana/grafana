@@ -5651,14 +5651,28 @@ export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
 export type Userinfo = object;
 export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
+  /** ForceQuery indicates whether the original URL contained a query ('?') character.
+    When set, the String method will include a trailing '?', even when RawQuery is empty. */
   ForceQuery?: boolean;
   Fragment?: string;
   Host?: string;
+  /** OmitHost indicates the URL has an empty host (authority).
+    When set, the String method will not include the host when it is empty. */
   OmitHost?: boolean;
   Opaque?: string;
   Path?: string;
+  /** RawFragment is an optional field containing an encoded fragment hint.
+    See the EscapedFragment method for more details.
+    
+    In general, code should call EscapedFragment instead of reading RawFragment. */
   RawFragment?: string;
+  /** RawPath is an optional field containing an encoded path hint.
+    See the EscapedPath method for more details.
+    
+    In general, code should call EscapedPath instead of reading RawPath. */
   RawPath?: string;
+  /** RawQuery contains the encoded query values, without the initial '?'.
+    Use URL.Query to decode the query. */
   RawQuery?: string;
   Scheme?: string;
   User?: Userinfo;
