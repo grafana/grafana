@@ -15,7 +15,9 @@ comboboxTestSetup();
 
 describe('OwnerReferenceSelector', () => {
   it('shows load error but keeps selector interactive', async () => {
-    const { getByRole, findByText } = render(<OwnerReferenceSelector onChange={jest.fn()} defaultTeamUid="team-a" />);
+    const { getByRole, findByText } = render(
+      <OwnerReferenceSelector onChange={jest.fn()} defaultTeamUid="team-non-existent" />
+    );
 
     expect(getByRole('combobox')).toBeInTheDocument();
     expect(await findByText('Could not load team details')).toBeInTheDocument();
