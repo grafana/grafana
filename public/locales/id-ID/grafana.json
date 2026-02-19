@@ -11675,6 +11675,8 @@
     },
     "user-invite-form": {
       "back": "Kembali",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "Email atau nama pengguna",
       "label-name": "Nama",
       "label-send-invite-email": "Kirim email undangan",
@@ -13153,6 +13155,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13194,6 +13200,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13221,14 +13228,16 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Pilih kartu {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
-      "transformations": "Transformasi"
+      "transformations": "Transformasi",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
