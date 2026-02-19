@@ -261,7 +261,7 @@ describe('getPanelMenu()', () => {
       expect(extensionsSubMenu).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            text: 'Declare incident when pressing this amazing menu item',
+            text: 'Declare incident when...',
             subMenu: expect.arrayContaining([
               expect.objectContaining({
                 text: 'Declare incident',
