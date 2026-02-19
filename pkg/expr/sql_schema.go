@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 )

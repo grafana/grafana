@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util/errhttp"

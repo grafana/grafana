@@ -339,6 +339,16 @@ export interface FeatureToggles {
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -1517,4 +1527,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
 }

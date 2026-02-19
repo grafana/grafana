@@ -313,6 +313,17 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"datasource.grafana.app": { // duplicate the query group here
+			"query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
+		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
 		},
