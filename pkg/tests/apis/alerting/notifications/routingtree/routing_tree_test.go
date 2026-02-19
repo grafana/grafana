@@ -382,7 +382,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NoError(t, err)
 		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = ""
-		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: true})
+		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: util.Pointer(true)})
 
 		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -577,7 +577,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v0alpha1.RoutingTreeRoute{
-			Continue:            true,
+			Continue:            util.Pointer(true),
 			Receiver:            util.Pointer(receiver),
 			GroupBy:             []string{"test-789"},
 			GroupWait:           util.Pointer("2m"),
