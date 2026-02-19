@@ -11837,6 +11837,8 @@
     },
     "user-invite-form": {
       "back": "Wstecz",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "Adres e-mail lub nazwa użytkownika",
       "label-name": "Nazwa",
       "label-send-invite-email": "Wyślij e-maila z zaproszeniem",
@@ -13336,6 +13338,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13377,6 +13383,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13404,14 +13411,22 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Wybierz kartę {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
-      "transformations": "Transformacje"
+      "transformations": "Transformacje",
+      "alerts_one": "",
+      "alerts_few": "",
+      "alerts_many": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_few": "",
+      "footer-items_many": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

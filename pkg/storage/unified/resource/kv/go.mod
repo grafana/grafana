@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 go 1.25.7
 
 require (
-	github.com/dgraph-io/badger/v4 v4.7.0
+	github.com/dgraph-io/badger/v4 v4.9.1
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
 )
