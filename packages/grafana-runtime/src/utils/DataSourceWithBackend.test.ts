@@ -607,16 +607,16 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
-  describe('buildDatasourceUrl', () => {
-    test('check that buildDatasourceUrl uses the new URL based on the feature toggle', () => {
+  describe('buildResourcesDatasourceUrl', () => {
+    test('check that buildResourcesDatasourceUrl uses the new URL based on the feature toggle', () => {
       config.featureToggles.datasourcesApiServerEnableResourceEndpointFrontend = true;
-      const url = createMockDatasource().ds.buildDatasourceUrl('api/v1/labels');
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels');
     });
 
-    test('check that buildDatasourceUrl uses the legacy URL based on the feature toggle', () => {
+    test('check that buildResourcesDatasourceUrl uses the legacy URL based on the feature toggle', () => {
       config.featureToggles.datasourcesApiServerEnableResourceEndpointFrontend = false;
-      const url = createMockDatasource().ds.buildDatasourceUrl('api/v1/labels');
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
   });
