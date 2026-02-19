@@ -16,7 +16,7 @@ require (
 	github.com/grafana/nanogit v0.3.5
 	github.com/migueleliasweb/go-github-mock v1.5.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/oauth2 v0.34.0
+	golang.org/x/oauth2 v0.35.0
 	k8s.io/apimachinery v0.35.1
 	k8s.io/apiserver v0.35.1
 	k8s.io/client-go v0.35.1

@@ -8,12 +8,11 @@
 package v0alpha1
 
 import (
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
+	datasourcev0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
-
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -686,7 +685,7 @@ func schema_pkg_apis_datasource_v0alpha1_QueryDataRequest(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(datav0alpha1.DataQuery{}.OpenAPIModelName()),
+										Ref: ref(datasourcev0alpha1.DataQuery{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -704,7 +703,7 @@ func schema_pkg_apis_datasource_v0alpha1_QueryDataRequest(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			datav0alpha1.DataQuery{}.OpenAPIModelName()},
+			datasourcev0alpha1.DataQuery{}.OpenAPIModelName()},
 	}
 }
 
@@ -828,14 +827,14 @@ func schema_pkg_apis_datasource_v0alpha1_QueryTypeDefinition(ref common.Referenc
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(datav0alpha1.QueryTypeDefinitionSpec{}.OpenAPIModelName()),
+							Ref:     ref(datasourcev0alpha1.QueryTypeDefinitionSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			datav0alpha1.QueryTypeDefinitionSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			datasourcev0alpha1.QueryTypeDefinitionSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
