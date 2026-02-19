@@ -37,7 +37,6 @@ import { isQueryServiceCompatible } from './qscheck';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
-
 /**
  * @internal
  */
