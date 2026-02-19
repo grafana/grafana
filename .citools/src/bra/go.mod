@@ -1,6 +1,6 @@
 module bra
 
-go 1.25.7
+go 1.26.0
 
 tool github.com/unknwon/bra
 
