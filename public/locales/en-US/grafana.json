@@ -4164,6 +4164,7 @@
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
+      "dismiss": "Dismiss",
       "nearing-body": "New resources can't be created once the limit is reached. Clean up unused resources to free up space.",
       "nearing-title": "You're nearing your storage limits",
       "request-extension": "Request quota extension",

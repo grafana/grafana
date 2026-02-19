@@ -68,31 +68,31 @@ describe('QuotaLimitBanner', () => {
   describe('renders nothing', () => {
     it('when feature flag is off', () => {
       config.featureToggles.kubernetesUnifiedStorageQuotas = false;
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('when loading', () => {
       mockQueries('loading', 'loading');
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('when both queries error', () => {
       mockQueries('error', 'error');
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('when both resources are below threshold', () => {
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('when limit is 0', () => {
       mockQueries({ usage: 100, limit: 0 }, { usage: 100, limit: 0 });
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 
@@ -205,8 +205,8 @@ describe('QuotaLimitBanner', () => {
     it('stays hidden when previously dismissed via localStorage', () => {
       store.setObject(DISMISS_STORAGE_KEY, { dashboards: true });
       mockQueries({ usage: 850, limit: 1000 }, { usage: 100, limit: 1000 });
-      const { container } = render(<QuotaLimitBanner />);
-      expect(container).toBeEmptyDOMElement();
+      render(<QuotaLimitBanner />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('dismissing dashboards does not hide folders', () => {
