@@ -232,7 +232,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
