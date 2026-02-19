@@ -437,6 +437,11 @@ func StandardSearchFields() SearchableDocumentFields {
 				Description: "created timestamp", // date?
 			},
 			{
+				Name:        SEARCH_FIELD_CREATED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who created the resource (format: user:<uid>)",
+			},
+			{
 				Name:        SEARCH_FIELD_EXPLAIN,
 				Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
 				Description: "Explain why this result matches (depends on the engine)",

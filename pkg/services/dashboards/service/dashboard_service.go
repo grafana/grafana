@@ -2147,6 +2147,14 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		})
 	}
 
+	if query.CreatedBy != "" {
+		request.Options.Fields = append(request.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED_BY,
+			Operator: string(selection.Equals),
+			Values:   []string{query.CreatedBy},
+		})
+	}
+
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"

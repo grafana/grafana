@@ -34,6 +34,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
 	deleted := c.Query("deleted")
+	createdBy := c.Query("createdBy")
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
@@ -96,6 +97,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
+		CreatedBy:     createdBy,
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
@@ -205,6 +207,10 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	Deleted bool `json:"deleted"`
+	// Filter by the user who created the resource (format: user:<uid>)
+	// in:query
+	// required: false
+	CreatedBy string `json:"createdBy"`
 }
 
 // swagger:response searchResponse
