@@ -2314,10 +2314,72 @@
       "metadata": {
         "name": "kubernetesExternalGroupMapping",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-25T13:21:23Z"
+        "creationTimestamp": "2025-11-25T13:21:23Z",
+        "deletionTimestamp": "2026-02-19T09:40:27Z"
       },
       "spec": {
         "description": "Routes external group mapping requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesExternalGroupMappingApis",
+        "resourceVersion": "1771494159959",
+        "creationTimestamp": "2026-02-19T09:40:27Z",
+        "deletionTimestamp": "2026-02-19T09:43:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-19 09:42:39.959752 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables external group mapping APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesExternalGroupMappingsApi",
+        "resourceVersion": "1771494229608",
+        "creationTimestamp": "2026-02-19T09:43:49Z"
+      },
+      "spec": {
+        "description": "Enables external group mapping APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesExternalGroupMappingsHandlerRedirect",
+        "resourceVersion": "1771494027867",
+        "creationTimestamp": "2026-02-19T09:40:27Z",
+        "deletionTimestamp": "2026-02-19T09:43:49Z"
+      },
+      "spec": {
+        "description": "Redirects the request of the external group mapping endpoints to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesExternalGroupMappingsRedirect",
+        "resourceVersion": "1771494229608",
+        "creationTimestamp": "2026-02-19T09:43:49Z"
+      },
+      "spec": {
+        "description": "Redirects the request of the external group mapping endpoints to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2428,7 +2490,8 @@
       "metadata": {
         "name": "kubernetesTeamGroupSyncsHandlerRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-02-19T09:40:27Z"
       },
       "spec": {
         "description": "Redirects the request of the team group sync endpoints to the app platform APIs",

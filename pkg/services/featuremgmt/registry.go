@@ -1809,14 +1809,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesExternalGroupMapping",
-			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -2377,8 +2369,16 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesTeamGroupSyncsHandlerRedirect",
-			Description:  "Redirects the request of the team group sync endpoints to the app platform APIs",
+			Name:         "kubernetesExternalGroupMappingsApi",
+			Description:  "Enables external group mapping APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesExternalGroupMappingsRedirect",
+			Description:  "Redirects the request of the external group mapping endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

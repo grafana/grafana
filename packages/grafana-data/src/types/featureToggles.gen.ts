@@ -1153,11 +1153,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
-  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1503,10 +1498,15 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
-  * Redirects the request of the team group sync endpoints to the app platform APIs
+  * Enables external group mapping APIs in the app platform
   * @default false
   */
-  kubernetesTeamGroupSyncsHandlerRedirect?: boolean;
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
   /**
   * Use the new APIs for syncing users to teams
   * @default false
