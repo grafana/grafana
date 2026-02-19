@@ -269,9 +269,6 @@ export class GeomapPanel extends Component<Props, State> {
       if (!variableName) {
         return;
       }
-      if (options.controls.showDebug) {
-        console.log('GeomapPanel.updateGeoVariables', variableName, bounds4326);
-      }
       // Store as comma-separated values: minLon,minLat,maxLon,maxLat
       locationService.partial({ [`var-${variableName}`]: `${bounds4326}` }, true);
     }, 500);
@@ -333,9 +330,6 @@ export class GeomapPanel extends Component<Props, State> {
 
     // register view listener to update dashboard variable if enabled
     if (viewConfig.dashboardVariable) {
-      if (options.controls.showDebug) {
-        console.log('Geomap.initMapAsync: register view listener', view);
-      }
       if (this.viewListenerKey != null) {
         view.un('change', this.viewListenerKey.listener);
       }
