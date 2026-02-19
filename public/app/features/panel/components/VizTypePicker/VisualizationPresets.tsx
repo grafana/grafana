@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useState, useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion, VisualizationSuggestion } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { VisualizationCardGrid } from './VisualizationCardGrid';
 
@@ -14,9 +15,10 @@ export interface Props {
   onPreview: (preset: VisualizationSuggestion) => void;
   onApply: (preset: VisualizationSuggestion) => void;
   onSkip: () => void;
+  onBack: () => void;
 }
 
-export function VisualizationPresets({ presets, data, suggestion, onPreview, onApply, onSkip }: Props) {
+export function VisualizationPresets({ presets, data, suggestion, onPreview, onApply, onSkip, onBack }: Props) {
   const styles = useStyles2(getStyles);
   const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
 
@@ -50,9 +52,21 @@ export function VisualizationPresets({ presets, data, suggestion, onPreview, onA
   return (
     <>
       <div className={styles.header}>
-        <Text element="p" variant="body">
-          {t('panel.presets.select-style', 'Select a style')}
-        </Text>
+        <div className={styles.headerLeft}>
+          <IconButton
+            key="arrow-left"
+            name="arrow-left"
+            variant="primary"
+            size="xl"
+            aria-label={t('panel.presets.back-button', 'Back')}
+            tooltip={t('panel.presets.back-button-tooltip', 'Go back')}
+            data-testid={selectors.components.PanelEditor.toggleVizPicker}
+            onClick={onBack}
+          />
+          <Text element="p" variant="body">
+            {t('panel.presets.select-style', 'Select style')}
+          </Text>
+        </div>
         <Button variant="primary" fill="text" onClick={onSkip}>
           {t('panel.presets.skip', 'Skip')}
         </Button>
@@ -85,6 +99,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(2),
       paddingBottom: theme.spacing(1),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    headerLeft: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
   };
 };

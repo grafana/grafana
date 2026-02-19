@@ -216,6 +216,7 @@ export function PanelVizTypePicker({
                     fromSuggestions: true,
                   });
                 }}
+                onBack={() => setPresetsState(null)}
               />
             )}
             {listMode === VisualizationSelectPaneTab.Visualizations && (
