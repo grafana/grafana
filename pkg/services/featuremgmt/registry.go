@@ -1809,14 +1809,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesExternalGroupMapping",
-			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -2370,7 +2362,23 @@ var (
 		},
 		{
 			Name:         "kubernetesTeamsHandlerRedirect",
-			Description:  "Redirects the request to teams related endpoints to the app platform API",
+			Description:  "Redirects the request of the team endpoints to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesExternalGroupMappingsApi",
+			Description:  "Enables external group mapping APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesExternalGroupMappingsRedirect",
+			Description:  "Redirects the request of the external group mapping endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2423,6 +2431,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "frontendServiceUseSettingsService",
+			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )

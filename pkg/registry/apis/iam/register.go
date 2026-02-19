@@ -824,7 +824,8 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
-	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}
+	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
+	routes = append(routes, b.display.GetAPIRoutes(defs))
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }
