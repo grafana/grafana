@@ -955,7 +955,7 @@ func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
 	t.Helper()
-	queries := make([]*simplejson.Json, 0)
+	queries := make([]*simplejson.Json, 0, len(rawQueries))
 	for _, q := range rawQueries {
 		json, err := simplejson.NewJson([]byte(q))
 		require.NoError(t, err)

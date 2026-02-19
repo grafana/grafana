@@ -26,7 +26,7 @@ func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Servic
 }
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
-	r := []plugins.PluginSource{
+	r := []plugins.PluginSource{ //nolint:prealloc
 		NewLocalSource(
 			plugins.ClassCore,
 			s.corePluginPaths(),
