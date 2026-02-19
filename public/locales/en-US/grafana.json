@@ -11851,6 +11851,8 @@
       "tooltip-delete": "Delete"
     },
     "presets": {
+      "back-button": "Back",
+      "back-button-tooltip": "Go back",
       "edit": "Edit",
       "edit-aria-label": "Edit with {{presetName}} preset",
       "select-style": "Select style",
