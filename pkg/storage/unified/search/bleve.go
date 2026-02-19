@@ -1962,6 +1962,8 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 // docInfo holds document information for authorization
 type docInfo struct {
 	doc          *search.DocumentMatch
+	namespace    string
+	group        string
 	resourceType string
 	name         string
 	folder       string
@@ -2058,9 +2060,9 @@ func (s *batchAuthzSearcher) initPullIterator() {
 			Name:      info.name,
 			Folder:    info.folder,
 			Verb:      info.verb,
-			Group:     s.group,
+			Group:     info.group,
 			Resource:  info.resourceType,
-			Namespace: s.namespace,
+			Namespace: info.namespace,
 		}
 	}
 
@@ -2088,6 +2090,8 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 		return docInfo{}, false
 	}
 
+	namespace := parts[0]
+	group := parts[1]
 	resourceType := parts[2]
 	name := parts[3]
 
@@ -2112,6 +2116,8 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 
 	return docInfo{
 		doc:          doc,
+		namespace:    namespace,
+		group:        group,
 		resourceType: resourceType,
 		name:         name,
 		folder:       folder,
