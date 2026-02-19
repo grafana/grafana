@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import { useParams } from 'react-router-dom-v5-compat';
+import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -15,6 +16,7 @@ import {
   locationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
+import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
@@ -58,11 +60,8 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
 }));
 
-const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
-jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
-  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: () => getPluginExtensionsMock,
-}));
+const getObservablePluginLinks = jest.fn().mockReturnValue(of([]));
+setGetObservablePluginLinks(getObservablePluginLinks);
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
@@ -170,8 +169,8 @@ describe('DashboardScenePage', () => {
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginExtensionsMock.mockRestore();
-    getPluginExtensionsMock.mockReturnValue({ extensions: [] });
+    getObservablePluginLinks.mockRestore();
+    getObservablePluginLinks.mockReturnValue(of([]));
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
 

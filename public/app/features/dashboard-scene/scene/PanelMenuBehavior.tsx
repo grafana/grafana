@@ -1,3 +1,5 @@
+import { firstValueFrom } from 'rxjs';
+
 import {
   getTimeZone,
   InterpolateFunction,
@@ -5,14 +7,12 @@ import {
   locationUtil,
   PanelMenuItem,
   PanelPlugin,
-  PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
-  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -23,13 +23,9 @@ import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
-import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
-import { PluginExtensionRegistries } from 'app/features/plugins/extensions/registry/types';
-import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
-import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -45,21 +41,6 @@ import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
-
-let getPluginExtensions: GetPluginExtensions;
-
-function setupGetPluginExtensions(registries: PluginExtensionRegistries) {
-  if (getPluginExtensions) {
-    return getPluginExtensions;
-  }
-
-  getPluginExtensions = createPluginExtensionsGetter(registries);
-
-  return getPluginExtensions;
-}
-
-// Define the category for metrics drilldown links
-const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -301,50 +282,28 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    const registries = await getPluginExtensionRegistries();
-    setupGetPluginExtensions(registries);
-
-    const { extensions } = getPluginExtensions({
-      extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-      context: createExtensionContext(panel, dashboard),
-      limitPerPlugin: 3,
-    });
+    const extensions = await firstValueFrom(
+      getObservablePluginLinks({
+        extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+        context: createExtensionContext(panel, dashboard),
+        limitPerPlugin: 3,
+      })
+    );
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+      const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
+      const reservedNames = new Set<string>(items.map((m) => m.text));
+      reservedNames.add(t('panel.header-menu.styles', `Styles`));
+      reservedNames.add(t('panel.header-menu.more', `More...`));
+      reservedNames.add(t('panel.header-menu.remove', `Remove`));
+      reservedNames.add(extensionsSubmenuName);
 
-      // Separate metrics drilldown links from other links
-      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
-        ([metricsDrilldownLinks, otherLinks], link) => {
-          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
-            metricsDrilldownLinks.push(link);
-          } else {
-            otherLinks.push(link);
-          }
-          return [metricsDrilldownLinks, otherLinks];
-        },
-        [[], []]
-      );
-
-      // Add specific "Metrics drilldown" menu
-      if (metricsDrilldownLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
-          iconClassName: 'code-branch',
-          type: 'submenu',
-          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
-        });
-      }
-
-      // Add generic "Extensions" menu for other links
-      if (otherLinks.length > 0) {
-        items.push({
-          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
-          iconClassName: 'plug',
-          type: 'submenu',
-          subMenu: createExtensionSubMenu(otherLinks),
-        });
-      }
+      appendExtensionsToPanelMenu({
+        extensions,
+        extensionsSubmenuName,
+        rootMenu: items,
+        reservedNames,
+      });
     }
 
     if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
@@ -530,7 +489,7 @@ export function getPanelLinks(panel: VizPanel) {
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
   let queryRunner = getQueryRunnerFor(panel);
-  const targets: DataQuery[] = queryRunner?.state.queries as DataQuery[];
+  const targets: DataQuery[] = queryRunner?.state.queries ?? [];
   const id = getPanelIdForVizPanel(panel);
 
   let scopedVars = {};

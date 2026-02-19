@@ -10,8 +10,6 @@ import {
   isDateTime,
   dateTime,
   PluginContextProvider,
-  type PluginExtensionLink,
-  type PanelMenuItem,
   type PluginExtensionAddedLinkConfig,
   urlUtil,
 } from '@grafana/data';
@@ -412,61 +410,6 @@ export function truncateTitle(title: string, length: number): string {
   return `${part.trimEnd()}...`;
 }
 
-export function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
-  const categorized: Record<string, PanelMenuItem[]> = {};
-  const uncategorized: PanelMenuItem[] = [];
-
-  for (const extension of extensions) {
-    const category = extension.category;
-
-    if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-        iconClassName: extension.icon,
-        target: extension.openInNewTab ? '_blank' : undefined,
-      });
-      continue;
-    }
-
-    if (!Array.isArray(categorized[category])) {
-      categorized[category] = [];
-    }
-
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-      iconClassName: extension.icon,
-      target: extension.openInNewTab ? '_blank' : undefined,
-    });
-  }
-
-  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-    subMenu.push({
-      text: truncateTitle(category, 25),
-      type: 'group',
-      subMenu: categorized[category],
-    });
-    return subMenu;
-  }, []);
-
-  if (uncategorized.length > 0) {
-    if (subMenu.length > 0) {
-      subMenu.push({
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        text: 'divider',
-        type: 'divider',
-      });
-    }
-
-    Array.prototype.push.apply(subMenu, uncategorized);
-  }
-
-  return subMenu;
-}
-
 export function getLinkExtensionOverrides(
   pluginId: string,
   config: AddedLinkRegistryItem,
@@ -488,6 +431,7 @@ export function getLinkExtensionOverrides(
       path = config.path,
       icon = config.icon,
       category = config.category,
+      group = config.group,
       openInNewTab = config.openInNewTab,
       ...rest
     } = overrides;
@@ -513,6 +457,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      group,
       openInNewTab,
     };
   } catch (error) {

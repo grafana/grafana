@@ -21,13 +21,14 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { dispatch, store } from 'app/store/store';
+import { dispatch } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
+
+import { appendExtensionsToPanelMenu } from './appendExtensionsToPanelMenu';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -88,12 +89,12 @@ export function getPanelMenu(
   const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
     const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
-    store.dispatch(
+    dispatch(
       navigateToExplore(panel, {
         timeRange: getTimeSrv().timeRange(),
         getExploreUrl,
         openInNewWindow,
-      }) as any
+      })
     );
   };
 
@@ -267,11 +268,17 @@ export function getPanelMenu(
   }
 
   if (extensions.length > 0 && !panel.isEditing) {
-    menu.push({
-      text: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
-      iconClassName: 'plug',
-      type: 'submenu',
-      subMenu: createExtensionSubMenu(extensions),
+    const extensionsSubmenuName = t('dashboard.get-panel-menu.text.extensions', 'Extensions');
+    const reservedNames = new Set<string>(menu.map((m) => m.text));
+    reservedNames.add(t('panel.header-menu.more', `More...`));
+    reservedNames.add(t('panel.header-menu.remove', `Remove`));
+    reservedNames.add(extensionsSubmenuName);
+
+    appendExtensionsToPanelMenu({
+      extensionsSubmenuName,
+      rootMenu: menu,
+      extensions,
+      reservedNames,
     });
   }
 
