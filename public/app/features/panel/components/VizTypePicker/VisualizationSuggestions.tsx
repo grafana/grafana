@@ -332,7 +332,7 @@ function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps)
         <div className={styles.orDividerLine} />
       </div>
       <div className={styles.startWithoutDataSection}>
-        <Text element="h4" textAlignment="center" weight="medium">
+        <Text element="p" textAlignment="center" color="secondary" variant="body">
           <Trans i18nKey="panel.visualization-suggestions.start-without-data-title">Start without data</Trans>
         </Text>
         <Text element="p" textAlignment="center" color="secondary" variant="bodySmall">
