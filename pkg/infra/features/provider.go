@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	ofrep "github.com/open-feature/go-sdk-contrib/providers/ofrep"
+	"github.com/open-feature/go-sdk-contrib/providers/ofrep"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
