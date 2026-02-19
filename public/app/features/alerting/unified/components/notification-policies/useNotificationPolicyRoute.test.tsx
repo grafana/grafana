@@ -23,7 +23,6 @@ test('k8sSubRouteToRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         receiver: 'receiver2',
         matchers: [{ label: 'label2', type: '!=', value: 'value2' }],
       },
@@ -43,7 +42,6 @@ test('k8sSubRouteToRoute', () => {
     repeat_interval: '4h',
     routes: [
       {
-        continue: false,
         name: 'test-name',
         receiver: 'receiver2',
         matchers: undefined,
