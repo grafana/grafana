@@ -187,7 +187,7 @@ describe('getPanelMenu()', () => {
 
       const menuItems = getPanelMenu(dashboard, panel, extensions);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-      const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
+      const menuItem = extensionsSubMenu?.find((i) => i.text === 'Declare incident when...');
 
       menuItem?.onClick?.({} as React.MouseEvent);
       expect(expectedOnClick).toHaveBeenCalledTimes(1);
@@ -197,6 +197,14 @@ describe('getPanelMenu()', () => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [
+        {
+          id: '0',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Placeholder',
+          path: '/p',
+          description: '',
+        },
         {
           id: '1',
           pluginId: '...',
@@ -230,6 +238,14 @@ describe('getPanelMenu()', () => {
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [
         {
+          id: '0',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Placeholder',
+          path: '/p',
+          description: '',
+        },
+        {
           id: '1',
           pluginId: '...',
           type: PluginExtensionTypes.link,
@@ -245,7 +261,7 @@ describe('getPanelMenu()', () => {
       expect(extensionsSubMenu).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            text: 'Declare incident when...',
+            text: 'Declare incident when pressing this amazing menu item',
             subMenu: expect.arrayContaining([
               expect.objectContaining({
                 text: 'Declare incident',
@@ -345,6 +361,14 @@ describe('getPanelMenu()', () => {
           path: '/path-root',
           category: '${root}',
           description: 'desc',
+        },
+        {
+          id: '0',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Placeholder',
+          path: '/p',
+          description: '',
         },
         {
           id: '2',
@@ -495,6 +519,14 @@ describe('getPanelMenu()', () => {
         const dashboard = createDashboardModelFixture({});
         const extensions: PluginExtensionLink[] = [
           {
+            id: '0',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Placeholder',
+            path: '/p',
+            description: '',
+          },
+          {
             id: '1',
             pluginId: '...',
             type: PluginExtensionTypes.link,
@@ -506,7 +538,8 @@ describe('getPanelMenu()', () => {
         ];
         const menuItems = getPanelMenu(dashboard, panel, extensions);
 
-        const testingSubmenu = menuItems.find((i) => i.text === 'Testing');
+        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+        const testingSubmenu = extensionsSubMenu?.find((i) => i.text === 'Testing');
         expect(testingSubmenu).toBeDefined();
         expect(testingSubmenu?.type).toBe('submenu');
         expect(testingSubmenu?.iconClassName).toBe('info');
@@ -520,6 +553,14 @@ describe('getPanelMenu()', () => {
         const dashboard = createDashboardModelFixture({});
         const extensions: PluginExtensionLink[] = [
           {
+            id: '0',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Placeholder',
+            path: '/p',
+            description: '',
+          },
+          {
             id: '1',
             pluginId: '...',
             type: PluginExtensionTypes.link,
@@ -532,7 +573,14 @@ describe('getPanelMenu()', () => {
         const menuItems = getPanelMenu(dashboard, panel, extensions);
 
         const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-        expect(extensionsSubMenu).toEqual(expect.arrayContaining([expect.objectContaining({ text: 'Fake Inspect' })]));
+        expect(extensionsSubMenu).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              text: 'Inspect',
+              subMenu: expect.arrayContaining([expect.objectContaining({ text: 'Fake Inspect', href: '/path' })]),
+            }),
+          ])
+        );
       });
 
       it('should order: root items → root submenus → Extensions → below-Extensions submenus → More...', () => {
@@ -580,14 +628,18 @@ describe('getPanelMenu()', () => {
         const rootIdx = menuItems.findIndex((i) => i.text === 'Root Item');
         const mySubmenuIdx = menuItems.findIndex((i) => i.text === 'MySubmenu');
         const extIdx = menuItems.findIndex((i) => i.text === 'Extensions');
-        const belowIdx = menuItems.findIndex((i) => i.text === 'BelowGroup');
         const moreIdx = menuItems.findIndex((i) => i.text === 'More...');
 
         expect(rootIdx).toBeGreaterThanOrEqual(0);
         expect(mySubmenuIdx).toBeGreaterThan(rootIdx);
         expect(extIdx).toBeGreaterThan(mySubmenuIdx);
-        expect(belowIdx).toBeGreaterThan(extIdx);
-        expect(moreIdx).toBeGreaterThan(belowIdx);
+        expect(moreIdx).toBeGreaterThan(extIdx);
+
+        // BelowGroup is inside Extensions submenu, not at root
+        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+        expect(extensionsSubMenu).toEqual(
+          expect.arrayContaining([expect.objectContaining({ text: 'BelowGroup', type: 'submenu' })])
+        );
       });
     });
   });
