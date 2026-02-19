@@ -503,12 +503,16 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 			}
 
 			// get the keys for the same resource
-			for currDK := range b.dataStore.Keys(ctx, ListRequestKey{
+			for currDK, err := range b.dataStore.Keys(ctx, ListRequestKey{
 				Group:     dk.Group,
 				Resource:  dk.Resource,
 				Namespace: dk.Namespace,
 				Name:      dk.Name,
 			}, SortOrderAsc) {
+				if err != nil {
+					b.log.Error("failed to get keys for resource '%s': %s", dk, err)
+					return 0, 0, "", err
+				}
 				keysToDelete = append(keysToDelete, currDK.String())
 			}
 		}
