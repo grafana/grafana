@@ -223,24 +223,25 @@ export const AnnotationsPlugin2 = ({
   }, [config, canvasRegionRendering, getColorByName, multiLane]);
 
   // ensure xAnnos are re-drawn whenever they change
-  useEffect(() => {
-    let timeout: any;
-    if (plot) {
-      plot.redraw();
-
-      // @todo Smelly
-      // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
-      // and ensures the anno marker positions in the dom are re-rendered in correct places
-      // (this is temp fix until uPlot integrtion is refactored)
-      timeout = setTimeout(() => {
-        forceUpdate();
-      }, 0);
-    }
-
-    return () => {
-      clearTimeout(timeout)
-    }
-  }, [xAnnos, plot]);
+  // useEffect(() => {
+  //   let timeout: any;
+  //   if (plot) {
+  //     plot.redraw();
+  //
+  //     // @todo Smelly
+  //     // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
+  //     // and ensures the anno marker positions in the dom are re-rendered in correct places
+  //     // (this is temp fix until uPlot integrtion is refactored)
+  //     timeout = setTimeout(() => {
+  //       forceUpdate();
+  //     }, 0);
+  //   }
+  //
+  //   return () => {
+  //     console.log('umount')
+  //     clearTimeout(timeout)
+  //   }
+  // }, [xAnnos, plot]);
 
   if (plot) {
     const markers = xAnnos.flatMap((frame, frameIdx) => {
