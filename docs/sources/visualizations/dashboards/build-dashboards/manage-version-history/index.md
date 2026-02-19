@@ -14,7 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage version history
+menutitle: Manage version history
 title: Manage dashboard version history
 description: View and compare previous versions of your dashboard
 weight: 400
@@ -32,9 +32,8 @@ The dashboard version history feature lets you compare dashboards and restore pr
 
 To compare two dashboard versions, follow these steps:
 
-1. Click **Edit**.
-1. In the sidebar, click the **Dashboard options** icon.
-1. In the edit pane, click **Settings**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
 1. Go to the **Versions** tab.
 1. Select the two dashboard versions that you want to compare.
 1. Click **Compare versions** to view the diff between the two versions.
@@ -50,9 +49,8 @@ When you're comparing versions, if one of the versions you've selected is the la
 
 To restore to a previously saved dashboard version, follow these steps:
 
-1. Click **Edit**.
-1. Click the **Dashboard options** icon.
-1. In the edit pane, click **Settings**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
 1. Go to the **Versions** tab.
 1. Click the **Restore** button next to the version.
 
