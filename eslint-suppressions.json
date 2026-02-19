@@ -1519,14 +1519,6 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
     "no-restricted-syntax": {
       "count": 5
