@@ -44,6 +44,7 @@ import {
   TypographyCtx,
   MeasureCellHeight,
   MeasureCellHeightEntry,
+  FilterType,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -617,7 +618,55 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
   return links.filter((link) => link.href || link.onClick != null);
 };
 
+/**
+ * @internal
+ * Processes nested table rows
+ */
+export const processNestedTableRows = (
+  rows: TableRow[],
+  processParents: (parents: TableRow[]) => TableRow[]
+): TableRow[] => {
+  // Separate parent and child rows
+  // Array for parentRows: enables sorting and maintains order for iteration
+  // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
+  const parentRows: TableRow[] = [];
+  const childRows: Map<number, TableRow> = new Map();
+
+  for (const row of rows) {
+    if (row.__depth === 0) {
+      parentRows.push(row);
+    } else {
+      childRows.set(row.__index, row);
+    }
+  }
+
+  // Process parent rows (filter or sort)
+  const processedParents = processParents(parentRows);
+
+  // Reconstruct the result
+  const result: TableRow[] = [];
+  processedParents.forEach((row) => {
+    result.push(row);
+    const childRow = childRows.get(row.__index);
+    if (childRow) {
+      result.push(childRow);
+    }
+  });
+
+  return result;
+};
+
 /* ----------------------------- Data grid sorting ---------------------------- */
+// Helper function to get displayed value
+const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
+  const field = fields.find((field) => getDisplayName(field) === key);
+  if (!field || !field.display) {
+    return '';
+  }
+  const displayedValue = formattedValueToString(field.display(row[key]));
+  return displayedValue;
+};
+
 /**
  * @internal
  */
@@ -625,8 +674,8 @@ export function applySort(
   rows: TableRow[],
   fields: Field[],
   sortColumns: SortColumn[],
-  columnTypes: ColumnTypes = getColumnTypes(fields),
-  hasNestedFrames: boolean = getIsNestedTable(fields)
+  columnTypes: ColumnTypes,
+  hasNestedFrames?: boolean
 ): TableRow[] {
   if (sortColumns.length === 0) {
     return rows;
@@ -662,13 +711,33 @@ export function applySort(
     return result;
   };
 
-  // Handle nested tables
-  if (hasNestedFrames) {
-    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
-  }
+  return hasNestedFrames
+    ? processNestedTableRows(rows, (parents) => parents.sort(compareRows))
+    : [...rows].sort(compareRows);
+}
 
-  // Regular sort for tables without nesting
-  return [...rows].sort(compareRows);
+export function applyFilter(
+  rows: TableRow[],
+  filter: FilterType,
+  fields: Field[],
+  hasNestedFrames?: boolean
+): TableRow[] {
+  const filterValues = Object.entries(filter);
+
+  const filterRows = (row: TableRow): boolean => {
+    for (const [, value] of filterValues) {
+      if (typeof value.parentIndex === 'number' && row.__parentIndex !== value.parentIndex) {
+        return true;
+      }
+      const displayedValue = getDisplayedValue(row, value.displayName, fields);
+      return value.filteredSet.has(displayedValue);
+    }
+    return true;
+  };
+
+  return hasNestedFrames
+    ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
+    : rows.filter(filterRows);
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -831,44 +900,6 @@ export function rowKeyGetter(row: TableRow): string {
  */
 export const getIsNestedTable = (fields: Field[]): boolean =>
   fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
- * Processes nested table rows
- */
-export const processNestedTableRows = (
-  rows: TableRow[],
-  processParents: (parents: TableRow[]) => TableRow[]
-): TableRow[] => {
-  // Separate parent and child rows
-  // Array for parentRows: enables sorting and maintains order for iteration
-  // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
-  const parentRows: TableRow[] = [];
-  const childRows: Map<number, TableRow> = new Map();
-
-  for (const row of rows) {
-    if (row.__depth === 0) {
-      parentRows.push(row);
-    } else {
-      childRows.set(row.__index, row);
-    }
-  }
-
-  // Process parent rows (filter or sort)
-  const processedParents = processParents(parentRows);
-
-  // Reconstruct the result
-  const result: TableRow[] = [];
-  processedParents.forEach((row) => {
-    result.push(row);
-    const childRow = childRows.get(row.__index);
-    if (childRow) {
-      result.push(childRow);
-    }
-  });
-
-  return result;
-};
 
 /**
  * @internal

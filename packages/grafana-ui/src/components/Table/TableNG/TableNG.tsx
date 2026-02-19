@@ -29,6 +29,7 @@ import {
 } from 'react-data-grid';
 
 import {
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
@@ -86,6 +87,7 @@ import {
   TableSummaryRow,
 } from './types';
 import {
+  applyFilter,
   applySort,
   calculateFooterHeight,
   canFieldBeColorized,
@@ -98,6 +100,7 @@ import {
   getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
+  getColumnTypes,
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
@@ -185,13 +188,7 @@ export function TableNG(props: TableNGProps) {
   const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  } = useFilteredRows(rows, data.fields, { hasNestedFrames });
+  const { rows: filteredRows, filter, setFilter } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
   const {
     rows: sortedRows,
@@ -200,6 +197,28 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+
+  const nestedRows = useMemo(() => {
+    const result: Array<{ raw: TableRow[]; filtered: TableRow[]; sorted: TableRow[] }> = [];
+    if (!hasNestedFrames || !nestedFramesFieldName) {
+      return result;
+    }
+
+    for (const parentRow of rows) {
+      // Type guard to check if data exists as it's optional
+      const nestedData = parentRow.data;
+      if (!nestedData) {
+        continue;
+      }
+
+      const rawRows = frameToRecords(nestedData, nestedFramesFieldName, parentRow.__index);
+      const filteredRows = applyFilter(rawRows, filter, nestedData.fields);
+      const sortedRows = applySort(filteredRows, nestedData.fields, sortColumns, getColumnTypes(nestedData.fields));
+      result[parentRow.__index] = { raw: rawRows, filtered: filteredRows, sorted: sortedRows };
+    }
+
+    return result;
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter]);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -276,12 +295,16 @@ export function TableNG(props: TableNGProps) {
   });
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
+  const visibleNestedRowCounts = useMemo(
+    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.sorted.length : 0)),
+    [nestedRows, expandedRows]
+  );
   const rowHeight = useRowHeight({
     columnWidths: widths,
     fields: visibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
-    expandedRows,
+    visibleNestedRowCounts,
     typographyCtx,
     maxHeight: maxRowHeight,
   });
@@ -445,17 +468,7 @@ export function TableNG(props: TableNGProps) {
           );
         }
 
-        // Type guard to check if data exists as it's optional
-        const nestedData = row.data;
-        if (!nestedData) {
-          return null;
-        }
-
-        const expandedRecords = applySort(
-          frameToRecords(nestedData, nestedFramesFieldName, row.__index),
-          nestedData.fields,
-          sortColumns
-        );
+        const expandedRecords = nestedRows[row.__index]?.sorted ?? [];
         if (!expandedRecords.length) {
           return (
             <div className={styles.noDataNested}>
@@ -496,16 +509,21 @@ export function TableNG(props: TableNGProps) {
       styles.noDataNested,
       data.fields.length,
       uniqueId,
-      nestedFramesFieldName,
-      sortColumns,
+      nestedRows,
       commonDataGridProps,
-      expandedRows,
       onCellClick,
+      expandedRows,
     ]
   );
 
   const fromFields = useCallback(
-    (f: Field[], widths: number[], frame = data): FromFieldsResult => {
+    (
+      f: Field[],
+      widths: number[],
+      frame: DataFrame,
+      innerRows: TableRow[],
+      innerSortedRows: TableRow[]
+    ): FromFieldsResult => {
       const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
@@ -774,15 +792,14 @@ export function TableNG(props: TableNGProps) {
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
               column={column}
-              rows={rows}
+              rows={innerRows}
               field={field}
               filter={filter}
               setFilter={setFilter}
               disableKeyboardEvents={disableKeyboardEvents}
-              crossFilterOrder={crossFilterOrder}
-              crossFilterRows={crossFilterRows}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
+              parentIndex={innerRows[0]?.__parentIndex}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -790,7 +807,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={sortedRows}
+              rows={innerSortedRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -810,7 +827,6 @@ export function TableNG(props: TableNGProps) {
       rowHeight,
       maxRowHeight,
       applyToRowBgFn,
-      data,
       frozenColumns,
       numFrozenColsFullyInView,
       getCellColorInlineStyles,
@@ -819,14 +835,10 @@ export function TableNG(props: TableNGProps) {
       getCellActions,
       disableSanitizeHtml,
       getTextColorForBackground,
-      rows,
       filter,
       setFilter,
       disableKeyboardEvents,
-      crossFilterOrder,
-      crossFilterRows,
       showTypeIcons,
-      sortedRows,
       footers,
       isUniformFooter,
     ]
@@ -845,7 +857,7 @@ export function TableNG(props: TableNGProps) {
   const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(visibleFields, widths);
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
     if (!firstRowNestedData) {
@@ -857,7 +869,15 @@ export function TableNG(props: TableNGProps) {
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const nestedColumnsMatrix = rows
       .filter((r) => !!r.data)
-      .map((r) => fromFields(getVisibleFields(r.data!.fields), nestedFieldWidths, r.data));
+      .map((r) =>
+        fromFields(
+          getVisibleFields(r.data!.fields),
+          nestedFieldWidths,
+          r.data!,
+          nestedRows[r.__index].raw,
+          nestedRows[r.__index].sorted
+        )
+      );
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
@@ -874,13 +894,16 @@ export function TableNG(props: TableNGProps) {
     return result;
   }, [
     buildNestedTableExpanderColumn,
+    data,
     enableSharedCrosshair,
     expandedRows,
     firstRowNestedData,
     fromFields,
     nestedFieldWidths,
+    nestedRows,
     panelContext,
     rows,
+    sortedRows,
     visibleFields,
     widths,
   ]);

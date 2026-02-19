@@ -55,13 +55,13 @@ describe('TableNG hooks', () => {
   describe('useFilteredRows', () => {
     it('should correctly initialize with provided fields and rows', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
       expect(result.current.rows[0].name).toBe('Alice');
     });
 
     it('should apply filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
 
       act(() => {
         result.current.setFilter({
@@ -75,7 +75,7 @@ describe('TableNG hooks', () => {
 
     it('should clear filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
 
       act(() => {
         result.current.setFilter({
@@ -157,7 +157,6 @@ describe('TableNG hooks', () => {
       const { fields, rows } = setupData();
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
-          hasNestedFrames: false,
           initialSortBy: [{ displayName: 'age', desc: false }],
         })
       );
@@ -171,7 +170,6 @@ describe('TableNG hooks', () => {
       const { fields, rows } = setupData();
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
-          hasNestedFrames: false,
           initialSortBy: [{ displayName: 'age', desc: false }],
         })
       );

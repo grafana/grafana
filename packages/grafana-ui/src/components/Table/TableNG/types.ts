@@ -55,9 +55,11 @@ export type FilterType = Record<
   string,
   {
     filteredSet: Set<string>;
+    displayName: string;
     filtered?: Array<SelectableValue<unknown>>;
     searchFilter?: string;
     operator?: SelectableValue<FilterOperator>;
+    parentIndex?: number;
   }
 >;
 

@@ -17,7 +17,6 @@ import {
 } from './types';
 import {
   getDisplayName,
-  processNestedTableRows,
   applySort,
   getColumnTypes,
   getRowHeight,
@@ -25,74 +24,20 @@ import {
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
   IS_SAFARI_26,
+  applyFilter,
 } from './utils';
-
-// Helper function to get displayed value
-const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
-  const field = fields.find((field) => getDisplayName(field) === key);
-  if (!field || !field.display) {
-    return '';
-  }
-  const displayedValue = formattedValueToString(field.display(row[key]));
-  return displayedValue;
-};
-
-export interface FilteredRowsResult {
-  rows: TableRow[];
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
-}
 
 export interface FilteredRowsOptions {
   hasNestedFrames: boolean;
 }
 
-export function useFilteredRows(
-  rows: TableRow[],
-  fields: Field[],
-  { hasNestedFrames }: FilteredRowsOptions
-): FilteredRowsResult {
-  // TODO: allow persisted filter selection via url
+export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
-  const filterValues = useMemo(() => Object.entries(filter), [filter]);
-
-  const crossFilterOrder: FilteredRowsResult['crossFilterOrder'] = useMemo(
-    () => Array.from(new Set(filterValues.map(([key]) => key))),
-    [filterValues]
+  const filteredRows = useMemo(
+    () => applyFilter(rows, filter, fields, hasNestedFrames),
+    [rows, filter, fields, hasNestedFrames]
   );
-
-  const [filteredRows, crossFilterRows] = useMemo(() => {
-    const crossFilterRows: FilteredRowsResult['crossFilterRows'] = {};
-
-    const filterRows = (row: TableRow): boolean => {
-      for (const [key, value] of filterValues) {
-        const displayedValue = getDisplayedValue(row, key, fields);
-        if (!value.filteredSet.has(displayedValue)) {
-          return false;
-        }
-        // collect rows for crossFilter
-        crossFilterRows[key] = crossFilterRows[key] ?? [];
-        crossFilterRows[key].push(row);
-      }
-      return true;
-    };
-
-    const filteredRows = hasNestedFrames
-      ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
-      : rows.filter(filterRows);
-
-    return [filteredRows, crossFilterRows];
-  }, [filterValues, rows, fields, hasNestedFrames]);
-
-  return {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  };
+  return { rows: filteredRows, filter, setFilter };
 }
 
 export interface SortedRowsOptions {
@@ -150,7 +95,7 @@ export function useSortedRows(
 
   const sortedRows = useMemo(
     () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, hasNestedFrames, columnTypes]
+    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
   );
 
   return {
@@ -355,7 +300,7 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: NonNullable<CSSProperties['height']>;
-  expandedRows: Set<number>;
+  visibleNestedRowCounts: number[];
   typographyCtx: TypographyCtx;
   maxHeight?: number;
 }
@@ -365,7 +310,7 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  expandedRows,
+  visibleNestedRowCounts,
   typographyCtx,
   maxHeight,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
@@ -393,17 +338,17 @@ export function useRowHeight({
       // nested rows
       if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows.has(row.__index)) {
+        const visibleNestedRowCount = visibleNestedRowCounts[row.__index];
+        if (visibleNestedRowCount === 0) {
           return 0;
         }
 
-        const rowCount = row.data?.length ?? 0;
-        if (rowCount === 0) {
+        if (visibleNestedRowCount === 0) {
           return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
         }
 
         const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
-        return defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
+        return defaultHeight * visibleNestedRowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
       }
 
       // regular rows
@@ -413,7 +358,7 @@ export function useRowHeight({
       }
       return result;
     };
-  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, expandedRows]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, visibleNestedRowCounts]);
 
   return rowHeight;
 }
