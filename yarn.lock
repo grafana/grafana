@@ -111,6 +111,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@axe-core/playwright@npm:^4.11.1":
+  version: 4.11.1
+  resolution: "@axe-core/playwright@npm:4.11.1"
+  dependencies:
+    axe-core: "npm:~4.11.1"
+  peerDependencies:
+    playwright-core: ">= 1.0.0"
+  checksum: 10/d2a0fce217fa415682c4730a0f82a5f3cf2b3081281ea4373f10aeb8a83417e84214e6bd75954a9ba3a23532e0afa0dad87cfcbfc88358170a50702266fad0cd
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:7.26.2":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -3732,17 +3743,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.3.0":
-  version: 3.3.0
-  resolution: "@grafana/plugin-e2e@npm:3.3.0"
+"@grafana/plugin-e2e@npm:3.4.0-canary.2462.22147426600.0":
+  version: 3.4.0-canary.2462.22147426600.0
+  resolution: "@grafana/plugin-e2e@npm:3.4.0-canary.2462.22147426600.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:12.4.0-21636304584"
+    "@axe-core/playwright": "npm:^4.11.1"
+    "@grafana/e2e-selectors": "npm:12.4.0-21983999378"
+    axe-core: "npm:^4.11.1"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/5f041d633aabe085c84e5be51121f383a7a010bdc2b314c0a984b008f5604e167a6c918bcf924c709a28ee4e7809c1f3522a5e770ce188edca71a529b7c7edb5
+  checksum: 10/88980825812e298a4fe918ff6aea1a8b7b907f6b6360069d741e6fcc9fe091ae13619f10702e335857150524361f64c564e16d03fe88b2b0060c2b398aee3deb
   languageName: node
   linkType: hard
 
@@ -13601,6 +13614,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axe-core@npm:^4.11.1, axe-core@npm:~4.11.1":
+  version: 4.11.1
+  resolution: "axe-core@npm:4.11.1"
+  checksum: 10/bbc8e8959258a229b92fbaa73437050825579815051cac7b0fdbb6752946fea226e403bfeeef3d60d712477bdd4c01afdc8455f27c3d85e4251df88b032b6250
+  languageName: node
+  linkType: hard
+
 "axios@npm:^1, axios@npm:^1.10.0, axios@npm:^1.12.0, axios@npm:^1.12.2, axios@npm:^1.6.1, axios@npm:^1.8.3":
   version: 1.13.5
   resolution: "axios@npm:1.13.5"
@@ -20585,7 +20605,7 @@ __metadata:
     "@grafana/llm": "npm:1.0.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.3.0"
+    "@grafana/plugin-e2e": "npm:3.4.0-canary.2462.22147426600.0"
     "@grafana/plugin-ui": "npm:^0.12.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -20700,6 +20720,7 @@ __metadata:
     "@welldone-software/why-did-you-render": "npm:8.0.3"
     ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.21"
+    axe-core: "npm:^4.11.1"
     babel-loader: "npm:10.0.0"
     baron: "npm:3.0.3"
     blob-polyfill: "npm:9.0.20240710"
