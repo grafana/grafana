@@ -11,14 +11,20 @@ import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { WizardFormData, WizardStep } from './types';
+import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {
   onCancel?: (repoName: string) => void;
+  goToStep: (stepId: WizardStep) => void;
   isCancelling?: boolean;
 }
 
-export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({
+  onCancel,
+  isCancelling,
+  goToStep,
+}: SynchronizeStepProps) {
   const { watch, register } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', syncTarget, migrateResources] = watch([
@@ -33,8 +39,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     healthMessage: repositoryHealthMessages,
     healthStatusNotReady,
     hasError,
+    fieldErrors,
     isLoading,
   } = useRepositoryStatus(repoName);
+
+  const hasFieldErrors = Boolean(fieldErrors?.length);
 
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
     isHealthy,
@@ -48,34 +57,27 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   const [job, setJob] = useState<Job>();
 
   useEffect(() => {
-    if (hasError) {
-      setStepStatusInfo({
-        status: 'error',
-        error: {
-          title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
-          message: t(
-            'provisioning.synchronize-step.repository-error-message',
-            'Unable to check repository status. Please verify the repository configuration and try again.'
-          ),
-        },
-      });
-    } else if (isUnhealthy) {
-      setStepStatusInfo({
-        status: 'error',
-        error: {
-          title: t(
-            'provisioning.synchronize-step.repository-unhealthy',
-            'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
-          ),
-          message: repositoryHealthMessages ?? '',
-        },
-      });
-    } else if (isLoading || healthStatusNotReady) {
-      setStepStatusInfo({ status: 'running' });
-    } else {
-      setStepStatusInfo({ status: 'idle' });
-    }
-  }, [isLoading, healthStatusNotReady, hasError, isUnhealthy, repositoryHealthMessages, setStepStatusInfo]);
+    setStepStatusInfo(
+      getSyncStepStatus({
+        hasFieldErrors,
+        hasError,
+        isUnhealthy,
+        isLoading,
+        healthStatusNotReady,
+        repositoryHealthMessages,
+        goToStep,
+      })
+    );
+  }, [
+    hasFieldErrors,
+    hasError,
+    isUnhealthy,
+    isLoading,
+    healthStatusNotReady,
+    repositoryHealthMessages,
+    setStepStatusInfo,
+    goToStep,
+  ]);
 
   const isButtonDisabled = hasError || !isHealthy;
 

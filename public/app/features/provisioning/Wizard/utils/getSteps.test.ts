@@ -1,4 +1,4 @@
-import { getSteps } from './getSteps';
+import { getSteps, getSyncStepStatus } from './getSteps';
 
 describe('getSteps', () => {
   const expectedStepOrder = ['authType', 'connection', 'bootstrap', 'synchronize', 'finish'];
@@ -31,5 +31,93 @@ describe('getSteps', () => {
     expect(authTypeStep?.title).toBe('Connect');
     expect(connectionStep?.name).toBe('Configure repository');
     expect(connectionStep?.title).toBe('Configure repository');
+  });
+});
+
+describe('getSyncStepStatus', () => {
+  const defaultState = {
+    hasFieldErrors: false,
+    hasError: false,
+    isUnhealthy: false,
+    isLoading: false,
+    healthStatusNotReady: false,
+    repositoryHealthMessages: undefined,
+    goToStep: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns running when loading', () => {
+    const result = getSyncStepStatus({ ...defaultState, isLoading: true });
+    expect(result.status).toBe('running');
+  });
+
+  it('returns running when health status not ready', () => {
+    const result = getSyncStepStatus({ ...defaultState, healthStatusNotReady: true });
+    expect(result.status).toBe('running');
+  });
+
+  it('returns error when query has error', () => {
+    const result = getSyncStepStatus({ ...defaultState, hasError: true });
+    expect(result.status).toBe('error');
+    expect(result).toHaveProperty('error');
+  });
+
+  it('returns error with action when unhealthy with field errors', () => {
+    const goToStep = jest.fn();
+    const result = getSyncStepStatus({
+      ...defaultState,
+      isUnhealthy: true,
+      hasFieldErrors: true,
+      goToStep,
+    });
+    expect(result.status).toBe('error');
+    expect(result).toHaveProperty('action');
+    // Verify the action calls goToStep with 'connection'
+    if ('action' in result && result.action?.onClick) {
+      result.action.onClick();
+      expect(goToStep).toHaveBeenCalledWith('connection');
+    }
+  });
+
+  it('returns error without action when unhealthy without field errors', () => {
+    const result = getSyncStepStatus({
+      ...defaultState,
+      isUnhealthy: true,
+      repositoryHealthMessages: ['Token expired'],
+    });
+    expect(result.status).toBe('error');
+    expect(result).not.toHaveProperty('action');
+    if ('error' in result && typeof result.error === 'object') {
+      expect(result.error.message).toEqual(['Token expired']);
+    }
+  });
+
+  it('returns idle when everything is healthy', () => {
+    const result = getSyncStepStatus(defaultState);
+    expect(result.status).toBe('idle');
+  });
+
+  it('prioritizes loading over error states', () => {
+    const result = getSyncStepStatus({
+      ...defaultState,
+      isLoading: true,
+      hasError: true,
+      isUnhealthy: true,
+    });
+    expect(result.status).toBe('running');
+  });
+
+  it('prioritizes hasError over isUnhealthy', () => {
+    const result = getSyncStepStatus({
+      ...defaultState,
+      hasError: true,
+      isUnhealthy: true,
+      hasFieldErrors: true,
+    });
+    expect(result.status).toBe('error');
+    expect(result).not.toHaveProperty('action');
   });
 });

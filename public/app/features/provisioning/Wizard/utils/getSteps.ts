@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { Step } from '../Stepper';
-import { RepoType, WizardStep } from '../types';
+import { RepoType, StepStatusInfo, WizardStep } from '../types';
 
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';
@@ -45,3 +45,61 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
     },
   ];
 };
+
+interface SyncStepState {
+  hasFieldErrors: boolean;
+  hasError: boolean;
+  isUnhealthy: boolean;
+  isLoading: boolean;
+  healthStatusNotReady: boolean;
+  repositoryHealthMessages: string[] | undefined;
+  goToStep: (stepId: WizardStep) => void;
+}
+
+export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
+  if (state.isLoading || state.healthStatusNotReady) {
+    return { status: 'running' };
+  }
+
+  if (state.hasError) {
+    return {
+      status: 'error',
+      error: {
+        title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
+        message: t(
+          'provisioning.synchronize-step.repository-error-message',
+          'Unable to check repository status. Please verify the repository configuration and try again.'
+        ),
+      },
+    };
+  }
+
+  if (state.isUnhealthy && state.hasFieldErrors) {
+    return {
+      status: 'error',
+      error: {
+        title: t('provisioning.synchronize-step.field-errors', 'Configuration errors detected'),
+        message: t(
+          'provisioning.synchronize-step.field-errors-message',
+          'There are issues with the repository configuration. Please review your settings.'
+        ),
+      },
+      action: {
+        label: t('provisioning.synchronize-step.review-configuration', 'Review configuration'),
+        onClick: () => state.goToStep('connection'),
+      },
+    };
+  }
+
+  if (state.isUnhealthy) {
+    return {
+      status: 'error',
+      error: {
+        title: t('provisioning.synchronize-step.repository-unhealthy', 'The repository cannot be synchronized'),
+        message: state.repositoryHealthMessages ?? [],
+      },
+    };
+  }
+
+  return { status: 'idle' };
+}
