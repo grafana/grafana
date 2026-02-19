@@ -136,25 +136,25 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 				return fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
 			}
 
-				res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-				if err != nil {
-					if sql.IsRowAlreadyExistsError(err) {
-						if versionAttempts < maxVersionAttempts {
-							versionAttempts += 1
-							version += 1
-							continue
-						}
-						return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+			res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+			if err != nil {
+				if sql.IsRowAlreadyExistsError(err) {
+					if versionAttempts < maxVersionAttempts {
+						versionAttempts += 1
+						version += 1
+						continue
 					}
-					if sqlite.IsBusyOrLocked(err) {
-						if busyAttempts < maxBusyAttempts {
-							busyAttempts += 1
-							time.Sleep(time.Duration(busyAttempts) * 50 * time.Millisecond)
-							continue
-						}
-					}
-					return fmt.Errorf("inserting row: %w", err)
+					return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
 				}
+				if sqlite.IsBusyOrLocked(err) {
+					if busyAttempts < maxBusyAttempts {
+						busyAttempts += 1
+						time.Sleep(time.Duration(busyAttempts) * 50 * time.Millisecond)
+						continue
+					}
+				}
+				return fmt.Errorf("inserting row: %w", err)
+			}
 
 			rowsAffected, err := res.RowsAffected()
 			if err != nil {
