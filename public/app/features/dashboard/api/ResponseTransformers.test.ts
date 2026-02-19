@@ -127,7 +127,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [
           {
@@ -601,7 +601,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [],
         annotations: {
