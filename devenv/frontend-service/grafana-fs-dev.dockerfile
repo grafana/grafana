@@ -32,5 +32,6 @@ COPY public/img/icons public/img/icons
 ADD devenv/frontend-service/build/grafana bin/grafana
 
 COPY public/build/assets-manifest.json public/build/assets-manifest.json
+COPY public/build/assets-manifest-react19.json public/build/assets-manifest-react19.json
 
 ENTRYPOINT ["bin/grafana", "server"]
