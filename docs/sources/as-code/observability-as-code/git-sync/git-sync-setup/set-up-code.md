@@ -12,7 +12,7 @@ labels:
     - oss
     - cloud
 title: Set up Git Sync as code
-weight: 110
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
@@ -64,7 +64,7 @@ metadata:
   name: '<GITHUB_CONNECTION_NAME>'
   namespace: default
 spec:
-  title: <REPOSITORY_TITLE>
+  title: '<REPOSITORY_TITLE>'
   type: github
   url: https://github.com
   github:
@@ -91,7 +91,7 @@ Next, create a `repository.yaml` file defining your Git Sync configuration. Depe
 apiVersion: provisioning.grafana.app/v0alpha1
 kind: Repository
 metadata:
-  name: <REPOSITORY_NAME>
+  name: '<REPOSITORY_NAME>'
 spec:
   sync:
     enabled: true
@@ -100,18 +100,18 @@ spec:
   workflows:
     - write
     - branch
-  title: <REPOSITORY_TITLE>
+  title: '<REPOSITORY_TITLE>'
 
 # Git Sync for GitHub:
 spec:
   type: github
   github:
-    url: <GIT_REPO_URL>
-    branch: <BRANCH>
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
     path: grafana/
 # GitHub App connection only:
   connection:
-    name: <GITHUB_CONNECTION_NAME>
+    name: '<GITHUB_CONNECTION_NAME>'
 # GitHub Personal Access Token only:
 secure:
   token: { create: "GIT_PAT" }
@@ -120,8 +120,8 @@ secure:
 spec:
   type: gitlab
   gitlab:
-    url: <GIT_REPO_URL>
-    branch: <BRANCH>
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
 secure:
   token: { create: "GIT_PAT" }
 
@@ -129,9 +129,9 @@ secure:
 spec:
   type: bitbucket
   bitbucket:
-    url: <GIT_REPO_URL>
-    branch: <BRANCH>
-    tokenUser: nanogit-test-admin
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+    tokenUser: tokenuser
 secure:
   token: { create: "GIT_PAT" }
 
@@ -139,10 +139,10 @@ secure:
 spec:
   type: git
   git:
-    url: <GIT_REPO_URL>
-    branch: <BRANCH>
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
     path: "grafana/"
-    tokenUser: git
+    tokenUser: tokenuser
 secure:
   token: { create: "GIT_PAT" }
 ```

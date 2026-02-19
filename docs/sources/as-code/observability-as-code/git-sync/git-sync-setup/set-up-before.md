@@ -12,7 +12,7 @@ labels:
     - oss
     - cloud
 title: Setup prerequisites
-weight: 120
+weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/
 aliases:
 ---
