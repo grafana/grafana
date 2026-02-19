@@ -48,7 +48,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   }, [hasActiveChild, location, menuIsDocked, link]);
 
   useEffect(() => {
-    store.subscribe(`grafana.navigation.expanded[${link.id}]`, () => {
+    return store.subscribe(`grafana.navigation.expanded[${link.id}]`, () => {
       setInternalExpandState(getSectionExpanded(link));
       store.set(`grafana.navigation.expanded-state-change`, new Date().getTime());
     });
