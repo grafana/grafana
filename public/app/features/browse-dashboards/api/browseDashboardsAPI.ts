@@ -475,7 +475,6 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          invalidateQuotaUsage(dispatch);
         });
       },
     }),

@@ -15,7 +15,7 @@ export const DISMISS_STORAGE_KEY = 'grafana.quota-limit-banner.dismissed';
 type DismissedMap = Record<string, boolean>;
 
 function formatDetail(resource: ResourceStatus): string {
-  const percentage = Math.round((resource.usage / resource.limit) * 100);
+  const percentage = Math.floor((resource.usage / resource.limit) * 100);
   const values = {
     usage: resource.usage.toLocaleString(),
     limit: resource.limit.toLocaleString(),
@@ -68,7 +68,7 @@ export function QuotaLimitBanner() {
   const extensionButtonContent = t('browse-dashboards.quota-banner.request-extension', 'Request quota extension');
 
   return (
-    <div className={styles.wrapper}>
+    <>
       {atLimitResources.length > 0 && (
         <Alert
           severity="error"
@@ -103,14 +103,11 @@ export function QuotaLimitBanner() {
           </div>
         </Alert>
       )}
-    </div>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    position: 'relative',
-  }),
   dismiss: css({
     position: 'absolute',
     top: theme.spacing(0.5),
