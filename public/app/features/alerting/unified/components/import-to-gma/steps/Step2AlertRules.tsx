@@ -26,11 +26,13 @@ import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
 import { ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions } from '../Wizard/constants';
 import { useRoutingTrees } from '../useRoutingTrees';
+import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { isStep2Valid } from './utils';
 
@@ -54,6 +56,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     register,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
@@ -235,6 +238,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                         onChange={(ds: DataSourceInstanceSettings) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
+                          // Auto-populate target datasource if not yet selected
+                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                            setValue('targetDatasourceUID', ds.uid);
+                          }
                         }}
                         noDefault
                         width={40}
@@ -328,6 +335,25 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                   )}
                   control={control}
                   name="rulesYamlFile"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
+                    },
+                    validate: async (value) => {
+                      if (!value) {
+                        return t('alerting.import-to-gma.step2.yaml-required', 'Please select a file');
+                      }
+                      try {
+                        await parseYamlFileToRulerRulesConfigDTO(value, value.name);
+                        return true;
+                      } catch (error) {
+                        return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
+                          error: stringifyErrorLike(error),
+                        });
+                      }
+                    },
+                  }}
                 />
               </Field>
             )}
@@ -443,10 +469,14 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
 }
 
 /**
- * Hook to check if Step 2 form is valid
+ * Hook to check if Step 2 form is valid.
+ * Checks both that required fields are filled AND that there are no validation errors.
  */
 export function useStep2Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<ImportFormValues>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
   const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -455,14 +485,22 @@ export function useStep2Validation(canImport: boolean): boolean {
     'targetDatasourceUID',
   ]);
 
-  return useMemo(() => {
-    return isStep2Valid({
-      canImport,
-      rulesSource,
-      rulesYamlFile,
-      rulesDatasourceUID,
-      selectedRoutingTree,
-      targetDatasourceUID,
-    });
-  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
+  const hasStep2Errors =
+    !!errors.rulesSource ||
+    !!errors.rulesDatasourceUID ||
+    !!errors.rulesYamlFile ||
+    !!errors.selectedRoutingTree ||
+    !!errors.targetDatasourceUID;
+
+  if (!canImport || hasStep2Errors) {
+    return false;
+  }
+
+  return isStep2Valid({
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  });
 }
