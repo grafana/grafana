@@ -314,7 +314,7 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
 	}
 
-	s.log.Debug("AzureADToken fetchToken completed", "access_token", token.AccessToken, "refresh_token", token.RefreshToken, "expiry", token.Expiry)
+	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
 	return token.WithExtra(rawResponse), nil
 }
 
