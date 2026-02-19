@@ -495,6 +495,53 @@ By default the `All` value includes all options in combined expression. This can
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source.
 
+## Configure multi-property variables
+
+If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as `dev` vs `development`&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
+
+To do so, configure a JSON array in which each object can have any number of properties.
+Then, you can reference any of the properties in as you use those variables.
+
+This applies to the following variable types:
+
+- Custom
+- Query
+  - Infinity
+  - PostgreSQL
+
+<!-- add links to data source docs -->
+
+### Multi-property custom variables
+
+To create a custom variable with multiple properties, define a JSON array, like this:
+
+```json
+[
+  { "value": "1", "text": "Development", "aws": "dev", "azure": "development", "google": "googledev" },
+  { "value": "2", "text": "Staging", "aws": "stag", "azure": "staging", "google": "googlestag" },
+  { "value": "3", "text": "Production", "aws": "prod", "azure": "production", "google": "googleprod" }
+]
+```
+
+This is how those values are displayed in a preview:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-preview-vals-v12.4.png" max-width="600px" alt="Custom variable configuration and preview of values" >}}
+
+Then you can use `${varName.someProperty}` syntax to reference any property in your dashboard panels or metrics:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-used-12.4.png" max-width=750px" alt="Multi-property variable used in a text panel" >}}
+
+You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-nested-v12.4.png" max-width="650px" alt="Nested variable configuration" >}}
+
+### Multi-property query variables
+
+Because query configuration is different for each data source, there's no one way to set up a JSON array to create a multi-property query variable.
+For PostgreSQL, refer to [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/).
+For other data sources, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
+For configuration information on all other data source plugins, refer to the [Plugins documentation](https://grafana.com/docs/plugins/).
+
 ## Global variables
 
 Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in queries, dashboard links, panel links, and data links.
