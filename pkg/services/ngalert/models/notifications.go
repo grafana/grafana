@@ -317,7 +317,11 @@ func (s *PolicyRouting) Fingerprint(_ featuremgmt.FeatureToggles) data.Fingerpri
 	return data.Fingerprint(h.Sum64())
 }
 
-func (s *PolicyRouting) ToLabels(_ featuremgmt.FeatureToggles) data.Labels {
+func (s *PolicyRouting) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		return make(data.Labels)
+	}
 	if s.IsDefault() {
 		return make(data.Labels)
 	}
