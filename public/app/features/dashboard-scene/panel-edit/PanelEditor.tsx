@@ -53,7 +53,7 @@ export interface PanelEditorState extends SceneObjectState {
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
-  pluginLoadErrror?: string;
+  pluginLoadError?: string;
   /**
    * Waiting for library panel or panel plugin to load
    */
@@ -167,7 +167,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (retry < 100) {
         setTimeout(() => this.waitForPlugin(retry + 1), retry * 10);
       } else {
-        this.setState({ pluginLoadErrror: 'Failed to load panel plugin' });
+        this.setState({ pluginLoadError: 'Failed to load panel plugin' });
       }
       return;
     }
