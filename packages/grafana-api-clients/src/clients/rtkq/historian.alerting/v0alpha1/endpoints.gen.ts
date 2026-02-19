@@ -173,7 +173,7 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistoryBody;
+export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistoryResponse;
 export type GetAlertstatehistoryApiArg = void;
 export type ListDummyApiResponse = /** status 200 OK */ DummyList;
 export type ListDummyApiArg = {
@@ -377,7 +377,7 @@ export type UpdateDummyStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryBody;
+export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryResponse;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
 };
@@ -413,11 +413,9 @@ export type ApiResourceList = {
   /** resources contains the name of the resources and if they are namespaced. */
   resources: ApiResource[];
 };
-export type GetAlertstatehistoryBody = {
+export type GetAlertstatehistoryResponse = {
   body: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
 };
 export type Time = string;
@@ -510,9 +508,7 @@ export type DummyOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -523,9 +519,7 @@ export type DummyOperatorState = {
 export type DummyStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -644,16 +638,22 @@ export type CreateNotificationqueryNotificationEntry = {
   /** Timestamp is the time at which the notification attempt completed. */
   timestamp: string;
 };
-export type CreateNotificationqueryBody = {
+export type CreateNotificationqueryResponse = {
   entries: CreateNotificationqueryNotificationEntry[];
 };
-export type CreateNotificationqueryMatcher = object;
+export type CreateNotificationqueryMatcher = {
+  label: string;
+  type: '=' | '!=' | '=~' | '!~';
+  value: string;
+};
 export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;
   /** GroupLabels optionally filters the entries by matching group labels. */
   groupLabels?: CreateNotificationqueryMatchers;
+  /** Labels optionally filters the entries by matching alert labels. */
+  labels?: CreateNotificationqueryMatchers;
   /** Limit is the maximum number of entries to return. */
   limit?: number;
   /** Outcome optionally filters the entries to only either successful or failed attempts. */

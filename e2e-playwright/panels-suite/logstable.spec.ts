@@ -152,7 +152,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
 
       // Assert the inspect drawer shows the correct log line body
       await expect(
-        page.getByLabel('Drawer title Inspect value').locator('.view-lines'),
+        page.getByRole('dialog', { name: 'Inspect value' }).locator('.view-lines'),
         'Drawer contains correct log line'
       ).toContainText(
         `level=info ts=2026-02-06T18:42:46.211051027Z caller=poller.go:133 msg="blocklist poll complete" seconds=526`

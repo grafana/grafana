@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -202,6 +203,12 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
 
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.Create(ctx, in, createValidation, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Create")
 
 	accIn, err := utils.MetaAccessor(in)
@@ -333,6 +340,13 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
+
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.Delete(ctx, name, deleteValidation, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Delete", "name", name)
 	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
@@ -379,6 +393,19 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
+
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		dryRunInfo := objInfo
+		dryRunForceCreate := forceAllowCreate
+		if !d.readUnified {
+			dryRunInfo = &wrappedUpdateInfo{objInfo: objInfo}
+			dryRunForceCreate = true
+		}
+		return d.unified.Update(ctx, name, dryRunInfo, createValidation, updateValidation, dryRunForceCreate, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Update", "name", name)
 	// update in legacy first, and then unistore. Will return a failure if either fails.
 	//
@@ -464,6 +491,12 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
+
+	// During dry-run, skip legacy storage and delegate directly to unified storage
+	// which already handles dry-run correctly via DryRunnableStorage.
+	if dryrun.IsDryRun(options.DryRun) {
+		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	}
 
 	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion)
 

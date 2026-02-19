@@ -22,66 +22,20 @@ menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
 last_reviewed: 2025-12-04
-refs:
-  query-transform-data-query-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-options
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  configure-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  troubleshoot-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
-  configure-grafana-feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-  alerting-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/
-  annotations-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/
 ---
 
 # Azure Monitor query editor
 
-Grafana provides a query editor for the Azure Monitor data source, which is located on the [Explore page](ref:explore). You can also access the Azure Monitor query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Azure Monitor data source, which is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the Azure Monitor query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
 This document explains querying specific to the Azure Monitor data source.
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
 ## Before you begin
 
-- Ensure you have [configured the Azure Monitor data source](ref:configure-azure-monitor).
+- Ensure you have [configured the Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/).
 - Verify your credentials have appropriate permissions for the resources you want to query.
 
 ## Key concepts
@@ -141,7 +95,7 @@ Optionally, you can apply further aggregations or filter by dimensions.
 
 The available options change depending on what is relevant to the selected metric.
 
-You can also augment queries by using [template variables](ref:template-variables).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ### Format legend aliases
 
@@ -196,7 +150,7 @@ The Logs query builder provides a visual interface for building Azure Monitor Lo
 
 **To enable the Logs query builder:**
 
-1. Enable the `azureMonitorLogsBuilderEditor` [feature toggle](ref:configure-grafana-feature-toggles) in your Grafana configuration.
+1. Enable the `azureMonitorLogsBuilderEditor` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) in your Grafana configuration.
 1. Restart Grafana for the change to take effect.
 
 **To switch between Builder and Code modes:**
@@ -228,7 +182,7 @@ You can switch from Builder to Code mode at any time to view or edit the generat
 
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](ref:template-variables).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 **To create a Basic Logs query:**
 
@@ -243,7 +197,7 @@ You can also augment queries by using [template variables](ref:template-variable
    {{< /admonition >}}
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables](ref:template-variables).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ### Logs query examples
 
@@ -327,7 +281,7 @@ To help you write queries, you can use several Grafana macros in the `where` cla
 | `$__escapeMulti($myVar)`        | Escapes illegal characters in multi-value template variables.<br/>If `$myVar` has the values `'\\grafana-vm\Network(eth0)\Total','\\hello!'` as a string, use this to expand it to `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`.<br/><br/>If using single-value variables, escape the variable inline instead: `@'\$myVar'`.                                                                                                                                                              |
 | `$__contains(colName, $myVar)`  | Expands multi-value template variables.<br/>If `$myVar` has the value `'value1','value2'`, use this to expand it to `colName in ('value1','value2')`.<br/><br/>If using the `All` option, check the `Include All Option` checkbox, and type the value `all` in the `Custom all value` field. If `$myVar` has the value `all`, the macro instead expands to `1 == 1`.<br/>For template variables with many options, this avoids building a large "where..in" clause, which improves performance. |
 
-Additionally, Grafana has the built-in [`$__interval` macro](ref:query-transform-data-query-options), which calculates an interval in seconds.
+Additionally, Grafana has the built-in [`$__interval` macro](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-options), which calculates an interval in seconds.
 
 ## Query Azure Resource Graph
 
@@ -454,13 +408,13 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
 
 Running a query returns all trace data within the time span specified by the panel or dashboard time range.
 
-You can also augment queries by using [template variables](ref:template-variables).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ## Use queries for alerting and recording rules
 
 All Azure Monitor query types (Metrics, Logs, Azure Resource Graph, and Traces) can be used with Grafana Alerting and recording rules.
 
-For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](ref:alerting-azure-monitor).
+For detailed information about creating alert rules, supported query types, authentication requirements, and examples, refer to [Azure Monitor alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/).
 
 ## Work with large Azure resource datasets
 
@@ -470,6 +424,6 @@ You can use filters to reduce the amount of records returned under that value.
 ## Next steps
 
 - [Use template variables](../template-variables/) to create dynamic, reusable dashboards
-- [Add annotations](ref:annotations-azure-monitor) to overlay events on your graphs
-- [Set up alerting](ref:alerting-azure-monitor) to create alert rules based on Azure Monitor data
-- [Troubleshoot](ref:troubleshoot-azure-monitor) common query and configuration issues
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/annotations/) to overlay events on your graphs
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/alerting/) to create alert rules based on Azure Monitor data
+- [Troubleshoot](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/) common query and configuration issues
