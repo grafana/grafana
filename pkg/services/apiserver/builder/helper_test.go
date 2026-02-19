@@ -97,20 +97,20 @@ func TestRedirection(t *testing.T) {
 	}{
 		{
 			name:   "query to datasource",
-			url:    "/apis/query.grafana.app/v0alpha1/namespace/default/connections",
-			expect: "/apis/datasource.grafana.app/v0alpha1/namespace/default/connections",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/connections",
 		}, {
 			name:   "query to datasource (with name hack)",
-			url:    "/apis/query.grafana.app/v0alpha1/namespace/default/query",
-			expect: "/apis/datasource.grafana.app/v0alpha1/namespace/default/query/name",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/name",
 		}, {
 			name:   "query sqlschemas",
-			url:    "/apis/query.grafana.app/v0alpha1/namespace/default/sqlschemas",
-			expect: "/apis/datasource.grafana.app/v0alpha1/namespace/default/query/sqlschemas",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/sqlschemas",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
 		}, {
 			name:   "name hack in datasource service",
-			url:    "/apis/datasource.grafana.app/v0alpha1/namespace/default/query",
-			expect: "/apis/datasource.grafana.app/v0alpha1/namespace/default/query/name", // hack :(
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/name", // hack :(
 		},
 	}
 
