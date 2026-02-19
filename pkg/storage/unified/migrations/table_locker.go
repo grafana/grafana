@@ -52,7 +52,7 @@ func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []st
 	case "mysql":
 		return l.lockMySQL(ctx, sqlHelper, quotedTables)
 	case "postgres":
-		return l.lockPostgres(sqlHelper, quotedTables)
+		return l.lockPostgres(ctx, sqlHelper, quotedTables)
 	default:
 		return nil, fmt.Errorf("unsupported database type for migration lock: %s", dbType)
 	}
@@ -95,8 +95,9 @@ func (l *legacyTableLocker) lockMySQL(ctx context.Context, sqlHelper *legacysql.
 	}, nil
 }
 
-func (l *legacyTableLocker) lockPostgres(sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func() error, error) {
+func (l *legacyTableLocker) lockPostgres(ctx context.Context, sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func() error, error) {
 	session := sqlHelper.DB.GetEngine().NewSession()
+	session = session.Context(ctx)
 
 	if err := session.Begin(); err != nil {
 		session.Close()
