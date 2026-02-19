@@ -183,7 +183,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getIntegrationtypeschemas",
+								OperationId: "getIntegrationTypeSchemas",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -204,7 +204,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaResource"),
 																						}},
 																				},
 																			},
@@ -225,7 +225,7 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getIntegrationtypeschemasField": {
+					"getIntegrationTypeSchemasField": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -286,7 +286,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasSelectOption"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasSelectOption"),
 												}},
 										},
 									},
@@ -294,7 +294,7 @@ var appManifestData = app.ManifestData{
 								"showWhen": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasShowWhen"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasShowWhen"),
 									},
 								},
 								"subformOptions": {
@@ -304,7 +304,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -330,7 +330,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchema": {
+					"getIntegrationTypeSchemasIntegrationTypeSchema": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchema - receiver integration schema format",
@@ -377,7 +377,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaVersion"),
 												}},
 										},
 									},
@@ -391,7 +391,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaResource": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaResource": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
@@ -420,7 +420,7 @@ var appManifestData = app.ManifestData{
 								"spec": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchema"),
 									},
 								},
 							},
@@ -430,7 +430,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaVersion": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -456,7 +456,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -479,7 +479,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasSelectOption": {
+					"getIntegrationTypeSchemasSelectOption": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -504,7 +504,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasShowWhen": {
+					"getIntegrationTypeSchemasShowWhen": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -527,6 +527,88 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+		},
+	},
+	Roles: map[string]app.ManifestRole{
+		"alerting-notifications:admin": {
+			Title:       "alerting-notifications Admin",
+			Description: "Allows all actions on Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Receiver",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "RoutingTree",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "TemplateGroup",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "TimeInterval",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"alerting-notifications:editor": {
+			Title:       "alerting-notifications Editor",
+			Description: "Create, Read, Update, and Delete Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Receiver",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "RoutingTree",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "TemplateGroup",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "TimeInterval",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"alerting-notifications:reader": {
+			Title:       "alerting-notifications Reader",
+			Description: "Read Receivers, RoutingTrees, TemplateGroups, and TimeIntervals",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Receiver",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "RoutingTree",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "TemplateGroup",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "TimeInterval",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"alerting-notifications:reader",
+		},
+		Editor: []string{
+			"alerting-notifications:editor",
+		},
+		Admin: []string{
+			"alerting-notifications:admin",
 		},
 	},
 }
@@ -556,7 +638,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestResponse{},
 
-	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasResponse{},
+	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationTypeSchemasResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -582,7 +664,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+	"v0alpha1|Receiver|test|POST": &v0alpha1.CreateReceiverIntegrationTestRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
@@ -610,4 +692,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

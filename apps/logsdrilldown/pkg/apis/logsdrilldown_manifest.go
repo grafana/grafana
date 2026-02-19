@@ -83,6 +83,88 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"logsdrilldown:admin": {
+			Title:       "logsdrilldown Admin",
+			Description: "Allows all actions on LogsDrilldowns, LogsDrilldownDefaults, and LogsDrilldownDefaultColumns",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "LogsDrilldown",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "LogsDrilldown/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaults",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaults/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaultColumns",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaultColumns/status",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"logsdrilldown:editor": {
+			Title:       "logsdrilldown Editor",
+			Description: "Create, Read, Update, and Delete LogsDrilldowns, LogsDrilldownDefaults, and LogsDrilldownDefaultColumns",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "LogsDrilldown",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaults",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaultColumns",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"logsdrilldown:reader": {
+			Title:       "logsdrilldown Reader",
+			Description: "Read LogsDrilldowns, LogsDrilldownDefaults, and LogsDrilldownDefaultColumns",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "LogsDrilldown",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaults",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "LogsDrilldownDefaultColumns",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"logsdrilldown:reader",
+		},
+		Editor: []string{
+			"logsdrilldown:editor",
+		},
+		Admin: []string{
+			"logsdrilldown:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -157,4 +239,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

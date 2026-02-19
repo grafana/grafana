@@ -119,6 +119,72 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"advisor:admin": {
+			Title:       "advisor Admin",
+			Description: "Allows all actions on CheckTypesand Checks",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Check",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "Check/status",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "CheckType",
+					PermissionSet: strPtr("admin"),
+				},
+				{
+					Kind:          "CheckType/status",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"advisor:editor": {
+			Title:       "advisor Editor",
+			Description: "Create, Read, Update, and Delete CheckTypesand Checks",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Check",
+					PermissionSet: strPtr("editor"),
+				},
+				{
+					Kind:          "CheckType",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"advisor:reader": {
+			Title:       "advisor Reader",
+			Description: "Read CheckTypesand Checks",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Check",
+					PermissionSet: strPtr("viewer"),
+				},
+				{
+					Kind:          "CheckType",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"advisor:reader",
+		},
+		Editor: []string{
+			"advisor:editor",
+		},
+		Admin: []string{
+			"advisor:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -194,4 +260,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

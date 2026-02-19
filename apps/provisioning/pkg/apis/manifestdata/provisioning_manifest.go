@@ -19,6 +19,37 @@ var appManifestData = app.ManifestData{
 	Group:            "provisioning.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions:         []app.ManifestVersion{},
+	Roles: map[string]app.ManifestRole{
+		"provisioning:admin": {
+			Title:       "provisioning Admin",
+			Description: "Allows all actions on ",
+			Kinds:       []app.ManifestRoleKind{},
+			Routes:      []string{},
+		},
+		"provisioning:editor": {
+			Title:       "provisioning Editor",
+			Description: "Create, Read, Update, and Delete ",
+			Kinds:       []app.ManifestRoleKind{},
+			Routes:      []string{},
+		},
+		"provisioning:reader": {
+			Title:       "provisioning Reader",
+			Description: "Read ",
+			Kinds:       []app.ManifestRoleKind{},
+			Routes:      []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"provisioning:reader",
+		},
+		Editor: []string{
+			"provisioning:editor",
+		},
+		Admin: []string{
+			"provisioning:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {

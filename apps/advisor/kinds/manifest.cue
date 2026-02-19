@@ -17,6 +17,7 @@ manifest: {
 				namespaced: {
 					"/register": {
 						"POST": {
+							name: "createRegister"
 							response: {
 								message:	string
 							}

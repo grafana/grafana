@@ -121,6 +121,52 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"live:admin": {
+			Title:       "live Admin",
+			Description: "Allows all actions on Channels",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Channel",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"live:editor": {
+			Title:       "live Editor",
+			Description: "Create, Read, Update, and Delete Channels",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Channel",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"live:reader": {
+			Title:       "live Reader",
+			Description: "Read Channels",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Channel",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"live:reader",
+		},
+		Editor: []string{
+			"live:editor",
+		},
+		Admin: []string{
+			"live:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -195,4 +241,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

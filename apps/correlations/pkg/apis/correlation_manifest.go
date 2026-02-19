@@ -61,6 +61,52 @@ var appManifestData = app.ManifestData{
 			},
 		},
 	},
+	Roles: map[string]app.ManifestRole{
+		"correlation:admin": {
+			Title:       "correlation Admin",
+			Description: "Allows all actions on Correlations",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Correlation",
+					PermissionSet: strPtr("admin"),
+				},
+			},
+			Routes: []string{},
+		},
+		"correlation:editor": {
+			Title:       "correlation Editor",
+			Description: "Create, Read, Update, and Delete Correlations",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Correlation",
+					PermissionSet: strPtr("editor"),
+				},
+			},
+			Routes: []string{},
+		},
+		"correlation:reader": {
+			Title:       "correlation Reader",
+			Description: "Read Correlations",
+			Kinds: []app.ManifestRoleKind{
+				{
+					Kind:          "Correlation",
+					PermissionSet: strPtr("viewer"),
+				},
+			},
+			Routes: []string{},
+		},
+	},
+	RoleBindings: &app.ManifestRoleBindings{
+		Viewer: []string{
+			"correlation:reader",
+		},
+		Editor: []string{
+			"correlation:editor",
+		},
+		Admin: []string{
+			"correlation:admin",
+		},
+	},
 }
 
 func LocalManifest() app.Manifest {
@@ -133,4 +179,7 @@ func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb stri
 }
 func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
 	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
+}
+func strPtr(s string) *string {
+	return &s
 }

@@ -17,6 +17,7 @@ shorturl: {
 	routes: {
 		"/goto": {
 			"GET": {
+				name: "getGoto"
 				response: {
 					url: string
 				}
