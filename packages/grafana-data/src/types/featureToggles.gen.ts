@@ -339,6 +339,16 @@ export interface FeatureToggles {
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -418,6 +428,11 @@ export interface FeatureToggles {
   * @default false
   */
   perPanelFiltering?: boolean;
+  /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
@@ -1138,11 +1153,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
-  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1483,10 +1493,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
-  * Redirects the request to teams related endpoints to the app platform API
+  * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
   kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables external group mapping APIs in the app platform
+  * @default false
+  */
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
   /**
   * Use the new APIs for syncing users to teams
   * @default false
@@ -1512,4 +1532,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
 }

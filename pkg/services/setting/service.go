@@ -22,6 +22,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	"k8s.io/client-go/util/flowcontrol"
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -45,8 +46,8 @@ var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafa
 const LogPrefix = "setting.service"
 
 const DefaultPageSize = int64(500)
-const DefaultQPS = float32(10)
-const DefaultBurst = 25
+const DefaultQPS = float32(15)
+const DefaultBurst = 40
 
 const (
 	ApiGroup   = "setting.grafana.app"
@@ -60,14 +61,18 @@ const defaultServiceName = "grafana"
 // refer to: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
 const otelServiceNameEnvVar = "OTEL_SERVICE_NAME"
 
+// longThrottleLatency defines the threshold for counting throttled requests.
+const longThrottleLatency = 50 * time.Millisecond
+
 var settingGroupVersion = schema.GroupVersion{
 	Group:   ApiGroup,
 	Version: apiVersion,
 }
 
-type remoteSettingServiceMetrics struct {
-	listDuration   *prometheus.HistogramVec
-	listResultSize *prometheus.HistogramVec
+type clientMetrics struct {
+	listDuration             *prometheus.HistogramVec
+	listResultSize           *prometheus.HistogramVec
+	rateLimiterThrottleTotal prometheus.Counter
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -122,7 +127,7 @@ type remoteSettingService struct {
 	restClient *rest.RESTClient
 	log        logging.Logger
 	pageSize   int64
-	metrics    remoteSettingServiceMetrics
+	metrics    clientMetrics
 }
 
 var _ Service = (*remoteSettingService)(nil)
@@ -183,8 +188,9 @@ type settingListMetadata struct {
 // New creates a Service from the provided configuration.
 func New(config Config) (Service, error) {
 	log := logging.New(LogPrefix)
+	metrics := initMetrics()
 
-	restClient, err := getRestClient(config, log)
+	restClient, err := getRestClient(config, log, metrics)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create REST client: %w", err)
 	}
@@ -198,7 +204,7 @@ func New(config Config) (Service, error) {
 		restClient: restClient,
 		log:        log,
 		pageSize:   pageSize,
-		metrics:    initMetrics(),
+		metrics:    metrics,
 	}, nil
 }
 
@@ -411,7 +417,7 @@ func toIni(ctx context.Context, settings []*Setting) (*ini.File, error) {
 	return conf, nil
 }
 
-func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) {
+func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RESTClient, error) {
 	if config.URL == "" {
 		return nil, fmt.Errorf("URL cannot be empty")
 	}
@@ -460,12 +466,17 @@ func getRestClient(config Config, log logging.Logger) (*rest.RESTClient, error) 
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
+	// Create the rate limiter explicitly so we can wrap it with instrumentation
+	rateLimiter := &instrumentedRateLimiter{
+		RateLimiter: flowcontrol.NewTokenBucketRateLimiter(qps, burst),
+		waitCounter: m.rateLimiterThrottleTotal,
+	}
+
 	restConfig := &rest.Config{
 		Host:            config.URL,
 		TLSClientConfig: config.TLSClientConfig,
 		WrapTransport:   wrapTransport,
-		QPS:             qps,
-		Burst:           burst,
+		RateLimiter:     rateLimiter,
 		UserAgent:       userAgent,
 		// Configure for our API group
 		APIPath: "/apis",
@@ -499,8 +510,26 @@ func (a *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	return a.transport.RoundTrip(reqCopy)
 }
 
-func initMetrics() remoteSettingServiceMetrics {
-	metrics := remoteSettingServiceMetrics{
+// instrumentedRateLimiter wraps a flowcontrol.RateLimiter and increments a
+// Prometheus counter each time Wait() blocks for longer than longThrottleLatency.
+type instrumentedRateLimiter struct {
+	flowcontrol.RateLimiter
+	waitCounter prometheus.Counter
+}
+
+var _ flowcontrol.RateLimiter = (*instrumentedRateLimiter)(nil)
+
+func (r *instrumentedRateLimiter) Wait(ctx context.Context) error {
+	start := time.Now()
+	err := r.RateLimiter.Wait(ctx)
+	if time.Since(start) > longThrottleLatency {
+		r.waitCounter.Inc()
+	}
+	return err
+}
+
+func initMetrics() clientMetrics {
+	metrics := clientMetrics{
 		listDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace:                   "settings",
@@ -521,6 +550,12 @@ func initMetrics() remoteSettingServiceMetrics {
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
+		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "settings",
+			Subsystem: "service",
+			Name:      "rate_limiter_throttle_total",
+			Help:      "Total number of requests that waited more than 50ms due to client-side rate limiting",
+		}),
 	}
 	return metrics
 }
@@ -528,9 +563,11 @@ func initMetrics() remoteSettingServiceMetrics {
 func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.listDuration.Describe(descs)
 	s.metrics.listResultSize.Describe(descs)
+	s.metrics.rateLimiterThrottleTotal.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.listDuration.Collect(metrics)
 	s.metrics.listResultSize.Collect(metrics)
+	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
 }

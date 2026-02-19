@@ -61,7 +61,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 		orgID: {
 			accesscontrol.ActionAlertingReceiversCreate:     nil,
 			accesscontrol.ActionAlertingReceiversRead:       []string{models.ScopeReceiversProvider.GetResourceAllScope()},
-			accesscontrol.ActionAlertingReceiversTestCreate: []string{models.ScopeReceiversProvider.GetResourceScopeType(ac.NewReceiverType)},
+			accesscontrol.ActionAlertingReceiversTestCreate: []string{models.ScopeReceiversProvider.GetNewResourceScope()},
 		},
 	}}
 
