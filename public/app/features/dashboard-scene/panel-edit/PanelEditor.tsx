@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -42,6 +42,7 @@ import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -239,6 +240,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         listMode: OptionFilter.All,
         isVizPickerOpen: this.state.isNewPanel,
         isNewPanel: this.state.isNewPanel,
+        suggestionApplied: false,
       });
 
       this.setState({
@@ -334,6 +336,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
+
+
+    if (this.state.optionsPane?.state.suggestionApplied) {
+      const panel = this.state.panelRef.resolve();
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.PANEL_SUGGESTION_APPLIED,
+        plugin_id: panel.state.pluginId,
+        from_suggestions: true,
+      });
+    }
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;

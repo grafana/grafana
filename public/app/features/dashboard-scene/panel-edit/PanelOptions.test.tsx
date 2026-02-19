@@ -96,6 +96,7 @@ function setup(options: SetupOptions = {}) {
     panelRef: panel.getRef(),
     searchQuery: '',
     listMode: OptionFilter.All,
+    suggestionApplied: false,
   });
 
   activateFullSceneTree(panelOptionsScene);
