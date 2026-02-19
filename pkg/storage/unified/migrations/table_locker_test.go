@@ -55,7 +55,7 @@ func TestUnifiedMigrationLocksTables(t *testing.T) {
 	registry.Register(MigrationDefinition{
 		ID: "dummy-resource-migration",
 		Resources: []ResourceInfo{
-			{GroupResource: dummyResource, LockTable: "resource"},
+			{GroupResource: dummyResource, LockTables: []string{"resource"}},
 		},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			dummyResource: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error {

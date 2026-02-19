@@ -256,17 +256,15 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 
 func (m *unifiedMigration) lockTablesForResources(resources []schema.GroupResource) []string {
 	tables := make([]string, 0, len(resources))
-	seen := make(map[string]struct{}, len(resources))
+	seen := make(map[string]struct{})
 	for _, res := range resources {
-		table := m.registry.GetLockTable(res)
-		if table == "" {
-			continue
+		for _, table := range m.registry.GetLockTables(res) {
+			if _, ok := seen[table]; ok {
+				continue
+			}
+			seen[table] = struct{}{}
+			tables = append(tables, table)
 		}
-		if _, ok := seen[table]; ok {
-			continue
-		}
-		seen[table] = struct{}{}
-		tables = append(tables, table)
 	}
 	return tables
 }

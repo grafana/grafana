@@ -71,7 +71,7 @@ func (l *legacyTableLocker) lockMySQL(ctx context.Context, sqlHelper *legacysql.
 		lockSQL.WriteString(" READ")
 	}
 
-	// Use a dedicated connection so the lock doesn't affect the connection pool.
+	// Use a dedicated connection to not implicitly commit migration transaction.
 	conn, err := sqlHelper.DB.GetEngine().DB().Conn(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get dedicated connection for table lock: %w", err)
