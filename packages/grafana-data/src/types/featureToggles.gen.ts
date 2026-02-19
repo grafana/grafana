@@ -1532,4 +1532,9 @@ export interface FeatureToggles {
   * @default false
   */
   react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
 }

@@ -837,4 +837,8 @@ const (
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
+
+	// FlagFrontendServiceUseSettingsService
+	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
 )
