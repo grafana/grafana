@@ -991,7 +991,7 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
-		return nil, groupsSet, fmt.Errorf("unknown rule type filter %q", query.RuleType)
+		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
 	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
