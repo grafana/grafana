@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import {
   FieldType,
   LoadingState,
@@ -11,6 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
+import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -54,11 +57,8 @@ jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
-jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
-  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: () => getPluginExtensionsMock,
-}));
+const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
+setGetObservablePluginLinks(getObservablePluginLinksMock);
 
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
@@ -128,8 +128,8 @@ describe('panelMenuBehavior', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -138,8 +138,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -167,8 +167,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate menu item title to 25 chars', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -177,8 +177,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -206,8 +206,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should show icons for link extensions (if they provide it)', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -217,8 +217,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             icon: 'external-link-alt',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -249,8 +249,8 @@ describe('panelMenuBehavior', () => {
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -259,8 +259,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             onClick: expectedOnClick,
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -335,7 +335,7 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should pass context with default time zone values when configuring extension', async () => {
@@ -392,12 +392,12 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should contain menu item with category', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -407,8 +407,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             category: 'Incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -441,8 +441,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate category to 25 chars', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -452,8 +452,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             category: 'Declare incident when pressing this amazing menu item',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -486,8 +486,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should contain menu item with category and append items without category after divider', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -505,8 +505,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -545,8 +545,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should add root category items to the main menu', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -556,8 +556,8 @@ describe('panelMenuBehavior', () => {
             path: '/path',
             category: '${root}',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -639,8 +639,8 @@ describe('panelMenuBehavior', () => {
 
     describe('plugin links', () => {
       it('should not show Metrics Drilldown menu when no Metrics Drilldown links exist', async () => {
-        getPluginExtensionsMock.mockReturnValue({
-          extensions: [
+        getObservablePluginLinksMock.mockReturnValue(
+          of([
             {
               id: '1',
               pluginId: '...',
@@ -649,8 +649,8 @@ describe('panelMenuBehavior', () => {
               description: 'Some other extension',
               path: '/a/other-app/action',
             },
-          ],
-        });
+          ])
+        );
 
         const { menu, panel } = await buildTestScene({});
 
@@ -677,8 +677,8 @@ describe('panelMenuBehavior', () => {
       });
 
       it('should separate Metrics Drilldown links into their own menu', async () => {
-        getPluginExtensionsMock.mockReturnValue({
-          extensions: [
+        getObservablePluginLinksMock.mockReturnValue(
+          of([
             {
               id: '1',
               pluginId: '...',
@@ -696,8 +696,8 @@ describe('panelMenuBehavior', () => {
               description: 'Some other extension',
               path: '/a/other-app/action',
             },
-          ],
-        });
+          ])
+        );
 
         const { menu, panel } = await buildTestScene({});
 
@@ -737,8 +737,8 @@ describe('panelMenuBehavior', () => {
       });
 
       it('should not show extensions menu when no non-Metrics Drilldown links exist', async () => {
-        getPluginExtensionsMock.mockReturnValue({
-          extensions: [
+        getObservablePluginLinksMock.mockReturnValue(
+          of([
             {
               id: '1',
               pluginId: '...',
@@ -748,8 +748,8 @@ describe('panelMenuBehavior', () => {
               path: '/a/grafana-metricsdrilldown-app/trail',
               category: 'metrics-drilldown',
             },
-          ],
-        });
+          ])
+        );
 
         const { menu, panel } = await buildTestScene({});
 

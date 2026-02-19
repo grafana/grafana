@@ -23,7 +23,7 @@ import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { appenExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
+import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
@@ -298,7 +298,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       reservedNames.add(t('panel.header-menu.remove', `Remove`));
       reservedNames.add(extensionsSubmenuName);
 
-      appenExtensionsToPanelMenu({
+      appendExtensionsToPanelMenu({
         extensions,
         extensionsSubmenuName,
         rootMenu: items,

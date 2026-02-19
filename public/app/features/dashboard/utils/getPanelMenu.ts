@@ -28,7 +28,7 @@ import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/a
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
-import { appenExtensionsToPanelMenu } from './appendExtensionsToPanelMenu';
+import { appendExtensionsToPanelMenu } from './appendExtensionsToPanelMenu';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -274,7 +274,7 @@ export function getPanelMenu(
     reservedNames.add(t('panel.header-menu.remove', `Remove`));
     reservedNames.add(extensionsSubmenuName);
 
-    appenExtensionsToPanelMenu({
+    appendExtensionsToPanelMenu({
       extensionsSubmenuName,
       rootMenu: menu,
       extensions,
