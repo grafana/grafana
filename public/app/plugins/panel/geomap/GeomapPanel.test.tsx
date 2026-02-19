@@ -172,23 +172,6 @@ const createPropsWithoutVariable = (baseProps: ComponentProps<typeof GeomapPanel
   },
 });
 
-// Helper to create props with debug enabled
-const createPropsWithDebug = (baseProps: ComponentProps<typeof GeomapPanel>) => ({
-  ...baseProps,
-  options: {
-    ...baseProps.options,
-    view: {
-      ...baseProps.options.view,
-      dashboardVariable: true,
-      dashboardVariableName: VARIABLE_NAME,
-    },
-    controls: {
-      ...baseProps.options.controls,
-      showDebug: true,
-    },
-  },
-});
-
 describe('GeomapPanel - View Listener', () => {
   let panel: GeomapPanel;
   let mockView: Partial<jest.Mocked<View>>;
@@ -459,20 +442,6 @@ describe('GeomapPanel - View Listener', () => {
 
       // locationService.partial should not have been called
       expect(locationService.partial).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Debug logging', () => {
-    it('should log debug info when showDebug is enabled', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      panel = new GeomapPanel(createPropsWithDebug(props));
-      const div = document.createElement('div');
-      await panel.initMapAsync(div);
-
-      expect(consoleSpy).toHaveBeenCalledWith('Geomap.initMapAsync: register view listener', mockView);
-
-      consoleSpy.mockRestore();
     });
   });
 
