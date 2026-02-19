@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 
+import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
@@ -43,6 +44,16 @@ export function RepositoryListItem({ repository }: Props) {
       );
     }
 
+    if (status?.sync?.finished) {
+      meta.push(
+        <Text variant="bodySmall" color="secondary" key="last-sync">
+          {t('provisioning.repository-card.last-sync', 'Last sync: {{date}}', {
+            date: dateTimeFormatTimeAgo(status.sync.finished),
+          })}
+        </Text>
+      );
+    }
+
     return meta;
   };
 
@@ -82,11 +93,7 @@ export function RepositoryListItem({ repository }: Props) {
         </Stack>
       </Card.Description>
 
-      <Card.Meta>
-        <Stack gap={2} direction="row" wrap>
-          {getRepositoryMeta()}
-        </Stack>
-      </Card.Meta>
+      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">

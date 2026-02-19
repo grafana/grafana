@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,6 +21,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
+import { RenamedResourcesList } from './CollapsibleRenameList';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -88,11 +89,35 @@ function ImportWizardContent() {
   const { activeStep, setStepErrors } = useStepperState();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [dryRunState, setDryRunState] = useState<'idle' | 'loading' | 'success' | 'warning' | 'error'>('idle');
-  const [dryRunResult, setDryRunResult] = useState<DryRunValidationResult | undefined>();
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
+  const { runDryRun, isLoading: isDryRunLoading, result: dryRunData, error: dryRunError } = useDryRunNotifications();
 
-  const { runDryRun } = useDryRunNotifications();
+  // Derive dry-run result from RTK Query state (success data or synthetic error result)
+  const dryRunResult: DryRunValidationResult | undefined = useMemo(() => {
+    if (dryRunData) {
+      return dryRunData;
+    }
+    if (dryRunError) {
+      return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [] };
+    }
+    return undefined;
+  }, [dryRunData, dryRunError]);
+
+  // Derive dry-run UI state from RTK Query state
+  const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
+    if (isDryRunLoading) {
+      return 'loading';
+    }
+    if (dryRunError || (dryRunResult && !dryRunResult.valid)) {
+      return 'error';
+    }
+    if (dryRunResult?.valid) {
+      const hasRenames = dryRunResult.renamedReceivers.length > 0 || dryRunResult.renamedTimeIntervals.length > 0;
+      return hasRenames ? 'warning' : 'success';
+    }
+    return 'idle';
+  }, [isDryRunLoading, dryRunError, dryRunResult]);
+
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
   const notifyApp = useAppNotification();
@@ -133,63 +158,42 @@ function ImportWizardContent() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  // Watch the policyTreeName to check for existing extra config conflicts
-  const policyTreeName = watch('policyTreeName');
-  const { extraConfigState, existingIdentifier } = useExtraConfigState(policyTreeName);
+  // Check for existing extra config that will be replaced
+  const { existingIdentifier } = useExtraConfigState();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
-  const handleTriggerDryRun = useCallback(async () => {
+  const handleTriggerDryRun = useCallback(() => {
     const formValues = getValues();
 
-    // Check if we have the required data to run dry-run
     if (!formValues.policyTreeName) {
+      // policy tree name is required to trigger dry-run
       return;
     }
     if (formValues.notificationsSource === 'yaml' && !formValues.notificationsYamlFile) {
+      // YAML file is required to trigger dry-run
       return;
     }
     if (formValues.notificationsSource === 'datasource' && !formValues.notificationsDatasourceName) {
+      // Datasource is required to trigger dry-run
       return;
     }
 
-    setDryRunState('loading');
-    setDryRunResult(undefined);
+    runDryRun({
+      source: formValues.notificationsSource,
+      datasourceName: formValues.notificationsDatasourceName ?? undefined,
+      yamlFile: formValues.notificationsYamlFile,
+      configIdentifier: formValues.policyTreeName,
+    });
+  }, [getValues, runDryRun]);
 
-    try {
-      const result = await runDryRun(
-        {
-          source: formValues.notificationsSource,
-          datasourceName: formValues.notificationsDatasourceName ?? undefined,
-          yamlFile: formValues.notificationsYamlFile,
-          configIdentifier: formValues.policyTreeName,
-        },
-        // TODO: Set skipValidation to false once the backend endpoint is implemented
-        { skipValidation: true }
-      );
-
-      setDryRunResult(result);
-
-      if (!result.valid) {
-        setDryRunState('error');
-        setStepErrors(StepKey.Notifications, true);
-      } else if (result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0) {
-        setDryRunState('warning');
-        setStepErrors(StepKey.Notifications, false);
-      } else {
-        setDryRunState('success');
-        setStepErrors(StepKey.Notifications, false);
-      }
-    } catch (err) {
-      setDryRunState('error');
-      setDryRunResult({
-        valid: false,
-        error: err instanceof Error ? err.message : String(err),
-        renamedReceivers: [],
-        renamedTimeIntervals: [],
-      });
+  // Sync step errors with dry-run state
+  useEffect(() => {
+    if (dryRunState === 'error') {
       setStepErrors(StepKey.Notifications, true);
+    } else if (dryRunState === 'success' || dryRunState === 'warning') {
+      setStepErrors(StepKey.Notifications, false);
     }
-  }, [getValues, runDryRun, setStepErrors]);
+  }, [dryRunState, setStepErrors]);
 
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
@@ -332,7 +336,6 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
-              extraConfigState={extraConfigState}
               existingIdentifier={existingIdentifier}
             />
           )}
@@ -381,9 +384,7 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
-  /** State of existing extra config: 'none' | 'same' (will overwrite) | 'different' (blocked) */
-  extraConfigState: 'none' | 'same' | 'different';
-  /** Identifier of existing extra config, if any */
+  /** Identifier of an existing imported config that will be replaced, if any */
   existingIdentifier?: string;
 }
 
@@ -394,13 +395,11 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  extraConfigState,
   existingIdentifier,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  // Can proceed if form is valid, dry-run passed, and no conflicting extra config
-  const canProceed =
-    isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error' && extraConfigState !== 'different';
+  // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
+  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
 
   return (
     <WizardStep
@@ -422,7 +421,6 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
-        extraConfigState={extraConfigState}
         existingIdentifier={existingIdentifier}
       />
     </WizardStep>
@@ -466,10 +464,11 @@ function Step2Wrapper({ step1Completed, step1Skipped, canImport, onNext, onSkip 
 // Validation Status Indicator Component
 interface ValidationStatusIndicatorProps {
   result: DryRunValidationResult;
-  styles: ReturnType<typeof getStyles>;
 }
 
-function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicatorProps) {
+function ValidationStatusIndicator({ result }: ValidationStatusIndicatorProps) {
+  const styles = useStyles2(getValidationIndicatorStyles);
+
   const hasRenames = result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0;
   const isSuccess = result.valid && !hasRenames;
   const isWarning = result.valid && hasRenames;
@@ -497,20 +496,10 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
             )}
           </Text>
         </Stack>
-        {result.renamedReceivers.length > 0 && (
-          <Text color="secondary" variant="bodySmall">
-            {t('alerting.import-to-gma.review.renamed-receivers', 'Receivers renamed: {{count}}', {
-              count: result.renamedReceivers.length,
-            })}
-          </Text>
-        )}
-        {result.renamedTimeIntervals.length > 0 && (
-          <Text color="secondary" variant="bodySmall">
-            {t('alerting.import-to-gma.review.renamed-intervals', 'Time intervals renamed: {{count}}', {
-              count: result.renamedTimeIntervals.length,
-            })}
-          </Text>
-        )}
+        <RenamedResourcesList
+          renamedReceivers={result.renamedReceivers}
+          renamedTimeIntervals={result.renamedTimeIntervals}
+        />
       </Stack>
     );
   }
@@ -525,6 +514,12 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
     </Stack>
   );
 }
+
+const getValidationIndicatorStyles = (theme: GrafanaTheme2) => ({
+  successIcon: css({ color: theme.colors.success.main }),
+  warningIcon: css({ color: theme.colors.warning.main }),
+  errorIcon: css({ color: theme.colors.error.main }),
+});
 
 // Review Step Component
 interface ReviewStepProps {
@@ -675,7 +670,7 @@ function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDatasource
                   </div>
                   {dryRunResult && (
                     <Box marginTop={1}>
-                      <ValidationStatusIndicator result={dryRunResult} styles={styles} />
+                      <ValidationStatusIndicator result={dryRunResult} />
                     </Box>
                   )}
                 </Stack>
@@ -1004,15 +999,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       backgroundColor: theme.colors.success.shade,
     },
-  }),
-  successIcon: css({
-    color: theme.colors.success.main,
-  }),
-  warningIcon: css({
-    color: theme.colors.warning.main,
-  }),
-  errorIcon: css({
-    color: theme.colors.error.main,
   }),
 });
 

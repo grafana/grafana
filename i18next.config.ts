@@ -14,6 +14,5 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
-    sort: (a, b) => (a.key > b.key ? 1 : a.key < b.key ? -1 : 0),
   },
 });

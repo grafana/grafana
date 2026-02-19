@@ -67,6 +67,42 @@ describe('getCachedPromise', () => {
     });
   });
 
+  describe('when called with invalidate option', () => {
+    test('should invalidate cache for function name', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest);
+      const actual2 = await getCachedPromise(simulateOkRequest, { invalidate: true });
+      const actual3 = await getCachedPromise(simulateOkRequest);
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual3).toBe(actual2);
+    });
+
+    test('should invalidate cache for cacheKey', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key', invalidate: true });
+      const actual3 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual3).toBe(actual2);
+    });
+
+    test('should return correct values when called concurrently', async () => {
+      const otherFunction = async () => 2;
+
+      const promise1 = getCachedPromise(simulateOkRequest, { cacheKey: 'the-key', invalidate: true });
+      const promise2 = getCachedPromise(otherFunction, { cacheKey: 'the-key', invalidate: true });
+
+      const [actual1, actual2] = await Promise.all([promise1, promise2]);
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual2).toBe(2);
+    });
+  });
+
   describe('when called with different functions', () => {
     test('should cache each function name separately', async () => {
       const otherFunction = async () => 2;
