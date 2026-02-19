@@ -93,6 +93,7 @@ export function QuotaLimitBanner() {
           <Trans i18nKey="browse-dashboards.quota-banner.nearing-body">
             New resources can&apos;t be created once the limit is reached. Clean up unused resources to free up space.
           </Trans>
+          {/* Alert doesn't support showing both buttonContent and a close icon, so we position dismiss manually */}
           <div className={styles.dismiss}>
             <IconButton
               aria-label={t('browse-dashboards.quota-banner.dismiss', 'Dismiss')}

@@ -20,6 +20,7 @@ interface QuotaUsageResponse {
   limit: number;
 }
 
+// TODO: Remove once the generated API types include usage/limit fields
 function isQuotaUsageResponse(data: unknown): data is QuotaUsageResponse {
   return (
     typeof data === 'object' &&
