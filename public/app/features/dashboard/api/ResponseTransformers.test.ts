@@ -438,7 +438,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
-      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('456');
       expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
@@ -851,7 +851,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
             'grafana.app/slug': 'dashboard-slug',
-            'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
+            'grafana.app/dashboard-gnet-id': '456',
           },
         },
         spec: {
