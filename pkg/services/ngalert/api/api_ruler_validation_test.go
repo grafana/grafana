@@ -983,87 +983,112 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 	cfg := config(t)
 	limits := makeLimits(cfg)
 
-	validNotificationSettings := models.NotificationSettingsGen(models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel))
-
 	testCases := []struct {
 		name                 string
-		notificationSettings models.NotificationSettings
+		notificationSettings apimodels.AlertRuleNotificationSettings
 		expErrorContains     string
 	}{
 		{
-			name:                 "valid notification settings",
-			notificationSettings: validNotificationSettings(),
+			name: "valid notification settings",
+			notificationSettings: apimodels.AlertRuleNotificationSettings{
+				Receiver:            "receiver",
+				GroupBy:             []string{model.AlertNameLabel, models.FolderTitleLabel},
+				GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
+				GroupInterval:       util.Pointer(model.Duration(5 * time.Second)),
+				RepeatInterval:      util.Pointer(model.Duration(5 * time.Minute)),
+				MuteTimeIntervals:   []string{"mute"},
+				ActiveTimeIntervals: []string{"active"},
+			},
 		},
 		{
 			name:                 "missing receiver is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithReceiver("")),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "", GroupBy: []string{model.AlertNameLabel, models.FolderTitleLabel}},
 			expErrorContains:     "receiver",
 		},
 		{
 			name:                 "group by empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy()),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupBy: []string{}},
 		},
 		{
 			name:                 "group by ... is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy("...")),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupBy: []string{"..."}},
 		},
 		{
 			name:                 "group by with alert name and folder name labels is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, models.FolderTitleLabel}},
 		},
 		{
 			name:                 "group by missing alert name label is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(models.FolderTitleLabel)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupBy: []string{models.FolderTitleLabel}},
 		},
 		{
 			name:                 "group by missing folder name label is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel}},
 		},
 		{
 			name:                 "group wait empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(nil)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: nil},
 		},
 		{
 			name:                 "group wait positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(util.Pointer(1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: util.Pointer(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "group wait negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(util.Pointer(-1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: util.Pointer(model.Duration(-1 * time.Second))},
 			expErrorContains:     "group wait",
 		},
 		{
 			name:                 "group interval empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(nil)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: nil},
 		},
 		{
 			name:                 "group interval positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(util.Pointer(1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: util.Pointer(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "group interval negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: util.Pointer(model.Duration(-1 * time.Second))},
 			expErrorContains:     "group interval",
 		},
 		{
 			name:                 "repeat interval empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(nil)),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: nil},
 		},
 		{
 			name:                 "repeat interval positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(util.Pointer(1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: util.Pointer(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "repeat interval negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: util.Pointer(model.Duration(-1 * time.Second))},
 			expErrorContains:     "repeat interval",
+		},
+		{
+			name:                 "valid notification settings with policy routing",
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: util.Pointer("policy")},
+		},
+		{
+			name:                 "empty policy is invalid",
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: util.Pointer("")},
+			expErrorContains:     "policy must be specified",
+		},
+		{
+			name:                 "contact point and policy routing both unspecific is invalid",
+			notificationSettings: apimodels.AlertRuleNotificationSettings{},
+			expErrorContains:     "at least one of policy routing or contact point routing must be specified",
+		},
+		{
+			name:                 "contact point and policy routing both specific is invalid",
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", Policy: util.Pointer("policy")},
+			expErrorContains:     "only one of policy routing or contact point routing can be specified",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
-			r.GrafanaManagedAlert.NotificationSettings = AlertRuleNotificationSettingsFromNotificationSettings(&tt.notificationSettings)
+			r.GrafanaManagedAlert.NotificationSettings = &tt.notificationSettings
 			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 
 			if tt.expErrorContains != "" {

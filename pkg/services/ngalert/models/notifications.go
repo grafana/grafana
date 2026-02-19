@@ -96,6 +96,8 @@ func (s *NotificationSettings) ToLabels(features featuremgmt.FeatureToggles) dat
 	if s == nil {
 		return make(data.Labels)
 	}
+	// NotificationSettings with both ContactPointRouting and PolicyRouting is invalid, however, if we somehow get into
+	// this state at a point when labels are required for alert routing, we let ContactPointRouting take precedence.
 	if s.ContactPointRouting != nil {
 		return s.ContactPointRouting.ToLabels(features)
 	}

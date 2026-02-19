@@ -97,6 +97,25 @@ func TestValidate(t *testing.T) {
 			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(util.Pointer(0*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
+		{
+			name:                 "valid notification settings with policy routing",
+			notificationSettings: NotificationSettingsFromPolicy("policy"),
+		},
+		{
+			name:                 "empty policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(""),
+			expErrorContains:     "policy must be specified",
+		},
+		{
+			name:                 "contact point and policy routing both unspecific is invalid",
+			notificationSettings: NotificationSettings{},
+			expErrorContains:     "at least one of policy routing or contact point routing must be specified",
+		},
+		{
+			name:                 "contact point and policy routing both specific is invalid",
+			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithPolicy("policy")),
+			expErrorContains:     "only one of policy routing or contact point routing can be specified",
+		},
 	}
 
 	for _, tt := range testCases {

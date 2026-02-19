@@ -511,26 +511,39 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.Noti
 	}
 }
 
-// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
+// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to models.NotificationSettings
 func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	if ns.Policy != nil {
-		return util.Pointer(models.NotificationSettingsFromPolicy(*ns.Policy))
+
+	// Validation is defined on the model and is not currently the responsibility of this method to enforce. That means
+	// the output of this compat can be an invalid NotificationSettings. Specifically, two such cases are important to
+	// consider here:
+	// 1. Both ContactPoint and Policy routing are specified: should return a NotificationSettings with both routing strategies.
+	// 2. Neither ContactPoint nor Policy routing are specified: should return an empty NotificationSettings, not nil.
+	res := models.NotificationSettings{}
+
+	cpr := models.ContactPointRouting{
+		Receiver:            ns.Receiver,
+		GroupBy:             ns.GroupBy,
+		GroupWait:           ns.GroupWait,
+		GroupInterval:       ns.GroupInterval,
+		RepeatInterval:      ns.RepeatInterval,
+		MuteTimeIntervals:   ns.MuteTimeIntervals,
+		ActiveTimeIntervals: ns.ActiveTimeIntervals,
 	}
-	// Default to contact point routing for backwards compatibility in validation.
-	return util.Pointer(models.NotificationSettingsFromContact(
-		models.ContactPointRouting{
-			Receiver:            ns.Receiver,
-			GroupBy:             ns.GroupBy,
-			GroupWait:           ns.GroupWait,
-			GroupInterval:       ns.GroupInterval,
-			RepeatInterval:      ns.RepeatInterval,
-			MuteTimeIntervals:   ns.MuteTimeIntervals,
-			ActiveTimeIntervals: ns.ActiveTimeIntervals,
-		},
-	))
+	if !cpr.Equals(&models.ContactPointRouting{}) {
+		// If any field related to contact point routing is specified, we create an instance of ContactPointRouting so
+		// that it is eventually validated.
+		res.ContactPointRouting = &cpr
+	}
+
+	if ns.Policy != nil {
+		res.PolicyRouting = &models.PolicyRouting{Policy: *ns.Policy}
+	}
+
+	return &res
 }
 
 func pointerOmitEmpty(s string) *string {
