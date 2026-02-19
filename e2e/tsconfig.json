@@ -1,6 +1,7 @@
 {
   "extends": "../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "types": ["cypress"],
     "resolveJsonModule": true
   },
