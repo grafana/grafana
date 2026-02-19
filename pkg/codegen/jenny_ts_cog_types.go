@@ -27,7 +27,7 @@ func (j TSCogTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	types := cog.TypesFromSchema().
 		CUEValue(packageName, cueValue, cog.ForceEnvelope(sfg.Name)).
 		Typescript(cog.TypescriptConfig{})
-	
+
 	if j.constantToEnum != nil {
 		types.SchemaTransformations(cog.ConstantToEnum(j.constantToEnum))
 	}
