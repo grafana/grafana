@@ -52,6 +52,8 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     };
   };
 
+  // checks if applicability is supported, otherwise no point in using this action, will show same
+  // results as the dashboard groupBy var
   private setApplicabilitySupport(groupByDs?: DataSourceRef | null, groupByApplicability?: boolean) {
     this.setState({
       supportsApplicability: verifyDrilldownApplicability(
@@ -63,6 +65,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     });
   }
 
+  // checks if the action should appear on the panel aka if the DSs match
   private updateGroupByActionSupport() {
     const queryRunner = this.getQueryRunner();
     const queries = queryRunner?.state.queries ?? [];
