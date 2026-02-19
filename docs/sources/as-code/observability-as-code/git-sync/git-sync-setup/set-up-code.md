@@ -93,46 +93,68 @@ kind: Repository
 metadata:
   name: <REPOSITORY_NAME>
 spec:
-  title: <REPOSITORY_TITLE>
-  type: github
-  github:
-    url: <GITHUB_REPO_URL>
-    branch: <BRANCH>
-    path: grafana/
-    generateDashboardPreviews: true
-  # GitHub App connection only:
-  connection:
-    name: <GITHUB_CONNECTION_NAME>
-sync:
+  sync:
     enabled: true
     intervalSeconds: 60
     target: folder
   workflows:
     - write
     - branch
+  title: <REPOSITORY_TITLE>
+
+# Git Sync for GitHub:
+spec:
+  type: github
+  github:
+    url: <GIT_REPO_URL>
+    branch: <BRANCH>
+    path: grafana/
+# GitHub App connection only:
+  connection:
+    name: <GITHUB_CONNECTION_NAME>
 # GitHub Personal Access Token only:
 secure:
-  token:
-    create: <GITHUB_PAT>
+  token: { create: "GIT_PAT" }
+
 # GitLab Personal Access Token only:
+spec:
+  type: gitlab
+  gitlab:
+    url: <GIT_REPO_URL>
+    branch: <BRANCH>
 secure:
-  token: { create: "SECRET" }
+  token: { create: "GIT_PAT" }
+
+# Bitbucket Personal Access Token only:
+spec:
+  type: bitbucket
+  bitbucket:
+    url: <GIT_REPO_URL>
+    branch: <BRANCH>
+    tokenUser: nanogit-test-admin
+secure:
+  token: { create: "GIT_PAT" }
+
 # Pure Git only:
+spec:
+  type: git
+  git:
+    url: <GIT_REPO_URL>
+    branch: <BRANCH>
+    path: "grafana/"
+    tokenUser: git
 secure:
-  token:
-    {
-      create: "SECRET",
-    }  
+  token: { create: "GIT_PAT" }
 ```
 
 Replace the placeholders with your values:
 
 - _`<REPOSITORY_NAME>`_: Unique identifier for this repository resource
 - _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
-- _`<GITHUB_REPO_URL>`_: GitHub repository URL
+- _`<GIT_REPO_URL>`_: GitHub repository URL
 - _`<BRANCH>`_: Branch to sync
 - _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection
-- _`<GITHUB_PAT>`_: GitHub Personal Access Token
+- _`<GIT_PAT>`_: Git provider Personal Access Token
 
 {{< admonition type="note" >}}
 
