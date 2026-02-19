@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, sceneUtils } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  EmptyState,
-  Icon,
-  Menu,
-  Stack,
-  Text,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { Box, Button, EmptyState, Icon, Stack, Text, usePanelContext, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -39,20 +27,9 @@ function hasSavedQueryReadPermissions(): boolean {
 }
 
 function UnconfiguredPanelComp(props: PanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-
-  const onMenuClick = useCallback(
-    (isOpen: boolean) => {
-      if (isOpen) {
-        DashboardInteractions.panelActionClicked('configure_dropdown', props.id, 'panel');
-      }
-      setIsOpen(isOpen);
-    },
-    [props.id]
-  );
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
@@ -157,28 +134,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
     }
   }, [panel, panelContext.app]);
 
-  const MenuActions = () => (
-    <Menu>
-      <Menu.Item
-        icon="pen"
-        label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
-        onClick={onConfigure}
-      ></Menu.Item>
-      {queryLibraryEnabled && hasSavedQueryReadPermissions() && (
-        <Menu.Item
-          icon="book-open"
-          label={t('dashboard.new-panel.menu-use-saved-query', 'Use saved query')}
-          onClick={onUseSavedQuery}
-        ></Menu.Item>
-      )}
-      <Menu.Item
-        icon="library-panel"
-        label={t('dashboard.new-panel.menu-use-library-panel', 'Use library panel')}
-        onClick={onUseLibraryPanel}
-      ></Menu.Item>
-    </Menu>
-  );
-
   const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
 
   if (showEmptyState) {
@@ -204,17 +159,19 @@ function UnconfiguredPanelComp(props: PanelProps) {
     <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
       <Box paddingBottom={2}>
         {isEditing ? (
-          <ButtonGroup>
-            <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+          <Stack direction="column" gap={1} alignItems="stretch">
+            <Button onClick={onConfigure} fullWidth>
+              <Trans i18nKey="dashboard.new-panel.configure-button">Configure new visualization</Trans>
             </Button>
-            <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-              <Button
-                aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
-                icon={isOpen ? 'angle-up' : 'angle-down'}
-              />
-            </Dropdown>
-          </ButtonGroup>
+            {queryLibraryEnabled && hasSavedQueryReadPermissions() && (
+              <Button onClick={onUseSavedQuery} fullWidth variant="secondary">
+                <Trans i18nKey="dashboard.new-panel.menu-use-saved-query">Use saved query</Trans>
+              </Button>
+            )}
+            <Button onClick={onUseLibraryPanel} fullWidth variant="secondary">
+              <Trans i18nKey="dashboard.new-panel.menu-use-library-panel">Select library panel</Trans>
+            </Button>
+          </Stack>
         ) : (
           <EmptyState
             variant="call-to-action"

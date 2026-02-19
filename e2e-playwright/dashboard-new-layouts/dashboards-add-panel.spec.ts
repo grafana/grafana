@@ -39,10 +39,11 @@ test.describe(
       ).toBeVisible();
 
       // Check that pressing the configure button shows the panel editor
-      await dashboardPage
+      const newPanelContent = dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.content)
         .filter({ hasText: 'Configure' })
-        .click();
+        .first();
+      await newPanelContent.getByRole('button', { name: /^Configure/ }).click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
     });
 
