@@ -88,8 +88,6 @@ import {
   TableSummaryRow,
 } from './types';
 import {
-  applyFilter,
-  applySort,
   calculateFooterHeight,
   canFieldBeColorized,
   createTypographyContext,
@@ -101,7 +99,6 @@ import {
   getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
-  getColumnTypes,
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
@@ -518,8 +515,8 @@ export function TableNG(props: TableNGProps) {
       f: Field[],
       widths: number[],
       frame: DataFrame,
-      innerRows: TableRow[],
-      innerSortedRows: TableRow[]
+      rawRows: TableRow[],
+      visibleRows: TableRow[]
     ): FromFieldsResult => {
       const result: FromFieldsResult = {
         columns: [],
@@ -789,14 +786,14 @@ export function TableNG(props: TableNGProps) {
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
               column={column}
-              rows={innerRows}
+              rows={rawRows}
               field={field}
               filter={filter}
               setFilter={setFilter}
               disableKeyboardEvents={disableKeyboardEvents}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
-              parentIndex={innerRows[0]?.__parentIndex}
+              parentIndex={visibleRows[0]?.__parentIndex}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -804,7 +801,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={innerSortedRows}
+              rows={visibleRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -841,6 +838,22 @@ export function TableNG(props: TableNGProps) {
     ]
   );
 
+  const nestedColumnsMatrix = useMemo(
+    () =>
+      rows
+        .filter((r) => !!r.data)
+        .map((r) =>
+          fromFields(
+            getVisibleFields(r.data!.fields),
+            nestedFieldWidths,
+            r.data!,
+            nestedRows[r.__index].raw,
+            nestedRows[r.__index].final
+          )
+        ),
+    [rows, nestedRows, nestedFieldWidths, fromFields]
+  );
+
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
@@ -852,17 +865,6 @@ export function TableNG(props: TableNGProps) {
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const nestedColumnsMatrix = rows
-      .filter((r) => !!r.data)
-      .map((r) =>
-        fromFields(
-          getVisibleFields(r.data!.fields),
-          nestedFieldWidths,
-          r.data!,
-          nestedRows[r.__index].raw,
-          nestedRows[r.__index].sorted
-        )
-      );
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
@@ -884,8 +886,7 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     firstRowNestedData,
     fromFields,
-    nestedFieldWidths,
-    nestedRows,
+    nestedColumnsMatrix,
     panelContext,
     rows,
     sortedRows,
@@ -992,36 +993,43 @@ export function TableNG(props: TableNGProps) {
 /**
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
-const renderRowFactory =
-  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
-  // eslint-disable-next-line react/display-name
-  (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
-    const { row } = props;
-    const rowIdx = row.__index;
-    const isExpanded = expandedRows.has(rowIdx);
+const renderRowFactory = (
+  fields: Field[],
+  panelContext: PanelContext,
+  expandedRows: Set<number>,
+  enableSharedCrosshair: boolean
+) => {
+  const onMouseLeave = () => {
+    panelContext.eventBus.publish(new DataHoverClearEvent());
+  };
+  const onMouseEnter = (timeField: Field, rowIdx: number) => {
+    panelContext.eventBus.publish(
+      new DataHoverEvent({
+        point: {
+          time: timeField?.values[rowIdx],
+        },
+      })
+    );
+  };
 
+  let timeField: Field | undefined;
+  if (enableSharedCrosshair) {
+    timeField = fields.find((f) => f.type === FieldType.time);
+  }
+
+  const renderRow = (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
+    const { row } = props;
+
+    const isExpanded = expandedRows.has(row.__index);
     // Don't render non expanded child rows
-    if (row.__depth > 0 && !isExpanded) {
+    if (row.__depth > 0 && !expandedRows.has(row.__index)) {
       return null;
     }
 
     const handlers: Partial<typeof props> = {};
-    if (enableSharedCrosshair) {
-      const timeField = fields.find((f) => f.type === FieldType.time);
-      if (timeField) {
-        handlers.onMouseEnter = () => {
-          panelContext.eventBus.publish(
-            new DataHoverEvent({
-              point: {
-                time: timeField?.values[rowIdx],
-              },
-            })
-          );
-        };
-        handlers.onMouseLeave = () => {
-          panelContext.eventBus.publish(new DataHoverClearEvent());
-        };
-      }
+    if (enableSharedCrosshair && timeField) {
+      handlers.onMouseEnter = () => onMouseEnter(timeField, row.__index);
+      handlers.onMouseLeave = onMouseLeave;
     }
 
     const a11yProps: AriaAttributes = {
@@ -1033,3 +1041,8 @@ const renderRowFactory =
 
     return <Row key={key} {...props} {...handlers} {...a11yProps} />;
   };
+
+  renderRow.displayName = 'RenderRow';
+
+  return renderRow;
+};
