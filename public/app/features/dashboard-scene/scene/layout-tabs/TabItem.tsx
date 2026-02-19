@@ -67,6 +67,7 @@ export class TabItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  protected _renderBeforeActivation = false;
 
   public containerRef = React.createRef<HTMLDivElement>();
 

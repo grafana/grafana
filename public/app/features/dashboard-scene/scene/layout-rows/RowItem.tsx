@@ -69,6 +69,7 @@ export class RowItem
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+  protected _renderBeforeActivation = true;
 
   public constructor(state?: Partial<RowItemState>) {
     super({
