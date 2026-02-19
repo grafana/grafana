@@ -8,10 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-const (
-	NewReceiverType = "new"
-)
-
 var (
 	// Asserts pre-conditions for read access to redacted receivers. If this evaluates to false, the user cannot read any redacted receivers.
 	readRedactedReceiversPreConditionsEval = ac.EvalAny(
@@ -201,7 +197,7 @@ var (
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 		ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingReceiversCreate), // Action for receivers. Org scope.
-			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetResourceScopeType(NewReceiverType)),
+			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetNewResourceScope()),
 		),
 	)
 )
