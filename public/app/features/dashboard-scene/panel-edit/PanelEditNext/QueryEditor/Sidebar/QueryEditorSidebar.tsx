@@ -12,12 +12,12 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
-import { useSidebarDragAndDrop } from '../hooks/useSidebarDragAndDrop';
 
 import { AlertIndicator } from './AlertIndicator';
 import { AlertsView } from './AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarFooter } from './SidebarFooter';
+import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
