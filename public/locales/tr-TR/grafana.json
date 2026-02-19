@@ -11729,6 +11729,8 @@
     },
     "user-invite-form": {
       "back": "Geri",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-posta veya kullanıcı adı",
       "label-name": "Ad",
       "label-send-invite-email": "Davet e-postası gönder",
@@ -13214,6 +13216,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13255,6 +13261,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13282,14 +13289,18 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "{{id}} kartını seçin",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
-      "transformations": "Dönüşümler"
+      "transformations": "Dönüşümler",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

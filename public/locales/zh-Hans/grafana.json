@@ -11675,6 +11675,8 @@
     },
     "user-invite-form": {
       "back": "上一步",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "电子邮箱或用户名",
       "label-name": "名称",
       "label-send-invite-email": "发送邀请电子邮件",
@@ -13153,6 +13155,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13194,6 +13200,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13221,14 +13228,16 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "选择卡片 {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
-      "transformations": "转换"
+      "transformations": "转换",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

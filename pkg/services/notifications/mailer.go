@@ -128,7 +128,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 func buildAttachedFiles(
 	attached []*SendEmailAttachFile,
 ) []*AttachedFile {
-	result := make([]*AttachedFile, 0)
+	result := make([]*AttachedFile, 0, len(attached))
 
 	for _, file := range attached {
 		result = append(result, &AttachedFile{

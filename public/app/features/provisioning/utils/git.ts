@@ -138,7 +138,7 @@ export function getRepoFileUrl({
   }
 
   const effectiveBranch = branch || 'main';
-  const fullPath = pathPrefix ? `${pathPrefix}${filePath}` : filePath;
+  const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
 
   switch (repoType) {
     case 'github':

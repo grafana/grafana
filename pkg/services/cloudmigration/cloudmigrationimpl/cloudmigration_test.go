@@ -884,7 +884,7 @@ func TestGetPlugins(t *testing.T) {
 	require.Len(t, plugins, 3)
 
 	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
-	pluginsIDs := make([]string, 0)
+	pluginsIDs := make([]string, 0) //nolint:prealloc
 	for _, plugin := range plugins {
 		// Special case of using the settings from the settings store
 		if plugin.ID == "plugin-external-valid-grafana" {

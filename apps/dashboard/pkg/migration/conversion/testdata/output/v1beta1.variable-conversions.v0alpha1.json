@@ -142,6 +142,7 @@
             {
               "key": "environment",
               "operator": "=",
+              "origin": "dashboard",
               "value": "production"
             }
           ],
@@ -164,6 +165,7 @@
             {
               "key": "job",
               "operator": "=",
+              "origin": "dashboard",
               "value": "prometheus"
             }
           ],
@@ -251,6 +253,10 @@
           "datasource": {
             "type": "prometheus",
             "uid": "existing-ref-uid"
+          },
+          "defaultValue": {
+            "text": "defaultGroupBy",
+            "value": "defaultGroupBy"
           },
           "description": "Group results by field",
           "hide": 0,
