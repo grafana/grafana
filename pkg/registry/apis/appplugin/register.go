@@ -114,7 +114,7 @@ func RegisterAPIService(
 	return last, nil // only used for wire
 }
 
-// getAppPlugins discovers all installed backend app plugins.
+// getAppPlugins discovers all installed app plugins.
 func getAppPlugins(ctx context.Context, pluginSources sources.Registry) ([]plugins.JSONData, error) {
 	var pluginJSONs []plugins.JSONData
 	uniquePlugins := map[string]bool{}
@@ -125,7 +125,7 @@ func getAppPlugins(ctx context.Context, pluginSources sources.Registry) ([]plugi
 			return nil, err
 		}
 		for _, p := range res {
-			if !p.Primary.JSONData.Backend || p.Primary.JSONData.Type != plugins.TypeApp {
+			if p.Primary.JSONData.Type != plugins.TypeApp {
 				continue
 			}
 
