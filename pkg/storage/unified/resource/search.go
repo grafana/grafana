@@ -318,7 +318,7 @@ func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span tr
 		"totalHits", stats.totalHits,
 		"returnedDocuments", stats.returnedDocuments,
 		"resultsConversionTime", stats.resultsConversionTime,
-	}
+	} //nolint:prealloc
 	args = append(args, params...)
 
 	s.log.FromContext(ctx).Debug("Search stats", args...)
