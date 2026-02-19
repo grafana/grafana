@@ -834,7 +834,7 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagLogsTablePanel
+	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanel = "logsTablePanel"
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )

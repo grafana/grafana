@@ -2409,7 +2409,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "logsTablePanel",
+			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,

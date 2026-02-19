@@ -2526,9 +2526,39 @@
     },
     {
       "metadata": {
-        "name": "logsTablePanel",
-        "resourceVersion": "1770817283435",
-        "creationTimestamp": "2026-02-11T13:41:23Z"
+        "name": "logsTablePaneNG",
+        "resourceVersion": "1771507050607",
+        "creationTimestamp": "2026-02-19T13:17:30Z",
+        "deletionTimestamp": "2026-02-19T13:17:42Z"
+      },
+      "spec": {
+        "description": "Enables the logs tableNG panel to replace existing tableRT",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "logsTablePaneNGl",
+        "resourceVersion": "1771507017867",
+        "creationTimestamp": "2026-02-19T13:16:57Z",
+        "deletionTimestamp": "2026-02-19T13:17:30Z"
+      },
+      "spec": {
+        "description": "Enables the logs tableNG panel to replace existing tableRT",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "logsTablePanelNG",
+        "resourceVersion": "1771507062600",
+        "creationTimestamp": "2026-02-19T13:17:42Z"
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",

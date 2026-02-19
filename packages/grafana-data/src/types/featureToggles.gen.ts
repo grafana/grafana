@@ -1526,5 +1526,5 @@ export interface FeatureToggles {
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */
-  logsTablePanel?: boolean;
+  logsTablePanelNG?: boolean;
 }
