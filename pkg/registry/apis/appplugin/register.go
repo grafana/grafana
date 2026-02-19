@@ -4,42 +4,45 @@ import (
 	"context"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
 	_ builder.APIGroupBuilder         = (*AppPluginAPIBuilder)(nil)
 	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider   = (*AppPluginAPIBuilder)(nil)
 )
 
 const VERSION = "v0alpha1"
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
-	pluginID       string
-	groupVersion   schema.GroupVersion
-	pluginStore    pluginstore.Store
-	pluginSettings pluginsettings.Service
-	accessControl  ac.AccessControl // optional; when nil the authz check is skipped (monolith delegates to its own middleware)
+	pluginID             string
+	groupVersion         schema.GroupVersion
+	pluginStore          pluginstore.Store
+	pluginSettings       pluginsettings.Service
+	pluginsUpdateChecker *updatemanager.PluginsService
+	pluginAssets         *pluginassets.Service
+	cfg                  *setting.Cfg
+	accessControl        ac.AccessControl
 }
 
 // NewAppPluginAPIBuilder creates a single AppPluginAPIBuilder for the given plugin ID.
@@ -48,6 +51,9 @@ func NewAppPluginAPIBuilder(
 	pluginID string,
 	pluginStore pluginstore.Store,
 	pluginSettings pluginsettings.Service,
+	pluginsUpdateChecker *updatemanager.PluginsService,
+	pluginAssets *pluginassets.Service,
+	cfg *setting.Cfg,
 	accessControl ac.AccessControl,
 ) *AppPluginAPIBuilder {
 	groupName := pluginID + ".app.grafana.app"
@@ -57,9 +63,12 @@ func NewAppPluginAPIBuilder(
 			Group:   groupName,
 			Version: VERSION,
 		},
-		pluginStore:    pluginStore,
-		pluginSettings: pluginSettings,
-		accessControl:  accessControl,
+		pluginStore:          pluginStore,
+		pluginSettings:       pluginSettings,
+		pluginsUpdateChecker: pluginsUpdateChecker,
+		pluginAssets:         pluginAssets,
+		cfg:                  cfg,
+		accessControl:        accessControl,
 	}
 }
 
@@ -68,6 +77,9 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	pluginStore pluginstore.Store,
 	pluginSettings pluginsettings.Service,
+	pluginsUpdateChecker *updatemanager.PluginsService,
+	pluginAssets *pluginassets.Service,
+	cfg *setting.Cfg,
 	accessControl ac.AccessControl,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
@@ -75,7 +87,7 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	pluginJSONs, err := getAppPlugins(pluginSources)
+	pluginJSONs, err := getAppPlugins(ctx, pluginSources)
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
@@ -89,9 +101,12 @@ func RegisterAPIService(
 				Group:   groupName,
 				Version: VERSION,
 			},
-			pluginStore:    pluginStore,
-			pluginSettings: pluginSettings,
-			accessControl:  accessControl,
+			pluginStore:          pluginStore,
+			pluginSettings:       pluginSettings,
+			pluginsUpdateChecker: pluginsUpdateChecker,
+			pluginAssets:         pluginAssets,
+			cfg:                  cfg,
+			accessControl:        accessControl,
 		}
 		apiRegistrar.RegisterAPI(b)
 		last = b
@@ -100,12 +115,12 @@ func RegisterAPIService(
 }
 
 // getAppPlugins discovers all installed backend app plugins.
-func getAppPlugins(pluginSources sources.Registry) ([]plugins.JSONData, error) {
+func getAppPlugins(ctx context.Context, pluginSources sources.Registry) ([]plugins.JSONData, error) {
 	var pluginJSONs []plugins.JSONData
 	uniquePlugins := map[string]bool{}
 
-	for _, pluginSource := range pluginSources.List(context.Background()) {
-		res, err := pluginSource.Discover(context.Background())
+	for _, pluginSource := range pluginSources.List(ctx) {
+		res, err := pluginSource.Discover(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -131,74 +146,31 @@ func (b *AppPluginAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	metav1.AddToGroupVersion(scheme, b.groupVersion)
-	scheme.AddKnownTypes(b.groupVersion, &metav1.Status{})
+	if err := apppluginv0alpha1.AddKnownTypes(scheme, b.groupVersion); err != nil {
+		return err
+	}
 	return scheme.SetVersionPriority(b.groupVersion)
 }
 
 func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
+	storage["settings"] = &settingsStorage{
+		pluginID:             b.pluginID,
+		pluginStore:          b.pluginStore,
+		pluginSettings:       b.pluginSettings,
+		pluginsUpdateChecker: b.pluginsUpdateChecker,
+		pluginAssets:         b.pluginAssets,
+		cfg:                  b.cfg,
+		resource:             b.groupVersion.WithResource("settings").GroupResource(),
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[b.groupVersion.Version] = storage
 	return nil
 }
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		return map[string]common.OpenAPIDefinition{}
-	}
+	return apppluginv0alpha1.GetOpenAPIDefinitions
 }
 
 func (b *AppPluginAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
-}
-
-// GetAPIRoutes registers the GET /settings namespace route.
-func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	return &builder.APIRoutes{
-		Namespace: []builder.APIRouteHandler{
-			{
-				Path: "settings",
-				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"AppPluginSettings"},
-							OperationId: "getAppPluginSettings",
-							Description: "Returns the settings for this app plugin in the given namespace (org).",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Description: "Plugin settings",
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil),
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Handler: b.settingsHandler,
-			},
-		},
-	}
 }
