@@ -65,9 +65,8 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     }
 
     const outputFrame: DataFrame = {
+      ...frame,
       fields: [],
-      length: frame.length,
-      refId: frame.refId,
     };
 
     for (const field of frame.fields) {
