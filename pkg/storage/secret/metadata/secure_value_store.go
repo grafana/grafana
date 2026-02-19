@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -100,10 +99,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		// if that's the case, we'll retry with a new version up to max attempts.
 		maxVersionAttempts := 3
 		versionAttempts := 0
-		// SQLite integration tests can hit transient lock contention when secure values are
-		// created concurrently; retry these short-lived lock errors.
-		maxBusyAttempts := 3
-		busyAttempts := 0
 		for {
 			sv.Status.Version = version
 
@@ -145,13 +140,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 						continue
 					}
 					return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
-				}
-				if sqlite.IsBusyOrLocked(err) {
-					if busyAttempts < maxBusyAttempts {
-						busyAttempts += 1
-						time.Sleep(time.Duration(busyAttempts) * 50 * time.Millisecond)
-						continue
-					}
 				}
 				return fmt.Errorf("inserting row: %w", err)
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/codes"
@@ -11,7 +12,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
+)
+
+const (
+	maxBusyOrLockedRetries = 3
+	busyOrLockedRetryDelay = 50 * time.Millisecond
 )
 
 // contextSessionTxKey is the key used to store the transaction in the context.
@@ -93,22 +100,64 @@ func (db *Database) ExecContext(ctx context.Context, query string, args ...any) 
 	spanCtx, span := db.tracer.Start(ctx, "Database.ExecContext")
 	defer span.End()
 
-	// If another transaction is already open, we just use that one instead of nesting.
-	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
-	}
+	boundQuery := db.sqlx.Rebind(query)
+	for attempt := 0; ; attempt++ {
+		// If another transaction is already open, we just use that one instead of nesting.
+		if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
+			res, err := tx.ExecContext(spanCtx, boundQuery, args...)
+			if !shouldRetryBusyOrLockedError(err, attempt) {
+				return res, err
+			}
+		} else {
+			res, err := db.sqlx.ExecContext(spanCtx, boundQuery, args...)
+			if !shouldRetryBusyOrLockedError(err, attempt) {
+				return res, err
+			}
+		}
 
-	return db.sqlx.ExecContext(spanCtx, db.sqlx.Rebind(query), args...)
+		if err := sleepWithContext(spanCtx, time.Duration(attempt+1)*busyOrLockedRetryDelay); err != nil {
+			return nil, err
+		}
+	}
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
 	spanCtx, span := db.tracer.Start(ctx, "Database.QueryContext")
 	defer span.End()
 
-	// If another transaction is already open, we just use that one instead of nesting.
-	if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
-		return tx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
-	}
+	boundQuery := db.sqlx.Rebind(query)
+	for attempt := 0; ; attempt++ {
+		// If another transaction is already open, we just use that one instead of nesting.
+		if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
+			rows, err := tx.QueryContext(spanCtx, boundQuery, args...)
+			if !shouldRetryBusyOrLockedError(err, attempt) {
+				return rows, err
+			}
+		} else {
+			rows, err := db.sqlx.QueryContext(spanCtx, boundQuery, args...)
+			if !shouldRetryBusyOrLockedError(err, attempt) {
+				return rows, err
+			}
+		}
 
-	return db.sqlx.QueryContext(spanCtx, db.sqlx.Rebind(query), args...)
+		if err := sleepWithContext(spanCtx, time.Duration(attempt+1)*busyOrLockedRetryDelay); err != nil {
+			return nil, err
+		}
+	}
+}
+
+func shouldRetryBusyOrLockedError(err error, attempt int) bool {
+	return err != nil && sqlite.IsBusyOrLocked(err) && attempt < maxBusyOrLockedRetries
+}
+
+func sleepWithContext(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
