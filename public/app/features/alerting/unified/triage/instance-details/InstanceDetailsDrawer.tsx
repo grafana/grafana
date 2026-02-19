@@ -1,24 +1,13 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, GrafanaTheme2, Labels, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { SceneContextProvider, useTimeRange } from '@grafana/scenes-react';
-import {
-  Alert,
-  Box,
-  Drawer,
-  Icon,
-  LoadingBar,
-  LoadingPlaceholder,
-  Stack,
-  Text,
-  TimeRangePicker,
-  useStyles2,
-} from '@grafana/ui';
+import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
+import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -50,69 +39,12 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
-interface InstanceDrawerChartRowProps {
-  chartKey: string;
-  chartTimeRange: TimeRange;
-  onTimeRangeChange: (range: TimeRange) => void;
-  query: AlertQuery;
-  instanceLabels: Labels;
-  thresholds: ReturnType<typeof getThresholdsForQueries>;
-  annotations: DataFrame[];
-}
-
-function InstanceDrawerChartRow({
-  chartKey,
-  chartTimeRange,
-  onTimeRangeChange,
-  query,
-  instanceLabels,
-  thresholds,
-  annotations,
-}: InstanceDrawerChartRowProps) {
-  return (
-    <Box>
-      <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={1}>
-        <TimeRangePicker
-          value={chartTimeRange}
-          onChange={onTimeRangeChange}
-          onChangeTimeZone={() => {}}
-          onMoveBackward={() => {}}
-          onMoveForward={() => {}}
-          onZoom={() => {}}
-        />
-      </Stack>
-      {/* SceneContextProvider scopes time to this chart only; key forces remount when range changes so queries re-run. */}
-      <SceneContextProvider
-        key={`chart-${chartKey}-${chartTimeRange.from.valueOf()}-${chartTimeRange.to.valueOf()}`}
-        timeRange={{ from: chartTimeRange.from.toString(), to: chartTimeRange.to.toString() }}
-      >
-        <QueryVisualization
-          query={query}
-          instanceLabels={instanceLabels}
-          thresholds={thresholds}
-          annotations={annotations}
-        />
-      </SceneContextProvider>
-    </Box>
-  );
-}
-
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
-  const [sceneTimeRange] = useTimeRange();
+  const [timeRange] = useTimeRange();
   const { rightColumnWidth } = useWorkbenchContext();
-  const [chartTimeRanges, setChartTimeRanges] = useState<Record<string, TimeRange>>({});
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
-
-  const getChartTimeRange = useCallback(
-    (chartKey: string) => chartTimeRanges[chartKey] ?? sceneTimeRange,
-    [chartTimeRanges, sceneTimeRange]
-  );
-
-  const setChartTimeRange = useCallback((chartKey: string, range: TimeRange) => {
-    setChartTimeRanges((prev) => ({ ...prev, [chartKey]: range }));
-  }, []);
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -131,8 +63,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
     labels: instanceLabels,
-    from: sceneTimeRange.from.unix(),
-    to: sceneTimeRange.to.unix(),
+    from: timeRange.from.unix(),
+    to: timeRange.to.unix(),
   });
 
   // Convert state history to LogRecords and filter by instance labels
@@ -174,24 +106,21 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
       width={drawerWidth}
     >
       <Stack direction="column" gap={3}>
+        <Stack justifyContent="flex-end">
+          <TimeRangePicker />
+        </Stack>
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>
-              {dataQueries.map((query, index) => {
-                const chartKey = query.refId ?? `query-${index}`;
-                return (
-                  <InstanceDrawerChartRow
-                    key={chartKey}
-                    chartKey={chartKey}
-                    chartTimeRange={getChartTimeRange(chartKey)}
-                    onTimeRangeChange={(range) => setChartTimeRange(chartKey, range)}
-                    query={query}
-                    instanceLabels={instanceLabels}
-                    thresholds={thresholds}
-                    annotations={annotations}
-                  />
-                );
-              })}
+              {dataQueries.map((query, index) => (
+                <QueryVisualization
+                  key={query.refId ?? `query-${index}`}
+                  query={query}
+                  instanceLabels={instanceLabels}
+                  thresholds={thresholds}
+                  annotations={annotations}
+                />
+              ))}
             </Stack>
           </Box>
         )}
