@@ -125,6 +125,20 @@ export function PanelVizTypePicker({
     onClose();
   }, [listMode, onClose]);
 
+  const applyPresetChange = (preset: VisualizationSuggestion | undefined, withModKey: boolean) => {
+    if (!presetsState) {
+      return;
+    }
+
+    onChange({
+      pluginId: presetsState.suggestion.pluginId,
+      options: preset?.options ?? presetsState.suggestion.options,
+      fieldConfig: preset?.fieldConfig ?? presetsState.suggestion.fieldConfig,
+      withModKey,
+      fromSuggestions: true,
+    });
+  };
+
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabs} hideBorder={true}>
@@ -189,33 +203,9 @@ export function PanelVizTypePicker({
                 presets={presetsState.presets}
                 data={data}
                 suggestion={presetsState.suggestion}
-                onPreview={(preset) => {
-                  onChange({
-                    pluginId: presetsState.suggestion.pluginId,
-                    options: preset.options ?? presetsState.suggestion.options,
-                    fieldConfig: preset.fieldConfig ?? presetsState.suggestion.fieldConfig,
-                    withModKey: true,
-                    fromSuggestions: true,
-                  });
-                }}
-                onApply={(preset) => {
-                  onChange({
-                    pluginId: presetsState.suggestion.pluginId,
-                    options: preset.options ?? presetsState.suggestion.options,
-                    fieldConfig: preset.fieldConfig ?? presetsState.suggestion.fieldConfig,
-                    withModKey: false,
-                    fromSuggestions: true,
-                  });
-                }}
-                onSkip={() => {
-                  onChange({
-                    pluginId: presetsState.suggestion.pluginId,
-                    options: presetsState.suggestion.options,
-                    fieldConfig: presetsState.suggestion.fieldConfig,
-                    withModKey: false,
-                    fromSuggestions: true,
-                  });
-                }}
+                onPreview={(preset) => applyPresetChange(preset, true)}
+                onApply={(preset) => applyPresetChange(preset, false)}
+                onSkip={() => applyPresetChange(undefined, false)}
                 onBack={() => setPresetsState(null)}
               />
             )}
