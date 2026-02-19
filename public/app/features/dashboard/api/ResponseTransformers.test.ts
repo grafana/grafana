@@ -962,7 +962,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
       expect(dashboard.revision).toBe(225);
-      expect(dashboard.gnetId).toBe(dashboardV2.metadata.annotations?.['grafana.app/dashboard-gnet-id']);
       expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
       expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
       expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
@@ -988,6 +987,14 @@ describe('ResponseTransformers', () => {
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
       validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
       validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
+
+      const gnetId = dashboardV2.metadata.annotations?.[AnnoKeyDashboardGnetId];
+      if (gnetId?.length) {
+        expect(dashboard.gnetId).toBe(+gnetId);
+      } else {
+        expect(dashboard.gnetId).toBeUndefined();
+      }
+
       // panel
       const panelKey = 'panel-1';
       expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
