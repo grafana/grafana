@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legacy/preferences';
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { fuzzySearch, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -109,39 +109,38 @@ export const MegaMenu = memo(
     };
 
     const navItemHasMatch = (item: NavModelItem, filter: string): boolean => {
-      return (
-        item.text.toLowerCase().includes(filter.toLowerCase()) ||
-        Boolean(item.children?.some((child) => navItemHasMatch(child, filter)))
-      );
+      const hasFuzzyMatch = fuzzySearch([item.text], filter).length > 0;
+      return hasFuzzyMatch || Boolean(item.children?.some((child) => navItemHasMatch(child, filter)));
     };
 
+    const filterNavTree = (items: NavModelItem[], filter: string): NavModelItem[] => {
+      return items.reduce((acc: NavModelItem[], item) => {
+        const thisItemHasMatches = navItemHasMatch(item, filter);
+        const filteredChildren = item.children ? filterNavTree(item.children, filter) : undefined;
+
+        if (!thisItemHasMatches && (!filteredChildren || filteredChildren.length === 0)) {
+          return acc;
+        }
+
+        const filteredItem: NavModelItem = {
+          ...item,
+          children: filteredChildren,
+        };
+
+        acc.push(filteredItem);
+        return acc;
+      }, []);
+    };
     /**
      * Filter mega menu items based on filter from MegaMenuControls
      */
     const onFilterChange = (filterValue: string) => {
       setMenuFilterValue(filterValue);
 
-      const filterNavTree = (items: NavModelItem[], filter: string): NavModelItem[] => {
-        return items.reduce((acc: NavModelItem[], item) => {
-          const thisItemHasMatches = navItemHasMatch(item, filter);
-          let filteredChildren: NavModelItem[] | undefined = undefined;
-          if (item.children) {
-            filteredChildren = filterNavTree(item.children, filter);
-          }
-
-          if (!thisItemHasMatches && (!filteredChildren || filteredChildren.length === 0)) {
-            return acc;
-          }
-
-          const filteredItem: NavModelItem = {
-            ...item,
-            children: filteredChildren,
-          };
-
-          acc.push(filteredItem);
-          return acc;
-        }, []);
-      };
+      if (filterValue.trim() === '') {
+        setFilteredNavTree(rawNavTree);
+        return;
+      }
 
       const filteredNavTree = filterNavTree(rawNavTree, filterValue);
       setFilteredNavTree(filteredNavTree);

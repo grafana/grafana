@@ -53,9 +53,11 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
     : t('navigation.megamenu.expand-all-sections', 'Expand all sections');
   const iconName = isAnythingExpanded ? 'angle-up' : 'angle-down';
   return (
-    <Box padding={1} paddingLeft={2}>
-      <Stack direction="row" gap={1}>
+    <Box padding={1} paddingLeft={1}>
+      <Stack direction="row" gap={2}>
         <Input
+          name="menu-filter"
+          aria-label={t('navigation.megamenu.search-input-label', 'Search menu')}
           value={filterValue}
           prefix={<Icon name="search" />}
           placeholder={t('navigation.megamenu.search-placeholder', 'Search menu')}
