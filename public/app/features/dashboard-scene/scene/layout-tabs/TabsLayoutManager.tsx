@@ -21,6 +21,7 @@ import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -35,10 +36,14 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTabSlug?: string;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutGroup {
+export class TabsLayoutManager
+  extends SceneObjectBase<TabsLayoutManagerState>
+  implements DashboardLayoutGroup, DashboardDropTarget
+{
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isDashboardDropTarget = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {

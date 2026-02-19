@@ -89,12 +89,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  private _sourceTabManagerKey: string | undefined = undefined;
+  private _draggingTabKeyCurrentDropTarget: string | undefined;
+  private _sourceTabIndex: number;
 
   public constructor() {
     super({});
 
     this._onPointerMove = this._onPointerMove.bind(this);
     this._stopDraggingSync = this._stopDraggingSync.bind(this);
+
+    this._onTabDragPointerMove = this._onTabDragPointerMove.bind(this);
+    this._onTabDragPointerUp = this._onTabDragPointerUp.bind(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -103,6 +109,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
+      document.body.removeEventListener('pointermove', this._onTabDragPointerUp);
+      document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       this._clearTabActivationTimer();
@@ -261,18 +269,61 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
   }
 
-  public startTabDrag(draggingTab: TabItem): void {
+  public startTabDrag(draggingTabKey: string, sourceTabManagerKey: string, sourceIndex: number): void {
+    this._sourceTabManagerKey = sourceTabManagerKey;
+    this._sourceTabIndex = sourceIndex;
+
+    const draggingTab = sceneGraph.findByKey(this._getDashboard(), draggingTabKey);
     this.setState({
       draggingTab: draggingTab.getRef(),
     });
+
+    document.body.addEventListener('pointermove', this._onTabDragPointerMove);
+    document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
   }
 
+  private _onTabDragPointerMove(evt: PointerEvent) {
+    const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
+
+    // Tabs can be dropped only to TabsLayoutManager
+    if (dropTarget instanceof TabsLayoutManager) {
+      this._draggingTabKeyCurrentDropTarget = dropTarget?.state?.key;
+    } else {
+      this._draggingTabKeyCurrentDropTarget = undefined;
+    }
+  }
+
+  private isDroppingTabToDifferentManager(): boolean {
+    return this._sourceTabManagerKey !== this._draggingTabKeyCurrentDropTarget;
+  }
+
+  private _onTabDragPointerUp(evt: PointerEvent) {
+    document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
+    document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
+    // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
+    // Dropping will remove elements from dom causing pangea to think the element is still being dragged and won't
+    // fire onDragEnd until container is re-rendered or removed (e.g. when row is collapsed) and may cause errors.
+  }
+
+  /**
+   * Single entry point for handling tab drag end. If the tab was dropped from a different manager we use values
+   * calculated by layout orchestrator.
+   * @param destinationManagerKey
+   * @param sourceIndex
+   * @param destinationIndex
+   */
   public stopTabDrag(
     destinationManagerKey: string | undefined,
     sourceIndex: number,
     destinationIndex: number | undefined
   ): void {
     const tab = this.state.draggingTab?.resolve();
+
+    if (this.isDroppingTabToDifferentManager()) {
+      destinationManagerKey = this._draggingTabKeyCurrentDropTarget;
+      sourceIndex = this._sourceTabIndex;
+      destinationIndex = 0;
+    }
 
     this.setState({
       draggingTab: undefined,

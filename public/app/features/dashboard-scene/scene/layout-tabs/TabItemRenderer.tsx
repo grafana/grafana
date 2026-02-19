@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
+import { Draggable, DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
@@ -62,9 +62,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
           }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
-          style={dragProvided.draggableProps.style}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
+          style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
         >
           <Tab
             ref={model.containerRef}
@@ -198,3 +198,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+function getDraggableStyle(style: React.CSSProperties | undefined, snapshot: DraggableStateSnapshot) {
+  if (!style || !snapshot.isDropAnimating || !snapshot.dropAnimation) {
+    return style;
+  }
+
+  return {
+    ...style,
+    transitionDuration: '0.01s',
+  };
+}

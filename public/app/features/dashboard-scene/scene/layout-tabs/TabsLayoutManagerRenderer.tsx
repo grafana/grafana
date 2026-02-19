@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, BeforeCapture, DropResult, DragStart } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, DropResult, DragStart } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +13,7 @@ import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/util
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
@@ -43,15 +44,9 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   const isClone = isRepeatCloneOrChildOf(model);
 
-  const onBeforeCapture = (before: BeforeCapture) => {
-    const tab = tabs.find((r) => r.state.key === before.draggableId);
-    if (tab && orchestrator) {
-      orchestrator.startTabDrag(tab);
-    }
+  const onBeforeDragStart = (start: DragStart) => {
+    orchestrator?.startTabDrag(start.draggableId, start.source.droppableId, start.source.index);
   };
-
-  // TODO: check if we can skip it
-  const onBeforeDragStart = (start: DragStart) => model.forceSelectTab(start.draggableId);
 
   const onDragEnd = (result: DropResult) => {
     orchestrator?.stopTabDrag(result.destination?.droppableId, result.source.index, result.destination?.index);
@@ -60,8 +55,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
-        <DragDropContext onBeforeCapture={onBeforeCapture} onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
-          <div className={styles.tabsRow}>
+        <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
+          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
             <Droppable droppableId={key!} direction="horizontal">
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
