@@ -344,6 +344,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
