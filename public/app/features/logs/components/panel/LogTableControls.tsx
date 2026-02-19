@@ -8,8 +8,9 @@ import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DownloadFormat } from '../../utils';
 
+import { getWrapButtonStyles } from './LogListCommon';
 import { CONTROLS_WIDTH_EXPANDED } from './LogListControls';
-import { LogListControlsOption } from './LogListControlsOption';
+import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { LOG_LIST_CONTROLS_WIDTH } from './virtualization';
 
 type Props = {
@@ -19,6 +20,8 @@ type Props = {
   logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
   downloadLogs: (format: DownloadFormat) => void;
+  wrapLogMessage: boolean;
+  setWrapLogMessage: (wrap: boolean) => void;
 };
 
 export const LogTableControls = ({
@@ -28,6 +31,8 @@ export const LogTableControls = ({
   setSortOrder,
   sortOrder,
   downloadLogs,
+  wrapLogMessage,
+  setWrapLogMessage,
 }: Props) => {
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -79,6 +84,8 @@ export const LogTableControls = ({
     [downloadLogs]
   );
 
+  console.log('LogTableControls');
+
   return (
     <div className={styles.navContainer}>
       <>
@@ -117,6 +124,12 @@ export const LogTableControls = ({
         size="lg"
       />
 
+      <WrapLogMessageButton
+        expanded={controlsExpanded}
+        wrapLogMessage={wrapLogMessage}
+        setWrapLogMessage={setWrapLogMessage}
+      />
+
       {!config.exploreHideLogsDownload && (
         <>
           <div className={styles.divider} />
@@ -133,6 +146,79 @@ export const LogTableControls = ({
         </>
       )}
     </div>
+  );
+};
+
+interface LogSelectOptionProps {
+  expanded: boolean;
+  wrapLogMessage: boolean;
+  setWrapLogMessage: (wrap: boolean) => void;
+}
+
+const WrapLogMessageButton = ({ expanded, wrapLogMessage, setWrapLogMessage }: LogSelectOptionProps) => {
+  const styles = useStyles2(getWrapButtonStyles, expanded);
+
+  /**
+   * This component currently controls two internal states: line wrapping and JSON formatting.
+   * The state transition is as follows:
+   * - Line wrapping and JSON formatting disabled.
+   * - Line wrapping enabled.
+   * - Line wrapping and JSON formatting enabled.
+   *
+   * Line wrapping also controls JSON formatting, because with line wrapping disabled,
+   * JSON formatting has no effect, so one is related with the other.
+   */
+  const disable = useCallback(() => {
+    setWrapLogMessage(false);
+    reportInteraction('logs_table_log_list_controls_wrap_clicked', {
+      state: false,
+      prettify: false,
+    });
+  }, [setWrapLogMessage]);
+
+  const wrap = useCallback(() => {
+    setWrapLogMessage(true);
+    reportInteraction('logs_table_log_list_controls_wrap_clicked', {
+      state: true,
+      prettify: false,
+    });
+  }, [setWrapLogMessage]);
+
+  const wrappingMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.hide', 'Disable line wrapping')}
+          className={!wrapLogMessage ? styles.menuItemActive : undefined}
+          onClick={disable}
+        />
+        <Menu.Item
+          label={t('logs.logs-controls.line-wrapping.enable', 'Enable line wrapping')}
+          className={wrapLogMessage ? styles.menuItemActive : undefined}
+          onClick={wrap}
+        />
+      </Menu>
+    ),
+    [disable, styles.menuItemActive, wrap, wrapLogMessage]
+  );
+
+  const wrapStateText = !wrapLogMessage
+    ? t('logs.logs-controls.line-wrapping.state.hide', 'Wrap disabled')
+    : t('logs.logs-controls.line-wrapping.state.wrap', 'Wrap lines');
+
+  const tooltip = t('logs.logs-controls.line-wrapping.tooltip', 'Set line wrap');
+
+  return (
+    <LogListControlsSelectOption
+      expanded={expanded}
+      name={'wrap-text'}
+      isActive={wrapLogMessage}
+      dropdown={wrappingMenu}
+      tooltip={tooltip}
+      label={wrapStateText}
+      buttonAriaLabel={tooltip}
+      customTagText={''}
+    />
   );
 };
 
