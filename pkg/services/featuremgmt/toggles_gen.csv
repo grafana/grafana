@@ -64,6 +64,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-02-18,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-18,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-02-19,datasourcesApiServerEnableResourceEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/aws-datasources,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
