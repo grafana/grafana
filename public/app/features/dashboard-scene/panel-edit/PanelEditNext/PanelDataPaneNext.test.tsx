@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
@@ -17,12 +17,20 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 // Mutable state object for the mock queryRunner
-const mockQueryRunnerState = {
-  queries: [] as unknown[],
-  maxDataPoints: undefined as number | undefined,
-  minInterval: undefined as string | undefined,
-  cacheTimeout: undefined as string | undefined,
-  queryCachingTTL: undefined as number | undefined,
+const mockQueryRunnerState: {
+  datasource: { uid: string; type: string } | undefined;
+  queries: unknown[];
+  maxDataPoints: number | undefined;
+  minInterval: string | undefined;
+  cacheTimeout: string | undefined;
+  queryCachingTTL: number | undefined;
+} = {
+  datasource: undefined,
+  queries: [],
+  maxDataPoints: undefined,
+  minInterval: undefined,
+  cacheTimeout: undefined,
+  queryCachingTTL: undefined,
 };
 
 // Mock getQueryRunnerFor to return our mock queryRunner
@@ -34,8 +42,13 @@ const mockQueryRunner = {
   runQueries: jest.fn(),
 } as unknown as SceneQueryRunner;
 
+// Mockable getDashboardSceneFor for localStorage tests
+const mockGetDashboardSceneFor = jest.fn();
+
 jest.mock('../../utils/utils', () => ({
+  ...jest.requireActual('../../utils/utils'),
   getQueryRunnerFor: () => mockQueryRunner,
+  getDashboardSceneFor: (sceneObject: unknown) => mockGetDashboardSceneFor(sceneObject),
 }));
 
 jest.mock('../getPanelFrameOptions', () => ({
@@ -45,12 +58,28 @@ jest.mock('../getPanelFrameOptions', () => ({
 // Mock sceneGraph.getTimeRange
 jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({} as ReturnType<typeof sceneGraph.getTimeRange>);
 
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
+    exists: jest.fn(),
+    get: jest.fn(),
+    getObject: jest.fn((_key, defaultValue) => defaultValue),
+    setObject: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
 describe('PanelDataPaneNext', () => {
   let dataPane: PanelDataPaneNext;
   let mockPanel: VizPanel;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default getDashboardSceneFor to throw (tests that need it should mock it explicitly)
+    mockGetDashboardSceneFor.mockImplementation(() => {
+      throw new Error('getDashboardSceneFor called but not mocked for this test');
+    });
 
     mockPanel = {
       state: {
@@ -70,6 +99,7 @@ describe('PanelDataPaneNext', () => {
 
     // Reset mock queryRunner state
     Object.assign(mockQueryRunnerState, {
+      datasource: undefined,
       queries: [],
       maxDataPoints: undefined,
       minInterval: undefined,
@@ -271,6 +301,44 @@ describe('PanelDataPaneNext', () => {
       mockPanel.state.$data = mockTransformer;
     });
 
+    describe('addTransformation', () => {
+      it('should append a transformation to the end by default', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns');
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {} },
+            { id: 'filter', options: {} },
+            { id: 'seriesToColumns', options: {} },
+          ],
+        });
+        expect(mockTransformer.reprocessTransformations).toHaveBeenCalled();
+      });
+
+      it('should insert a transformation after a specific index', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns', 0);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'seriesToColumns', options: {} },
+            { id: 'reduce', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+      });
+
+      it('should not throw when $data is not SceneDataTransformer', () => {
+        mockPanel.state.$data = undefined;
+        expect(() => dataPane.addTransformation('seriesToColumns')).not.toThrow();
+      });
+    });
+
     describe('reorderTransformations', () => {
       it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
         jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
@@ -431,6 +499,107 @@ describe('PanelDataPaneNext', () => {
           }),
         ]),
       });
+    });
+  });
+
+  describe('localStorage datasource loading', () => {
+    it('should load datasource from localStorage when no datasource is available', async () => {
+      // Clear all mocks to ensure clean state
+      jest.clearAllMocks();
+
+      const mockGetLastUsedDatasourceFromStorage = jest.fn().mockReturnValue({
+        datasourceUid: 'stored-prom-uid',
+      });
+
+      const mockStoreLastUsedDataSourceInLocalStorage = jest.fn();
+
+      const promDatasource = {
+        uid: 'stored-prom-uid',
+        type: 'prometheus',
+        name: 'Prometheus Stored',
+      };
+
+      const promSettings: DataSourceInstanceSettings = {
+        uid: 'stored-prom-uid',
+        type: 'prometheus',
+        name: 'Prometheus Stored',
+        access: 'proxy',
+        meta: {
+          id: 'prometheus',
+          name: 'Prometheus',
+          type: PluginType.datasource,
+          info: {
+            author: { name: '' },
+            description: '',
+            links: [],
+            logos: { small: '', large: '' },
+            screenshots: [],
+            updated: '',
+            version: '',
+          },
+          module: '',
+          baseUrl: '',
+        },
+        readOnly: false,
+        jsonData: {},
+      };
+
+      jest
+        .spyOn(require('app/features/dashboard/utils/dashboard'), 'getLastUsedDatasourceFromStorage')
+        .mockImplementation(mockGetLastUsedDatasourceFromStorage);
+
+      jest
+        .spyOn(require('app/features/datasources/components/picker/utils'), 'storeLastUsedDataSourceInLocalStorage')
+        .mockImplementation(mockStoreLastUsedDataSourceInLocalStorage);
+
+      const mockGet = jest.fn().mockResolvedValue(promDatasource);
+      const mockGetInstanceSettingsForLS = jest.fn().mockReturnValue(promSettings);
+
+      jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
+        get: mockGet,
+        getInstanceSettings: mockGetInstanceSettingsForLS,
+      });
+
+      // Mock getDashboardSceneFor to return a dashboard with UID
+      const mockDashboard = {
+        state: { uid: 'test-dashboard-uid' },
+      };
+
+      mockGetDashboardSceneFor.mockReturnValue(mockDashboard);
+
+      // Set up queryRunner with NO datasource
+      mockQueryRunnerState.datasource = undefined;
+      mockQueryRunnerState.queries = [{ refId: 'A' }]; // No datasource property
+
+      const testDataPane = new PanelDataPaneNext({
+        panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
+      });
+
+      // Call loadDatasource directly (without full activation to avoid other issues)
+      await (testDataPane as unknown as { loadDatasource: () => Promise<void> }).loadDatasource();
+
+      // Should check localStorage with dashboard UID
+      expect(mockGetLastUsedDatasourceFromStorage).toHaveBeenCalledWith('test-dashboard-uid');
+
+      // Should load the datasource from localStorage
+      expect(mockGet).toHaveBeenCalledWith({
+        uid: 'stored-prom-uid',
+        type: 'prometheus',
+      });
+
+      // Should update state with loaded datasource
+      expect(testDataPane.state.datasource).toBe(promDatasource);
+      expect(testDataPane.state.dsSettings).toBe(promSettings);
+
+      // Should update queryRunner with datasource
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        datasource: expect.objectContaining({
+          uid: 'stored-prom-uid',
+        }),
+      });
+
+      // Should store datasource in localStorage
+      expect(mockStoreLastUsedDataSourceInLocalStorage).toHaveBeenCalled();
     });
   });
 });
