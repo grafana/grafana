@@ -69,7 +69,7 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.RoutingTreeRoute {
 		GroupBy:             r.GroupByStr,
 		MuteTimeIntervals:   r.MuteTimeIntervals,
 		ActiveTimeIntervals: r.ActiveTimeIntervals,
-		Continue:            util.Pointer(r.Continue),
+		Continue:            util.PointerOrNil(r.Continue),
 		GroupWait:           optionalPrometheusDurationToString(r.GroupWait),
 		GroupInterval:       optionalPrometheusDurationToString(r.GroupInterval),
 		RepeatInterval:      optionalPrometheusDurationToString(r.RepeatInterval),
