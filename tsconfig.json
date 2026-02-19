@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "baseUrl": "public/",
     "outDir": "public/dist",
+    "rootDir": ".",
     "rootDirs": ["public/"],
     "allowJs": true,
     "strict": true,
