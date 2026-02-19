@@ -398,6 +398,12 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		})
 		installation := &github.Installation{
 			ID: github.Ptr(int64(454545)),
+			Permissions: &github.InstallationPermissions{
+				Contents:        github.Ptr("write"),
+				Metadata:        github.Ptr("read"),
+				PullRequests:    github.Ptr("write"),
+				RepositoryHooks: github.Ptr("write"),
+			},
 		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(

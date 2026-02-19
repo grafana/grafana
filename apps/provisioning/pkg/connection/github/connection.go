@@ -248,7 +248,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		logger.Info("error getting app installation", "installationID", c.obj.Spec.GitHub.InstallationID, "error", err)
 		// Check for specific error types
@@ -323,6 +323,22 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		}
+	}
+
+	// Validate that the installation has accepted the required permissions.
+	// Installation permissions may lag behind App permissions when the App owner added new
+	// permissions but the installation owner has not yet accepted them on GitHub.
+	installationPermErrors := validateInstallationPermissions(c.obj.Spec.GitHub.InstallationID, installation.Permissions)
+	if len(installationPermErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  installationPermErrors,
+		}, nil
 	}
 
 	return &provisioning.TestResults{
@@ -495,6 +511,55 @@ func validateAppPermissions(appID string, permissions AppPermissions) []provisio
 	}
 
 	return errors
+}
+
+// validateInstallationPermissions checks if the installation has accepted the required permissions.
+// Installation permissions may differ from App permissions when the App's permissions were updated
+// but the installation owner has not yet accepted them on GitHub.
+func validateInstallationPermissions(installationID string, permissions AppPermissions) []provisioning.ErrorDetails {
+	var errs []provisioning.ErrorDetails
+
+	requiredPerms := map[string]struct {
+		current  AppPermission
+		required AppPermission
+	}{
+		"contents": {
+			current:  permissions.Contents,
+			required: AppPermissionWrite,
+		},
+		"metadata": {
+			current:  permissions.Metadata,
+			required: AppPermissionRead,
+		},
+		"pull_requests": {
+			current:  permissions.PullRequests,
+			required: AppPermissionWrite,
+		},
+		"webhooks": {
+			current:  permissions.Webhooks,
+			required: AppPermissionWrite,
+		},
+	}
+
+	for name, perm := range requiredPerms {
+		if perm.current < perm.required {
+			detail := fmt.Sprintf(
+				"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s/%s",
+				name,
+				toAppPermissionString(perm.required),
+				toAppPermissionString(perm.current),
+				githubInstallationURL,
+				installationID,
+			)
+			errs = append(errs, provisioning.ErrorDetails{
+				Type:   metav1.CauseTypeForbidden,
+				Field:  field.NewPath("spec", "github", "installationID").String(),
+				Detail: detail,
+			})
+		}
+	}
+
+	return errs
 }
 
 func toAppPermissionString(permissions AppPermission) string {

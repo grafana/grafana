@@ -74,6 +74,10 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
+	// Permissions granted to this installation.
+	// These may differ from App permissions if the installation owner has not yet accepted
+	// the App's updated permissions on GitHub.
+	Permissions AppPermissions
 }
 
 // InstallationToken represents a Github App Installation Access Token.
@@ -149,6 +153,12 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
+		Permissions: AppPermissions{
+			Contents:     toAppPermission(installation.GetPermissions().GetContents()),
+			Metadata:     toAppPermission(installation.GetPermissions().GetMetadata()),
+			PullRequests: toAppPermission(installation.GetPermissions().GetPullRequests()),
+			Webhooks:     toAppPermission(installation.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 

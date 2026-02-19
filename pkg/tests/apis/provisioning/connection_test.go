@@ -1699,6 +1699,99 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
 			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.BadValue, appIDError.Origin)
 	})
+
+	t.Run("connection with installation missing permissions becomes unhealthy with fieldErrors", func(t *testing.T) {
+		// Create a connection that has valid app ID but installation lacks required permissions
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-install-perms",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Set up a mock where app has all permissions but installation lacks contents permission
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		var installationID int64 = 454545
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
+				},
+			),
+			ghmock.WithRequestMatch(
+				ghmock.GetAppInstallationsByInstallationId, github.Installation{
+					ID: &installationID,
+					// No Permissions - simulates an installation that has not yet accepted the App's permissions
+				},
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy due to insufficient installation permissions
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
+
+		// Verify the connection is unhealthy and has fieldErrors
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason")
+
+		require.NotEmpty(t, conn.Status.FieldErrors, "fieldErrors should be populated for installation with no permissions")
+
+		for _, installPermError := range conn.Status.FieldErrors {
+			assert.Equal(t, metav1.CauseTypeForbidden, installPermError.Type, "Type must be Forbidden")
+			assert.Equal(t, "spec.github.installationID", installPermError.Field, "Field must be spec.github.installationID")
+			assert.Contains(t, installPermError.Detail, "https://github.com/settings/installations/454545", "Detail must include installation URL")
+			assert.Empty(t, installPermError.Origin, "Origin should be empty")
+		}
+
+		t.Logf("Verified %d installation permission fieldErrors", len(conn.Status.FieldErrors))
+	})
 }
 
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
@@ -1824,6 +1917,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 			ghmock.WithRequestMatch(
 				ghmock.GetAppInstallationsByInstallationId, github.Installation{
 					ID: &validInstallationID,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				},
 			),
 		)
@@ -2643,6 +2742,12 @@ func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
 			app := createAppWithPermissions(123456, tc.permissions)
 			installation := &github.Installation{
 				ID: github.Ptr(int64(454545)),
+				Permissions: &github.InstallationPermissions{
+					Contents:        github.Ptr("write"),
+					Metadata:        github.Ptr("read"),
+					PullRequests:    github.Ptr("write"),
+					RepositoryHooks: github.Ptr("write"),
+				},
 			}
 
 			connectionFactory.Client = ghmock.NewMockedHTTPClient(

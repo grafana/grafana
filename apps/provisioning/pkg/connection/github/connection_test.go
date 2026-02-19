@@ -192,6 +192,12 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
 				}, nil)
 			},
 			expectedCode:  http.StatusOK,
@@ -961,6 +967,12 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionWrite,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
 				}, nil)
 			},
 			expectedCode:  http.StatusOK,

@@ -252,6 +252,12 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
+				Permissions: conngh.AppPermissions{
+					Contents:     conngh.AppPermissionWrite,
+					Metadata:     conngh.AppPermissionRead,
+					PullRequests: conngh.AppPermissionWrite,
+					Webhooks:     conngh.AppPermissionWrite,
+				},
 			},
 			wantErr: false,
 		},
@@ -303,6 +309,9 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
+				Permissions: conngh.AppPermissions{
+					Contents: conngh.AppPermissionRead,
+				},
 			},
 			wantErr: false,
 		},

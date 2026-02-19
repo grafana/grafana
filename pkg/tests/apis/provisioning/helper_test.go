@@ -1052,7 +1052,13 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be created")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) UpdateGithubConnection(
@@ -1067,7 +1073,13 @@ func (h *provisioningTestHelper) UpdateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be updated")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
@@ -1134,6 +1146,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				installation := github.Installation{
 					ID: &idInt,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
 			}),
