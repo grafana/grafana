@@ -143,6 +143,7 @@ export function useFiltersOverviewState({
     openGroups: {},
   });
 
+  const [loading, setLoading] = useState(true);
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
 
   const operatorConfig = useMemo(
@@ -155,8 +156,11 @@ export function useFiltersOverviewState({
   // Initialize state from filters
   useEffect(() => {
     if (!adhocFilters) {
+      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const init = async () => {
       const { keys, operatorsByKey, multiValuesByKey, singleValuesByKey, isOriginByKey } = buildOverviewState(
@@ -198,6 +202,7 @@ export function useFiltersOverviewState({
         isGrouped,
         openGroups,
       }));
+      setLoading(false);
     };
 
     init();
@@ -296,6 +301,7 @@ export function useFiltersOverviewState({
     listItems,
     operatorConfig,
     actions,
+    loading,
     hasKeys: state.keys.length > 0,
     hasAdhocFilters: Boolean(adhocFilters),
   };

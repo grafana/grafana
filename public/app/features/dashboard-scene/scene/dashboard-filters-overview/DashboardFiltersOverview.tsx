@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
 import { MULTI_OPERATOR_VALUES } from './utils';
+
+const GROUP_HEADER_HEIGHT = 32;
+const FILTER_ROW_HEIGHT = 32;
+const ROW_GAP = 8;
 
 interface DashboardFiltersOverviewProps {
   adhocFilters?: AdHocFiltersVariable;
@@ -23,15 +29,33 @@ export const DashboardFiltersOverview = ({
   searchQuery = '',
 }: DashboardFiltersOverviewProps) => {
   const styles = useStyles2(getStyles);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { state, listItems, operatorConfig, actions, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
+  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
     adhocFilters,
     groupByVariable,
     searchQuery,
   });
 
+  const virtualizer = useVirtualizer({
+    count: listItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (index) => (listItems[index]?.type === 'group' ? GROUP_HEADER_HEIGHT : FILTER_ROW_HEIGHT),
+    measureElement: (element) => element.getBoundingClientRect().height,
+    overscan: 5,
+    gap: ROW_GAP,
+  });
+
   if (!hasAdhocFilters) {
     return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.centered}>
+        {t('dashboard.filters-overview.loading', 'Loading filters')}&nbsp;<Spinner inline />
+      </div>
+    );
   }
 
   if (!hasKeys) {
@@ -40,43 +64,74 @@ export const DashboardFiltersOverview = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.listContainer}>
-        {listItems.map((item) => {
-          if (item.type === 'group') {
+      <div ref={scrollRef} className={styles.listContainer}>
+        <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const item = listItems[virtualRow.index];
+            if (!item) {
+              return null;
+            }
+
+            if (item.type === 'group') {
+              return (
+                <div
+                  key={`group-${item.group}`}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <GroupHeader
+                    group={item.group}
+                    isOpen={state.openGroups[item.group] ?? true}
+                    onToggle={actions.toggleGroup}
+                  />
+                </div>
+              );
+            }
+
+            const { keyOption, keyValue } = item;
+            const operatorValue = state.operatorsByKey[keyValue] ?? '=';
+
             return (
-              <GroupHeader
-                key={`group-${item.group}`}
-                group={item.group}
-                isOpen={state.openGroups[item.group] ?? true}
-                onToggle={actions.toggleGroup}
-              />
+              <div
+                key={`row-${keyValue}-${keyOption.group ?? 'ungrouped'}`}
+                ref={virtualizer.measureElement}
+                data-index={virtualRow.index}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <FilterRow
+                  keyOption={keyOption}
+                  keyValue={keyValue}
+                  operatorValue={operatorValue}
+                  isMultiOperator={MULTI_OPERATOR_VALUES.has(operatorValue)}
+                  singleValue={state.singleValuesByKey[keyValue] ?? ''}
+                  multiValues={state.multiValuesByKey[keyValue] ?? []}
+                  isGroupBy={state.isGrouped[keyValue] ?? false}
+                  isOrigin={state.isOriginByKey[keyValue] ?? false}
+                  hasGroupByVariable={Boolean(groupByVariable)}
+                  operatorOptions={operatorConfig.options}
+                  onOperatorChange={actions.setOperator}
+                  onSingleValueChange={actions.setSingleValue}
+                  onMultiValuesChange={actions.setMultiValues}
+                  onGroupByToggle={actions.toggleGroupBy}
+                  getValueOptions={actions.getValueOptionsForKey}
+                />
+              </div>
             );
-          }
-
-          const { keyOption, keyValue } = item;
-          const operatorValue = state.operatorsByKey[keyValue] ?? '=';
-
-          return (
-            <FilterRow
-              key={`row-${keyValue}-${keyOption.group ?? 'ungrouped'}`}
-              keyOption={keyOption}
-              keyValue={keyValue}
-              operatorValue={operatorValue}
-              isMultiOperator={MULTI_OPERATOR_VALUES.has(operatorValue)}
-              singleValue={state.singleValuesByKey[keyValue] ?? ''}
-              multiValues={state.multiValuesByKey[keyValue] ?? []}
-              isGroupBy={state.isGrouped[keyValue] ?? false}
-              isOrigin={state.isOriginByKey[keyValue] ?? false}
-              hasGroupByVariable={Boolean(groupByVariable)}
-              operatorOptions={operatorConfig.options}
-              onOperatorChange={actions.setOperator}
-              onSingleValueChange={actions.setSingleValue}
-              onMultiValuesChange={actions.setMultiValues}
-              onGroupByToggle={actions.toggleGroupBy}
-              getValueOptions={actions.getValueOptionsForKey}
-            />
-          );
-        })}
+          })}
+        </div>
       </div>
 
       <Footer
@@ -126,14 +181,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     minHeight: 0,
   }),
+  centered: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    flex: 1,
+  }),
   listContainer: css({
     width: '100%',
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
   }),
   footer: css({
     marginTop: theme.spacing(2),
