@@ -145,10 +145,10 @@ export const TimeSeriesPanel = ({
         return (
           <>
             {/*{!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}*/}
-            {cursorSync !== DashboardCursorSync.Off && (
-              <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
-            )}
-            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
+            {/*{cursorSync !== DashboardCursorSync.Off && (*/}
+            {/*  <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />*/}
+            {/*)}*/}
+            {/*<XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />*/}
             {/*{options.tooltip.mode !== TooltipDisplayMode.None && (*/}
             {/*  <TooltipPlugin2*/}
             {/*    config={uplotConfig}*/}
@@ -225,24 +225,24 @@ export const TimeSeriesPanel = ({
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
                 />
-                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
-                  <ExemplarsPlugin
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
-                    config={uplotConfig}
-                    exemplars={data.annotations}
-                    timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
-                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-                  <ThresholdControlsPlugin
-                    config={uplotConfig}
-                    fieldConfig={fieldConfig}
-                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
-                  />
-                )}
+                {/*<OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />*/}
+                {/*{data.annotations && (*/}
+                {/*  <ExemplarsPlugin*/}
+                {/*    visibleSeries={getVisibleLabels(uplotConfig, frames)}*/}
+                {/*    config={uplotConfig}*/}
+                {/*    exemplars={data.annotations}*/}
+                {/*    timeZone={timeZone}*/}
+                {/*    maxHeight={options.tooltip.maxHeight}*/}
+                {/*    maxWidth={options.tooltip.maxWidth}*/}
+                {/*  />*/}
+                {/*)}*/}
+                {/*{((canEditThresholds && onThresholdsChange) || showThresholds) && (*/}
+                {/*  <ThresholdControlsPlugin*/}
+                {/*    config={uplotConfig}*/}
+                {/*    fieldConfig={fieldConfig}*/}
+                {/*    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}*/}
+                {/*  />*/}
+                {/*)}*/}
               </>
             )}
           </>
