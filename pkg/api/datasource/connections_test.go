@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientrest "k8s.io/client-go/rest"
 
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
