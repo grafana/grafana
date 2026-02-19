@@ -517,6 +517,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableResourceEndpoint",
+			Description:     "Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -655,6 +663,14 @@ var (
 			Description:  "Enables generating table data as PDF in reporting",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "reportingV2Layouts",
+			Description:  "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
 		},
@@ -2018,6 +2034,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingAlertsActivityBanner",
+			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
@@ -2381,7 +2406,16 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-		}}
+		},
+		{
+			Name:         "react19",
+			Description:  "Whether to use the new React 19 runtime",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+	}
 )
 
 //go:embed toggles_gen.json

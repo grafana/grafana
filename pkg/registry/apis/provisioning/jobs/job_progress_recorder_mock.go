@@ -71,52 +71,6 @@ func (_c *MockJobProgressRecorder_Complete_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// HasDirPathFailedDeletion provides a mock function with given fields: folderPath
-func (_m *MockJobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
-	ret := _m.Called(folderPath)
-
-	if len(ret) == 0 {
-		panic("no return value specified for HasDirPathFailedDeletion")
-	}
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(folderPath)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
-// MockJobProgressRecorder_HasDirPathFailedDeletion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasDirPathFailedDeletion'
-type MockJobProgressRecorder_HasDirPathFailedDeletion_Call struct {
-	*mock.Call
-}
-
-// HasDirPathFailedDeletion is a helper method to define mock.On call
-//   - folderPath string
-func (_e *MockJobProgressRecorder_Expecter) HasDirPathFailedDeletion(folderPath interface{}) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
-	return &MockJobProgressRecorder_HasDirPathFailedDeletion_Call{Call: _e.mock.On("HasDirPathFailedDeletion", folderPath)}
-}
-
-func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
-	})
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Return(_a0 bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // HasDirPathFailedCreation provides a mock function with given fields: path
 func (_m *MockJobProgressRecorder) HasDirPathFailedCreation(path string) bool {
 	ret := _m.Called(path)
@@ -163,6 +117,52 @@ func (_c *MockJobProgressRecorder_HasDirPathFailedCreation_Call) RunAndReturn(ru
 	return _c
 }
 
+// HasDirPathFailedDeletion provides a mock function with given fields: folderPath
+func (_m *MockJobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
+	ret := _m.Called(folderPath)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasDirPathFailedDeletion")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(folderPath)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_HasDirPathFailedDeletion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasDirPathFailedDeletion'
+type MockJobProgressRecorder_HasDirPathFailedDeletion_Call struct {
+	*mock.Call
+}
+
+// HasDirPathFailedDeletion is a helper method to define mock.On call
+//   - folderPath string
+func (_e *MockJobProgressRecorder_Expecter) HasDirPathFailedDeletion(folderPath interface{}) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
+	return &MockJobProgressRecorder_HasDirPathFailedDeletion_Call{Call: _e.mock.On("HasDirPathFailedDeletion", folderPath)}
+}
+
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) Return(_a0 bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasDirPathFailedDeletion_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasDirPathFailedDeletion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Record provides a mock function with given fields: ctx, result
 func (_m *MockJobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	_m.Called(ctx, result)
@@ -197,9 +197,9 @@ func (_c *MockJobProgressRecorder_Record_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// ResetResults provides a mock function with no fields
-func (_m *MockJobProgressRecorder) ResetResults() {
-	_m.Called()
+// ResetResults provides a mock function with given fields: keepWarnings
+func (_m *MockJobProgressRecorder) ResetResults(keepWarnings bool) {
+	_m.Called(keepWarnings)
 }
 
 // MockJobProgressRecorder_ResetResults_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetResults'
@@ -208,13 +208,14 @@ type MockJobProgressRecorder_ResetResults_Call struct {
 }
 
 // ResetResults is a helper method to define mock.On call
-func (_e *MockJobProgressRecorder_Expecter) ResetResults() *MockJobProgressRecorder_ResetResults_Call {
-	return &MockJobProgressRecorder_ResetResults_Call{Call: _e.mock.On("ResetResults")}
+//   - keepWarnings bool
+func (_e *MockJobProgressRecorder_Expecter) ResetResults(keepWarnings interface{}) *MockJobProgressRecorder_ResetResults_Call {
+	return &MockJobProgressRecorder_ResetResults_Call{Call: _e.mock.On("ResetResults", keepWarnings)}
 }
 
-func (_c *MockJobProgressRecorder_ResetResults_Call) Run(run func()) *MockJobProgressRecorder_ResetResults_Call {
+func (_c *MockJobProgressRecorder_ResetResults_Call) Run(run func(keepWarnings bool)) *MockJobProgressRecorder_ResetResults_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(bool))
 	})
 	return _c
 }
@@ -224,7 +225,7 @@ func (_c *MockJobProgressRecorder_ResetResults_Call) Return() *MockJobProgressRe
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_ResetResults_Call) RunAndReturn(run func()) *MockJobProgressRecorder_ResetResults_Call {
+func (_c *MockJobProgressRecorder_ResetResults_Call) RunAndReturn(run func(bool)) *MockJobProgressRecorder_ResetResults_Call {
 	_c.Run(run)
 	return _c
 }
