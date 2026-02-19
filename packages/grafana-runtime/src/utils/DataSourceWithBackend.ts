@@ -360,7 +360,7 @@ class DataSourceWithBackend<
    * /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resource/api/v1/labels
    */
   buildDatasourceUrl(path: string): string {
-    if (config.featureToggles.datasourcesResourceResourceApi) {
+    if (config.featureToggles.datasourcesApiServerEnableResourceEndpointFrontend) {
       const apiVersion = 'v0alpha1';
       return `/apis/${this.type}.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
     }
