@@ -1,22 +1,29 @@
-import { useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from './QueryEditorContext';
 import { TransformationDebugDisplay } from './TransformationDebugDisplay';
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationFilterDisplay } from './TransformationFilterDisplay';
 import { TransformationHelpDisplay } from './TransformationHelpDisplay';
+import { useTransformationInputData } from './hooks/useTransformationInputData';
 
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
   const { selectedTransformation } = useQueryEditorUIContext();
+  const { transformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
-  // Memoize to avoid recreating potentially large data.series array reference on every render.
-  // This prevents unnecessary re-renders and processing in TransformationEditor.
-  const inputData = useMemo(() => data?.series ?? [], [data?.series]);
+  const inputData = useTransformationInputData({
+    selectedTransformation,
+    allTransformations: transformations,
+    rawData: data?.series ?? [],
+  });
 
   if (!selectedTransformation) {
     return null;
