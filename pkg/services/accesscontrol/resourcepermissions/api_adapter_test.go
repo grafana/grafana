@@ -896,7 +896,7 @@ type mockResourcePermissionStore struct {
 }
 
 func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
-	var filtered []accesscontrol.ResourcePermission
+	filtered := make([]accesscontrol.ResourcePermission, 0, len(m.permissions))
 
 	for _, perm := range m.permissions {
 		// Apply managed filters

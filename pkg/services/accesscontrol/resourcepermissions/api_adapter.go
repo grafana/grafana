@@ -344,7 +344,7 @@ func (a *api) getAllPermissionsFromLegacy(ctx context.Context, namespace string,
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
 	}
 
-	var filtered []accesscontrol.ResourcePermission
+	filtered := make([]accesscontrol.ResourcePermission, 0, len(legacyPermissions))
 	for _, perm := range legacyPermissions {
 		if filter.onlyInherited && !perm.IsInherited {
 			continue

@@ -161,6 +161,7 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 	// feature parity with K8s API. Both APIs should show all users/teams with access.
 	// When redirect is disabled, apply normal filtering based on license.
 	enforceAccessControl := s.license.FeatureEnabled("accesscontrol.enforcement")
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) {
 		enforceAccessControl = false
 	}
