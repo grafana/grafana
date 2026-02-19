@@ -216,15 +216,15 @@ export const TimeSeriesPanel = ({
             {/*)}*/}
             {!isVerticallyOriented && (
               <>
-                {/*<AnnotationsPlugin2*/}
-                {/*  replaceVariables={replaceVariables}*/}
-                {/*  multiLane={options.annotations?.multiLane}*/}
-                {/*  annotations={data.annotations ?? []}*/}
-                {/*  config={uplotConfig}*/}
-                {/*  timeZone={timeZone}*/}
-                {/*  newRange={newAnnotationRange}*/}
-                {/*  setNewRange={setNewAnnotationRange}*/}
-                {/*/>*/}
+                <AnnotationsPlugin2
+                  replaceVariables={replaceVariables}
+                  multiLane={options.annotations?.multiLane}
+                  annotations={data.annotations ?? []}
+                  config={uplotConfig}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin
