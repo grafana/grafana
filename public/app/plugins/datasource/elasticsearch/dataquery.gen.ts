@@ -392,6 +392,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   editorType?: string;
   /**
+   * Query language (when editor is code): raw_dsl or esql
+   */
+  queryLanguage?: string;
+  /**
    * List of metric aggregations
    */
   metrics?: Array<MetricAggregation>;
@@ -407,6 +411,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Name of time field
    */
   timeField?: string;
+  /**
+   * ESQL query
+   */
+  esqlQuery?: string;
 }
 
 export const defaultElasticsearchDataQuery: Partial<ElasticsearchDataQuery> = {

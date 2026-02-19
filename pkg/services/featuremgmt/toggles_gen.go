@@ -774,6 +774,10 @@ const (
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
+	// FlagElasticsearchESQLQuery
+	// Enables the ES|QL query editor in the Elasticsearch data source
+	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
+
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"

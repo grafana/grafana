@@ -348,3 +348,20 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(root)
 }
+
+// EsqlRequest represents an ES|QL query request
+type EsqlRequest struct {
+	Query string `json:"query"`
+}
+
+// EsqlColumn represents a column in ES|QL response
+type EsqlColumn struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// EsqlResponse represents an ES|QL query response
+type EsqlResponse struct {
+	Columns []EsqlColumn    `json:"columns"`
+	Values  [][]interface{} `json:"values"`
+}

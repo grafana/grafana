@@ -1,7 +1,7 @@
 import { Action, createAction } from '@reduxjs/toolkit';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { QueryType } from '../../types';
+import { QueryLanguage, QueryType } from '../../types';
 
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';
 
@@ -15,6 +15,8 @@ export const changeQuery = createAction<ElasticsearchDataQuery['query']>('change
 
 export const changeRawDSLQuery = createAction<ElasticsearchDataQuery['rawDSLQuery']>('change_raw_dsl_query');
 
+export const changeEsqlQuery = createAction<ElasticsearchDataQuery['esqlQuery']>('change_esql_query');
+
 export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>('change_alias_pattern');
 
 export const changeEditorType = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type');
@@ -22,6 +24,8 @@ export const changeEditorType = createAction<ElasticsearchDataQuery['editorType'
 export const changeEditorTypeAndResetQuery = createAction<ElasticsearchDataQuery['editorType']>(
   'change_editor_type_and_reset_query'
 );
+
+export const changeQueryLanguage = createAction<QueryLanguage>('change_query_language');
 
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
@@ -61,6 +65,26 @@ export const rawDSLQueryReducer = (prevRawDSLQuery: ElasticsearchDataQuery['rawD
   return prevRawDSLQuery;
 };
 
+export const esqlQueryReducer = (prevEsqlQuery: ElasticsearchDataQuery['esqlQuery'], action: Action) => {
+  if (changeEsqlQuery.match(action)) {
+    return action.payload;
+  }
+
+  if (changeEditorTypeAndResetQuery.match(action)) {
+    return '';
+  }
+
+  if (changeMetricType.match(action)) {
+    return '';
+  }
+
+  if (initQuery.match(action)) {
+    return prevEsqlQuery || '';
+  }
+
+  return prevEsqlQuery;
+};
+
 export const aliasPatternReducer = (prevAliasPattern: ElasticsearchDataQuery['alias'], action: Action) => {
   if (changeAliasPattern.match(action)) {
     return action.payload;
@@ -91,4 +115,19 @@ export const editorTypeReducer = (prevEditorType: ElasticsearchDataQuery['editor
   }
 
   return prevEditorType;
+};
+
+export const queryLanguageReducer = (
+  prevQueryLanguage: ElasticsearchDataQuery['queryLanguage'],
+  action: Action
+): ElasticsearchDataQuery['queryLanguage'] => {
+  if (changeQueryLanguage.match(action)) {
+    return action.payload;
+  }
+
+  if (initQuery.match(action)) {
+    return prevQueryLanguage ?? 'raw_dsl';
+  }
+
+  return prevQueryLanguage;
 };

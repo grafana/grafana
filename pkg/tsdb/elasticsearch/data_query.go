@@ -24,19 +24,21 @@ type elasticsearchDataQuery struct {
 	dataQueries                  []backend.DataQuery
 	logger                       log.Logger
 	ctx                          context.Context
+	datasourceIndex              string
 	keepLabelsInResponse         bool
 	aggregationParserDSLRawQuery AggregationParser
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger, datasourceIndex string) *elasticsearchDataQuery {
 	_, fromAlert := req.Headers[headerFromAlert]
 	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
 
 	return &elasticsearchDataQuery{
-		client:      client,
-		dataQueries: req.Queries,
-		logger:      logger,
-		ctx:         ctx,
+		client:          client,
+		dataQueries:     req.Queries,
+		logger:          logger,
+		ctx:             ctx,
+		datasourceIndex: datasourceIndex,
 		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
 		// Historically, these labels have been used in alerting rules and transformations.
 		keepLabelsInResponse: fromAlert || fromExpression,
@@ -57,6 +59,91 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return response, nil
 	}
 
+	// Separate ES|QL queries from regular queries.
+	// ES|QL queries must be handled separately because they:
+	// 1. Use a different endpoint: /_query (single query) vs /_msearch (batch)
+	// 2. Have a different request format: {"query": "..."} vs NDJSON with headers
+	// 3. Have a different response format: {columns, values} vs {aggregations, hits}
+	// 4. Cannot be batched together like regular queries
+	//
+	// In contrast, Raw DSL queries (QueryLanguage == "raw_dsl") still use the /_msearch
+	// endpoint and the same response format, so they can be processed together
+	// with other regular queries in processQuery().
+	var regularQueries []*Query
+	var esqlQueries []*Query
+	for _, q := range queries {
+		if q.IsEsqlQuery() {
+			esqlQueries = append(esqlQueries, q)
+		} else {
+			regularQueries = append(regularQueries, q)
+		}
+	}
+
+	// Execute ES|QL queries individually (each requires a separate HTTP call to /_query)
+	for _, q := range esqlQueries {
+		esqlResponse, err := e.executeEsqlQuery(q)
+		if err != nil {
+			response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		response.Responses[q.RefID] = *esqlResponse
+	}
+
+	// Execute regular queries as a batch via /_msearch
+	if len(regularQueries) > 0 {
+		regularResponse, err := e.executeRegularQueries(regularQueries, start)
+		if err != nil {
+			return response, nil
+		}
+		for refID, resp := range regularResponse.Responses {
+			response.Responses[refID] = resp
+		}
+	}
+
+	return response, nil
+}
+
+func (e *elasticsearchDataQuery) executeEsqlQuery(q *Query) (*backend.DataResponse, error) {
+	if q.EsqlQuery == "" {
+		return nil, backend.DownstreamError(fmt.Errorf("ES|QL query is empty"))
+	}
+
+	query := e.resolveEsqlIndexPlaceholder(q.EsqlQuery)
+	e.logger.Debug("Executing ES|QL query", "query", query, "refID", q.RefID)
+
+	esqlRes, err := e.client.ExecuteEsql(query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Process the ES|QL response based on the metric type, similar to how
+	// the "code" editor type handles different metric types (logs, raw_data, raw_document, etc.)
+	configuredFields := e.client.GetConfiguredFields()
+
+	if isLogsQuery(q) {
+		return processEsqlLogsResponse(esqlRes, q, configuredFields)
+	} else if isRawDocumentQuery(q) {
+		return processEsqlRawDocumentResponse(esqlRes, q)
+	} else if isRawDataQuery(q) {
+		return processEsqlRawDataResponse(esqlRes, q)
+	} else {
+		// Metrics queries should return time series frames so they are compatible
+		// with the same frontend flows as regular/raw DSL metrics queries.
+		return processEsqlMetricsResponse(esqlRes, q)
+	}
+}
+
+func (e *elasticsearchDataQuery) resolveEsqlIndexPlaceholder(query string) string {
+	if e.datasourceIndex == "" {
+		return query
+	}
+
+	return strings.ReplaceAll(query, "$index", e.datasourceIndex)
+}
+
+func (e *elasticsearchDataQuery) executeRegularQueries(queries []*Query, start time.Time) (*backend.QueryDataResponse, error) {
+	response := backend.NewQueryDataResponse()
+
 	ms := e.client.MultiSearch()
 
 	for _, q := range queries {
@@ -72,9 +159,9 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 
 	req, err := ms.Build()
 	if err != nil {
-		mqs, _ := json.Marshal(e.dataQueries)
+		mqs, _ := json.Marshal(queries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		response.Responses[queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
 		return response, nil
 	}
 
@@ -91,16 +178,16 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 				err = backend.DownstreamError(err)
 			}
 		}
-		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		response.Responses[queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
 		return response, nil
 	}
 
 	if res.Status >= 400 {
 		statusErr := fmt.Errorf("unexpected status code: %d", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.Status) == backend.ErrorSourceDownstream {
-			response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(statusErr))
+			response.Responses[queries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(statusErr))
 		} else {
-			response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(statusErr))
+			response.Responses[queries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(statusErr))
 		}
 		return response, nil
 	}

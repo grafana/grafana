@@ -24,7 +24,10 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
 	filters.AddQueryStringFilter(q.RawQuery, true)
 
-	if q.EditorType != nil && *q.EditorType == "code" {
+	// Code-editor queries may not include queryLanguage,
+	// but still provide rawDSLQuery directly.
+	isImplicitRawDSLQuery := q.IsCodeEditorType() && q.QueryLanguage == nil && q.RawDSLQuery != ""
+	if q.IsRawDSLQuery() || isImplicitRawDSLQuery {
 		cfg := backend.GrafanaConfigFromContext(e.ctx)
 		if !cfg.FeatureToggles().IsEnabled("elasticsearchRawDSLQuery") {
 			return backend.DownstreamError(fmt.Errorf("raw DSL query feature is disabled. Enable the elasticsearchRawDSLQuery feature toggle to use this query type"))

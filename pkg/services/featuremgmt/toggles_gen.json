@@ -1474,6 +1474,19 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchESQLQuery",
+        "resourceVersion": "1769025600000",
+        "creationTimestamp": "2026-01-21T12:00:00Z"
+      },
+      "spec": {
+        "description": "Enables the ES|QL query editor in the Elasticsearch data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchImprovedParsing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-01-15T17:05:54Z"

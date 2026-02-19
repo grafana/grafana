@@ -37,6 +37,8 @@ composableKinds: DataQuery: {
 				timeField?: string
 				// Editor type
 				editorType?: string
+				// Query language
+				queryLanguage?: string
 				// List of bucket aggregations
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations

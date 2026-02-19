@@ -2,6 +2,7 @@ package es
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -48,6 +49,7 @@ type Client interface {
 	GetConfiguredFields() ConfiguredFields
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
+	ExecuteEsql(query string) (*EsqlResponse, error)
 }
 
 // NewClient creates a new elasticsearch client
@@ -212,6 +214,70 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder()
+}
+
+func (c *baseClientImpl) ExecuteEsql(query string) (*EsqlResponse, error) {
+	var err error
+
+	esqlRequest := EsqlRequest{
+		Query: query,
+	}
+
+	payload, err := json.Marshal(esqlRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal ES|QL request: %w", err)
+	}
+
+	_, span := tracing.DefaultTracer().Start(c.ctx, "datasource.elasticsearch.queryData.executeEsql", trace.WithAttributes(
+		attribute.String("url", c.ds.URL),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+	}()
+
+	start := time.Now()
+	clientRes, err := c.transport.executeEsqlRequest(payload)
+	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
+		sourceErr := backend.ErrorWithSource{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.ErrorSource())
+		}
+		if clientRes != nil {
+			lp = append(lp, "statusCode", clientRes.StatusCode)
+		}
+		c.logger.Error("Error received from Elasticsearch ES|QL endpoint", lp...)
+		return nil, err
+	}
+	defer func() {
+		if err := clientRes.Body.Close(); err != nil {
+			c.logger.Warn("Failed to close response body", "error", err)
+		}
+	}()
+
+	c.logger.Info("Response received from Elasticsearch ES|QL endpoint", "status", "ok", "statusCode", clientRes.StatusCode, "contentLength", clientRes.ContentLength, "duration", time.Since(start), "stage", StageDatabaseRequest)
+
+	// Check for error status codes
+	if clientRes.StatusCode >= 400 {
+		bodyBytes, _ := io.ReadAll(clientRes.Body)
+		return nil, backend.DownstreamError(fmt.Errorf("ES|QL query failed with status %d: %s", clientRes.StatusCode, string(bodyBytes)))
+	}
+
+	var esqlResponse EsqlResponse
+	dec := json.NewDecoder(clientRes.Body)
+	if err := dec.Decode(&esqlResponse); err != nil {
+		return nil, backend.DownstreamError(fmt.Errorf("failed to decode ES|QL response: %w", err))
+	}
+
+	return &esqlResponse, nil
 }
 
 func isFeatureEnabled(ctx context.Context, feature string) bool {

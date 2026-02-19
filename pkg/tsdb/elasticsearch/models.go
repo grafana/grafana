@@ -11,6 +11,7 @@ import (
 type Query struct {
 	RawQuery      string       `json:"query"`
 	RawDSLQuery   string       `json:"rawDSLQuery"`
+	EsqlQuery     string       `json:"esqlQuery"`
 	BucketAggs    []*BucketAgg `json:"bucketAggs"`
 	Metrics       []*MetricAgg `json:"metrics"`
 	Alias         string       `json:"alias"`
@@ -20,6 +21,7 @@ type Query struct {
 	MaxDataPoints int64
 	TimeRange     backend.TimeRange
 	EditorType    *string `json:"editorType"`
+	QueryLanguage *string `json:"queryLanguage"`
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
@@ -125,4 +127,16 @@ func describeMetric(metricType, field string) string {
 		return text
 	}
 	return text + " " + field
+}
+
+func (q *Query) IsEsqlQuery() bool {
+	return q.IsCodeEditorType() && q.QueryLanguage != nil && *q.QueryLanguage == "esql"
+}
+
+func (q *Query) IsRawDSLQuery() bool {
+	return q.IsCodeEditorType() && q.QueryLanguage != nil && *q.QueryLanguage == "raw_dsl"
+}
+
+func (q *Query) IsCodeEditorType() bool {
+	return q.EditorType != nil && *q.EditorType == "code"
 }
