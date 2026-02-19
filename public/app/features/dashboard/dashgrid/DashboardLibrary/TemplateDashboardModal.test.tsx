@@ -43,9 +43,16 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
 
+const mockUseBooleanFlagValue = jest.fn();
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flagKey: string, defaultValue: boolean) => mockUseBooleanFlagValue(flagKey, defaultValue),
+}));
+
 describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseBooleanFlagValue.mockImplementation((_, defaultValue: boolean) => defaultValue);
     mockGetList.mockReturnValue([
       { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
     ]);
@@ -155,59 +162,141 @@ describe('TemplateDashboardModal', () => {
   });
 
   describe('Assistant button', () => {
-    it('should redirect to template dashboard URL when Customize with Assistant is clicked with correct parameters', async () => {
-      const { user } = render(<TemplateDashboardModal />, {
-        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+    describe('when feature flags are false', () => {
+      it('should not render Customize with Assistant button when both feature flags are false', async () => {
+        mockUseBooleanFlagValue.mockImplementation((key: string) => {
+          if (key === 'dashboardTemplatesAssistantButton') {
+            return false;
+          }
+          if (key === 'assistant.frontend.tools.dashboardTemplates') {
+            return false;
+          }
+          return false;
+        });
+
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await waitFor(() => {
+          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+        });
+
+        expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+      it('should not render Customize with Assistant button when dashboardTemplatesAssistantButton is false', async () => {
+        mockUseBooleanFlagValue.mockImplementation((key: string) => {
+          if (key === 'dashboardTemplatesAssistantButton') {
+            return false;
+          }
+          if (key === 'assistant.frontend.tools.dashboardTemplates') {
+            return true;
+          }
+          return false;
+        });
+
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await waitFor(() => {
+          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+        });
+
+        expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
       });
 
-      await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+      it('should not render Customize with Assistant button when assistant.frontend.tools.dashboardTemplates is false', async () => {
+        mockUseBooleanFlagValue.mockImplementation((key: string) => {
+          if (key === 'dashboardTemplatesAssistantButton') {
+            return true;
+          }
+          if (key === 'assistant.frontend.tools.dashboardTemplates') {
+            return false;
+          }
+          return false;
+        });
 
-      await waitFor(() => {
-        expect(mockLocationServicePush).toHaveBeenCalledTimes(1);
-        const calledUrl = mockLocationServicePush.mock.calls[0][0];
-        expect(calledUrl).toContain(DASHBOARD_LIBRARY_ROUTES.Template);
-        expect(calledUrl).toContain('gnetId=1');
-        expect(calledUrl).toContain('title=Test+Template+Dashboard');
-        expect(calledUrl).toContain('assistantSource=assistant_button');
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await waitFor(() => {
+          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+        });
+
+        expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
       });
     });
 
-    it('should close modal when Customize with Assistant is clicked', async () => {
-      const { user } = render(<TemplateDashboardModal />, {
-        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+    describe('when feature flags are enabled', () => {
+      beforeEach(() => {
+        mockUseBooleanFlagValue.mockImplementation((key: string) => {
+          if (key === 'dashboardTemplatesAssistantButton') {
+            return true;
+          }
+          if (key === 'assistant.frontend.tools.dashboardTemplates') {
+            return true;
+          }
+          return false;
+        });
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+      it('should redirect to template dashboard URL when Customize with Assistant is clicked with correct parameters', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await waitFor(() => {
+          expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+
+        await waitFor(() => {
+          expect(mockLocationServicePush).toHaveBeenCalledTimes(1);
+          const calledUrl = mockLocationServicePush.mock.calls[0][0];
+          expect(calledUrl).toContain(DASHBOARD_LIBRARY_ROUTES.Template);
+          expect(calledUrl).toContain('gnetId=1');
+          expect(calledUrl).toContain('title=Test+Template+Dashboard');
+          expect(calledUrl).toContain('assistantSource=assistant_button');
+        });
       });
 
-      await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+      it('should close modal when Customize with Assistant is clicked', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
 
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
+        });
       });
-    });
 
-    it('should track action assistant when Customize with Assistant is clicked', async () => {
-      const { user } = render(<TemplateDashboardModal />, {
-        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      it('should track action assistant when Customize with Assistant is clicked', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await waitFor(() => {
+          expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+
+        expect(mockItemClicked).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: 'assistant',
+          })
+        );
       });
-
-      await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
-      });
-
-      await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
-
-      expect(mockItemClicked).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: 'assistant',
-        })
-      );
     });
   });
 

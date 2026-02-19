@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
@@ -30,6 +31,11 @@ export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
+  const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
+  const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(
+    'assistant.frontend.tools.dashboardTemplates',
+    false
+  );
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 
@@ -141,7 +147,9 @@ export const TemplateDashboardModal = () => {
                     onClose={onClose}
                     dashboard={dashboard}
                     kind="template_dashboard"
-                    showAssistantButton
+                    showAssistantButton={
+                      isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
+                    }
                   />
                 );
               })}
