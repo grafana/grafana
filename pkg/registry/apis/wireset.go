@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
+	"github.com/grafana/grafana/pkg/registry/apis/customtheme"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -80,4 +81,5 @@ var WireSet = wire.NewSet(
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
+	customtheme.RegisterAPIService,
 )
