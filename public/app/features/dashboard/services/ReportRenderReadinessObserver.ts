@@ -25,10 +25,6 @@ interface MessageEvent<T extends MessageEventType> {
  * normal dashboard usage.
  */
 export class ReportRenderReadinessObserver implements performanceUtils.ScenePerformanceObserver {
-  onDashboardInteractionStart = (): void => {
-    window.__grafana_report_render_complete = false;
-  };
-
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     if (data.interactionType === 'dashboard_view') {
       sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });

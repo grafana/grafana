@@ -11,21 +11,12 @@ describe('ReportRenderReadinessObserver', () => {
 
   beforeEach(() => {
     observer = new ReportRenderReadinessObserver();
-    delete window.__grafana_report_render_complete;
     messageChannelMock = jest.fn();
     window.__grafanaImageRendererMessageChannel = messageChannelMock;
   });
 
   afterEach(() => {
     delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
-  });
-
-  describe('onDashboardInteractionStart', () => {
-    it('should set __grafana_report_render_complete to false', () => {
-      observer.onDashboardInteractionStart!();
-
-      expect(window.__grafana_report_render_complete).toBe(false);
-    });
   });
 
   describe('onDashboardInteractionComplete', () => {
@@ -60,15 +51,12 @@ describe('ReportRenderReadinessObserver', () => {
       expect(messageChannelMock).not.toHaveBeenCalled();
     });
 
-    it('should reset to false on new interaction start then send message on dashboard_view complete', () => {
+    it('should send a message for each dashboard_view completion', () => {
       observer.onDashboardInteractionComplete!({
         interactionType: 'dashboard_view',
         duration: 1000,
       } as performanceUtils.DashboardInteractionCompleteData);
       expect(messageChannelMock).toHaveBeenCalledTimes(1);
-
-      observer.onDashboardInteractionStart!();
-      expect(window.__grafana_report_render_complete).toBe(false);
 
       observer.onDashboardInteractionComplete!({
         interactionType: 'dashboard_view',
