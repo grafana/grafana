@@ -1006,7 +1006,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 		Resource:  ns.Resource,
 	}
 
-	expectations := make([]expectation, 0)
+	expectations := make([]expectation, 0) //nolint:prealloc
 	// initial test will contain the same "changes" as the second one (first one added by the for loop below)
 	// this is done with a 2 hour old RV so it uses the event store instead of the data store to check for changes
 	expectations = append(expectations, expectation{
