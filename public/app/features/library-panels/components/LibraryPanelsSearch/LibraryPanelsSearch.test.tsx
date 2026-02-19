@@ -35,17 +35,21 @@ const timeseries: PanelPluginMeta = {
   sort: 1,
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      timeseries: {
-        info: { logos: { small: '' } },
-        name: 'Time Series',
-      },
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMeta: jest.fn((type: string) => ({
+    value: {
+      id: type,
+      name: type === 'timeseries' ? 'Time Series' : 'Graph',
+      info: { logos: { small: '', large: '' } },
+      baseUrl: '',
+      type: 'panel',
+      module: '',
+      sort: 0,
     },
-  },
+    loading: false,
+    error: undefined,
+  })),
 }));
 
 const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels');

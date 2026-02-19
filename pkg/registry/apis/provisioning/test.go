@@ -131,12 +131,26 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					if old != nil {
 						oldCfg := old.Config()
 						repository.CopySecureValues(&cfg, oldCfg)
+
+						// Copying previous finalizers
+						if len(cfg.GetFinalizers()) == 0 {
+							cfg.SetFinalizers(oldCfg.GetFinalizers())
+						}
 					}
 				}
 
 				cfg.SetName(name)
 				if cfg.GetNamespace() == "" {
 					cfg.SetNamespace(ns)
+				}
+
+				// In case the given repo has no finalizers, set the default ones.
+				// This is because we now enforce their existence at validation time.
+				if len(cfg.GetFinalizers()) == 0 {
+					cfg.SetFinalizers([]string{
+						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
+					})
 				}
 
 				// In case a connection is specified, we should try creating a new token with given info

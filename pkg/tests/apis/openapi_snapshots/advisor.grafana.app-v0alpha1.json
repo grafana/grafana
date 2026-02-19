@@ -2217,10 +2217,7 @@
           "details": {
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
@@ -2325,10 +2322,7 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -2440,10 +2434,7 @@
           "details": {
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
@@ -2486,10 +2477,7 @@
           "additionalFields": {
             "description": "additionalFields is reserved for future use",
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",

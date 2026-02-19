@@ -45,20 +45,18 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   };
 
   const onEndEditName = (newName: string) => {
-    const trimmedName = newName.trim();
-    const error = validateQueryName(trimmedName);
+    setIsEditing(false);
+    setValidationError(null);
 
-    if (error) {
-      setValidationError(error);
+    const trimmedName = newName.trim();
+
+    if (validateQueryName(trimmedName)) {
       return;
     }
 
     if (query.refId !== trimmedName) {
       onQueryUpdate({ ...query, refId: trimmedName }, query.refId);
     }
-
-    setIsEditing(false);
-    setValidationError(null);
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
@@ -73,6 +71,14 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      const trimmedName = event.currentTarget.value.trim();
+      const error = validateQueryName(trimmedName);
+
+      if (error) {
+        setValidationError(error);
+        return;
+      }
+
       onEndEditName(event.currentTarget.value);
     } else if (event.key === 'Escape') {
       event.stopPropagation(); // Prevent going all the way back to the dashboard scene

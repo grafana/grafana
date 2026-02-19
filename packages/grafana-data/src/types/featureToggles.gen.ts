@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
@@ -333,6 +338,16 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
+  /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -414,6 +429,11 @@ export interface FeatureToggles {
   */
   perPanelFiltering?: boolean;
   /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
@@ -423,6 +443,11 @@ export interface FeatureToggles {
   * @default false
   */
   pdfTables?: boolean;
+  /**
+  * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
+  * @default false
+  */
+  reportingV2Layouts?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -1273,6 +1298,11 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
+  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
+  * @default false
+  */
+  alertingAlertsActivityBanner?: boolean;
+  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */
@@ -1492,4 +1522,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables the notification history global menu item viewer
+  * @default false
+  */
+  alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
 }

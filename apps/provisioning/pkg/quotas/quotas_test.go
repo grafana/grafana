@@ -287,6 +287,114 @@ func TestIsQuotaExceeded(t *testing.T) {
 	}
 }
 
+func TestIsQuotaReached(t *testing.T) {
+	tests := []struct {
+		name       string
+		conditions []metav1.Condition
+		expected   bool
+	}{
+		{
+			name:       "no conditions returns false",
+			conditions: nil,
+			expected:   false,
+		},
+		{
+			name:       "empty conditions returns false",
+			conditions: []metav1.Condition{},
+			expected:   false,
+		},
+		{
+			name: "quota reached returns true",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaReached,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "within quota returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonWithinQuota,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota exceeded returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionFalse,
+					Reason: provisioning.ReasonQuotaExceeded,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota unlimited returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaUnlimited,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "true status but wrong reason returns false",
+			conditions: []metav1.Condition{
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonWithinQuota,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "unrelated condition is ignored",
+			conditions: []metav1.Condition{
+				{
+					Type:   "SomeOtherCondition",
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaReached,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "quota reached among multiple conditions",
+			conditions: []metav1.Condition{
+				{
+					Type:   "SomeOtherCondition",
+					Status: metav1.ConditionTrue,
+					Reason: "Ready",
+				},
+				{
+					Type:   provisioning.ConditionTypeResourceQuota,
+					Status: metav1.ConditionTrue,
+					Reason: provisioning.ReasonQuotaReached,
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsQuotaReached(tt.conditions)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestWouldStayWithinQuota(t *testing.T) {
 	tests := []struct {
 		name      string
