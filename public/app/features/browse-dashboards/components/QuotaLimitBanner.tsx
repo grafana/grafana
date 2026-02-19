@@ -38,18 +38,17 @@ function formatDetail(resource: ResourceStatus): string {
 export function QuotaLimitBanner() {
   const styles = useStyles2(getStyles);
   const { resources, isLoading, hasError, featureEnabled } = useQuotaLimits();
-
   const [dismissed, setDismissed] = useState<DismissedMap>(
     () => store.getObject<DismissedMap>(DISMISS_STORAGE_KEY) ?? {}
   );
 
-  const visibleResources = resources.filter((r) => !(r.state === 'nearing' && dismissed[r.kind]));
-  if (!featureEnabled || isLoading || hasError || visibleResources.length === 0) {
+  const atLimitResources = resources.filter((r) => r.state === 'at_limit');
+  const nearingResources = resources.filter((r) => r.state === 'nearing' && !dismissed[r.kind]);
+
+  if (!featureEnabled || isLoading || hasError || (!atLimitResources.length && !nearingResources.length)) {
     return null;
   }
 
-  const atLimitResources = visibleResources.filter((r) => r.state === 'at_limit');
-  const nearingResources = visibleResources.filter((r) => r.state === 'nearing');
   const isPaying = !isFreeTierLicense();
 
   const handleDismiss = () => {

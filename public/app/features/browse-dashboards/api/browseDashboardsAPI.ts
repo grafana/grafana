@@ -133,6 +133,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          // Refetch quota usage after mutations that change the total number of dashboards or folders
           invalidateQuotaUsage(dispatch);
         });
       },
@@ -467,7 +468,7 @@ export const browseDashboardsAPI = createApi({
 
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
-        queryFulfilled.then(async () => {
+        queryFulfilled.then(async ({ data }) => {
           await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
@@ -475,6 +476,10 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          // version 1 means a newly created dashboard — only then does the resource count change
+          if (data.version === 1) {
+            invalidateQuotaUsage(dispatch);
+          }
         });
       },
     }),
