@@ -71,6 +71,7 @@ dc_resource("tempo", labels=["observability"])
 
 dc_resource("postgres", labels=["misc"])
 dc_resource("tempo-init", labels=["misc"])
+dc_resource("goff", labels=["misc"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing with the path, it is relative to the Tiltfile

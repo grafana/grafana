@@ -52,18 +52,6 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 				maps.Copy(defs, getter(ref))
 			}
 		}
-
-		// TODO: add timerange to upstream SDK setup
-		maps.Copy(defs, map[string]openapi.OpenAPIDefinition{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.TimeRange": {
-				Schema: spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Type:                 []string{"object"},
-						AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-					},
-				},
-			},
-		})
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {

@@ -40,7 +40,7 @@ func (m *mockResponder) Error(err error) {
 func TestUserTeamREST_Connect(t *testing.T) {
 	t.Run("should create handler with default pagination", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -67,7 +67,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse limit query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -88,7 +88,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse offset query parameter and calculate page", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -111,7 +111,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse page query parameter and calculate offset", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -134,7 +134,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -155,7 +155,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should not enable explain when explain=false", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -176,7 +176,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should return error when identity is missing", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := context.Background()
 		responder := &mockResponder{}
@@ -199,7 +199,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		mockClient := &MockClient{
 			MockError: errors.New("search failed"),
 		}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -253,7 +253,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				},
 			},
 		}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -288,7 +288,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 	t.Run("should include correct fields in search request", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewUserTeamREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+		handler := NewUserTeamREST(mockClient, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",

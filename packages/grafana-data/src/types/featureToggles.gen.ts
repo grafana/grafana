@@ -64,11 +64,6 @@ export interface FeatureToggles {
   */
   cloudWatchCrossAccountQuerying?: boolean;
   /**
-  * Show warnings when dashboards do not validate against the schema
-  * @default false
-  */
-  showDashboardValidationWarnings?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -149,6 +144,11 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
+  * Enable Faro session replay for Grafana
+  * @default false
+  */
+  faroSessionReplay?: boolean;
+  /**
   * A table visualisation for logs in Explore
   * @default true
   */
@@ -208,11 +208,6 @@ export interface FeatureToggles {
   * @default false
   */
   aiGeneratedDashboardChanges?: boolean;
-  /**
-  * Enables rendering retries for the reporting feature
-  * @default false
-  */
-  reportingRetries?: boolean;
   /**
   * Enables CSV encoding options in the reporting feature
   * @default false
@@ -309,6 +304,11 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
+  * Does not register datasource apis that use the numeric id
+  * @default false
+  */
+  datasourceDisableIdApi?: boolean;
+  /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
   */
@@ -319,6 +319,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Use the new datasource API groups for datasource CRUD requests
+  * @default false
+  */
+  useNewAPIsForDatasourceCRUD?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   * @default false
   */
@@ -328,6 +333,21 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceFromUI?: boolean;
+  /**
+  * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesRerouteLegacyCRUDAPIs?: boolean;
+  /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -409,6 +429,11 @@ export interface FeatureToggles {
   */
   perPanelFiltering?: boolean;
   /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
@@ -418,6 +443,11 @@ export interface FeatureToggles {
   * @default false
   */
   pdfTables?: boolean;
+  /**
+  * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
+  * @default false
+  */
+  reportingV2Layouts?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -454,15 +484,15 @@ export interface FeatureToggles {
   */
   auditLoggingAppPlatform?: boolean;
   /**
-  * Enable the secrets management API and services under app platform
-  * @default false
-  */
-  secretsManagementAppPlatform?: boolean;
-  /**
   * Enable the secrets management app platform UI
   * @default false
   */
   secretsManagementAppPlatformUI?: boolean;
+  /**
+  * Enable the Secrets Keeper management UI for configuring external secret storage
+  * @default false
+  */
+  secretsKeeperUI?: boolean;
   /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   * @default false
@@ -608,6 +638,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableSendAlertsExternal?: boolean;
+  /**
+  * Use the new k8s API for fetching integration type schemas
+  * @default false
+  */
+  alertingSyncNotifiersApiMigration?: boolean;
   /**
   * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
   * @default false
@@ -875,6 +910,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+  * @default false
+  */
+  teamHttpHeadersFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -970,6 +1010,11 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
+  * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+  * @default false
+  */
+  alertingMigrationWizardUI?: boolean;
+  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
@@ -1052,10 +1097,21 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
+  * @deprecated
   * @default false
   */
   kubernetesAuthZHandlerRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZResourcePermissionsRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1096,11 +1152,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthnMutation?: boolean;
-  /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1242,6 +1293,11 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
+  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
+  * @default false
+  */
+  alertingAlertsActivityBanner?: boolean;
+  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */
@@ -1292,6 +1348,11 @@ export interface FeatureToggles {
   */
   panelStyleActions?: boolean;
   /**
+  * Enable visualization presets
+  * @default false
+  */
+  vizPresets?: boolean;
+  /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
   * @default false
   */
@@ -1326,6 +1387,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Exclude redundant individual dashboard/folder permissions from managed roles at query time
+  * @default false
+  */
+  excludeRedundantManagedPermissions?: boolean;
   /**
   * Show insights for plugins in the plugin details page
   * @default false
@@ -1427,8 +1493,53 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Redirects the request of the team endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables external group mapping APIs in the app platform
+  * @default false
+  */
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
+  /**
+  * Use the new APIs for syncing users to teams
+  * @default false
+  */
+  kubernetesTeamSync?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Makes NoData and Error alerts fire immediately, without 'pending' stage
+  * @default false
+  */
+  alertingIgnorePendingForNoDataAndError?: boolean;
+  /**
+  * Enables the notification history tab in the rule viewer
+  * @default false
+  */
+  alertingNotificationHistoryRuleViewer?: boolean;
+  /**
+  * Enables the notification history global menu item viewer
+  * @default false
+  */
+  alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
 }

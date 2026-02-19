@@ -148,8 +148,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideDashboardControls,
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel } = dashboard.useState();
-  const isQueryEditorNext = Boolean(config.featureToggles.queryEditorNext);
+  const { links, editPanel, isEditing } = dashboard.useState();
+  const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
@@ -179,7 +179,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           )}
           {!hideVariableControls && (
             <div className={styles.drilldownControlsContainer}>
-              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
+              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} isEditing={isEditing} />
             </div>
           )}
           <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
@@ -313,16 +313,16 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
-      '&:hover .dashboard-canvas-add-button': {
+
+      '&:hover .dashboard-canvas-controls': {
         opacity: 1,
-        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
       ...(isQueryEditorNext && {
         padding: 0,
-        marginBottom: theme.spacing(1),
+        marginBottom: theme.spacing(-1),
       }),
       paddingRight: 0,
     }),

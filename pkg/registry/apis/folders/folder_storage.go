@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -84,6 +85,11 @@ func (s *folderStorage) Create(ctx context.Context,
 	if err != nil {
 		statusErr := apierrors.ToFolderStatusError(err)
 		return nil, &statusErr
+	}
+
+	// Skip permission side effects during dry-run
+	if dryrun.IsDryRun(options.DryRun) {
+		return obj, nil
 	}
 
 	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled

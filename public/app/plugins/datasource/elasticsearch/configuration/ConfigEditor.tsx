@@ -12,7 +12,7 @@ import {
   DataSourceDescription,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Alert, SecureSocksProxySettings, Divider, Stack } from '@grafana/ui';
+import { Alert, Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
 import { ElasticsearchOptions, ElasticsearchSecureJsonData } from '../types';
 
@@ -37,18 +37,6 @@ export const ConfigEditor = (props: Props) => {
     config: options,
     onChange: onOptionsChange,
   });
-  if (config.sigV4AuthEnabled) {
-    authProps.customMethods = [
-      {
-        id: 'custom-sigv4',
-        label: 'SigV4 auth',
-        description: 'AWS Signature Version 4 authentication',
-        component: <SIGV4ConnectionConfig inExperimentalAuthComponent={true} {...props} />,
-      },
-    ];
-    authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
-  }
-
   authProps.customMethods = [
     {
       id: 'custom-api-key',
@@ -58,6 +46,19 @@ export const ConfigEditor = (props: Props) => {
     },
   ];
   authProps.selectedMethod = options.jsonData.apiKeyAuth ? 'custom-api-key' : authProps.selectedMethod;
+
+  if (config.sigV4AuthEnabled) {
+    authProps.customMethods = [
+      ...authProps.customMethods,
+      {
+        id: 'custom-sigv4',
+        label: 'SigV4 auth',
+        description: 'AWS Signature Version 4 authentication',
+        component: <SIGV4ConnectionConfig inExperimentalAuthComponent={true} {...props} />,
+      },
+    ];
+    authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
+  }
 
   return (
     <>

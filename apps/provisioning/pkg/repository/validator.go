@@ -37,7 +37,7 @@ func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
 	}
 }
 
-// ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
+// Validate does structural validation (via Factory.Validate) and configuration checks on the repository object.
 // It does not run a health check or compare against existing repositories.
 func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
@@ -87,6 +87,19 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			}
 		default:
 			list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "invalid workflow"))
+		}
+	}
+
+	// Validating the presence of finalizers in resources not marked for deletion.
+	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+		if len(cfg.Finalizers) == 0 {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					"cannot have no finalizers set on resources not marked for deletion",
+				),
+			)
 		}
 	}
 

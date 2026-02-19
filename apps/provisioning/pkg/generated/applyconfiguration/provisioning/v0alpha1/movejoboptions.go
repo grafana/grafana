@@ -7,10 +7,21 @@ package v0alpha1
 // MoveJobOptionsApplyConfiguration represents a declarative configuration of the MoveJobOptions type for use
 // with apply.
 type MoveJobOptionsApplyConfiguration struct {
-	Ref        *string                         `json:"ref,omitempty"`
-	Paths      []string                        `json:"paths,omitempty"`
-	TargetPath *string                         `json:"targetPath,omitempty"`
-	Resources  []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	// Ref to the branch or commit hash that should move
+	Ref *string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
+	// Destination path for the move (e.g. "new-location/")
+	TargetPath *string `json:"targetPath,omitempty"`
+	// Resources to move
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the paths.
+	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
 }
 
 // MoveJobOptionsApplyConfiguration constructs a declarative configuration of the MoveJobOptions type for use with

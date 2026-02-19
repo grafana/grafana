@@ -3,9 +3,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
+import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { Title } from '../common/Title';
 
 import { PoliciesTree } from './PoliciesTree';
 
@@ -33,12 +35,22 @@ const PoliciesTreeWrapper = () => {
 function PolicyPage() {
   const { name = '' } = useParams();
   const routeName = name === ROOT_ROUTE_NAME ? 'Default Policy' : decodeURIComponent(name);
+  const { navId, pageNav } = useNotificationPoliciesNav();
 
-  const pageNav = {
-    text: routeName,
-  };
   return (
-    <AlertmanagerPageWrapper navId="am-routes" pageNav={pageNav} accessType="notification">
+    <AlertmanagerPageWrapper
+      navId={navId}
+      accessType="notification"
+      pageNav={{
+        text: routeName,
+        parentItem: pageNav,
+      }}
+      renderTitle={(title) => <Title name={title} returnToFallback={'/alerting/routes'} />}
+      subTitle={t(
+        'alerting.policy-page.text-subtitle',
+        'Determine how alerts are routed to contact points for alert rules configured to use this notification policy.'
+      )}
+    >
       <PoliciesTreeWrapper />
     </AlertmanagerPageWrapper>
   );

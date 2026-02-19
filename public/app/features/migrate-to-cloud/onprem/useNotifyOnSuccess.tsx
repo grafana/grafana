@@ -1,9 +1,8 @@
 import { useRef, useEffect } from 'react';
 
+import { GetSnapshotResponseDto, SnapshotDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
-
-import { GetSnapshotResponseDto, SnapshotDto } from '../api';
 
 import { pluralizeResourceName } from './resourceInfo';
 import { ResourceTableItem } from './types';

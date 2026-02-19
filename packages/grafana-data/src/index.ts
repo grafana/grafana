@@ -447,6 +447,8 @@ export {
 export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
+  type DashboardMutationAPI,
+  type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
@@ -599,6 +601,7 @@ export {
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
+export { type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBindingStatus,

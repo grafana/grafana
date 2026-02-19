@@ -1702,6 +1702,285 @@ func TestService_Upsert(t *testing.T) {
 	})
 }
 
+func TestService_Patch(t *testing.T) {
+	t.Parallel()
+
+	t.Run("successfully patches SSO settings with partial data", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			return settings.Provider == provider &&
+				settings.Settings["enabled"] == true &&
+				settings.Settings["client_id"] == "stored-client-id" &&
+				settings.Settings["client_secret"] == "stored-client-secret"
+		}), mock.Anything, mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			defer wg.Done()
+			return settings.Provider == provider &&
+				settings.Settings["enabled"] == true &&
+				settings.Settings["client_id"] == "stored-client-id"
+		})).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		env.secrets.On("Encrypt", mock.Anything, []byte("stored-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-stored-client-secret"), mock.Anything).Return([]byte("stored-client-secret"), nil).Once()
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				ID:       "someid",
+				Provider: provider,
+				Settings: map[string]any{
+					"enabled":       false,
+					"client_id":     "stored-client-id",
+					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-stored-client-secret")),
+				},
+			}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		wg.Wait()
+
+		require.Equal(t, true, env.store.ActualSSOSettings.Settings["enabled"])
+		require.Equal(t, "stored-client-id", env.store.ActualSSOSettings.Settings["client_id"])
+	})
+
+	t.Run("returns error if provider is not configurable", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GrafanaComProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
+	})
+
+	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables["github"] = reloadable
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.Error(t, err)
+		require.True(t, ssosettings.ErrInvalidProvider.Is(err))
+	})
+
+	t.Run("returns error if validation fails", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("validation failed"))
+		env.reloadables[provider] = reloadable
+
+		env.secrets.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return([]byte("decrypted"), nil).Maybe()
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				Provider: provider,
+				Settings: map[string]any{
+					"enabled": false,
+				},
+			}, nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "validation failed")
+	})
+
+	t.Run("returns error if GetForProvider fails", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return nil, errors.New("database error")
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "database error")
+	})
+
+	t.Run("returns error if store upsert fails", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		env.reloadables[provider] = reloadable
+
+		env.secrets.On("Encrypt", mock.Anything, mock.Anything, mock.Anything).Return([]byte("encrypted"), nil).Maybe()
+		env.secrets.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return([]byte("decrypted"), nil).Maybe()
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				Provider: provider,
+				Settings: map[string]any{
+					"enabled": false,
+				},
+			}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			return errors.New("upsert failed")
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "upsert failed")
+	})
+
+	t.Run("preserves secrets when not included in patch data", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			return settings.Settings["client_secret"] == "stored-client-secret"
+		}), mock.Anything, mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+			wg.Done()
+		}).Once()
+		env.reloadables[provider] = reloadable
+
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-stored-client-secret"), mock.Anything).Return([]byte("stored-client-secret"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("stored-client-secret"), mock.Anything).Return([]byte("encrypted-stored-client-secret"), nil).Once()
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				Provider: provider,
+				Settings: map[string]any{
+					"enabled":       false,
+					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-stored-client-secret")),
+				},
+			}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		wg.Wait()
+	})
+
+	t.Run("passes correct oldSettings to validator for diff calculation", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.AzureADProviderName
+		patchData := map[string]any{
+			"enabled": true,
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		var capturedOldSettings models.SSOSettings
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.Anything, mock.MatchedBy(func(oldSettings models.SSOSettings) bool {
+			capturedOldSettings = oldSettings
+			return true
+		}), mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+			wg.Done()
+		}).Once()
+		env.reloadables[provider] = reloadable
+
+		env.secrets.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return([]byte("decrypted"), nil).Maybe()
+		env.secrets.On("Encrypt", mock.Anything, mock.Anything, mock.Anything).Return([]byte("encrypted"), nil).Maybe()
+
+		storedSettings := map[string]any{
+			"enabled":     false,
+			"org_mapping": "existing-org-mapping",
+		}
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				Provider: provider,
+				Settings: storedSettings,
+			}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		wg.Wait()
+
+		require.Equal(t, false, capturedOldSettings.Settings["enabled"])
+		require.Equal(t, "existing-org-mapping", capturedOldSettings.Settings["org_mapping"])
+	})
+}
+
 func TestService_Delete(t *testing.T) {
 	t.Parallel()
 

@@ -1080,17 +1080,8 @@
         "summary": "Reloads the LDAP configuration.",
         "operationId": "reloadLDAPCfg",
         "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
+          "410": {
+            "$ref": "#/responses/goneError"
           }
         }
       }
@@ -3454,174 +3445,6 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/permissions": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ],
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "operationId": "getDashboardPermissionsListByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDashboardPermissionsListResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ],
-        "summary": "Updates permissions for a dashboard.",
-        "operationId": "updateDashboardPermissionsByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDashboardACLCommand"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
-        "tags": [
-          "dashboards",
-          "versions"
-        ],
-        "summary": "Gets all existing versions for the dashboard.",
-        "operationId": "getDashboardVersionsByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dashboardVersionsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
-        "tags": [
-          "dashboards",
-          "versions"
-        ],
-        "summary": "Get a specific dashboard version.",
-        "operationId": "getDashboardVersionByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardVersionID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dashboardVersionResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -7776,11 +7599,13 @@
     },
     "/playlists": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlists.",
         "operationId": "searchPlaylists",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7805,11 +7630,13 @@
         }
       },
       "post": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Create playlist.",
         "operationId": "createPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7841,11 +7668,13 @@
     },
     "/playlists/{uid}": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist.",
         "operationId": "getPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7873,11 +7702,13 @@
         }
       },
       "put": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Update playlist.",
         "operationId": "updatePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7913,11 +7744,13 @@
         }
       },
       "delete": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Delete playlist.",
         "operationId": "deletePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7947,11 +7780,13 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist items.",
         "operationId": "getPlaylistItems",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -12618,6 +12453,53 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Partially updates the SSO Settings for a provider. Only provided fields are updated.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Patch SSO Settings",
+        "operationId": "patchProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -22834,11 +22716,12 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path. The Fragment field is also stored in decoded form,\nuse [URL.EscapedFragment] to retrieve the original encoding.\n\nThe [URL.String] method uses the [URL.EscapedPath] method to obtain the path.",
       "type": "object",
       "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
+          "description": "ForceQuery indicates whether the original URL contained a query ('?') character.\nWhen set, the String method will include a trailing '?', even when RawQuery is empty.",
           "type": "boolean"
         },
         "Fragment": {
@@ -22848,6 +22731,7 @@
           "type": "string"
         },
         "OmitHost": {
+          "description": "OmitHost indicates the URL has an empty host (authority).\nWhen set, the String method will not include the host when it is empty.",
           "type": "boolean"
         },
         "Opaque": {
@@ -22857,12 +22741,15 @@
           "type": "string"
         },
         "RawFragment": {
+          "description": "RawFragment is an optional field containing an encoded fragment hint.\nSee the EscapedFragment method for more details.\n\nIn general, code should call EscapedFragment instead of reading RawFragment.",
           "type": "string"
         },
         "RawPath": {
+          "description": "RawPath is an optional field containing an encoded path hint.\nSee the EscapedPath method for more details.\n\nIn general, code should call EscapedPath instead of reading RawPath.",
           "type": "string"
         },
         "RawQuery": {
+          "description": "RawQuery contains the encoded query values, without the initial '?'.\nUse URL.Query to decode the query.",
           "type": "string"
         },
         "Scheme": {

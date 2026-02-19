@@ -6,7 +6,6 @@ import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLib
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
 
@@ -33,19 +32,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
       : {}),
   });
 }
-
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
@@ -77,6 +63,14 @@ export function trackDashboardSceneCreatedOrSaved(
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
+  // Extract variable type counts from tracking info
+  const variables = Object.entries(sceneDashboardTrackingInfo ?? {})
+    .filter(([key]) => /^variable_type_.+_count$/.test(key))
+    .reduce<Record<string, number>>((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+
   const dashboardLibraryProperties =
     config.featureToggles.dashboardLibrary ||
     config.featureToggles.dashboardTemplates ||
@@ -102,12 +96,14 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+          ...variables,
           ...dashboardLibraryProperties,
         }
       : {
           uid: dashboard.state.uid || '',
           numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
           numRows: sceneDashboardTrackingInfo?.rowCount || 0,
+          ...variables,
           ...dashboardLibraryProperties,
         }),
   });

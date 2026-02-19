@@ -28,7 +28,7 @@ import {
   AdHocFilterWithLabels,
   SwitchVariableKind,
   defaultIntervalVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';

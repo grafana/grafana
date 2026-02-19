@@ -109,6 +109,8 @@ type SearchBackend interface {
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
+	// rebuild forces a full rebuild of the index, regardless of state.
+	// lastImportTime is used to determine if an existing file-based index needs to be rebuilt before opening.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -118,6 +120,7 @@ type SearchBackend interface {
 		builder BuildFn,
 		updater UpdateFn,
 		rebuild bool,
+		lastImportTime time.Time,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -154,7 +157,6 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
-	lifecycle          LifecycleHooks
 	backendDiagnostics resourcepb.DiagnosticsServer
 }
 
@@ -306,7 +308,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
-	args := []any{
+	args := []any{ //nolint:prealloc
 		"operation", stats.operation,
 		"elapsedTime", elapsed,
 		"indexBuildTime", stats.indexBuildTime,
@@ -536,7 +538,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	ctx, span := tracer.Start(ctx, "resource.searchServer.RebuildIndexes")
 	defer span.End()
 
-	filterKeys := make([]NamespacedResource, len(req.Keys))
+	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
 	for _, key := range req.Keys {
 		if req.Namespace != key.Namespace {
 			return &resourcepb.RebuildIndexesResponse{
@@ -571,10 +573,31 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}
 	}
 
+	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0)
+	for _, key := range filterKeys {
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		bi, err := idx.BuildInfo()
+		if err != nil {
+			s.log.Warn("failed to get build info for index", "key", key, "error", err)
+			continue
+		}
+		if !bi.BuildTime.IsZero() {
+			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{
+				Group:         key.Group,
+				Resource:      key.Resource,
+				BuildTimeUnix: bi.BuildTime.Unix(),
+			})
+		}
+	}
+
 	// All rebuilds completed successfully
 	return &resourcepb.RebuildIndexesResponse{
 		RebuildCount: int64(rebuildCount),
 		Details:      fmt.Sprintf("completed %d index rebuilds", rebuildCount),
+		BuildTimes:   buildTimes,
 	}, nil
 }
 
@@ -602,7 +625,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false)
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
 			return err
 		})
 	}
@@ -642,7 +665,6 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-
 	return nil
 }
 
@@ -654,22 +676,11 @@ func (s *searchServer) stop() {
 
 // Init initializes the search server.
 func (s *searchServer) Init(ctx context.Context) error {
-	if s.lifecycle != nil {
-		if err := s.lifecycle.Init(ctx); err != nil {
-			return fmt.Errorf("failed to initialize lifecycle hooks: %w", err)
-		}
-	}
 	return s.init(ctx)
 }
 
 // Stop stops the search server.
 func (s *searchServer) Stop(ctx context.Context) error {
-	if s.lifecycle != nil {
-		err := s.lifecycle.Stop(ctx)
-		if err != nil {
-			return fmt.Errorf("service stopped with error: %w", err)
-		}
-	}
 	s.stop()
 	return nil
 }
@@ -846,7 +857,8 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}
 
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true)
+	// Pass rebuild=true to force rebuild of any existing file-based index
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
@@ -957,13 +969,25 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				}
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false)
+			// Get last import time to pass to BuildIndex, which will check if the file-based
+			// index needs to be rebuilt before opening it.
+			var lastImportTime time.Time
+			importTimes, err := s.getLastImportTimes(ctx)
+			if err != nil {
+				s.log.FromContext(ctx).Warn("failed to get last import times", "error", err)
+				// Continue without import time check
+			} else {
+				lastImportTime = importTimes[key]
+			}
+
+			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
 			if idx == nil {
 				return nil, fmt.Errorf("nil index after build")
 			}
+
 			return idx, nil
 		})
 
@@ -996,7 +1020,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
-func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
+func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
 
@@ -1163,7 +1187,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return rv, docs, nil
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild)
+	// If lastImportTime is set and this is a dashboard resource, clear the cache
+	// to ensure we get the latest usage insights data when rebuilding
+	if !lastImportTime.IsZero() && nsr.Resource == dashboardv1.DASHBOARD_RESOURCE {
+		s.builders.clearNamespacedCache(nsr)
+	}
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime)
 
 	if err != nil {
 		return nil, err
