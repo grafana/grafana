@@ -237,7 +237,7 @@ const AppRegistrationClientCertificateCredentials = ({
     };
     onCredentialsChange(updated);
   };
-  const onPrivateKeyPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onPrivateKeyPasswordChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const updated: AzureClientCertificateCredentials = {
       ...credentials,
       privateKeyPassword: event.target.value,
@@ -308,56 +308,30 @@ const AppRegistrationClientCertificateCredentials = ({
           />
         </Field>
       )}
-      {!disabled &&
-        (typeof credentials.privateKeyPassword === 'symbol' ? (
-          <Field
-            label={t(
-              'components.app-registration-credentials.label-symbol-private-key-password',
+      {!disabled && (
+        <Field
+          label={t('components.app-registration-credentials.label-symbol-private-key-password', 'Private Key Password')}
+          htmlFor="private-key-password"
+          noMargin
+        >
+          <SecretTextArea
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            cols={45}
+            rows={1}
+            className="width-30"
+            aria-label={t(
+              'components.app-registration-credentials.aria-label-private-key-password',
               'Private Key Password'
             )}
-            htmlFor="private-key-password"
-            noMargin
-          >
-            <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
-              <Input
-                aria-label={t(
-                  'components.app-registration-credentials.aria-label-symbol-private-key-password',
-                  'Private Key Password'
-                )}
-                placeholder={t(
-                  'components.app-registration-credentials.placeholder-symbol-private-key-password',
-                  'configured'
-                )}
-                disabled={true}
-                data-testid={'private-key-password'}
-              />
-              <Button variant="secondary" type="button" onClick={onPrivateKeyPasswordReset} disabled={disabled}>
-                <Trans i18nKey="components.app-registration-credentials.reset-symbol-private-key-password">Reset</Trans>
-              </Button>
-            </div>
-          </Field>
-        ) : (
-          <Field
-            label={t('components.app-registration-credentials.label-private-key-password', 'Private Key Password')}
-            data-testid={selectors.components.configEditor.privateKeyPassword.input}
-            htmlFor="private-key-password"
-            noMargin
-          >
-            <Input
-              className="width-30"
-              aria-label={t(
-                'components.app-registration-credentials.aria-label-private-key-password',
-                'Private Key Password'
-              )}
-              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-              value={credentials.privateKeyPassword || ''}
-              onChange={onPrivateKeyPasswordChange}
-              id="private-key-password"
-              disabled={disabled}
-            />
-          </Field>
-        ))}
+            onChange={onPrivateKeyPasswordChange}
+            id="private-key-password"
+            disabled={disabled}
+            isConfigured={typeof credentials.privateKeyPassword === 'symbol'}
+            onReset={onPrivateKeyPasswordReset}
+          />
+        </Field>
+      )}
     </>
   );
 };
