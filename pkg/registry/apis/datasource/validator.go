@@ -29,6 +29,8 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	switch a.GetOperation() {
 	case admission.Create, admission.Update:
 		return b.validateDataSource(ctx, ds)
+	case admission.Delete, admission.Connect: // no validation on these methods at the moment
+		return nil
 	}
 	return nil
 }

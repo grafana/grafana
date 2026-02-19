@@ -167,8 +167,8 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	return cmd, nil
 }
 
-// FromUpdateCommand converts a legacy UpdateDataSourceCommand to a K8s DataSource.
-// This is the reverse of ToUpdateCommand.
+// FromUpdateCommand converts a legacy UpdateDataSourceCommand to datasource
+// v0alpha1 resource, for sending PUT requests to the /apis endpoint.
 func (r *Converter) FromUpdateCommand(cmd *datasources.UpdateDataSourceCommand, apiVersion string) (*datasourceV0.DataSource, error) {
 	ds := &datasourceV0.DataSource{
 		TypeMeta: metav1.TypeMeta{
