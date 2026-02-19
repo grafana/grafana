@@ -11729,6 +11729,8 @@
     },
     "user-invite-form": {
       "back": "Zurück",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-Mail oder Benutzername",
       "label-name": "Name",
       "label-send-invite-email": "Einladungs-E-Mail senden",
@@ -13214,6 +13216,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13255,6 +13261,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13282,14 +13289,18 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Karte {{id}} auswählen",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
-      "transformations": "Transformationen"
+      "transformations": "Transformationen",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
