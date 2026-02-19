@@ -110,19 +110,21 @@ describe('QuotaLimitBanner', () => {
     expect(screen.getByText(/hit your storage limits/i)).toBeInTheDocument();
   });
 
-  it('shows both resources when both are affected', () => {
+  it('shows separate alerts when one is at_limit and another is nearing', () => {
     mockQueries(NEARING, AT_LIMIT);
     render(<QuotaLimitBanner />);
-    // Worst state wins — error severity
     expect(screen.getByText(/hit your storage limits/i)).toBeInTheDocument();
+    expect(screen.getByText(/nearing your storage limits/i)).toBeInTheDocument();
     expect(screen.getByText(/created 850 of 1,000 dashboards \(85%\)/)).toBeInTheDocument();
     expect(screen.getByText(/created 1,000 of 1,000 folders \(100%\)/)).toBeInTheDocument();
   });
 
-  it('uses error severity when any resource is at limit', () => {
-    mockQueries(NEARING, AT_LIMIT);
+  it('shows both resources in one alert when both have same state', () => {
+    mockQueries(NEARING, NEARING);
     render(<QuotaLimitBanner />);
-    expect(screen.getByText(/hit your/i)).toBeInTheDocument();
+    expect(screen.getByText(/created 850 of 1,000 dashboards \(85%\)/)).toBeInTheDocument();
+    expect(screen.getByText(/created 850 of 1,000 folders \(85%\)/)).toBeInTheDocument();
+    expect(screen.getAllByText(/nearing your storage limits/i)).toHaveLength(1);
   });
 
   it('shows "Request quota extension" button for paying customers', () => {
@@ -130,6 +132,13 @@ describe('QuotaLimitBanner', () => {
     mockQueries(AT_LIMIT, OK);
     render(<QuotaLimitBanner />);
     expect(screen.getByText(/request quota extension/i)).toBeInTheDocument();
+  });
+
+  it('shows extension button in each alert when both severities present', () => {
+    mockIsFreeTier = false;
+    mockQueries(NEARING, AT_LIMIT);
+    render(<QuotaLimitBanner />);
+    expect(screen.getAllByText(/request quota extension/i)).toHaveLength(2);
   });
 
   it('shows both X close and extension button for paying customers when nearing limit', () => {

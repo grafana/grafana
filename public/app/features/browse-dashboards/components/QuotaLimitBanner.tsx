@@ -2,29 +2,17 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { isFreeTierLicense } from '../../provisioning/utils/isFreeTierLicense';
-import { type QuotaState, type ResourceStatus, useQuotaLimits } from '../hooks/useQuotaLimits';
+import { type ResourceStatus, useQuotaLimits } from '../hooks/useQuotaLimits';
 
 const QUOTA_EXTENSION_URL = 'https://grafana.com/help';
 
 export const DISMISS_STORAGE_KEY = 'grafana.quota-limit-banner.dismissed';
 
 type DismissedMap = Record<string, boolean>;
-
-function worstState(a: QuotaState, b: QuotaState): QuotaState {
-  const order: Record<QuotaState, number> = { ok: 0, nearing: 1, at_limit: 2 };
-  return order[a] >= order[b] ? a : b;
-}
-
-function getTitle(overallState: QuotaState): string {
-  if (overallState === 'at_limit') {
-    return t('browse-dashboards.quota-banner.at-limit-title', "You've hit your storage limits");
-  }
-  return t('browse-dashboards.quota-banner.nearing-title', "You're nearing your storage limits");
-}
 
 function formatDetail(resource: ResourceStatus): string {
   const percentage = Math.round((resource.usage / resource.limit) * 100);
@@ -47,16 +35,6 @@ function formatDetail(resource: ResourceStatus): string {
   );
 }
 
-function getBodyText(overallState: QuotaState): string {
-  if (overallState === 'at_limit') {
-    return t('browse-dashboards.quota-banner.at-limit-body', 'Clean up unused resources to free up space.');
-  }
-  return t(
-    'browse-dashboards.quota-banner.nearing-body',
-    "New resources can't be created once the limit is reached. Clean up unused resources to free up space."
-  );
-}
-
 export function QuotaLimitBanner() {
   const styles = useStyles2(getStyles);
   const { resources, isLoading, hasError, featureEnabled } = useQuotaLimits();
@@ -66,16 +44,17 @@ export function QuotaLimitBanner() {
   );
 
   const visibleResources = resources.filter((r) => !(r.state === 'nearing' && dismissed[r.kind]));
-  const overallState = visibleResources.reduce<QuotaState>((worst, r) => worstState(worst, r.state), 'ok');
-  if (!featureEnabled || isLoading || hasError || overallState === 'ok') {
+  if (!featureEnabled || isLoading || hasError || visibleResources.length === 0) {
     return null;
   }
 
+  const atLimitResources = visibleResources.filter((r) => r.state === 'at_limit');
+  const nearingResources = visibleResources.filter((r) => r.state === 'nearing');
   const isPaying = !isFreeTierLicense();
 
   const handleDismiss = () => {
     const next = { ...dismissed };
-    for (const r of visibleResources) {
+    for (const r of nearingResources) {
       next[r.kind] = true;
     }
     store.setObject(DISMISS_STORAGE_KEY, next);
@@ -86,26 +65,45 @@ export function QuotaLimitBanner() {
     window.open(QUOTA_EXTENSION_URL, '_blank');
   };
 
-  const title = getTitle(overallState);
-  const details = visibleResources.map((r) => formatDetail(r)).join(' ');
-  const bodyText = getBodyText(overallState);
-
   return (
     <div className={styles.wrapper}>
-      <Alert
-        severity={overallState === 'at_limit' ? 'error' : 'warning'}
-        title={title}
-        onRemove={overallState !== 'at_limit' ? handleDismiss : undefined}
-      >
-        <Stack justifyContent="space-between" alignItems="center">
-          {details} {bodyText}
-          {isPaying && (
-            <Button variant="primary" onClick={handleRequestExtension}>
-              {t('browse-dashboards.quota-banner.request-extension', 'Request quota extension')}
-            </Button>
-          )}
-        </Stack>
-      </Alert>
+      {atLimitResources.length > 0 && (
+        <Alert
+          severity="error"
+          title={t('browse-dashboards.quota-banner.at-limit-title', "You've hit your storage limits")}
+        >
+          <Stack justifyContent="space-between" alignItems="center">
+            {atLimitResources.map((r) => formatDetail(r)).join(' ')}{' '}
+            <Trans i18nKey="browse-dashboards.quota-banner.at-limit-body">
+              Clean up unused resources to free up space.
+            </Trans>
+            {isPaying && (
+              <Button variant="primary" onClick={handleRequestExtension}>
+                <Trans i18nKey="browse-dashboards.quota-banner.request-extension">Request quota extension</Trans>
+              </Button>
+            )}
+          </Stack>
+        </Alert>
+      )}
+      {nearingResources.length > 0 && (
+        <Alert
+          severity="warning"
+          title={t('browse-dashboards.quota-banner.nearing-title', "You're nearing your storage limits")}
+          onRemove={handleDismiss}
+        >
+          <Stack justifyContent="space-between" alignItems="center">
+            {nearingResources.map((r) => formatDetail(r)).join(' ')}{' '}
+            <Trans i18nKey="browse-dashboards.quota-banner.nearing-body">
+              New resources can&apos;t be created once the limit is reached. Clean up unused resources to free up space.
+            </Trans>
+            {isPaying && (
+              <Button variant="primary" onClick={handleRequestExtension}>
+                <Trans i18nKey="browse-dashboards.quota-banner.request-extension">Request quota extension</Trans>
+              </Button>
+            )}
+          </Stack>
+        </Alert>
+      )}
     </div>
   );
 }

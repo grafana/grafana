@@ -3,6 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { handleRequestError } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
+import { generatedAPI as quotasAPI } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
@@ -31,6 +32,10 @@ import { refetchChildren, refreshParents } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
+
+function invalidateQuotaUsage() {
+  dispatch(quotasAPI.util.invalidateTags(['QuotaUsage']));
+}
 
 export interface DeleteFoldersArgs {
   folderUIDs: string[];
@@ -88,8 +93,11 @@ export const browseDashboardsAPI = createApi({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) =>
         result && result.length > 0
-          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
-          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
+          ? [
+              { type: 'getFolder', id: 'LIST' },
+              ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid })),
+            ]
+          : [{ type: 'getFolder', id: 'LIST' }],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -129,6 +137,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          invalidateQuotaUsage();
         });
       },
     }),
@@ -182,7 +191,8 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: ['getFolder'],
+      // Don't invalidate individual getFolder tags — the folder no longer exists and refetching would 404
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -200,6 +210,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          invalidateQuotaUsage();
         });
       },
     }),
@@ -321,7 +332,8 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* folders. used in the delete modal.
     deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
-      invalidatesTags: ['getFolder'],
+      // Don't invalidate individual getFolder tags — the folders no longer exist and refetching would 404
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
       queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
@@ -347,13 +359,15 @@ export const browseDashboardsAPI = createApi({
           dispatch(refreshParents(folderUIDs));
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
+          invalidateQuotaUsage();
         });
       },
     }),
 
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
-      invalidatesTags: ['getFolder'],
+      // Don't invalidate individual getFolder tags — deleted dashboards don't need folder refetch that could 404
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
@@ -420,6 +434,7 @@ export const browseDashboardsAPI = createApi({
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
           dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
+          invalidateQuotaUsage();
           for (const uid of dashboardUIDs) {
             dispatch(
               setStarred({
@@ -464,6 +479,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          invalidateQuotaUsage();
         });
       },
     }),
@@ -522,6 +538,7 @@ export const browseDashboardsAPI = createApi({
 
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
+          invalidateQuotaUsage();
         });
       },
     }),
@@ -558,6 +575,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          invalidateQuotaUsage();
 
           return { data: { name } };
         } catch (error) {
