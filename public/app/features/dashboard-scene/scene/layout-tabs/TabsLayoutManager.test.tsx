@@ -151,12 +151,14 @@ describe('TabsLayoutManager', () => {
       const tabsLayoutManager = buildTabsLayoutManager([]);
       const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
       const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
-      tabsLayoutManager.removeTab(tab2);
+      tabsLayoutManager.removeTab(tab3);
 
-      expect(tabsLayoutManager.state.tabs).toHaveLength(1);
+      expect(tabsLayoutManager.state.tabs).toHaveLength(2);
       expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
-      expect(tabsLayoutManager.state.currentTabSlug).toBe(tab1.getSlug());
+      expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
       expect(dashboardEditActions.removeElement).toHaveBeenCalled();
     });
 

@@ -319,9 +319,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     let tabIndex = 0;
     const tabsAfterRemoval = tabsBeforeRemoval.filter((r, i) => {
       if (r !== tab) {
-        tabIndex = i;
         return true;
       }
+      tabIndex = i;
       return false;
     });
     const parent = this.parent!;
