@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { computeErrorMessage, getErrorNodes, getWarningMarkers } from './highlighting';
+import { computeErrorMessage, getErrorMarkers, getErrorNodes, getMarker, getWarningMarkers } from './highlighting';
 
 describe('Highlighting', () => {
   describe('gets correct warning markers for', () => {
@@ -81,6 +81,42 @@ describe('Highlighting', () => {
           },
         ])
       );
+    });
+  });
+
+  describe('getMarker', () => {
+    it('returns valid 1-based marker when from and to are 0 (invalid query at position 0)', () => {
+      const { model } = setup('{ .foo = 1 }');
+      const marker = getMarker(8, 'Invalid query.', model, 0, 0);
+      expect(marker).toEqual({
+        message: 'Invalid query.',
+        severity: 8,
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 1,
+        endColumn: 1,
+      });
+    });
+
+    it('returns correct marker for valid from/to on single line', () => {
+      const { model } = setup('hello');
+      const marker = getMarker(8, 'Test error', model, 1, 4);
+      expect(marker).toMatchObject({
+        message: 'Test error',
+        severity: 8,
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 2,
+        endColumn: 5,
+      });
+    });
+  });
+
+  describe('getErrorMarkers', () => {
+    it('does not throw for invalid query that produces error nodes', () => {
+      const { model } = setup('Root=1-698b7d11-6e5020e45727f8fe3724ce4f');
+      const errorNodes = getErrorNodes('Root=1-698b7d11-6e5020e45727f8fe3724ce4f');
+      expect(() => getErrorMarkers(8, model, errorNodes)).not.toThrow();
     });
   });
 
