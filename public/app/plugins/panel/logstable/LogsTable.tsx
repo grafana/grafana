@@ -211,6 +211,8 @@ export const LogsTable = ({
 const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {
     wrapper: css({
+      // prevent overflow in the tiny suggestions preview
+      overflow: 'hidden',
       height,
       width,
     }),
