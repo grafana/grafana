@@ -145,10 +145,10 @@ export const TimeSeriesPanel = ({
         return (
           <>
             {/*{!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}*/}
-            {/*{cursorSync !== DashboardCursorSync.Off && (*/}
-            {/*  <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />*/}
-            {/*)}*/}
-            {/*<XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />*/}
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
+            )}
+            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
             {/*{options.tooltip.mode !== TooltipDisplayMode.None && (*/}
             {/*  <TooltipPlugin2*/}
             {/*    config={uplotConfig}*/}
