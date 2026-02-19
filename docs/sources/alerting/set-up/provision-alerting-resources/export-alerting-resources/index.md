@@ -205,9 +205,16 @@ To export the notification policy tree from the Grafana UI, complete the followi
 2. In the **Default notification policy** section, click **...** -> **Export**.
 3. Choose the format to export in.
 
-   The exported contact point appears in different formats - YAML, JSON, Terraform.
+   The exported notification policy tree appears in different formats - YAML, JSON, Terraform.
 
 4. Click **Copy Code** or **Download**.
+
+When the `alertingMultiplePolicies` feature flag is enabled, you can export individual named routing trees.
+
+1. Click **Alerts & IRM** -> **Notification policies**.
+1. Find the routing tree you want to export in the list.
+1. Click the **More actions** menu item and select **Export**.
+1. Choose the export format and click **Copy Code** or **Download**.
 
 ### Export mute timings
 
