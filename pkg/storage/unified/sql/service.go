@@ -53,6 +53,7 @@ type service struct {
 	// -- Shared Components
 	backend       resource.StorageBackend
 	serverStopper resource.ResourceServerStopper
+	healthService resource.HealthService
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
 	log           log.Logger
@@ -85,22 +86,21 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-	provider grpcserver.Provider,
+	grpcService *grpcserver.DSKitService,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil, grpcService.Health)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
 		if err != nil {
 			return nil, err
 		}
-		err = s.initializeSubservicesManager()
-		if err != nil {
+		if err = s.initializeSubservicesManager(); err != nil {
 			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
 
-	if err := s.registerServer(provider); err != nil {
+	if err := s.registerServer(grpcService.Provider); err != nil {
 		return nil, err
 	}
 
@@ -120,9 +120,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
-	provider grpcserver.Provider,
+	grpcService *grpcserver.DSKitService,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient, grpcService.Health)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -151,12 +151,11 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.initializeSubservicesManager()
-	if err != nil {
+	if err := s.initializeSubservicesManager(); err != nil {
 		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
-	if err := s.registerServer(provider); err != nil {
+	if err := s.registerServer(grpcService.Provider); err != nil {
 		return nil, err
 	}
 
@@ -176,6 +175,7 @@ func newService(
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
+	healthService resource.HealthService,
 ) *service {
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -198,6 +198,7 @@ func newService(
 		searchRing:         searchRing,
 		searchClient:       searchClient,
 		subservicesWatcher: services.NewFailureWatcher(),
+		healthService:      healthService,
 	}
 }
 
@@ -323,6 +324,8 @@ func (s *service) starting(ctx context.Context) error {
 		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
+	// check health for setting service status
+	s.checkHealth(ctx)
 	return nil
 }
 
@@ -368,20 +371,49 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 }
 
 func (s *service) running(ctx context.Context) error {
-	select {
-	case err := <-s.subservicesWatcher.Chan():
-		return fmt.Errorf("subservice failure: %w", err)
-	case <-ctx.Done():
-		s.log.Info("Stopping resource server")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.serverStopper.Stop(ctx); err != nil {
-			s.log.Warn("Failed to stop resource server", "error", err)
-		} else {
-			s.log.Info("Resource server stopped")
-		}
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
-		return nil
+	for {
+		select {
+		case <-ticker.C:
+			s.checkHealth(ctx)
+		case err := <-s.subservicesWatcher.Chan():
+			s.healthService.SetServingStatus(s.ServiceName(), grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+			return fmt.Errorf("subservice failure: %w", err)
+		case <-ctx.Done():
+			s.healthService.SetServingStatus(s.ServiceName(), grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+			s.log.Info("Stopping resource server")
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := s.serverStopper.Stop(stopCtx); err != nil {
+				s.log.Warn("Failed to stop resource server", "error", err)
+			} else {
+				s.log.Info("Resource server stopped")
+			}
+
+			return nil
+		}
+	}
+}
+
+// checkHealth calls IsHealthy on the storage backend and updates the health status.
+func (s *service) checkHealth(ctx context.Context) {
+	if s.healthService == nil {
+		return
+	}
+	diag, ok := s.backend.(resourcepb.DiagnosticsServer) //nolint:staticcheck
+	if !ok {
+		s.healthService.SetServingStatus(s.ServiceName(), grpc_health_v1.HealthCheckResponse_SERVING)
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	resp, err := diag.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
+	if err != nil || resp.GetStatus() != resourcepb.HealthCheckResponse_SERVING {
+		s.healthService.SetServingStatus(s.ServiceName(), grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	} else {
+		s.healthService.SetServingStatus(s.ServiceName(), grpc_health_v1.HealthCheckResponse_SERVING)
 	}
 }
 
@@ -514,7 +546,8 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 		return err
 	}
 	s.serverStopper = server
-	return s.registerUnifiedResourceServer(provider, server)
+	s.registerUnifiedResourceServer(provider, server)
+	return nil
 }
 
 // searchServerWithAuth wraps a SearchServer with per-service authentication.
@@ -534,7 +567,8 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
+	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+	return nil
 }
 
 // resourceServerWithAuth wraps a ResourceServer with per-service authentication.
@@ -545,7 +579,7 @@ type resourceServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) error {
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
@@ -560,18 +594,5 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// Register search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
-}
-
-// registerHealthAndReflection registers the health check and reflection services on the gRPC server.
-func (s *service) registerHealthAndReflection(provider grpcserver.Provider, healthChecker resourcepb.DiagnosticsServer) error {
-	healthService, err := resource.ProvideHealthService(healthChecker)
-	if err != nil {
-		return err
-	}
-	srv := provider.GetServer()
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
-
-	return nil
 }

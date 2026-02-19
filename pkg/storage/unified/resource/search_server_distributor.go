@@ -35,7 +35,7 @@ var (
 	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
 )
 
-func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
+func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, grpcService *grpcserver.DSKitService) (UnifiedStorageGrpcService, error) {
 	s := &distributorServer{
 		log:        log.New("index-server-distributor"),
 		ring:       ring,
@@ -43,18 +43,27 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 		tracing:    tracer,
 	}
 
-	healthService, err := ProvideHealthService(s)
-	if err != nil {
-		return nil, err
-	}
-
-	srv := provider.GetServer()
+	srv := grpcService.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
-	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
+	_, _ = grpcserver.ProvideReflectionService(cfg, grpcService)
 
-	s.BasicService = services.NewIdleService(nil, nil).WithName(modules.SearchServerDistributor)
+	healthService := grpcService.Health
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		s.checkHealth(healthService)
+
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				s.checkHealth(healthService)
+			case <-ctx.Done():
+				healthService.SetServingStatus(modules.SearchServerDistributor, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+				return nil
+			}
+		}
+	}, nil).WithName(modules.SearchServerDistributor)
 	return s, nil
 }
 
@@ -295,6 +304,14 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	}
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
+}
+
+func (ds *distributorServer) checkHealth(healthService HealthService) {
+	if ds.ring.State() == services.Running {
+		healthService.SetServingStatus(modules.SearchServerDistributor, grpc_health_v1.HealthCheckResponse_SERVING)
+	} else {
+		healthService.SetServingStatus(modules.SearchServerDistributor, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	}
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {

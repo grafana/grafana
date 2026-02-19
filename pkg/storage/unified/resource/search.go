@@ -157,7 +157,7 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
-	backendDiagnostics resourcepb.DiagnosticsServer
+	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
 var (
@@ -691,7 +691,7 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 	if s.backendDiagnostics == nil {
 		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
 	}
-	return s.backendDiagnostics.IsHealthy(ctx, req)
+	return s.backendDiagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {

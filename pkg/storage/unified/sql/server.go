@@ -160,6 +160,7 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	}
 
 	resourceOpts.Backend = opts.Backend
+	//nolint: staticcheck
 	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
 		resourceOpts.Diagnostics = diagnostics
 	}

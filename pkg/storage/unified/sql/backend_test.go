@@ -225,12 +225,12 @@ func TestBackend_IsHealthy(t *testing.T) {
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	res, err := b.IsHealthy(ctx, nil)
+	res, err := b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-	res, err = b.IsHealthy(ctx, nil)
+	res, err = b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.Nil(t, res)
 	require.Error(t, err)
 	require.ErrorIs(t, err, errTest)
