@@ -909,7 +909,7 @@ type testContext struct {
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
 	t.Helper()
-	queries := make([]*simplejson.Json, 0)
+	queries := make([]*simplejson.Json, 0, len(rawQueries))
 	for _, q := range rawQueries {
 		json, err := simplejson.NewJson([]byte(q))
 		require.NoError(t, err)
