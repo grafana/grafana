@@ -283,7 +283,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getDefaultDisplayedFieldsFromExploreState(
       panelState?.logs,
       updatePanelState,
-      config.featureToggles.logsTablePanel ?? false
+      config.featureToggles.logsTablePanelNG ?? false
     )
   );
 
@@ -841,7 +841,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const enableNewLogsTable = config.featureToggles.logsTablePanel;
+  const enableNewLogsTable = config.featureToggles.logsTablePanelNG;
   const panelData: PanelData = {
     state: loading ? LoadingState.Loading : LoadingState.Done,
     series: props.logsFrames ?? [],

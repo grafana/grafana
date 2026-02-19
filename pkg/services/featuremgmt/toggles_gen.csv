@@ -64,6 +64,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-02-18,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-18,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-02-19,datasourcesApiServerEnableResourceEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/aws-datasources,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
@@ -80,6 +81,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-28,panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true
 2025-12-08,perPanelFiltering,experimental,@grafana/dashboards-squad,false,false,true
+2026-02-18,dashboardFiltersOverview,preview,@grafana/dashboards-squad,false,false,true
 2023-11-03,panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-02-18,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -299,4 +301,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
-2026-02-11,logsTablePanel,experimental,@grafana/observability-logs,false,false,false
+2026-02-18,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-02-19,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false

@@ -517,7 +517,7 @@ describe('Logs', () => {
     });
   });
   describe('with table panel visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
+    let originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
     let origResizeObserver = global.ResizeObserver;
 
     beforeEach(() => {
@@ -546,12 +546,12 @@ describe('Logs', () => {
     });
 
     beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsTablePanel;
-      config.featureToggles.logsTablePanel = true;
+      originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
+      config.featureToggles.logsTablePanelNG = true;
     });
 
     afterAll(() => {
-      config.featureToggles.logsTablePanel = originalVisualisationTypeValue;
+      config.featureToggles.logsTablePanelNG = originalVisualisationTypeValue;
     });
 
     it('should show table', async () => {
