@@ -55,8 +55,6 @@ async function runChecks(page: Page) {
     await page.getByRole('button', { name: 'Refresh' }).click();
   }
 
-  await page.waitForTimeout(1000);
-
   await page
     .getByRole('button', { name: 'Running checks...' })
     .isVisible({ timeout: 2000 })
