@@ -40,7 +40,6 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
   /** Row currently being dragged */
   draggingRow?: SceneObjectRef<RowItem>;
-  draggingTab?: SceneObjectRef<TabItem>;
   /** Key of the source tab where drag started */
   sourceTabKey?: string;
   /** Key of the tab currently being hovered during drag */
@@ -89,6 +88,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  private _draggedTab: TabItem | undefined;
 
   public constructor() {
     super({});
@@ -269,10 +269,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   public startTabDrag(sourceTabsManagerId: string, draggedTabId: string, draggedTabIndex: number): void {
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
 
-    const draggingTab = sceneGraph.findByKey(this._getDashboard(), draggedTabId);
-    this.setState({
-      draggingTab: draggingTab.getRef(),
-    });
+    this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
 
     document.body.addEventListener('pointermove', this._onTabDragPointerMove);
     document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
@@ -314,19 +311,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     const sourceManager = this._sourceDropTarget;
     const destinationManager = this._lastDropTarget;
-    targetIndex = targetIndex || destinationManager.getTabsIncludingRepeats().length;
+    targetIndex = targetIndex ?? destinationManager.getTabsIncludingRepeats().length;
 
-    const tab = this.state.draggingTab?.resolve();
+    const tab = this._draggedTab;
 
     if (!tab) {
       return;
     }
 
     const sourceIndex = sourceManager.state.tabs.findIndex((t) => t === tab);
-
-    this.setState({
-      draggingTab: undefined,
-    });
+    this._draggedTab = undefined;
 
     // moving within the same TabsLayoutManager
     if (sourceManager === destinationManager) {
