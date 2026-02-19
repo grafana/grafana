@@ -7,11 +7,17 @@ import {
 
 describe('ReportRenderReadinessObserver', () => {
   let observer: ReportRenderReadinessObserver;
+  let messageChannelMock: jest.Mock;
 
   beforeEach(() => {
     observer = new ReportRenderReadinessObserver();
     delete window.__grafana_report_render_complete;
-    delete window.__grafana_report_render_duration;
+    messageChannelMock = jest.fn();
+    window.__grafanaImageRendererMessageChannel = messageChannelMock;
+  });
+
+  afterEach(() => {
+    delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
   });
 
   describe('onDashboardInteractionStart', () => {
@@ -23,45 +29,55 @@ describe('ReportRenderReadinessObserver', () => {
   });
 
   describe('onDashboardInteractionComplete', () => {
-    it('should set __grafana_report_render_complete to true for dashboard_view interactions', () => {
+    it('should send REPORT_RENDER_COMPLETE message for dashboard_view interactions', () => {
       observer.onDashboardInteractionComplete!({
         interactionType: 'dashboard_view',
         duration: 1234,
       } as performanceUtils.DashboardInteractionCompleteData);
 
-      expect(window.__grafana_report_render_complete).toBe(true);
-      expect(window.__grafana_report_render_duration).toBe(1234);
+      expect(messageChannelMock).toHaveBeenCalledWith(
+        JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } })
+      );
     });
 
-    it('should not set __grafana_report_render_complete for non-dashboard_view interactions', () => {
+    it('should not send a message for non-dashboard_view interactions', () => {
       observer.onDashboardInteractionComplete!({
         interactionType: 'refresh',
         duration: 500,
       } as performanceUtils.DashboardInteractionCompleteData);
 
-      expect(window.__grafana_report_render_complete).toBeUndefined();
-      expect(window.__grafana_report_render_duration).toBeUndefined();
+      expect(messageChannelMock).not.toHaveBeenCalled();
     });
 
-    it('should reset to false on new interaction start then complete on dashboard_view', () => {
-      // First interaction completes
+    it('should not send a message when __grafanaImageRendererMessageChannel is not defined', () => {
+      delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
+
+      observer.onDashboardInteractionComplete!({
+        interactionType: 'dashboard_view',
+        duration: 1234,
+      } as performanceUtils.DashboardInteractionCompleteData);
+
+      expect(messageChannelMock).not.toHaveBeenCalled();
+    });
+
+    it('should reset to false on new interaction start then send message on dashboard_view complete', () => {
       observer.onDashboardInteractionComplete!({
         interactionType: 'dashboard_view',
         duration: 1000,
       } as performanceUtils.DashboardInteractionCompleteData);
-      expect(window.__grafana_report_render_complete).toBe(true);
+      expect(messageChannelMock).toHaveBeenCalledTimes(1);
 
-      // New interaction starts
       observer.onDashboardInteractionStart!();
       expect(window.__grafana_report_render_complete).toBe(false);
 
-      // New interaction completes
       observer.onDashboardInteractionComplete!({
         interactionType: 'dashboard_view',
         duration: 2000,
       } as performanceUtils.DashboardInteractionCompleteData);
-      expect(window.__grafana_report_render_complete).toBe(true);
-      expect(window.__grafana_report_render_duration).toBe(2000);
+      expect(messageChannelMock).toHaveBeenCalledTimes(2);
+      expect(messageChannelMock).toHaveBeenLastCalledWith(
+        JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } })
+      );
     });
   });
 
