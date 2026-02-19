@@ -20,13 +20,13 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "sqlschemas",
+				Path: "query/sqlschema",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Query SQL Schemas"},
+							Tags:        []string{"Query"},
 							OperationId: "querySqlSchemas",
-							Description: "Get a SQL Schema for a set of queries",
+							Description: "Send the same request you would send to /query, and get a schema that will represent the response",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
