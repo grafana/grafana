@@ -1,6 +1,7 @@
 package integrationtypeschema
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -55,7 +56,10 @@ func TestIntegrationTypeSchemaList(t *testing.T) {
 		require.NoError(t, err)
 
 		if !assert.JSONEq(t, string(exp), string(got), "response should match expected snapshot") {
-			err = os.WriteFile(path.Join("test-data", "list.json"), got, 0o644)
+			var prettyJSON bytes.Buffer
+			err = json.Indent(&prettyJSON, got, "", "  ")
+			require.NoError(t, err, "failed to indent snapshot")
+			err = os.WriteFile(path.Join("test-data", "list.json"), prettyJSON.Bytes(), 0o644)
 			require.NoError(t, err, "failed to update snapshot")
 		}
 	})
