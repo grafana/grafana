@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom-v5-compat';
-import { getWrapper, render, screen } from 'test/test-utils';
+import { getWrapper, render, screen, userEvent } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,6 +65,12 @@ const setup = (sectionNav?: NavModelItem) => {
     wrapper,
     preloadedState: { navBarTree },
   });
+};
+
+const getSearchInput = async () => screen.findByLabelText('Search menu');
+const filterMegaMenu = async (filter: string) => {
+  const user = userEvent.setup();
+  return user.type(await getSearchInput(), filter);
 };
 
 describe('MegaMenu', () => {
@@ -152,20 +158,47 @@ describe('MegaMenu', () => {
 
     describe('filter menu items', () => {
       it('filters menu items', async () => {
-        const { user } = setup();
-        await user.type(await screen.findByPlaceholderText('Search menu'), 'Child1');
+        setup();
+
+        await filterMegaMenu('Child1');
+
+        expect(await screen.findByText('Child1')).toBeInTheDocument();
+      });
+
+      it('filters menu items with fuzzy search', async () => {
+        setup();
+
+        await filterMegaMenu('chld1');
+
         expect(await screen.findByText('Child1')).toBeInTheDocument();
       });
 
       it('clears filter and shows all menu items', async () => {
         const { user } = setup();
-        await user.type(await screen.findByPlaceholderText('Search menu'), 'Child1');
 
+        await filterMegaMenu('Child1');
         await screen.findByText('Child1');
-
         await user.click(await screen.findByRole('button', { name: 'Clear filter' }));
 
         expect(await screen.findByText('Grandchild1')).toBeInTheDocument();
+      });
+
+      it('shows all items when filter is manually cleared', async () => {
+        const { user } = setup();
+
+        await filterMegaMenu('Child1');
+        await screen.findByText('Child1');
+        await user.clear(await getSearchInput());
+
+        expect(await screen.findByText('Grandchild1')).toBeInTheDocument();
+      });
+
+      it('shows empty state when no results are found', async () => {
+        setup();
+
+        await filterMegaMenu('foo bar');
+
+        expect(await screen.findByText('No results found')).toBeInTheDocument();
       });
     });
   });
