@@ -22,10 +22,8 @@ func (CustomTheme) OpenAPIModelName() string {
 type CustomThemeSpec struct {
 	// The theme JSON data
 	ThemeJSON string `json:"themeJson"`
-	// The UID of the user who created this theme
-	UserUID string `json:"userUid"`
-	// Whether this theme is available globally
-	IsGlobal bool `json:"isGlobal"`
+	// The UID of the user who created this theme. If empty, the theme is available globally.
+	UserUID string `json:"userUid,omitempty"`
 }
 
 func (CustomThemeSpec) OpenAPIModelName() string {

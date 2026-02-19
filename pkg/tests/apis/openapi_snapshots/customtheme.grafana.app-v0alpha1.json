@@ -433,6 +433,56 @@
         }
       ]
     },
+    "/apis/customtheme.grafana.app/v0alpha1/namespaces/{namespace}/customthemes/byuser/{userUid}": {
+      "get": {
+        "tags": [
+          "CustomTheme"
+        ],
+        "description": "Get custom themes for a specific user. Use includeGlobal=true to also include themes available globally (those with no user assigned).",
+        "operationId": "getCustomThemesByUser",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          },
+          {
+            "name": "userUid",
+            "in": "path",
+            "description": "The UID of the user whose themes to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeGlobal",
+            "in": "query",
+            "description": "When true, also include themes that are available globally (no user assigned)",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/definitions/com.github.grafana.grafana.pkg.apis.customtheme.v0alpha1.CustomThemeList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/customtheme.grafana.app/v0alpha1/namespaces/{namespace}/customthemes/{name}": {
       "get": {
         "tags": [
@@ -869,16 +919,12 @@
       "com.github.grafana.grafana.pkg.apis.customtheme.v0alpha1.CustomThemeSpec": {
         "type": "object",
         "properties": {
-          "isGlobal": {
-            "description": "Whether this theme is available globally",
-            "type": "boolean"
-          },
           "themeJson": {
             "description": "The theme JSON data",
             "type": "string"
           },
           "userUid": {
-            "description": "The UID of the user who created this theme",
+            "description": "The UID of the user who created this theme. If empty, the theme is available globally.",
             "type": "string"
           }
         }

@@ -23,8 +23,7 @@ var CustomThemeResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "User UID", Type: "string", Format: "string", Description: "The user who created the theme"},
-			{Name: "Global", Type: "boolean", Description: "Whether the theme is globally available"},
+			{Name: "User UID", Type: "string", Format: "string", Description: "The user who created the theme (empty = global)"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -35,7 +34,6 @@ var CustomThemeResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			return []interface{}{
 				m.Name,
 				m.Spec.UserUID,
-				m.Spec.IsGlobal,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},

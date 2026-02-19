@@ -69,6 +69,15 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['CustomTheme'],
       }),
+      getCustomThemesByUser: build.query<GetCustomThemesByUserApiResponse, GetCustomThemesByUserApiArg>({
+        query: (queryArg) => ({
+          url: `/customthemes/byuser/${queryArg.userUid}`,
+          params: {
+            includeGlobal: queryArg.includeGlobal,
+          },
+        }),
+        providesTags: ['CustomTheme'],
+      }),
       getCustomTheme: build.query<GetCustomThemeApiResponse, GetCustomThemeApiArg>({
         query: (queryArg) => ({
           url: `/customthemes/${queryArg.name}`,
@@ -239,6 +248,13 @@ export type DeletecollectionCustomThemeApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
+export type GetCustomThemesByUserApiResponse = /** status 200 undefined */ CustomThemeList;
+export type GetCustomThemesByUserApiArg = {
+  /** The UID of the user whose themes to retrieve */
+  userUid: string;
+  /** When true, also include themes that are available globally (no user assigned) */
+  includeGlobal?: boolean;
+};
 export type GetCustomThemeApiResponse = /** status 200 OK */ CustomTheme;
 export type GetCustomThemeApiArg = {
   /** name of the CustomTheme */
@@ -408,11 +424,9 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type CustomThemeSpec = {
-  /** Whether this theme is available globally */
-  isGlobal?: boolean;
   /** The theme JSON data */
   themeJson?: string;
-  /** The UID of the user who created this theme */
+  /** The UID of the user who created this theme. If empty, the theme is available globally. */
   userUid?: string;
 };
 export type CustomTheme = {
@@ -493,6 +507,8 @@ export const {
   useLazyListCustomThemeQuery,
   useCreateCustomThemeMutation,
   useDeletecollectionCustomThemeMutation,
+  useGetCustomThemesByUserQuery,
+  useLazyGetCustomThemesByUserQuery,
   useGetCustomThemeQuery,
   useLazyGetCustomThemeQuery,
   useReplaceCustomThemeMutation,

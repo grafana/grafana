@@ -1,6 +1,8 @@
 package customtheme
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,9 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
-var _ builder.APIGroupBuilder = (*CustomThemeAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder       = (*CustomThemeAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider = (*CustomThemeAPIBuilder)(nil)
+)
 
-type CustomThemeAPIBuilder struct{}
+type CustomThemeAPIBuilder struct {
+	store rest.Storage
+}
 
 func NewCustomThemeAPIBuilder() *CustomThemeAPIBuilder {
 	return &CustomThemeAPIBuilder{}
@@ -57,6 +64,22 @@ func (b *CustomThemeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   customtheme.GROUP,
 		Version: runtime.APIVersionInternal,
 	})
+
+	err = scheme.AddFieldLabelConversionFunc(
+		customtheme.SchemeGroupVersion.WithKind("CustomTheme"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.userUid":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for CustomTheme: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }
@@ -72,11 +95,19 @@ func (b *CustomThemeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 	resourceInfo := customtheme.CustomThemeResourceInfo
 	storage := map[string]rest.Storage{}
 
-	customThemeStorage, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	customThemeStorage, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		scheme,
+		resourceInfo,
+		optsGetter,
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: CustomThemeGetAttrs,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
+	b.store = customThemeStorage
 	storage[resourceInfo.StoragePath()] = customThemeStorage
 	apiGroupInfo.VersionedResourcesStorageMap[customtheme.VERSION] = storage
 	return nil
@@ -84,4 +115,8 @@ func (b *CustomThemeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 func (b *CustomThemeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return customtheme.GetOpenAPIDefinitions
+}
+
+func (b *CustomThemeAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	return getByUserRoutes(b.store)
 }

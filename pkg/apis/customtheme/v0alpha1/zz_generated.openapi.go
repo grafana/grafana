@@ -123,15 +123,8 @@ func schema_pkg_apis_customtheme_v0alpha1_CustomThemeSpec(ref common.ReferenceCa
 					},
 					"userUid": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UID of the user who created this theme",
+							Description: "The UID of the user who created this theme. If empty, the theme is available globally.",
 							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"isGlobal": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether this theme is available globally",
-							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
