@@ -658,6 +658,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardFiltersOverview",
+			Description:  "Enables the dashboard filters overview pane",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
