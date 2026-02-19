@@ -172,7 +172,7 @@
     "openapi-types": "^12.1.3",
     "plop": "^4.0.1",
     "rollup": "^4.22.4",
-    "typescript": "5.9.2"
+    "typescript": "6.0.0-beta"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",

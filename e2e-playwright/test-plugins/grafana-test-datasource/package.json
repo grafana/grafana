@@ -23,7 +23,7 @@
     "glob": "10.4.1",
     "i18next-cli": "^1.24.22",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "6.0.0-beta",
     "webpack": "^5.105.0",
     "webpack-merge": "5.10.0"
   },

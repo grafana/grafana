@@ -494,8 +494,8 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
         mode: mode,
       };
     default:
+      // @ts-ignore
       return {
-        // @ts-ignore
         type: displayMode,
       };
   }
