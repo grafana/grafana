@@ -599,6 +599,12 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
+    "alerts-activity-banner": {
+      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
+      "open-button": "See Alert Activity",
+      "open-button-aria": "Open Alerts Activity",
+      "title": "Alert Activity is now available!"
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
@@ -935,9 +941,9 @@
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
-      "used-by_one": "Used by {{count}} notification policy",
+      "used-by_one": "Used by {{count}} notification policies",
       "used-by_other": "Used by {{count}} notification policies",
-      "used-by-rules_one": "Used by {{count}} alert rule",
+      "used-by-rules_one": "Used by {{count}} alert rules",
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
@@ -1652,6 +1658,10 @@
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
+      "renamed-intervals_one": "{{count}} time intervals will be renamed",
+      "renamed-intervals_other": "{{count}} time intervals will be renamed",
+      "renamed-receivers_one": "{{count}} contact points will be renamed",
+      "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
         "back": "Alert rules",
         "filter": "Filter",
@@ -1668,10 +1678,6 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
-        "renamed-intervals_one": "Time intervals renamed: {{count}}",
-        "renamed-intervals_other": "Time intervals renamed: {{count}}",
-        "renamed-receivers_one": "Receivers renamed: {{count}}",
-        "renamed-receivers_other": "Receivers renamed: {{count}}",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1700,8 +1706,6 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
-        "extra-config-conflict-desc": "There is already an uncommitted imported configuration named \"{{identifier}}\". To proceed, either use \"{{identifier}}\" as your policy tree name to replace it, or commit/discard the existing configuration first.",
-        "extra-config-conflict-title": "Cannot import notification resources",
         "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
         "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
@@ -1711,11 +1715,8 @@
         "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-required": "Policy tree name is required",
         "policy-tree-title": "Policy Tree Name",
-        "renamed-intervals_one": "{{count}} time intervals will be renamed",
-        "renamed-intervals_other": "{{count}} time intervals will be renamed",
-        "renamed-receivers_one": "{{count}} contact points will be renamed",
-        "renamed-receivers_other": "{{count}} contact points will be renamed",
         "select-datasource": "Select data source",
         "skip": "Skip this step",
         "source": {
@@ -1732,8 +1733,7 @@
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
-        "validation-warning": "Some resources will be renamed",
-        "validation-warning-desc": "Some resources will be renamed to avoid conflicts with existing resources.",
+        "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
         "yaml-file": "Alertmanager config YAML"
       },
       "step2": {
@@ -1772,7 +1772,9 @@
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
         "upload": "Upload YAML file",
-        "yaml-file": "Rules YAML file"
+        "yaml-error": "Failed to parse YAML file: {{error}}",
+        "yaml-file": "Rules YAML file",
+        "yaml-required": "Please select a file"
       },
       "success": "Successfully imported resources to Grafana Alerting.",
       "target-folder": {
@@ -2308,6 +2310,9 @@
       "recipient": "Recipient",
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
+    "open-drawer-icon-button": {
+      "details": "Details"
+    },
     "option-customfield": {
       "label-custom-template": "Custom template",
       "placeholder": "Enter plain text or reference a template, e.g. {{template \"default.message\" .}}",
@@ -2646,6 +2651,13 @@
       "resample-to": "Resample to",
       "upsample": "Upsample"
     },
+    "revert-experience-modal": {
+      "description-line1": "Considering going back to the previous experience because you're missing more information on alert state?",
+      "description-line2": "The Alert Activity page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
+      "revert-button": "Revert to previous experience",
+      "see-activity-button": "See Alert Activity",
+      "title": "Revert to previous experience"
+    },
     "routing": {
       "routing": "Routing"
     },
@@ -2874,8 +2886,8 @@
       },
       "rulerrule-loading-error": "Failed to load the rule",
       "toggle": {
-        "go-back-to-old-look": "Go back to the old look",
-        "try-out-the-new-look": "Try out the new look!"
+        "use-new-experience": "Use new experience",
+        "view-previous-experience": "Revert to previous experience"
       },
       "unknown-rule-type": "Unknown rule type"
     },
@@ -4157,11 +4169,11 @@
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
-      "all-failed_other": "Failed to restore {{count}} dashboards.",
+      "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
-      "failed-count_other": "{{count}} dashboards failed",
+      "failed-count_other": "{{count}} dashboard failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboards restored successfully",
+      "success-count_other": "{{count}} dashboard restored successfully",
       "success-multiple": "Dashboards restored",
       "success-single": "Dashboard restored",
       "view-dashboard": "View dashboard",
@@ -6251,6 +6263,19 @@
     "community-mapping-select-datasource": "Select a datasource",
     "community-search-placeholder": "Search community dashboards...",
     "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+    "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
+    "compatibility-badge": {
+      "check": "Check compatibility",
+      "check-tooltip": "Checks how many dashboard metrics match your data source.",
+      "checking": "Checking",
+      "error-text": "Error",
+      "error-tooltip": "Compatibility check failed. First, verify the <2>data source</2> is working. Then open the dashboard and review the <6>variables</6>.",
+      "not-supported-tooltip": "This dashboard or datasource type is not yet supported. Only Prometheus datasources and non-dynamic dashboards (v1) are currently supported.",
+      "score-text": "{{score}}% compatible",
+      "tooltip-green": "{{score}}% ({{found}}/{{total}}) of metrics match.",
+      "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",
+      "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
@@ -6474,8 +6499,6 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "The value is not saved in the Grafana database",
-      "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
@@ -9790,12 +9813,16 @@
       },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
+        "expander-column-name": "Expand nested rows",
         "no-data": "No data"
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sparkline": {
         "no-data": "no data"
+      },
+      "tooltip": {
+        "trigger": "Toggle tooltip"
       }
     },
     "tags": {
@@ -10338,7 +10365,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -11704,6 +11731,8 @@
     },
     "user-invite-form": {
       "back": "Back",
+      "disabled-message": "This form is no longer in use. To invite a new user, please click the button to manage invitations externally.",
+      "disabled-title": "Externally managed users",
       "label-email-or-username": "Email or username",
       "label-name": "Name",
       "label-send-invite-email": "Send invite email",
@@ -12655,6 +12684,7 @@
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
       "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
+      "retry-action": "Retry",
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
@@ -12725,6 +12755,7 @@
       "source-code": "Source code"
     },
     "repository-card": {
+      "last-sync": "Last sync: {{date}}",
       "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
@@ -12853,8 +12884,9 @@
       "label-pending-step": "Pending step"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatic pulling disabled",
+      "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
+      "disabled": "Disabled",
       "error": "Error",
       "pending": "Pending",
       "pulling": "Pulling",
@@ -13186,6 +13218,10 @@
       "show-transformation-help": "Show transformation help",
       "transformation-debug": "Debug"
     },
+    "alerts": {
+      "no-alerts": "No alert rules for this panel",
+      "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
       "body-transformation": "Removing one transformation may break others.",
@@ -13227,9 +13263,12 @@
       "query-options": "Query Options"
     },
     "header": {
+      "alert": "Alert",
       "expression": "Expression",
       "pending-expression": "Select an Expression",
       "pending-expression-cancel": "Cancel",
+      "pending-transformation": "Select a Transformation",
+      "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13246,14 +13285,21 @@
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-query": "Add query",
+      "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
+      "add-transformation": "Add transformation",
+      "add-transformation-below": "Add transformation below {{id}}",
       "alert-indicator": {
         "button-label": "View alert rules",
-        "tooltip": "View alert rules"
+        "button-label-hide": "Hide alert rules",
+        "close": "Close"
       },
+      "alerts_one": "Alerts ({{count}})",
+      "alerts_other": "Alerts ({{count}})",
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "data-mode": "Data Mode",
+      "footer-items_one": "{{count}} item",
+      "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"

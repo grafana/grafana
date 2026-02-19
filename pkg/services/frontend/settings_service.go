@@ -24,12 +24,16 @@ import (
 //
 // [settings_service]
 // url =
+// qps =
+// burst =
 //
 // Returns nil if not configured (this is not an error condition). Errors returned should
 // be considered critical.
 func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) (settingservice.Service, error) {
 	settingsSec := cfg.SectionWithEnvOverrides("settings_service")
 	settingsServiceURL := settingsSec.Key("url").String()
+	settingsServiceQPS := float32(settingsSec.Key("qps").MustFloat64(0))
+	settingsServiceBurst := settingsSec.Key("burst").MustInt(0)
 	if settingsServiceURL == "" {
 		// If settings service URL is not configured, return nil *without* error
 		return nil, nil
@@ -63,6 +67,8 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 		URL:                 settingsServiceURL,
 		TokenExchangeClient: tokenClient,
 		TLSClientConfig:     tlsConfig,
+		QPS:                 settingsServiceQPS,
+		Burst:               settingsServiceBurst,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settings service client: %w", err)

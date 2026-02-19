@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,6 +132,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		handler := middleware(testHandler)
 
+		successBefore := testutil.ToFloat64(settingsFetchMetric.WithLabelValues("success"))
+
 		req := httptest.NewRequest("GET", "/", nil)
 		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
@@ -148,6 +151,9 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		// Verify settings service was called
 		assert.True(t, mockSettingsService.called)
+
+		// Verify success metric was incremented
+		assert.Equal(t, successBefore+1, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("success")))
 	})
 
 	t.Run("should fallback to base config on settings service error", func(t *testing.T) {
@@ -177,6 +183,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		handler := middleware(testHandler)
 
+		errorBefore := testutil.ToFloat64(settingsFetchMetric.WithLabelValues("error"))
+
 		req := httptest.NewRequest("GET", "/", nil)
 		req = setupTestContext(req, "stacks-123")
 		recorder := httptest.NewRecorder()
@@ -192,6 +200,9 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		// Verify settings service was called
 		assert.True(t, mockSettingsService.called)
+
+		// Verify error metric was incremented
+		assert.Equal(t, errorBefore+1, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("error")))
 	})
 
 	t.Run("should not call settings service when no namespace is present", func(t *testing.T) {
