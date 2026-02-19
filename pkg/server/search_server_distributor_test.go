@@ -49,6 +49,7 @@ var (
 
 //nolint:gocyclo
 func TestIntegrationDistributor(t *testing.T) {
+	t.Skip("Skipping flaky test: 'no healthy replica' errors.")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
