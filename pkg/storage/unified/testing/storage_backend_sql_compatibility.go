@@ -58,7 +58,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	return backend, dbConn
 }
 
-func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {
+func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBackendFunc, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {
 	if opts == nil {
 		opts = &TestOptions{}
 	}
@@ -87,7 +87,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 			}
 
 			kvbackend, db := newKvBackend(t.Context())
-			sqlbackend, _ := newSqlBackend(t.Context())
+			sqlbackend := newSqlBackend(t.Context())
 
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
@@ -100,7 +100,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		}
 
 		kvbackend, db := newKvBackend(t.Context())
-		sqlbackend, _ := newSqlBackend(t.Context())
+		sqlbackend := newSqlBackend(t.Context())
 
 		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
 	})
@@ -197,7 +197,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 	// Delete the 3 resources
 	for i := 1; i <= 3; i++ {
 		name := fmt.Sprintf("test-playlist-%d", i)
-		deleted := deletePlaylistResource(t, server, ctx, nsPrefix, name, currentRVs[i-1])
+		deleted := deletePlaylistResource(t, server, ctx, nsPrefix, name, currentRVs[i-1]) //nolint:gosec // i-1 is bounded by loop range [0,2]
 
 		// Verify deleted resource key_path (with folder for resource 2)
 		key := createPlaylistKey(nsPrefix, name)

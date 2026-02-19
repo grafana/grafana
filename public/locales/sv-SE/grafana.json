@@ -599,6 +599,12 @@
       "title-restore-version": "Återställ versionen",
       "title-restoring-alertmanager-configuration": "Återställer konfigurationen för Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sortera",
       "label-filter-placeholder-search-alerts-by-labels": "Sök varningar efter etiketter",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1801,7 +1797,11 @@
         "target-datasource-description": "Välj den datakälla som de importerade reglerna ska fråga. Se till att mätvärden som används i de importerade reglerna är tillgängliga i den här datakällan.",
         "target-datasource-required": "Välj en måldatakälla"
       },
-      "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}"
+      "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2649,13 @@
       "resample-to": "Sampla om till",
       "upsample": "Sampla upp"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Routing"
     },
@@ -2877,8 +2884,8 @@
       },
       "rulerrule-loading-error": "Det gick inte att ladda regeln",
       "toggle": {
-        "go-back-to-old-look": "Gå tillbaka till det gamla utseendet",
-        "try-out-the-new-look": "Prova det nya utseendet!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Okänd regeltyp"
     },
@@ -9804,12 +9811,16 @@
       },
       "inspect-drawer-title": "Inspektera värde",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Inga data"
       },
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
       "sparkline": {
         "no-data": "inga data"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11718,6 +11729,8 @@
     },
     "user-invite-form": {
       "back": "Tillbaka",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-post eller användarnamn",
       "label-name": "Namn",
       "label-send-invite-email": "Skicka inbjudan per e-post",
@@ -12669,6 +12682,7 @@
       "loading-finished-job": "Läser in färdigt jobb …",
       "no-job-found": "Inget jobb hittades",
       "no-job-found-message": "Jobbet kan ha raderats eller kunde inte hämtas. Avbryt den aktuella processen och börja om.",
+      "retry-action": "",
       "starting": "Startar …",
       "status": {
         "title-error-running-job": "Ett fel uppstod när ett jobb kördes",
@@ -12739,6 +12753,7 @@
       "source-code": "Källkod"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Skrivskyddad",
       "settings": "Inställningar",
       "view": "Visa"
@@ -12867,8 +12882,9 @@
       "label-pending-step": "Väntande steg"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatisk hämtning inaktiverad",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Raderar",
+      "disabled": "",
       "error": "Fel",
       "pending": "Väntande",
       "pulling": "Hämtar",
@@ -13200,6 +13216,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13241,9 +13261,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,17 +13283,24 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Välj kort {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
-      "transformations": "Omvandlingar"
+      "transformations": "Omvandlingar",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

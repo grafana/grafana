@@ -10,7 +10,6 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
@@ -26,7 +25,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 			ctx = scopeCtx
 		}
 	}
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.v2alpha1_to_v1beta1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2alpha1_to_v1beta1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 	)
@@ -55,7 +54,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 }
 
 func convertDashboardSpec_V2alpha1_to_V1beta1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
-	_, span := tracing.Start(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
 	defer span.End()
 
 	dashboard := make(map[string]interface{})
@@ -1641,6 +1640,14 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 		varMap["datasource"] = datasource
 	}
 
+	// Handle defaultValue if present
+	if spec.DefaultValue != nil {
+		varMap["defaultValue"] = map[string]interface{}{
+			"text":  convertStringOrArrayOfStringToV1(spec.DefaultValue.Text),
+			"value": convertStringOrArrayOfStringToV1(spec.DefaultValue.Value),
+		}
+	}
+
 	return varMap, nil
 }
 
@@ -1689,6 +1696,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
 			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
+			}
 			filters = append(filters, filterMap)
 		}
 		varMap["filters"] = filters
@@ -1714,6 +1724,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			}
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
+			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
 			}
 			baseFilters = append(baseFilters, filterMap)
 		}
