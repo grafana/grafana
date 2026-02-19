@@ -1,4 +1,4 @@
-import { reportInteraction } from "src/analytics/utils";
+import { reportInteraction } from "@grafana/runtime";
 import { Event, EventProperty } from "./types.mts";
 
 export const createInteractionEvent = (repo: Event['repo'] = 'grafana', feature: Event['feature']) => {
