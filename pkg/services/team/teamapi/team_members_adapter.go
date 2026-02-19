@@ -40,12 +40,12 @@ func (f *directRestConfigClientFactory) GetClient(c *contextmodel.ReqContext) (*
 	restConfig.APIPath = "apis"
 	clientRegistry := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
 
-	resClient, err := clientRegistry.ClientFor(iamv0alpha1.TeamBindingKind())
+	client, err := iamv0alpha1.NewTeamBindingClientFromGenerator(clientRegistry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource client for TeamBinding: %w", err)
 	}
 
-	return iamv0alpha1.NewTeamBindingClient(resClient), nil
+	return client, nil
 }
 
 // setTeamMembershipsViaK8s updates team memberships using the TeamBinding K8s API
@@ -257,7 +257,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 		binding := &iamv0alpha1.TeamBinding{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-				Kind:       "TeamBinding",
+				Kind:       iamv0alpha1.TeamBindingKind().Kind(),
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
