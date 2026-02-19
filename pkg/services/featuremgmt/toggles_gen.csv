@@ -92,11 +92,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-01-18,jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 2025-12-29,auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2025-08-01,secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-<<<<<<< HEAD
-2026-02-04,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-=======
 2026-02-18,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
->>>>>>> main
 2024-01-23,alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 2025-01-27,alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
 2024-11-27,scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -218,23 +214,14 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-24,alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 2025-06-18,kubernetesAuthzApis,deprecated,@grafana/identity-access-team,false,false,false
 2025-08-29,kubernetesAuthZHandlerRedirect,deprecated,@grafana/identity-access-team,false,false,false
-<<<<<<< HEAD
-2026-02-04,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-02-04,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
-=======
 2026-02-18,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
->>>>>>> main
 2025-08-01,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
-<<<<<<< HEAD
-2026-01-15,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
-=======
 2026-02-18,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
->>>>>>> main
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2025-07-25,kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 2025-11-25,kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
@@ -246,11 +233,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-01,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
-<<<<<<< HEAD
-2026-01-26,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
-=======
 2026-02-18,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
->>>>>>> main
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
@@ -270,11 +253,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-01,teamFolders,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-08-01,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
-<<<<<<< HEAD
-2026-02-13,alertingAlertsActivityBanner,experimental,@grafana/alerting-squad,false,false,true
-=======
 2026-02-18,alertingAlertsActivityBanner,experimental,@grafana/alerting-squad,false,false,true
->>>>>>> main
 2025-08-01,graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 2025-08-01,azureResourcePickerUpdates,GA,@grafana/partner-datasources,false,false,true
 2025-08-01,prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
@@ -311,26 +290,14 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
-<<<<<<< HEAD
-2026-01-15,queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true
-2026-01-13,queryEditorNext,experimental,@grafana/datapro,false,false,true
-2026-01-20,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
-2026-02-04,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-02-09,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
-2026-01-27,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
-2026-02-11,appPluginAPIServer,experimental,@grafana/plugins-platform-backend,false,true,false
-2026-02-11,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-02-11,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
-2026-02-13,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
-=======
 2026-02-18,queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true
 2026-02-18,queryEditorNext,experimental,@grafana/datapro,false,false,true
 2026-02-18,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
+2026-02-11,appPluginAPIServer,experimental,@grafana/plugins-platform-backend,false,true,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
->>>>>>> main
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
