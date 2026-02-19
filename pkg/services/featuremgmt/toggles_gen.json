@@ -1160,6 +1160,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardFiltersOverview",
+        "resourceVersion": "1771412613032",
+        "creationTimestamp": "2026-02-18T11:03:33Z"
+      },
+      "spec": {
+        "description": "Enables the dashboard filters overview pane",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardLevelTimeMacros",
         "resourceVersion": "1771410284502",
         "creationTimestamp": "2025-07-31T09:49:07Z"
@@ -1373,6 +1387,19 @@
       },
       "spec": {
         "description": "Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableResourceEndpointFrontend",
+        "resourceVersion": "1771492008460",
+        "creationTimestamp": "2026-02-19T09:06:48Z"
+      },
+      "spec": {
+        "description": "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
@@ -1734,6 +1761,35 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "frontendServiceSettingsOverrides",
+        "resourceVersion": "1771419300836",
+        "creationTimestamp": "2026-02-18T12:55:00Z",
+        "deletionTimestamp": "2026-02-18T16:12:18Z"
+      },
+      "spec": {
+        "description": "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "frontendServiceUseSettingsService",
+        "resourceVersion": "1771431138536",
+        "creationTimestamp": "2026-02-18T16:12:18Z"
+      },
+      "spec": {
+        "description": "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "false"
       }

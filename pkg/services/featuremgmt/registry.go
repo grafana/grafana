@@ -525,6 +525,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
+			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -645,6 +653,14 @@ var (
 			Name:         "perPanelFiltering",
 			Description:  "Enables filtering by grouping labels on the panel level through legend or tooltip",
 			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardFiltersOverview",
+			Description:  "Enables the dashboard filters overview pane",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
@@ -2415,6 +2431,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "frontendServiceUseSettingsService",
+			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )
