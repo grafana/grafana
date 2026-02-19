@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
@@ -19,10 +21,12 @@ export function TransformationEditorRenderer() {
   const { transformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
+  const rawData = useMemo(() => data?.series ?? [], [data]);
+
   const inputData = useTransformationInputData({
     selectedTransformation,
     allTransformations: transformations,
-    rawData: data?.series ?? [],
+    rawData,
   });
 
   if (!selectedTransformation) {
