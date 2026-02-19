@@ -346,7 +346,7 @@ export const SINGLE_LINE_ESTIMATE_THRESHOLD = 18.5;
  */
 export function getRowHeight(
   fields: Field[],
-  rowIdx: number,
+  row: TableRow,
   columnWidths: number[],
   defaultHeight: number,
   measurers?: MeasureCellHeightEntry[],
@@ -358,7 +358,7 @@ export function getRowHeight(
   }
 
   let maxHeight = -1;
-  let maxValue = '';
+  let maxValue: unknown = '';
   let maxWidth = 0;
   let maxField: Field | undefined;
   let preciseMeasurer: MeasureCellHeight | undefined;
@@ -372,11 +372,12 @@ export function getRowHeight(
 
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
+      const displayName = getDisplayName(field);
       // special case: for the header, provide `-1` as the row index.
-      const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+      const cellValueRaw = row.__index === -1 ? displayName : row[displayName];
       if (cellValueRaw != null) {
         const colWidth = columnWidths[fieldIdx];
-        const estimatedHeight = measurer(cellValueRaw, colWidth, field, rowIdx, lineHeight);
+        const estimatedHeight = measurer(cellValueRaw, colWidth, field, row.__index, lineHeight);
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
           maxValue = cellValueRaw;
@@ -397,7 +398,7 @@ export function getRowHeight(
   // if we finished this row height loop with an estimate, we need to call
   // the `preciseMeasurer` method to get the exact line count.
   if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, rowIdx, lineHeight);
+    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height

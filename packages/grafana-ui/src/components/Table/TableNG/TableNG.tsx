@@ -296,9 +296,22 @@ export function TableNG(props: TableNGProps) {
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
-    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.sorted.length : 0)),
+    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.sorted.length : null)),
     [nestedRows, expandedRows]
   );
+
+  // set up the first row's nested data and the nest field widths using useColWidths to avoid
+  // unnecessary re-renders on re-size.
+  const firstRowNestedData = useMemo(
+    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
+    [hasNestedFrames, rows]
+  );
+  const nestedVisibleFields = useMemo(
+    () => (firstRowNestedData ? getVisibleFields(firstRowNestedData.fields) : []),
+    [firstRowNestedData]
+  );
+  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+
   const rowHeight = useRowHeight({
     columnWidths: widths,
     fields: visibleFields,
@@ -307,6 +320,9 @@ export function TableNG(props: TableNGProps) {
     visibleNestedRowCounts,
     typographyCtx,
     maxHeight: maxRowHeight,
+    nestedColWidths: nestedFieldWidths,
+    nestedFields: nestedVisibleFields,
+    nestedRows,
   });
 
   const {
@@ -843,18 +859,6 @@ export function TableNG(props: TableNGProps) {
       isUniformFooter,
     ]
   );
-
-  // set up the first row's nested data and the nest field widths using useColWidths to avoid
-  // unnecessary re-renders on re-size.
-  const firstRowNestedData = useMemo(
-    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
-    [hasNestedFrames, rows]
-  );
-  const nestedVisibleFields = useMemo(
-    () => (firstRowNestedData ? getVisibleFields(firstRowNestedData.fields) : []),
-    [firstRowNestedData]
-  );
-  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);

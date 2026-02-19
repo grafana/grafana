@@ -283,7 +283,7 @@ export function useHeaderHeight({
     }
     return getRowHeight(
       fields,
-      -1,
+      { __index: -1, __depth: 0 },
       columnAvailableWidths,
       TABLE.HEADER_HEIGHT,
       measurers,
@@ -300,23 +300,33 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: NonNullable<CSSProperties['height']>;
-  visibleNestedRowCounts: number[];
+  visibleNestedRowCounts: Array<number | null>;
   typographyCtx: TypographyCtx;
   maxHeight?: number;
+  nestedRows: Array<{ raw: TableRow[]; filtered: TableRow[]; sorted: TableRow[] }>;
+  nestedFields: Field[];
+  nestedColWidths: number[];
 }
 
 export function useRowHeight({
   columnWidths,
   fields,
-  hasNestedFrames,
   defaultHeight,
-  visibleNestedRowCounts,
   typographyCtx,
   maxHeight,
+  hasNestedFrames,
+  visibleNestedRowCounts,
+  nestedFields,
+  nestedColWidths,
+  nestedRows,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const measurers = useMemo(
     () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
     [fields, typographyCtx, maxHeight]
+  );
+  const nestedMeasurers = useMemo(
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
+    [nestedFields, typographyCtx, maxHeight]
   );
   const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
@@ -334,12 +344,15 @@ export function useRowHeight({
     // this cache should get blown away on resize, data refresh, updated fields, etc.
     // caching by __index is ok because sorting does not modify the __index.
     const cache: Array<number | undefined> = Array(fields[0].values.length);
+    const nestedRowCache: Array<number[] | undefined> = visibleNestedRowCounts.map((count) =>
+      count == null ? undefined : Array(count)
+    );
     return (row: TableRow) => {
       // nested rows
       if (row.__depth > 0) {
         // if unexpanded, height === 0
         const visibleNestedRowCount = visibleNestedRowCounts[row.__index];
-        if (visibleNestedRowCount === 0) {
+        if (visibleNestedRowCount == null) {
           return 0;
         }
 
@@ -348,17 +361,52 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
-        return defaultHeight * visibleNestedRowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
+        return (
+          nestedRows[row.__index].sorted.reduce(
+            (acc, row) => acc + getRowHeight(nestedFields, row, nestedColWidths, defaultHeight, nestedMeasurers),
+            0
+          ) +
+          nestedHeaderHeight +
+          TABLE.CELL_PADDING * 2
+        );
+      }
+
+      if (row.__parentIndex != null) {
+        const nestedRowCacheEntry = nestedRowCache[row.__parentIndex];
+        if (nestedRowCacheEntry == null) {
+          return 0;
+        }
+
+        if (nestedRowCacheEntry[row.__index]) {
+          return nestedRowCacheEntry[row.__index];
+        }
+
+        const result = getRowHeight(nestedFields, row, nestedColWidths, defaultHeight, nestedMeasurers);
+
+        nestedRowCacheEntry[row.__index] = result;
+        return result;
       }
 
       // regular rows
       let result = cache[row.__index];
       if (!result) {
-        result = cache[row.__index] = getRowHeight(fields, row.__index, colWidths, defaultHeight, measurers);
+        result = cache[row.__index] = getRowHeight(fields, row, colWidths, defaultHeight, measurers);
       }
       return result;
     };
-  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, visibleNestedRowCounts]);
+  }, [
+    colWidths,
+    defaultHeight,
+    fields,
+    hasNestedFrames,
+    hasWrappedCols,
+    measurers,
+    nestedColWidths,
+    nestedFields,
+    nestedMeasurers,
+    nestedRows,
+    visibleNestedRowCounts,
+  ]);
 
   return rowHeight;
 }
