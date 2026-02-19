@@ -10,6 +10,7 @@ import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistan
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getSceneObjectSelectionPathId } from '../../utils/pathId';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -27,6 +28,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     model.state.conditionalRendering
   );
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected: isRepeatSourceSelected } = useElementSelection(model.state.repeatSourceKey);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
@@ -34,6 +36,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
+  const rowSelectionPathId = getSceneObjectSelectionPathId(model);
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -95,7 +98,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
-            !isClone && isSelected && 'dashboard-selected-element',
+            (isSelected || (!!isClone && isRepeatSourceSelected)) && 'dashboard-selected-element',
             !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
             isDropTarget && 'dashboard-drop-target'
           )}
@@ -118,6 +121,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             setTimeout(() => onSelect?.(evt));
           }}
           data-testid={selectors.components.DashboardRow.wrapper(title!)}
+          data-selection-path-id={rowSelectionPathId}
           {...dragProvided.draggableProps}
         >
           {(!isHeaderHidden || isEditing) && (

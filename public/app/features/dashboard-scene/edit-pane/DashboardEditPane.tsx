@@ -7,6 +7,7 @@ import {
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { findObjectBySelectionPathId } from '../utils/pathId';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementSelection } from './ElementSelection';
@@ -213,7 +214,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
-    let obj = sceneGraph.findByKey(this, element.id);
+    const obj = element.pathId
+      ? (findObjectBySelectionPathId(this, element.pathId) ?? sceneGraph.findByKey(this, element.id))
+      : sceneGraph.findByKey(this, element.id);
+
     if (obj) {
       // Do not select repeat clones or their children
       if (isRepeatCloneOrChildOf(obj)) {

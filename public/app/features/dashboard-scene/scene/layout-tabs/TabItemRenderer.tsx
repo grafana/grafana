@@ -10,6 +10,7 @@ import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDis
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getSceneObjectSelectionPathId } from '../../utils/pathId';
 import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -22,6 +23,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected: isRepeatSourceSelected } = useElementSelection(model.state.repeatSourceKey);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
@@ -34,6 +36,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const [isConditionallyHidden] = useIsConditionallyHidden(model.state.conditionalRendering);
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
+  const tabSelectionPathId = getSceneObjectSelectionPathId(model);
 
   const isDraggable = !isClone && isEditing;
 
@@ -70,8 +73,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             truncate
             className={cx(
               isConditionallyHidden && styles.hidden,
-              isSelected && 'dashboard-selected-element',
-              isSelectable && !isSelected && 'dashboard-selectable-element',
+              (isSelected || (!!isClone && isRepeatSourceSelected)) && 'dashboard-selected-element',
+              !isClone && isSelectable && !isSelected && 'dashboard-selectable-element',
               isDropTarget && 'dashboard-drop-target'
             )}
             active={isActive}
@@ -119,6 +122,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             }}
             label={titleInterpolated}
             data-tab-activation-key={key}
+            data-selection-path-id={tabSelectionPathId}
             {...titleCollisionProps}
           />
         </div>

@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelContext';
@@ -50,13 +51,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
+          const isClone = isRepeatCloneOrChildOf(item);
 
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              data-selection-path-id={item.getPathId()}
+              className={cx(
+                isConditionallyHidden && !isEditing && styles.hidden,
+                isClone && 'dashboard-repeat-clone-panel'
+              )}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
