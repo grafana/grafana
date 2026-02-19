@@ -30,10 +30,10 @@ enum RuleType {
   Unknown = 'Unknown',
 }
 
-const DetailGroup = ({ title, children }: { title: string; children: React.ReactNode }) => {
+const DetailGroup = ({ title, children }: { title?: string; children: React.ReactNode }) => {
   return (
     <Stack direction="column" gap={1}>
-      <Text variant="h4">{title}</Text>
+      {title && <Text variant="h4">{title}</Text>}
       <Stack direction="column" gap={2}>
         {children}
       </Stack>
@@ -98,7 +98,7 @@ export const Details = ({ rule }: DetailsProps) => {
   );
   return (
     <div className={styles.metadata}>
-      <DetailGroup title={t('alerting.alert.rule', 'Rule')}>
+      <DetailGroup>
         <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
         {rulerRuleType.grafana.rule(rule.rulerRule) && (
           <>
@@ -227,7 +227,7 @@ export const Details = ({ rule }: DetailsProps) => {
         <DetailGroup title={t('alerting.alert.annotations', 'Annotations')}>
           {Object.keys(annotations).length === 0 ? (
             <div>
-              <Text color="secondary" italic>
+              <Text color="secondary">
                 <Trans i18nKey="alerting.alert.no-annotations">No annotations</Trans>
               </Text>
             </div>
@@ -353,13 +353,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadata: css({
     display: 'grid',
     gap: theme.spacing(4),
-    gridTemplateColumns: '1fr 1fr 1fr',
-
-    [theme.breakpoints.down('lg')]: {
-      gridTemplateColumns: '1fr 1fr',
-    },
-    [theme.breakpoints.down('sm')]: {
-      gridTemplateColumns: '1fr',
-    },
+    gridTemplateColumns: '1fr',
   }),
 });

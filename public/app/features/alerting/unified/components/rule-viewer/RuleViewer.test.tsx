@@ -228,7 +228,7 @@ describe('RuleViewer', () => {
       });
 
       const recordingRuleIdentifier = ruleId.fromCombinedRule('grafana', recordingRule);
-      await renderRuleViewer(recordingRule, recordingRuleIdentifier, ActiveTab.Details);
+      await renderRuleViewer(recordingRule, recordingRuleIdentifier);
 
       expect(await screen.findByText('Test recording rule')).toBeInTheDocument();
       expect(await screen.findByRole('status', { name: 'Alert evaluation currently paused' })).toBeInTheDocument();
@@ -470,7 +470,7 @@ describe('RuleViewer', () => {
     const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
     it('should render metadata for vanilla Prometheus alert rule', async () => {
-      renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);
+      renderRuleViewer(mockRule, mockRuleIdentifier);
 
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
