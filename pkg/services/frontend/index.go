@@ -12,10 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type IndexProvider struct {
@@ -43,6 +45,9 @@ type IndexViewData struct {
 	Nonce string
 
 	PublicDashboardAccessToken string
+
+	// Feature flag for image-renderer to check support for binding calls
+	RenderBindingSupported bool
 }
 
 // Templates setup.
@@ -102,6 +107,10 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	// make a copy of the settings
 	fsSettings := requestConfig.FSFrontendSettings
 
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+
+	p.log.Info("Render binding supported", "reportRenderBinding", renderBindingSupported)
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
 		AppSubUrl:                  p.config.AppSubURL,
@@ -111,6 +120,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Nonce:                      reqCtx.RequestNonce,
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
+		RenderBindingSupported:     renderBindingSupported,
 	}
 
 	// TODO -- reevaluate with mt authnz
