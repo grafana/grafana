@@ -259,10 +259,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 				APIVersion: iamv0alpha1.GroupVersion.Identifier(),
 				Kind:       iamv0alpha1.TeamBindingKind().Kind(),
 			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: namespace,
-				Name:      fmt.Sprintf("tb-%s-%s", teamUID, user.UID),
-			},
+			ObjectMeta: makeMetadata(namespace, user.UID, teamUID),
 			Spec: iamv0alpha1.TeamBindingSpec{
 				Subject: iamv0alpha1.TeamBindingspecSubject{
 					Name: user.UID,
@@ -328,4 +325,11 @@ func (tapi *TeamAPI) validateUsersExist(
 	}
 
 	return nil
+}
+
+func makeMetadata(namespace, userUID, teamUID string) metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Name:      fmt.Sprintf("u.%s.%s", userUID, teamUID),
+		Namespace: namespace,
+	}
 }
