@@ -517,6 +517,22 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableResourceEndpoint",
+			Description:     "Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
+			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -637,6 +653,14 @@ var (
 			Name:         "perPanelFiltering",
 			Description:  "Enables filtering by grouping labels on the panel level through legend or tooltip",
 			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardFiltersOverview",
+			Description:  "Enables the dashboard filters overview pane",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
@@ -2391,7 +2415,16 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-		}}
+		},
+		{
+			Name:         "react19",
+			Description:  "Whether to use the new React 19 runtime",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+	}
 )
 
 //go:embed toggles_gen.json

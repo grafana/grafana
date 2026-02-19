@@ -5,15 +5,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { QUERY_EDITOR_COLORS, QueryEditorType, SidebarSize } from '../../constants';
+import {
+  useAlertingContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
-import { AddCardButton } from './AddCardButton';
 import { AlertIndicator } from './AlertIndicator';
-import { DraggableList } from './DraggableList';
-import { QueryCard } from './QueryCard';
-import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
-import { TransformationCard } from './TransformationCard';
+import { AlertsView } from './AlertsView';
+import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
+import { SidebarFooter } from './SidebarFooter';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
@@ -29,11 +32,18 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
+  const { alertRules } = useAlertingContext();
+  const { cardType } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
   };
+
+  const isAlertView = cardType === QueryEditorType.Alert;
+  const sidebarHeaderTitle = isAlertView
+    ? t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length })
+    : t('query-editor-next.sidebar.data', 'Data');
 
   return (
     <div className={styles.container}>
@@ -48,7 +58,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
               aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
             />
             <Text weight="medium" variant="h6">
-              {t('query-editor-next.sidebar.data', 'Data')}
+              {sidebarHeaderTitle}
             </Text>
           </Stack>
           <AlertIndicator />
@@ -57,39 +67,19 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>
-          <QuerySidebarCollapsableHeader
-            label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-            headerAction={<AddCardButton variant="query" alwaysVisible />}
-          >
-            <DraggableList
-              droppableId="query-sidebar-queries"
-              items={queries}
-              keyExtractor={(query) => query.refId}
-              renderItem={(query) => <QueryCard query={query} />}
-              onDragEnd={onQueryDragEnd}
+          {isAlertView ? (
+            <AlertsView alertRules={alertRules} />
+          ) : (
+            <QueriesAndTransformationsView
+              queries={queries}
+              transformations={transformations}
+              onQueryDragEnd={onQueryDragEnd}
+              onTransformationDragEnd={onTransformationDragEnd}
             />
-          </QuerySidebarCollapsableHeader>
-          <QuerySidebarCollapsableHeader
-            label={t('query-editor-next.sidebar.transformations', 'Transformations')}
-            headerAction={<AddCardButton variant="transformation" alwaysVisible />}
-          >
-            {transformations.length > 0 && (
-              <DraggableList
-                droppableId="query-sidebar-transformations"
-                items={transformations}
-                keyExtractor={(t) => t.transformId}
-                renderItem={(t) => <TransformationCard transformation={t} />}
-                onDragEnd={onTransformationDragEnd}
-              />
-            )}
-          </QuerySidebarCollapsableHeader>
+          )}
         </div>
       </ScrollContainer>
-      <div className={styles.footer}>
-        <Text weight="medium" variant="bodySmall">
-          {t('query-editor-next.sidebar.data-mode', 'Data Mode')}
-        </Text>
-      </div>
+      <SidebarFooter />
     </div>
   );
 });
@@ -111,11 +101,6 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
-    }),
-    footer: css({
-      marginTop: 'auto',
-      background: QUERY_EDITOR_COLORS.card.headerBg,
-      padding: theme.spacing(1, 1.5),
     }),
   };
 }

@@ -596,6 +596,12 @@
       "title-restore-version": "バージョンの復元",
       "title-restoring-alertmanager-configuration": "Alertmanager設定の復元"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "並べ替え",
       "label-filter-placeholder-search-alerts-by-labels": "ラベルでアラートを検索",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1791,7 +1791,9 @@
         "target-datasource-description": "インポートされたルールでクエリを実行するデータソースを選択します。インポートされたルールで使用されるメトリックが、このデータソースで利用可能であることを確認してください。",
         "target-datasource-required": "ターゲットデータソースを選択してください"
       },
-      "yaml-error": "YAMLファイルの解析に失敗しました: {{error}}"
+      "yaml-error": "YAMLファイルの解析に失敗しました: {{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2634,13 @@
       "resample-to": "再サンプリング先",
       "upsample": "アップサンプリング"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "ルーティング"
     },
@@ -2860,8 +2869,8 @@
       },
       "rulerrule-loading-error": "ルールの読み込みに失敗しました",
       "toggle": {
-        "go-back-to-old-look": "以前の表示に戻す",
-        "try-out-the-new-look": "新しい表示をお試しください！"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "不明なルールタイプ"
     },
@@ -9759,12 +9768,16 @@
       },
       "inspect-drawer-title": "値を検査",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "データなし"
       },
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
       "sparkline": {
         "no-data": "データなし"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11662,6 +11675,8 @@
     },
     "user-invite-form": {
       "back": "戻る",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "メールアドレスまたはユーザー名",
       "label-name": "名前",
       "label-send-invite-email": "招待メールを送信",
@@ -12607,6 +12622,7 @@
       "loading-finished-job": "完了したジョブを読み込み中...",
       "no-job-found": "ジョブが見つかりません",
       "no-job-found-message": "ジョブが削除されたか、取得できなかった可能性があります。現在のプロセスをキャンセルして、最初からやり直してください。",
+      "retry-action": "",
       "starting": "開始中...",
       "status": {
         "title-error-running-job": "実行エラー",
@@ -12677,6 +12693,7 @@
       "source-code": "ソースコード"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "読み取り専用",
       "settings": "設定",
       "view": "表示"
@@ -12805,8 +12822,9 @@
       "label-pending-step": "保留中のステップ"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "自動プルが無効になっています",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "削除中",
+      "disabled": "",
       "error": "エラー",
       "pending": "保留中",
       "pulling": "プル中",
@@ -13137,6 +13155,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13178,9 +13200,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,17 +13222,22 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "カード{{id}}を選択",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
-      "transformations": "変換"
+      "transformations": "変換",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

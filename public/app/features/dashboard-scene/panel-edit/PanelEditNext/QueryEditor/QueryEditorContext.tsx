@@ -40,6 +40,7 @@ export interface QueryRunnerState {
 export interface AlertingState {
   alertRules: AlertRule[];
   loading: boolean;
+  isDashboardSaved: boolean;
 }
 
 export interface PanelState {

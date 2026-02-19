@@ -11,7 +11,8 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { Transformation } from '../types';
+import { AlertRule, Transformation } from '../types';
+import { getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
@@ -61,6 +62,7 @@ function PendingPickerHeader({ editorType, label, onCancel, cancelLabel, styles 
  * This interface defines everything needed to render the header without Scene coupling.
  */
 export interface ContentHeaderProps {
+  selectedAlert: AlertRule | null;
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   queries: DataQuery[];
@@ -98,6 +100,7 @@ export interface ContentHeaderProps {
  * different architectural patterns.
  */
 export function ContentHeader({
+  selectedAlert,
   selectedQuery,
   selectedTransformation,
   queries,
@@ -115,7 +118,7 @@ export function ContentHeader({
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
 
-  const styles = useStyles2(getStyles, { cardType });
+  const styles = useStyles2(getStyles, { cardType, selectedAlert });
 
   if (pendingExpression) {
     return (
@@ -141,7 +144,7 @@ export function ContentHeader({
     );
   }
 
-  if (!selectedQuery && !selectedTransformation) {
+  if (!selectedQuery && !selectedTransformation && !selectedAlert) {
     return null;
   }
 
@@ -149,6 +152,18 @@ export function ContentHeader({
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+
+        {cardType === QueryEditorType.Alert && selectedAlert && (
+          <>
+            <Text weight="light" variant="body" color="primary">
+              <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
+            </Text>
+            <Separator />
+            <Text weight="light" variant="code" color="primary">
+              {selectedAlert.rule.name}
+            </Text>
+          </>
+        )}
 
         {cardType === QueryEditorType.Query && selectedQuery && (
           <>
@@ -181,7 +196,7 @@ export function ContentHeader({
           </>
         )}
 
-        {selectedQuery && (
+        {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
             <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
@@ -207,6 +222,7 @@ export function ContentHeaderSceneWrapper({
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
   const {
+    selectedAlert,
     selectedQuery,
     selectedTransformation,
     cardType,
@@ -220,6 +236,7 @@ export function ContentHeaderSceneWrapper({
 
   return (
     <ContentHeader
+      selectedAlert={selectedAlert}
       selectedQuery={selectedQuery}
       selectedTransformation={selectedTransformation}
       queries={queries}
@@ -240,10 +257,15 @@ interface DatasourceSectionProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
+) => {
+  const borderColor = getEditorBorderColor(theme, cardType, selectedAlert?.state);
+
   return {
     container: css({
-      borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,
+      borderLeft: `4px solid ${borderColor}`,
       backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(0.5),
       borderTopLeftRadius: theme.shape.radius.default,

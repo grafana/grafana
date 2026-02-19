@@ -123,6 +123,7 @@ interface CreateQueryEditorProviderOptions {
   dsState?: Partial<DatasourceState>;
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
+  alertingState?: Partial<AlertingState>;
 }
 
 /**
@@ -146,6 +147,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     dsState = {},
     qrState = {},
     panelState = {},
+    alertingState = {},
   } = options;
 
   const defaultDsState: DatasourceState = {
@@ -200,6 +202,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultAlertingState: AlertingState = {
     alertRules: [],
     loading: false,
+    isDashboardSaved: true,
+    ...alertingState,
   };
 
   return {
