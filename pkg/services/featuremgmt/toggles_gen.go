@@ -658,10 +658,6 @@ const (
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
 
-	// FlagKubernetesExternalGroupMapping
-	// Routes external group mapping requests from /api to the /apis endpoint
-	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
-
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -811,8 +807,16 @@ const (
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
 	// FlagKubernetesTeamsHandlerRedirect
-	// Redirects the request to teams related endpoints to the app platform API
+	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+
+	// FlagKubernetesExternalGroupMappingsApi
+	// Enables external group mapping APIs in the app platform
+	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
+
+	// FlagKubernetesExternalGroupMappingsRedirect
+	// Redirects the request of the external group mapping endpoints to the app platform APIs
+	FlagKubernetesExternalGroupMappingsRedirect = "kubernetesExternalGroupMappingsRedirect"
 
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams

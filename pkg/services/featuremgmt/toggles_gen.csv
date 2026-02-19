@@ -226,7 +226,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2025-07-25,kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
-2025-11-25,kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
 2025-05-23,restoreDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2025-12-10,recentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-01-13,experimentRecentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
@@ -296,6 +295,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,queryEditorNext,experimental,@grafana/datapro,false,false,true
 2026-02-18,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-02-19,kubernetesExternalGroupMappingsApi,experimental,@grafana/identity-access-team,false,false,false
+2026-02-19,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
