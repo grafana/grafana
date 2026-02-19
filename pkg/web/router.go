@@ -136,7 +136,7 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	if len(r.groups) > 0 {
 		groupPattern := ""
-		h := make([]Handler, 0)
+		h := make([]Handler, 0) //nolint:prealloc
 		for _, g := range r.groups {
 			groupPattern += g.pattern
 			h = append(h, g.handlers...)

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/correlations
 
-go 1.25.7
+go 1.26.0
 
 require (
 	github.com/grafana/grafana-app-sdk v0.50.4
