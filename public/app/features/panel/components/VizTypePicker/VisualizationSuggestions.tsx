@@ -5,6 +5,7 @@ import { useAsyncRetry } from 'react-use';
 import {
   GrafanaTheme2,
   PanelData,
+  PanelModel,
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
   VisualizationSuggestion,
@@ -28,6 +29,7 @@ import { VizTypeChangeDetails } from './types';
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   data?: PanelData;
+  panel?: PanelModel;
   vizPanel?: VizPanel;
   searchQuery?: string;
   isNewPanel?: boolean;
@@ -66,7 +68,15 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
   return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, data, vizPanel, searchQuery, isNewPanel, onShowPresets }: Props) {
+export function VisualizationSuggestions({
+  onChange,
+  data,
+  panel,
+  vizPanel,
+  searchQuery,
+  isNewPanel,
+  onShowPresets,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
@@ -76,7 +86,8 @@ export function VisualizationSuggestions({ onChange, data, vizPanel, searchQuery
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
-  const isUnconfiguredPanel = vizPanel?.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID;
+  const isUnconfiguredPanel =
+    vizPanel?.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID || panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
   const panelState = useMemo((): PanelState => {
     if (isUnconfiguredPanel) {
