@@ -375,8 +375,9 @@ func TestBase64Paddings(t *testing.T) {
 		token := sign(t, key, jwt.Claims{
 			Subject: subject,
 		}, nil)
-		var tokenParts []string
-		for i, part := range strings.Split(token, ".") {
+		parts := strings.Split(token, ".")
+		tokenParts := make([]string, 0, len(parts))
+		for i, part := range parts {
 			// Create parts with different padding numbers to test multiple cases.
 			tokenParts = append(tokenParts, part+strings.Repeat(string(base64.StdPadding), i))
 		}

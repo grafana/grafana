@@ -43,7 +43,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 	ruleKey := ngmodels.AlertRuleKeyWithGroup{}
 
 	transitionToKey := map[ngmodels.AlertInstanceKey]StateTransition{}
-	transitions := make([]StateTransition, 0)
+	transitions := make([]StateTransition, 0, len(allStates)*len(allStates))
 	for _, fromState := range allStates {
 		for i, toState := range allStates {
 			tr := StateTransition{
