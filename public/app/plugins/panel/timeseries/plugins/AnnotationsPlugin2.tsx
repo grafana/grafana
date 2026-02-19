@@ -227,6 +227,7 @@ export const AnnotationsPlugin2 = ({
     if (plot) {
       plot.redraw();
 
+      // @todo Smelly
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
       // (this is temp fix until uPlot integrtion is refactored)
@@ -237,7 +238,7 @@ export const AnnotationsPlugin2 = ({
   }, [xAnnos, plot]);
 
   if (plot) {
-    let markers = xAnnos.flatMap((frame, frameIdx) => {
+    const markers = xAnnos.flatMap((frame, frameIdx) => {
       let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];

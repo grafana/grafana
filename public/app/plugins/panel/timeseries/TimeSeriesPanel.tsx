@@ -214,37 +214,37 @@ export const TimeSeriesPanel = ({
             {/*    maxWidth={options.tooltip.maxWidth}*/}
             {/*  />*/}
             {/*)}*/}
-            {/*{!isVerticallyOriented && (*/}
-            {/*  <>*/}
-            {/*    <AnnotationsPlugin2*/}
-            {/*      replaceVariables={replaceVariables}*/}
-            {/*      multiLane={options.annotations?.multiLane}*/}
-            {/*      annotations={data.annotations ?? []}*/}
-            {/*      config={uplotConfig}*/}
-            {/*      timeZone={timeZone}*/}
-            {/*      newRange={newAnnotationRange}*/}
-            {/*      setNewRange={setNewAnnotationRange}*/}
-            {/*    />*/}
-            {/*    <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />*/}
-            {/*    {data.annotations && (*/}
-            {/*      <ExemplarsPlugin*/}
-            {/*        visibleSeries={getVisibleLabels(uplotConfig, frames)}*/}
-            {/*        config={uplotConfig}*/}
-            {/*        exemplars={data.annotations}*/}
-            {/*        timeZone={timeZone}*/}
-            {/*        maxHeight={options.tooltip.maxHeight}*/}
-            {/*        maxWidth={options.tooltip.maxWidth}*/}
-            {/*      />*/}
-            {/*    )}*/}
-            {/*    {((canEditThresholds && onThresholdsChange) || showThresholds) && (*/}
-            {/*      <ThresholdControlsPlugin*/}
-            {/*        config={uplotConfig}*/}
-            {/*        fieldConfig={fieldConfig}*/}
-            {/*        onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}*/}
-            {/*      />*/}
-            {/*    )}*/}
-            {/*  </>*/}
-            {/*)}*/}
+            {!isVerticallyOriented && (
+              <>
+                {/*<AnnotationsPlugin2*/}
+                {/*  replaceVariables={replaceVariables}*/}
+                {/*  multiLane={options.annotations?.multiLane}*/}
+                {/*  annotations={data.annotations ?? []}*/}
+                {/*  config={uplotConfig}*/}
+                {/*  timeZone={timeZone}*/}
+                {/*  newRange={newAnnotationRange}*/}
+                {/*  setNewRange={setNewAnnotationRange}*/}
+                {/*/>*/}
+                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
+                {/*{data.annotations && (*/}
+                {/*  <ExemplarsPlugin*/}
+                {/*    visibleSeries={getVisibleLabels(uplotConfig, frames)}*/}
+                {/*    config={uplotConfig}*/}
+                {/*    exemplars={data.annotations}*/}
+                {/*    timeZone={timeZone}*/}
+                {/*    maxHeight={options.tooltip.maxHeight}*/}
+                {/*    maxWidth={options.tooltip.maxWidth}*/}
+                {/*  />*/}
+                {/*)}*/}
+                {/*{((canEditThresholds && onThresholdsChange) || showThresholds) && (*/}
+                {/*  <ThresholdControlsPlugin*/}
+                {/*    config={uplotConfig}*/}
+                {/*    fieldConfig={fieldConfig}*/}
+                {/*    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}*/}
+                {/*  />*/}
+                {/*)}*/}
+              </>
+            )}
           </>
         );
       }}
