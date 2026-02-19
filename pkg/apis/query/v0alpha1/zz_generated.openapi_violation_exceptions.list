@@ -1,7 +1,0 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServer,AliasIDs
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,BasicColumn,MySQLType
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceConnection,APIGroup
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceConnection,APIVersion
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,SampleRows,values
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServerList,ListMeta
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceConnectionList,ListMeta

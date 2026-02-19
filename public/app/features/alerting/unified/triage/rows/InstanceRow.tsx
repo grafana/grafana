@@ -6,7 +6,7 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel } from '@grafana/scenes-react';
+import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   AxisPlacement,
@@ -135,7 +135,14 @@ export function InstanceRow({
       />
 
       {isDrawerOpen && (
-        <InstanceDetailsDrawer ruleUID={ruleUID} instanceLabels={instance.labels} onClose={handleDrawerClose} />
+        <SceneContextProvider
+          timeRange={{
+            from: typeof timeRange.raw.from === 'string' ? timeRange.raw.from : timeRange.raw.from.toISOString(),
+            to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
+          }}
+        >
+          <InstanceDetailsDrawer ruleUID={ruleUID} instanceLabels={instance.labels} onClose={handleDrawerClose} />
+        </SceneContextProvider>
       )}
     </>
   );

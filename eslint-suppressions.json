@@ -2610,11 +2610,6 @@
       "count": 2
     }
   },
-  "public/app/features/library-panels/components/LibraryPanelCard/LibraryPanelCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/live/centrifuge/LiveDataStream.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

@@ -596,6 +596,12 @@
       "title-restore-version": "還原版本",
       "title-restoring-alertmanager-configuration": "正在還原 Alertmanager 設定"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "排序",
       "label-filter-placeholder-search-alerts-by-labels": "按標籤搜尋警報",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1791,7 +1791,9 @@
         "target-datasource-description": "選擇匯入規則所要查詢的資料來源。請確保匯入規則中使用的指標在此資料來源中為可用。",
         "target-datasource-required": "請選擇目標資料來源"
       },
-      "yaml-error": "無法剖析 YAML 檔案：{{error}}"
+      "yaml-error": "無法剖析 YAML 檔案：{{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2634,13 @@
       "resample-to": "重新取樣為",
       "upsample": "向上取樣"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "路由"
     },
@@ -2860,8 +2869,8 @@
       },
       "rulerrule-loading-error": "無法載入規則",
       "toggle": {
-        "go-back-to-old-look": "恢復舊外觀",
-        "try-out-the-new-look": "試試新外觀！"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "未知的規則類型"
     },
@@ -9759,12 +9768,16 @@
       },
       "inspect-drawer-title": "檢查值",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "無資料"
       },
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
       "sparkline": {
         "no-data": "無資料"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11662,6 +11675,8 @@
     },
     "user-invite-form": {
       "back": "返回",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "電子郵件或使用者名稱",
       "label-name": "名稱",
       "label-send-invite-email": "傳送邀請電子郵件",
@@ -12607,6 +12622,7 @@
       "loading-finished-job": "正在載入已完成的作業…",
       "no-job-found": "找不到任務",
       "no-job-found-message": "作業可能已被刪除或無法檢索。取消目前的流程，然後再次開始。",
+      "retry-action": "",
       "starting": "正在開始…",
       "status": {
         "title-error-running-job": "執行作業時發生錯誤",
@@ -12677,6 +12693,7 @@
       "source-code": "原始碼"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
@@ -12805,8 +12822,9 @@
       "label-pending-step": "待處理步驟"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "自動拉取已停用",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "正在刪除",
+      "disabled": "",
       "error": "錯誤",
       "pending": "待處理",
       "pulling": "正在拉取",
@@ -13137,6 +13155,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13178,9 +13200,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,17 +13222,22 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "選取卡片 {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
-      "transformations": "轉換"
+      "transformations": "轉換",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
