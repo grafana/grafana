@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "rootDir": "."
+  },
   "exclude": ["dist", "node_modules", "**/*.test.ts*", "../../public/test/setupTests.ts"],
   "extends": "./tsconfig.json"
 }
