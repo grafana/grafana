@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -97,8 +98,12 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 
 		// Some other concurrent request may have created the version we're trying to create,
 		// if that's the case, we'll retry with a new version up to max attempts.
-		maxAttempts := 3
-		attempts := 0
+		maxVersionAttempts := 3
+		versionAttempts := 0
+		// SQLite integration tests can hit transient lock contention when secure values are
+		// created concurrently; retry these short-lived lock errors.
+		maxBusyAttempts := 3
+		busyAttempts := 0
 		for {
 			sv.Status.Version = version
 
@@ -131,18 +136,25 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 				return fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
 			}
 
-			res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-			if err != nil {
-				if sql.IsRowAlreadyExistsError(err) {
-					if attempts < maxAttempts {
-						attempts += 1
-						version += 1
-						continue
+				res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+				if err != nil {
+					if sql.IsRowAlreadyExistsError(err) {
+						if versionAttempts < maxVersionAttempts {
+							versionAttempts += 1
+							version += 1
+							continue
+						}
+						return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
 					}
-					return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+					if sqlite.IsBusyOrLocked(err) {
+						if busyAttempts < maxBusyAttempts {
+							busyAttempts += 1
+							time.Sleep(time.Duration(busyAttempts) * 50 * time.Millisecond)
+							continue
+						}
+					}
+					return fmt.Errorf("inserting row: %w", err)
 				}
-				return fmt.Errorf("inserting row: %w", err)
-			}
 
 			rowsAffected, err := res.RowsAffected()
 			if err != nil {
