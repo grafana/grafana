@@ -69,18 +69,19 @@ You're taken to the **Settings** tab where you can configure the data source.
 
 The Azure Monitor data source supports four authentication methods. Choose based on where Grafana is hosted and your security requirements:
 
-| Authentication method | Best for                                   | Requirements                                                   |
-| --------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| **App Registration**  | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret         |
-| **Managed Identity**  | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource                 |
-| **Workload Identity** | Grafana in Kubernetes (AKS)                | Workload identity federation configured                        |
-| **Current User**      | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login |
+| Authentication method                     | Best for                                   | Requirements                                                    |
+| ----------------------------------------- | ------------------------------------------ | --------------------------------------------------------------- |
+| **App Registration (client secret)**      | Any Grafana deployment                     | Microsoft Entra ID app registration with client secret          |
+| **App Registration (client certificate)** | Any Grafana deployment                     | Microsoft Entra ID app registration with certificate credential |
+| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | Managed identity enabled on the Azure resource                  |
+| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | Workload identity federation configured                         |
+| **Current User**                          | User-level access control                  | Microsoft Entra ID authentication configured for Grafana login  |
 
 ## Configure authentication
 
 Select one of the following authentication methods and complete the configuration.
 
-### App Registration
+### App Registration (client secret)
 
 Use a Microsoft Entra ID app registration (service principal) to authenticate. This method works with any Grafana deployment.
 
@@ -123,6 +124,111 @@ datasources:
       subscriptionId: <subscription-id> # Optional, default subscription
     secureJsonData:
       clientSecret: <client-secret>
+    version: 1
+```
+
+### App Registration (client certificate)
+
+Use a Microsoft Entra ID app registration with a certificate.
+
+#### App Registration (client certificate) prerequisites
+
+1. Create an app registration in Microsoft Entra ID.
+   Refer to the [Azure documentation for creating a service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in).
+1. Create or retrieve an existing certificate (see examples below for creating self-signed PEM or PFX certificates).
+1. Upload a certificate to the app registration in PEM or PFX format. Refer to the [Azure documentation here](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials?source=recommendations&tabs=certificate).
+1. Assign the `Reader` role to the app registration on the subscription or resources you want to monitor.
+   Refer to the [Azure documentation for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current).
+
+#### Add the certificate to the app registration
+
+Add the public certificate to your app registration in the Azure portal:
+
+1. Open the app registration in Azure.
+1. Select **Certificates & secrets**.
+1. Select **Certificates**.
+1. Click **Upload certificate**.
+1. Upload the certificate file that contains the public certificate (`.cer`, `.crt`, or `.pem`).
+1. Save your changes.
+
+The uploaded certificate is used by Microsoft Entra ID to validate the client assertion signature from Grafana.
+
+#### Certificate formats
+
+The Azure Monitor data source supports these certificate formats:
+
+- **PEM:** Provide both the certificate and private key in PEM text format.
+- **PFX:** Provide a base64-encoded PFX payload in the **Client Certificate** field, and provide the certificate password.
+
+#### Create self-signed certificates
+
+The following examples are for test and lab environments. For production, use certificates from your internal or public certificate authority.
+
+Create a self-signed PEM certificate and private key with OpenSSL:
+
+```sh
+openssl genrsa -out key.pem 2048
+openssl req -new -sha256 -key key.pem -out csr.csr
+openssl req -x509 -sha256 -days 365 -key key.pem -in csr.csr -out certificate.pem
+```
+
+In this example:
+
+- `certificate.pem` is uploaded to **Certificates & secrets** in Azure.
+- `certificate.pem` is the client certificate added to Grafana.
+- `key.pem` is the private key added to Grafana.
+
+Create an encrypted, base64 encoded PFX certificate:
+
+```sh
+openssl genrsa -out key.pem 2048
+openssl req -new -sha256 -key key.pem -out csr.csr
+openssl req -x509 -sha256 -days 365 -key key.pem -in csr.csr -out certificate.pem
+openssl pkcs12 -export -inkey key.pem -in certificate.pem -out certificate.pfx
+openssl base64 -in certificate.pfx -out certificate.b64
+```
+
+Ensure you make note of the password you use to encrypt the certificate.
+
+In this example:
+
+- `certificate.pem` is uploaded to **Certificates & secrets** in Azure.
+- `certificate.b64` is the encrypted, encoded file added to Grafana (in the client certificate field).
+
+#### App Registration (client certificate) UI configuration
+
+| Setting                     | Description                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Authentication**          | Select **App Registration (Client Certificate)**.                                                                                          |
+| **Azure Cloud**             | The Azure environment to connect to. Select **Azure** for the public cloud, or choose Azure Government or Azure China for national clouds. |
+| **Directory (tenant) ID**   | The GUID that identifies your Microsoft Entra ID tenant.                                                                                   |
+| **Application (client) ID** | The GUID for the app registration you created.                                                                                             |
+| **Format**                  | Select **PEM** or **PFX**.                                                                                                                 |
+| **Client Certificate**      | Paste the certificate content (PEM text or base64-encoded PFX payload).                                                                    |
+| **Private Key**             | Required only for PEM. Paste the private key PEM.                                                                                          |
+| **Certificate Password**    | Required for encrypted PFX files.                                                                                                          |
+| **Default Subscription**    | Click **Load Subscriptions** to populate available subscriptions, then select your default.                                                |
+
+#### Provision App Registration (client certificate) with YAML
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientcertificate
+      cloudName: azuremonitor # See supported cloud names below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      certificateFormat: pem # Use pem or pfx
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientCertificate: <certificate-content>
+      privateKey: <private-key-content> # pem only
+      certificatePassword: <certificate-password> # pfx only, if set
     version: 1
 ```
 
@@ -393,7 +499,7 @@ After configuring the data source, click **Save & test**. A successful connectio
 
 If the test fails, verify:
 
-- Your credentials are correct (tenant ID, client ID, client secret)
+- Your credentials are correct (tenant ID, client ID, and client secret or certificate fields)
 - The identity has the required Azure RBAC permissions
 - For Managed Identity or Workload Identity, that the Grafana server configuration is correct
 - Network connectivity to Azure endpoints
@@ -405,12 +511,13 @@ For more information about provisioning, refer to [Provisioning Grafana](https:/
 
 ### Provision quick reference
 
-| Authentication method | `azureAuthType` value | Required fields                                    |
-| --------------------- | --------------------- | -------------------------------------------------- |
-| App Registration      | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`             |
-| Managed Identity      | `msi`                 | None (uses VM identity)                            |
-| Workload Identity     | `workloadidentity`    | None (uses pod identity)                           |
-| Current User          | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true` |
+| Authentication method            | `azureAuthType` value | Required fields                                                  |
+| -------------------------------- | --------------------- | ---------------------------------------------------------------- |
+| App Registration (client secret) | `clientsecret`        | `tenantId`, `clientId`, `clientSecret`                           |
+| App Registration (certificate)   | `clientcertificate`   | `tenantId`, `clientId`, `certificateFormat`, `clientCertificate` |
+| Managed Identity                 | `msi`                 | None (uses VM identity)                                          |
+| Workload Identity                | `workloadidentity`    | None (uses pod identity)                                         |
+| Current User                     | `currentuser`         | `oauthPassThru: true`, `disableGrafanaCache: true`               |
 
 All methods support the optional `subscriptionId` field to set a default subscription.
 
@@ -474,6 +581,52 @@ resource "grafana_data_source" "azure_monitor" {
 
   secure_json_data_encoded = jsonencode({
     clientSecret = "<CLIENT_SECRET>"
+  })
+}
+```
+
+**App Registration (client certificate with PEM):**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType     = "clientcertificate"
+    cloudName         = "azuremonitor"
+    tenantId          = "<TENANT_ID>"
+    clientId          = "<CLIENT_ID>"
+    certificateFormat = "pem"
+    subscriptionId    = "<SUBSCRIPTION_ID>"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientCertificate = "<CERTIFICATE_CONTENT>"
+    privateKey        = "<PRIVATE_KEY_CONTENT>"
+  })
+}
+```
+
+**App Registration (client certificate with PFX):**
+
+```hcl
+resource "grafana_data_source" "azure_monitor" {
+  type = "grafana-azure-monitor-datasource"
+  name = "Azure Monitor"
+
+  json_data_encoded = jsonencode({
+    azureAuthType     = "clientcertificate"
+    cloudName         = "azuremonitor"
+    tenantId          = "<TENANT_ID>"
+    clientId          = "<CLIENT_ID>"
+    certificateFormat = "pfx"
+    subscriptionId    = "<SUBSCRIPTION_ID>"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    clientCertificate = "<CERTIFICATE_CONTENT_BASE64_ENCODED>"
+    certificatePassword = "<CERTIFICATE_PASSWORD>"
   })
 }
 ```
