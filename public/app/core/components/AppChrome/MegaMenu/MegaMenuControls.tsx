@@ -1,12 +1,20 @@
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 
 import { store, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Stack, Input, Icon, IconButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
-export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: string) => void }) => {
-  const [isAnythingExpanded, setIsAnythingExpanded] = useState(false);
+import { getSectionExpanded } from './utils';
+
+export const MegaMenuControls = ({
+  onFilterChange,
+  defaultExpandedState,
+}: {
+  onFilterChange: (filter: string) => void;
+  defaultExpandedState: boolean;
+}) => {
+  const [isAnythingExpanded, setIsAnythingExpanded] = useState(defaultExpandedState);
   const [filterValue, setFilterValue] = useState('');
   const navTree = useSelector((state) => state.navBarTree);
   const toggleAllSections = (tree: NavModelItem[], expanded: boolean) => {
@@ -23,8 +31,10 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
     });
   };
 
-  store.subscribe('grafana.navigation.expanded-state-change', () => {
-    setIsAnythingExpanded(navTree.some((item) => Boolean(store.get(`grafana.navigation.expanded[${item.id}]`))));
+  useEffect(() => {
+    return store.subscribe('grafana.navigation.expanded-state-change', () => {
+      setIsAnythingExpanded(navTree.some((item) => getSectionExpanded(item)));
+    });
   });
 
   const expandAllSections = () => {
