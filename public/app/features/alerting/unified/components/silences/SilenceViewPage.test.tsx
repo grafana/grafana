@@ -113,7 +113,7 @@ describe('SilenceViewPage', () => {
     const ruleLink = await screen.findByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE });
     expect(ruleLink).toBeInTheDocument();
     const parsedRuleLink = new URL(ruleLink.getAttribute('href') ?? '', 'http://localhost');
-    expect(parsedRuleLink.pathname).toBe(`/alerting/grafana/${MOCK_RULE_UID}/view`);
+    expect(parsedRuleLink.pathname).toBe(`/alerting/grafana/${encodeURIComponent(MOCK_RULE_UID)}/view`);
     expect(parsedRuleLink.searchParams.get('returnTo')).toBe(`/alerting/silence/${silenceId}/view`);
   });
 });

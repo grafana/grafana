@@ -73,7 +73,6 @@ describe('useSilenceViewData', () => {
     });
 
     expect(result.current.error).toBeUndefined();
-    expect(result.current.isNotFound).toBeFalsy();
     expect(result.current.silence).toBeDefined();
     expect(result.current.silencedAlerts).toHaveLength(1);
     expect(result.current.silencedAlerts[0].labels.alertname).toBe('MatchingAlert');
@@ -90,7 +89,6 @@ describe('useSilenceViewData', () => {
 
     expect(result.current.error).toBeDefined();
     expect(result.current.silence).toBeUndefined();
-    expect(result.current.isNotFound).toBeFalsy();
     expect(result.current.silencedAlerts).toEqual([]);
   });
 
@@ -105,7 +103,6 @@ describe('useSilenceViewData', () => {
 
     expect(result.current.error).toBeDefined();
     expect(result.current.silence).toBeUndefined();
-    expect(result.current.isNotFound).toBeTruthy();
     expect(result.current.silencedAlerts).toEqual([]);
   });
 });

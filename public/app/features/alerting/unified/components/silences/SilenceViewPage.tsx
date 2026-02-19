@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
@@ -23,7 +24,8 @@ function Title({ title }: { title: string }) {
 }
 
 function SilenceView() {
-  const { silence, silencedAlerts, isLoading, error, isNotFound } = useSilenceViewData();
+  const { silence, silencedAlerts, isLoading, error } = useSilenceViewData();
+  const isNotFound = isFetchError(error) && error.status === 404;
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.silence-view.loading', 'Loading silence...')} />;

@@ -20,7 +20,7 @@ export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewConte
   const returnTo = createReturnTo();
 
   const alertRuleHref = metadata?.rule_uid
-    ? `/alerting/grafana/${metadata.rule_uid}/view?${new URLSearchParams({ returnTo }).toString()}`
+    ? `/alerting/grafana/${encodeURIComponent(metadata.rule_uid)}/view?${new URLSearchParams({ returnTo }).toString()}`
     : '';
 
   return (
