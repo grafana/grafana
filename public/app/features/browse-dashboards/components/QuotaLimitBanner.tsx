@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, IconButton, useStyles2 } from '@grafana/ui';
 
 import { isFreeTierLicense } from '../../provisioning/utils/isFreeTierLicense';
 import { type ResourceStatus, useQuotaLimits } from '../hooks/useQuotaLimits';
@@ -65,43 +65,41 @@ export function QuotaLimitBanner() {
     window.open(QUOTA_EXTENSION_URL, '_blank');
   };
 
+  const extensionButtonContent = t('browse-dashboards.quota-banner.request-extension', 'Request quota extension');
+
   return (
     <div className={styles.wrapper}>
       {atLimitResources.length > 0 && (
         <Alert
           severity="error"
           title={t('browse-dashboards.quota-banner.at-limit-title', "You've hit your storage limits")}
+          onRemove={isPaying ? handleRequestExtension : undefined}
+          buttonContent={isPaying ? extensionButtonContent : undefined}
         >
-          <Stack justifyContent="space-between" alignItems="center">
-            {atLimitResources.map((r) => formatDetail(r)).join(' ')}{' '}
-            <Trans i18nKey="browse-dashboards.quota-banner.at-limit-body">
-              Clean up unused resources to free up space.
-            </Trans>
-            {isPaying && (
-              <Button variant="primary" onClick={handleRequestExtension}>
-                <Trans i18nKey="browse-dashboards.quota-banner.request-extension">Request quota extension</Trans>
-              </Button>
-            )}
-          </Stack>
+          {atLimitResources.map((r) => formatDetail(r)).join(' ')}{' '}
+          <Trans i18nKey="browse-dashboards.quota-banner.at-limit-body">
+            Clean up unused resources to free up space.
+          </Trans>
         </Alert>
       )}
       {nearingResources.length > 0 && (
         <Alert
           severity="warning"
           title={t('browse-dashboards.quota-banner.nearing-title', "You're nearing your storage limits")}
-          onRemove={handleDismiss}
+          onRemove={isPaying ? handleRequestExtension : undefined}
+          buttonContent={isPaying ? extensionButtonContent : undefined}
         >
-          <Stack justifyContent="space-between" alignItems="center">
-            {nearingResources.map((r) => formatDetail(r)).join(' ')}{' '}
-            <Trans i18nKey="browse-dashboards.quota-banner.nearing-body">
-              New resources can&apos;t be created once the limit is reached. Clean up unused resources to free up space.
-            </Trans>
-            {isPaying && (
-              <Button variant="primary" onClick={handleRequestExtension}>
-                <Trans i18nKey="browse-dashboards.quota-banner.request-extension">Request quota extension</Trans>
-              </Button>
-            )}
-          </Stack>
+          {nearingResources.map((r) => formatDetail(r)).join(' ')}{' '}
+          <Trans i18nKey="browse-dashboards.quota-banner.nearing-body">
+            New resources can&apos;t be created once the limit is reached. Clean up unused resources to free up space.
+          </Trans>
+          <div className={styles.dismiss}>
+            <IconButton
+              aria-label={t('browse-dashboards.quota-banner.dismiss', 'Dismiss')}
+              name="times"
+              onClick={handleDismiss}
+            />
+          </div>
         </Alert>
       )}
     </div>
@@ -111,5 +109,10 @@ export function QuotaLimitBanner() {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     position: 'relative',
+  }),
+  dismiss: css({
+    position: 'absolute',
+    top: theme.spacing(0.5),
+    right: theme.spacing(0.25),
   }),
 });

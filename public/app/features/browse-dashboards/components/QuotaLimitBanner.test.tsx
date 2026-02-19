@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import userEvent from '@testing-library/user-event';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -47,6 +47,8 @@ function mockQueries(dashboards: UsageData | 'loading' | 'error', folders: Usage
 
 const errorAlert = { name: /hit your storage limits/i };
 const warningAlert = { name: /nearing your storage limits/i };
+// Alert's buttonContent button gets aria-label="Close alert" (hardcoded in Alert component)
+const extensionButton = { name: /close alert/i };
 
 describe('QuotaLimitBanner', () => {
   let previousFlag: boolean | undefined;
@@ -83,7 +85,6 @@ describe('QuotaLimitBanner', () => {
     });
 
     it('when both resources are below threshold', () => {
-      mockQueries({ usage: 100, limit: 1000 }, { usage: 100, limit: 1000 });
       const { container } = render(<QuotaLimitBanner />);
       expect(container).toBeEmptyDOMElement();
     });
@@ -119,6 +120,12 @@ describe('QuotaLimitBanner', () => {
       const alert = screen.getByRole('alert', errorAlert);
       expect(alert).toHaveTextContent(/created 1,000 of 1,000 dashboards \(100%\)/);
       expect(alert).toHaveTextContent(/created 500 of 500 folders \(100%\)/);
+    });
+
+    it('shows when one query errors but the other is at limit', () => {
+      mockQueries({ usage: 1000, limit: 1000 }, 'error');
+      render(<QuotaLimitBanner />);
+      expect(screen.getByRole('alert', errorAlert)).toBeInTheDocument();
     });
   });
 
@@ -174,37 +181,23 @@ describe('QuotaLimitBanner', () => {
       expect(alert).toHaveTextContent(/created 900 of 1,000 folders \(90%\)/);
       expect(screen.queryByRole('alert', errorAlert)).not.toBeInTheDocument();
     });
-
-    it('still shows when one query errors but the other has data', () => {
-      mockQueries({ usage: 1000, limit: 1000 }, 'error');
-      render(<QuotaLimitBanner />);
-      expect(screen.getByRole('alert', errorAlert)).toBeInTheDocument();
-    });
   });
 
   describe('dismiss', () => {
-    it('hides warning when close button is clicked', async () => {
+    it('hides warning when dismiss button is clicked', async () => {
       mockQueries({ usage: 850, limit: 1000 }, { usage: 100, limit: 1000 });
       render(<QuotaLimitBanner />);
       expect(screen.getByRole('alert', warningAlert)).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: /close/i }));
+      await userEvent.click(screen.getByRole('button', { name: /dismiss/i }));
       expect(screen.queryByRole('alert', warningAlert)).not.toBeInTheDocument();
-    });
-
-    it('does not show close button on error alert', () => {
-      mockQueries({ usage: 1000, limit: 1000 }, { usage: 100, limit: 1000 });
-      render(<QuotaLimitBanner />);
-
-      expect(screen.getByRole('alert', errorAlert)).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument();
     });
 
     it('persists dismissal to localStorage', async () => {
       mockQueries({ usage: 850, limit: 1000 }, { usage: 100, limit: 1000 });
       render(<QuotaLimitBanner />);
 
-      await userEvent.click(screen.getByRole('button', { name: /close/i }));
+      await userEvent.click(screen.getByRole('button', { name: /dismiss/i }));
       const stored = store.getObject<Record<string, boolean>>(DISMISS_STORAGE_KEY);
       expect(stored).toEqual(expect.objectContaining({ dashboards: true }));
     });
@@ -229,24 +222,31 @@ describe('QuotaLimitBanner', () => {
 
   describe('request quota extension', () => {
     it('shows button for paying customers', () => {
-      mockIsFreeTier = false;
       mockQueries({ usage: 1000, limit: 1000 }, { usage: 100, limit: 1000 });
       render(<QuotaLimitBanner />);
-      expect(screen.getByRole('button', { name: /request quota extension/i })).toBeInTheDocument();
+
+      const alert = screen.getByRole('alert', errorAlert);
+      expect(within(alert).getByRole('button', extensionButton)).toBeInTheDocument();
     });
 
     it('hides button for free tier', () => {
       mockIsFreeTier = true;
       mockQueries({ usage: 1000, limit: 1000 }, { usage: 100, limit: 1000 });
       render(<QuotaLimitBanner />);
-      expect(screen.queryByRole('button', { name: /request quota extension/i })).not.toBeInTheDocument();
+
+      const alert = screen.getByRole('alert', errorAlert);
+      expect(within(alert).queryByRole('button', extensionButton)).not.toBeInTheDocument();
     });
 
     it('shows button in each alert when both severities present', () => {
-      mockIsFreeTier = false;
       mockQueries({ usage: 850, limit: 1000 }, { usage: 1000, limit: 1000 });
       render(<QuotaLimitBanner />);
-      expect(screen.getAllByRole('button', { name: /request quota extension/i })).toHaveLength(2);
+
+      const error = screen.getByRole('alert', errorAlert);
+      expect(within(error).getByRole('button', extensionButton)).toBeInTheDocument();
+
+      const warning = screen.getByRole('alert', warningAlert);
+      expect(within(warning).getByRole('button', extensionButton)).toBeInTheDocument();
     });
   });
 
