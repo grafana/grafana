@@ -1670,29 +1670,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardControlSourceRef": {
-        "description": "Source information for controls (e.g. variables or links)",
-        "type": "object",
-        "required": [
-          "uid",
-          "sourceId",
-          "sourceType"
-        ],
-        "properties": {
-          "sourceId": {
-            "description": "E.g. \"prometheus\"",
-            "type": "string"
-          },
-          "sourceType": {
-            "description": "E.g. \"datasource\"",
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConversionStatus": {
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
         "type": "object",
@@ -1855,9 +1832,6 @@
           "placement": {
             "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
             "type": "string"
-          },
-          "source": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardControlSourceRef"
           },
           "tags": {
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
@@ -2282,7 +2256,7 @@
             ]
           },
           "unit": {
-            "description": "Unit a field should use. The unit you select is applied to all fields except time.\nYou can use the units ID availables in Grafana or a custom unit.\nAvailable units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts\nAs custom unit, you can use the following formats:\n`suffix:\u003csuffix\u003e` for custom unit that should go after value.\n`prefix:\u003cprefix\u003e` for custom unit that should go before value.\n`time:\u003cformat\u003e` For custom date time formats type for example `time:YYYY-MM-DD`.\n`si:\u003cbase scale\u003e\u003cunit characters\u003e` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.\n`count:\u003cunit\u003e` for a custom count unit.\n`currency:\u003cunit\u003e` for custom a currency unit.",
+            "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:\u003csuffix\u003e` for custom unit that should go after value. `prefix:\u003cprefix\u003e` for custom unit that should go before value. `time:\u003cformat\u003e` For custom date time formats type for example `time:YYYY-MM-DD`. `si:\u003cbase scale\u003e\u003cunit characters\u003e` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:\u003cunit\u003e` for a custom count unit. `currency:\u003cunit\u003e` for custom a currency unit.",
             "type": "string"
           },
           "writeable": {
