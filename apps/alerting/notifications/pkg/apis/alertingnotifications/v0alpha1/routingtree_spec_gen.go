@@ -25,7 +25,7 @@ func (RoutingTreeRouteDefaults) OpenAPIModelName() string {
 type RoutingTreeRoute struct {
 	Receiver            *string              `json:"receiver,omitempty"`
 	Matchers            []RoutingTreeMatcher `json:"matchers,omitempty"`
-	Continue            *bool                `json:"continue,omitempty"`
+	Continue            bool                 `json:"continue"`
 	GroupBy             []string             `json:"group_by,omitempty"`
 	MuteTimeIntervals   []string             `json:"mute_time_intervals,omitempty"`
 	ActiveTimeIntervals []string             `json:"active_time_intervals,omitempty"`
