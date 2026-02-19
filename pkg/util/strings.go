@@ -142,8 +142,8 @@ func RemainingDaysUntil(expiration time.Time) string {
 
 // ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.
 func ToCamelCase(str string) string {
-	var finalParts []string
 	parts := strings.Split(str, "_")
+	finalParts := make([]string, 0, len(parts))
 
 	for _, part := range parts {
 		finalParts = append(finalParts, strings.Split(part, "-")...)
