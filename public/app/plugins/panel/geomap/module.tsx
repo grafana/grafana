@@ -55,8 +55,11 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
     builder.addBooleanSwitch({
       category,
       path: 'view.dashboardVariable',
-      description: 'Store view bounds in a dashboard variable for use in queries',
-      name: 'Sync view to dashboard variable',
+      name: t('geomap.name-sync-view-variable', 'Sync view to dashboard variable'),
+      description: t(
+        'geomap.description-sync-view-variable',
+        'Store view bounds in a dashboard variable for use in queries'
+      ),
       defaultValue: false,
     });
 
@@ -64,8 +67,8 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       category,
       id: 'view.dashboardVariableName',
       path: 'view.dashboardVariableName',
-      name: 'Variable name',
-      description: 'Specify the dashboard variable to store view bounds',
+      name: t('geomap.name-variable-name', 'Variable name'),
+      description: t('geomap.description-variable-name', 'Specify the dashboard variable to store view bounds'),
       editor: VariableNameEditor,
       showIf: (config) => config.view?.dashboardVariable === true,
     });

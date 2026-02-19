@@ -8618,6 +8618,8 @@
     "description-show-measure": "Show tools for making measurements on the map",
     "description-show-scale": "Indicate map scale",
     "description-show-zoom": "Show zoom control buttons in the upper left corner",
+    "description-sync-view-variable": "Store view bounds in a dashboard variable for use in queries",
+    "description-variable-name": "Specify the dashboard variable to store view bounds",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -8679,7 +8681,9 @@
     "name-show-measure": "Show measure tools",
     "name-show-scale": "Show scale",
     "name-show-zoom": "Show zoom control",
+    "name-sync-view-variable": "Sync view to dashboard variable",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "Variable name",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "No string fields found"
     },
