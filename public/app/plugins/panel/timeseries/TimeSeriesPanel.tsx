@@ -236,13 +236,13 @@ export const TimeSeriesPanel = ({
                 {/*    maxWidth={options.tooltip.maxWidth}*/}
                 {/*  />*/}
                 {/*)}*/}
-                {/*{((canEditThresholds && onThresholdsChange) || showThresholds) && (*/}
-                {/*  <ThresholdControlsPlugin*/}
-                {/*    config={uplotConfig}*/}
-                {/*    fieldConfig={fieldConfig}*/}
-                {/*    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}*/}
-                {/*  />*/}
-                {/*)}*/}
+                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
+                  <ThresholdControlsPlugin
+                    config={uplotConfig}
+                    fieldConfig={fieldConfig}
+                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
+                  />
+                )}
               </>
             )}
           </>
