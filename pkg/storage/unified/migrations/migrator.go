@@ -3,6 +3,8 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
@@ -47,13 +49,34 @@ type streamProvider interface {
 
 func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
-	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.Namespace, registry)
+	settings.Collection = collectResourceKeys(opts.Namespace, opts.Resources, registry)
+	return settings
+}
+
+func collectResourceKeys(namespace string, resources []schema.GroupResource, registry *MigrationRegistry) []*resourcepb.ResourceKey {
+	keys := make([]*resourcepb.ResourceKey, 0, len(resources))
+	seen := make(map[string]struct{}, len(resources))
+	for _, res := range resources {
+		resourceID := normalizedResourceID(res)
+		if _, ok := seen[resourceID]; ok {
+			continue
+		}
+		seen[resourceID] = struct{}{}
+		key := buildResourceKey(res, namespace, registry)
 		if key != nil {
-			settings.Collection = append(settings.Collection, key)
+			keys = append(keys, key)
 		}
 	}
-	return settings
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Resource < keys[j].Resource
+	})
+
+	return keys
+}
+
+func normalizedResourceID(gr schema.GroupResource) string {
+	return strings.ToLower(gr.Resource)
 }
 
 type resourceClientStreamProvider struct {
@@ -171,13 +194,7 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 }
 
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	keys := []*resourcepb.ResourceKey{}
-	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.NamespaceInfo.Value, m.registry)
-		if key != nil {
-			keys = append(keys, key)
-		}
-	}
+	keys := collectResourceKeys(opts.NamespaceInfo.Value, opts.Resources, m.registry)
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
 		Namespace: opts.NamespaceInfo.Value,
@@ -185,6 +202,10 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	})
 	if err != nil {
 		return fmt.Errorf("error rebuilding index: %w", err)
+	}
+	if response == nil {
+		m.log.Warn("received empty rebuild indexes response", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+		return nil
 	}
 
 	if response.Error != nil {
@@ -200,11 +221,7 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 
 		m.log.Info("distributor contacted all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
 
-		buildTimeMap := make(map[string]int64)
-		for _, bt := range response.BuildTimes {
-			key := bt.Group + "/" + bt.Resource
-			buildTimeMap[key] = bt.BuildTimeUnix
-		}
+		buildTimeMap := toBuildTimeMap(response.BuildTimes)
 
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
@@ -212,7 +229,7 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		// Resources with no data (and therefore no index) won't have a build time,
 		// and that's fine - we skip validation for those.
 		for _, res := range opts.Resources {
-			key := res.Group + "/" + res.Resource
+			key := normalizedResourceID(res)
 			buildTime, found := buildTimeMap[key]
 			if !found {
 				m.log.Info("no build time reported for resource, skipping validation (index may not exist)", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
@@ -229,4 +246,12 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	}
 
 	return nil
+}
+
+func toBuildTimeMap(buildTimes []*resourcepb.RebuildIndexesResponse_IndexBuildTime) map[string]int64 {
+	buildTimeMap := make(map[string]int64, len(buildTimes))
+	for _, bt := range buildTimes {
+		buildTimeMap[strings.ToLower(bt.Resource)] = bt.BuildTimeUnix
+	}
+	return buildTimeMap
 }
