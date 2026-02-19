@@ -89,9 +89,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
-  private _sourceTabManagerKey: string | undefined = undefined;
-  private _draggingTabKeyCurrentDropTarget: string | undefined;
-  private _sourceTabIndex: number;
 
   public constructor() {
     super({});
@@ -269,11 +266,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
   }
 
-  public startTabDrag(draggingTabKey: string, sourceTabManagerKey: string, sourceIndex: number): void {
-    this._sourceTabManagerKey = sourceTabManagerKey;
-    this._sourceTabIndex = sourceIndex;
+  public startTabDrag(sourceTabsManagerId: string, draggedTabId: string, draggedTabIndex: number): void {
+    this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
 
-    const draggingTab = sceneGraph.findByKey(this._getDashboard(), draggingTabKey);
+    const draggingTab = sceneGraph.findByKey(this._getDashboard(), draggedTabId);
     this.setState({
       draggingTab: draggingTab.getRef(),
     });
@@ -287,14 +283,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     // Tabs can be dropped only to TabsLayoutManager
     if (dropTarget instanceof TabsLayoutManager) {
-      this._draggingTabKeyCurrentDropTarget = dropTarget?.state?.key;
+      this._lastDropTarget = dropTarget;
     } else {
-      this._draggingTabKeyCurrentDropTarget = undefined;
+      this._lastDropTarget = null;
     }
-  }
-
-  private isDroppingTabToDifferentManager(): boolean {
-    return this._sourceTabManagerKey !== this._draggingTabKeyCurrentDropTarget;
   }
 
   private _onTabDragPointerUp(evt: PointerEvent) {
@@ -308,53 +300,45 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /**
    * Single entry point for handling tab drag end. If the tab was dropped from a different manager we use values
    * calculated by layout orchestrator.
-   * @param destinationManagerKey
-   * @param sourceIndex
-   * @param destinationIndex
+   * @param targetTabsManagerId
+   * @param targetIndex
    */
-  public stopTabDrag(
-    destinationManagerKey: string | undefined,
-    sourceIndex: number,
-    destinationIndex: number | undefined
-  ): void {
+  public stopTabDrag(targetIndex: number | undefined): void {
+    if (this._sourceDropTarget === null || !(this._sourceDropTarget instanceof TabsLayoutManager)) {
+      return;
+    }
+
+    if (this._lastDropTarget === null || !(this._lastDropTarget instanceof TabsLayoutManager)) {
+      return;
+    }
+
+    const sourceManager = this._sourceDropTarget;
+    const destinationManager = this._lastDropTarget;
+    targetIndex = targetIndex || destinationManager.getTabsIncludingRepeats().length;
+
     const tab = this.state.draggingTab?.resolve();
 
-    if (this.isDroppingTabToDifferentManager()) {
-      destinationManagerKey = this._draggingTabKeyCurrentDropTarget;
-      sourceIndex = this._sourceTabIndex;
-      destinationIndex = 0;
+    if (!tab) {
+      return;
     }
+
+    const sourceIndex = sourceManager.state.tabs.findIndex((t) => t === tab);
 
     this.setState({
       draggingTab: undefined,
     });
 
-    if (!tab || !destinationManagerKey || destinationIndex === undefined) {
-      return;
-    }
-
-    const sourceManager = tab.getParentLayout();
-    const destinationManager = sceneGraph.findByKeyAndType(
-      this._getDashboard(),
-      destinationManagerKey,
-      TabsLayoutManager
-    );
-
-    if (!destinationManager) {
-      return;
-    }
-
     // moving within the same TabsLayoutManager
     if (sourceManager === destinationManager) {
-      if (sourceIndex === destinationIndex) {
+      if (sourceIndex === targetIndex) {
         return;
       }
-      sourceManager.moveTab(sourceIndex, destinationIndex);
+      sourceManager.moveTab(sourceIndex, targetIndex);
       return;
     }
     // moving to a different TabsLayoutManager
     else {
-      const realDestinationIndex = destinationManager.mapTabInsertIndex(destinationIndex);
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
       this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
     }
@@ -927,6 +911,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return null;
     }
 
+    return this._findDropTargetByKey(key);
+  }
+
+  private _findDropTargetByKey(key: string): DashboardDropTarget | null {
     const sceneObject = sceneGraph.findByKey(this._getDashboard(), key);
 
     if (!sceneObject || !isDashboardDropTarget(sceneObject)) {

@@ -45,11 +45,15 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isClone = isRepeatCloneOrChildOf(model);
 
   const onBeforeDragStart = (start: DragStart) => {
-    orchestrator?.startTabDrag(start.draggableId, start.source.droppableId, start.source.index);
+    const sourceTabsManagerId = start.source.droppableId;
+    const draggedTabId = start.draggableId;
+    const draggedTabIndex = start.source.index;
+    orchestrator?.startTabDrag(sourceTabsManagerId, draggedTabId, draggedTabIndex);
   };
 
   const onDragEnd = (result: DropResult) => {
-    orchestrator?.stopTabDrag(result.destination?.droppableId, result.source.index, result.destination?.index);
+    const targetIndex = result.destination?.index;
+    orchestrator?.stopTabDrag(targetIndex);
   };
 
   return (
