@@ -1255,6 +1255,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardTemplatesAssistantButton",
+        "resourceVersion": "1771449972072",
+        "creationTimestamp": "2026-02-18T21:26:12Z"
+      },
+      "spec": {
+        "description": "Enables the Assistant button in the dashboard templates card",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardUndoRedo",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-29T14:46:39Z",
