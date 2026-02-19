@@ -12071,6 +12071,7 @@
       "expand-all-sections": "Expand all sections",
       "list-label": "Navigation",
       "open": "Main menu",
+      "search-input-label": "Search menu",
       "search-placeholder": "Search menu",
       "undock": "Undock menu"
     },
