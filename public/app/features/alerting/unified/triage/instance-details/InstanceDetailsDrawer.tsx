@@ -114,7 +114,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
             <Stack direction="column" gap={2}>
               {dataQueries.map((query, index) => (
                 <QueryVisualization
-                  key={query.refId || `query-${index}`}
+                  key={query.refId ?? `query-${index}`}
                   query={query}
                   instanceLabels={instanceLabels}
                   thresholds={thresholds}

@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		})
 
 		// Create a dashboard JSON file with UTF-8 BOM prefix (EF BB BF)
-		dashboardWithBOM := []byte{0xEF, 0xBB, 0xBF} // UTF-8 BOM
+		dashboardWithBOM := []byte{0xEF, 0xBB, 0xBF} //nolint:prealloc // UTF-8 BOM
 		dashboardWithBOM = append(dashboardWithBOM, []byte(`{
 			"uid": "bom-prefix-test",
 			"title": "Dashboard with BOM Prefix",
@@ -266,7 +266,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 	t.Run("YAML file with BOM", func(t *testing.T) {
 		// Create a YAML dashboard file with UTF-8 BOM
-		yamlWithBOM := []byte{0xEF, 0xBB, 0xBF} // UTF-8 BOM
+		yamlWithBOM := []byte{0xEF, 0xBB, 0xBF} //nolint:prealloc // UTF-8 BOM
 		yamlWithBOM = append(yamlWithBOM, []byte(`
 apiVersion: dashboard.grafana.app/v1beta1
 kind: Dashboard

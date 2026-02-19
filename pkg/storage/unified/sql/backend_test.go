@@ -775,7 +775,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 		}
 
-		var allItems []int64
+		allItems := make([]int64, 0, len(versions)*len(pages))
 		initialRV := rv51
 
 		// Test each page

@@ -82,6 +82,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
+| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
