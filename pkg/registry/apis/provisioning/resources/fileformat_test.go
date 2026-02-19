@@ -117,7 +117,8 @@ spec:
 
 	t.Run("load dashboard with UTF-8 BOM prefix", func(t *testing.T) {
 		// UTF-8 BOM is EF BB BF at the start of the file
-		dashboardJSON := []byte{0xEF, 0xBB, 0xBF}
+		dashboardJSON := make([]byte, 0, 96)
+		dashboardJSON = append(dashboardJSON, 0xEF, 0xBB, 0xBF)
 		dashboardJSON = append(dashboardJSON, []byte(`{
 			"title": "Dashboard with BOM",
 			"schemaVersion": 7,
@@ -200,7 +201,8 @@ spec:
 
 	t.Run("load YAML dashboard with BOM", func(t *testing.T) {
 		// YAML dashboard with UTF-8 BOM prefix
-		yamlData := []byte{0xEF, 0xBB, 0xBF}
+		yamlData := make([]byte, 0, 173)
+		yamlData = append(yamlData, 0xEF, 0xBB, 0xBF)
 		yamlData = append(yamlData, []byte(`
 apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
