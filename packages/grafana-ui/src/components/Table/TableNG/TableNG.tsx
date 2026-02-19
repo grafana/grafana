@@ -62,6 +62,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNestedRows,
   usePaginatedRows,
   useRowHeight,
   useScrollbarWidth,
@@ -198,27 +199,7 @@ export function TableNG(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  const nestedRows = useMemo(() => {
-    const result: Array<{ raw: TableRow[]; filtered: TableRow[]; sorted: TableRow[] }> = [];
-    if (!hasNestedFrames || !nestedFramesFieldName) {
-      return result;
-    }
-
-    for (const parentRow of rows) {
-      // Type guard to check if data exists as it's optional
-      const nestedData = parentRow.data;
-      if (!nestedData) {
-        continue;
-      }
-
-      const rawRows = frameToRecords(nestedData, nestedFramesFieldName, parentRow.__index);
-      const filteredRows = applyFilter(rawRows, filter, nestedData.fields);
-      const sortedRows = applySort(filteredRows, nestedData.fields, sortColumns, getColumnTypes(nestedData.fields));
-      result[parentRow.__index] = { raw: rawRows, filtered: filteredRows, sorted: sortedRows };
-    }
-
-    return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter]);
+  const nestedRows = useNestedRows(rows, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -296,7 +277,7 @@ export function TableNG(props: TableNGProps) {
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
-    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.sorted.length : null)),
+    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.final.length : null)),
     [nestedRows, expandedRows]
   );
 
@@ -484,7 +465,7 @@ export function TableNG(props: TableNGProps) {
           );
         }
 
-        const expandedRecords = nestedRows[row.__index]?.sorted ?? [];
+        const expandedRecords = nestedRows[row.__index]?.final ?? [];
         if (!expandedRecords.length) {
           return (
             <div className={styles.noDataNested}>

@@ -290,6 +290,11 @@ export type FrameToRowsConverter = (
   nestedRowIndex?: number
 ) => TableRow[];
 
+export interface NestedRowEntry {
+  raw: TableRow[];
+  final: TableRow[];
+}
+
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
 
