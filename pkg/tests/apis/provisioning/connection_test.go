@@ -1586,7 +1586,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
-			installationIDError.Type, installationIDError.Field, installationIDError.Detail, appIDError.BadValue, installationIDError.Origin)
+			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.BadValue, installationIDError.Origin)
 	})
 
 	t.Run("connection with invalid app ID becomes unhealthy with fieldErrors", func(t *testing.T) {
