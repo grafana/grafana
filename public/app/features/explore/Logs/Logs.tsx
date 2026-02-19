@@ -16,6 +16,8 @@ import {
   ExploreLogsPanelState,
   ExplorePanelsState,
   FieldConfigSource,
+  FieldType,
+  getFieldDisplayName,
   GrafanaTheme2,
   LoadingState,
   LogLevel,
@@ -473,18 +475,55 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const onChangeVisualisation = useCallback(
     (visualisation: LogsVisualisationType) => {
       setVisualisationType(visualisation);
+      let newDisplayedFieldsForPanel: string[] = displayedFields;
+      const timeField = props.logsFrames?.[tableFrameIndex].fields?.find((f) => f.type === FieldType.time);
+      const timeName = timeField ? getFieldDisplayName(timeField) : undefined;
+
+      console.log('displayedFields', { displayedFields, showTime });
+
+      // If we're switching to the logs panel, remove time from displayed fields
+      if (visualisation === 'logs') {
+        newDisplayedFieldsForPanel = displayedFields.filter((f) => f !== timeName);
+
+        // if we removed time from the logs displayed fields, then we want to show the timestamp in the logs panel
+        if (newDisplayedFieldsForPanel.length !== displayedFields.length) {
+          setShowTime(true);
+        }
+        // If we're switching to the table panel and time is shown in the logs panel, add the column to the table
+      } else if (showTime && newDisplayedFieldsForPanel.length) {
+        if (timeName) {
+          // Warning: this means when switching back and forth between panels time column is always reset to first
+          newDisplayedFieldsForPanel = [timeName, ...displayedFields];
+        }
+      }
+
       const payload = {
         ...panelState?.logs,
         visualisationType: visualisation,
+        displayedFields: newDisplayedFieldsForPanel,
+        showTime: showTime,
       };
+
       updatePanelState(payload);
 
+      if (!shallowCompare(newDisplayedFieldsForPanel, displayedFields)) {
+        console.log('newDisplayedFieldsForPanel', newDisplayedFieldsForPanel);
+        setDisplayedFields(newDisplayedFieldsForPanel);
+      }
       reportInteraction('grafana_explore_logs_visualisation_changed', {
         newVisualizationType: visualisation,
         datasourceType: props.datasourceType ?? 'unknown',
       });
     },
-    [panelState?.logs, props.datasourceType, updatePanelState]
+    [
+      displayedFields,
+      showTime,
+      panelState?.logs,
+      updatePanelState,
+      props.datasourceType,
+      tableFrameIndex,
+      props.logsFrames,
+    ]
   );
 
   const onChangeDedup = useCallback(
@@ -1137,7 +1176,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 }
 
                 if (options.frameIndex !== tableFrameIndex) {
-                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
+                  const refId = props.logsFrames?.[options.frameIndex]?.refId;
                   if (refId) {
                     updatePanelState({ refId });
                   }
