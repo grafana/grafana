@@ -429,6 +429,11 @@ export interface FeatureToggles {
   */
   perPanelFiltering?: boolean;
   /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
@@ -1527,4 +1532,9 @@ export interface FeatureToggles {
   * @default false
   */
   react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
 }

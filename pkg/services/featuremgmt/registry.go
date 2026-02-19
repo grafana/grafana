@@ -658,6 +658,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardFiltersOverview",
+			Description:  "Enables the dashboard filters overview pane",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -2415,6 +2423,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "frontendServiceUseSettingsService",
+			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )
