@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { handleRequestError } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
-import { generatedAPI as quotasAPI } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
@@ -32,10 +32,6 @@ import { refetchChildren, refreshParents } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
-
-function invalidateQuotaUsage() {
-  dispatch(quotasAPI.util.invalidateTags(['QuotaUsage']));
-}
 
 export interface DeleteFoldersArgs {
   folderUIDs: string[];
@@ -137,7 +133,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -210,7 +206,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -359,7 +355,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refreshParents(folderUIDs));
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -434,7 +430,7 @@ export const browseDashboardsAPI = createApi({
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
           dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(
               setStarred({
@@ -479,7 +475,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -538,7 +534,7 @@ export const browseDashboardsAPI = createApi({
 
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -575,7 +571,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          invalidateQuotaUsage();
+          invalidateQuotaUsage(dispatch);
 
           return { data: { name } };
         } catch (error) {

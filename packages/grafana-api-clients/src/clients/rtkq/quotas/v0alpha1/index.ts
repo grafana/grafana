@@ -10,3 +10,7 @@ export const generatedAPI = rawAPI.enhanceEndpoints({
     },
   },
 });
+
+export function invalidateQuotaUsage(dispatch: (action: unknown) => void) {
+  dispatch(generatedAPI.util.invalidateTags(['QuotaUsage']));
+}
