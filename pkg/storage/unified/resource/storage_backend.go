@@ -319,8 +319,13 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 		ticker := time.NewTicker(b.garbageCollection.Interval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+			}
 		}
 	}()
 
