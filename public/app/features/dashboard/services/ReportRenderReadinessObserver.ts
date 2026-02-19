@@ -27,6 +27,11 @@ export class ReportRenderReadinessObserver implements performanceUtils.ScenePerf
 
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     if (data.interactionType === 'dashboard_view') {
+      // check if chromedp binding exists. It only takes a string argument.
+      if (window.__grafanaReportRenderCompleted) {
+        window.__grafanaReportRenderCompleted('true');
+      }
+
       window.__grafana_report_render_complete = true;
       window.__grafana_report_render_duration = data.duration;
     }

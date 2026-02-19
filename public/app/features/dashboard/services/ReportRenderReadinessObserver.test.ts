@@ -16,7 +16,7 @@ describe('ReportRenderReadinessObserver', () => {
 
   describe('onDashboardInteractionStart', () => {
     it('should set __grafana_report_render_complete to false', () => {
-      observer.onDashboardInteractionStart!({} as performanceUtils.DashboardInteractionStartData);
+      observer.onDashboardInteractionStart!();
 
       expect(window.__grafana_report_render_complete).toBe(false);
     });
@@ -52,7 +52,7 @@ describe('ReportRenderReadinessObserver', () => {
       expect(window.__grafana_report_render_complete).toBe(true);
 
       // New interaction starts
-      observer.onDashboardInteractionStart!({} as performanceUtils.DashboardInteractionStartData);
+      observer.onDashboardInteractionStart!();
       expect(window.__grafana_report_render_complete).toBe(false);
 
       // New interaction completes
