@@ -89,86 +89,90 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
     <ConfigSubSection
       title={t('grafana-sql.components.connection-limits.title-connection-limits', 'Connection limits')}
     >
-      <MaxOpenConnectionsField
-        labelWidth={labelWidth}
-        onMaxConnectionsChanged={onMaxConnectionsChanged}
-        jsonData={jsonData}
-      />
+      <Stack direction="column" gap={2}>
+        <MaxOpenConnectionsField
+          labelWidth={labelWidth}
+          onMaxConnectionsChanged={onMaxConnectionsChanged}
+          jsonData={jsonData}
+        />
 
-      <Field
-        label={
-          <Label>
-            <Stack gap={0.5}>
-              <span>
-                <Trans i18nKey="grafana-sql.components.connection-limits.auto-max-idle">Auto max idle</Trans>
-              </span>
-              <Tooltip
-                content={
-                  <span>
-                    <Trans
-                      i18nKey="grafana-sql.components.connection-limits.content-auto-max-idle"
-                      values={{ defaultMaxIdle: config.sqlConnectionLimits.maxIdleConns }}
-                    >
-                      If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
-                      <i> Max open connections</i>. If the number of maximum open connections is not set it will be set
-                      to the default ({'{{defaultMaxIdle}}'}).
-                    </Trans>
-                  </span>
-                }
-              >
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            </Stack>
-          </Label>
-        }
-      >
-        <Switch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
-      </Field>
+        <Field
+          noMargin
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>
+                  <Trans i18nKey="grafana-sql.components.connection-limits.auto-max-idle">Auto max idle</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <span>
+                      <Trans
+                        i18nKey="grafana-sql.components.connection-limits.content-auto-max-idle"
+                        values={{ defaultMaxIdle: config.sqlConnectionLimits.maxIdleConns }}
+                      >
+                        If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
+                        <i> Max open connections</i>. If the number of maximum open connections is not set it will be
+                        set to the default ({'{{defaultMaxIdle}}'}).
+                      </Trans>
+                    </span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
+        >
+          <Switch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
+        </Field>
 
-      <Field
-        label={
-          <Label>
-            <Stack gap={0.5}>
-              <span>
-                <Trans i18nKey="grafana-sql.components.connection-limits.max-idle">Max idle</Trans>
-              </span>
-              <Tooltip
-                content={
-                  <span>
-                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-idle">
-                      The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
-                      greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i>{' '}
-                      will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections
-                      are retained.
-                    </Trans>
-                  </span>
-                }
-              >
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            </Stack>
-          </Label>
-        }
-      >
-        {autoIdle ? (
-          <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
-        ) : (
-          <NumberInput
-            value={jsonData.maxIdleConns}
-            defaultValue={config.sqlConnectionLimits.maxIdleConns}
-            onChange={(value) => {
-              onJSONDataNumberChanged('maxIdleConns')(value);
-            }}
-            width={labelWidth}
-          />
-        )}
-      </Field>
+        <Field
+          noMargin
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>
+                  <Trans i18nKey="grafana-sql.components.connection-limits.max-idle">Max idle</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <span>
+                      <Trans i18nKey="grafana-sql.components.connection-limits.content-max-idle">
+                        The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
+                        greater than 0 but less than the <i>Max idle connections</i>, then the{' '}
+                        <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If
+                        set to 0, no idle connections are retained.
+                      </Trans>
+                    </span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
+        >
+          {autoIdle ? (
+            <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
+          ) : (
+            <NumberInput
+              value={jsonData.maxIdleConns}
+              defaultValue={config.sqlConnectionLimits.maxIdleConns}
+              onChange={(value) => {
+                onJSONDataNumberChanged('maxIdleConns')(value);
+              }}
+              width={labelWidth}
+            />
+          )}
+        </Field>
 
-      <MaxLifetimeField
-        labelWidth={labelWidth}
-        onMaxLifetimeChanged={onJSONDataNumberChanged('connMaxLifetime')}
-        jsonData={jsonData}
-      />
+        <MaxLifetimeField
+          labelWidth={labelWidth}
+          onMaxLifetimeChanged={onJSONDataNumberChanged('connMaxLifetime')}
+          jsonData={jsonData}
+        />
+      </Stack>
     </ConfigSubSection>
   );
 };

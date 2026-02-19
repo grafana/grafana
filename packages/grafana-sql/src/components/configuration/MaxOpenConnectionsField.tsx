@@ -15,6 +15,7 @@ interface Props {
 export function MaxOpenConnectionsField({ labelWidth, onMaxConnectionsChanged, jsonData }: Props) {
   return (
     <Field
+      noMargin
       label={
         <Label>
           <Stack gap={0.5}>
