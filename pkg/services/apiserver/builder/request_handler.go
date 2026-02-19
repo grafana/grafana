@@ -13,10 +13,15 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-// convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
+// RootWebServiceProvider allows a builder to add a WebService at server root (e.g. /ofrep) for non-namespaced APIs.
+type RootWebServiceProvider interface {
+	AddRootWebService(container *restful.Container) error
+}
+
+// ConvertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction.
 // It extracts path parameters from restful.Request and populates them in the request context
-// so that mux.Vars can read them (for backward compatibility with handlers that use mux.Vars)
-func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFunction {
+// so that mux.Vars can read them (for backward compatibility with handlers that use mux.Vars).
+func ConvertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		// Extract path parameters from restful.Request and populate mux.Vars
 		// This is needed for backward compatibility with handlers that use mux.Vars(r)
@@ -97,7 +102,7 @@ func AugmentWebServicesWithCustomRoutes(
 					route.Path,
 					route.Handler,
 				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
+				routeFunction := ConvertHandlerToRouteFunction(instrumentedHandler)
 
 				// Use OpenAPI spec to configure routes properly
 				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, false); err != nil {
@@ -113,12 +118,21 @@ func AugmentWebServicesWithCustomRoutes(
 					route.Path,
 					route.Handler,
 				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
+				routeFunction := ConvertHandlerToRouteFunction(instrumentedHandler)
 
 				// Use OpenAPI spec to configure routes properly
 				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, true); err != nil {
 					return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
 				}
+			}
+		}
+	}
+
+	// Standalone server only: add root WebServices (e.g. /ofrep) from builders that implement RootWebServiceProvider
+	for _, b := range builders {
+		if rw, ok := b.(RootWebServiceProvider); ok {
+			if err := rw.AddRootWebService(container); err != nil {
+				return fmt.Errorf("add root WebService: %w", err)
 			}
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/emicklei/go-restful/v3"
 	"github.com/gorilla/mux"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
@@ -33,6 +34,7 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+var _ builder.RootWebServiceProvider = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -354,22 +356,20 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 	return user.GetIdentityType() != types.TypeUnauthenticated
 }
 
-// validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
+// validateNamespace checks if the namespace in the evaluation context matches the namespace in the request.
+// For the legacy namespaced path, namespace comes from auth or URL path and eval context must match.
+// For the root /ofrep path (no namespace in URL), namespace is resolved from auth or evaluation context only.
 func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
 
-	var namespace string
-	user, ok := types.AuthInfoFrom(r.Context())
-	if !ok {
+	pathNamespace := mux.Vars(r)["namespace"]
+	user, hasAuth := types.AuthInfoFrom(r.Context())
+	if !hasAuth {
+		span.SetAttributes(attribute.Bool("validation.success", false))
 		return false, ""
 	}
-
-	if user.GetNamespace() != "" {
-		namespace = user.GetNamespace()
-	} else {
-		namespace = mux.Vars(r)["namespace"]
-	}
+	userNamespace := user.GetNamespace()
 
 	// Read request body for namespace validation and tracing
 	body, err := io.ReadAll(r.Body)
@@ -384,12 +384,54 @@ func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 	span.SetAttributes(attribute.String("request.body", string(body)))
 
 	evalCtxNamespace := b.namespaceFromEvalCtx(body)
-	// Remote providers MUST include namespace in evaluation context
-	if evalCtxNamespace == namespace {
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true, evalCtxNamespace
+	// Resolve namespace: auth (when present) > path (legacy) > evaluation context (root path only)
+	namespace := userNamespace
+	if namespace == "" {
+		namespace = pathNamespace
 	}
-
+	if namespace == "" {
+		namespace = evalCtxNamespace
+	}
+	var valid bool
+	if pathNamespace != "" {
+		// Legacy namespaced path: eval context must exactly match resolved namespace
+		valid = evalCtxNamespace == namespace
+	} else {
+		// Root /ofrep path: allow when eval context matches or is unset
+		valid = evalCtxNamespace == "" || evalCtxNamespace == namespace
+	}
+	if valid {
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return true, namespace
+	}
 	span.SetAttributes(attribute.Bool("validation.success", false))
 	return false, evalCtxNamespace
+}
+
+// NewRootHandler returns an http.Handler that serves the OFREP API at /ofrep/v1/evaluate/flags (and /ofrep/v1/evaluate/flags/{flagKey}).
+// Used by the embedded Grafana apiserver to expose the non-namespaced path alongside the legacy namespaced path.
+func NewRootHandler(b *APIBuilder) http.Handler {
+	r := mux.NewRouter()
+	r.HandleFunc("/ofrep/v1/evaluate/flags", b.allFlagsHandler).Methods(http.MethodPost)
+	r.HandleFunc("/ofrep/v1/evaluate/flags/{flagKey}", b.oneFlagHandler).Methods(http.MethodPost)
+	return r
+}
+
+// AddRootWebService adds a WebService at /ofrep to the container (implements builder.RootWebServiceProvider for standalone server).
+func (b *APIBuilder) AddRootWebService(container *restful.Container) error {
+	return addOFREPRootWebService(container, b)
+}
+
+// addOFREPRootWebService registers POST /ofrep/v1/evaluate/flags and .../flags/{flagKey} on the container.
+func addOFREPRootWebService(container *restful.Container, b *APIBuilder) error {
+	toRoute := builder.ConvertHandlerToRouteFunction
+	ws := new(restful.WebService)
+	ws.Path("/ofrep")
+	ws.Route(ws.POST("/v1/evaluate/flags").To(toRoute(b.allFlagsHandler)).
+		Consumes("application/json").Produces("application/json"))
+	ws.Route(ws.POST("/v1/evaluate/flags/{flagKey}").To(toRoute(b.oneFlagHandler)).
+		Param(ws.PathParameter("flagKey", "flag key").DataType("string")).
+		Consumes("application/json").Produces("application/json"))
+	container.Add(ws)
+	return nil
 }

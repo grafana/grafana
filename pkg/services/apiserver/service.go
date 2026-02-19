@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -111,6 +112,8 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+
+	ofrepRootHandler http.Handler // set in start() for /ofrep/v1/evaluate/flags (non-namespaced path)
 }
 
 func ProvideService(
@@ -209,6 +212,33 @@ func ProvideService(
 	}
 
 	s.rr.Group("/apis", proxyHandler)
+	// Non-namespaced OFREP path (Proposal 1); both /ofrep and legacy /apis/.../namespaces/<ns>/ofrep are supported during migration
+	ofrepProxyHandler := func(ofrepRoute routing.RouteRegister) {
+		handler := func(c *contextmodel.ReqContext) {
+			if err := s.AwaitRunning(c.Req.Context()); err != nil {
+				c.Resp.WriteHeader(http.StatusInternalServerError)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+				return
+			}
+			if s.ofrepRootHandler == nil {
+				c.Resp.WriteHeader(http.StatusNotFound)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusNotFound)))
+				return
+			}
+			req := c.Req
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
+			}
+			if c.SignedInUser != nil {
+				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
+				req = req.WithContext(ctx)
+			}
+			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+			s.ofrepRootHandler.ServeHTTP(resp, req)
+		}
+		ofrepRoute.Any("/*", handler)
+	}
+	s.rr.Group("/ofrep", ofrepProxyHandler)
 	s.rr.Group("/livez", proxyHandler)
 	s.rr.Group("/readyz", proxyHandler)
 	s.rr.Group("/healthz", proxyHandler)
@@ -433,6 +463,14 @@ func (s *service) start(ctx context.Context) error {
 			serverConfig.MergedResourceConfig,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
+		}
+	}
+
+	// Set OFREP root handler for the non-namespaced path /ofrep/v1/evaluate/flags (embedded server only)
+	for _, b := range builders {
+		if ob, ok := b.(*ofrep.APIBuilder); ok {
+			s.ofrepRootHandler = ofrep.NewRootHandler(ob)
+			break
 		}
 	}
 
