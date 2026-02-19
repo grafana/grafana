@@ -122,12 +122,23 @@ export function VisualizationSuggestions({
   }, [suggestions]);
 
   const applySuggestion = useCallback(
-    async (
+    (
       suggestion: PanelPluginVisualizationSuggestion,
       suggestionIndex: number,
       isAutoSelected = false,
       shouldCloseVizPicker = false
     ) => {
+      const applyOnChange = (withModKey: boolean) => {
+        setSuggestionHash(suggestion.hash);
+        onChange({
+          pluginId: suggestion.pluginId,
+          options: suggestion.options,
+          fieldConfig: suggestion.fieldConfig,
+          withModKey,
+          fromSuggestions: true,
+        });
+      };
+
       if (shouldCloseVizPicker) {
         VizSuggestionsInteractions.suggestionAccepted({
           pluginId: suggestion.pluginId,
@@ -137,16 +148,19 @@ export function VisualizationSuggestions({
         });
 
         if (config.featureToggles.vizPresets && onShowPresets && vizPanel) {
-          try {
-            console.log('getPresetsForPanel');
-            const presetsResult = await getPresetsForPanel(suggestion.pluginId, vizPanel);
-            if (presetsResult.presets && presetsResult.presets.length > 0) {
-              onShowPresets(suggestion, presetsResult.presets);
-              return;
-            }
-          } catch (error) {
-            console.error('Failed to load presets:', error);
-          }
+          getPresetsForPanel(suggestion.pluginId, vizPanel)
+            .then((presetsResult) => {
+              if (presetsResult.presets && presetsResult.presets.length > 0) {
+                onShowPresets(suggestion, presetsResult.presets);
+                return;
+              }
+              applyOnChange(false);
+            })
+            .catch((error) => {
+              console.error('Failed to load presets:', error);
+              applyOnChange(false);
+            });
+          return;
         }
       } else {
         VizSuggestionsInteractions.suggestionPreviewed({
@@ -157,15 +171,7 @@ export function VisualizationSuggestions({
         });
       }
 
-      setSuggestionHash(suggestion.hash);
-
-      onChange({
-        pluginId: suggestion.pluginId,
-        options: suggestion.options,
-        fieldConfig: suggestion.fieldConfig,
-        withModKey: !shouldCloseVizPicker,
-        fromSuggestions: true,
-      });
+      applyOnChange(!shouldCloseVizPicker);
     },
     [onChange, panelState, onShowPresets, vizPanel]
   );
