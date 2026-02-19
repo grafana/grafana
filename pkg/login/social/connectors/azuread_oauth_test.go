@@ -1572,23 +1572,16 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
 		s.info.WorkloadIdentityTokenFile = workloadFile
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusBadRequest)
-		}))
-		defer server.Close()
-		s.Endpoint.TokenURL = server.URL
-
+		// No RefreshToken
 		token := &oauth2.Token{
 			AccessToken: "old-access-token",
-			// No RefreshToken
-			Expiry: time.Now().Add(-time.Hour),
+			Expiry:      time.Now().Add(-time.Hour),
 		}
-		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, server.Client())
 
-		ts := s.TokenSource(ctx, token)
+		ts := s.TokenSource(context.Background(), token)
 		_, err = ts.Token()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "oauth2: cannot fetch token: 400 Bad Request")
+		require.Contains(t, err.Error(), "no refresh token available to refresh the access token")
 	})
 
 	t.Run("error when invalid token response", func(t *testing.T) {
