@@ -137,6 +137,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "logsdrilldown.grafana.app",
 		Version: "v1beta1",
+	}, {
+		Group:   "customtheme.grafana.app",
+		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)
