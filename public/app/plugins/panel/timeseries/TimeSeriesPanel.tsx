@@ -226,16 +226,16 @@ export const TimeSeriesPanel = ({
                 {/*  setNewRange={setNewAnnotationRange}*/}
                 {/*/>*/}
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {/*{data.annotations && (*/}
-                {/*  <ExemplarsPlugin*/}
-                {/*    visibleSeries={getVisibleLabels(uplotConfig, frames)}*/}
-                {/*    config={uplotConfig}*/}
-                {/*    exemplars={data.annotations}*/}
-                {/*    timeZone={timeZone}*/}
-                {/*    maxHeight={options.tooltip.maxHeight}*/}
-                {/*    maxWidth={options.tooltip.maxWidth}*/}
-                {/*  />*/}
-                {/*)}*/}
+                {data.annotations && (
+                  <ExemplarsPlugin
+                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
+                    config={uplotConfig}
+                    exemplars={data.annotations}
+                    timeZone={timeZone}
+                    maxHeight={options.tooltip.maxHeight}
+                    maxWidth={options.tooltip.maxWidth}
+                  />
+                )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (
                   <ThresholdControlsPlugin
                     config={uplotConfig}
