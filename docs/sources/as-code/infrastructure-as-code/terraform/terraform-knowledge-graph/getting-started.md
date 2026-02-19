@@ -137,4 +137,5 @@ Now that you have configured the Terraform provider, you can start managing know
 - [Create custom model rules](../custom-model-rules/)
 - [Set up log configurations](../log-configurations/)
 - [Configure thresholds](../thresholds/)
-- [Configure knowledge graph SLOs](../knowledge-graph-slo/)
+- [Configure the Knowledge Graph stack](../knowledge-graph-stack/)
+- [Define Prometheus rules](../prometheus-rules/)
