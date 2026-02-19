@@ -121,10 +121,10 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     // Unregister view listener
-    if (this.viewListernerKey && this.map) {
+    if (this.viewListenerKey && this.map) {
       const view = this.map.getView();
-      view.un('change', this.viewListernerKey.listener);
-      this.viewListernerKey = null;
+      view.un('change', this.viewListenerKey.listener);
+      this.viewListenerKey = null;
     }
 
     for (const lyr of this.layers) {
@@ -251,7 +251,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   // view listerner handler, used to unregister when view changes
-  private viewListernerKey: EventsKey | null = null;
+  private viewListenerKey: EventsKey | null = null;
 
   // updateGeoVariables debounce timeout
   private timeoutId: NodeJS.Timeout | null = null; // for debounce
@@ -336,10 +336,10 @@ export class GeomapPanel extends Component<Props, State> {
       if (options.controls.showDebug) {
         console.log('Geomap.initMapAsync: register view listener', view);
       }
-      if (this.viewListernerKey != null) {
-        view.un('change', this.viewListernerKey.listener);
+      if (this.viewListenerKey != null) {
+        view.un('change', this.viewListenerKey.listener);
       }
-      this.viewListernerKey = view.on('change', () => {
+      this.viewListenerKey = view.on('change', () => {
         this.updateGeoVariables(view, options);
       });
       this.updateGeoVariables(view, options);
