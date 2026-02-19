@@ -64,6 +64,7 @@ export const mockActions: QueryEditorActions = {
   changeDataSource: jest.fn(),
   toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),
+  addTransformation: jest.fn(),
   deleteTransformation: jest.fn(),
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
@@ -100,6 +101,9 @@ export const mockUIStateBase = {
   pendingExpression: null,
   setPendingExpression: jest.fn(),
   finalizePendingExpression: jest.fn(),
+  pendingTransformation: null,
+  setPendingTransformation: jest.fn(),
+  finalizePendingTransformation: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -119,6 +123,7 @@ interface CreateQueryEditorProviderOptions {
   dsState?: Partial<DatasourceState>;
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
+  alertingState?: Partial<AlertingState>;
 }
 
 /**
@@ -142,6 +147,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     dsState = {},
     qrState = {},
     panelState = {},
+    alertingState = {},
   } = options;
 
   const defaultDsState: DatasourceState = {
@@ -180,6 +186,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
+    pendingTransformation: null,
+    setPendingTransformation: jest.fn(),
+    finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     ...uiStateOverrides,
@@ -193,6 +202,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultAlertingState: AlertingState = {
     alertRules: [],
     loading: false,
+    isDashboardSaved: true,
+    ...alertingState,
   };
 
   return {

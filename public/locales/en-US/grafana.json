@@ -1658,6 +1658,10 @@
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
+      "renamed-intervals_one": "{{count}} time intervals will be renamed",
+      "renamed-intervals_other": "{{count}} time intervals will be renamed",
+      "renamed-receivers_one": "{{count}} contact points will be renamed",
+      "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
         "back": "Alert rules",
         "filter": "Filter",
@@ -1674,10 +1678,6 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
-        "renamed-intervals_one": "Time intervals renamed: {{count}}",
-        "renamed-intervals_other": "Time intervals renamed: {{count}}",
-        "renamed-receivers_one": "Receivers renamed: {{count}}",
-        "renamed-receivers_other": "Receivers renamed: {{count}}",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1706,8 +1706,6 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
-        "extra-config-conflict-desc": "There is already an uncommitted imported configuration named \"{{identifier}}\". To proceed, either use \"{{identifier}}\" as your policy tree name to replace it, or commit/discard the existing configuration first.",
-        "extra-config-conflict-title": "Cannot import notification resources",
         "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
         "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
@@ -1717,11 +1715,8 @@
         "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-required": "Policy tree name is required",
         "policy-tree-title": "Policy Tree Name",
-        "renamed-intervals_one": "{{count}} time intervals will be renamed",
-        "renamed-intervals_other": "{{count}} time intervals will be renamed",
-        "renamed-receivers_one": "{{count}} contact points will be renamed",
-        "renamed-receivers_other": "{{count}} contact points will be renamed",
         "select-datasource": "Select data source",
         "skip": "Skip this step",
         "source": {
@@ -1738,8 +1733,7 @@
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
-        "validation-warning": "Some resources will be renamed",
-        "validation-warning-desc": "Some resources will be renamed to avoid conflicts with existing resources.",
+        "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
         "yaml-file": "Alertmanager config YAML"
       },
       "step2": {
@@ -1778,7 +1772,9 @@
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
         "upload": "Upload YAML file",
-        "yaml-file": "Rules YAML file"
+        "yaml-error": "Failed to parse YAML file: {{error}}",
+        "yaml-file": "Rules YAML file",
+        "yaml-required": "Please select a file"
       },
       "success": "Successfully imported resources to Grafana Alerting.",
       "target-folder": {
@@ -9817,12 +9813,16 @@
       },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
+        "expander-column-name": "Expand nested rows",
         "no-data": "No data"
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sparkline": {
         "no-data": "no data"
+      },
+      "tooltip": {
+        "trigger": "Toggle tooltip"
       }
     },
     "tags": {
@@ -11731,6 +11731,8 @@
     },
     "user-invite-form": {
       "back": "Back",
+      "disabled-message": "This form is no longer in use. To invite a new user, please click the button to manage invitations externally.",
+      "disabled-title": "Externally managed users",
       "label-email-or-username": "Email or username",
       "label-name": "Name",
       "label-send-invite-email": "Send invite email",
@@ -12682,6 +12684,7 @@
       "loading-finished-job": "Loading finished job...",
       "no-job-found": "No job found",
       "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
+      "retry-action": "Retry",
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
@@ -12752,6 +12755,7 @@
       "source-code": "Source code"
     },
     "repository-card": {
+      "last-sync": "Last sync: {{date}}",
       "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
@@ -12880,8 +12884,9 @@
       "label-pending-step": "Pending step"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatic pulling disabled",
+      "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
+      "disabled": "Disabled",
       "error": "Error",
       "pending": "Pending",
       "pulling": "Pulling",
@@ -13213,6 +13218,10 @@
       "show-transformation-help": "Show transformation help",
       "transformation-debug": "Debug"
     },
+    "alerts": {
+      "no-alerts": "No alert rules for this panel",
+      "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
       "body-transformation": "Removing one transformation may break others.",
@@ -13254,9 +13263,12 @@
       "query-options": "Query Options"
     },
     "header": {
+      "alert": "Alert",
       "expression": "Expression",
       "pending-expression": "Select an Expression",
       "pending-expression-cancel": "Cancel",
+      "pending-transformation": "Select a Transformation",
+      "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
     "help": {
@@ -13273,14 +13285,21 @@
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-query": "Add query",
+      "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
+      "add-transformation": "Add transformation",
+      "add-transformation-below": "Add transformation below {{id}}",
       "alert-indicator": {
         "button-label": "View alert rules",
-        "tooltip": "View alert rules"
+        "button-label-hide": "Hide alert rules",
+        "close": "Close"
       },
+      "alerts_one": "Alerts ({{count}})",
+      "alerts_other": "Alerts ({{count}})",
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "data-mode": "Data Mode",
+      "footer-items_one": "{{count}} item",
+      "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"

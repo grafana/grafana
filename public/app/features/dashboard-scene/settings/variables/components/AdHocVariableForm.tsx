@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -48,29 +48,27 @@ export function AdHocVariableForm({
   );
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
         </VariableLegend>
       )}
 
-      <Box marginBottom={2}>
-        <EditorField
-          label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
-          htmlFor="data-source-picker"
-          tooltip={infoText}
-        >
-          <DataSourcePicker
-            current={datasource}
-            onChange={onDataSourceChange}
-            width={30}
-            variables={true}
-            dashboard={true}
-            noDefault
-          />
-        </EditorField>
-      </Box>
+      <EditorField
+        label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+        tooltip={infoText}
+      >
+        <DataSourcePicker
+          current={datasource}
+          onChange={onDataSourceChange}
+          width={30}
+          variables={true}
+          dashboard={true}
+          noDefault
+        />
+      </EditorField>
 
       {datasourceSupported === false ? (
         <Alert
@@ -79,6 +77,7 @@ export function AdHocVariableForm({
             'This data source does not support ad hoc filters'
           )}
           severity="warning"
+          bottomSpacing={0}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
@@ -95,6 +94,7 @@ export function AdHocVariableForm({
               'Provide dimensions as CSV: {{name}}, {{value}}',
               { name: 'dimensionName', value: 'dimensionId' }
             )}
+            noMargin
           >
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
@@ -135,6 +135,6 @@ export function AdHocVariableForm({
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
         />
       )}
-    </>
+    </Stack>
   );
 }
