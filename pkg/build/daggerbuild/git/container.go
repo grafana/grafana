@@ -50,7 +50,7 @@ func CloneContainer(d *dagger.Client, opts *GitCloneOptions) (*dagger.Container,
 		}
 	}
 
-	cloneArgs := []string{"git", "clone"}
+	cloneArgs := []string{"git", "clone"} //nolint:prealloc
 
 	cloneArgs = append(cloneArgs, "${GIT_CLONE_URL}", "src")
 

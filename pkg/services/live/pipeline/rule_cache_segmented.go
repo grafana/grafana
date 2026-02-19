@@ -27,8 +27,8 @@ func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
 
 func (s *CacheSegmentedTree) updatePeriodically() {
 	for {
-		var namespaces []string
 		s.radixMu.Lock()
+		namespaces := make([]string, 0, len(s.radix))
 		for v := range s.radix {
 			namespaces = append(namespaces, v)
 		}

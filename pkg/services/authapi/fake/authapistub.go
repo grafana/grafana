@@ -32,7 +32,7 @@ func (client *AuthapiStub) DeleteAccessPolicy(_ context.Context, params authapi.
 }
 
 func (client *AuthapiStub) ListAccessPolicies(_ context.Context, _ authapi.ListAccessPoliciesParams) ([]authapi.AccessPolicy, error) {
-	items := make([]authapi.AccessPolicy, 0)
+	items := make([]authapi.AccessPolicy, 0, len(client.Policies))
 	for _, v := range client.Policies {
 		items = append(items, v)
 	}

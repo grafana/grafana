@@ -2558,7 +2558,7 @@ func RunTestGuaranteedUpdateWithSuggestionAndConflict(ctx context.Context, t *te
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if updatedPod2.Generation != 3 {
-		t.Errorf("unexpected pod generation: %q", updatedPod2.Generation)
+		t.Errorf("unexpected pod generation: %d", updatedPod2.Generation)
 	}
 
 	// Third, update using a current version as the suggestion.

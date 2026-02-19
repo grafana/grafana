@@ -29,7 +29,7 @@ import (
 func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
 	logger := log.New("openfga.server")
 
-	opts := []server.OpenFGAServiceV1Option{
+	opts := []server.OpenFGAServiceV1Option{ //nolint:prealloc
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
 

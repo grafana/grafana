@@ -141,7 +141,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			return err
 		}
 
-		deletes := []string{
+		deletes := []string{ //nolint:prealloc
 			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",

@@ -850,7 +850,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
-	retrievedEvents = make([]string, 0)
+	retrievedEvents = make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)

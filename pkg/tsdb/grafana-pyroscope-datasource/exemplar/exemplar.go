@@ -17,11 +17,12 @@ func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar) *data.
 	frame.Meta = &data.FrameMeta{
 		DataTopic: data.DataTopicAnnotations,
 	}
-	fields := []*data.Field{
+	fields := make([]*data.Field, 0, 3+len(labels))
+	fields = append(fields,
 		data.NewField("Time", nil, []time.Time{}),
-		data.NewField("Value", labels, []float64{}), // add labels here?
+		data.NewField("Value", labels, []float64{}),
 		data.NewField("Id", nil, []string{}),
-	}
+	)
 	fields[2].Config = &data.FieldConfig{
 		DisplayName: "Profile ID",
 	}

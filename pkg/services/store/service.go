@@ -165,7 +165,7 @@ func ProvideService(
 	}
 
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
-		storages := make([]storageRuntime, 0)
+		storages := make([]storageRuntime, 0, 3)
 
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{

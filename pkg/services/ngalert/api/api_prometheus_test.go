@@ -810,8 +810,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			for i, actual := range group.Rules {
 				expected := rules[i]
 				if actual.Name != expected.Title {
-					var actualNames []string
-					var expectedNames []string
+					actualNames := make([]string, 0, len(group.Rules))
+					expectedNames := make([]string, 0, len(rules))
 					for _, rule := range group.Rules {
 						actualNames = append(actualNames, rule.Name)
 					}

@@ -350,7 +350,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := []any{}
+	clean := make([]any, 0, len(v.Items))
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}

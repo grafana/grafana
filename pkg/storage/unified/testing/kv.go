@@ -306,7 +306,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -367,7 +367,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Use a key range with no keys.
 		startKey, endKey := "aaaaa", "aaaaz"
 
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
@@ -380,7 +380,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("interrupting the iterator", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -405,7 +405,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -414,7 +414,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "b"),
 			EndKey:   namespacedKey(nsPrefix, "d"),
@@ -426,7 +426,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "c"),
 			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("c")),
@@ -438,7 +438,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with limit and range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
 			EndKey:   namespacedKey(nsPrefix, "c"),
@@ -462,7 +462,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -471,7 +471,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -480,7 +480,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
 			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("a")),
@@ -493,7 +493,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			Sort:  resource.SortOrderDesc,
 			Limit: 3,
@@ -684,7 +684,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		var results []result //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -739,7 +739,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		var results []result //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -757,7 +757,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
 		keys := namespacedKeys(nsPrefix, []string{"non-existent-1", "non-existent-2", "non-existent-3"})
-		var results []resource.KeyValue
+		var results []resource.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -769,7 +769,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with empty keys list", func(t *testing.T) {
 		keys := []string{}
-		var results []resource.KeyValue
+		var results []resource.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -808,7 +808,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get in specific order
 		keys := namespacedKeys(nsPrefix, []string{"z-key", "invalid-key1", "a-key", "invalid-key2", "m-key", "invalid-key3"})
-		var results []string
+		var results []string //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			err = kv.Value.Close()

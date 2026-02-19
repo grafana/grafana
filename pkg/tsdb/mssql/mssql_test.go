@@ -195,9 +195,9 @@ func TestMSSQL(t *testing.T) {
 			Value int64
 		}
 
-		series := []*metric{}
 		firstRange := genTimeRangeByInterval(fromStart, 10*time.Minute, 10*time.Second)
 		secondRange := genTimeRangeByInterval(fromStart.Add(20*time.Minute), 10*time.Minute, 10*time.Second)
+		series := make([]*metric, 0, len(firstRange)+len(secondRange))
 
 		for _, t := range firstRange {
 			series = append(series, &metric{
@@ -407,7 +407,7 @@ func TestMSSQL(t *testing.T) {
 
 		var tInitial time.Time
 
-		series := []*metric_values{}
+		series := []*metric_values{} //nolint:prealloc
 		for i, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
 			if i == 0 {
 				tInitial = t
@@ -948,7 +948,7 @@ func TestMSSQL(t *testing.T) {
 			Tags        string
 		}
 
-		events := []*event{}
+		events := []*event{} //nolint:prealloc
 		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
