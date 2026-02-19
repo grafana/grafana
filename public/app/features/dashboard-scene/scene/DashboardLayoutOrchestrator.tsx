@@ -16,7 +16,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel } from '../utils/utils';
 
@@ -106,10 +106,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
-      document.body.removeEventListener('pointermove', this._onTabDragPointerUp);
       document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
+      document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
       this._cleanupDragState();
@@ -271,8 +271,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
 
-    document.body.addEventListener('pointermove', this._onTabDragPointerMove);
     document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
+    document.body.addEventListener('pointermove', this._onTabDragPointerMove);
   }
 
   private _onTabDragPointerMove(evt: PointerEvent) {
@@ -286,19 +286,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
   }
 
-  private _onTabDragPointerUp(evt: PointerEvent) {
+  private _onTabDragPointerUp() {
     document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
     document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
     // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
-    // Dropping will remove elements from dom causing pangea to think the element is still being dragged and won't
-    // fire onDragEnd until container is re-rendered or removed (e.g. when row is collapsed) and may cause errors.
+    // Finishing dropping in here would remove elements from dom causing pangea to think the element is still being
+    // dragged and won't fire onDragEnd until container is re-rendered or removed (e.g. when row is collapsed).
   }
 
   /**
    * Single entry point for handling tab drag end. If the tab was dropped from a different manager we use values
    * calculated by layout orchestrator.
-   * @param targetTabsManagerId
-   * @param targetIndex
    */
   public stopTabDrag(targetIndex: number | undefined): void {
     if (this._sourceDropTarget === null || !(this._sourceDropTarget instanceof TabsLayoutManager)) {
@@ -319,7 +317,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    const sourceIndex = sourceManager.state.tabs.findIndex((t) => t === tab);
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === tab);
     this._draggedTab = undefined;
 
     // moving within the same TabsLayoutManager
@@ -381,12 +379,20 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           tabs: destTabs,
           currentTabSlug: tab.getSlug(),
         });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
       },
       undo: () => {
         // Reverse order for the same parenting reason as in perform().
         destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
         tab.clearParent();
         source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
       },
     });
   }
