@@ -12908,12 +12908,15 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "field-errors": "Configuration errors detected",
+      "field-errors-message": "There are issues with the repository configuration. Please review your settings.",
       "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
       "migrate-resources-description": "Import existing dashboards from connected external storage into the provisioning folder created in the previous step",
       "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
-      "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
+      "repository-unhealthy": "The repository cannot be synchronized",
+      "review-configuration": "Review configuration",
       "text-checking-repository": "Checking repository status..."
     },
     "token-permissions-info": {
