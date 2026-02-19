@@ -26,7 +26,15 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
         return field.name;
       });
 
-    return [...labels, ...fields];
+    // Include severity field (level/detected_level) - it's excluded from extraFields but should be selectable
+    const severityFieldNames: string[] = [];
+    if (logsFrame?.severityField && !logsFrame.severityField.config?.custom?.hidden) {
+      const count = logsFrame.severityField.values.filter((value) => value !== null && value !== undefined).length;
+      cardinality.set(logsFrame.severityField.name, count);
+      severityFieldNames.push(logsFrame.severityField.name);
+    }
+
+    return [...labels, ...fields, ...severityFieldNames];
   });
 
   const labels = [...new Set(allFields)];
