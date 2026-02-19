@@ -527,20 +527,43 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that has notification settings", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
-		notificationSettings := ngmodels.ContactPointRouting{
-			Receiver: "test-receiver",
-			GroupBy:  []string{"job"},
+		for _, tc := range []struct {
+			name       string
+			inputNS    ngmodels.NotificationSettings
+			expectedNS apimodels.AlertRuleNotificationSettings
+		}{
+			{
+				name: "ContactPointRouting",
+				inputNS: ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"job"},
+				}),
+				expectedNS: apimodels.AlertRuleNotificationSettings{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"job"},
+				},
+			},
+			{
+				name:    "PolicyRouting",
+				inputNS: ngmodels.NotificationSettingsFromPolicy("test-policy"),
+				expectedNS: apimodels.AlertRuleNotificationSettings{
+					Policy: util.Pointer("test-policy"),
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				fakeStore, fakeAIM, api := setupAPI(t)
+				generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(tc.inputNS), gen.WithIsPaused(false))
+				r := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, r.Status())
+				var res apimodels.RuleResponse
+				require.NoError(t, json.Unmarshal(r.Body(), &res))
+				require.Len(t, res.Data.RuleGroups, 1)
+				require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+				require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+				require.Equal(t, tc.expectedNS, *res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+			})
 		}
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithContactPointRouting(notificationSettings), gen.WithIsPaused(false))
-		r := api.RouteGetRuleStatuses(c)
-		require.Equal(t, http.StatusOK, r.Status())
-		var res apimodels.RuleResponse
-		require.NoError(t, json.Unmarshal(r.Body(), &res))
-		require.Len(t, res.Data.RuleGroups, 1)
-		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
-		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
-		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {

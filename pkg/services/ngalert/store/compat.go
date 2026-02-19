@@ -119,8 +119,8 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		}
 	}
 
-	if ar.AlertRoutingPolicy != nil {
-		result.NotificationSettings = util.Pointer(models.NotificationSettingsFromPolicy(*ar.AlertRoutingPolicy))
+	if ar.NotificationSettings != "" && ar.AlertRoutingPolicy != nil {
+		l.Warn("Both policy routing and contact point routing exist on rule", append(result.GetKey().LogContext(), "policy", ar.AlertRoutingPolicy)...)
 	}
 
 	if !opts.ExcludeContactPointRouting && ar.NotificationSettings != "" {
@@ -131,6 +131,13 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		if ns != nil {
 			result.NotificationSettings = util.Pointer(models.NotificationSettingsFromContact(*ns))
 		}
+	}
+
+	if ar.AlertRoutingPolicy != nil {
+		if result.NotificationSettings == nil {
+			result.NotificationSettings = &models.NotificationSettings{}
+		}
+		result.NotificationSettings.PolicyRouting = &models.PolicyRouting{Policy: *ar.AlertRoutingPolicy}
 	}
 
 	if !opts.ExcludeMetadata && ar.Metadata != "" {
