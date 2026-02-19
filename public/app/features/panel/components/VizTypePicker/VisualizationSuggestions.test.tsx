@@ -1,6 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 
-import { LoadingState, PanelData, PanelModel, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import { LoadingState, PanelData, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import { VizPanel } from '@grafana/scenes';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import * as getAllSuggestionsModule from '../../suggestions/getAllSuggestions';
@@ -58,7 +59,7 @@ describe('VisualizationSuggestions', () => {
       <VisualizationSuggestions
         onChange={jest.fn()}
         data={initialData}
-        panel={undefined}
+        vizPanel={undefined}
         searchQuery=""
         isNewPanel={false}
       />
@@ -86,7 +87,7 @@ describe('VisualizationSuggestions', () => {
       <VisualizationSuggestions
         onChange={jest.fn()}
         data={streamingData}
-        panel={undefined}
+        vizPanel={undefined}
         searchQuery=""
         isNewPanel={false}
       />
@@ -114,7 +115,7 @@ describe('VisualizationSuggestions', () => {
       <VisualizationSuggestions
         onChange={jest.fn()}
         data={initialData}
-        panel={undefined}
+        vizPanel={undefined}
         searchQuery=""
         isNewPanel={false}
       />
@@ -145,7 +146,7 @@ describe('VisualizationSuggestions', () => {
       <VisualizationSuggestions
         onChange={jest.fn()}
         data={structureChangedData}
-        panel={undefined}
+        vizPanel={undefined}
         searchQuery=""
         isNewPanel={false}
       />
@@ -158,7 +159,7 @@ describe('VisualizationSuggestions', () => {
 
   it('should call onChange for new panels (unconfigured)', async () => {
     const mockOnChange = jest.fn();
-    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const unconfiguredPanel = { state: { pluginId: UNCONFIGURED_PANEL_PLUGIN_ID } } as VizPanel;
     const data: PanelData = {
       series: [
         toDataFrame({
@@ -174,7 +175,7 @@ describe('VisualizationSuggestions', () => {
     };
 
     render(
-      <VisualizationSuggestions onChange={mockOnChange} data={data} panel={unconfiguredPanel} isNewPanel={true} />
+      <VisualizationSuggestions onChange={mockOnChange} data={data} vizPanel={unconfiguredPanel} isNewPanel={true} />
     );
 
     await waitFor(() => {
@@ -184,7 +185,7 @@ describe('VisualizationSuggestions', () => {
 
   it('should not call onChange for existing panels', async () => {
     const mockOnChange = jest.fn();
-    const existingPanel = { type: 'timeseries' } as PanelModel;
+    const existingPanel = { state: { pluginId: 'timeseries' } } as VizPanel;
     const data: PanelData = {
       series: [
         toDataFrame({
@@ -199,7 +200,9 @@ describe('VisualizationSuggestions', () => {
       structureRev: 1,
     };
 
-    render(<VisualizationSuggestions onChange={mockOnChange} data={data} panel={existingPanel} isNewPanel={false} />);
+    render(
+      <VisualizationSuggestions onChange={mockOnChange} data={data} vizPanel={existingPanel} isNewPanel={false} />
+    );
 
     // Wait for suggestions to load
     await waitFor(() => {
@@ -218,7 +221,7 @@ describe('VisualizationSuggestions', () => {
 
   it('should call onChange for unconfigured panels', async () => {
     const mockOnChange = jest.fn();
-    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const unconfiguredPanel = { state: { pluginId: UNCONFIGURED_PANEL_PLUGIN_ID } } as VizPanel;
     const data: PanelData = {
       series: [
         toDataFrame({
@@ -234,7 +237,7 @@ describe('VisualizationSuggestions', () => {
     };
 
     render(
-      <VisualizationSuggestions onChange={mockOnChange} data={data} panel={unconfiguredPanel} isNewPanel={false} />
+      <VisualizationSuggestions onChange={mockOnChange} data={data} vizPanel={unconfiguredPanel} isNewPanel={false} />
     );
 
     await waitFor(() => {
