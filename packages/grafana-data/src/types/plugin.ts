@@ -53,6 +53,7 @@ export interface PluginError {
   pluginType?: PluginType;
 }
 
+/** @deprecated it will be removed in a future release */
 export interface AngularMeta {
   detected: boolean;
   hideDeprecation: boolean;
@@ -216,6 +217,7 @@ export interface PluginMetaInfo {
   screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
+  keywords?: string[] | null;
 }
 
 export interface PluginConfigPageProps<T extends PluginMeta> {

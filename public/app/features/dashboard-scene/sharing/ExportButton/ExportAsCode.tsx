@@ -9,13 +9,14 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-import { ExportMode, ResourceExport } from './ResourceExport';
+import { ResourceExport } from './ResourceExport';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
@@ -25,17 +26,21 @@ export class ExportAsCode extends ShareExportTab {
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
   }
+
+  public getSubtitle(): string | undefined {
+    return t('export.json.info-text', 'Copy or download a file containing the definition of your dashboard');
+  }
 }
 
 function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
   const styles = useStyles2(getStyles);
-  const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
+  const { isSharingExternally, isViewingYAML, exportFormat } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
 
     return json;
-  }, [isSharingExternally, exportMode]);
+  }, [isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
@@ -53,19 +58,13 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
 
   return (
     <div data-testid={selector.container} className={styles.container}>
-      <p>
-        <Trans i18nKey="export.json.info-text">
-          Copy or download a file containing the definition of your dashboard
-        </Trans>
-      </p>
-
       {config.featureToggles.kubernetesDashboards ? (
         <ResourceExport
           dashboardJson={dashboardJson}
           isSharingExternally={isSharingExternally ?? false}
-          exportMode={exportMode ?? ExportMode.Classic}
+          exportFormat={exportFormat ?? ExportFormat.Classic}
           isViewingYAML={isViewingYAML ?? false}
-          onExportModeChange={model.onExportModeChange}
+          onExportFormatChange={model.onExportFormatChange}
           onShareExternallyChange={model.onShareExternallyChange}
           onViewYAML={model.onViewYAML}
         />

@@ -24,10 +24,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	const repo = "job-validation-test-repo"
 	testRepo := TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		Target:             "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
-		ExpectedFolders:    0,
+		ExpectedFolders:    1, // folder sync creates a folder
 	}
 	helper.CreateRepo(t, testRepo)
 

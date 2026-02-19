@@ -1,23 +1,15 @@
 import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
-import { isGrafanaDevMode } from '../utils';
+import { basicApp } from '../test-fixtures/config.apps';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
-
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scneario)
-  isGrafanaDevMode: jest.fn().mockReturnValue(false),
-}));
 
 jest.mock('../logs/log', () => {
   const { createLogMock } = jest.requireActual('../logs/testUtils');
@@ -30,48 +22,17 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedComponentsRegistry', () => {
-  const originalApps = config.apps;
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedComponentsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
+    config.buildInfo.env = 'production';
   });
 
   it('should return empty registry when no extensions registered', async () => {
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
@@ -79,7 +40,7 @@ describe('AddedComponentsRegistry', () => {
 
   it('should be possible to register added components in the registry', async () => {
     const extensionPointId = `${pluginId}/hello-world/v1`;
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -107,7 +68,7 @@ describe('AddedComponentsRegistry', () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
     const extensionPointId = 'grafana/alerting/home';
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -166,7 +127,7 @@ describe('AddedComponentsRegistry', () => {
     const pluginId2 = 'grafana-basic-app2';
     const extensionPointId1 = 'grafana/alerting/home';
     const extensionPointId2 = 'grafana/user/profile/tab';
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -226,7 +187,7 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should be possible to asynchronously register component extensions for the same extension point (same plugin)', async () => {
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
     const extensionPointId = 'grafana/alerting/home';
 
     // Register extensions for the first extension point
@@ -265,7 +226,7 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should be possible to register one extension component targeting multiple extension points', async () => {
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
     const extensionPointId1 = 'grafana/alerting/home';
     const extensionPointId2 = 'grafana/user/profile/tab';
 
@@ -304,7 +265,7 @@ describe('AddedComponentsRegistry', () => {
     const pluginId2 = 'myorg-extensions-app';
     const extensionPointId1 = 'grafana/alerting/home';
     const extensionPointId2 = 'grafana/user/profile/tab';
-    const reactiveRegistry = new AddedComponentsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -359,7 +320,7 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should not register component when title is missing', async () => {
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const extensionPointId = 'grafana/alerting/home';
 
     registry.register({
@@ -381,7 +342,7 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should not be possible to register a component on a read-only registry', async () => {
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
     const extensionPointId = 'grafana/alerting/home';
 
@@ -405,7 +366,7 @@ describe('AddedComponentsRegistry', () => {
 
   it('should pass down fresh registrations to the read-only version of the registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
     const subscribeCallback = jest.fn();
     let readOnlyState;
@@ -439,18 +400,15 @@ describe('AddedComponentsRegistry', () => {
 
   it('should not register a component added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const componentConfig = {
       title: 'Component title',
       description: 'Component description',
       targets: ['grafana/alerting/home'],
       component: () => React.createElement('div', null, 'Hello World1'),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedComponents = [];
 
     registry.register({
       pluginId,
@@ -465,9 +423,9 @@ describe('AddedComponentsRegistry', () => {
 
   it('should register a component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const componentConfig = {
       title: 'Component title',
       description: 'Component description',
@@ -487,19 +445,13 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should register a component added by a plugin in production mode even if the meta-info is missing', async () => {
-    // Production mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-
-    const registry = new AddedComponentsRegistry();
+    const registry = await createRegistry();
     const componentConfig = {
       title: 'Component title',
       description: 'Component description',
       targets: ['grafana/alerting/home'],
       component: () => React.createElement('div', null, 'Hello World1'),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedComponents = [];
 
     registry.register({
       pluginId,
@@ -514,18 +466,20 @@ describe('AddedComponentsRegistry', () => {
 
   it('should register a component added by a plugin in dev-mode if the meta-info is present', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedComponentsRegistry();
     const componentConfig = {
       title: 'Component title',
       description: 'Component description',
       targets: ['grafana/alerting/home'],
       component: () => React.createElement('div', null, 'Hello World1'),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+    const { description, targets, title } = componentConfig;
+    const app = {
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedComponents: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,
@@ -540,7 +494,7 @@ describe('AddedComponentsRegistry', () => {
 
   describe('asObservableSlice', () => {
     it('should return the selected slice from the registry', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/alerting/home';
 
       registry.register({
@@ -568,7 +522,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should return undefined when the selected key does not exist', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -578,7 +532,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should only emit when the selected slice changes', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/alerting/home';
       const subscribeCallback = jest.fn();
 
@@ -641,7 +595,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should deep freeze the selected slice', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/alerting/home';
 
       registry.register({
@@ -669,7 +623,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should work with read-only registries', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const readOnlyRegistry = registry.readOnly();
       const extensionPointId = 'grafana/alerting/home';
 
@@ -698,7 +652,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should emit immediately to new subscribers with the current slice value', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/alerting/home';
 
       registry.register({
@@ -725,7 +679,7 @@ describe('AddedComponentsRegistry', () => {
     });
 
     it('should not emit when Object.is returns true for the same value', async () => {
-      const registry = new AddedComponentsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/alerting/home';
       const subscribeCallback = jest.fn();
 

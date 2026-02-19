@@ -87,7 +87,6 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   hasIncrementalQuery: boolean;
   httpMethod: string;
-  id: number;
   interval: string;
   languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
@@ -123,7 +122,6 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.ruleMappings = {};

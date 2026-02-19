@@ -1,17 +1,28 @@
 package plugins
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var (
@@ -20,30 +31,69 @@ var (
 )
 
 type AppInstaller struct {
+	metaManager        *meta.ProviderManager
+	cfgProvider        configprovider.ConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
+
 	*pluginsapp.PluginAppInstaller
 }
 
-func ProvideAppInstaller(accessControlService accesscontrol.Service, accessClient authlib.AccessClient) (*AppInstaller, error) {
-	if err := registerAccessControlRoles(accessControlService); err != nil {
-		return nil, fmt.Errorf("registering access control roles: %w", err)
+func ProvideAppInstaller(
+	cfgProvider configprovider.ConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider,
+	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
+	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
+) (*AppInstaller, error) {
+	metrics.MustRegister(registerer)
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+		if err := registerAccessControlRoles(accessControlService); err != nil {
+			return nil, fmt.Errorf("registering access control roles: %w", err)
+		}
 	}
 
-	grafanaComAPIURL := os.Getenv("GRAFANA_COM_API_URL")
-	if grafanaComAPIURL == "" {
-		grafanaComAPIURL = "https://grafana.com/api/plugins"
-	}
+	logger := logging.DefaultLogger.With("app", "plugins.app")
 
-	coreProvider := meta.NewCoreProvider()
-	cloudProvider := meta.NewCatalogProvider(grafanaComAPIURL)
-	metaProviderManager := meta.NewProviderManager(coreProvider, cloudProvider)
-
+	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
+	coreProvider := meta.NewCoreProvider(logger, func() (string, error) {
+		return getPluginsPath(cfgProvider)
+	})
+	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
+	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager, false)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AppInstaller{
+		metaManager:        metaProviderManager,
+		cfgProvider:        cfgProvider,
+		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
+}
+
+func getPluginsPath(cfgProvider configprovider.ConfigProvider) (string, error) {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", errors.New("getPluginsPath fallback failed: could not determine working directory")
+		}
+		// Check if we're in the Grafana root
+		pluginsPath := filepath.Join(wd, "public", "app", "plugins")
+		if _, err = os.Stat(pluginsPath); err != nil {
+			return "", errors.New("getPluginsPath fallback failed: could not find core plugins directory")
+		}
+		return pluginsPath, nil
+	}
+
+	pluginsPath := filepath.Join(cfg.StaticRootPath, "public", "app", "plugins")
+	if _, err = os.Stat(pluginsPath); err != nil {
+		return "", errors.New("could not find core plugins directory")
+	}
+
+	return pluginsPath, nil
 }

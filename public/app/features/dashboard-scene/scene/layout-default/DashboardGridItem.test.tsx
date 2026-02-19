@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
@@ -53,9 +55,9 @@ describe('PanelRepeaterGridItem', () => {
 
     expect(repeater.state.repeatedPanels?.length).toBe(0);
 
-    await new Promise((r) => setTimeout(r, 10));
-
-    expect(repeater.state.repeatedPanels?.length).toBe(4);
+    await waitFor(() => {
+      expect(repeater.state.repeatedPanels?.length).toBe(4);
+    });
   });
 
   it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
@@ -65,9 +67,9 @@ describe('PanelRepeaterGridItem', () => {
 
     expect(repeater.state.repeatedPanels?.length).toBe(0);
 
-    await new Promise((r) => setTimeout(r, 10));
-
-    expect(repeater.state.repeatedPanels?.length).toBe(4);
+    await waitFor(() => {
+      expect(repeater.state.repeatedPanels?.length).toBe(4);
+    });
 
     // LocalValueVariableState is not exposed, so we build this type casting
     const variableState = repeater.state.repeatedPanels![0].state.$variables?.state.variables[0].state as {
@@ -116,9 +118,9 @@ describe('PanelRepeaterGridItem', () => {
 
     const deactivate = activateFullSceneTree(scene);
 
-    await new Promise((r) => setTimeout(r, 10));
-
-    expect(panel.state.repeatedPanels?.length).toBe(4);
+    await waitFor(() => {
+      expect(panel.state.repeatedPanels?.length).toBe(4);
+    });
 
     const vizPanel = panel.state.body as VizPanel;
 
@@ -127,7 +129,9 @@ describe('PanelRepeaterGridItem', () => {
     // mimic going to panel edit
     deactivate();
 
-    await new Promise((r) => setTimeout(r, 10));
+    await waitFor(() => {
+      expect(panel.state.repeatedPanels?.length).toBe(4);
+    });
 
     vizPanel.setState({ title: 'Changed' });
 
@@ -136,9 +140,10 @@ describe('PanelRepeaterGridItem', () => {
 
     panel.publishEvent(new DashboardEditActionEvent({ source: panel, perform: () => {}, undo: () => {} }), true);
 
-    await new Promise((r) => setTimeout(r, 10));
+    await waitFor(() => {
+      expect(panel.state.repeatedPanels?.length).toBe(4);
+    });
 
-    expect(panel.state.repeatedPanels?.length).toBe(4);
     expect((panel.state.repeatedPanels![0] as VizPanel).state.title).toBe('Changed');
   });
 
@@ -155,9 +160,10 @@ describe('PanelRepeaterGridItem', () => {
 
     activateFullSceneTree(scene);
 
-    await new Promise((r) => setTimeout(r, 10));
+    await waitFor(() => {
+      expect(repeater.state.body.state.$variables?.state.variables[0].getValue()).toBe('');
+    });
 
-    expect(repeater.state.body.state.$variables?.state.variables[0].getValue()).toBe('');
     console.error = origError;
   });
 

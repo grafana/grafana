@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -62,7 +62,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -128,7 +127,6 @@ type DashboardsAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
@@ -154,7 +152,14 @@ func RegisterAPIService(
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
 	dashboardActivityChannel live.DashboardActivityChannel,
+	configProvider configprovider.ConfigProvider,
 ) *DashboardsAPIBuilder {
+	cfg, err := configProvider.Get(context.Background())
+	if err != nil {
+		logging.DefaultLogger.Error("failed to load settings configuration instance", "stackId", cfg.StackID, "err", err)
+		return nil
+	}
+
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -237,7 +242,7 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -383,6 +388,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Validate tags
+	if err := validateDashboardTags(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -442,6 +452,12 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting new dash meta accessor: %w", err)
 	}
 
+	// storage will set it to the previous value if not set
+	id := newAccessor.GetDeprecatedInternalID()                 // nolint:staticcheck
+	if id != 0 && oldAccessor.GetDeprecatedInternalID() != id { // nolint:staticcheck
+		return apierrors.NewBadRequest("cannot change the ID of a dashboard. set the label grafana.app/deprecatedInternalID to the previous value")
+	}
+
 	// Parse namespace for old dashboard
 	nsInfo, err := authlib.ParseNamespace(oldAccessor.GetNamespace())
 	if err != nil {
@@ -450,6 +466,11 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	// Validate tags
+	if err := validateDashboardTags(newDashObj); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -548,6 +569,32 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateDashboardTags validates that all dashboard tags are within the maximum length
+func validateDashboardTags(obj runtime.Object) error {
+	var tags []string
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv1.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv2alpha1.Dashboard:
+		tags = d.Spec.Tags
+	case *dashv2beta1.Dashboard:
+		tags = d.Spec.Tags
+	default:
+		return fmt.Errorf("unsupported dashboard version: %T", obj)
+	}
+
+	for _, tag := range tags {
+		if len(tag) > 50 {
+			return dashboards.ErrDashboardTagTooLong
+		}
+	}
+
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -747,7 +794,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
-			Options:      b.snapshotOptions,
 		}
 		storage[snapshots.StoragePath()] = snapshotLegacyStore
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)
@@ -917,17 +963,16 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Add dashboard hits manually
 	if oas.Info.Title == "dashboard.grafana.app/v0alpha1" {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-		defsBase := "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1."
-		refsBase := "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1."
+		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
 
 		// Add any missing definitions
 		//-----------------------------
 		for _, k := range kinds {
-			v := defs[defsBase+k]
-			clean := strings.Replace(k, defsBase, refsBase, 1)
-			if oas.Components.Schemas[clean] == nil {
+			key := refsBase + k
+			v := defs[key]
+			if oas.Components.Schemas[key] == nil {
 				switch k {
 				case "SearchResults":
 					v.Schema.Properties["sortBy"] = *spec.RefProperty(
@@ -946,7 +991,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[clean] = &v.Schema
+				oas.Components.Schemas[k] = &v.Schema // use the short key (without the full package path)
 			}
 		}
 

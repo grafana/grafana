@@ -1,14 +1,17 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getTestIdForLayout } from '../../utils/test-utils';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
@@ -16,32 +19,62 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator, isEditing } = useDashboardState(model);
+  const {
+    layoutOrchestrator,
+    isEditing,
+    meta: { isEmbedded },
+  } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen } = layoutManager.useState();
+  const { fillScreen, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
-  const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
+  const showCanvasActions = !isEmbedded && !isRepeatCloneOrChildOf(model) && isEditing;
 
   if (soloPanelContext) {
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
   }
 
+  // Build children with placeholder inserted at dropPosition
+  const renderChildren = () => {
+    if (dropPosition === null || dropPosition === undefined) {
+      return children.map((item) => <item.Component key={item.state.key} model={item} />);
+    }
+
+    const result: React.ReactNode[] = [];
+    const insertPosition = Math.min(dropPosition, children.length);
+
+    for (let i = 0; i <= children.length; i++) {
+      if (i === insertPosition) {
+        result.push(<DropPlaceholder key="drop-placeholder" styles={styles} />);
+      }
+      if (i < children.length) {
+        const item = children[i];
+        result.push(<item.Component key={item.state.key} model={item} />);
+      }
+    }
+
+    return result;
+  };
+
   return (
     <div
+      data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
+      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
-      {children.map((item) => (
-        <item.Component key={item.state.key} model={item} />
-      ))}
+      {renderChildren()}
       {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
     </div>
   );
+}
+
+function DropPlaceholder({ styles }: { styles: ReturnType<typeof getStyles> }) {
+  return <div className={styles.dropPlaceholder} />;
 }
 
 const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
@@ -72,4 +105,10 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
   }),
   containerFillScreen: css({ flexGrow: 1 }),
   containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
+  dropPlaceholder: css({
+    border: `1px dashed ${theme.colors.primary.main}`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.primary.transparent,
+    minHeight: '100px',
+  }),
 });

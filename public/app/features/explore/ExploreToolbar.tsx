@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -204,11 +205,13 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
+        data-testid={selectors.pages.Explore.toolbar.bar}
         leftItems={[
           <ToolbarButton
             key="content-outline"
             variant="canvas"
             tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
+            data-testid={selectors.pages.Explore.toolbar.contentOutline}
             icon="list-ui-alt"
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
@@ -240,6 +243,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             <ToolbarButton
               variant="canvas"
               key="split"
+              data-testid={selectors.pages.Explore.toolbar.split}
               tooltip={t('explore.toolbar.split-tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
@@ -306,6 +310,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             noIntervalPicker={isLive}
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
+            data-testid={selectors.pages.Explore.toolbar.refreshPicker}
           />,
           (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
           datasourceInstance?.meta.streaming && (

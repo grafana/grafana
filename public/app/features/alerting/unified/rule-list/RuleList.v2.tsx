@@ -13,11 +13,16 @@ import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelecto
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
+import { getRulesDataSources } from '../utils/datasource';
+import { isAdmin } from '../utils/misc';
 
+import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
+import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
 function RuleList() {
   const { filterState } = useRulesFilter();
@@ -25,6 +30,7 @@ function RuleList() {
 
   return (
     <Stack direction="column">
+      <AlertsActivityBanner />
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       {viewMode === 'list' ? (
         <FilterView filterState={filterState} />
@@ -40,8 +46,13 @@ export function RuleListActions() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
+  // Check if there are any data sources with manageAlerts enabled
+  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+  const canCreateCloudRules =
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
@@ -50,6 +61,8 @@ export function RuleListActions() {
     config.featureToggles.alertingMigrationUI &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
@@ -76,6 +89,13 @@ export function RuleListActions() {
               url="/alerting/import-datasource-managed-rules"
             />
           )}
+          {canAccessMigrationWizardUI && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to GMA')}
+              icon="exchange-alt"
+              url="/alerting/import-to-gma"
+            />
+          )}
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
           {canCreateGrafanaRules && (
@@ -95,7 +115,14 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA, canExportRules, toggleShowExportDrawer]
+    [
+      canCreateGrafanaRules,
+      canCreateCloudRules,
+      canImportRulesToGMA,
+      canAccessMigrationWizardUI,
+      canExportRules,
+      toggleShowExportDrawer,
+    ]
   );
 
   return (
@@ -117,14 +144,18 @@ export function RuleListActions() {
 }
 
 export default function RuleListPage() {
+  const { isApplying } = useApplyDefaultSearch();
+  const { navId, pageNav } = useAlertRulesNav();
+
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
+      pageNav={pageNav}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
-      isLoading={false}
+      isLoading={isApplying}
       actions={<RuleListActions />}
     >
-      <RuleList />
+      {!isApplying && <RuleList />}
     </AlertingPageWrapper>
   );
 }

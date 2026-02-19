@@ -61,8 +61,6 @@ connection: {
 				status: {
 					// The generation of the spec last time reconciliation ran
 					observedGeneration?: int
-					// Connection state
-					state: "connected" | "disconnected"
 					// The connection health status
 					health: #HealthStatus
 				}

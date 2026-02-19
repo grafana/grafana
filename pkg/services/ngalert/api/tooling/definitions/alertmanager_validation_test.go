@@ -462,6 +462,16 @@ func TestValidateNotificationTemplates(t *testing.T) {
 			},
 			expContent: `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 		},
+		{
+			name: "unknown template kind",
+			template: NotificationTemplate{
+				Name:       "Alert Instance Template",
+				Template:   `{{ define "Same name as definition" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
+				Provenance: "test",
+				Kind:       "unknown",
+			},
+			expError: errors.New("unknown template kind: unknown"),
+		},
 	}
 
 	for _, tt := range tc {

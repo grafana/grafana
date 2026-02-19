@@ -284,11 +284,20 @@ type PostableRuleGroupConfig struct {
 
 	// fields below are used by Mimir/Loki rulers
 
-	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
-	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
-	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
-	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
+	SourceTenants                 []string          `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration   `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool              `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Labels                        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+
+	// GEM Ruler.
+
+	RWConfigs []RemoteWriteConfig `yaml:"remote_write,omitempty" json:"remote_write,omitempty"`
+}
+
+type RemoteWriteConfig struct {
+	URL string `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -328,8 +337,8 @@ func (c *PostableRuleGroupConfig) validate() error {
 		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
 	}
 
-	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0) {
-		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval and limit are not supported for Grafana rules")
+	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0 || len(c.Labels) > 0 || len(c.RWConfigs) > 0) {
+		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval, limit, labels, and remote_write are not supported for Grafana rules")
 	}
 	return nil
 }
@@ -345,11 +354,16 @@ type GettableRuleGroupConfig struct {
 
 	// fields below are used by Mimir/Loki rulers
 
-	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
-	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
-	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
-	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
+	SourceTenants                 []string          `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration   `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool              `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Labels                        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+
+	// GEM Ruler.
+
+	RWConfigs []RemoteWriteConfig `yaml:"remote_write,omitempty" json:"remote_write,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {

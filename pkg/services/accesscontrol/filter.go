@@ -194,3 +194,23 @@ func RolePrefixesFilter(rolePrefixes []string) (string, []any) {
 
 	return query, params
 }
+
+// ManagedPermissionsActionSetsFilter returns a SQL clause that excludes individual
+// dashboard/folder action permissions from managed roles. These permissions are
+// redundant when action sets are enabled, because ExpandActionSets expands the
+// action set permissions (e.g. dashboards:view) into the underlying individual
+// actions (e.g. dashboards:read) in memory.
+//
+// This can dramatically reduce the number of permission rows loaded from the
+// database for large installations where many managed permissions accumulated
+// before action sets were enabled by default.
+func ManagedPermissionsActionSetsFilter() string {
+	return ` AND NOT (
+		role.name LIKE 'managed:%'
+		AND permission.kind IN ('dashboards', 'folders')
+		AND permission.action NOT IN (
+			'dashboards:view', 'dashboards:edit', 'dashboards:admin',
+			'folders:view', 'folders:edit', 'folders:admin'
+		)
+	)`
+}

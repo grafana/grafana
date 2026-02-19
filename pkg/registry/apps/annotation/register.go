@@ -2,7 +2,6 @@ package annotation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
@@ -27,40 +27,47 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AnnotationAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AnnotationAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type AnnotationAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg    *setting.Cfg
-	legacy *legacyStorage
+	cfg        *setting.Cfg
+	k8sAdapter *k8sRESTAdapter
 }
 
+// RegisterAppInstaller Layers (from bottom to top):
+//  1. annotations.Repository - old Grafana annotation service
+//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
+//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
-) (*AnnotationAppInstaller, error) {
-	installer := &AnnotationAppInstaller{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg: cfg,
 	}
 
 	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
 	if service != nil {
 		mapper := grafrequest.GetNamespaceMapper(cfg)
+
+		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
 		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
-		installer.legacy = &legacyStorage{
+
+		// Layer 2→3: Wrap Store interface with K8s REST adapter
+		installer.k8sAdapter = &k8sRESTAdapter{
 			store:  sqlAdapter,
 			mapper: mapper,
 		}
-		// Create the tags handler using the sqlAdapter as TagProvider
+
+		// Create the tags handler using the sqlAdapter (which implements TagProvider)
 		tagHandler = newTagsHandler(sqlAdapter)
 	}
 
@@ -82,7 +89,22 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Any authenticated user can access the API
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
+// GetLegacyStorage returns the K8s REST storage implementation for the annotation resource.
+// Called by the app platform to get the storage backend.
+func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
 	kind := annotationV0.AnnotationKind()
 	gvr := schema.GroupVersionResource{
 		Group:    kind.Group(),
@@ -94,7 +116,8 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		return nil
 	}
 
-	a.legacy.tableConverter = utils.NewTableConverter(
+	// Set up table converter for kubectl-style output
+	a.k8sAdapter.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
@@ -112,52 +135,56 @@ func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		},
 	)
 
-	return a.legacy
+	return a.k8sAdapter
 }
 
 var (
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Creater              = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	_ rest.Scoper               = (*k8sRESTAdapter)(nil)
+	_ rest.SingularNameProvider = (*k8sRESTAdapter)(nil)
+	_ rest.Getter               = (*k8sRESTAdapter)(nil)
+	_ rest.Storage              = (*k8sRESTAdapter)(nil)
+	_ rest.Creater              = (*k8sRESTAdapter)(nil)
+	_ rest.Updater              = (*k8sRESTAdapter)(nil)
+	_ rest.GracefulDeleter      = (*k8sRESTAdapter)(nil)
 )
 
-type legacyStorage struct {
+// k8sRESTAdapter adapts the Store interface to Kubernetes REST storage interface.
+// This layer handles K8s API conventions (fieldSelectors, ListOptions, runtime.Object, etc.)
+// and delegates actual storage operations to the Store interface.
+type k8sRESTAdapter struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
-func (s *legacyStorage) New() runtime.Object {
+func (s *k8sRESTAdapter) New() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroValue()
 }
 
-func (s *legacyStorage) Destroy() {}
+func (s *k8sRESTAdapter) Destroy() {}
 
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *k8sRESTAdapter) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *legacyStorage) GetSingularName() string {
+func (s *k8sRESTAdapter) GetSingularName() string {
 	return strings.ToLower(annotationV0.AnnotationKind().Kind())
 }
 
-func (s *legacyStorage) NewList() runtime.Object {
+func (s *k8sRESTAdapter) NewList() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroListValue()
 }
 
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 
 	opts := ListOptions{}
 	if options.FieldSelector != nil {
+		// Parse K8s field selectors into Store ListOptions
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
 			case "spec.dashboardUID":
@@ -178,41 +205,25 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 					return nil, fmt.Errorf("unsupported operator %s for spec.panelID (only = supported)", r.Operator)
 				}
 			case "spec.time":
-				switch r.Operator {
-				case selection.GreaterThan:
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
 					from, err := strconv.ParseInt(r.Value, 10, 64)
 					if err != nil {
 						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
 					}
 					opts.From = from
-				case selection.LessThan:
-					to, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
-					}
-					opts.To = to
-				default:
-					return nil, fmt.Errorf("unsupported operator %s for spec.time (only >, < supported for ranges)", r.Operator)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.from (only = supported)", r.Operator)
 				}
-
 			case "spec.timeEnd":
-				switch r.Operator {
-				case selection.GreaterThan:
-					from, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
-					}
-					opts.From = from
-				case selection.LessThan:
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
 					to, err := strconv.ParseInt(r.Value, 10, 64)
 					if err != nil {
 						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 					}
 					opts.To = to
-				default:
-					return nil, fmt.Errorf("unsupported operator %s for spec.timeEnd (only >, < supported for ranges)", r.Operator)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
 				}
-
 			default:
 				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
 			}
@@ -224,20 +235,29 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		opts.Limit = options.Limit
 	}
 
+	// Extract continue token from request
+	if options.Continue != "" {
+		opts.Continue = options.Continue
+	}
+
 	result, err := s.store.List(ctx, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return &annotationV0.AnnotationList{Items: result.Items}, nil
+	// Return list with continue token for pagination
+	return &annotationV0.AnnotationList{
+		Items:    result.Items,
+		ListMeta: metav1.ListMeta{Continue: result.Continue},
+	}, nil
 }
 
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
 	return s.store.Get(ctx, namespace, name)
 }
 
-func (s *legacyStorage) Create(ctx context.Context,
+func (s *k8sRESTAdapter) Create(ctx context.Context,
 	obj runtime.Object,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
@@ -249,7 +269,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	return s.store.Create(ctx, resource)
 }
 
-func (s *legacyStorage) Update(ctx context.Context,
+func (s *k8sRESTAdapter) Update(ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
 	createValidation rest.ValidateObjectFunc,
@@ -257,15 +277,40 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	namespace := request.NamespaceValue(ctx)
+
+	obj, err := objInfo.UpdatedObject(ctx, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resource, ok := obj.(*annotationV0.Annotation)
+	if !ok {
+		return nil, false, fmt.Errorf("expected annotation")
+	}
+
+	if resource.Name != name {
+		return nil, false, fmt.Errorf("name in URL does not match name in body")
+	}
+
+	if resource.Namespace != namespace {
+		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
+	}
+
+	updated, err := s.store.Update(ctx, resource)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return updated, false, nil
 }
 
-func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 	err := s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
 }

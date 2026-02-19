@@ -10,15 +10,14 @@ import { ModeOption } from '../types';
  */
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
-  const allowedTargets = settings?.allowedTargets || ['instance', 'folder'];
-  const legacyStorageEnabled = settings?.legacyStorage;
+  const allowedTargets = settings?.allowedTargets || ['folder'];
 
   return modeOptions.map((option) => {
     if (option.disabled) {
       return option;
     }
 
-    const disabledReason = resolveDisabledReason(option, { allowedTargets, folderConnected, legacyStorageEnabled });
+    const disabledReason = resolveDisabledReason(option, { allowedTargets, folderConnected });
 
     if (!disabledReason) {
       return option;
@@ -35,7 +34,6 @@ function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings
 type DisableContext = {
   allowedTargets: string[];
   folderConnected?: boolean;
-  legacyStorageEnabled?: boolean;
 };
 
 // Returns a translated reason why the given mode option should be disabled.
@@ -44,13 +42,6 @@ function resolveDisabledReason(option: ModeOption, context: DisableContext) {
     return t(
       'provisioning.mode-options.disabled.not-allowed',
       'Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.'
-    );
-  }
-
-  if (context.legacyStorageEnabled && option.target !== 'instance') {
-    return t(
-      'provisioning.mode-options.disabled.legacy-storage',
-      'Legacy storage mode only supports syncing the entire Grafana instance.'
     );
   }
 

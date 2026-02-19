@@ -12,4 +12,4 @@ WHERE {{.Ident "namespace" }} = {{.Arg .Namespace }}
   AND {{.Ident "resource" }} = {{.Arg .Resource }}
   AND {{.Ident "resource_version" }} > {{.Arg .SinceRv }} {{/* needs to exclude SinceRv */}}
   AND {{.Ident "resource_version" }} <= {{.Arg .LatestRv }} {{/* needs to include LatestRv */}}
-ORDER BY {{.Ident "name" }} ASC, {{.Ident "resource_version" }} DESC
+ORDER BY {{.Ident "resource_version" }} DESC

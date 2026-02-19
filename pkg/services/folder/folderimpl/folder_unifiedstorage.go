@@ -14,6 +14,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -282,6 +283,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
+}
+
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -347,22 +352,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
+	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+		hits.Hits = hits.Hits[1:]
 	}
 
-	uid := hits.Hits[0].Name
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -726,19 +721,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
-	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-	}
-
 	// Check that the user is allowed to move the folder to the destination folder
 	hasAccess, evalErr := s.canMoveViaApiServer(ctx, cmd)
 	if evalErr != nil {
@@ -748,30 +730,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	// here we get the folder, we need to get the height of current folder
-	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
-	}
-
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
-	}
-
-	for _, parent := range parents {
-		// if the current folder is already a parent of newparent, we should return error
-		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
-		}
-	}
-
-	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,

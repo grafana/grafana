@@ -31,6 +31,10 @@ const (
 	maxLimit           = 1000
 	Namespace          = "grafana"
 	Subsystem          = "alerting"
+
+	// LogQL field path for alert rule UID after JSON parsing.
+	// Loki flattens nested JSON fields with underscores: alert.labels.__alert_rule_uid__ -> alert_labels___alert_rule_uid__
+	lokiAlertRuleUIDField = "alert_labels___alert_rule_uid__"
 )
 
 var (
@@ -111,12 +115,19 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	if query.RuleUID != nil {
-		selectors = append(selectors,
-			fmt.Sprintf(`%s=%q`, historian.LabelRuleUID, *query.RuleUID))
+	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
+
+	// Searching for ruleUID before JSON parsing can dramatically improve performance.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
 	}
 
-	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+	logql += ` | json`
+
+	// Add ruleUID filter as JSON line filter if specified.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` | %s = %q`, lokiAlertRuleUIDField, *query.RuleUID)
+	}
 
 	// Add receiver filter if specified.
 	if query.Receiver != nil && *query.Receiver != "" {
@@ -142,6 +153,23 @@ func buildQuery(query Query) (string, error) {
 				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
 			}
 			logql += fmt.Sprintf(` | groupLabels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
+		}
+	}
+
+	// Add alert labels filter if specified.
+	if query.Labels != nil {
+		for _, matcher := range *query.Labels {
+			// Validate the matcher close to where it is used to form the query,
+			// to reduce the risk of introducing a query injection bug.
+			if !validLabelKeyRegex.MatchString(matcher.Label) {
+				return "", fmt.Errorf("%w: alert label: %q", ErrInvalidQuery, matcher.Label)
+			}
+			switch matcher.Type {
+			case "=", "!=", "=~", "!~":
+			default:
+				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
+			}
+			logql += fmt.Sprintf(` | alert_labels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
 		}
 	}
 
@@ -211,16 +239,13 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
-	alerts := make([]EntryAlert, len(lokiEntry.Alerts))
-	for i, a := range lokiEntry.Alerts {
-		alerts[i] = EntryAlert{
-			Status:      a.Status,
-			Labels:      a.Labels,
-			Annotations: a.Annotations,
-			StartsAt:    a.StartsAt,
-			EndsAt:      a.EndsAt,
-		}
-	}
+	alerts := []EntryAlert{{
+		Status:      lokiEntry.Alert.Status,
+		Labels:      lokiEntry.Alert.Labels,
+		Annotations: lokiEntry.Alert.Annotations,
+		StartsAt:    lokiEntry.Alert.StartsAt,
+		EndsAt:      lokiEntry.Alert.EndsAt,
+	}}
 
 	return Entry{
 		Timestamp:    s.T,

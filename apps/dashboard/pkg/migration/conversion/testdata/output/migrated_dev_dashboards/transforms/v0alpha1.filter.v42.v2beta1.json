@@ -86,6 +86,10 @@
                   "kind": "reduce",
                   "spec": {
                     "id": "reduce",
+                    "filter": {
+                      "id": "byRefId",
+                      "options": "A"
+                    },
                     "options": {
                       "includeTimeField": false,
                       "mode": "reduceFields",
@@ -99,6 +103,10 @@
                   "kind": "reduce",
                   "spec": {
                     "id": "reduce",
+                    "filter": {
+                      "id": "byRefId",
+                      "options": "B"
+                    },
                     "options": {
                       "includeTimeField": false,
                       "mode": "reduceFields",

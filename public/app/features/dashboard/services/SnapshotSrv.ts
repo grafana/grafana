@@ -1,8 +1,8 @@
-import { lastValueFrom, map } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 
-import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardDTO, SnapshotSpec } from 'app/types/dashboard';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { getAPINamespace } from '../../../api/utils';
 
@@ -82,11 +82,12 @@ interface DashboardSnapshotList {
   items: K8sSnapshotResource[];
 }
 
-interface K8sDashboardSnapshot {
+// Response from the /dashboard subresource - returns a Dashboard with raw dashboard data in spec
+interface K8sDashboardSubresource {
   apiVersion: string;
-  kind: 'Snapshot';
+  kind: 'Dashboard';
   metadata: K8sMetadata;
-  spec: SnapshotSpec;
+  spec: DashboardDataDTO;
 }
 
 class K8sAPI implements DashboardSnapshotSrv {
@@ -118,10 +119,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSharingOptions() {
-    // TODO? should this be in a config service, or in the same service?
-    // we have http://localhost:3000/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/default/options
-    // BUT that has an unclear user mapping story still, so lets stick with the existing shared-options endpoint
-    return getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options');
+    return getBackendSrv().get<SnapshotSharingOptions>(this.url + '/settings');
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
@@ -131,32 +129,32 @@ class K8sAPI implements DashboardSnapshotSrv {
       const token = `??? TODO, get anon token for snapshots (${contextSrv.user?.name}) ???`;
       headers['Authorization'] = `Bearer ${token}`;
     }
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<K8sDashboardSnapshot>({
+
+    // Fetch both snapshot metadata and dashboard content in parallel
+    const [snapshotResponse, dashboardResponse] = await Promise.all([
+      lastValueFrom(
+        getBackendSrv().fetch<K8sSnapshotResource>({
           url: this.url + '/' + uid,
           method: 'GET',
           headers: headers,
         })
-        .pipe(
-          map((response: FetchResponse<K8sDashboardSnapshot>) => {
-            return {
-              dashboard: response.data.spec.dashboard,
-              meta: {
-                isSnapshot: true,
-                canSave: false,
-                canEdit: false,
-                canAdmin: false,
-                canStar: false,
-                canShare: false,
-                canDelete: false,
-                isFolder: false,
-                provisioned: false,
-              },
-            };
-          })
-        )
-    );
+      ),
+      lastValueFrom(
+        getBackendSrv().fetch<K8sDashboardSubresource>({
+          url: this.url + '/' + uid + '/dashboard',
+          method: 'GET',
+          headers: headers,
+        })
+      ),
+    ]);
+
+    return {
+      dashboard: dashboardResponse.data.spec,
+      meta: {
+        isSnapshot: true,
+        k8s: snapshotResponse.data.metadata,
+      },
+    };
   }
 }
 

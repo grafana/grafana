@@ -16,6 +16,7 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   CancelActivationHandler,
+  sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -27,6 +28,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
+import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -146,16 +148,69 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideDashboardControls,
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel } = dashboard.useState();
-  const styles = useStyles2(getStyles);
+  const { links, editPanel, isEditing } = dashboard.useState();
+  const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
+  const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
+
+  // Get adhoc and groupby variables for drilldown controls
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
+  const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
+  // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
+  if (useUnifiedDrilldownUI) {
+    return (
+      <div
+        data-testid={selectors.pages.Dashboard.Controls}
+        className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+      >
+        <div className={styles.topRow}>
+          {config.featureToggles.scopeFilters && !editPanel && (
+            <ContextualNavigationPaneToggle className={styles.contextualNavToggleNewLayout} hideWhenOpen={true} />
+          )}
+          {!hideVariableControls && (
+            <div className={styles.drilldownControlsContainer}>
+              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} isEditing={isEditing} />
+            </div>
+          )}
+          <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
+            {!hideTimeControls && (
+              <div className={styles.fixedControlsNewLayout}>
+                <timePicker.Component model={timePicker} />
+                <refreshPicker.Component model={refreshPicker} />
+              </div>
+            )}
+            {config.featureToggles.dashboardNewLayouts && (
+              <div className={styles.fixedControlsNewLayout}>
+                <DashboardControlActions dashboard={dashboard} />
+              </div>
+            )}
+          </div>
+        </div>
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} />
+            <DashboardDataLayerControls dashboard={dashboard} />
+          </>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
+        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+      </div>
+    );
+  }
+
+  // Original layout when feature toggle is off
   return (
     <div
       data-testid={selectors.pages.Dashboard.Controls}
@@ -202,8 +257,9 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
 
   return (
     <>
@@ -241,8 +297,9 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   return null;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
   return {
+    // Original controls style
     controls: css({
       gap: theme.spacing(1),
       padding: theme.spacing(2, 2, 1, 2),
@@ -256,20 +313,44 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
-      '&:hover .dashboard-canvas-add-button': {
+
+      '&:hover .dashboard-canvas-controls': {
         opacity: 1,
-        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
-      // In panel edit we do not need any right padding as the splitter is providing it
+      ...(isQueryEditorNext && {
+        padding: 0,
+        marginBottom: theme.spacing(-1),
+      }),
       paddingRight: 0,
+    }),
+    // New layout styles (used when feature toggle is on)
+    topRow: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(1),
+      width: '100%',
+      marginBottom: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
+    }),
+    drilldownControlsContainer: css({
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      [theme.breakpoints.down('sm')]: {
+        order: 1, // Move below the time controls
+        flex: '1 1 100%', // Take full width to force new line
+      },
     }),
     embedded: css({
       background: 'unset',
       position: 'unset',
     }),
+    // Original rightControls style
     rightControls: css({
       display: 'flex',
       gap: theme.spacing(1),
@@ -279,6 +360,15 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: '100%',
       minWidth: 0,
     }),
+    // Modified rightControls for new layout
+    rightControlsNewLayout: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      flexShrink: 0,
+    }),
+    // Original fixedControls style
     fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
@@ -286,6 +376,14 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
       order: 2,
       marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    // Fixed controls for new layout (no margin/order)
+    fixedControlsNewLayout: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
       flexShrink: 0,
       alignSelf: 'flex-start',
     }),
@@ -300,6 +398,10 @@ function getStyles(theme: GrafanaTheme2) {
     contextualNavToggle: css({
       display: 'inline-flex',
       margin: theme.spacing(0, 1, 1, 0),
+    }),
+    contextualNavToggleNewLayout: css({
+      display: 'inline-flex',
+      flexShrink: 0,
     }),
   };
 }

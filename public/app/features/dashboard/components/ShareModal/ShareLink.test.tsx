@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { BootData, getDefaultTimeRange } from '@grafana/data';
@@ -96,9 +96,11 @@ describe('ShareModal', () => {
   describe('with current time range and panel', () => {
     it('should generate share url absolute time', async () => {
       render(<ShareLink {...props} />);
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22'
-      );
+      const linkUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+
+      await waitFor(() => {
+        expect(linkUrl).toHaveValue('http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22');
+      });
     });
 
     it('should generate render url', async () => {
@@ -106,10 +108,11 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
-      expect(
-        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
-      ).toHaveAttribute('href', base + params);
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
+      const linkUrl = await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage });
+      await waitFor(() => {
+        expect(linkUrl).toHaveAttribute('href', base + params);
+      });
     });
 
     it('should generate render url for scripted dashboard', async () => {
@@ -117,18 +120,20 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
-      expect(
-        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
-      ).toHaveAttribute('href', base + params);
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
+      const linkUrl = await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage });
+      await waitFor(() => {
+        expect(linkUrl).toHaveAttribute('href', base + params);
+      });
     });
 
     it('should remove panel id when no panel in scope', async () => {
       props.panel = undefined;
       render(<ShareLink {...props} />);
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://server/#!/test?from=1000&to=2000&orgId=1'
-      );
+      const linkUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+      await waitFor(() => {
+        expect(linkUrl).toHaveValue('http://server/#!/test?from=1000&to=2000&orgId=1');
+      });
     });
 
     it('should add theme when specified', async () => {
@@ -136,9 +141,10 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       await userEvent.click(screen.getByLabelText('Light'));
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://server/#!/test?from=1000&to=2000&orgId=1&theme=light'
-      );
+      const linkUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+      await waitFor(() => {
+        expect(linkUrl).toHaveValue('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
+      });
     });
 
     it('should remove editPanel from image url when is first param in querystring', async () => {
@@ -147,24 +153,28 @@ describe('ShareModal', () => {
 
       const base = 'http://server';
       const path = '/#!/test';
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        base + path + '?editPanel=1&from=1000&to=2000&orgId=1'
-      );
-      expect(
-        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
-      ).toHaveAttribute(
-        'href',
-        base + path + '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&scale=1&tz=UTC'
-      );
+      const textboxUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+      const linkUrl = await screen.findByRole('link', {
+        name: selectors.pages.SharePanelModal.linkToRenderedImage,
+      });
+      await waitFor(() => {
+        expect(textboxUrl).toHaveValue(base + path + '?editPanel=1&from=1000&to=2000&orgId=1');
+        expect(linkUrl).toHaveAttribute(
+          'href',
+          base + path + '?from=1000&to=2000&orgId=1&panelId=1&hideLogo=true&width=1000&height=500&scale=1&tz=UTC'
+        );
+      });
     });
 
     it('should shorten url', async () => {
       render(<ShareLink {...props} />);
 
       await userEvent.click(await screen.findByLabelText('Shorten URL'));
-      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        `http://localhost:3000/goto/${mockUid}`
-      );
+      const linkUrl = await screen.findByRole('textbox', { name: 'Link URL' });
+
+      await waitFor(() => {
+        expect(linkUrl).toHaveValue(`http://localhost:3000/goto/${mockUid}`);
+      });
     });
 
     it('should generate render url without shareView param', async () => {
@@ -172,10 +182,11 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
-      expect(
-        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
-      ).toHaveAttribute('href', base + params);
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
+      const linkUrl = await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage });
+      await waitFor(() => {
+        expect(linkUrl).toHaveAttribute('href', base + params);
+      });
     });
   });
 });
@@ -209,11 +220,12 @@ describe('when appUrl is set in the grafana config', () => {
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
     render(<ShareLink {...props} />);
 
-    expect(
-      await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
-    ).toHaveAttribute(
-      'href',
-      `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&width=1000&height=500&scale=1&tz=UTC`
-    );
+    const linkUrl = await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage });
+    await waitFor(() => {
+      expect(linkUrl).toHaveAttribute(
+        'href',
+        `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&hideLogo=true&width=1000&height=500&scale=1&tz=UTC`
+      );
+    });
   });
 });

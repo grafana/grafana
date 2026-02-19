@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { useStyles2, Badge } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
@@ -27,7 +27,15 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
     setIsInstalling(false);
   }, [installedVersion]);
 
-  if (versions.length === 0) {
+  // Check if installed version is in the versions list
+  const isInstalledVersionMissing = useMemo(() => {
+    if (!installedVersion) {
+      return false;
+    }
+    return !versions.some((v) => v.version === installedVersion);
+  }, [versions, installedVersion]);
+
+  if (versions.length === 0 && !isInstalledVersionMissing) {
     return (
       <p>
         <Trans i18nKey="plugins.version-list.no-version-history-was-found">No version history was found.</Trans>
@@ -94,23 +102,27 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                 <td>{version.version}</td>
               )}
 
-              {/* Install button */}
+              {/* Install button or status badge */}
               <td>
-                <VersionInstallButton
-                  pluginId={pluginId}
-                  version={version}
-                  latestCompatibleVersion={latestCompatibleVersion?.version}
-                  installedVersion={installedVersion}
-                  onConfirmInstallation={onInstallClick}
-                  disabled={
-                    isInstalledVersion ||
-                    isInstalling ||
-                    version.angularDetected ||
-                    !version.isCompatible ||
-                    disableInstallation
-                  }
-                  tooltip={tooltip}
-                />
+                {isInstalledVersion && version.status === 'deprecated' ? (
+                  <Badge text={t('plugins.version-list.deprecated', 'Deprecated')} color="orange" />
+                ) : (
+                  <VersionInstallButton
+                    pluginId={pluginId}
+                    version={version}
+                    latestCompatibleVersion={latestCompatibleVersion?.version}
+                    installedVersion={installedVersion}
+                    onConfirmInstallation={onInstallClick}
+                    disabled={
+                      isInstalledVersion ||
+                      isInstalling ||
+                      version.angularDetected ||
+                      !version.isCompatible ||
+                      disableInstallation
+                    }
+                    tooltip={tooltip}
+                  />
+                )}
               </td>
 
               {/* Latest release date */}
@@ -131,6 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({ padding: theme.spacing(2, 4, 3) }),
   currentVersion: css({ fontWeight: theme.typography.fontWeightBold }),
   spinner: css({ marginLeft: theme.spacing(1) }),
+  badge: css({ marginLeft: theme.spacing(1) }),
   table: css({
     tableLayout: 'fixed',
     width: '100%',

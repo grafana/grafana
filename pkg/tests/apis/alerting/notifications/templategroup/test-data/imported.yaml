@@ -1,0 +1,15 @@
+alertmanager_config: |
+  route:
+    receiver: sinkhole
+    group_by:
+      - alertname
+  receivers:
+    - name: sinkhole
+template_files:
+  imported: |
+    {{ define "imported" }}
+    {{ end }}
+  template: |
+    {{ define "template" }}
+      {{ template "imported" . }}
+    {{ end }}

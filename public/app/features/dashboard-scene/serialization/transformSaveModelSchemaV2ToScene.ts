@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  AdHocFilterWithLabels,
   behaviors,
   ConstantVariable,
   CustomVariable,
@@ -44,7 +45,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -52,7 +53,6 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
-  DeprecatedInternalId,
   AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -135,11 +135,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
-  let dashboardId: number | undefined = undefined;
-
-  if (metadata.labels?.[DeprecatedInternalId]) {
-    dashboardId = parseInt(metadata.labels[DeprecatedInternalId], 10);
-  }
 
   const meta: DashboardMeta = {
     canShare: dto.access.canShare !== false,
@@ -206,7 +201,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      id: dashboardId,
       isDirty: false,
       links: dashboard.links,
       meta,
@@ -237,7 +231,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
-          uid: dashboardId?.toString(),
+          uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
@@ -305,7 +299,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -319,6 +313,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       },
       variable.group
     );
+
+    // Separate filters by origin - filters with origin go to originFilters, others go to filters
+    const originFilters: AdHocFilterWithLabels[] = [];
+    const filters: AdHocFilterWithLabels[] = [];
+    variable.spec.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,
       type: 'adhoc',
@@ -327,26 +327,29 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       datasource: ds,
       applyMode: 'auto',
-      filters: variable.spec.filters ?? [],
+      filters,
+      originFilters,
       baseFilters: variable.spec.baseFilters ?? [],
-      defaultKeys: variable.spec.defaultKeys,
+      defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
+      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
     return new AdHocFiltersVariable(adhocVariableState);
   }
+
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-
       query: variable.spec.query,
       isMulti: variable.spec.multi,
       allValue: variable.spec.allValue || undefined,
@@ -355,6 +358,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -375,6 +379,16 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      ...(variable.spec.staticOptions?.length
+        ? {
+            staticOptions: variable.spec.staticOptions.map((option) => ({
+              label: String(option.text),
+              value: String(option.value),
+              properties: option.properties,
+            })),
+          }
+        : {}),
+      ...(variable.spec.staticOptionsOrder !== undefined && { staticOptionsOrder: variable.spec.staticOptionsOrder }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({
@@ -459,8 +473,13 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
+      defaultValue: variable.spec.defaultValue
+        ? { value: variable.spec.defaultValue.value, text: variable.spec.defaultValue.text }
+        : undefined,
     });
   } else if (variable.kind === defaultSwitchVariableKind().kind) {
     return new SwitchVariable({
@@ -536,7 +555,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             applyMode: 'auto',
             filters: v.spec.filters ?? [],
             baseFilters: v.spec.baseFilters ?? [],
-            defaultKeys: v.spec.defaultKeys,
+            defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(

@@ -20,6 +20,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,8 +51,41 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validIDTokenClaimsWithServiceAccount = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "service-account:3",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validIDTokenClaimsWithRenderService = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "render:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
+		},
+	}
+	validIDTokenClaimsWithAnonymous = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "anonymous:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
@@ -60,7 +95,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stacks-1234",
 		},
 	}
@@ -71,7 +106,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stack-1234",
 		},
 	}
@@ -112,18 +147,18 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "org-2",
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
 		Claims: jwt.Claims{
-			Subject:  "service-account:2",
+			Subject:  "api-key:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
 		},
 	}
@@ -237,7 +272,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
@@ -256,7 +291,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				Namespace:         "*",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -275,10 +310,86 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as service account",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithServiceAccount,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "3",
+				Type:              claims.TypeServiceAccount,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithServiceAccount,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as render service",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithRenderService,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeRenderService,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithRenderService,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleAdmin},
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as anonymous",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithAnonymous,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: string(org.RoleEditor),
+				},
+			},
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeAnonymous,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithAnonymous,
+				Namespace:         "default",
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleEditor},
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
@@ -298,7 +409,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
@@ -326,7 +437,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
@@ -354,7 +465,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -410,7 +521,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,

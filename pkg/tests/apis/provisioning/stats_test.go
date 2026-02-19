@@ -21,13 +21,14 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 	const repo = "stats-test-repo1"
 
 	testRepo := TestRepo{
-		Name: repo,
+		Name:   repo,
+		Target: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":   "dashboard1.json",
 			"testdata/text-options.json": "folder/dashboard2.json",
 		},
 		ExpectedDashboards: 2,
-		ExpectedFolders:    1,
+		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -94,7 +95,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 					require.Equal(t, int64(2), count, "repo should manage 2 dashboards")
 				} else if group == "folder.grafana.app" && resource == "folders" {
 					count, _, _ := unstructured.NestedInt64(stat, "count")
-					require.Equal(t, int64(1), count, "repo should manage 1 folder")
+					require.Equal(t, int64(2), count, "repo should manage 2 folders (repo folder + nested folder)")
 				}
 			}
 		}

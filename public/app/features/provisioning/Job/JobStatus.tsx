@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';
@@ -11,9 +14,10 @@ export interface JobStatusProps {
   watch: Job;
   jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -24,6 +28,18 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   // Only initialize finished query if we've checked active jobs and found none
   const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
   const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
+
+  useEffect(() => {
+    if (activeQuery.isError) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
+          message: getErrorMessage(activeQuery.error),
+        },
+      });
+    }
+  }, [activeQuery.isError, activeQuery.error, onStatusChange]);
 
   if (activeQuery.isLoading) {
     return (
@@ -37,17 +53,19 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   }
 
   if (activeQuery.isError) {
-    onStatusChange?.({
-      status: 'error',
-      error: {
-        title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
-      },
-    });
     return null;
   }
 
   if (activeJob) {
-    return <JobContent job={activeJob} isFinishedJob={false} onStatusChange={onStatusChange} jobType={jobType} />;
+    return (
+      <JobContent
+        job={activeJob}
+        isFinishedJob={false}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+        onRetry={onRetry}
+      />
+    );
   }
 
   if (shouldCheckFinishedJobs) {
@@ -57,6 +75,7 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
         repositoryName={repoLabel}
         onStatusChange={onStatusChange}
         jobType={jobType}
+        onRetry={onRetry}
       />
     );
   }

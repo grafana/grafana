@@ -24,11 +24,7 @@ func ProvideBuilderMetrics(reg prometheus.Registerer) *BuilderMetrics {
 	}
 }
 
-func (m *BuilderMetrics) RecordDualWriterModes(resource, group string, targetMode, currentMode grafanarest.DualWriterMode) {
-	m.dualWriterTargetMode.WithLabelValues(resource, group).Set(float64(targetMode))
-	m.dualWriterCurrentMode.WithLabelValues(resource, group).Set(float64(currentMode))
-}
-
-func ProvideDualWriterMetrics(reg prometheus.Registerer) *grafanarest.DualWriterMetrics {
-	return grafanarest.NewDualWriterMetrics(reg)
+func (m *BuilderMetrics) RecordDualWriterModes(resource, group string, mode grafanarest.DualWriterMode) {
+	m.dualWriterTargetMode.WithLabelValues(resource, group).Set(float64(mode))
+	m.dualWriterCurrentMode.WithLabelValues(resource, group).Set(float64(mode))
 }

@@ -2,8 +2,8 @@ import { ComponentType } from 'react';
 
 import { DataLink, RegistryItem, Action } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { ColorDimensionConfig, ScaleDimensionConfig, DirectionDimensionConfig } from '@grafana/schema';
-import { config } from 'app/core/config';
 import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';

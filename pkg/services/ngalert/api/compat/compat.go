@@ -189,42 +189,11 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
-	cPtr := &rule.Condition
-	if rule.Condition == "" {
-		cPtr = nil
-	}
-
-	noDataState := definitions.NoDataState(rule.NoDataState)
-	ndsPtr := &noDataState
-	if noDataState == "" {
-		ndsPtr = nil
-	}
-	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
-	eesPtr := &execErrorState
-	if execErrorState == "" {
-		eesPtr = nil
-	}
-
 	result := definitions.AlertRuleExport{
-		UID:                  rule.UID,
-		Title:                rule.Title,
-		For:                  model.Duration(rule.For),
-		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
-		Condition:            cPtr,
-		Data:                 data,
-		DashboardUID:         rule.DashboardUID,
-		PanelID:              rule.PanelID,
-		NoDataState:          ndsPtr,
-		ExecErrState:         eesPtr,
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
-		Record:               AlertRuleRecordExportFromRecord(rule.Record),
-	}
-	if rule.For.Seconds() > 0 {
-		result.ForString = util.Pointer(model.Duration(rule.For).String())
-	}
-	if rule.KeepFiringFor.Seconds() > 0 {
-		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+		UID:      rule.UID,
+		Title:    rule.Title,
+		Data:     data,
+		IsPaused: rule.IsPaused,
 	}
 	if rule.Annotations != nil {
 		result.Annotations = &rule.Annotations
@@ -232,11 +201,52 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
 	}
-	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
-		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+
+	if rule.Type() == models.RuleTypeRecording {
+		populateRecordingRuleExportFields(rule, &result)
+	} else {
+		populateAlertingRuleExportFields(rule, &result)
 	}
 
 	return result, nil
+}
+
+func populateRecordingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.Record = AlertRuleRecordExportFromRecord(rule.Record)
+}
+
+func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.DashboardUID = rule.DashboardUID
+	result.PanelID = rule.PanelID
+	result.NotificationSettings = AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings)
+
+	if rule.Condition != "" {
+		result.Condition = &rule.Condition
+	}
+
+	if rule.NoDataState != "" {
+		noDataState := definitions.NoDataState(rule.NoDataState)
+		result.NoDataState = &noDataState
+	}
+
+	if rule.ExecErrState != "" {
+		execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+		result.ExecErrState = &execErrorState
+	}
+
+	result.For = model.Duration(rule.For)
+	if rule.For > 0 {
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
+	}
+
+	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
+	if rule.KeepFiringFor > 0 {
+		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+	}
+
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+	}
 }
 
 func encodeQueryModel(m map[string]any) (string, error) {
@@ -448,12 +458,15 @@ func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definition
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
-func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettings
+func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 	return &definitions.AlertRuleNotificationSettings{
 		Receiver:            m.Receiver,
 		GroupBy:             m.GroupBy,
@@ -465,12 +478,15 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
-func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
+func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
@@ -492,12 +508,12 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 }
 
 // NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
-func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) []models.NotificationSettings {
+func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	return []models.NotificationSettings{
-		{
+	return util.Pointer(models.NotificationSettingsFromContact(
+		models.ContactPointRouting{
 			Receiver:            ns.Receiver,
 			GroupBy:             ns.GroupBy,
 			GroupWait:           ns.GroupWait,
@@ -506,7 +522,7 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			MuteTimeIntervals:   ns.MuteTimeIntervals,
 			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
-	}
+	))
 }
 
 func pointerOmitEmpty(s string) *string {

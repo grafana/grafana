@@ -35,17 +35,23 @@ export const FieldRenderer = ({
   const [isSecretConfigured, setIsSecretConfigured] = useState(secretConfigured);
   const isDependantField = typeof field !== 'string';
   const name = isDependantField ? field.name : field;
-  const parentValue = isDependantField ? watch(field.dependsOn) : null;
+  const parentValue = isDependantField && field.dependsOn ? watch(field.dependsOn) : null;
   const fieldData = fieldMap(provider)[name];
   const theme = useTheme2();
+
+  // Handle disabledWhen configuration
+  const disabledWhen = isDependantField ? field.disabledWhen : undefined;
+  const disabledWhenValue = disabledWhen ? watch(disabledWhen.field) : undefined;
+  const isDisabled = disabledWhen ? disabledWhenValue === disabledWhen.is : false;
+
   // Unregister a field that depends on a toggle to clear its data
   useEffect(() => {
-    if (isDependantField) {
+    if (isDependantField && field.dependsOn) {
       if (!parentValue) {
         unregister(name);
       }
     }
-  }, [unregister, name, parentValue, isDependantField]);
+  }, [unregister, name, parentValue, isDependantField, field]);
 
   const isNotEmptySelectableValueArray = (
     current: string | boolean | Record<string, string> | Array<SelectableValue<string>> | undefined
@@ -64,6 +70,13 @@ export const FieldRenderer = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Set the value when the field is disabled
+  useEffect(() => {
+    if (isDisabled && disabledWhen?.disabledValue) {
+      setValue(name, disabledWhen.disabledValue.value);
+    }
+  }, [isDisabled, disabledWhen?.disabledValue, name, setValue]);
+
   if (!field) {
     console.log('missing field:', name);
     return null;
@@ -74,12 +87,12 @@ export const FieldRenderer = ({
   }
 
   // Dependant field means the field depends on another field's value and shouldn't be rendered if the parent field is false
-  if (isDependantField) {
-    const parentValue = watch(field.dependsOn);
+  if (isDependantField && field.dependsOn) {
     if (!parentValue) {
       return null;
     }
   }
+
   const fieldProps = {
     label: fieldData.label,
     required: !!fieldData.validation?.required,
@@ -131,10 +144,10 @@ export const FieldRenderer = ({
             rules={fieldData.validation}
             name={name}
             control={control}
-            render={({ field: { ref, onChange, ...fieldProps }, fieldState: { invalid } }) => {
+            render={({ field: { ref, onChange, ...controllerFieldProps }, fieldState: { invalid } }) => {
               return (
                 <Select
-                  {...fieldProps}
+                  {...controllerFieldProps}
                   placeholder={fieldData.placeholder}
                   isMulti={fieldData.multi}
                   invalid={invalid}
@@ -143,6 +156,7 @@ export const FieldRenderer = ({
                   allowCustomValue={!!fieldData.allowCustomValue}
                   defaultValue={fieldData.defaultValue}
                   onChange={onChange}
+                  disabled={isDisabled}
                   onCreateOption={(v) => {
                     const customValue = { value: v, label: v };
                     onChange([...(options || []), customValue]);

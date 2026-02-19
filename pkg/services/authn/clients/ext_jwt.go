@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -131,11 +132,11 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !claims.IsIdentityType(t, claims.TypeUser) {
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	return &authn.Identity{
+	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
@@ -151,7 +152,24 @@ func (s *ExtendedJWT) authenticateAsUser(
 			},
 			FetchSyncedUser: true,
 		},
-	}, nil
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		// RenderService always has Admin role (based on render.go logic)
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {

@@ -3,13 +3,16 @@ package team
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"math"
 	"strconv"
+	"strings"
 
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/team"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,19 +28,24 @@ const (
 type LegacyTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
 	teamService team.Service
-	log         *slog.Logger
+	log         log.Logger
+	tracer      trace.Tracer
 }
 
 // NewLegacyTeamSearchClient creates a new LegacyTeamSearchClient.
-func NewLegacyTeamSearchClient(teamService team.Service) *LegacyTeamSearchClient {
+func NewLegacyTeamSearchClient(teamService team.Service, tracer trace.Tracer) *LegacyTeamSearchClient {
 	return &LegacyTeamSearchClient{
 		teamService: teamService,
-		log:         slog.Default().With("logger", "legacy-team-search-client"),
+		log:         log.New("grafana-apiserver.teams.legacy-search"),
+		tracer:      tracer,
 	}
 }
 
 // Search searches for teams in the legacy search engine.
 func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "team.legacysearch")
+	defer span.End()
+
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -64,6 +72,8 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 
 	res, err := c.teamService.SearchTeams(ctx, query)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "team legacy search failed")
 		return nil, err
 	}
 
@@ -102,7 +112,8 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
-		if col, ok := builders.TeamSearchTableColumnDefinitions[field]; ok {
+		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
 		}
 	}
@@ -121,7 +132,8 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
-		switch field {
+		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:
 			cells = append(cells, []byte(t.Email))
 		case builders.TEAM_SEARCH_PROVISIONED:

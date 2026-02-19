@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+
 import { DashboardInteractions } from '../../utils/interactions';
-import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { VersionHistoryTable } from './VersionHistoryTable';
 
@@ -12,6 +13,15 @@ jest.mock('../../utils/interactions', () => ({
   },
 }));
 
+function createMockResource(version: number, spec: object) {
+  return {
+    apiVersion: 'v0alpha1',
+    kind: 'Dashboard',
+    metadata: { name: '0', generation: version, resourceVersion: '0', creationTimestamp: '' },
+    spec,
+  };
+}
+
 const mockVersions: DecoratedRevisionModel[] = [
   {
     id: 1,
@@ -21,9 +31,8 @@ const mockVersions: DecoratedRevisionModel[] = [
     message: 'Initial version',
     checked: false,
     uid: '0',
-    parentVersion: 0,
-    created: new Date(),
-    data: { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] },
+    created: '2023-01-01T00:00:00Z',
+    data: createMockResource(1, { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] }),
     ageString: '1 day ago',
   },
   {
@@ -34,9 +43,8 @@ const mockVersions: DecoratedRevisionModel[] = [
     message: 'Second version',
     checked: false,
     uid: '0',
-    parentVersion: 0,
-    created: new Date(),
-    data: { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] },
+    created: '2023-02-01T00:00:00Z',
+    data: createMockResource(2, { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] }),
     ageString: '10 days ago',
   },
 ];
@@ -52,7 +60,7 @@ describe('VersionHistoryTable', () => {
       version: mockVersions[1].version,
       index: 1,
       confirm: false,
-      version_date: mockVersions[1].created,
+      version_date: new Date(mockVersions[1].created),
     });
   });
 });

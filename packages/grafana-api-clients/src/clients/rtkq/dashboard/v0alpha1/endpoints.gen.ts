@@ -243,12 +243,17 @@ const injectedRtkApi = api
             type: queryArg['type'],
             folder: queryArg.folder,
             facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
+            panelType: queryArg.panelType,
+            dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            ownerReference: queryArg.ownerReference,
             explain: queryArg.explain,
+            panelTitleSearch: queryArg.panelTitleSearch,
           },
         }),
         providesTags: ['Search'],
@@ -283,6 +288,10 @@ const injectedRtkApi = api
       deleteWithKey: build.mutation<DeleteWithKeyApiResponse, DeleteWithKeyApiArg>({
         query: (queryArg) => ({ url: `/snapshots/delete/${queryArg.deleteKey}`, method: 'DELETE' }),
         invalidatesTags: ['Snapshot'],
+      }),
+      getSnapshotSettings: build.query<GetSnapshotSettingsApiResponse, GetSnapshotSettingsApiArg>({
+        query: () => ({ url: `/snapshots/settings` }),
+        providesTags: ['Snapshot'],
       }),
       getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
         query: (queryArg) => ({
@@ -663,27 +672,30 @@ export type SearchDashboardsAndFoldersApiArg = {
   folder?: string;
   /** count distinct terms for selected fields */
   facet?: string[];
+  /** maximum number of terms to return per facet (default 50, max 1000) */
+  facetLimit?: number;
   /** tag query filter */
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
+  /** find dashboards using panels of a given plugin type */
+  panelType?: string;
+  /** find dashboards using datasources of a given plugin type */
+  dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin) */
   permission?: 'view' | 'edit' | 'admin';
   /** sortable field */
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
+  ownerReference?: string[];
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
+  /** [experimental] optionally include matches from panel titles */
+  panelTitleSearch?: boolean;
 };
-export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Sortable fields (depends on backend support) */
-  fields: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-};
+export type GetSortableFieldsApiResponse = /** status 200 undefined */ any;
 export type GetSortableFieldsApiArg = void;
 export type ListSnapshotApiResponse = /** status 200 OK */ SnapshotList;
 export type ListSnapshotApiArg = {
@@ -739,6 +751,8 @@ export type DeleteWithKeyApiArg = {
   /** unique key returned in create */
   deleteKey: string;
 };
+export type GetSnapshotSettingsApiResponse = /** status 200 undefined */ any;
+export type GetSnapshotSettingsApiArg = void;
 export type GetSnapshotApiResponse = /** status 200 OK */ Snapshot;
 export type GetSnapshotApiArg = {
   /** name of the Snapshot */
@@ -1019,7 +1033,7 @@ export type GridPos = {
   x: number;
   y: number;
 };
-export type DataQuery = {
+export type DataResponse = {
   /** The datasource */
   datasource?: {
     /** The apiserver version */
@@ -1110,7 +1124,7 @@ export type LibraryPanelSpec = {
   /** The panel type */
   pluginVersion?: string;
   /** The datasource queries */
-  targets?: DataQuery[];
+  targets?: DataResponse[];
   /** The title of the library panel */
   title?: string;
   /** Whether the panel is transparent */
@@ -1172,6 +1186,8 @@ export type DashboardHit = {
   managedBy?: ManagedBy;
   /** The k8s "name" (eg, grafana UID) */
   name: string;
+  /** Owner references set on the resource metadata in the format {Group}/{Kind}/{Name} */
+  ownerReferences?: string[];
   /** Dashboard or folder */
   resource: string;
   /** When using "real" search, this is the score */
@@ -1270,6 +1286,8 @@ export const {
   useLazyListSnapshotQuery,
   useCreateSnapshotMutation,
   useDeleteWithKeyMutation,
+  useGetSnapshotSettingsQuery,
+  useLazyGetSnapshotSettingsQuery,
   useGetSnapshotQuery,
   useLazyGetSnapshotQuery,
   useDeleteSnapshotMutation,

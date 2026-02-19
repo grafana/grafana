@@ -138,7 +138,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
 
 export const MetricsModal = (props: MetricsModalProps) => {
   return (
-    <MetricsModalContextProvider languageProvider={props.datasource.languageProvider}>
+    <MetricsModalContextProvider languageProvider={props.datasource.languageProvider} timeRange={props.timeRange}>
       <MetricsModalContent {...props} />
     </MetricsModalContextProvider>
   );

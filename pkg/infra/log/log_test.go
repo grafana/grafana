@@ -88,7 +88,7 @@ func TestNew(t *testing.T) {
 				val:      swapLogger,
 				maxLevel: level.AllowAll(),
 			},
-		})
+		}, "info")
 
 		err := log1.Log("msg", "hello 1")
 		require.NoError(t, err)

@@ -1,9 +1,7 @@
 import { css, cx } from '@emotion/css';
+import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,6 +12,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
+import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
@@ -81,17 +80,16 @@ export function Drawer({
   const styles = useStyles2(getStyles);
   const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
+  const titleId = useId();
 
-  const overlayRef = React.useRef(null);
-  const { dialogProps, titleProps } = useDialog({}, overlayRef);
-  const { overlayProps } = useOverlay(
-    {
-      isDismissable: false,
-      isOpen: true,
-      onClose,
+  const { context, refs } = useFloating({
+    open: true,
+    onOpenChange: (open) => {
+      if (!open) {
+        onClose?.();
+      }
     },
-    overlayRef
-  );
+  });
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
@@ -117,6 +115,8 @@ export function Drawer({
           minWidth,
         },
       }}
+      aria-label={typeof title === 'string' ? selectors.components.Drawer.General.title(title) : undefined}
+      aria-labelledby={title ? titleId : undefined}
       width={''}
       motion={{
         motionAppear: true,
@@ -128,19 +128,11 @@ export function Drawer({
         motionAppear: true,
         motionName: styles.maskMotion,
       }}
+      // this is handled by floating-ui
+      autoFocus={false}
     >
-      <FocusScope restoreFocus contain autoFocus>
-        <div
-          aria-label={
-            typeof title === 'string'
-              ? selectors.components.Drawer.General.title(title)
-              : selectors.components.Drawer.General.title('no title')
-          }
-          className={styles.container}
-          {...overlayProps}
-          {...dialogProps}
-          ref={overlayRef}
-        >
+      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
+        <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className={cx(dragStyles.dragHandleVertical, styles.resizer)}
@@ -159,7 +151,7 @@ export function Drawer({
             </div>
             {typeof title === 'string' ? (
               <Stack direction="column">
-                <Text element="h3" truncate {...titleProps}>
+                <Text element="h3" id={titleId} truncate>
                   {title}
                 </Text>
                 {subtitle && (
@@ -169,13 +161,13 @@ export function Drawer({
                 )}
               </Stack>
             ) : (
-              title
+              <div id={titleId}>{title}</div>
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
           {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
-      </FocusScope>
+      </FloatingFocusManager>
     </RcDrawer>
   );
 }

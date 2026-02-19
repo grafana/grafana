@@ -990,20 +990,21 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			deref[i], deref[j] = deref[j], deref[i]
 		})
 		for _, rule := range deref {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 || len(rule.NotificationSettings[0].ActiveTimeIntervals) == 0 {
+			cpr := rule.ContactPointRouting()
+			if cpr == nil || cpr.Receiver == "" || len(cpr.MuteTimeIntervals) == 0 || len(cpr.ActiveTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && (slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) || slices.Contains(rule.NotificationSettings[0].ActiveTimeIntervals, intervalName)) {
+				if cpr.Receiver == receiver && (slices.Contains(cpr.MuteTimeIntervals, intervalName) || slices.Contains(cpr.ActiveTimeIntervals, intervalName)) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
-				receiver = rule.NotificationSettings[0].Receiver
-				if len(rule.NotificationSettings[0].MuteTimeIntervals) > 0 {
-					intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				receiver = cpr.Receiver
+				if len(cpr.MuteTimeIntervals) > 0 {
+					intervalName = cpr.MuteTimeIntervals[0]
 				}
-				if len(rule.NotificationSettings[0].ActiveTimeIntervals) > 0 {
-					intervalName = rule.NotificationSettings[0].ActiveTimeIntervals[0]
+				if len(cpr.ActiveTimeIntervals) > 0 {
+					intervalName = cpr.ActiveTimeIntervals[0]
 				}
 				expected = append(expected, rule.GetKey())
 			}
@@ -1197,7 +1198,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	})
 }
 
-func TestIntegrationListNotificationSettings(t *testing.T) {
+func TestIntegrationListContactPointRoutings(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
@@ -1235,14 +1236,14 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
 	require.NoError(t, err)
 
-	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
+	result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{OrgID: 1})
 	require.NoError(t, err)
 	require.Len(t, result, len(orgRules))
 	for _, rule := range rulesWithNotificationsAndReceiver {
 		if !assert.Contains(t, result, rule.GetKey()) {
 			continue
 		}
-		assert.EqualValues(t, rule.NotificationSettings, result[rule.GetKey()])
+		assert.EqualValues(t, *rule.ContactPointRouting(), result[rule.GetKey()])
 	}
 
 	t.Run("should list notification settings by receiver name", func(t *testing.T) {
@@ -1251,7 +1252,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:        1,
 			ReceiverName: searchName,
 		})
@@ -1267,7 +1268,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			TimeIntervalName: searchName,
 		})
@@ -1278,7 +1279,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		}
 	})
 	t.Run("should return nothing if filter does not match", func(t *testing.T) {
-		result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     "not-found-receiver",
 			TimeIntervalName: "not-found-time-interval",
@@ -1293,21 +1294,22 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			orgRules[i], orgRules[j] = orgRules[j], orgRules[i]
 		})
 		for _, rule := range orgRules {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+			cpr := rule.ContactPointRouting()
+			if cpr == nil || cpr.Receiver == "" || len(cpr.MuteTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, timeInterval) {
+				if cpr.Receiver == receiver && slices.Contains(cpr.MuteTimeIntervals, timeInterval) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
-				receiver = rule.NotificationSettings[0].Receiver
-				timeInterval = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				receiver = cpr.Receiver
+				timeInterval = cpr.MuteTimeIntervals[0]
 				expected = append(expected, rule.GetKey())
 			}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     receiver,
 			TimeIntervalName: timeInterval,
@@ -2454,7 +2456,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			ruleGen.WithLabels(map[string]string{"glob": "*[?]"}),
 			ruleGen.WithTitle("rule_glob")))
 		ruleSpecialChars := createRule(t, store, ruleGen.With(
-			ruleGen.WithLabels(map[string]string{"json": "line1\nline2\\end\"quote"}),
+			ruleGen.WithLabels(map[string]string{"label-with-hyphen": "line1\nline2\\end\"quote"}),
 			ruleGen.WithTitle("rule_special_chars")))
 		ruleEmpty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": ""}),
@@ -2462,6 +2464,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleNonempty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
 			ruleGen.WithTitle("rule_nonempty")))
+		// include a rule with no labels at all,
+		// to ensure we handle that case correctly.
+		// JSON functions need to be able to handle null and empty string values.
+		ruleNoLabels := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{}),
+			ruleGen.WithTitle("rule_no_labels")))
 
 		tc := []struct {
 			name          string
@@ -2487,7 +2495,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 			{
 				name: "special characters in labels are handled correctly",
@@ -2525,7 +2533,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				name: "JSON escape characters are handled correctly",
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher {
-						m, _ := labels.NewMatcher(labels.MatchEqual, "json", "line1\nline2\\end\"quote")
+						m, _ := labels.NewMatcher(labels.MatchEqual, "label-with-hyphen", "line1\nline2\\end\"quote")
 						return m
 					}(),
 				},
@@ -2536,7 +2544,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNoLabels},
 			},
 			{
 				name: "inequality matcher on non-existent label matches all rules",
@@ -2546,7 +2554,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 						return m
 					}(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 		}
 
@@ -2585,6 +2593,54 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			require.Error(t, err)
 			require.ErrorContains(t, err, "is not supported")
 		})
+	})
+
+	t.Run("filter by PluginOriginFilter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		testOrgID := int64(12345)
+		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+
+		regularRule := createRule(t, store, testRuleGen)
+		pluginRule := createRule(t, store, testRuleGen.With(
+			models.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		))
+
+		tc := []struct {
+			name          string
+			filter        models.PluginOriginFilter
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should return all rules when PluginOriginFilterNone",
+				filter:        models.PluginOriginFilterNone,
+				expectedRules: []*models.AlertRule{regularRule, pluginRule},
+			},
+			{
+				name:          "should filter out plugin rules when PluginOriginFilterHide",
+				filter:        models.PluginOriginFilterHide,
+				expectedRules: []*models.AlertRule{regularRule},
+			},
+			{
+				name:          "should return only plugin rules when PluginOriginFilterOnly",
+				filter:        models.PluginOriginFilterOnly,
+				expectedRules: []*models.AlertRule{pluginRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{
+						OrgID: testOrgID,
+					},
+					PluginOriginFilter: tt.filter,
+				}
+				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
 	})
 }
 

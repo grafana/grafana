@@ -192,7 +192,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   });
 
   const xField = frame.fields[0];
-  const xAxisHidden = xField.config.custom.axisPlacement === AxisPlacement.Hidden;
+  const xAxisHidden = xField.config.custom?.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     show: !xAxisHidden,

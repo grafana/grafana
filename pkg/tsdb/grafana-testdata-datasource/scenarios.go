@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"math"
 	"math/rand"
 	"strconv"
@@ -664,17 +665,14 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		})
 
 		frame := data.NewFrame(q.RefID,
+			data.NewField("labels", data.Labels{}, []json.RawMessage{}),
 			data.NewField("time", nil, []time.Time{}),
 			data.NewField("message", nil, []string{}),
-			data.NewField("container_id", nil, []string{}),
-			data.NewField("hostname", nil, []string{}),
+			data.NewField("nanos", nil, []string{}),
+			data.NewField("labelTypes", nil, []json.RawMessage{}),
 		).SetMeta(&data.FrameMeta{
 			PreferredVisualization: "logs",
 		})
-
-		if includeLevelColumn {
-			frame.Fields = append(frame.Fields, data.NewField("level", nil, []string{}))
-		}
 
 		for i := int64(0); i < lines && to > from; i++ {
 			logLevel := logLevelGenerator.Next()
@@ -685,26 +683,147 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 			}
 
 			message := fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString)
+			nanos := strconv.FormatInt(q.TimeRange.To.UnixNano(), 10)
 			containerID := containerIDGenerator.Next()
 			hostname := hostnameGenerator.Next()
 
 			t := time.Unix(to/int64(1e+3), (to%int64(1e+3))*int64(1e+6))
 
 			if includeLevelColumn {
-				frame.AppendRow(t, message, containerID, hostname, logLevel)
+				frame.AppendRow(
+					json.RawMessage(fmt.Sprintf(`{"container_id":"%s","hostname":"%s","level":"%s"}`, containerID, hostname, logLevel)),
+					t,
+					message,
+					nanos,
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`),
+				)
 			} else {
-				frame.AppendRow(t, message, containerID, hostname)
+				frame.AppendRow(
+					json.RawMessage(fmt.Sprintf(`{"container_id":"%s","hostname":"%s"}`, containerID, hostname)),
+					t,
+					message,
+					nanos,
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field"}`),
+				)
 			}
 
 			to -= q.Interval.Milliseconds()
 		}
 
 		respD := resp.Responses[q.RefID]
+		dataPlaneErr := adjustDataplaneLogsFrame(frame, &q)
+		if dataPlaneErr != nil {
+			return nil, dataPlaneErr
+		}
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
 	return resp, nil
+}
+
+// Adapted from /pkg/tsdb/loki/frame.go
+func adjustDataplaneLogsFrame(frame *data.Frame, query *backend.DataQuery) error {
+	// we check if the fields are of correct type and length
+	fields := frame.Fields
+	if len(fields) != 4 && len(fields) != 5 {
+		return fmt.Errorf("invalid field length in logs frame. expected 4 or 5, got %d", len(fields))
+	}
+
+	labelsField := fields[0]
+	timeField := fields[1]
+	lineField := fields[2]
+	stringTimeField := fields[3]
+	var labelTypesField *data.Field
+	if len(fields) == 5 {
+		labelTypesField = fields[4]
+		if labelTypesField.Type() != data.FieldTypeJSON {
+			return fmt.Errorf("invalid field types in logs frame. expected json, got %s", labelTypesField.Type())
+		}
+		labelTypesField.Name = "labelTypes"
+		labelTypesField.Config = &data.FieldConfig{
+			Custom: map[string]interface{}{
+				"hidden": true,
+			},
+		}
+	}
+
+	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) || (stringTimeField.Type() != data.FieldTypeString) {
+		return fmt.Errorf("invalid field types in logs frame. expected time, string, json and string, got %s, %s, %s and %s", timeField.Type(), lineField.Type(), labelsField.Type(), stringTimeField.Type())
+	}
+
+	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) || (timeField.Len() != stringTimeField.Len()) {
+		return fmt.Errorf("indifferent field lengths in logs frame. expected all to be equal, got %d, %d, %d and %d", timeField.Len(), lineField.Len(), labelsField.Len(), stringTimeField.Len())
+	}
+
+	// this returns an error when the length of fields do not match
+	_, err := frame.RowLen()
+	if err != nil {
+		return err
+	}
+
+	timeField.Name = "timestamp"
+	labelsField.Name = "labels"
+	lineField.Name = "body"
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.Custom = nil
+	frame.Meta.Type = data.FrameTypeLogLines
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
+	if err != nil {
+		return err
+	}
+
+	if labelTypesField != nil {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField, labelTypesField}
+	} else {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField}
+	}
+	return nil
+}
+
+func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField *data.Field, refId string) (*data.Field, error) {
+	length := stringTimeField.Len()
+
+	ids := make([]string, length)
+
+	checksums := make(map[string]int)
+
+	for i := 0; i < length; i++ {
+		time := stringTimeField.At(i).(string)
+		line := lineField.At(i).(string)
+		labels := labelsField.At(i).(json.RawMessage)
+
+		sum, err := calculateCheckSum(time, line, labels)
+		if err != nil {
+			return nil, err
+		}
+
+		sumCount := checksums[sum]
+		idSuffix := ""
+		if sumCount > 0 {
+			// we had this checksum already, we need to do something to make it unique
+			idSuffix = fmt.Sprintf("_%d", sumCount)
+		}
+		checksums[sum] = sumCount + 1
+
+		ids[i] = sum + idSuffix
+	}
+	return data.NewField("id", nil, ids), nil
+}
+
+func calculateCheckSum(time string, line string, labels []byte) (string, error) {
+	input := []byte(line + "_")
+	input = append(input, labels...)
+	hash := fnv.New32()
+	_, err := hash.Write(input)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s_%x", time, hash.Sum32()), nil
 }
 
 func (s *Service) handleErrorWithSourceScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

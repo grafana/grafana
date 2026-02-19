@@ -1301,13 +1301,13 @@
             "version": "11.0.0-pre",
             "spec": {
               "options": {
-                "code": {
-                  "language": "plaintext",
-                  "showLineNumbers": false,
-                  "showMiniMap": false
-                },
-                "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
-                "mode": "markdown"
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
+                    "mode": "markdown"
+                  }
+                }
               },
               "fieldConfig": {
                 "defaults": {},

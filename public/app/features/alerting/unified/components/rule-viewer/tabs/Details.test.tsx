@@ -2,6 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { setupMockServer } from '@grafana/test-utils/server';
 
+import { setupBackendSrv } from '../../../mockApi';
 import { mockCombinedRule } from '../../../mocks';
 import { alertingFactory } from '../../../mocks/server/db';
 import { setupDataSources } from '../../../testSetup/datasources';
@@ -12,6 +13,7 @@ import { Details } from './Details';
 const server = setupMockServer();
 
 beforeAll(() => {
+  setupBackendSrv();
   setupDataSources();
 });
 

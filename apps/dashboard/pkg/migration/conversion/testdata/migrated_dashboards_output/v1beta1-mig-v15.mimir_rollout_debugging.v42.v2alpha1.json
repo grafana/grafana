@@ -961,8 +961,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "$datasource"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(up, job)"
             }
@@ -988,8 +992,12 @@
           "hide": "dontHide",
           "refresh": "onDashboardLoad",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "",
+            "uid": "$datasource"
+          },
           "query": {
-            "kind": "prometheus",
+            "kind": "",
             "spec": {
               "__legacyStringValue": "label_values(up{job=~\"$cluster\"}, instance)"
             }

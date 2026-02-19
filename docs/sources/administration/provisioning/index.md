@@ -428,10 +428,23 @@ Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
 
 You _must_ use the Kubernetes resource format to provision dashboards v2 / dynamic dashboards.
 
-It later polls that path every `updateIntervalSeconds` for updates to the dashboard files and updates its database.
-
 {{< admonition type="note" >}}
 Grafana installs dashboards at the root level if you don't set the `folder` field.
+{{< /admonition >}}
+
+#### Detect updates to provisioned dashboards files
+
+After Grafana provisions your dashboards, it checks the filesystem for changes and updates dashboards as needed.
+
+The mechanism Grafana uses to do this depends on your `updateIntervalSeconds` value:
+
+- **More than 10 seconds**: Grafana polls the path at that interval.
+- **10 seconds or less**: Grafana watches the filesystem for changes and updates dashboards when it detects them.
+
+{{< admonition type="note" >}}
+When `updateIntervalSeconds` is 10 or less, Grafana relies on filesystem watch events to detect changes.
+Depending on your filesystem and how you mount or sync dashboard files (for example, Docker bind mounts or some network filesystems), those events might not reach Grafana.
+To work around this, set `updateIntervalSeconds` to more than 10 to force polling, or update your setup so filesystem watch events are propagated.
 {{< /admonition >}}
 
 #### Make changes to a provisioned dashboard

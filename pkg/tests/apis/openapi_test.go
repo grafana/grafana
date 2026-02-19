@@ -10,7 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -28,14 +30,20 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
+			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
+		},
+		// Explicitly configure with mode 5 the resources supported by provisioning.
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
 	})
 
@@ -47,7 +55,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "34", info.Minor)
+		require.Equal(t, "35", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -91,7 +99,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "investigations.grafana.app",
+		Group:   "datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",
@@ -99,6 +107,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
@@ -121,11 +132,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
 	}, {
-		Group:   "testdata.datasource.grafana.app",
+		Group:   "grafana-testdata-datasource.datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "logsdrilldown.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

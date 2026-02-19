@@ -6,20 +6,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/services"
-
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -32,115 +30,175 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	Backend          resource.StorageBackend
 	OverridesService *resource.OverridesService
-	DB               infraDB.DB
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
+	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// DisableStorageServices is used for standalone search server
+	DisableStorageServices bool
 }
 
+// NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-
-	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
-		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
-			opts.Cfg,
-			opts.Tracer,
-			nil, // not needed for gRPC client mode
-			nil, // not needed for gRPC client mode
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
-		}
-		opts.SecureValues = inlineSecureValueService
+	if opts.DisableStorageServices {
+		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
 	}
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withSecureValueService,
+		withBlobConfig,
+		withAccessClient,
+		withMaxPageSizeBytes,
+		withBackend,
+		withQOSQueue,
+		withOverridesService,
+		withSearch,
+		withSearchClient,
+		withQuotaConfig,
+		withStorageMetrics,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewResourceServer(*resourceOpts)
+}
 
-	serverOptions := resource.ResourceServerOptions{
+// NewSearchServer creates a new SearchServer with only search capabilities enabled.
+func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+	opts.DisableStorageServices = true
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withBlobConfig,
+		withAccessClient,
+		withBackend,
+		withSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewSearchServer(*resourceOpts)
+}
+
+type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOptions) error
+
+// buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
+func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
 		Reg:          opts.Reg,
 		SecureValues: opts.SecureValues,
 	}
+	for _, optFn := range withOpts {
+		if err := optFn(opts, serverOptions); err != nil {
+			return nil, err
+		}
+	}
+	return serverOptions, nil
+}
+
+func withSecureValueService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.SecureValues != nil || opts.Cfg == nil || !opts.Cfg.SecretsManagement.GrpcClientEnable {
+		return nil
+	}
+	inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+		opts.Cfg,
+		opts.Tracer,
+		nil, // not needed for gRPC client mode
+		nil, // not needed for gRPC client mode
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create inline secure value service: %w", err)
+	}
+	resourceOpts.SecureValues = inlineSecureValueService
+	return nil
+}
+
+func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	}
+	return nil
+}
+
+func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	resourceOpts.Blob = resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
 	// Support local file blob
-	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
+	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
+		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		serverOptions.Blob.URL = "file:///" + dir
+		resourceOpts.Blob.URL = "file:///" + dir
 	}
+	return nil
+}
 
-	// This is mostly for testing, being able to influence when we paginate
-	// based on the page size during tests.
+func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
-	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
 
-	if opts.Backend != nil {
-		serverOptions.Backend = opts.Backend
-		// TODO: we should probably have a proper interface for diagnostics/lifecycle
-	} else {
-		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-		if err != nil {
-			return nil, err
-		}
-
-		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
-			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
-			}
-
-			kvBackend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-				KvStore: sqlkv,
-				Tracer:  opts.Tracer,
-				Reg:     opts.Reg,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("error creating kv backend: %s", err)
-			}
-
-			serverOptions.Backend = kvBackend
-			serverOptions.Diagnostics = kvBackend
-		} else {
-			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-				opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
-			backend, err := NewBackend(BackendOptions{
-				DBProvider:           eDB,
-				Reg:                  opts.Reg,
-				IsHA:                 isHA,
-				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
-			})
-			if err != nil {
-				return nil, err
-			}
-			serverOptions.Backend = backend
-			serverOptions.Diagnostics = backend
-			serverOptions.Lifecycle = backend
-		}
+func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.Backend == nil {
+		return fmt.Errorf("missing storage backend")
 	}
 
-	serverOptions.Search = opts.SearchOptions
-	serverOptions.IndexMetrics = opts.IndexMetrics
-	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
-	serverOptions.OverridesService = opts.OverridesService
+	resourceOpts.Backend = opts.Backend
+	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
+		resourceOpts.Diagnostics = diagnostics
+	}
+	return nil
+}
 
-	return resource.NewResourceServer(serverOptions)
+func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SearchClient = opts.SearchClient
+	return nil
+}
+
+func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Search = opts.SearchOptions
+	resourceOpts.IndexMetrics = opts.IndexMetrics
+	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+	return nil
+}
+
+func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QOSQueue = opts.QOSQueue
+	return nil
+}
+
+func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.OverridesService = opts.OverridesService
+	return nil
+}
+
+func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QuotasConfig = resource.QuotasConfig{
+		EnforceQuotas:  opts.Cfg.EnforceQuotas,
+		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
+	}
+	return nil
+}
+
+func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.StorageMetrics = opts.StorageMetrics
+	return nil
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should

@@ -153,6 +153,14 @@ interface BaseProps<TableData extends object> {
    * Optional way to set how the table is sorted from the beginning. Must be memoized.
    */
   initialSortBy?: Array<SortingRule<TableData>>;
+  /**
+   * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
+   */
+  disableSortRemove?: boolean;
+  /**
+   * Will automatically reset to the first page if the `data` prop is changed
+   */
+  autoResetPage?: boolean;
 }
 
 interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
@@ -181,6 +189,7 @@ type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExp
  * @alpha
  */
 export function InteractiveTable<TableData extends object>({
+  autoResetPage,
   className,
   columns,
   data,
@@ -191,6 +200,7 @@ export function InteractiveTable<TableData extends object>({
   showExpandAll = false,
   fetchData,
   initialSortBy = [],
+  disableSortRemove,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
@@ -218,10 +228,12 @@ export function InteractiveTable<TableData extends object>({
       columns: tableColumns,
       data,
       autoResetExpanded: false,
+      autoResetPage: !!autoResetPage, // If undefined, we want to treat this as false to prevent page reset by default
       autoResetSortBy: false,
       disableMultiSort: true,
       // If fetchData is provided, we disable client-side sorting
       manualSortBy: Boolean(fetchData),
+      disableSortRemove,
       getRowId,
       initialState: {
         hiddenColumns: [

@@ -290,6 +290,7 @@
       }
     },
     {
+      "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
       "datasource": {
         "type": "grafana-testdata-datasource"
       },
@@ -300,15 +301,7 @@
         "y": 0
       },
       "id": 6,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "# Graph panel \u003e\u003e Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
-        "mode": "markdown"
-      },
+      "mode": "markdown",
       "pluginVersion": "11.0.0-pre",
       "targets": [
         {

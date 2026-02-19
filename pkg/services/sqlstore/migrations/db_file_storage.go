@@ -91,7 +91,7 @@ func convertFilePathHashIndexToPrimaryKey(mg *migrator.Migrator) {
 	mg.AddMigration("drop file_path unique index from file table if it exists (mysql)", mysqlMigration2)
 
 	mysqlMigration3 := migrator.NewRawSQLMigration("").Mysql(`ALTER TABLE file ADD PRIMARY KEY (path_hash);`)
-	mysqlMigration3.Condition = &migrator.IfPrimaryKeyNotExistsCondition{TableName: "file", ColumnName: "path_hash"}
+	mysqlMigration3.Condition = &migrator.IfPrimaryKeyNotExistsCondition{TableName: "file"}
 	mg.AddMigration("add primary key to file table if it doesn't exist (mysql)", mysqlMigration3)
 
 	postgres := `
@@ -162,7 +162,7 @@ func convertFileMetaPathHashKeyIndexToPrimaryKey(mg *migrator.Migrator) {
 	mg.AddMigration("drop file_path unique index from file_meta table if it exists (mysql)", mysqlMigration2)
 
 	mysqlMigration3 := migrator.NewRawSQLMigration("").Mysql(`ALTER TABLE file_meta ADD PRIMARY KEY (path_hash, ` + "`key`" + `);`)
-	mysqlMigration3.Condition = &migrator.IfPrimaryKeyNotExistsCondition{TableName: "file_meta", ColumnName: "path_hash"}
+	mysqlMigration3.Condition = &migrator.IfPrimaryKeyNotExistsCondition{TableName: "file_meta"}
 	mg.AddMigration("add primary key to file_meta table if it doesn't exist (mysql)", mysqlMigration3)
 
 	postgres := `

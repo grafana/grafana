@@ -43,7 +43,9 @@ export type QueryLibraryContextType = {
     app?: CoreApp,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
-    datasourceFilters?: string[]
+    datasourceFilters?: string[],
+    parentRef?: React.RefObject<HTMLDivElement | null>,
+    showAsButtonHeader?: boolean
   ) => ReactNode;
 
   /**

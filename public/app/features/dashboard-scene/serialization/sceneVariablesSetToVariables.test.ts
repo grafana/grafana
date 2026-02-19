@@ -74,7 +74,6 @@ const fakeDsMock: DataSourceApi = {
     getType: () => VariableSupportType.Standard,
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
-  id: 1,
   uid: 'fake-uid',
 };
 
@@ -376,6 +375,7 @@ describe('sceneVariablesSetToVariables', () => {
       "options": [],
       "query": "test,test1,test2",
       "type": "custom",
+      "valuesFormat": "csv",
     }
     `);
   });
@@ -1180,6 +1180,7 @@ describe('sceneVariablesSetToVariables', () => {
         "options": [],
         "query": "test,test1,test2",
         "skipUrlSync": false,
+        "valuesFormat": "csv",
       },
     }
     `);

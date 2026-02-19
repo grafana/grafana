@@ -34,7 +34,7 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
 }
@@ -45,14 +45,14 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   readOnly,
   repository,
   saveAsCopy,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -65,8 +65,9 @@ export function SaveProvisionedDashboardForm({
     register,
     formState: { dirtyFields },
   } = methods;
-  // button enabled if form comment is dirty or dashboard state is dirty
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
+  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  const rawDashboardJSON = dashboard.getRawJsonFromEditor();
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
@@ -110,15 +111,13 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(() => {
-    panelEditor?.onDiscard();
-
     const model = dashboard.getSaveModel();
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
+  }, [dashboard, defaultValues.folder?.uid, drawer, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {
@@ -191,13 +190,15 @@ export function SaveProvisionedDashboardForm({
 
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-      copyTags,
-      saveAsCopy,
-    });
+    const body = rawDashboardJSON
+      ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
+      : dashboard.getSaveResource({
+          isNew,
+          title,
+          description,
+          copyTags,
+          saveAsCopy,
+        });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
@@ -295,8 +296,7 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
           />
@@ -371,7 +371,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

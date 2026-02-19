@@ -10,7 +10,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
+import { DataSourceRef } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   AutoGridLayoutItemKind,
@@ -22,7 +22,8 @@ import {
   TabsLayoutTabKind,
   DataQueryKind,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -178,7 +179,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
+  if (config.panels[panel.vizConfig?.group]?.skipDataQuery) {
     return undefined;
   }
 
@@ -228,29 +229,45 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
  * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
  * which does NOT add panel-level datasource for non-mixed panels.
  */
-function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
-  if (!panel.spec.data?.spec.queries?.length) {
+export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+  const queries = panel.spec.data?.spec.queries;
+  if (!queries?.length) {
     return undefined;
   }
 
-  let firstDatasource: DataSourceRef | undefined = undefined;
-  let isMixedDatasource = false;
+  // Check if multiple queries use Dashboard datasource - this needs mixed mode
+  const dashboardDsQueryCount = queries.filter((q) => q.spec.query.datasource?.name === SHARED_DASHBOARD_QUERY).length;
+  if (dashboardDsQueryCount > 1) {
+    return { type: 'mixed', uid: MIXED_DATASOURCE_NAME };
+  }
 
-  panel.spec.data.spec.queries.forEach((query) => {
-    const queryDs = query.spec.query.datasource?.name
+  // Get all datasources from queries
+  const datasources = queries.map((query) =>
+    query.spec.query.datasource?.name
       ? { uid: query.spec.query.datasource.name, type: query.spec.query.group }
-      : getRuntimePanelDataSource(query.spec.query);
+      : getRuntimePanelDataSource(query.spec.query)
+  );
 
-    if (!firstDatasource) {
-      firstDatasource = queryDs;
-    } else if (firstDatasource.uid !== queryDs?.uid || firstDatasource.type !== queryDs?.type) {
-      isMixedDatasource = true;
-    }
-  });
+  const firstDatasource = datasources[0];
+
+  // Check if queries use different datasources
+  const isMixedDatasource = datasources.some(
+    (ds) => ds?.uid !== firstDatasource?.uid || ds?.type !== firstDatasource?.type
+  );
+
+  if (isMixedDatasource) {
+    return { type: 'mixed', uid: MIXED_DATASOURCE_NAME };
+  }
+
+  // Handle case where all queries use Dashboard datasource - needs to set datasource for proper data fetching
+  // See DashboardDatasourceBehaviour.tsx for more details
+  if (firstDatasource?.uid === SHARED_DASHBOARD_QUERY) {
+    return { type: 'datasource', uid: SHARED_DASHBOARD_QUERY };
+  }
 
   // Only return mixed datasource - for non-mixed panels, each query already has its own datasource
   // This matches the Go backend behavior which doesn't add panel.datasource for non-mixed panels
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return undefined;
 }
 
 /**

@@ -3,6 +3,7 @@ import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from '../types';
+import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
 import {
   fetchCommunityDashboard,
@@ -14,8 +15,16 @@ import {
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
+  reportInteraction: jest.fn(),
 }));
 
+jest.mock('../interactions', () => ({
+  ...jest.requireActual('../interactions'),
+  DashboardLibraryInteractions: {
+    ...jest.requireActual('../interactions').DashboardLibraryInteractions,
+    communityDashboardFiltered: jest.fn(),
+  },
+}));
 const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackendSrv>;
 
 // Helper to create mock BackendSrv
@@ -26,31 +35,9 @@ const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =
   }) as unknown as BackendSrv;
 
 // Helper functions for creating mock objects
-const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
-  id: 1,
-  name: 'Test Dashboard',
-  description: 'Test Description',
-  downloads: 100,
-  datasource: 'Prometheus',
-  ...overrides,
-});
-
-const createMockPluginDashboard = (overrides: Partial<PluginDashboard> = {}): PluginDashboard => ({
-  dashboardId: 1,
-  uid: 'dash-uid',
-  title: 'Test Dashboard',
-  pluginId: 'prometheus',
-  path: 'dashboards/test.json',
-  description: 'Test plugin dashboard',
-  imported: false,
-  importedRevision: 0,
-  importedUri: '',
-  importedUrl: '',
-  removed: false,
-  revision: 1,
-  slug: 'test-dashboard',
-  ...overrides,
-});
+const createMockGnetDashboardWithDownloads = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => {
+  return createMockGnetDashboard({ ...overrides, downloads: 10000 });
+};
 
 const defaultFetchParams: FetchCommunityDashboardsParams = {
   orderBy: 'downloads',
@@ -80,8 +67,54 @@ describe('dashboardLibraryApi', () => {
   });
 
   describe('fetchCommunityDashboards', () => {
+    describe('filterNotSafeDashboards', () => {
+      it('should filter out dashboards with panel types that can contain JavaScript code', async () => {
+        const safeDashboard = createMockGnetDashboardWithDownloads({ id: 1 });
+        const mockDashboards = [
+          safeDashboard,
+          createMockGnetDashboardWithDownloads({ id: 2, panelTypeSlugs: ['ae3e-plotly-panel'] }),
+        ];
+        const mockResponse = {
+          page: 1,
+          pages: 5,
+          items: mockDashboards,
+        };
+        mockGet.mockResolvedValue(mockResponse);
+
+        const result = await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(result).toEqual({
+          page: 1,
+          pages: 5,
+          items: [safeDashboard],
+        });
+      });
+
+      it('should filter out dashboards with low downloads', async () => {
+        const safeDashboard = createMockGnetDashboardWithDownloads({ id: 1 });
+        const mockDashboards = [safeDashboard, createMockGnetDashboard({ id: 2, downloads: 999 })];
+        const mockResponse = {
+          page: 1,
+          pages: 5,
+          items: mockDashboards,
+        };
+        mockGet.mockResolvedValue(mockResponse);
+
+        const result = await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(result).toEqual({
+          page: 1,
+          pages: 5,
+          items: [safeDashboard],
+        });
+      });
+    });
+
     it('should fetch community dashboards with correct query parameters', async () => {
-      const mockDashboards = [createMockGnetDashboard({ id: 1 }), createMockGnetDashboard({ id: 2 })];
+      const mockDashboards = [
+        createMockGnetDashboardWithDownloads({ id: 1 }),
+        createMockGnetDashboardWithDownloads({ id: 2 }),
+      ];
       const mockResponse = {
         page: 1,
         pages: 5,
@@ -93,7 +126,7 @@ describe('dashboardLibraryApi', () => {
       const result = await fetchCommunityDashboards(defaultFetchParams);
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/api/gnet/dashboards?orderBy=downloads&direction=desc&page=1&pageSize=10&includeLogo=1&includeScreenshots=true',
+        '/api/gnet/dashboards?orderBy=downloads&direction=desc&page=1&pageSize=10&includeLogo=1&includeScreenshots=true&includePanelTypeSlugs=true',
         undefined,
         undefined,
         { showErrorAlert: false }
@@ -154,7 +187,7 @@ describe('dashboardLibraryApi', () => {
     });
 
     it('should use fallback values when page/pages are missing', async () => {
-      const items = [createMockGnetDashboard()];
+      const items = [createMockGnetDashboardWithDownloads()];
 
       mockGet.mockResolvedValue({
         items,

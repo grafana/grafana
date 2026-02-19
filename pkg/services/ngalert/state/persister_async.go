@@ -16,28 +16,31 @@ type AsyncStatePersister struct {
 	log           log.Logger
 	batchSize     int
 	store         InstanceStore
-	ticker        *clock.Ticker
+	clock         clock.Clock
 	metrics       *metrics.State
 	jitterEnabled bool
 	interval      time.Duration
 }
 
-func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
+func NewAsyncStatePersister(log log.Logger, clk clock.Clock, interval time.Duration, cfg ManagerCfg) StatePersister {
 	return &AsyncStatePersister{
 		log:           log,
 		store:         cfg.InstanceStore,
-		ticker:        ticker,
+		clock:         clk,
 		batchSize:     cfg.StatePeriodicSaveBatchSize,
 		metrics:       cfg.Metrics,
 		jitterEnabled: cfg.StatePeriodicSaveJitterEnabled,
-		interval:      cfg.StatePeriodicSaveInterval,
+		interval:      interval,
 	}
 }
 
 func (a *AsyncStatePersister) Async(ctx context.Context, instancesProvider AlertInstancesProvider) {
+	ticker := a.clock.Ticker(a.interval)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-a.ticker.C:
+		case <-ticker.C:
 			if err := a.fullSync(ctx, instancesProvider); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
@@ -46,7 +49,6 @@ func (a *AsyncStatePersister) Async(ctx context.Context, instancesProvider Alert
 			if err := a.fullSync(context.Background(), instancesProvider); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
-			a.ticker.Stop()
 			a.log.Info("State async worker is shut down.")
 			return
 		}

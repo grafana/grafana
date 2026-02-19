@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"type":"string"},"panelID":{"type":"integer"},"tags":{"items":{"type":"string"},"type":"array"},"text":{"type":"string"},"time":{"type":"integer"},"timeEnd":{"type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaAnnotationv0alpha1     = []byte(`{"Annotation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardUID":{"type":"string"},"panelID":{"type":"integer"},"tags":{"items":{"type":"string"},"type":"array"},"text":{"type":"string"},"time":{"type":"integer"},"timeEnd":{"type":"integer"}},"required":["text","time"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaAnnotationv0alpha1 app.VersionSchema
 	_                               = json.Unmarshal(rawSchemaAnnotationv0alpha1, &versionSchemaAnnotationv0alpha1)
 )
@@ -40,6 +40,12 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaAnnotationv0alpha1,
+					SelectableFields: []string{
+						"spec.time",
+						"spec.timeEnd",
+						"spec.dashboardUID",
+						"spec.panelID",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -77,6 +83,28 @@ var appManifestData = app.ManifestData{
 																		"tags": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"count": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"number"},
+																									},
+																								},
+																								"tag": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"tag",
+																								"count",
+																							},
+																						}},
+																				},
 																			},
 																		},
 																	},
@@ -122,7 +150,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/tags|GET": v0alpha1.GetTags{},
+	"v0alpha1||<namespace>/tags|GET": v0alpha1.GetTagsResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

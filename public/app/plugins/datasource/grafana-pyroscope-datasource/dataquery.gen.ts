@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/grafana-pyroscope-datasource/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
@@ -23,6 +25,10 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    * Allows to group the results.
    */
   groupBy: Array<string>;
+  /**
+   * If set to true, exemplars will be requested
+   */
+  includeExemplars: boolean;
   /**
    * Specifies the query label selectors.
    */
@@ -47,6 +53,7 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
+  includeExemplars: false,
   labelSelector: '{}',
   spanSelector: [],
 };

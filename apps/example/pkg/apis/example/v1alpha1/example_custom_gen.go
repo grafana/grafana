@@ -23,3 +23,8 @@ type ExampleCustom struct {
 func NewExampleCustom() *ExampleCustom {
 	return &ExampleCustom{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for ExampleCustom.
+func (ExampleCustom) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleCustom"
+}

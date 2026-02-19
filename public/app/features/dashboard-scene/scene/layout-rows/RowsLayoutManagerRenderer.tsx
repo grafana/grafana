@@ -1,5 +1,6 @@
-import { css } from '@emotion/css';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { css, cx } from '@emotion/css';
+import { DragDropContext, Droppable, BeforeCapture, DropResult } from '@hello-pangea/dnd';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,9 +9,11 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState } from '../../utils/utils';
+import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeater } from './RowItemRepeater';
@@ -20,8 +23,41 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { rows, key } = model.useState();
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
+  const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
   const { hasCopiedRow } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
+  const orchestrator = getLayoutOrchestratorFor(model);
+
+  // Only act as a drop target when empty (no rows)
+  const showAsDropTarget = rows.length === 0;
+
+  const handleBeforeCapture = useCallback(
+    (before: BeforeCapture) => {
+      const row = rows.find((r) => r.state.key === before.draggableId);
+      if (row && orchestrator) {
+        orchestrator.startRowDrag(row);
+      }
+    },
+    [rows, orchestrator]
+  );
+
+  const handleDragEnd = useCallback(
+    (result: DropResult) => {
+      // Stop tracking row drag in orchestrator
+      orchestrator?.stopRowDrag();
+
+      if (!result.destination) {
+        return;
+      }
+
+      if (result.destination.index === result.source.index) {
+        return;
+      }
+
+      model.moveRow(result.draggableId, result.source.index, result.destination.index);
+    },
+    [model, orchestrator]
+  );
 
   if (soloPanelContext) {
     return rows.map((row) => <RowWrapper row={row} manager={model} key={row.state.key!} />);
@@ -31,32 +67,28 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
 
   return (
     <DragDropContext
+      onBeforeCapture={handleBeforeCapture}
       onBeforeDragStart={(start) => model.forceSelectRow(start.draggableId)}
-      onDragEnd={(result) => {
-        if (!result.destination) {
-          return;
-        }
-
-        if (result.destination.index === result.source.index) {
-          return;
-        }
-
-        model.moveRow(result.draggableId, result.source.index, result.destination.index);
-      }}
+      onDragEnd={handleDragEnd}
     >
       <Droppable droppableId={key!} direction="vertical">
         {(dropProvided) => (
-          <div className={styles.wrapper} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+          <div
+            className={styles.wrapper}
+            ref={dropProvided.innerRef}
+            {...dropProvided.droppableProps}
+            {...(showAsDropTarget ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
+          >
             {rows.map((row) => (
               <RowWrapper row={row} manager={model} key={row.state.key!} />
             ))}
             {dropProvided.placeholder}
             {isEditing && !isClone && (
-              <div className="dashboard-canvas-add-button">
+              <div className={cx(layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
                 <Button
                   icon="plus"
-                  variant="primary"
-                  fill="text"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => model.addNewRow()}
                   onPointerUp={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.addRow}
@@ -66,8 +98,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                 {hasCopiedRow && (
                   <Button
                     icon="clipboard-alt"
-                    variant="primary"
-                    fill="text"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => model.pasteRow()}
                     onPointerUp={(evt) => evt.stopPropagation()}
                     data-testid={selectors.components.CanvasGridAddActions.pasteRow}
@@ -77,8 +109,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                 )}
                 <Button
                   icon="layers-slash"
-                  variant="primary"
-                  fill="text"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => model.ungroupRows()}
                   data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
                 >
@@ -115,6 +147,12 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexGrow: 1,
       width: '100%',
+
+      // Show rows layout controls (Add row, etc.) when hovering anywhere in the layout
+      // Using > to only affect direct children, not grid controls inside rows
+      '&:hover > .dashboard-canvas-controls': {
+        opacity: 1,
+      },
     }),
   };
 }

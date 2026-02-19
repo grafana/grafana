@@ -23,6 +23,8 @@ killercoda:
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Route alerts using dynamic labels](http://www.grafana.com/tutorials/alerting-get-started-pt5/) tutorial.
 
+{{< youtube id="mqj_hN24zLU" >}}
+
 <!-- USE CASE -->
 
 In this tutorial you will learn how to:

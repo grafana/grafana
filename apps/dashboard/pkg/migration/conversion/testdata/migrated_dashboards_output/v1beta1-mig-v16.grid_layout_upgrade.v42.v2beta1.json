@@ -120,7 +120,14 @@
             "group": "logs",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "logs",
+                  "originalOptions": {
+                    "height": 100
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

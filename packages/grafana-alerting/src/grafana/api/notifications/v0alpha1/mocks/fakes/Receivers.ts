@@ -1,8 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
+import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
-import { GROUP, VERSION } from '../../const';
 import {
   ContactPoint,
   ContactPointMetadataAnnotations,
@@ -14,7 +15,7 @@ import { AlertingEntityMetadataAnnotationsFactory } from './common';
 
 export const ListReceiverApiResponseFactory = Factory.define<EnhancedListReceiverApiResponse>(() => ({
   kind: 'ReceiverList',
-  apiVersion: `${GROUP}/${VERSION}`,
+  apiVersion: `${API_GROUP}/${API_VERSION}`,
   metadata: {
     resourceVersion: generateResourceVersion(),
   },
@@ -26,7 +27,7 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
 
   return {
     kind: 'Receiver',
-    apiVersion: `${GROUP}/${VERSION}`,
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
     metadata: {
       name: btoa(title),
       namespace: DEFAULT_NAMESPACE,

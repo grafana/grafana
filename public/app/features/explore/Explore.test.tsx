@@ -112,9 +112,16 @@ const dummyProps: Props = {
   compact: false,
   changeCompactMode: jest.fn(),
   queryLibraryRef: undefined,
+  queriesChangedIndexAtRun: 0,
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      savedQueriesRBAC: false,
+    },
+  },
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({}),
     getList: () => [],
@@ -127,6 +134,7 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: () => true,
+    isSignedIn: true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));

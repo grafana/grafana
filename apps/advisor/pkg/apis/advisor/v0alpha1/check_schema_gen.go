@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaCheck = resource.NewSimpleSchema("advisor.grafana.app", "v0alpha1", &Check{}, &CheckList{}, resource.WithKind("Check"),
+	schemaCheck = resource.NewSimpleSchema("advisor.grafana.app", "v0alpha1", NewCheck(), &CheckList{}, resource.WithKind("Check"),
 		resource.WithPlural("checks"), resource.WithScope(resource.NamespacedScope))
 	kindCheck = resource.Kind{
 		Schema: schemaCheck,

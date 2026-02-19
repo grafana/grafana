@@ -89,7 +89,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced active time interval does not exist", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			},
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced receiver does not exist", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			Receiver: "unknown",
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+		require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
@@ -143,7 +143,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				},
 			}
 			_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-			require.ErrorIs(t, err, ErrRouteInvalidFormat)
+			require.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 		})
 	})
 
@@ -229,7 +229,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		}
 
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
-		require.ErrorIs(t, err, ErrRouteConflictingMatchers)
+		require.ErrorIs(t, err, models.ErrRouteConflictingMatchers)
 	})
 
 	t.Run("should ignore extra config validation if it is invalid", func(t *testing.T) {
@@ -348,7 +348,7 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.TemplateFiles = map[string]string{
 		"test": "test",
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
+	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []definitions.TimeInterval{
 		{
 			Name: "test",
 		},
@@ -442,8 +442,8 @@ func TestResetPolicyTree(t *testing.T) {
 
 func TestRoute_Fingerprint(t *testing.T) {
 	// Test that the fingerprint is stable.
-	mustRegex := func(rg string) config.Regexp {
-		var regex config.Regexp
+	mustRegex := func(rg string) definitions.Regexp {
+		var regex definitions.Regexp
 		require.NoError(t, json.Unmarshal([]byte(rg), &regex))
 		return regex
 	}
@@ -461,7 +461,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 			},
 			GroupByAll: true,
 			Match:      map[string]string{"Match1": "MatchValue1", "Match2": "MatchValue2"},
-			MatchRE: map[string]config.Regexp{
+			MatchRE: map[string]definitions.Regexp{
 				"MatchRE": mustRegex(`".*"`),
 			},
 			Matchers: config.Matchers{
@@ -492,7 +492,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 		},
 		GroupByAll: false,
 		Match:      map[string]string{"Match1_2": "MatchValue1", "Match2": "MatchValue2_2"},
-		MatchRE: map[string]config.Regexp{
+		MatchRE: map[string]definitions.Regexp{
 			"MatchRE": mustRegex(`".+"`),
 		},
 		Matchers: config.Matchers{
@@ -585,7 +585,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []config.TimeInterval{
+					TimeIntervals: []definitions.TimeInterval{
 						{
 							Name: "test-mute-interval",
 						},

@@ -2,15 +2,35 @@ name: Feature toggles CI
 
 on:
   pull_request:
-    paths:
-      - 'pkg/services/featuremgmt/toggles_gen_test.go'
-      - 'pkg/services/featuremgmt/registry.go'
-      - 'docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md'
 
 permissions: {}
 
 jobs:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changedbackend: ${{ steps.detect-changes.outputs.backend }}
+      changeddocs: ${{ steps.detect-changes.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/feature-toggles-ci.yml
+
   test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changedbackend == 'true' || needs.detect-changes.outputs.changeddocs == 'true'
+
     name: Feature toggles documentation is in sync with source
 
     runs-on: ubuntu-latest

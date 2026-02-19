@@ -24,7 +24,7 @@ export default [
         flatten: false,
       }),
     ],
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
+    output: [cjsOutput(pkg, 'grafana-ui'), esmOutput(pkg, 'grafana-ui')],
     treeshake: false,
   },
   {
@@ -37,7 +37,7 @@ export default [
         flatten: false,
       }),
     ],
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
+    output: [cjsOutput(pkg, 'grafana-ui'), esmOutput(pkg, 'grafana-ui')],
     treeshake: false,
   },
 ];

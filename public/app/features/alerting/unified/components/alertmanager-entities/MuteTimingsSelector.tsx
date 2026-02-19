@@ -1,12 +1,11 @@
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
-import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { MuteTiming, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
-const mapTimeInterval = ({ name, time_intervals }: MuteTimeInterval): SelectableValue<string> => ({
+const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({
   value: name,
   label: name,
   description: time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
@@ -17,9 +16,9 @@ const TimeIntervalSelector = ({
   alertmanager,
   selectProps,
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
-  const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
+  const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled, filterUsable: true });
 
-  const timeIntervalOptions = data?.map((value) => mapTimeInterval(value)) || [];
+  const timeIntervalOptions = (data || []).map((value) => mapTimeInterval(value));
 
   return (
     <MultiSelect

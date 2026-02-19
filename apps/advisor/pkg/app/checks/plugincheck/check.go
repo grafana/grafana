@@ -17,7 +17,7 @@ const (
 
 func New(
 	pluginStore pluginstore.Store,
-	pluginRepo repo.Service,
+	pluginRepo checks.PluginInfoGetter,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginErrorResolver plugins.ErrorResolver,
 	grafanaVersion string,
@@ -33,7 +33,7 @@ func New(
 
 type check struct {
 	PluginStore         pluginstore.Store
-	PluginRepo          repo.Service
+	PluginRepo          checks.PluginInfoGetter
 	updateChecker       pluginchecker.PluginUpdateChecker
 	pluginErrorResolver plugins.ErrorResolver
 	GrafanaVersion      string

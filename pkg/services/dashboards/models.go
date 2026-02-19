@@ -294,6 +294,9 @@ type DashboardProvisioning struct {
 	ExternalID  string `xorm:"external_id"`
 	CheckSum    string
 	Updated     int64
+
+	// note: only used when writing metadata to unified storage resources - not saved in legacy table.
+	AllowUIUpdates bool `xorm:"-"`
 }
 
 type DeleteDashboardCommand struct {

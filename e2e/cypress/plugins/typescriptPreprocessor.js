@@ -18,6 +18,7 @@ const webpackOptions = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    conditionNames: ['@grafana-app/source', '...'],
   },
 };
 

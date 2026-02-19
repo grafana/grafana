@@ -7,11 +7,15 @@
   },
   "name": "mapping-with-team-and-group",
   "rv": 1234,
-  "fields": {
-    "team": "team1",
-    "external_group": "group1"
-  },
   "title": "mapping-with-team-and-group",
   "title_ngram": "mapping-with-team-and-group",
-  "title_phrase": "mapping-with-team-and-group"
+  "title_phrase": "mapping-with-team-and-group",
+  "fields": {
+    "external_group": "group1",
+    "team": "team1"
+  },
+  "selectableFields": {
+    "spec.externalGroupId": "group1",
+    "spec.teamRef.name": "team1"
+  }
 }

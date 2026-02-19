@@ -35,17 +35,21 @@ const timeseries: PanelPluginMeta = {
   sort: 1,
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      timeseries: {
-        info: { logos: { small: '' } },
-        name: 'Time Series',
-      },
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMeta: jest.fn((type: string) => ({
+    value: {
+      id: type,
+      name: type === 'timeseries' ? 'Time Series' : 'Graph',
+      info: { logos: { small: '', large: '' } },
+      baseUrl: '',
+      type: 'panel',
+      module: '',
+      sort: 0,
     },
-  },
+    loading: false,
+    error: undefined,
+  })),
 }));
 
 const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels');
@@ -340,14 +344,16 @@ describe('LibraryPanelsSearch', () => {
         await user.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
 
         await waitFor(() =>
-          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-            searchString: '',
-            folderFilterUIDs: ['wfTJJL5Wz'],
-            page: 1,
-            typeFilter: [],
-            sortDirection: undefined,
-            perPage: 40,
-          })
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              searchString: '',
+              folderFilterUIDs: ['wfTJJL5Wz'],
+              page: 1,
+              typeFilter: [],
+              sortDirection: undefined,
+              perPage: 40,
+            })
+          )
         );
       });
     });

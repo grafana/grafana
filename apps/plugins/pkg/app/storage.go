@@ -18,6 +18,7 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -36,12 +37,14 @@ type MetaStorage struct {
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error)
 	clientErr     error
 	clientOnce    sync.Once
+	logger        logging.Logger
 
 	gr             schema.GroupResource
 	tableConverter rest.TableConvertor
 }
 
 func NewMetaStorage(
+	logger logging.Logger,
 	metaManager *meta.ProviderManager,
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
 ) *MetaStorage {
@@ -53,6 +56,7 @@ func NewMetaStorage(
 	return &MetaStorage{
 		metaManager:    metaManager,
 		clientFactory:  clientFactory,
+		logger:         logger,
 		gr:             gr,
 		tableConverter: rest.NewDefaultTableConvertor(gr),
 	}
@@ -100,29 +104,48 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
+	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
+
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
+		metrics.APIRequestsTotal.WithLabelValues("list", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
 	plugins, err := pluginClient.ListAll(ctx, ns.Value, resource.ListOptions{})
 	if err != nil {
-		logging.DefaultLogger.Error("Failed to list plugins", "namespace", ns.Value, "error", err)
+		logger.Error("Failed to list plugins", "error", err)
+		metrics.APIRequestsTotal.WithLabelValues("list", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
 	}
 
 	// Convert each Plugin to Meta
 	metaItems := make([]pluginsv0alpha1.Meta, 0, len(plugins.Items))
 	for _, plugin := range plugins.Items {
-		result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+		result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+			ID:       plugin.Spec.Id,
+			Version:  plugin.Spec.Version,
+			ParentID: plugin.Spec.ParentId,
+		})
 		if err != nil {
 			// Log error but continue with other plugins
-			logging.DefaultLogger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+			logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 			continue
 		}
 
-		pluginMeta := createMetaFromMetaJSONData(result.Meta, plugin.Name, plugin.Namespace)
-		metaItems = append(metaItems, *pluginMeta)
+		pluginMeta := pluginsv0alpha1.Meta{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      plugin.Name,
+				Namespace: plugin.Namespace,
+			},
+			Spec: result.Meta,
+		}
+		pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   pluginsv0alpha1.APIGroup,
+			Version: pluginsv0alpha1.APIVersion,
+			Kind:    pluginsv0alpha1.MetaKind().Kind(),
+		})
+		metaItems = append(metaItems, pluginMeta)
 	}
 
 	list := &pluginsv0alpha1.MetaList{
@@ -133,6 +156,7 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 		Items: metaItems,
 	}
 
+	metrics.APIRequestsTotal.WithLabelValues("list", "success").Inc()
 	return list, nil
 }
 
@@ -142,8 +166,11 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
+	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
+
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
+		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
@@ -152,44 +179,43 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		Name:      name,
 	})
 	if err != nil {
+		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, err
 	}
 
-	result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+	result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+		ID:       plugin.Spec.Id,
+		Version:  plugin.Spec.Version,
+		ParentID: plugin.Spec.ParentId,
+	})
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
 			gr := schema.GroupResource{
 				Group:    pluginsv0alpha1.APIGroup,
 				Resource: name,
 			}
+			metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 			return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
 		}
 
-		logging.DefaultLogger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+		logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
-	return createMetaFromMetaJSONData(result.Meta, name, ns.Value), nil
-}
-
-// createMetaFromMetaJSONData creates a Meta k8s object from MetaJSONData and plugin metadata.
-func createMetaFromMetaJSONData(pluginJSON pluginsv0alpha1.MetaJSONData, name, namespace string) *pluginsv0alpha1.Meta {
 	pluginMeta := &pluginsv0alpha1.Meta{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      plugin.Name,
+			Namespace: plugin.Namespace,
 		},
-		Spec: pluginsv0alpha1.MetaSpec{
-			PluginJSON: pluginJSON,
-		},
+		Spec: result.Meta,
 	}
-
-	// Set the GroupVersionKind
 	pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   pluginsv0alpha1.APIGroup,
 		Version: pluginsv0alpha1.APIVersion,
 		Kind:    pluginsv0alpha1.MetaKind().Kind(),
 	})
 
-	return pluginMeta
+	metrics.APIRequestsTotal.WithLabelValues("get", "success").Inc()
+	return pluginMeta, nil
 }

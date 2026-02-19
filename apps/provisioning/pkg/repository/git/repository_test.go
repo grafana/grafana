@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,204 +21,6 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
-func TestGitRepository_Validate(t *testing.T) {
-	tests := []struct {
-		name      string
-		config    *provisioning.Repository
-		gitConfig RepositoryConfig
-		want      field.ErrorList // number of expected validation errors
-	}{
-		{
-			name: "valid config",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "token123",
-				Path:   "configs",
-			},
-			want: nil,
-		},
-		{
-			name: "missing URL",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				Branch: "main",
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Required(field.NewPath("spec", "test_type", "url"), "a git url is required"),
-			},
-		},
-		{
-			name: "invalid URL scheme",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "http://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "url"), "http://git.example.com/repo.git", "invalid git URL format"),
-			},
-		},
-		{
-			name: "missing host",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https:///repo.git", // URL with missing host
-				Branch: "main",
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "url"), "https:///repo.git", "invalid git URL format"),
-			},
-		},
-		{
-			name: "unparseable url",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "://not a valid url",
-				Branch: "main",
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "url"), "://not a valid url", "invalid git URL format"),
-			},
-		},
-		{
-			name: "missing branch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "", // Empty branch
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Required(field.NewPath("spec", "test_type", "branch"), "a git branch is required"),
-			},
-		},
-		{
-			name: "invalid branch name",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "invalid/branch*name", // Invalid branch name
-				Token:  "token123",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "branch"), "invalid/branch*name", "invalid branch name"),
-			},
-		},
-		{
-			name: "missing token for R/W repository",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type:      "test_type",
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "", // Empty token
-			},
-			want: field.ErrorList{
-				field.Required(field.NewPath("secure", "token"), "a git access token is required"),
-			},
-		},
-		{
-			name: "missing token for read-only repository",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type:      "test_type",
-					Workflows: nil, // read-only
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "", // Empty token
-			},
-			want: nil,
-		},
-		{
-			name: "unsafe path",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "token123",
-				Path:   "../unsafe/path",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "path"), "../unsafe/path", "path contains traversal attempt (./ or ../)"),
-			},
-		},
-		{
-			name: "absolute path",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
-				},
-			},
-			gitConfig: RepositoryConfig{
-				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
-				Token:  "token123",
-				Path:   "/absolute/path",
-			},
-			want: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "test_type", "path"), "/absolute/path", "path must be relative"),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := &gitRepository{
-				config:    tt.config,
-				gitConfig: tt.gitConfig,
-			}
-
-			errors := gitRepo.Validate()
-			require.Equal(t, tt.want, errors)
-		})
-	}
-}
-
 func TestIsValidGitURL(t *testing.T) {
 	tests := []struct {
 		name string
@@ -230,9 +33,9 @@ func TestIsValidGitURL(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "invalid HTTP URL",
+			name: "valid HTTP URL for local development",
 			url:  "http://git.example.com/owner/repo.git",
-			want: false,
+			want: true,
 		},
 		{
 			name: "missing scheme",
@@ -600,6 +403,108 @@ func TestGitRepository_Test(t *testing.T) {
 			},
 			wantError: nil,
 		},
+		{
+			name: "success - empty branch uses default branch (main)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - empty branch uses default branch (master)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch - no main, but master exists
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/master", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/master",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - empty branch uses first branch alphabetically",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs for GetDefaultBranch - no main or master
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/feature", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/alpha", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/alpha",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - empty branch and GetDefaultBranch fails (no branches)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs returns no branches
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/tags/v1.0", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: nil,
+			wantError:   errors.New("no branches found in repository"),
+		},
+		{
+			name: "failure - empty branch and GetDefaultBranch fails (list refs error)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Mock ListRefs returns an error
+				mockClient.ListRefsReturns(nil, errors.New("network error"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "", // Empty branch should trigger GetDefaultBranch
+			},
+			wantResults: nil,
+			wantError:   errors.New("list refs: network error"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -618,22 +523,33 @@ func TestGitRepository_Test(t *testing.T) {
 			}
 
 			results, err := gitRepo.Test(context.Background())
-			require.NoError(t, err, "Test method should not return an error")
 
-			require.Equal(t, tt.wantResults, results, "Test results mismatch")
-			require.Equal(t, tt.wantError, err, "Test error mismatch")
+			if tt.wantError != nil {
+				require.Error(t, err, "Test method should return an error")
+				require.Contains(t, err.Error(), tt.wantError.Error(), "Error message mismatch")
+				require.Nil(t, results, "Results should be nil when error occurs")
+			} else {
+				require.NoError(t, err, "Test method should not return an error")
+				require.Equal(t, tt.wantResults, results, "Test results mismatch")
 
-			// Verify the mock calls
-			require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				// Verify the mock calls only when no error
+				require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
 
-			if mockClient.RepoExistsCallCount() > 0 {
-				require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
-			}
+				if mockClient.RepoExistsCallCount() > 0 {
+					require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
+				}
 
-			if mockClient.GetRefCallCount() > 0 {
-				require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
-				_, ref := mockClient.GetRefArgsForCall(0)
-				require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
+				if mockClient.GetRefCallCount() > 0 {
+					require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
+					_, ref := mockClient.GetRefArgsForCall(0)
+					// When branch is empty, GetDefaultBranch is called which sets the branch
+					// In that case, we just verify the format but not the exact branch name
+					if tt.gitConfig.Branch == "" {
+						require.True(t, strings.HasPrefix(ref, "refs/heads/"), "GetRef should be called with correct branch reference format")
+					} else {
+						require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
+					}
+				}
 			}
 		})
 	}
@@ -2318,71 +2234,6 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 	})
 }
 
-func TestGitRepository_ValidateBranchNames(t *testing.T) {
-	tests := []struct {
-		name        string
-		branchName  string
-		expectValid bool
-	}{
-		{"valid simple branch", "main", true},
-		{"valid feature branch", "feature/new-feature", true},
-		{"valid branch with numbers", "release-v1.2.3", true},
-		{"invalid double slash", "feature//branch", false},
-		{"invalid double dot", "feature..branch", false},
-		{"invalid ending with dot", "feature.", false},
-		{"invalid starting with slash", "/feature", false},
-		{"invalid ending with slash", "feature/", false},
-		{"invalid with space", "feature branch", false},
-		{"invalid with tilde", "feature~1", false},
-		{"invalid with caret", "feature^1", false},
-		{"invalid with colon", "feature:branch", false},
-		{"invalid with question mark", "feature?", false},
-		{"invalid with asterisk", "feature*", false},
-		{"invalid with square brackets", "feature[1]", false},
-		{"invalid with backslash", "feature\\branch", false},
-		{"invalid empty string", "", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := &gitRepository{
-				config: &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Type: "test_type",
-					},
-				},
-				gitConfig: RepositoryConfig{
-					URL:    "https://git.example.com/repo.git",
-					Branch: tt.branchName,
-					Token:  "token123",
-				},
-			}
-
-			errors := gitRepo.Validate()
-
-			if tt.expectValid {
-				// Should not have a branch validation error for invalid branch name
-				for _, err := range errors {
-					if err.Field == "spec.test_type.branch" && err.Type == field.ErrorTypeInvalid {
-						require.NotContains(t, err.Detail, "invalid branch name")
-					}
-				}
-			} else {
-				// Should have a branch validation error (either required or invalid)
-				found := false
-				for _, err := range errors {
-					if err.Field == "spec.test_type.branch" &&
-						(err.Type == field.ErrorTypeInvalid || err.Type == field.ErrorTypeRequired) {
-						found = true
-						break
-					}
-				}
-				require.True(t, found, "Expected branch validation error for: %s", tt.branchName)
-			}
-		})
-	}
-}
-
 func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -2459,61 +2310,6 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, refHash)
-			}
-		})
-	}
-}
-
-func TestGitRepository_PathValidation(t *testing.T) {
-	tests := []struct {
-		name        string
-		path        string
-		expectError bool
-		errorMsg    string
-	}{
-		{"valid relative path", "configs/dir", false, ""},
-		{"path traversal with ../", "../configs", true, "path contains traversal attempt (./ or ../)"},
-		{"path traversal with ./", "./configs", true, "path contains traversal attempt (./ or ../)"},
-		{"absolute path", "/absolute/path", true, "path must be relative"},
-		{"empty path", "", false, ""},
-		{"path with multiple traversals", "../../etc/passwd", true, "path contains traversal attempt (./ or ../)"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := &gitRepository{
-				config: &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Type: "test_type",
-					},
-				},
-				gitConfig: RepositoryConfig{
-					URL:    "https://git.example.com/repo.git",
-					Branch: "main",
-					Token:  "token123",
-					Path:   tt.path,
-				},
-			}
-
-			errors := gitRepo.Validate()
-
-			if tt.expectError {
-				found := false
-				for _, err := range errors {
-					if err.Field == "spec.test_type.path" && err.Type == field.ErrorTypeInvalid {
-						require.Contains(t, err.Detail, tt.errorMsg)
-						found = true
-						break
-					}
-				}
-				require.True(t, found, "Expected path validation error for: %s", tt.path)
-			} else {
-				// Should not have a path validation error
-				for _, err := range errors {
-					if err.Field == "spec.test_type.path" {
-						t.Errorf("Unexpected path validation error for %s: %s", tt.path, err.Detail)
-					}
-				}
 			}
 		})
 	}
@@ -4233,6 +4029,157 @@ func TestGitRepository_Move_ErrorConditions(t *testing.T) {
 			if tt.errorType != nil {
 				require.ErrorIs(t, err, tt.errorType)
 			}
+		})
+	}
+}
+
+func TestGitRepository_GetDefaultBranch(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMock      func(*mocks.FakeClient)
+		expectedBranch string
+		wantError      bool
+		errorContains  string
+	}{
+		{
+			name: "returns main when main branch exists",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/feature", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+			},
+			expectedBranch: "main",
+			wantError:      false,
+		},
+		{
+			name: "returns master when master exists but main does not",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/master", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/feature", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+			},
+			expectedBranch: "master",
+			wantError:      false,
+		},
+		{
+			name: "prefers main over master when both exist",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/master", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+			},
+			expectedBranch: "main",
+			wantError:      false,
+		},
+		{
+			name: "returns first branch alphabetically when neither main nor master exists",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/feature", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+					{Name: "refs/heads/develop", Hash: hash.MustFromHex("b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3")},
+					{Name: "refs/heads/alpha", Hash: hash.MustFromHex("c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4")},
+				}, nil)
+			},
+			expectedBranch: "alpha",
+			wantError:      false,
+		},
+		{
+			name: "returns error when no branches exist",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/tags/v1.0", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+				}, nil)
+			},
+			wantError:     true,
+			errorContains: "no branches found",
+		},
+		{
+			name: "returns error when ListRefs fails",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, errors.New("network error"))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					URL: "https://git.example.com/owner/repo.git",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitRepositoryType,
+						Git: &provisioning.GitRepositoryConfig{
+							URL: "https://git.example.com/owner/repo.git",
+						},
+					},
+				},
+			}
+
+			branch, err := gitRepo.GetDefaultBranch(context.Background())
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorContains)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedBranch, branch)
+			}
+		})
+	}
+}
+
+func TestGitRepository_GetCurrentBranch(t *testing.T) {
+	tests := []struct {
+		name           string
+		branchInConfig string
+		expectedBranch string
+	}{
+		{
+			name:           "returns current branch from config",
+			branchInConfig: "feature-branch",
+			expectedBranch: "feature-branch",
+		},
+		{
+			name:           "returns empty string when branch not set",
+			branchInConfig: "",
+			expectedBranch: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gitRepo := &gitRepository{
+				gitConfig: RepositoryConfig{
+					URL:    "https://git.example.com/owner/repo.git",
+					Branch: tt.branchInConfig,
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitRepositoryType,
+						Git: &provisioning.GitRepositoryConfig{
+							URL:    "https://git.example.com/owner/repo.git",
+							Branch: tt.branchInConfig,
+						},
+					},
+				},
+			}
+
+			branch := gitRepo.GetCurrentBranch()
+			require.Equal(t, tt.expectedBranch, branch)
 		})
 	}
 }

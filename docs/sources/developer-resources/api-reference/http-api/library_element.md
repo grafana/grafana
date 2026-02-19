@@ -41,7 +41,8 @@ Query parameters:
 - `sortDirection`: Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - `typeFilter`: A comma separated list of types to filter the elements by.
 - `excludeUid`: Element UID to exclude from search results.
-- `folderFilter`: A comma separated list of folder IDs to filter the elements by.
+- `folderFilter`: **Deprecated.** A comma separated list of folder IDs to filter the elements by. Use `folderFilterUIDs` instead.
+- `folderFilterUIDs`: A comma separated list of folder UIDs to filter the elements by.
 - `perPage`: The number of results per page; default is 100.
 - `page`: The page for a set of records, given that only `perPage` records are returned at a time. Numbering starts at `1`.
 

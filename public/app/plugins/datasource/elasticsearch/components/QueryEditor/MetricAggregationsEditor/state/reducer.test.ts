@@ -1,13 +1,7 @@
-import {
-  MetricAggregation,
-  ElasticsearchDataQuery,
-  Derivative,
-  ExtendedStats,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { Derivative, ElasticsearchDataQuery, ExtendedStats, MetricAggregation } from '../../../../dataquery.gen';
 import { defaultMetricAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { metricAggregationConfig } from '../utils';
 
 import {
@@ -247,5 +241,27 @@ describe('Metric Aggregations Reducer', () => {
       .givenReducer(reducer, [])
       .whenActionIsDispatched(initQuery())
       .thenStateShouldEqual([defaultMetricAgg('1')]);
+  });
+
+  describe('When switching editor type', () => {
+    it('Should reset to single default metric when switching to code editor', () => {
+      const initialState: MetricAggregation[] = [
+        {
+          id: '1',
+          type: 'avg',
+          field: 'value',
+        },
+        {
+          id: '2',
+          type: 'max',
+          field: 'value',
+        },
+      ];
+
+      reducerTester<ElasticsearchDataQuery['metrics']>()
+        .givenReducer(reducer, initialState)
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .thenStateShouldEqual([defaultMetricAgg('1')]);
+    });
   });
 });

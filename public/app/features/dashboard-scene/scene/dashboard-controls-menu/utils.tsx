@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SceneDataState, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { DashboardLink, VariableHide } from '@grafana/schema';
 
@@ -5,27 +6,24 @@ import { isDashboardDataLayerSetState } from '../DashboardDataLayerSet';
 import { DashboardScene } from '../DashboardScene';
 
 export function getDashboardControlsLinks(links: DashboardLink[]) {
-  // Dashboard links are not supported at the moment.
-  // Reason: nesting <Dropdown> components causes issues since the inner dropdown is rendered in a portal,
-  // so clicking it closes the parent dropdown (the parent sees it as an overlay click, and the event cannot easily be intercepted,
-  // as it is in different HTML subtree).
-  return links.filter((link) => link.placement === 'inControlsMenu' && link.type !== 'dashboards');
+  return links.filter((link) => link.placement === 'inControlsMenu');
 }
 
 export function getDashboardControlsVariables(variables: SceneVariable[]) {
   return variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
 }
 
-export function getDashboardControlsAnnotations(dataState: SceneDataState) {
+export function getDashboardControlsAnnotations(dataState: SceneDataState, isEditingNewLayouts?: boolean) {
   return (isDashboardDataLayerSetState(dataState) ? dataState.annotationLayers : []).filter(
-    (layer) => layer.state.placement === 'inControlsMenu' && !layer.state.isHidden
+    (layer) => layer.state.placement === 'inControlsMenu' && (!layer.state.isHidden || isEditingNewLayouts)
   );
 }
 
 export function getDashboardControls(dashboard: DashboardScene) {
   const variables = getDashboardControlsVariables(sceneGraph.getVariables(dashboard)?.state.variables);
   const links = getDashboardControlsLinks(dashboard.state.links);
-  const annotations = getDashboardControlsAnnotations(sceneGraph.getData(dashboard).state);
+  const isEditingNewLayouts = dashboard.state.isEditing && config.featureToggles.dashboardNewLayouts;
+  const annotations = getDashboardControlsAnnotations(sceneGraph.getData(dashboard).state, isEditingNewLayouts);
 
   return {
     variables,
@@ -36,11 +34,15 @@ export function getDashboardControls(dashboard: DashboardScene) {
 
 export function useDashboardControls(dashboard: DashboardScene) {
   const dashboardState = dashboard.useState();
+
   const variablesState = sceneGraph.getVariables(dashboard).useState();
+  const variables = getDashboardControlsVariables(variablesState.variables);
+
   const dataState = sceneGraph.getData(dashboard).useState();
   const links = getDashboardControlsLinks(dashboardState.links);
-  const variables = getDashboardControlsVariables(variablesState.variables);
-  const annotations = getDashboardControlsAnnotations(dataState);
+
+  const isEditingNewLayouts = dashboardState.isEditing && config.featureToggles.dashboardNewLayouts;
+  const annotations = getDashboardControlsAnnotations(dataState, isEditingNewLayouts);
 
   return {
     variables,

@@ -7,8 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/alerting/definition"
-
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 const (
@@ -29,6 +28,10 @@ func (u *GrafanaAlertmanagerConfig) MarshalJSON() ([]byte, error) {
 	return definition.MarshalJSONWithSecrets((*cfg)(u))
 }
 
+type RuntimeConfig struct {
+	DispatchTimer string `json:"dispatch_timer"`
+}
+
 type UserGrafanaConfig struct {
 	GrafanaAlertmanagerConfig GrafanaAlertmanagerConfig `json:"configuration"`
 	Hash                      string                    `json:"configuration_hash"`
@@ -37,6 +40,7 @@ type UserGrafanaConfig struct {
 	Promoted                  bool                      `json:"promoted"`
 	ExternalURL               string                    `json:"external_url"`
 	SmtpConfig                SmtpConfig                `json:"smtp_config"`
+	RuntimeConfig             RuntimeConfig             `json:"runtime_config"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
@@ -71,8 +75,8 @@ func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
 	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil)
 }
 
-func (mc *Mimir) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	response := []apimodels.Receiver{}
+func (mc *Mimir) GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error) {
+	response := []alertingmodels.ReceiverStatus{}
 
 	// nolint:bodyclose
 	// closed within `do`

@@ -1,10 +1,10 @@
 import { memo } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { reportInteraction, config } from '@grafana/runtime';
-import { Divider, SecureSocksProxySettings } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Divider, Field, Input, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
 import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
 
@@ -36,14 +36,33 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
           <Divider />
           <ConfigSection
             title="Additional settings"
-            description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
+            description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy and Universe Domain."
             isCollapsible
-            isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+            isInitiallyOpen={
+              options.jsonData.enableSecureSocksProxy !== undefined || options.jsonData.universeDomain !== undefined
+            }
           >
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            <Stack direction={'column'}>
+              <Field noMargin label="Universe Domain">
+                <Input
+                  width={50}
+                  value={options.jsonData.universeDomain}
+                  onChange={(event) =>
+                    updateDatasourcePluginJsonDataOption(
+                      { options, onOptionsChange },
+                      'universeDomain',
+                      event.currentTarget.value
+                    )
+                  }
+                  placeholder="googleapis.com"
+                ></Input>
+              </Field>
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </Stack>
           </ConfigSection>
         </>
       )}
+      <Divider />
     </>
   );
 });

@@ -7,10 +7,15 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"math/rand"
+	"path/filepath"
 	"sync"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,17 +27,20 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/sqlite"
-
 	"github.com/grafana/grafana-app-sdk/logging"
-
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
@@ -40,6 +48,14 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+
+type GarbageCollectionConfig struct {
+	Enabled          bool
+	Interval         time.Duration // how often the process runs
+	BatchSize        int           // max number of candidates to delete (unique NGR)
+	MaxAge           time.Duration // retention period
+	DashboardsMaxAge time.Duration // dashboard retention
+}
 
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
@@ -52,16 +68,124 @@ func ProvideStorageBackend(
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer
-	resource.LifecycleHooks
+}
+
+// NewStorageBackend creates the unified storage backend based on options.StorageType.
+// It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
+// Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
+// For all other storage types a SQL backend will be created.
+func NewStorageBackend(
+	cfg *setting.Cfg,
+	db infraDB.DB,
+	reg prometheus.Registerer,
+	storageMetrics *resource.StorageMetrics,
+	tracer trace.Tracer,
+	disableStorageServices bool,
+) (resource.StorageBackend, error) {
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+	switch storageType {
+	case options.StorageTypeFile:
+		return NewFileBackend(cfg)
+	case options.StorageTypeUnifiedGrpc:
+		return nil, nil
+	default: // fall back to SQL backend
+	}
+	// create default unified backend
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
+		cfg.SectionWithEnvOverrides("resource_api"))
+
+	if !cfg.EnableSQLKVBackend {
+		return NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  reg,
+			IsHA:                 isHA,
+			storageMetrics:       storageMetrics,
+			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+			GarbageCollection: GarbageCollectionConfig{
+				Enabled:          cfg.EnableGarbageCollection,
+				Interval:         cfg.GarbageCollectionInterval,
+				BatchSize:        cfg.GarbageCollectionBatchSize,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+			},
+			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
+			DisableStorageServices:  disableStorageServices,
+		})
+	}
+
+	ctx := context.Background()
+	dbConn, err := eDB.Init(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing DB: %w", err)
+	}
+	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	if dialect == nil {
+		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+	}
+
+	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	if err != nil {
+		return nil, fmt.Errorf("error creating sqlkv: %s", err)
+	}
+
+	kvBackendOpts := resource.KVBackendOptions{
+		KvStore:              sqlkv,
+		Tracer:               tracer,
+		Reg:                  reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+	}
+
+	if cfg.EnableSQLKVCompatibilityMode {
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      dbConn,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+		}
+
+		kvBackendOpts.RvManager = rvManager
+	}
+
+	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	dataPath := apiserverCfg.Key("storage_path").
+		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kvStore := resource.NewBadgerKV(db)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kvStore,
+		Log:     log.New("storage-backend"),
+	})
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Reg             prometheus.Registerer
-	PollingInterval time.Duration
-	WatchBufferSize int
-	IsHA            bool
-	storageMetrics  *resource.StorageMetrics
+	DBProvider        db.DBProvider
+	Reg               prometheus.Registerer
+	PollingInterval   time.Duration
+	WatchBufferSize   int
+	IsHA              bool
+	storageMetrics    *resource.StorageMetrics
+	GarbageCollection GarbageCollectionConfig
+
+	DisableStorageServices bool
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -82,8 +206,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
-	return &backend{
+	backend := &backend{
 		isHA:                    opts.IsHA,
+		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -95,12 +220,24 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-	}, nil
+		garbageCollection:       opts.GarbageCollection,
+	}
+	if err := backend.Init(ctx); err != nil {
+		return nil, err
+	}
+	backend.Service = services.NewIdleService(nil, func(_ error) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return backend.Stop(ctx)
+	})
+	return backend, nil
 }
 
 type backend struct {
+	services.Service
 	//general
-	isHA bool
+	isHA                   bool
+	disableStorageServices bool
 
 	// server lifecycle
 	done     <-chan struct{}
@@ -119,6 +256,8 @@ type backend struct {
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
 
+	// -- Storage Services
+
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
@@ -126,13 +265,16 @@ type backend struct {
 	notifier        eventNotifier
 
 	// resource version manager
-	rvManager *resourceVersionManager
+	rvManager *rvmanager.ResourceVersionManager
 
 	// testing
 	simulatedNetworkLatency time.Duration
 
 	historyPruner resource.Pruner
 
+	garbageCollection GarbageCollectionConfig
+
+	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Time
 }
@@ -162,8 +304,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
+	if b.disableStorageServices {
+		return nil
+	}
+
 	// Initialize ResourceVersionManager
-	rvManager, err := NewResourceVersionManager(ResourceManagerOptions{
+	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 		Dialect: b.dialect,
 		DB:      b.db,
 	})
@@ -173,7 +319,18 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.rvManager = rvManager
 
 	// Initialize notifier after dialect is set up
-	notifier, err := newNotifier(b)
+	notifier, err := newNotifier(&notifierConfig{
+		isHA:            b.isHA,
+		pollingInterval: b.pollingInterval,
+		watchBufferSize: b.watchBufferSize,
+		log:             b.log,
+		bulkLock:        b.bulkLock,
+		listLatestRVs:   b.listLatestRVs,
+		storageMetrics:  b.storageMetrics,
+		done:            b.done,
+		db:              b.db,
+		dialect:         b.dialect,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
 	}
@@ -181,6 +338,11 @@ func (b *backend) initLocked(ctx context.Context) error {
 
 	if err := b.initPruner(ctx); err != nil {
 		return fmt.Errorf("failed to create pruner: %w", err)
+	}
+	if b.garbageCollection.Enabled {
+		if err := b.initGarbageCollection(ctx); err != nil {
+			return fmt.Errorf("failed to initialize garbage collection: %w", err)
+		}
 	}
 
 	return nil
@@ -241,6 +403,141 @@ func (b *backend) initPruner(ctx context.Context) error {
 	return nil
 }
 
+func (b *backend) initGarbageCollection(ctx context.Context) error {
+	b.log.Info("starting garbage collection loop")
+
+	go func() {
+		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
+		if b.garbageCollection.Interval > 0 {
+			jitter := time.Duration(rand.Int63n(b.garbageCollection.Interval.Nanoseconds()))
+			select {
+			case <-b.done:
+				return
+			case <-time.After(jitter):
+			}
+		}
+
+		ticker := time.NewTicker(b.garbageCollection.Interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-b.done:
+				return
+			case <-ticker.C:
+				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	defer span.End()
+	start := time.Now()
+
+	deletedByKey := map[string]int64{}
+
+	groupResources, err := b.listLatestRVs(ctx)
+	if err != nil {
+		b.log.Error("failed to list group resources for garbage collection", "error", err)
+		return deletedByKey
+	}
+
+	for group, resources := range groupResources {
+		for resourceName := range resources {
+			resourceKey := group + "/" + resourceName
+			resourceCutoff := b.garbageCollectionCutoffTimestamp(group, resourceName, cutoffTimeStamp)
+			totalDeleted := int64(0)
+			for {
+				deleted, err := b.garbageCollectBatch(ctx, group, resourceName, resourceCutoff, b.garbageCollection.BatchSize)
+				if err != nil {
+					b.log.Error("garbage collection failed",
+						"group", group,
+						"resource", resourceName,
+						"error", err)
+					break
+				}
+				if deleted == 0 {
+					break
+				}
+				totalDeleted += deleted
+				if deleted < int64(b.garbageCollection.BatchSize) {
+					break
+				}
+				select {
+				case <-b.done:
+					return deletedByKey
+				case <-time.After(time.Second):
+				}
+			}
+			if totalDeleted > 0 {
+				b.log.Info("garbage collection deleted history",
+					"group", group,
+					"resource", resourceName,
+					"rows", totalDeleted,
+					"seconds", time.Since(start).Seconds(),
+				)
+				deletedByKey[resourceKey] += totalDeleted
+			}
+		}
+	}
+
+	return deletedByKey
+}
+
+func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
+	if group == "dashboard.grafana.app" && resourceName == "dashboards" {
+		return time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
+	}
+	return defaultCutoff
+}
+
+func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
+	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
+	defer span.End()
+
+	var rowsAffected int64
+	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		// query will return at most batchSize candidates
+		candidates, err := dbutil.Query(ctx, tx, sqlResourceHistoryGarbageGetCandidates, &sqlGarbageCollectCandidatesRequest{
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			Group:           group,
+			Resource:        resourceName,
+			CutoffTimestamp: cutoffTimestamp,
+			BatchSize:       batchSize,
+			Response:        new(gcCandidateName),
+		})
+		if err != nil {
+			return err
+		}
+		if len(candidates) == 0 {
+			return nil
+		}
+		span.AddEvent("candidates", trace.WithAttributes(attribute.Int("candidates", len(candidates))))
+		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       group,
+			Resource:    resourceName,
+			Candidates:  candidates,
+		})
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		rowsAffected = rows
+		span.AddEvent("rows deleted", trace.WithAttributes(attribute.Int64("rowsDeleted", rowsAffected)))
+		return nil
+	})
+	return rowsAffected, err
+}
+
 func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
@@ -298,6 +595,9 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
+	if b.disableStorageServices {
+		return 0, fmt.Errorf("storage backend is not enabled")
+	}
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
@@ -660,14 +960,12 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 	}
 
-	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
-	if latestRv == sinceRv {
+	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv <= sinceRv {
 		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
-	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
-	lastSeen := ""
-
+	seen := make(map[string]struct{})
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -701,12 +999,11 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 			}
 
 			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if mr.Key.Name == lastSeen {
+			if _, ok := seen[mr.Key.Name]; ok {
 				continue
 			}
 
-			lastSeen = mr.Key.Name
-
+			seen[mr.Key.Name] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}
@@ -732,7 +1029,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 		iter.offset = continueToken.StartOffset
 
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
-			return 0, apierrors.NewBadRequest("request resource version does not math token")
+			return 0, apierrors.NewBadRequest("request resource version does not match token")
 		}
 	}
 	if iter.listRV < 1 {
@@ -892,6 +1189,9 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	if b.disableStorageServices {
+		return nil, fmt.Errorf("watcher is not enabled")
+	}
 	return b.notifier.notify(ctx)
 }
 
@@ -928,12 +1228,12 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestRV")
 	defer span.End()
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+	res, err := dbutil.QueryRow(ctx, x, rvmanager.SqlResourceVersionGet, rvmanager.SqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
 		ReadOnly:    true,
-		Response:    new(resourceVersionResponse),
+		Response:    new(rvmanager.ResourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
@@ -1037,8 +1337,4 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
-}
-
-func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

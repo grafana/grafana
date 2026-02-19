@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -56,7 +57,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamBindingLegacyStore      *teambinding.LegacyBindingStore
 	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
-	rolesStorage                RoleStorageBackend
+	roleApiInstaller            RoleApiInstaller
+	globalRoleApiInstaller      GlobalRoleApiInstaller
+	teamLBACApiInstaller        TeamLBACApiInstaller
 	resourcePermissionsStorage  resource.StorageBackend
 	roleBindingsStorage         RoleBindingStorageBackend
 	externalGroupMappingStorage ExternalGroupMappingStorageBackend
@@ -82,11 +85,12 @@ type IdentityAccessManagementAPIBuilder struct {
 	reg    prometheus.Registerer
 	logger log.Logger
 
-	dual              dualwrite.Service
-	unified           resource.ResourceClient
-	userSearchClient  resourcepb.ResourceIndexClient
-	userSearchHandler *user.SearchHandler
-	teamSearch        *TeamSearchHandler
+	dual                              dualwrite.Service
+	unified                           resource.ResourceClient
+	userSearchClient                  resourcepb.ResourceIndexClient
+	userSearchHandler                 *user.SearchHandler
+	teamSearch                        *TeamSearchHandler
+	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
@@ -98,4 +102,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
+
+	tracing *tracing.TracingService
 }

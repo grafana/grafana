@@ -30,11 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// AlertRuleMaxTitleLength is the maximum length of the alert rule title
-const AlertRuleMaxTitleLength = 190
+const (
+	// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+	AlertRuleMaxTitleLength = 190
 
-// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
-const AlertRuleMaxRuleGroupNameLength = 190
+	// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+	AlertRuleMaxRuleGroupNameLength = 190
+)
 
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
@@ -100,7 +102,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		if len(versions) > 0 {
-			_, err = sess.Insert(versions)
+			_, err = sess.BulkInsert(alertRuleVersion{}, versions, sqlstore.NativeSettingsForDialect(st.SQLStore.GetDialect()))
 			if err != nil {
 				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 			}
@@ -642,6 +644,23 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			_ = rows.Close()
 		}()
 
+		opts := AlertRuleConvertOptions{}
+		if query.Compact {
+			opts.ExcludeAlertQueries = true
+			opts.ExcludeContactPointRouting = true
+			opts.ExcludeMetadata = true
+
+			if query.ReceiverName != "" || query.TimeIntervalName != "" {
+				// Need ContactPointRouting for these filters
+				opts.ExcludeContactPointRouting = false
+			}
+
+			if query.HasPrometheusRuleDefinition != nil {
+				// Need Metadata for this filter
+				opts.ExcludeMetadata = false
+			}
+		}
+
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
 		var rulesFetched int64
@@ -653,12 +672,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			var converted ngmodels.AlertRule
-			if query.Compact {
-				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
-			} else {
-				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
-			}
+			converted, err := convertAlertRuleToModel(*rule, st.Logger, opts)
 
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
@@ -711,19 +725,22 @@ func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
+	settings := rule.ContactPointRouting()
 	if query.ReceiverName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return false
 		}
 	}
 
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) ||
-				slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return false
 		}
 	}
@@ -958,6 +975,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.PluginOriginFilter != ngmodels.PluginOriginFilterNone {
+		q, err = st.filterByPluginOrigin(query.PluginOriginFilter, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
 	// FIXME: record is nullable but we don't save it as null when it's nil
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
@@ -986,17 +1010,21 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 		st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRules", "error", err)
 		return nil, false
 	}
+	settings := converted.ContactPointRouting()
 	if query.ReceiverName != "" { // remove false-positive hits from the result
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return nil, false
 		}
 	}
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) || slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return nil, false
 		}
 	}
@@ -1303,8 +1331,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	return nil
 }
 
-// ListNotificationSettings fetches all notification settings for given organization
-func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+// ListContactPointRoutings fetches all notification settings for given organization
+func (st DBstore) ListContactPointRoutings(ctx context.Context, q ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
 	var rules []alertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(alertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
@@ -1333,7 +1361,7 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
+	result := make(map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, len(rules))
 	for _, rule := range rules {
 		if rule.NotificationSettings == "" {
 			continue
@@ -1342,23 +1370,20 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert notification settings %s to models: %w", rule.UID, err)
 		}
-		ns := make([]ngmodels.NotificationSettings, 0, len(rule.NotificationSettings))
-		for _, setting := range converted {
-			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
-				continue
-			}
-			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(setting.ActiveTimeIntervals, q.TimeIntervalName) {
-				continue
-			}
-			ns = append(ns, setting)
+		if converted == nil {
+			continue
 		}
-		if len(ns) > 0 {
-			key := ngmodels.AlertRuleKey{
-				OrgID: q.OrgID,
-				UID:   rule.UID,
-			}
-			result[key] = ns
+
+		if q.ReceiverName != "" && q.ReceiverName != converted.Receiver {
+			continue
 		}
+		if q.TimeIntervalName != "" && !slices.Contains(converted.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(converted.ActiveTimeIntervals, q.TimeIntervalName) {
+			continue
+		}
+		result[ngmodels.AlertRuleKey{
+			OrgID: q.OrgID,
+			UID:   rule.UID,
+		}] = *converted
 	}
 	return result, nil
 }
@@ -1415,6 +1440,32 @@ func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Ses
 	return sess, nil
 }
 
+// filterByPluginOrigin adds filtering for plugin-originated rules based on the __grafana_origin label.
+func (st DBstore) filterByPluginOrigin(filter ngmodels.PluginOriginFilter, sess *xorm.Session) (*xorm.Session, error) {
+	if filter == ngmodels.PluginOriginFilterNone {
+		return sess, nil
+	}
+
+	var sql string
+	var args []any
+	var err error
+
+	switch filter {
+	case ngmodels.PluginOriginFilterHide:
+		sql, args, err = buildLabelKeyMissingCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	case ngmodels.PluginOriginFilterOnly:
+		sql, args, err = buildLabelKeyExistsCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	default:
+		return nil, fmt.Errorf("unknown plugin origin filter %q", filter)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sess.And(sql, args...), nil
+}
+
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
@@ -1455,10 +1506,13 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			if r.NotificationSettings[idx].Receiver == oldReceiver {
-				r.NotificationSettings[idx].Receiver = newReceiver
-			}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+
+		if settings.Receiver == oldReceiver {
+			settings.Receiver = newReceiver
 		}
 
 		updates = append(updates, ngmodels.UpdateRule{
@@ -1530,16 +1584,18 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
-				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
-				}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+		for mtIdx := range settings.MuteTimeIntervals {
+			if settings.MuteTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.MuteTimeIntervals[mtIdx] = newTimeInterval
 			}
-			for mtIdx := range r.NotificationSettings[idx].ActiveTimeIntervals {
-				if r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] = newTimeInterval
-				}
+		}
+		for mtIdx := range settings.ActiveTimeIntervals {
+			if settings.ActiveTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.ActiveTimeIntervals[mtIdx] = newTimeInterval
 			}
 		}
 

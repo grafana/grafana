@@ -35,14 +35,16 @@ func TestProviderManager_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns cached result when available and not expired", func(t *testing.T) {
-		cachedMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		cachedMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: cachedMeta,
 					TTL:  time.Hour,
@@ -52,20 +54,22 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 		pm := NewProviderManager(provider)
 
-		result1, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result1, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		require.NotNil(t, result1)
 		assert.Equal(t, cachedMeta, result1.Meta)
 		assert.Equal(t, time.Hour, result1.TTL)
 
-		provider.getMetaFunc = func(ctx context.Context, pluginID, version string) (*Result, error) {
+		provider.getMetaFunc = func(ctx context.Context, ref PluginRef) (*Result, error) {
 			return &Result{
-				Meta: pluginsv0alpha1.MetaJSONData{Id: "different"},
-				TTL:  time.Hour,
+				Meta: pluginsv0alpha1.MetaSpec{
+					PluginJson: pluginsv0alpha1.MetaJSONData{Id: "different"},
+				},
+				TTL: time.Hour,
 			}, nil
 		}
 
-		result2, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result2, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		require.NotNil(t, result2)
 		assert.Equal(t, cachedMeta, result2.Meta)
@@ -73,15 +77,17 @@ func TestProviderManager_GetMeta(t *testing.T) {
 	})
 
 	t.Run("fetches from provider when not cached", func(t *testing.T) {
-		expectedMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expectedMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 		expectedTTL := 2 * time.Hour
 
 		provider := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: expectedMeta,
 					TTL:  expectedTTL,
@@ -91,7 +97,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 		pm := NewProviderManager(provider)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -107,66 +113,56 @@ func TestProviderManager_GetMeta(t *testing.T) {
 		assert.Equal(t, expectedTTL, cached.ttl)
 	})
 
-	t.Run("does not cache result with zero TTL and tries next provider", func(t *testing.T) {
-		zeroTTLMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Zero TTL Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
-		}
-		expectedMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+	t.Run("does not cache result with zero TTL", func(t *testing.T) {
+		zeroTTLMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Zero TTL Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 
-		provider1 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+		provider := &mockProvider{
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: zeroTTLMeta,
 					TTL:  0,
 				}, nil
 			},
 		}
-		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
-				return &Result{
-					Meta: expectedMeta,
-					TTL:  time.Hour,
-				}, nil
-			},
-		}
 
-		pm := NewProviderManager(provider1, provider2)
+		pm := NewProviderManager(provider)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta)
+		assert.Equal(t, zeroTTLMeta, result.Meta)
+		assert.Equal(t, time.Duration(0), result.TTL)
 
 		pm.cacheMu.RLock()
-		cached, exists := pm.cache["test-plugin:1.0.0"]
+		_, exists := pm.cache["test-plugin:1.0.0"]
 		pm.cacheMu.RUnlock()
 
-		assert.True(t, exists)
-		assert.Equal(t, expectedMeta, cached.meta)
-		assert.Equal(t, time.Hour, cached.ttl)
+		assert.False(t, exists, "zero TTL results should not be cached")
 	})
 
 	t.Run("tries next provider when first returns ErrMetaNotFound", func(t *testing.T) {
-		expectedMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expectedMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider1 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return nil, ErrMetaNotFound
 			},
 		}
 		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: expectedMeta,
 					TTL:  time.Hour,
@@ -176,7 +172,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 		pm := NewProviderManager(provider1, provider2)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -185,19 +181,19 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 	t.Run("returns ErrMetaNotFound when all providers return ErrMetaNotFound", func(t *testing.T) {
 		provider1 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return nil, ErrMetaNotFound
 			},
 		}
 		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return nil, ErrMetaNotFound
 			},
 		}
 
 		pm := NewProviderManager(provider1, provider2)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -208,19 +204,19 @@ func TestProviderManager_GetMeta(t *testing.T) {
 		expectedErr := errors.New("network error")
 
 		provider1 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return nil, expectedErr
 			},
 		}
 		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return nil, ErrMetaNotFound
 			},
 		}
 
 		pm := NewProviderManager(provider1, provider2)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to fetch plugin metadata from any provider")
@@ -229,20 +225,24 @@ func TestProviderManager_GetMeta(t *testing.T) {
 	})
 
 	t.Run("skips expired cache entries", func(t *testing.T) {
-		expiredMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Expired Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expiredMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Expired Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
-		expectedMeta := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Test Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expectedMeta := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Test Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 
 		callCount := 0
 		provider := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				callCount++
 				if callCount == 1 {
 					return &Result{
@@ -259,32 +259,36 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 		pm := NewProviderManager(provider)
 
-		result1, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result1, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		assert.Equal(t, expiredMeta, result1.Meta)
 
 		time.Sleep(2 * time.Nanosecond)
 
-		result2, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result2, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		assert.Equal(t, expectedMeta, result2.Meta)
 		assert.Equal(t, 2, callCount)
 	})
 
 	t.Run("uses first successful provider", func(t *testing.T) {
-		expectedMeta1 := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Provider 1 Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expectedMeta1 := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Provider 1 Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
-		expectedMeta2 := pluginsv0alpha1.MetaJSONData{
-			Id:   "test-plugin",
-			Name: "Provider 2 Plugin",
-			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		expectedMeta2 := pluginsv0alpha1.MetaSpec{
+			PluginJson: pluginsv0alpha1.MetaJSONData{
+				Id:   "test-plugin",
+				Name: "Provider 2 Plugin",
+				Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+			},
 		}
 
 		provider1 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: expectedMeta1,
 					TTL:  time.Hour,
@@ -292,7 +296,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 			},
 		}
 		provider2 := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
 				return &Result{
 					Meta: expectedMeta2,
 					TTL:  time.Hour,
@@ -302,7 +306,7 @@ func TestProviderManager_GetMeta(t *testing.T) {
 
 		pm := NewProviderManager(provider1, provider2)
 
-		result, err := pm.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -331,13 +335,13 @@ func TestProviderManager_Run(t *testing.T) {
 
 func TestProviderManager_cleanupExpired(t *testing.T) {
 	t.Run("removes expired entries", func(t *testing.T) {
-		validMeta := pluginsv0alpha1.MetaJSONData{Id: "valid"}
-		expiredMeta1 := pluginsv0alpha1.MetaJSONData{Id: "expired1"}
-		expiredMeta2 := pluginsv0alpha1.MetaJSONData{Id: "expired2"}
+		validMeta := pluginsv0alpha1.MetaSpec{PluginJson: pluginsv0alpha1.MetaJSONData{Id: "valid"}}
+		expiredMeta1 := pluginsv0alpha1.MetaSpec{PluginJson: pluginsv0alpha1.MetaJSONData{Id: "expired1"}}
+		expiredMeta2 := pluginsv0alpha1.MetaSpec{PluginJson: pluginsv0alpha1.MetaJSONData{Id: "expired2"}}
 
 		provider := &mockProvider{
-			getMetaFunc: func(ctx context.Context, pluginID, version string) (*Result, error) {
-				switch pluginID {
+			getMetaFunc: func(ctx context.Context, ref PluginRef) (*Result, error) {
+				switch ref.ID {
 				case "valid":
 					return &Result{Meta: validMeta, TTL: time.Hour}, nil
 				case "expired1":
@@ -352,29 +356,29 @@ func TestProviderManager_cleanupExpired(t *testing.T) {
 		pm := NewProviderManager(provider)
 		ctx := context.Background()
 
-		_, err := pm.GetMeta(ctx, "expired1", "1.0.0")
+		_, err := pm.GetMeta(ctx, PluginRef{ID: "expired1", Version: "1.0.0"})
 		require.NoError(t, err)
-		_, err = pm.GetMeta(ctx, "expired2", "1.0.0")
+		_, err = pm.GetMeta(ctx, PluginRef{ID: "expired2", Version: "1.0.0"})
 		require.NoError(t, err)
-		_, err = pm.GetMeta(ctx, "valid", "1.0.0")
+		_, err = pm.GetMeta(ctx, PluginRef{ID: "valid", Version: "1.0.0"})
 		require.NoError(t, err)
 
 		time.Sleep(2 * time.Nanosecond)
 
 		pm.cleanupExpired()
 
-		provider.getMetaFunc = func(ctx context.Context, pluginID, version string) (*Result, error) {
-			if pluginID == "valid" {
+		provider.getMetaFunc = func(ctx context.Context, ref PluginRef) (*Result, error) {
+			if ref.ID == "valid" {
 				return &Result{Meta: validMeta, TTL: time.Hour}, nil
 			}
 			return nil, ErrMetaNotFound
 		}
 
-		result, err := pm.GetMeta(ctx, "expired1", "1.0.0")
+		result, err := pm.GetMeta(ctx, PluginRef{ID: "expired1", Version: "1.0.0"})
 		assert.Error(t, err)
 		assert.Nil(t, result)
 
-		result, err = pm.GetMeta(ctx, "valid", "1.0.0")
+		result, err = pm.GetMeta(ctx, PluginRef{ID: "valid", Version: "1.0.0"})
 		require.NoError(t, err)
 		assert.Equal(t, validMeta, result.Meta)
 	})
@@ -390,45 +394,50 @@ func TestProviderManager_cacheKey(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		pluginID string
-		version  string
+		ref      PluginRef
 		expected string
 	}{
 		{
 			name:     "basic key",
-			pluginID: "test-plugin",
-			version:  "1.0.0",
+			ref:      PluginRef{ID: "test-plugin", Version: "1.0.0"},
 			expected: "test-plugin:1.0.0",
 		},
 		{
 			name:     "empty version",
-			pluginID: "test-plugin",
-			version:  "",
+			ref:      PluginRef{ID: "test-plugin", Version: ""},
 			expected: "test-plugin:",
 		},
 		{
 			name:     "empty plugin ID",
-			pluginID: "",
-			version:  "1.0.0",
+			ref:      PluginRef{ID: "", Version: "1.0.0"},
 			expected: ":1.0.0",
+		},
+		{
+			name:     "with parent ID",
+			ref:      PluginRef{ID: "child-plugin", Version: "1.0.0", ParentID: ptr("parent-plugin")},
+			expected: "child-plugin:1.0.0:parent-plugin",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key := pm.cacheKey(tt.pluginID, tt.version)
+			key := pm.cacheKey(tt.ref)
 			assert.Equal(t, tt.expected, key)
 		})
 	}
 }
 
 type mockProvider struct {
-	getMetaFunc func(ctx context.Context, pluginID, version string) (*Result, error)
+	getMetaFunc func(ctx context.Context, ref PluginRef) (*Result, error)
 }
 
-func (m *mockProvider) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
+func (m *mockProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
 	if m.getMetaFunc != nil {
-		return m.getMetaFunc(ctx, pluginID, version)
+		return m.getMetaFunc(ctx, ref)
 	}
 	return nil, ErrMetaNotFound
+}
+
+func ptr(s string) *string {
+	return &s
 }

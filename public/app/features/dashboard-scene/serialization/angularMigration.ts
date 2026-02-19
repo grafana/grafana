@@ -77,6 +77,11 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
  * 4. Handler calls stat plugin's onPanelTypeChanged with { angular: originalOptions }
  * 5. Plugin migrates format/valueName/etc to proper stat options
  *
+ * For panels where autoMigrateFrom equals the current type (e.g., "text" -> "text"):
+ * - These are panels with Angular-style properties at the root level (content, mode, etc.)
+ * - We spread originalOptions onto the panel so the plugin's migration handler can see them
+ * - This matches the v1 behavior where PanelModel.restoreModel() spreads all properties
+ *
  * @param migrationData The __angularMigration data extracted from panel options
  */
 export function getV2AngularMigrationHandler(migrationData: AngularMigrationData) {
@@ -90,19 +95,28 @@ export function getV2AngularMigrationHandler(migrationData: AngularMigrationData
       return;
     }
 
-    if (plugin.onPanelTypeChanged) {
-      // Some plugins rely on being able to access targets to set up the fieldConfig when migrating from angular.
-      // Proxy the targets property with a deprecation warning.
-      const targetClone = cloneDeep(panel.targets);
-      Object.defineProperty(panel, 'targets', {
-        get: function () {
-          console.warn(
-            'Accessing the targets property when migrating a panel plugin is deprecated. Changes to this property will be ignored.'
-          );
-          return targetClone;
-        },
-      });
+    // Spread originalOptions onto the panel object.
+    // This is critical for plugins that use setMigrationHandler (like text panel) which expect
+    // Angular properties (content, mode, etc.) to be directly on the panel object.
+    // This matches the v1 behavior where PanelModel.restoreModel() spreads all JSON properties.
+    if (originalOptions && Object.keys(originalOptions).length > 0) {
+      defaults(panel, originalOptions);
+    }
 
+    // Some plugins rely on being able to access targets to set up the fieldConfig when migrating from angular.
+    // Proxy the targets property with a deprecation warning.
+    const targetClone = cloneDeep(panel.targets);
+    Object.defineProperty(panel, 'targets', {
+      get: function () {
+        console.warn(
+          'Accessing the targets property when migrating a panel plugin is deprecated. Changes to this property will be ignored.'
+        );
+        return targetClone;
+      },
+    });
+
+    // For panels with onPanelTypeChanged (e.g., singlestat -> stat), call the handler
+    if (plugin.onPanelTypeChanged) {
       // For Angular panels, wrap in { angular: ... } to match expected format
       // For React panels migrating from other React panels, pass options directly
       const prevOptions = wasAngular ? { angular: originalOptions } : { options: originalOptions };
