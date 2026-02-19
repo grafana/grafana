@@ -420,6 +420,18 @@ tls = true
 # Set the tenant ID for Loki communication, which is disabled by default.
 # The tenant ID is required to interact with Loki running in multi-tenant mode.
 tenant_id =
+# Only available for the HTTP client.
+# How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+# If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
+# `batch_size_bytes` also needs to be set in order to enable batching.
+batch_wait_duration =
+# Only available for the HTTP client.
+# How many events (in bytes) to accumulate in a single batch before sending it to Loki.
+# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+# If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
+# `batch_wait_duration` also needs to be set in order to enable batching.
+batch_size_bytes =
 ```
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:
