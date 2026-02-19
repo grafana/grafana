@@ -17,11 +17,20 @@ interface GroupByVariableEditorProps {
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { variable, onRunQuery, inline } = props;
-  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true } = variable.useState();
+  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true, defaultValue } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
   }, [variable.state]);
+
+  const { value: tagKeyOptions = [] } = useAsync(async () => {
+    if (!datasource?.getTagKeys) {
+      return [];
+    }
+    const result = await datasource.getTagKeys({ filters: [] });
+    const keys = Array.isArray(result) ? result : (result.data ?? []);
+    return keys.map((k) => ({ label: k.text || String(k.value), value: String(k.value) }));
+  }, [datasource]);
 
   const supported = datasource?.getTagKeys !== undefined;
   const message = supported
@@ -40,6 +49,25 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
+  const onDefaultValueChange = (values: string[]) => {
+    if (values.length === 0) {
+      variable.setState({ defaultValue: undefined });
+    } else {
+      variable.setState({
+        defaultValue: {
+          value: values,
+          text: values,
+        },
+      });
+    }
+  };
+
+  const defaultValueStrings: string[] = defaultValue
+    ? Array.isArray(defaultValue.value)
+      ? defaultValue.value.map(String)
+      : [String(defaultValue.value)]
+    : [];
+
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
@@ -51,6 +79,9 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
+      defaultValue={defaultValueStrings}
+      defaultValueOptions={tagKeyOptions}
+      onDefaultValueChange={onDefaultValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
       inline={inline}
