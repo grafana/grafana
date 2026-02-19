@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "./src",
     "paths": {
       "@emotion/core": ["./src/types/emotion-core-stub.d.ts"],
       "@grafana/ui": ["."]
