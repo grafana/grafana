@@ -49,7 +49,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			}
 			return c, ok
 		})
-		var result []fakes.GenericRecordedQuery
+		result := make([]fakes.GenericRecordedQuery, 0, len(results))
 		for _, cmd := range results {
 			result = append(result, cmd.(fakes.GenericRecordedQuery))
 		}
@@ -312,8 +312,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		for i, actual := range groups[0].Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(group.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range group.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}
@@ -644,8 +644,8 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		for i, actual := range groups[0].Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(group.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range group.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}
@@ -686,8 +686,8 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		for i, actual := range result.Rules {
 			expected := expectedRules[i]
 			if actual.GrafanaManagedAlert.UID != expected.UID {
-				var actualUIDs []string
-				var expectedUIDs []string
+				actualUIDs := make([]string, 0, len(result.Rules))
+				expectedUIDs := make([]string, 0, len(expectedRules))
 				for _, rule := range result.Rules {
 					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
 				}

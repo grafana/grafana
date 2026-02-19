@@ -38,7 +38,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 			}
 			return c, ok
 		})
-		var result []fakes.GenericRecordedQuery
+		result := make([]fakes.GenericRecordedQuery, 0, len(results))
 		for _, cmd := range results {
 			result = append(result, cmd.(fakes.GenericRecordedQuery))
 		}

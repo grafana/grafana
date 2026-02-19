@@ -407,7 +407,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
@@ -432,7 +432,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 2, Limit: 1})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
@@ -445,7 +445,7 @@ func TestGetSnapshotList(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100, Sort: "latest"})
 		require.NoError(t, err)
 
-		ids := make([]string, 0)
+		ids := make([]string, 0) //nolint:prealloc
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
