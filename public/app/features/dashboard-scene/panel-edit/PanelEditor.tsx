@@ -337,7 +337,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
 
-
     if (this.state.optionsPane?.state.suggestionApplied) {
       const panel = this.state.panelRef.resolve();
       reportInteraction(INTERACTION_EVENT_NAME, {

@@ -35,7 +35,6 @@ export const VizSuggestionsInteractions = {
   }) => {
     reportVizSuggestionsInteraction('suggestion_applied', properties);
   },
-
 };
 
 const reportVizSuggestionsInteraction = (name: string, properties?: Record<string, unknown>) => {
