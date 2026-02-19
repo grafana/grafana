@@ -27,6 +27,14 @@ export interface UseWizardSubmissionReturn {
   handleSubmit: () => Promise<void>;
 }
 
+// Fields that have visible form inputs on each step.
+// Used to prevent setting phantom errors on fields that aren't rendered on the current step,
+// which would otherwise persist in RHF state and silently block form submission on retry.
+const STEP_FORM_FIELDS: Partial<Record<WizardStep, string[]>> = {
+  authType: ['repository.url', 'repository.token', 'repository.tokenUser'],
+  connection: ['repository.branch', 'repository.path'],
+};
+
 export function useWizardSubmission({
   activeStep,
   currentStepConfig,
@@ -52,6 +60,7 @@ export function useWizardSubmission({
     const formData = getValues();
 
     if (currentStepConfig?.submitOnNext) {
+      setStepStatusInfo({ status: 'idle' });
       const fieldsToValidate =
         activeStep === 'connection' || activeStep === 'authType'
           ? (['repository'] as const)
@@ -121,8 +130,11 @@ export function useWizardSubmission({
               },
             });
           } else if (errors.length > 0) {
+            const visibleFields = STEP_FORM_FIELDS[activeStep];
             for (const [field, errorMessage] of errors) {
-              setError(field, errorMessage);
+              if (!visibleFields || visibleFields.includes(field)) {
+                setError(field, errorMessage);
+              }
             }
             const combinedMessage = errors.map(([, err]) => err.message).join('\n');
             setStepStatusInfo({

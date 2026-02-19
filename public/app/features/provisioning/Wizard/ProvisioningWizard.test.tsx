@@ -435,6 +435,73 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
     });
 
+    it('should allow retry after non-field error on connection step', async () => {
+      const mockSubmitData = jest.fn();
+      const mockMutationState = {
+        status: QueryStatus.uninitialized,
+        isLoading: false,
+        error: null,
+      };
+      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
+        mockSubmitData,
+        mockMutationState,
+        mockMutationState,
+      ]);
+
+      const urlError = {
+        data: {
+          kind: 'TestResults',
+          apiVersion: 'provisioning.grafana.app/v0alpha1',
+          success: false,
+          code: 400,
+          errors: [
+            {
+              type: 'FieldValueInvalid',
+              field: 'spec.github.url',
+              detail: 'Invalid repository URL',
+            },
+          ],
+        },
+        status: 400,
+      };
+
+      // authType succeeds → connection fails with URL error → retry succeeds
+      mockSubmitData
+        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } })
+        .mockRejectedValueOnce(urlError)
+        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } });
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await fillConnectionForm(user, 'github', {
+        token: 'test-token',
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        path: '/',
+      });
+
+      // First connection attempt — fails with URL error (field not on this step)
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      // Error banner is shown
+      expect(await screen.findByRole('alert', { name: /Repository connection failed/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
+
+      // User edits a visible field (branch)
+      const branchCombobox = screen.getByRole('combobox');
+      await user.clear(branchCombobox);
+      await user.type(branchCombobox, 'develop{Enter}');
+
+      // Retry — should not be silently blocked
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      // Submit was called 3 times: 1 authType + 2 connection attempts
+      expect(mockSubmitData).toHaveBeenCalledTimes(3);
+
+      // Wizard advances to next step — proves no silent block
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+    });
+
     it('should show error alert for Status API errors', async () => {
       const mockSubmitData = jest.fn();
       const mockMutationState = {
