@@ -11335,6 +11335,7 @@
     },
     "megamenu": {
       "close": "Close menu",
+      "dialog-label": "Navigation",
       "dock": "Dock menu",
       "list-label": "Navigation",
       "open": "Open menu",
