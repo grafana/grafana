@@ -373,15 +373,15 @@ export type TabsTestSetup = {
 /**
  * Setups a tabs drag and drop test scenario
  */
-export function setupTabsTest(scenario: TabsTestSetup) {
+export function setupTabsTest(senario: TabsTestSetup) {
   let drag: TabItem | undefined = undefined;
-  let sourceIndex = 0;
   let destIndex = 0;
-  let destManager = undefined;
+  let destManager: TabsLayoutManager | undefined = undefined;
+  let sourceManager: TabsLayoutManager | undefined = undefined;
 
   const managers: TabsLayoutManager[] = [];
 
-  const rows = scenario.tabs.map((tabsInRow) => {
+  const rows = senario.tabs.map((tabsInRow) => {
     const names = tabsInRow.split(' ');
     const tabs: TabItem[] = [];
     const layout = new TabsLayoutManager({ tabs: [] });
@@ -392,14 +392,14 @@ export function setupTabsTest(scenario: TabsTestSetup) {
       const title = name[0];
       const tab = new TabItem({ title });
 
-      if (title === scenario.drag) {
+      if (title === senario.drag) {
         drag = tab;
-        sourceIndex = index;
+        sourceManager = layout;
       }
 
-      if (title === scenario.drop) {
+      if (title === senario.drop) {
         destManager = layout;
-        destIndex = scenario.after ? index + 1 : index;
+        destIndex = senario.after ? index + 1 : index;
       }
 
       index++;
@@ -409,9 +409,9 @@ export function setupTabsTest(scenario: TabsTestSetup) {
           .slice(1)
           .split('')
           .map((title) => {
-            if (title === scenario.drop) {
+            if (title === senario.drop) {
               destManager = layout;
-              destIndex = scenario.after ? index + 1 : index;
+              destIndex = senario.after ? index + 1 : index;
             }
             index++;
             return new TabItem({ title, repeatSourceKey: tab.state.key });
@@ -431,8 +431,12 @@ export function setupTabsTest(scenario: TabsTestSetup) {
 
   return {
     performDrag: () => {
-      orchestrator.startTabDrag(drag!);
-      orchestrator.stopTabDrag(destManager!.state.key!, sourceIndex, destIndex);
+      // Simulate dnd start
+      orchestrator.startTabDrag(sourceManager!.state.key!, drag!.state.key!);
+      // Simulate pointer move over destination tabs manager so orchestrator considers it a valid drop target
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = destManager!;
+      orchestrator.stopTabDrag(destIndex);
     },
     assertExpectedTabs: () => {
       const all = managers.map((manager) =>
@@ -441,7 +445,7 @@ export function setupTabsTest(scenario: TabsTestSetup) {
           .map((t) => t.state.title)
           .join('')
       );
-      expect(all).toEqual(scenario.expected.map((t) => t.replace(/ /g, '')));
+      expect(all).toEqual(senario.expected.map((t) => t.replace(/ /g, '')));
     },
     assertInitialTabs: () => {
       const all = managers.map((manager) =>
@@ -450,7 +454,7 @@ export function setupTabsTest(scenario: TabsTestSetup) {
           .map((t) => t.state.title)
           .join('')
       );
-      expect(all).toEqual(scenario.tabs.map((t) => t.replace(/ /g, '')));
+      expect(all).toEqual(senario.tabs.map((t) => t.replace(/ /g, '')));
     },
   };
 }

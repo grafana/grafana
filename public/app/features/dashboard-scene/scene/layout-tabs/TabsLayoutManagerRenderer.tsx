@@ -47,8 +47,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const onBeforeDragStart = (start: DragStart) => {
     const sourceTabsManagerId = start.source.droppableId;
     const draggedTabId = start.draggableId;
-    const draggedTabIndex = start.source.index;
-    orchestrator?.startTabDrag(sourceTabsManagerId, draggedTabId, draggedTabIndex);
+    orchestrator?.startTabDrag(sourceTabsManagerId, draggedTabId);
   };
 
   const onDragEnd = (result: DropResult) => {
