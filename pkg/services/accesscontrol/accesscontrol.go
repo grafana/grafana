@@ -29,6 +29,8 @@ type AccessControl interface {
 	// This is useful when we don't want to reuse any pre-configured resolvers
 	// for a authorization call.
 	WithoutResolvers() AccessControl
+	// InvalidateResolverCache removes a scope resolution from the cache
+	InvalidateResolverCache(orgID int64, scope string)
 }
 
 type Service interface {
