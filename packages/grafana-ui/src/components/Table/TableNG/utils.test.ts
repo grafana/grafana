@@ -19,7 +19,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { MeasureCellHeightEntry } from './types';
+import { MeasureCellHeightEntry, TableRow } from './types';
 import {
   extractPixelValue,
   frameToRecords,
@@ -1226,6 +1226,7 @@ describe('TableNG utils', () => {
 
   describe('getRowHeight', () => {
     let fields: Field[];
+    let rows: TableRow[];
     let measurers: MeasureCellHeightEntry[];
 
     beforeEach(() => {
@@ -1243,6 +1244,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
+      rows = frameToRecords(createDataFrame({ fields }));
       measurers = [
         {
           measure: jest.fn(
@@ -1261,43 +1263,43 @@ describe('TableNG utils', () => {
 
     it('should use the default height for single-line rows', () => {
       // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
-      expect(getRowHeight(fields, 0, [30, 30], 36, measurers, 20, 10)).toBe(36);
+      expect(getRowHeight(fields, { __index: 0, __depth: 0 }, [30, 30], 36, measurers, 20, 10)).toBe(36);
     });
 
     it('should use the default height for multi-line rows which are shorter than the default height', () => {
       // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
-      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 5, 5)).toBe(36);
+      expect(getRowHeight(fields, { __index: 3, __depth: 0 }, [30, 30], 36, measurers, 5, 5)).toBe(36);
     });
 
     it('should return the row height using line measurers for multi-line', () => {
       // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
-      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(70);
+      expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
 
       // 4 lines @ 15px (789 122 349 932), 15px vertical padding
-      expect(getRowHeight(fields, 4, [30, 30], 36, measurers, 15, 15)).toBe(75);
+      expect(getRowHeight(fields, rows[4], [30, 30], 36, measurers, 15, 15)).toBe(75);
     });
 
     it('should take colWidths into account when calculating max wrap cell', () => {
-      getRowHeight(fields, 3, [50, 60], 36, measurers, 20, 10);
+      getRowHeight(fields, rows[3], [50, 60], 36, measurers, 20, 10);
       expect(measurers[0].measure).toHaveBeenCalledWith('longer one here', 50, fields[0], 3, 20);
       expect(measurers[1].measure).toHaveBeenCalledWith(123456, 60, fields[1], 3, 20);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
-      getRowHeight(fields, -1, [50, 60], 36, measurers, 20, 10);
+      getRowHeight(fields, { __index: -1, __depth: 0 }, [50, 60], 36, measurers, 20, 10);
       expect(measurers[0].measure).toHaveBeenCalledWith('Name', 50, fields[0], -1, 20);
       expect(measurers[1].measure).toHaveBeenCalledWith('Age', 60, fields[1], -1, 20);
     });
 
     it('should ignore columns which do not have measurers', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [measurers[1]], 20, 10);
+      const height = getRowHeight(fields, rows[3], [30, 30], 36, [measurers[1]], 20, 10);
       // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
       expect(height).toBe(50);
     });
 
     it('should return the default height if there are no measurers to apply', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
+      const height = getRowHeight(fields, rows[3], [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
     });
 
@@ -1324,14 +1326,14 @@ describe('TableNG utils', () => {
       // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
       // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
       it('uses the estimate value rather than the precise value to select the row height', () => {
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
         jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(36);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(36);
 
         // this is what we really care about - we want to save on performance by not calling the measure in this case.
         expect(measurers[1].measure).not.toHaveBeenCalled();
@@ -1345,7 +1347,7 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - thresholdOffset);
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
     });
   });
@@ -1452,7 +1454,7 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
-      const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
+      const records = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
       expect(records).toMatchObject([
         { time: 1, value: 20 },

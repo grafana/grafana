@@ -65,7 +65,7 @@ describe('TableNG hooks', () => {
 
       act(() => {
         result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']) },
+          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
         });
       });
 
@@ -79,7 +79,7 @@ describe('TableNG hooks', () => {
 
       act(() => {
         result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']) },
+          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
         });
       });
 
@@ -158,6 +158,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
           initialSortBy: [{ displayName: 'age', desc: false }],
+          hasNestedFrames: false,
         })
       );
 
@@ -171,6 +172,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
           initialSortBy: [{ displayName: 'age', desc: false }],
+          hasNestedFrames: false,
         })
       );
 
@@ -586,7 +588,15 @@ describe('TableNG hooks', () => {
               defaultHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              expandedRows: new Set([0]),
+              visibleNestedRowCounts: [1],
+              nestedRows: [
+                {
+                  raw: frameToRecords(createDataFrame({ fields })),
+                  final: frameToRecords(createDataFrame({ fields })),
+                },
+              ],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
             });
             if (typeof rowHeight !== 'function') {
               throw new Error('Expected rowHeight to be a function');
@@ -642,7 +652,10 @@ describe('TableNG hooks', () => {
               defaultHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: false,
-              expandedRows: new Set(),
+              visibleNestedRowCounts: [],
+              nestedRows: [],
+              nestedFields: [],
+              nestedColWidths: [],
             });
             if (typeof rowHeight !== 'function') {
               throw new Error('Expected rowHeight to be a function');
@@ -664,6 +677,7 @@ describe('TableNG hooks', () => {
 
       it('adjusts the width of the columns based on the cell padding and border', () => {
         fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+        rows = frameToRecords(createDataFrame({ fields: fieldsWithWrappedText }));
 
         const measureHeightFn = jest.fn(() => 40);
         const estimateHeightFn = jest.fn(() => 40);
@@ -674,7 +688,10 @@ describe('TableNG hooks', () => {
             defaultHeight: 40,
             typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: false,
-            expandedRows: new Set(),
+            visibleNestedRowCounts: [],
+            nestedRows: [],
+            nestedFields: [],
+            nestedColWidths: [],
           });
           if (typeof rowHeight !== 'function') {
             throw new Error('Expected rowHeight to be a function');
