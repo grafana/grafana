@@ -5409,8 +5409,7 @@
     "panel-menu-behavior": {
       "async-func": {
         "text": {
-          "extensions": "Extensions",
-          "metrics-drilldown": "Metrics drilldown"
+          "extensions": "Extensions"
         }
       }
     },
