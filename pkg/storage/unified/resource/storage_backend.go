@@ -309,6 +309,11 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	b.log.Info("starting garbage collection loop")
 
+	if b.garbageCollection.Interval <= 0 {
+		b.log.Error("garbage collection interval must be greater than 0")
+		return fmt.Errorf("garbage collection interval must be greater than 0")
+	}
+
 	go func() {
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		if b.garbageCollection.Interval > 0 {
