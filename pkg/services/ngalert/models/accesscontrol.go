@@ -16,6 +16,8 @@ const (
 	PermissionView  ReceiverPermission = "View"
 	PermissionEdit  ReceiverPermission = "Edit"
 	PermissionAdmin ReceiverPermission = "Admin"
+
+	NewReceiverScopeID = "-"
 )
 
 var (
@@ -25,6 +27,10 @@ var (
 
 type ReceiverScopeProvider struct {
 	accesscontrol.ScopeProvider
+}
+
+func (p ReceiverScopeProvider) GetNewResourceScope() string {
+	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(NewReceiverScopeID))
 }
 
 func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {

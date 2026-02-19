@@ -8,4 +8,5 @@ manifest: {
 	        kinds: [shorturl]
 	    }
 	}
+	roles: {}
 }
