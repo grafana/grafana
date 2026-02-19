@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,
   NestedScene,
@@ -71,25 +71,28 @@ const grafanaCloudPromDs: DataSourceInformation = {
   settings: undefined,
 };
 
-const SERIES_COLORS = {
-  alerting: 'red',
-  firing: 'red',
-  active: 'red',
-  missed: 'red',
-  failed: 'red',
-  pending: 'yellow',
-  recovering: 'yellow',
-  nodata: 'blue',
-  'active evaluation': 'blue',
-  normal: 'green',
-  success: 'green',
-  error: 'orange',
+const themeColors = config.theme2.colors;
+
+const SERIES_COLOR_MAPPING = {
+  alerting: themeColors.error.main,
+  firing: themeColors.error.main,
+  active: themeColors.error.main,
+  missed: themeColors.error.main,
+  failed: themeColors.error.main,
+  pending: themeColors.warning.main,
+  recovering: themeColors.warning.main,
+  nodata: themeColors.info.main,
+  'active evaluation': themeColors.info.main,
+  normal: themeColors.success.main,
+  success: themeColors.success.main,
+  error: themeColors.warning.text,
 };
 
-export function overrideToFixedColor(key: keyof typeof SERIES_COLORS) {
+// ⚠️ these colors will _not_ update if user changes their theme without refreshing
+export function overrideToFixedColor(key: keyof typeof SERIES_COLOR_MAPPING) {
   return {
     mode: 'fixed',
-    fixedColor: SERIES_COLORS[key],
+    fixedColor: SERIES_COLOR_MAPPING[key],
   };
 }
 

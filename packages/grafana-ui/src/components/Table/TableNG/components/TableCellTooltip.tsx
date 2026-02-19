@@ -3,6 +3,7 @@ import { DataGridHandle } from 'react-data-grid';
 
 import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
@@ -153,16 +154,25 @@ export const TableCellTooltip = memo(
           />
         )}
 
-        {/* TODO: figure out an accessible way to trigger the tooltip. */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div
           className={classes.tooltipCaret}
           ref={tooltipCaretRef}
           data-testid={selectors.components.Panels.Visualization.TableNG.Tooltip.Caret}
+          aria-label={t('grafana-ui.table.tooltip.trigger', 'Toggle tooltip')}
+          role="button"
+          aria-haspopup="true"
           aria-pressed={pinned}
+          tabIndex={0}
           onClick={() => setPinned((prev) => !prev)}
           onMouseLeave={onMouseLeave}
           onMouseEnter={onMouseEnter}
+          onKeyDown={(ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              ev.stopPropagation();
+              setPinned((prev) => !prev);
+            }
+          }}
           onBlur={onMouseLeave}
           onFocus={onMouseEnter}
         />
