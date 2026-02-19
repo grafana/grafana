@@ -77,6 +77,7 @@ describe('OwnerReferenceSelector', () => {
   it('searches teams by typed query string', async () => {
     const queries: string[] = [];
 
+    // This just checks if we call the api with the right param and then passes it to the regular handler
     server.use(
       http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', ({ request }) => {
         const query = new URL(request.url).searchParams.get('query') ?? '';
