@@ -48,10 +48,10 @@ Your annotation query must return a `time` column and can optionally include `ti
 
 | Column    | Required | Description                                                                                   |
 | --------- | -------- | --------------------------------------------------------------------------------------------- |
-| `time`    | Yes      | The timestamp for the annotation. Can be a native SQL date/time type or UNIX epoch value.      |
-| `timeend` | No       | The end timestamp for range annotations. Creates a shaded region instead of a vertical line.   |
+| `time`    | Yes      | The timestamp for the annotation. Can be a native SQL date/time type or UNIX epoch value.     |
+| `timeend` | No       | The end timestamp for range annotations. Creates a shaded region instead of a vertical line.  |
 | `text`    | No       | The annotation description displayed when you hover over the annotation.                      |
-| `tags`    | No       | Tags for the annotation as a comma-separated string. Helps categorize and filter annotations.  |
+| `tags`    | No       | Tags for the annotation as a comma-separated string. Helps categorize and filter annotations. |
 
 ## Example queries
 
