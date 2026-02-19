@@ -106,7 +106,7 @@ Under certain circumstances you may require your users to re-authenticate before
 - Delete the user's token `user_auth_token` from the database. This requires database access as is not available to Grafana Cloud customers.
 - Set `login_maximum_lifetime_duration` to 1 minute, wait for the logout to take effect (usually it's executed in under 10 minutes), then reset `login_maximum_lifetime_duration` to its usual value. 
 
-Use cases inclue:
+Use cases include:
 
 - SSO migrations: Force re-auth to pick up new IdP/permissions
 - Security incidents: Immediate response to credential compromise
