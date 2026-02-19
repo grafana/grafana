@@ -1366,6 +1366,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableResourceEndpointFrontend",
+        "resourceVersion": "1771492008460",
+        "creationTimestamp": "2026-02-19T09:06:48Z"
+      },
+      "spec": {
+        "description": "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesRerouteLegacyCRUDAPIs",
         "resourceVersion": "1771410284502",
         "creationTimestamp": "2026-02-18T10:24:44Z"
