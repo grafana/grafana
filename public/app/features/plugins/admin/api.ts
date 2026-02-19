@@ -33,13 +33,17 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const installedVersion = local?.info.version;
   const installedVersionMissing = !versions.some((v) => v.version === installedVersion);
   if (installedVersion && installedVersionMissing) {
-    const missingVersion = await getPluginVersion(id, installedVersion);
-    if (missingVersion?.status === 'deprecated') {
-      missingVersion.isCompatible = false;
-      versions.push(missingVersion);
-      versions.sort((a, b) => {
-        return isVersionGtOrEq(a.version, b.version) ? -1 : 1;
-      });
+    try {
+      const missingVersion = await getPluginVersion(id, installedVersion);
+      if (missingVersion?.status === 'deprecated') {
+        missingVersion.isCompatible = false;
+        versions.push(missingVersion);
+        versions.sort((a, b) => {
+          return isVersionGtOrEq(a.version, b.version) ? -1 : 1;
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to fetch details for installed version ${installedVersion} of plugin ${id}`, error);
     }
   }
 
@@ -135,6 +139,7 @@ async function getPluginVersion(id: string, version: string): Promise<Version> {
   } catch (error) {
     if (isFetchError(error)) {
       // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+      console.log(error);
       error.isHandled = true;
     }
     throw error;
