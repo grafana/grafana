@@ -119,12 +119,12 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 
 | Macro example                                         | Description                                                                                                                                                                                                               |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                             |
+| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. It also helps to recognize the time column, as required in Time Series format. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                             |
 | `$__timeEpoch(dateColumn)`                            | Replaces the value with an expression to convert to a UNIX Epoch timestamp and renames the column to `time_sec`. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                       |
-| `$__timeFilter(dateColumn)`                           | Replaces the value a time range filter using the specified column name. Example: `dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)`                                                             |
+| `$__timeFilter(dateColumn)`                           | Applies a time range filter using the specified column name and fetches only the data that falls within that range. Example: `dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)`                                                             |
 | `$__timeFrom()`                                       | Replaces the value with the start of the currently active time selection. Example: `FROM_UNIXTIME(1494410783)`                                                                                                            |
 | `$__timeTo()`                                         | Replaces the value with the end of the currently active time selection. Example: `FROM_UNIXTIME(1494410983)`                                                                                                              |
-| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a `GROUP BY` clause. Example: `cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) AS signed)*300 AS signed)`                                                            |
+| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a `GROUP BY` clause and creates the bucket timestamps at a fixed interval. Example: `cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) AS signed)*300 AS signed)`                                                            |
 | `$__timeGroup(dateColumn,'5m', 0)`                    | Same as the `$__timeGroup(dateColumn,'5m')` macro, but includes a fill parameter to ensure missing points in the series are added by Grafana, using 0 as the default value. **This applies only to time series queries.** |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as the `$__timeGroup(dateColumn,'5m', 0)` but `NULL` is used as the value for missing points. _This applies only to time series queries._                                                                            |
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists, it uses `NULL`. _This applies only to time series queries._        |
@@ -170,104 +170,127 @@ The examples in this section refer to the data in the following table:
 +---------------------+--------------+---------------------+----------+
 | time_date_time      | value_double | CreatedAt           | hostname |
 +---------------------+--------------+---------------------+----------+
-| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
-| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
-| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
-| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
-| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
+| 2025-01-02 03:05:00 | 3.0          | 2025-01-02 03:05:00 | 10.0.1.1 |
+| 2025-01-02 03:06:00 | 4.0          | 2025-01-02 03:06:00 | 10.0.1.2 |
+| 2025-01-02 03:10:00 | 6.0          | 2025-01-02 03:10:00 | 10.0.1.1 |
+| 2025-01-02 03:11:00 | 7.0          | 2025-01-02 03:11:00 | 10.0.1.2 |
+| 2025-01-02 03:20:00 | 5.0          | 2025-01-02 03:20:00 | 10.0.1.2 |
 +---------------------+--------------+---------------------+----------+
 ```
-
-Time series query results are returned in [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). In the data frame query result, any column, except for time or string-type columns, transforms into value fields. String columns, on the other hand, become field labels.
 
 {{< admonition type="note" >}}
 For backward compatibility, an exception to this rule applies to queries that return three columns, one of which is a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, while the series name is set to its value. See the following example for reference.
 {{< /admonition >}}
 
-**Example with `metric` column:**
+**Example with `$__time(dateColumn)` Macro:**
 
 ```sql
 SELECT
-  $__timeGroupAlias("time_date_time",'5m'),
-  min("value_double"),
-  'min' as metric
-FROM test_data
-WHERE $__timeFilter("time_date_time")
+  $__time(time_date_time),
+  value_double
+FROM my_data
+ORDER BY time_date_time
+```
+
+Table panel result:
+
+(internal_reference_url_to_be_added)
+
+In the following example, the result includes two columns, Time and value_double, which represent the data associated with fixed timestamps. This query does not apply a time range filter and returns all rows from the table.
+
+**Example with `$__timeFilter(dateColumn)` Macro:**
+
+```sql
+SELECT
+  $__time(time_date_time),
+  value_double
+FROM my_data
+WHERE $__timeFilter(time_date_time)
+ORDER BY time_date_time
+```
+
+Table panel result: 
+
+(internal_reference_url_to_be_added)
+
+This example returns the same result as the previous one, but adds support for filtering data using the Grafana time picker.
+
+**Example with `$__timeGroup(dateColumn,'5m')` Macro:**
+
+```sql
+SELECT
+  $__timeGroup(time_date_time, '5m') AS time,
+  sum(value_double) AS sum_value
+FROM my_data
+WHERE $__timeFilter(time_date_time)
 GROUP BY time
 ORDER BY time
 ```
 
-Data frame result:
+Table panel result: 
 
-```text
-+---------------------+-----------------+
-| Name: time          | Name: min       |
-| Labels:             | Labels:         |
-| Type: []time.Time   | Type: []float64 |
-+---------------------+-----------------+
-| 2020-01-02 03:05:00 | 3               |
-| 2020-01-02 03:10:00 | 6               |
-+---------------------+-----------------+
-```
+(internal_reference_url_to_be_added)
 
-To customize default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
+Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](internal_reference_url_to_be_added).
 
-Following are time series query examples.
-
-**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Example with `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
 ```sql
 SELECT
-  $__timeGroupAlias("createdAt",'5m',0),
-  sum(value) as value,
+  $__timeGroupAlias(time_date_time,'5m'),
+  min(value_double),
+  'min' as metric
+FROM my_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY time
+ORDER BY time
+```
+
+Table panel result: 
+
+(internal_reference_url_to_be_added)
+
+The following result is similar to the result of the `$__timeGroup(dateColumn,'5m')` macro, except it uses a built-in alias for the time column. To customize the default series name formatting (optional), refer to [Standard options definitions](internal_reference_url_to_be_added).
+
+
+**Example with `$__timeGroupAlias` Macro to convert null values to zero instead:**
+
+```sql
+SELECT
+  $__timeGroupAlias(createdAt,'5m',0),
+  sum(value_double) as value,
   hostname
-FROM test_data
+FROM my_data
 WHERE
-  $__timeFilter("createdAt")
+  $__timeFilter(createdAt)
 GROUP BY time, hostname
 ORDER BY time
 ```
 
-Based on the data frame result in the following example, the time series panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](ref:configure-standard-options-display-name) display value `${__field.labels.hostname}`.
+Table panel result: 
 
-Data frame result:
+(internal_reference_url_to_be_added)
 
-```text
-+---------------------+---------------------------+---------------------------+
-| Name: time          | Name: value               | Name: value               |
-| Labels:             | Labels: hostname=10.0.1.1 | Labels: hostname=10.0.1.2 |
-| Type: []time.Time   | Type: []float64           | Type: []float64           |
-+---------------------+---------------------------+---------------------------+
-| 2020-01-02 03:05:00 | 3                         | 4                         |
-| 2020-01-02 03:10:00 | 6                         | 7                         |
-+---------------------+---------------------------+---------------------------+
-```
+Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the Time column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](internal_reference_url_to_be_added) to display the value of ${__field.labels.hostname}.
 
-**Example with multiple columns:**
+**Example with multiple columns for `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
 ```sql
 SELECT
-  $__timeGroupAlias("time_date_time",'5m'),
-  min("value_double") as "min_value",
-  max("value_double") as "max_value"
-FROM test_data
-WHERE $__timeFilter("time_date_time")
+  $__timeGroupAlias(time_date_time,'5m'),
+  min(value_double) as min_value,
+  max(value_double) as max_value
+FROM my_data
+WHERE $__timeFilter(time_date_time)
 GROUP BY time
 ORDER BY time
 ```
 
-Data frame result:
+Table panel result: 
 
-```text
-+---------------------+-----------------+-----------------+
-| Name: time          | Name: min_value | Name: max_value |
-| Labels:             | Labels:         | Labels:         |
-| Type: []time.Time   | Type: []float64 | Type: []float64 |
-+---------------------+-----------------+-----------------+
-| 2020-01-02 03:04:00 | 3               | 4               |
-| 2020-01-02 03:05:00 | 6               | 7               |
-+---------------------+-----------------+-----------------+
-```
+(internal_reference_url_to_be_added)
+
+The query returns multiple columns representing minimum and maximum values within the defined range.
 
 ## Templating
 
