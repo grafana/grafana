@@ -1,6 +1,11 @@
 import { ChangeEvent } from 'react';
 
-import { AzureClientCertificateCredentials, AzureClientSecretCredentials, AzureCredentials } from '@grafana/azure-sdk';
+import {
+  AzureClientCertificateCredentials,
+  AzureClientSecretCredentials,
+  AzureCredentials,
+  CertificateFormat,
+} from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Select } from '@grafana/ui';
@@ -207,6 +212,14 @@ const AppRegistrationClientCertificateCredentials = ({
   credentials: AzureClientCertificateCredentials;
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
 }) => {
+  const onCertificateFormatChange = (selected: SelectableValue<CertificateFormat>) => {
+    const updated: AzureClientCertificateCredentials = {
+      ...credentials,
+      certificateFormat: selected.value,
+    };
+    onCredentialsChange(updated);
+  };
+
   const onClientCertificateChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const updated: AzureClientCertificateCredentials = {
       ...credentials,
@@ -237,25 +250,48 @@ const AppRegistrationClientCertificateCredentials = ({
     };
     onCredentialsChange(updated);
   };
-  const onPrivateKeyPasswordChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const onCertificatePasswordChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const updated: AzureClientCertificateCredentials = {
       ...credentials,
-      privateKeyPassword: event.target.value,
+      certificatePassword: event.target.value,
     };
     onCredentialsChange(updated);
   };
 
-  const onPrivateKeyPasswordReset = () => {
+  const onCertificatePasswordReset = () => {
     const updated: AzureClientCertificateCredentials = {
       ...credentials,
-      privateKeyPassword: '',
+      certificatePassword: '',
     };
     onCredentialsChange(updated);
   };
+
+  const certificateFormatOptions = [
+    { label: 'PEM', value: CertificateFormat.PEM },
+    { label: 'PFX', value: CertificateFormat.PFX },
+  ];
 
   return (
     <>
-      {!disabled && (
+      <Field
+        label={t('components.app-registration-credentials.label-certificate-format', 'Format')}
+        description={t(
+          'components.app-registration-credentials.description-certificate-format',
+          'Choose the format of the certificate (PEM certificates should be in plain text PEM format, PFX certificates should be in base64 encoded PFX format)'
+        )}
+        data-testid={selectors.components.configEditor.certificateFormat.select}
+        htmlFor="certificate-format"
+        noMargin
+      >
+        <Select
+          className="width-15"
+          value={certificateFormatOptions.find((opt) => opt.value === credentials.certificateFormat)}
+          options={certificateFormatOptions}
+          onChange={onCertificateFormatChange}
+          disabled={disabled}
+        />
+      </Field>
+      {!disabled && credentials.certificateFormat && (
         <Field
           label={t('components.app-registration-credentials.label-client-certificate', 'Client Certificate')}
           data-testid={selectors.components.configEditor.clientCertificate.input}
@@ -283,7 +319,7 @@ const AppRegistrationClientCertificateCredentials = ({
           />
         </Field>
       )}
-      {!disabled && (
+      {!disabled && credentials.certificateFormat === CertificateFormat.PEM && (
         <Field
           label={t('components.app-registration-credentials.label-private-key', 'Private Key')}
           data-testid={selectors.components.configEditor.privateKey.input}
@@ -308,9 +344,9 @@ const AppRegistrationClientCertificateCredentials = ({
           />
         </Field>
       )}
-      {!disabled && (
+      {!disabled && credentials.certificateFormat === CertificateFormat.PFX && (
         <Field
-          label={t('components.app-registration-credentials.label-symbol-private-key-password', 'Private Key Password')}
+          label={t('components.app-registration-credentials.label-symbol-private-key-password', 'Certificate Password')}
           htmlFor="private-key-password"
           noMargin
         >
@@ -322,13 +358,13 @@ const AppRegistrationClientCertificateCredentials = ({
             className="width-30"
             aria-label={t(
               'components.app-registration-credentials.aria-label-private-key-password',
-              'Private Key Password'
+              'Certificate Password'
             )}
-            onChange={onPrivateKeyPasswordChange}
+            onChange={onCertificatePasswordChange}
             id="private-key-password"
             disabled={disabled}
-            isConfigured={typeof credentials.privateKeyPassword === 'symbol'}
-            onReset={onPrivateKeyPasswordReset}
+            isConfigured={typeof credentials.certificatePassword === 'symbol'}
+            onReset={onCertificatePasswordReset}
           />
         </Field>
       )}

@@ -23,8 +23,11 @@ export const components = {
     privateKey: {
       input: 'data-testid private-key',
     },
-    privateKeyPassword: {
+    certificatePassword: {
       input: 'data-testid private-key-password',
+    },
+    certificateFormat: {
+      select: 'data-testid certificate-format',
     },
     loadSubscriptions: {
       button: 'data-testid load-subscriptions',
