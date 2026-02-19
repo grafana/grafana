@@ -9,6 +9,7 @@
     "@grafana/lezer-logql": "0.2.9",
     "@grafana/llm": "1.0.2",
     "@grafana/monaco-logql": "^0.0.8",
+    "@grafana/plugin-ui": "^0.13.1",
     "@grafana/runtime": "12.4.0-pre",
     "@grafana/schema": "12.4.0-pre",
     "@grafana/ui": "12.4.0-pre",
