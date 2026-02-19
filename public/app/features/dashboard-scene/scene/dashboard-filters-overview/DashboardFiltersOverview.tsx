@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
-import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
@@ -14,6 +15,7 @@ import { MULTI_OPERATOR_VALUES } from './utils';
 const GROUP_HEADER_HEIGHT = 32;
 const FILTER_ROW_HEIGHT = 32;
 const ROW_GAP = 8;
+const SKELETON_ROW_COUNT = 30;
 
 interface DashboardFiltersOverviewProps {
   adhocFilters?: AdHocFiltersVariable;
@@ -52,8 +54,10 @@ export const DashboardFiltersOverview = ({
 
   if (loading) {
     return (
-      <div className={styles.centered}>
-        {t('dashboard.filters-overview.loading', 'Loading filters')}&nbsp;<Spinner inline />
+      <div className={styles.skeletonContainer}>
+        {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
+          <Skeleton key={i} height={FILTER_ROW_HEIGHT} containerClassName={styles.skeletonRow} />
+        ))}
       </div>
     );
   }
@@ -181,12 +185,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     minHeight: 0,
   }),
-  centered: css({
+  skeletonContainer: css({
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'column',
+    gap: ROW_GAP,
     width: '100%',
-    flex: 1,
+  }),
+  skeletonRow: css({
+    display: 'block',
+    lineHeight: 1,
   }),
   listContainer: css({
     width: '100%',
