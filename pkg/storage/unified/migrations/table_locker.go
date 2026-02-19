@@ -16,9 +16,9 @@ type legacyTableLocker struct {
 }
 
 // LockMigrationTables locks the legacy tables during migration to prevent concurrent writes.
-func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []string) (func() error, error) {
+func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []string) (func(context.Context) error, error) {
 	if len(tables) == 0 {
-		return func() error { return nil }, nil
+		return func(context.Context) error { return nil }, nil
 	}
 
 	sqlHelper, err := l.sql(ctx)
@@ -29,7 +29,7 @@ func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []st
 	dbType := string(sqlHelper.DB.GetDBType())
 	if dbType == "sqlite3" {
 		// SQLite already has a shared session at this point
-		return func() error { return nil }, nil
+		return func(context.Context) error { return nil }, nil
 	}
 
 	quotedTables := make([]string, 0, len(tables))
@@ -45,7 +45,7 @@ func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []st
 		quotedTables = append(quotedTables, sqlHelper.DB.Quote(sqlHelper.Table(table)))
 	}
 	if len(quotedTables) == 0 {
-		return func() error { return nil }, nil
+		return func(context.Context) error { return nil }, nil
 	}
 
 	switch dbType {
@@ -60,7 +60,7 @@ func (l *legacyTableLocker) LockMigrationTables(ctx context.Context, tables []st
 
 // lockMySQL acquires READ locks on a dedicated connection outside the pool.
 // This prevents LOCK TABLES from poisoning pooled connections (MySQL error 1100).
-func (l *legacyTableLocker) lockMySQL(ctx context.Context, sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func() error, error) {
+func (l *legacyTableLocker) lockMySQL(ctx context.Context, sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func(context.Context) error, error) {
 	var lockSQL strings.Builder
 	lockSQL.WriteString("LOCK TABLES ")
 	for i, table := range quotedTables {
@@ -84,18 +84,18 @@ func (l *legacyTableLocker) lockMySQL(ctx context.Context, sqlHelper *legacysql.
 		return nil, err
 	}
 
-	return func() error {
+	return func(ctx context.Context) error {
 		defer func() {
 			if closeErr := conn.Close(); closeErr != nil {
 				tableLockerLog.Warn("failed to close lock connection", "error", closeErr)
 			}
 		}()
-		_, err := conn.ExecContext(context.Background(), "UNLOCK TABLES")
+		_, err := conn.ExecContext(ctx, "UNLOCK TABLES")
 		return err
 	}, nil
 }
 
-func (l *legacyTableLocker) lockPostgres(ctx context.Context, sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func() error, error) {
+func (l *legacyTableLocker) lockPostgres(ctx context.Context, sqlHelper *legacysql.LegacyDatabaseHelper, quotedTables []string) (func(context.Context) error, error) {
 	session := sqlHelper.DB.GetEngine().NewSession()
 	session = session.Context(ctx)
 
@@ -111,8 +111,8 @@ func (l *legacyTableLocker) lockPostgres(ctx context.Context, sqlHelper *legacys
 		return nil, err
 	}
 
-	return func() error {
+	return func(_ context.Context) error {
 		defer session.Close()
-		return session.Commit()
+		return session.Rollback()
 	}, nil
 }

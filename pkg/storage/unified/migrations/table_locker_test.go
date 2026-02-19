@@ -32,11 +32,11 @@ func (f fakeBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) 
 }
 
 type tableLockerMock struct {
-	unlockFunc func() error
+	unlockFunc func(context.Context) error
 	tables     []string
 }
 
-func (m *tableLockerMock) LockMigrationTables(ctx context.Context, tables []string) (func() error, error) {
+func (m *tableLockerMock) LockMigrationTables(ctx context.Context, tables []string) (func(context.Context) error, error) {
 	m.tables = tables
 	return m.unlockFunc, nil
 }
@@ -46,7 +46,7 @@ func TestUnifiedMigrationLocksTables(t *testing.T) {
 	dummyResource := schema.GroupResource{Group: "group", Resource: "resource"}
 	unlockCalled := false
 	tableLockerMock := &tableLockerMock{
-		unlockFunc: func() error {
+		unlockFunc: func(context.Context) error {
 			unlockCalled = true
 			return nil
 		},
@@ -98,7 +98,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, unlock)
 
-		err = unlock()
+		err = unlock(ctx)
 		require.NoError(t, err)
 	})
 
@@ -110,7 +110,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, unlock)
 
-		err = unlock()
+		err = unlock(ctx)
 		require.NoError(t, err)
 	})
 
@@ -122,7 +122,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, unlock)
 
-		err = unlock()
+		err = unlock(ctx)
 		require.NoError(t, err)
 	})
 
@@ -163,7 +163,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 		}
 
 		// Release the lock
-		require.NoError(t, unlock())
+		require.NoError(t, unlock(ctx))
 
 		// Now write should complete
 		select {

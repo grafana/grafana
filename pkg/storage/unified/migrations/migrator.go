@@ -28,7 +28,7 @@ type MigrateOptions struct {
 // MigrationTableLocker abstracts locking of legacy database tables during migration.
 type MigrationTableLocker interface {
 	// LockMigrationTables locks legacy tables during migration to prevent concurrent updates.
-	LockMigrationTables(ctx context.Context, tables []string) (func() error, error)
+	LockMigrationTables(ctx context.Context, tables []string) (func(context.Context) error, error)
 }
 
 // Read from legacy and write into unified storage
@@ -124,7 +124,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, err
 	}
 	defer func() {
-		if err := unlockTables(); err != nil {
+		if err := unlockTables(ctx); err != nil {
 			m.log.Error("error unlocking legacy tables", "error", err, "namespace", opts.Namespace)
 		}
 	}()
