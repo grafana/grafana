@@ -251,7 +251,7 @@ export class UPlotConfigBuilder {
   }
 
   private tzDate = (ts: number) => {
-    let date = new Date(ts);
+    const date = new Date(ts);
 
     return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
