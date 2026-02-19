@@ -199,6 +199,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
+/**
+ * A hack to remove snap-back effect from pangea/dnd.
+ * When dragging to another tabs manager pangea thinks it was dropped outisde of a droppable
+ * and creates a snap-back effect. Setting timing to "0" seems to confuse pange to think drop
+ * hasn't finished so we set it to a very small number.
+ *
+ * This will eventually be removed when we start using LayoutOrchestrator for dragging within a tab as well
+ */
 function getDraggableStyle(style: React.CSSProperties | undefined, snapshot: DraggableStateSnapshot) {
   if (!style || !snapshot.isDropAnimating || !snapshot.dropAnimation) {
     return style;
