@@ -99,6 +99,15 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
 }
 
 function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
+  const isDashboardLibraryEnabled =
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards;
+
+  if (!isDashboardLibraryEnabled) {
+    return {};
+  }
+
   // url values for dashboard library experiment
   const urlParams = new URLSearchParams(window.location.search);
   const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
@@ -119,21 +128,14 @@ function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
     false
   );
 
-  const dashboardLibraryProperties =
-    config.featureToggles.dashboardLibrary ||
-    config.featureToggles.dashboardTemplates ||
-    config.featureToggles.suggestedDashboards
-      ? {
-          isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
-          isDashboardTemplatesAssistantEnabled:
-            isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
-          datasourceTypes,
-          sourceEntryPoint,
-          libraryItemId,
-          creationOrigin,
-          ...(assistantSource && { assistantSource }),
-        }
-      : {};
-
-  return dashboardLibraryProperties;
+  return {
+    isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
+    isDashboardTemplatesAssistantEnabled:
+      isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
+    datasourceTypes,
+    sourceEntryPoint,
+    libraryItemId,
+    creationOrigin,
+    ...(assistantSource && { assistantSource }),
+  };
 }
