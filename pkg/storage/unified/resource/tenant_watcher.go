@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tenantGVR = schema.GroupVersionResource{
@@ -51,14 +53,40 @@ type TenantWatcherConfig struct {
 	Log            log.Logger
 }
 
+// NewTenantWatcherConfig creates TenantWatcherConfig from Grafana settings and returns nil
+// when required settings are missing. It logs why tenant watcher initialization is skipped.
+func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
+	logger := log.New("tenant-watcher")
+	if logger == nil {
+		logger = log.NewNopLogger()
+	}
+
+	if cfg == nil {
+		logger.Info("tenant watcher not initialized, config is nil")
+		return nil
+	}
+
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	tenantWatcherCfg := &TenantWatcherConfig{
+		TenantAPIServerURL: strings.TrimSpace(cfg.TenantApiServerAddress),
+		Token:              strings.TrimSpace(grpcSection.Key("token").MustString("")),
+		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
+		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
+		Log:                logger,
+	}
+
+	if tenantWatcherCfg.TenantAPIServerURL == "" || tenantWatcherCfg.Token == "" || tenantWatcherCfg.TokenExchangeURL == "" {
+		logger.Info("tenant watcher not valid - ensure tenant api address, token, and token exchange url are set")
+		return nil
+	}
+
+	return tenantWatcherCfg
+}
+
 // NewTenantRESTConfig creates a rest.Config that authenticates to the
 // app-platform API server using a signed access token sent via the
 // Authorization header.
 func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
-	if cfg.TenantAPIServerURL == "" {
-		return nil, fmt.Errorf("TenantAPIServerURL is required")
-	}
-
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if cfg.AllowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
