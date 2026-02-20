@@ -23,12 +23,10 @@ function getDefaultFieldWidth(
   timeFieldName: string,
   options: LogsTableOptions
 ): number | undefined {
-  if (getFieldDisplayName(field) !== timeFieldName) {
-    return undefined;
-  }
   if (fieldIndex !== 0) {
     return undefined;
   }
+
   if (options.showInspectLogLine && options.showCopyLogLink) {
     return DEFAULT_FIRST_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH;
   } else if (options.showInspectLogLine || options.showCopyLogLink) {
