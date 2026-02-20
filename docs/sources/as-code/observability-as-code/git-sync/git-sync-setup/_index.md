@@ -89,13 +89,11 @@ Refer to [Create a GitHub App](https://grafana.com/docs/grafana/<GRAFANA_VERSION
 If you want to configure Git Sync for GitHub and authenticate with GitHub App:
 
 - If you already have an existing GitHub App connected:
-
   1. Select **Choose an existing app**.
   1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
   1. Paste the **Repository URL** for your GitHub repository into the text box.
 
 - If you want to connect using a new GitHub App:
-
   1. Select **Connect to a new app**.
   1. Type in the following fields:
      - The ID of the GitHub App you want to use
