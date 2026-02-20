@@ -170,3 +170,22 @@ const sortByProp = <T>(items: T[], propGetter: (item: T) => Object | undefined) 
 
 export const sortDefaultVarsFirst = (items: SceneVariable[]) => sortByProp(items, (item) => item.state.source);
 export const sortDefaultLinksFirst = (items: DashboardLink[]) => sortByProp(items, (item) => item.source);
+
+/** Source describing where a default control (variable or link) was added from, e.g. a datasource */
+export interface ControlSource {
+  type: 'datasource';
+  ref: { group?: string };
+}
+
+/**
+ * Returns the display name of the plugin that added the control (e.g. datasource type name).
+ * Uses sync lookup from getList() so it's safe to call in render.
+ */
+export function getPluginNameForControlSource(source: ControlSource | undefined): string | undefined {
+  if (!source?.ref?.group) {
+    return undefined;
+  }
+  const list = getDataSourceSrv().getList({});
+  const ds = list.find((d) => d.meta.id === source.ref.group);
+  return ds?.meta.name ?? source.ref.group;
+}

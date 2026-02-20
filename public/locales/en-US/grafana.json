@@ -6496,7 +6496,8 @@
       "tooltip-copy-link": "Copy link",
       "tooltip-move-link-down": "Move link down",
       "tooltip-move-link-up": "Move link up",
-      "type": "Type"
+      "type": "Type",
+      "user-defined-heading": "User defined links"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
@@ -6550,6 +6551,18 @@
           "row-title": "Row title"
         }
       }
+    },
+    "default-links-table": {
+      "added-by-datasource": "Added by the '{{pluginName}}' plugin",
+      "added-by-datasource-unknown": "Added by datasource",
+      "heading": "System links",
+      "heading-tooltip": "These links are provided by the system and cannot be edited."
+    },
+    "default-variables-table": {
+      "added-by-datasource": "Added by the {{pluginName}} plugin",
+      "added-by-datasource-unknown": "Added by datasource",
+      "heading": "System variables",
+      "heading-tooltip": "These variables are provided by the system and cannot be edited."
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Failed to delete dashboard",
@@ -7129,6 +7142,7 @@
     "variable-editor-list": {
       "definition": "Definition",
       "new-variable": "New variable",
+      "user-defined-heading": "User defined variables",
       "variable": "Variable"
     },
     "variable-editor-list-row": {

@@ -8,6 +8,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
 import { DashboardLinkList } from '../settings/links/DashboardLinkList';
+import { SystemLinksSection } from '../settings/links/SystemLinksSection';
 import { NEW_LINK } from '../settings/links/utils';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -38,36 +39,50 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
   }
 
   public onNewLink = () => {
+    const editableLinks = this.links.filter((l) => l.source === undefined);
     this.links = [...this.links, NEW_LINK];
-    this.setState({ editIndex: this.links.length - 1 });
+    this.setState({ editIndex: editableLinks.length });
   };
 
-  public onDelete = (idx: number) => {
-    this.links = [...this.links.slice(0, idx), ...this.links.slice(idx + 1)];
-
+  /** Index is into the editable links list (excludes default links with source). */
+  public onDelete = (editableIndex: number) => {
+    const links = this.links;
+    const defaultLinks = links.filter((l) => l.source != null);
+    const editableLinks = links.filter((l) => l.source === undefined);
+    const newEditable = editableLinks.filter((_, i) => i !== editableIndex);
+    this.links = [...defaultLinks, ...newEditable];
     this.setState({ editIndex: undefined });
   };
 
   public onDuplicate = (link: DashboardLink) => {
-    this.links = [...this.links, { ...link }];
+    this.links = [...this.links, { ...link, source: undefined }];
   };
 
-  public onOrderChange = (idx: number, direction: number) => {
-    this.links = arrayUtils.moveItemImmutably(this.links, idx, idx + direction);
+  /** Indices are into the editable links list. */
+  public onOrderChange = (editableIndex: number, direction: number) => {
+    const links = this.links;
+    const defaultLinks = links.filter((l) => l.source != null);
+    const editableLinks = links.filter((l) => l.source === undefined);
+    const newEditable = arrayUtils.moveItemImmutably(editableLinks, editableIndex, editableIndex + direction);
+    this.links = [...defaultLinks, ...newEditable];
   };
 
-  public onEdit = (editIndex: number) => {
-    this.setState({ editIndex });
+  /** Index is into the editable links list. */
+  public onEdit = (editableIndex: number) => {
+    this.setState({ editIndex: editableIndex });
   };
 
   public onUpdateLink = (link: DashboardLink) => {
-    const idx = this.state.editIndex;
-
-    if (idx === undefined) {
+    const editableIndex = this.state.editIndex;
+    if (editableIndex === undefined) {
       return;
     }
-
-    this.links = [...this.links.slice(0, idx), link, ...this.links.slice(idx + 1)];
+    const links = this.links;
+    const defaultLinks = links.filter((l) => l.source != null);
+    const editableLinks = links.filter((l) => l.source === undefined);
+    const newEditable = [...editableLinks];
+    newEditable[editableIndex] = link;
+    this.links = [...defaultLinks, ...newEditable];
   };
 
   public onGoBack = () => {
@@ -80,7 +95,10 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
   const dashboard = getDashboardSceneFor(model);
   const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const linkToEdit = editIndex !== undefined ? links[editIndex] : undefined;
+
+  const defaultLinks = links.filter((l) => l.source != null);
+  const editableLinks = links.filter((l) => l.source === undefined);
+  const linkToEdit = editIndex !== undefined ? editableLinks[editIndex] : undefined;
 
   if (linkToEdit) {
     return (
@@ -99,13 +117,14 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
       <DashboardLinkList
-        links={links}
+        links={editableLinks}
         onNew={model.onNewLink}
         onEdit={model.onEdit}
         onDelete={model.onDelete}
         onDuplicate={model.onDuplicate}
         onOrderChange={model.onOrderChange}
       />
+      {defaultLinks.length > 0 && <SystemLinksSection links={defaultLinks} />}
     </Page>
   );
 }

@@ -63,6 +63,9 @@ export function DashboardLinkList({
 
   return (
     <>
+      <h5 className={styles.sectionHeading}>
+        <Trans i18nKey="dashboard-scene.dashboard-link-list.user-defined-heading">User defined links</Trans>
+      </h5>
       <table role="grid" className="filter-table filter-table--hover">
         <thead>
           <tr>
@@ -136,6 +139,9 @@ export function DashboardLinkList({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  sectionHeading: css({
+    marginBottom: theme.spacing(2),
+  }),
   titleWrapper: css({
     width: '20vw',
     textOverflow: 'ellipsis',

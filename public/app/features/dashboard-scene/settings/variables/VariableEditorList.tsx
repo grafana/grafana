@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import classNames from 'classnames';
 import { ReactElement } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -59,6 +60,9 @@ export function VariableEditorList({
     <EmptyVariablesList onAdd={onVariableAdd} />
   ) : (
     <Stack direction="column" gap={3}>
+      <h5 className={styles.sectionHeading}>
+        <Trans i18nKey="dashboard-scene.variable-editor-list.user-defined-heading">User defined variables</Trans>
+      </h5>
       <table
         className={classNames('filter-table', 'filter-table--hover', styles.tableContainer)}
         data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
@@ -155,7 +159,10 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  sectionHeading: css({
+    marginBottom: theme.spacing(2),
+  }),
   tableContainer: css({
     overflow: 'auto',
   }),
