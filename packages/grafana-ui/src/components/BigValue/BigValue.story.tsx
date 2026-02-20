@@ -10,7 +10,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  Props,
+  BigValueProps,
 } from './BigValue';
 import mdx from './BigValue.mdx';
 
@@ -58,7 +58,7 @@ const meta: Meta = {
   },
 };
 
-interface StoryProps extends Props {
+interface StoryProps extends BigValueProps {
   numeric: number;
   title: string;
   color: string;
@@ -95,7 +95,6 @@ export const ApplyNoValue: StoryFn<StoryProps> = ({
       width={width}
       height={height}
       colorMode={colorMode}
-      graphMode={graphMode}
       textMode={textMode}
       justifyMode={justifyMode}
       value={{
@@ -107,6 +106,18 @@ export const ApplyNoValue: StoryFn<StoryProps> = ({
       sparkline={graphMode === BigValueGraphMode.None ? undefined : sparkline}
     />
   );
+};
+
+ApplyNoValue.args = {
+  valueText: '$5022',
+  title: 'Total Earnings',
+  colorMode: BigValueColorMode.Value,
+  graphMode: BigValueGraphMode.Area,
+  justifyMode: BigValueJustifyMode.Auto,
+  width: 400,
+  height: 300,
+  color: 'red',
+  textMode: BigValueTextMode.Auto,
 };
 
 export const Basic: StoryFn<StoryProps> = ({
@@ -137,7 +148,6 @@ export const Basic: StoryFn<StoryProps> = ({
       width={width}
       height={height}
       colorMode={colorMode}
-      graphMode={graphMode}
       textMode={textMode}
       justifyMode={justifyMode}
       value={{
@@ -163,14 +173,53 @@ Basic.args = {
   textMode: BigValueTextMode.Auto,
 };
 
-ApplyNoValue.args = {
+export const Flexible: StoryFn<StoryProps> = ({
+  valueText,
+  title,
+  colorMode,
+  graphMode,
+  height,
+  width,
+  color,
+  textMode,
+  justifyMode,
+}) => {
+  const theme = useTheme2();
+  const sparkline: FieldSparkline = {
+    y: {
+      name: '',
+      values: [1, 2, 3, 4, 3],
+      type: FieldType.number,
+      state: { range: { min: 1, max: 4, delta: 3 } },
+      config: {},
+    },
+  };
+
+  return (
+    <BigValue
+      theme={theme}
+      colorMode={colorMode}
+      textMode={textMode}
+      justifyMode={justifyMode}
+      height={NaN}
+      width={NaN}
+      value={{
+        text: valueText,
+        numeric: 5022,
+        color: color,
+        title,
+      }}
+      sparkline={graphMode === BigValueGraphMode.None ? undefined : sparkline}
+    />
+  );
+};
+
+Flexible.args = {
   valueText: '$5022',
   title: 'Total Earnings',
   colorMode: BigValueColorMode.Value,
   graphMode: BigValueGraphMode.Area,
   justifyMode: BigValueJustifyMode.Auto,
-  width: 400,
-  height: 300,
   color: 'red',
   textMode: BigValueTextMode.Auto,
 };

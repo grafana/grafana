@@ -9,12 +9,14 @@ import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, BigValueProps, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
 const VALUE_FONT_WEIGHT = 500;
+
+export type BigValuePropsWithHeightAndWidth = BigValueProps & Required<Pick<BigValueProps, 'width' | 'height'>>;
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -31,7 +33,7 @@ export abstract class BigValueLayout {
   maxTextHeight: number;
   textValues: BigValueTextValues;
 
-  constructor(private props: Props) {
+  constructor(private props: BigValuePropsWithHeightAndWidth) {
     const { width, height, value, text } = props;
 
     this.valueColor = value.color ?? 'gray';
@@ -288,7 +290,7 @@ export abstract class BigValueLayout {
 }
 
 export class WideNoChartLayout extends BigValueLayout {
-  constructor(props: Props) {
+  constructor(props: BigValuePropsWithHeightAndWidth) {
     super(props);
 
     const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
@@ -350,7 +352,7 @@ export class WideNoChartLayout extends BigValueLayout {
 }
 
 export class WideWithChartLayout extends BigValueLayout {
-  constructor(props: Props) {
+  constructor(props: BigValuePropsWithHeightAndWidth) {
     super(props);
 
     const { width, height } = props;
@@ -406,7 +408,7 @@ export class WideWithChartLayout extends BigValueLayout {
 }
 
 export class StackedWithChartLayout extends BigValueLayout {
-  constructor(props: Props) {
+  constructor(props: BigValuePropsWithHeightAndWidth) {
     super(props);
 
     const { width, height } = props;
@@ -464,7 +466,7 @@ export class StackedWithChartLayout extends BigValueLayout {
 }
 
 export class StackedWithNoChartLayout extends BigValueLayout {
-  constructor(props: Props) {
+  constructor(props: BigValuePropsWithHeightAndWidth) {
     super(props);
 
     const { height } = props;
@@ -523,7 +525,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
   }
 }
 
-export function buildLayout(props: Props): BigValueLayout {
+export function buildLayout(props: BigValuePropsWithHeightAndWidth): BigValueLayout {
   const { width, height, sparkline } = props;
   const useWideLayout = width / height > 2.5 && !props.disableWideLayout;
 
@@ -557,7 +559,7 @@ export interface BigValueTextValues extends DisplayValue {
   tooltip?: string;
 }
 
-function getTextValues(props: Props): BigValueTextValues {
+function getTextValues(props: BigValuePropsWithHeightAndWidth): BigValueTextValues {
   const { value, alignmentFactors, count } = props;
   let { textMode } = props;
 

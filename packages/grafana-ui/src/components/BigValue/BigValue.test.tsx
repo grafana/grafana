@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { createTheme } from '@grafana/data';
 
-import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValue';
+import { BigValue, BigValueColorMode, BigValueProps } from './BigValue';
 
 const valueObject = {
   text: '25',
@@ -10,10 +10,9 @@ const valueObject = {
   color: 'red',
 };
 
-function getProps(propOverrides?: Partial<Props>): Props {
-  const props: Props = {
+function getProps(propOverrides?: Partial<BigValueProps>): BigValueProps {
+  const props: BigValueProps = {
     colorMode: BigValueColorMode.Background,
-    graphMode: BigValueGraphMode.Line,
     height: 300,
     width: 300,
     value: valueObject,
