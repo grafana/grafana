@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/logsdrilldown
 go 1.26.0
 
 require (
-	github.com/grafana/grafana-app-sdk v0.51.3
+	github.com/grafana/grafana-app-sdk v0.51.4
 	github.com/grafana/grafana-app-sdk/logging v0.51.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4

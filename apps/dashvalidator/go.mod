@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.51.3
+	github.com/grafana/grafana-app-sdk v0.51.4
 	github.com/grafana/grafana-app-sdk/logging v0.51.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.303.1

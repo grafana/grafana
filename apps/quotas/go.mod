@@ -44,7 +44,7 @@ replace (
 
 require (
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.51.3
+	github.com/grafana/grafana-app-sdk v0.51.4
 	github.com/grafana/grafana-app-sdk/logging v0.51.1
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.35.1
