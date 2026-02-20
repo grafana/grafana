@@ -7,6 +7,7 @@ import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
 import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
 
 import { dataSource } from '../ExpressionDatasource';
+import { quoteTableIdentifierIfNecessary } from './sqlIdentifier';
 
 export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]): Promise<SQLSelectableValue[]> {
   const datasource = dataSource;
@@ -14,7 +15,7 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteTableIdentifierIfNecessary(query.table)} LIMIT 1`;
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },

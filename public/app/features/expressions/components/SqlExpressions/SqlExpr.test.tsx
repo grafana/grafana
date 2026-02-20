@@ -9,8 +9,13 @@ jest.mock('@grafana/ui', () => ({
   useStyles2: jest.fn().mockImplementation(() => ({})),
 }));
 
+const mockSQLEditor = jest.fn();
+
 jest.mock('@grafana/plugin-ui', () => ({
-  SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
+  SQLEditor: (props: { query: string }) => {
+    mockSQLEditor(props);
+    return <div data-testid="sql-editor">SQL Editor Mock</div>;
+  },
 }));
 
 // Mock lazy loaded GenAI components
@@ -96,6 +101,23 @@ describe('SqlExpr', () => {
     await waitFor(() => {
       expect(query.expression).toBe(existingExpression);
     });
+  });
+
+
+
+  it('quotes table names with spaces in the initial query', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'gdp per capita' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('FROM\n  `gdp per capita`');
   });
 
   it('adds alerting format when alerting prop is true', async () => {

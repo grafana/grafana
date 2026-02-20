@@ -14,6 +14,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { quoteTableIdentifierIfNecessary } from '../../utils/sqlIdentifier';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
@@ -71,7 +72,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  ${quoteTableIdentifierIfNecessary(vars[0])}
 LIMIT
   10`;
 

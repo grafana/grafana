@@ -3,6 +3,7 @@ import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIde
 import { config } from '@grafana/runtime';
 
 import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';
+import { quoteTableIdentifierIfNecessary } from '../../../utils/sqlIdentifier';
 
 interface CompletionProviderGetterArgs {
   getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
@@ -18,7 +19,7 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
         const refIdsToTableDefs = args.refIds.map((refId) => {
           const tableDef: TableDefinition = {
             name: refId.label || refId.value || '',
-            completion: refId.label || refId.value || '',
+            completion: quoteTableIdentifierIfNecessary(refId.label || refId.value || ''),
           };
           return tableDef;
         });
