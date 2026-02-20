@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -70,13 +71,16 @@ func Build(
 		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
 	}
 
-	// Mount toolexec binary if configured (only for linux-amd64/arm64)
+	// go-trace-toolexec-exporter only has binaries for linux-amd64 and linux-arm64
 	switch distro {
 	case DistLinuxAMD64, DistLinuxARM64:
-		if hostPath := ResolveToolexecBinary(); hostPath != "" {
+		hostPath := ResolveToolexecBinary()
+		logFile := os.Getenv("GOCACHE_TOOLEXEC_TRACES_LOG_FILE")
+
+		if hostPath != "" && logFile != "" {
 			hostDir := filepath.Dir(hostPath)
 			hostFile := filepath.Base(hostPath)
-			containerPath := "/bin/" + hostFile
+			containerPath := filepath.Join("/bin", hostFile)
 
 			builder = builder.
 				WithMountedFile(
@@ -84,6 +88,11 @@ func Build(
 					d.Host().Directory(hostDir).File(hostFile),
 				).
 				WithEnvVariable("GO_TRACE_TOOLEXEC_PATH", containerPath)
+
+			logDir := filepath.Dir(logFile)
+			builder = builder.
+				WithMountedDirectory(logDir, d.Host().Directory(logDir)).
+				WithEnvVariable("GOCACHE_TOOLEXEC_TRACES_LOG_FILE", logFile)
 		}
 	}
 
