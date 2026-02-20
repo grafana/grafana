@@ -203,7 +203,7 @@ describe('runQueries', () => {
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     await dispatch(runQueries({ exploreId: 'left' }));
-    await jest.runOnlyPendingTimers();
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
   });
 
@@ -214,7 +214,7 @@ describe('runQueries', () => {
     await dispatch(runQueries({ exploreId: 'left' }));
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
-    await jest.runOnlyPendingTimers();
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 

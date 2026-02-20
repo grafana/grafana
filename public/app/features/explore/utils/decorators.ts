@@ -14,7 +14,7 @@ import {
   getRawDisplayProcessor,
   DataSourceApi,
 } from '@grafana/data';
-import { config, CorrelationData, isPanelPluginInstalled } from '@grafana/runtime';
+import { config, CorrelationData } from '@grafana/runtime';
 import { getPanelPluginMetas, PanelPluginMetas } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types/explore';
