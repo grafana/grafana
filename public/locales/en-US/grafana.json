@@ -1745,8 +1745,13 @@
         "namespace-desc": "Filter by namespace (optional)",
         "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "override-warning-body": "The target folder already contains alert rules that share the same namespace as the rules being imported. These existing rules may be overwritten or removed during the import.",
+        "override-warning-details": "Rules that might be overwritten",
+        "override-warning-title": "Some existing rules may be overwritten",
         "pause-alerting": "Pause imported alert rules",
         "pause-recording": "Pause imported recording rules",
+        "plugin-rules-warning-body": "Rules managed by plugins, integrations, or Synthetic Monitoring have been detected and will not be imported.",
+        "plugin-rules-warning-title": "Some rules are excluded from import",
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
         "policy-title": "Notification Routing",
         "policy-tree": "Policy tree",
@@ -12942,12 +12947,15 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "field-errors": "Configuration errors detected",
+      "field-errors-message": "There are issues with the repository configuration. Please review your settings.",
       "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
       "migrate-resources-description": "Import existing dashboards from connected external storage into the provisioning folder created in the previous step",
       "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
+      "review-configuration": "Review configuration",
       "text-checking-repository": "Checking repository status..."
     },
     "token-permissions-info": {
