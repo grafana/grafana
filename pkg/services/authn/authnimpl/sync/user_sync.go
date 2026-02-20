@@ -450,6 +450,12 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
+		s.log.FromContext(ctx).Debug("Creating new auth connection",
+			"userId", userID,
+			"authModule", identity.AuthenticatedBy,
+			"authId", identity.AuthID,
+			"sessionId", identity.SessionID)
+
 		setAuthInfoCmd := &login.SetAuthInfoCommand{
 			UserId:     usr.ID,
 			UserUID:    usr.UID,
@@ -463,6 +469,12 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 		}
 		return s.authInfoService.SetAuthInfo(ctx, setAuthInfoCmd)
 	}
+
+	s.log.FromContext(ctx).Debug("Updating existing auth connection",
+		"userId", userID,
+		"authModule", identity.AuthenticatedBy,
+		"authId", identity.AuthID,
+		"sessionId", identity.SessionID)
 
 	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
 		UserId:     usr.ID,
