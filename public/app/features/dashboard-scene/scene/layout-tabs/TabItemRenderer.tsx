@@ -210,7 +210,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
  * We want to disable the drop to cover the case:
  * - A tab is dragged to a different tab manager
  * - DashboardLaoytOrchestrator takes care of handling the drag
- * - hello-pangea/dnd takes core only of dragging within the same tab manager, but doesn't know how the tab was dropped
+ * - hello-pangea/dnd takes core only of dragging within the same tab manager, but doesn't know the tab was dropped
  *   into a different manager and creates a "snap back" animation of the tab going back to its original position
  */
 function getDraggableStyle(style: React.CSSProperties | undefined, snapshot: DraggableStateSnapshot) {
