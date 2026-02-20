@@ -4,9 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/stretchr/testify/require"
+
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
@@ -38,8 +39,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 							ScenarioId: TestDataQueryTypeRandomWalk,
 						},
 					),
-				},
-				{
+				}, {
 					Name: "pulse wave example",
 					SaveModel: data.AsUnstructured(
 						TestDataQuery{
@@ -51,6 +51,15 @@ func TestQueryTypeDefinitions(t *testing.T) {
 								OffValue: 1.23, // should be any (rather json any)
 								OnValue:  4.56, // should be any
 							},
+						},
+					),
+				}, {
+					Name: "multiple series",
+					SaveModel: data.AsUnstructured(
+						TestDataQuery{
+							ScenarioId:  TestDataQueryTypeRandomWalk,
+							SeriesCount: 10,
+							Spread:      0.2,
 						},
 					),
 				},

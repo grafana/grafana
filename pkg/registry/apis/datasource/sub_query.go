@@ -10,11 +10,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -31,7 +30,7 @@ var (
 
 func (r *subQueryREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &query.QueryDataResponse{}
+	return &dsV0.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}
@@ -45,7 +44,7 @@ func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subQueryREST) ProducesObject(verb string) interface{} {
-	return &query.QueryDataResponse{}
+	return &dsV0.QueryDataResponse{}
 }
 
 func (r *subQueryREST) ConnectMethods() []string {
@@ -97,7 +96,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
 			responder.Object(int(backend.StatusBadRequest),
-				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
 					"A": {
 						Error:       errors.New(e.LogMessage),
 						ErrorSource: backend.ErrorSourceDownstream,
@@ -112,8 +111,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			responder.Error(err)
 			return
 		}
-		responder.Object(query.GetResponseCode(rsp),
-			&query.QueryDataResponse{QueryDataResponse: *rsp},
+		responder.Object(dsV0.GetResponseCode(rsp),
+			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
 }

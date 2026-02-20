@@ -1466,15 +1466,14 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 			manifest := apis.LocalManifest()
 
 			// Get all Dashboard versions from the manifest
-			for _, kind := range manifest.ManifestData.Kinds() {
-				if kind.Kind == "Dashboard" {
-					for _, version := range kind.Versions {
-						// Skip converting to the same version
-						if version.VersionName == gv.Version {
-							continue
-						}
-
-						targetVersion := version.VersionName
+			for _, version := range manifest.ManifestData.Versions {
+				// Skip converting to the same version
+				if version.Name == gv.Version {
+					continue
+				}
+				targetVersion := version.Name
+				for _, kind := range version.Kinds {
+					if kind.Kind == "Dashboard" {
 						t.Run(fmt.Sprintf("to_%s", targetVersion), func(t *testing.T) {
 							// Create target object
 							var target runtime.Object

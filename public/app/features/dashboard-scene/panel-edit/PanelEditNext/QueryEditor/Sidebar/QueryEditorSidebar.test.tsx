@@ -20,7 +20,7 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
-  it('should not render transformations section when no transformations exist', () => {
+  it('should always render transformations section even when no transformations exist', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
     renderWithQueryEditorProvider(<QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />, {
@@ -28,7 +28,7 @@ describe('QueryEditorSidebar', () => {
       selectedQuery: queries[0],
     });
 
-    expect(screen.queryByText(/transformations/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/transformations/i)).toBeInTheDocument();
   });
 
   it('should render queries section even when no queries exist', () => {
@@ -89,7 +89,7 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
   });
 
-  it('should render "Add below" buttons only for query/expression cards, not transformations', () => {
+  it('should render "Add below" buttons for both query/expression and transformation cards', () => {
     const queries: DataQuery[] = [
       { refId: 'A', datasource: { type: 'test', uid: 'test' } },
       { refId: 'B', datasource: { type: 'test', uid: 'test' } },
@@ -109,7 +109,29 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add below B/i })).toBeInTheDocument();
 
-    // Transformation cards should NOT have an "Add below" button
-    expect(screen.queryByRole('button', { name: /add below organize/i })).not.toBeInTheDocument();
+    // Transformation cards should also have an add button
+    expect(screen.getByRole('button', { name: /add transformation below organize/i })).toBeInTheDocument();
+  });
+
+  it('should call setSidebarSize with Full when toggling from Mini', async () => {
+    const setSidebarSize = jest.fn();
+    const { user } = renderWithQueryEditorProvider(
+      <QueryEditorSidebar sidebarSize={SidebarSize.Mini} setSidebarSize={setSidebarSize} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));
+
+    expect(setSidebarSize).toHaveBeenCalledWith(SidebarSize.Full);
+  });
+
+  it('should call setSidebarSize with Mini when toggling from Full', async () => {
+    const setSidebarSize = jest.fn();
+    const { user } = renderWithQueryEditorProvider(
+      <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={setSidebarSize} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));
+
+    expect(setSidebarSize).toHaveBeenCalledWith(SidebarSize.Mini);
   });
 });

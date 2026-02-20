@@ -7,11 +7,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -23,7 +21,7 @@ const QueryRequestSchemaKey = "QueryRequestSchema"
 type OASQueryOptions struct {
 	Swagger    *spec3.OpenAPI
 	PluginJSON *plugins.JSONData
-	QueryTypes *query.QueryTypeDefinitionList
+	QueryTypes *dsV0.QueryTypeDefinitionList
 
 	Root             string
 	QueryPath        string // eg "namespaces/{namespace}/query/{name}"
@@ -35,7 +33,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	oas := options.Swagger
 	root := options.Root
 	examples := options.QueryExamples
-	resourceName := query.QueryTypeDefinitionResourceInfo.GroupResource().Resource
+	resourceName := dsV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
 	builder := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{""},
@@ -145,7 +143,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	return nil
 }
 
-func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Example {
+func getExamples(queryTypes *dsV0.QueryTypeDefinitionList) map[string]*spec3.Example {
 	if queryTypes == nil {
 		return nil
 	}

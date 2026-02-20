@@ -106,7 +106,7 @@
 /apps/dashvalidator/ @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
-/pkg/apis/query @grafana/grafana-datasources-core-services
+/pkg/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
@@ -229,8 +229,8 @@
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-backend
 /devenv/dashboards.yaml @grafana/dashboards-squad
-/devenv/datasources.yaml @grafana/grafana-backend-group
-/devenv/datasources_docker.yaml @grafana/grafana-backend-group
+/devenv/datasources.yaml @grafana/data-sources
+/devenv/datasources_docker.yaml @grafana/data-sources
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
@@ -499,6 +499,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/test-plugins/ @grafana/grafana-frontend-platform
 /e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/utils/ @grafana/grafana-frontend-platform
+/e2e-playwright/various-suite/advisor.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/exemplars.spec.ts @grafana/observability-traces-and-profiling
@@ -1259,6 +1260,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/detect-plugin-extension-changes.yml @grafana/grafana-frontend-platform
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
+/.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support

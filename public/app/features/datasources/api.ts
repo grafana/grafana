@@ -9,6 +9,9 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
   return await getBackendSrv().get('/api/datasources');
 };
 
+// From pkg/storage/unified/apistore/secure.go
+const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
+
 export interface K8sMetadata {
   name: string;
   namespace: string;
@@ -83,15 +86,6 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     spec: k8sSpec,
     apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
   };
-  if (dsSettings.secureJsonData) {
-    dsK8sSettings.secure = {};
-    for (let [k, v] of Object.entries(dsSettings.secureJsonData)) {
-      let value = { create: v };
-      if (isRecordOfString(value)) {
-        dsK8sSettings.secure[k] = value;
-      }
-    }
-  }
   return dsK8sSettings;
 };
 
@@ -139,6 +133,22 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   return dsSettings;
 };
 
+export const getSecretDigest = (fieldName: string): Promise<ArrayBuffer> => {
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(fieldName));
+};
+
+// This function produces the same is based on datasources.GetLegacySecureValueName in
+// grafana/pkg/registry/apis/datasource/converter.go
+export const getSecretName = async (datasourceUid: string, fieldName: string): Promise<string> => {
+  const fieldAndUid = datasourceUid + '|' + fieldName;
+  const digestBuffer = await getSecretDigest(fieldAndUid).then((value) => {
+    return value;
+  });
+  const hashArray = Array.from(new Uint8Array(digestBuffer));
+  const hexString = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
+};
+
 export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
@@ -176,7 +186,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (config.featureToggles.queryServiceWithConnections) {
+  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 
@@ -201,14 +211,41 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
-export const updateDataSource = (dataSource: DataSourceSettings) => {
-  if (config.featureToggles.queryServiceWithConnections) {
+export const updateDataSource = async (dataSource: DataSourceSettings) => {
+  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
     let k8sVersion = 'v0alpha1';
     let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
       dataSource,
       config.namespace,
       k8sVersion
     );
+
+    if (dataSource.secureJsonData) {
+      dsK8sSettings.secure = {};
+      for (let [k, v] of Object.entries(dataSource.secureJsonData)) {
+        if (v === '') {
+          let value = {
+            remove: true,
+            name: await getSecretName(dataSource.uid, k).then((value) => {
+              return value;
+            }),
+          };
+          if (isRecordOfString(value)) {
+            dsK8sSettings.secure[k] = value;
+          }
+        } else {
+          let value = {
+            create: v,
+            name: await getSecretName(dataSource.uid, k).then((value) => {
+              return value;
+            }),
+          };
+          if (isRecordOfString(value)) {
+            dsK8sSettings.secure[k] = value;
+          }
+        }
+      }
+    }
     return getBackendSrv().put(
       `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
       dsK8sSettings,

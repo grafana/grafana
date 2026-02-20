@@ -3,13 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
@@ -50,6 +51,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
     return undefined;
   }, [selection]);
+
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
   const onSetLayoutElement = useCallback(
     (obj: SceneObject<SceneObjectState> | undefined) => {
@@ -101,6 +106,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       {openPane === 'outline' && (
         <Sidebar.OpenPane>
           <DashboardOutline editPane={editPane} isEditing={isEditing} />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'filters' && (
+        <Sidebar.OpenPane>
+          <DashboardFiltersOverviewPane
+            adhocFilters={adHocVar}
+            groupByVariable={groupByVar}
+            onClose={() => editPane.closePane()}
+          />
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
@@ -164,6 +178,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
           active={openPane === 'outline'}
         ></Sidebar.Button>
+        {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+          <Sidebar.Button
+            icon="filter"
+            onClick={() => editPane.openPane('filters')}
+            title={t('dashboards.filters-overview.filters', 'Filters')}
+            tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
+            active={openPane === 'filters'}
+          />
+        )}
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
         {renderEnterpriseItems()}
         {Boolean(meta.isSnapshot) && (

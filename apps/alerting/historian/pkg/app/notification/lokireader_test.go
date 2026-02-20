@@ -135,7 +135,7 @@ func TestBuildQuery(t *testing.T) {
 			query: Query{
 				RuleUID: stringPtr("test-rule-uid"),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -144,7 +144,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID:  stringPtr("test-rule-uid"),
 				Receiver: stringPtr("email-receiver"),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -153,7 +153,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Status:  createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | status = "firing"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | status = "firing"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -162,7 +162,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error = ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -171,7 +171,7 @@ func TestBuildQuery(t *testing.T) {
 				RuleUID: stringPtr("test-rule-uid"),
 				Outcome: outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeError),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error != ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | error != ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -182,7 +182,7 @@ func TestBuildQuery(t *testing.T) {
 				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusResolved),
 				Outcome:  outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
-			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -232,6 +232,65 @@ func TestBuildQuery(t *testing.T) {
 			name: "query with invalid group operator",
 			query: Query{
 				GroupLabels: &Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with alert label matcher",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with many alert label matchers",
+			query: Query{
+				Labels: &Matchers{
+					{Type: "=", Label: "severity", Value: "critical"},
+					{Type: "!=", Label: "env", Value: "test"},
+					{Type: "=~", Label: "team", Value: "platform.*"},
+					{Type: "!~", Label: "region", Value: "us-.*"},
+				},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | alert_labels_severity = "critical" | alert_labels_env != "test"`+
+				` | alert_labels_team =~ "platform.*" | alert_labels_region !~ "us-.*"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with both group labels and alert labels",
+			query: Query{
+				GroupLabels: &Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+				Labels:      &Matchers{{Type: "=", Label: "severity", Value: "critical"}},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | groupLabels_alertname = "HighCPU" | alert_labels_severity = "critical"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with invalid alert label with space",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "seve rity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label starting with number",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "1severity", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label with attempted injection",
+			query: Query{
+				Labels: &Matchers{{Type: "=", Label: "\" = \"inject\"", Value: "critical"}},
+			},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name: "query with invalid alert label operator",
+			query: Query{
+				Labels: &Matchers{{Type: "|=", Label: "severity", Value: "critical"}},
 			},
 			experr: ErrInvalidQuery,
 		},
@@ -445,11 +504,12 @@ func TestLokiReader_RunQuery(t *testing.T) {
 								SchemaVersion: 1,
 								Receiver:      "receiver-1",
 								Status:        "firing",
+								GroupKey:      "group1",
 								GroupLabels:   map[string]string{},
 								Alert:         historian.NotificationHistoryLokiEntryAlert{},
 								AlertIndex:    0,
 								AlertCount:    1,
-								PipelineTime:  now,
+								PipelineTime:  entry1Time,
 							}),
 						},
 						{
@@ -458,11 +518,12 @@ func TestLokiReader_RunQuery(t *testing.T) {
 								SchemaVersion: 1,
 								Receiver:      "receiver-3",
 								Status:        "firing",
+								GroupKey:      "group3",
 								GroupLabels:   map[string]string{},
 								Alert:         historian.NotificationHistoryLokiEntryAlert{},
 								AlertIndex:    0,
 								AlertCount:    1,
-								PipelineTime:  now,
+								PipelineTime:  entry3Time,
 							}),
 						},
 					},
@@ -475,11 +536,12 @@ func TestLokiReader_RunQuery(t *testing.T) {
 								SchemaVersion: 1,
 								Receiver:      "receiver-2",
 								Status:        "firing",
+								GroupKey:      "group2",
 								GroupLabels:   map[string]string{},
 								Alert:         historian.NotificationHistoryLokiEntryAlert{},
 								AlertIndex:    0,
 								AlertCount:    1,
-								PipelineTime:  now,
+								PipelineTime:  entry2Time,
 							}),
 						},
 					},
@@ -606,4 +668,468 @@ func TestRuleUIDLabelConstant(t *testing.T) {
 	// If this changes in the alerting module, our LogQL field path constant will be incorrect
 	// and filtering for a single alert rule by its UID will break.
 	assert.Equal(t, "__alert_rule_uid__", models.RuleUIDLabel)
+}
+
+func TestGroupAlerts(t *testing.T) {
+	now := time.Now().UTC()
+	pipelineTime := now.Add(-5 * time.Minute)
+
+	tests := []struct {
+		name     string
+		entries  []Entry
+		expected []Entry
+	}{
+		{
+			name:     "empty entries",
+			entries:  []Entry{},
+			expected: []Entry{},
+		},
+		{
+			name: "single entry with single alert",
+			entries: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple alerts for same notification",
+			entries: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "3"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+						{Status: "firing", Labels: map[string]string{"alert": "3"}},
+					},
+				},
+			},
+		},
+		{
+			name: "different group keys - separate notifications",
+			entries: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group2",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group2",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+		},
+		{
+			name: "different timestamps - same notification (grouped)",
+			entries: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now.Add(-1 * time.Second),
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+		},
+		{
+			name: "different pipeline times - separate notifications",
+			entries: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime.Add(-1 * time.Second),
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime.Add(-1 * time.Second),
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+			},
+		},
+		{
+			name: "complex scenario with mixed grouping",
+			entries: []Entry{
+				// Notification 1: group1, pipeline1 (3 alerts across different timestamps)
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+					},
+				},
+				// Notification 2: group2, pipeline1 (1 alert)
+				{
+					Timestamp:    now,
+					GroupKey:     "group2",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver2",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "3"}},
+					},
+				},
+				// This entry will be grouped with the first two (same groupKey and pipelineTime)
+				{
+					Timestamp:    now.Add(-1 * time.Minute),
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "resolved",
+					Alerts: []EntryAlert{
+						{Status: "resolved", Labels: map[string]string{"alert": "4"}},
+					},
+				},
+			},
+			expected: []Entry{
+				{
+					Timestamp:    now,
+					GroupKey:     "group1",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver1",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "1"}},
+						{Status: "firing", Labels: map[string]string{"alert": "2"}},
+						{Status: "resolved", Labels: map[string]string{"alert": "4"}},
+					},
+				},
+				{
+					Timestamp:    now,
+					GroupKey:     "group2",
+					PipelineTime: pipelineTime,
+					Receiver:     "receiver2",
+					Status:       "firing",
+					Alerts: []EntryAlert{
+						{Status: "firing", Labels: map[string]string{"alert": "3"}},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := groupEntries(tt.entries)
+			require.Equal(t, len(tt.expected), len(result), "number of grouped notifications should match")
+
+			for i := range tt.expected {
+				assert.Equal(t, tt.expected[i].Timestamp, result[i].Timestamp, "timestamp should match")
+				assert.Equal(t, tt.expected[i].GroupKey, result[i].GroupKey, "groupKey should match")
+				assert.Equal(t, tt.expected[i].PipelineTime, result[i].PipelineTime, "pipelineTime should match")
+				assert.Equal(t, tt.expected[i].Receiver, result[i].Receiver, "receiver should match")
+				assert.Equal(t, tt.expected[i].Status, result[i].Status, "status should match")
+				assert.Equal(t, len(tt.expected[i].Alerts), len(result[i].Alerts), "number of alerts should match")
+
+				for j := range tt.expected[i].Alerts {
+					assert.Equal(t, tt.expected[i].Alerts[j].Status, result[i].Alerts[j].Status, "alert status should match")
+					assert.Equal(t, tt.expected[i].Alerts[j].Labels, result[i].Alerts[j].Labels, "alert labels should match")
+				}
+			}
+		})
+	}
+}
+
+func TestLokiReader_RunQueryWithGrouping(t *testing.T) {
+	now := time.Now().UTC()
+	pipelineTime := now.Add(-5 * time.Minute)
+
+	entry2Time := now.Add(-2 * time.Hour)
+	entry3Time := now.Add(-1 * time.Hour)
+
+	// Create a mock response with 5 log lines representing 2 notifications:
+	// - Notification 1: 3 alerts with the same groupKey, timestamp, and pipelineTime
+	// - Notification 2: 2 alerts with the same groupKey, timestamp, and pipelineTime
+	mockResponse := lokiclient.QueryRes{
+		Data: lokiclient.QueryData{
+			Result: []lokiclient.Stream{
+				{
+					Values: []lokiclient.Sample{
+						// Notification 1 - Alert 1
+						{
+							T: entry3Time,
+							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
+								SchemaVersion: 1,
+								Receiver:      "receiver-1",
+								GroupKey:      "groupkey-1",
+								Status:        "firing",
+								GroupLabels:   map[string]string{"alertname": "alert1"},
+								Alert: historian.NotificationHistoryLokiEntryAlert{
+									Status: "firing",
+									Labels: map[string]string{"instance": "host1"},
+								},
+								AlertIndex:   0,
+								AlertCount:   3,
+								PipelineTime: pipelineTime,
+							}),
+						},
+						// Notification 1 - Alert 2
+						{
+							T: entry3Time,
+							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
+								SchemaVersion: 1,
+								Receiver:      "receiver-1",
+								GroupKey:      "groupkey-1",
+								Status:        "firing",
+								GroupLabels:   map[string]string{"alertname": "alert1"},
+								Alert: historian.NotificationHistoryLokiEntryAlert{
+									Status: "firing",
+									Labels: map[string]string{"instance": "host2"},
+								},
+								AlertIndex:   1,
+								AlertCount:   3,
+								PipelineTime: pipelineTime,
+							}),
+						},
+						// Notification 1 - Alert 3
+						{
+							T: entry3Time,
+							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
+								SchemaVersion: 1,
+								Receiver:      "receiver-1",
+								GroupKey:      "groupkey-1",
+								Status:        "firing",
+								GroupLabels:   map[string]string{"alertname": "alert1"},
+								Alert: historian.NotificationHistoryLokiEntryAlert{
+									Status: "firing",
+									Labels: map[string]string{"instance": "host3"},
+								},
+								AlertIndex:   2,
+								AlertCount:   3,
+								PipelineTime: pipelineTime,
+							}),
+						},
+						// Notification 2 - Alert 1
+						{
+							T: entry2Time,
+							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
+								SchemaVersion: 1,
+								Receiver:      "receiver-2",
+								GroupKey:      "groupkey-2",
+								Status:        "resolved",
+								GroupLabels:   map[string]string{"alertname": "alert2"},
+								Alert: historian.NotificationHistoryLokiEntryAlert{
+									Status: "resolved",
+									Labels: map[string]string{"instance": "host1"},
+								},
+								AlertIndex:   0,
+								AlertCount:   2,
+								PipelineTime: pipelineTime,
+							}),
+						},
+						// Notification 2 - Alert 2
+						{
+							T: entry2Time,
+							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
+								SchemaVersion: 1,
+								Receiver:      "receiver-2",
+								GroupKey:      "groupkey-2",
+								Status:        "resolved",
+								GroupLabels:   map[string]string{"alertname": "alert2"},
+								Alert: historian.NotificationHistoryLokiEntryAlert{
+									Status: "resolved",
+									Labels: map[string]string{"instance": "host2"},
+								},
+								AlertIndex:   1,
+								AlertCount:   2,
+								PipelineTime: pipelineTime,
+							}),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mockClient := &mockLokiClient{}
+	mockClient.On("RangeQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(mockResponse, nil)
+
+	reader := &LokiReader{
+		client: mockClient,
+		logger: &logging.NoOpLogger{},
+	}
+
+	entries, err := reader.runQuery(context.Background(), "test query", now.Add(-6*time.Hour), now, 1000)
+	require.NoError(t, err)
+
+	// Should get 2 notifications (grouped from 5 log lines)
+	require.Len(t, entries, 2, "should have 2 notifications after grouping")
+
+	mockClient.AssertExpectations(t)
+
+	// Verify first notification (newest first, so entry3Time)
+	assert.Equal(t, "receiver-1", entries[0].Receiver)
+	assert.Equal(t, "groupkey-1", entries[0].GroupKey)
+	assert.Equal(t, entry3Time, entries[0].Timestamp)
+	assert.Len(t, entries[0].Alerts, 3, "first notification should have 3 alerts")
+	assert.Equal(t, "host1", entries[0].Alerts[0].Labels["instance"])
+	assert.Equal(t, "host2", entries[0].Alerts[1].Labels["instance"])
+	assert.Equal(t, "host3", entries[0].Alerts[2].Labels["instance"])
+
+	// Verify second notification
+	assert.Equal(t, "receiver-2", entries[1].Receiver)
+	assert.Equal(t, "groupkey-2", entries[1].GroupKey)
+	assert.Equal(t, entry2Time, entries[1].Timestamp)
+	assert.Len(t, entries[1].Alerts, 2, "second notification should have 2 alerts")
+	assert.Equal(t, "host1", entries[1].Alerts[0].Labels["instance"])
+	assert.Equal(t, "host2", entries[1].Alerts[1].Labels["instance"])
 }

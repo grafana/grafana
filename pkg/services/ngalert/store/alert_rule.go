@@ -102,7 +102,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		if len(versions) > 0 {
-			_, err = sess.Insert(versions)
+			_, err = sess.BulkInsert(alertRuleVersion{}, versions, sqlstore.NativeSettingsForDialect(st.SQLStore.GetDialect()))
 			if err != nil {
 				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 			}
@@ -991,7 +991,7 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
-		return nil, groupsSet, fmt.Errorf("unknown rule type filter %q", query.RuleType)
+		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
 	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
@@ -1131,7 +1131,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
@@ -1154,7 +1154,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
 		}

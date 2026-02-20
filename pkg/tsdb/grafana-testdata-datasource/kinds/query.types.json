@@ -1,6 +1,6 @@
 {
   "kind": "QueryTypeDefinitionList",
-  "apiVersion": "query.grafana.app/v0alpha1",
+  "apiVersion": "datasource.grafana.app/v0alpha1",
   "metadata": {
     "resourceVersion": "1709261615323"
   },
@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1745998648052",
+        "resourceVersion": "1771247953198",
         "creationTimestamp": "2024-03-01T02:53:35Z"
       },
       "spec": {
@@ -328,6 +328,14 @@
                 "timeStep": 1000
               },
               "scenarioId": "predictable_pulse"
+            }
+          },
+          {
+            "name": "multiple series",
+            "saveModel": {
+              "scenarioId": "random_walk",
+              "seriesCount": 10,
+              "spread": 0.2
             }
           }
         ]

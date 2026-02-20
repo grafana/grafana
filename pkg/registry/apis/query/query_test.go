@@ -13,19 +13,20 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryapi "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryapi "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {

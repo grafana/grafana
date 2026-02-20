@@ -220,11 +220,11 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### log_datasource_query_request_body
 
-Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+Whether to record data source queries' request body. This can significantly increase the size of your logs. Disabled by default.
 
 ### log_datasource_query_response_body
 
-Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+Whether to record data source queries' response body. This can significantly increase the size of your logs. Disabled by default.
 
 ### verbose
 
@@ -273,6 +273,22 @@ The amount of times the HTTP or gRPC client will retry a failed request to Loki.
 ### timeout
 
 The timeout duration of an HTTP request or gRPC call to Loki. The default is `3s`.
+
+### batch_wait_duration
+
+Only available for the HTTP client. Disabled by default.
+How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+If the wait duration is very long and the `batch_size_bytes` is very high, events might take a long time to be sent.
+To enable batching, you must also set the `batch_size_bytes` configuration option.
+
+### batch_size_bytes
+
+Only available for the HTTP client. Disabled by default.
+How many events, in bytes, to accumulate in a single batch before sending it to Loki.
+Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+If you want to always wait for the `batch_wait_duration`, set `batch_size_bytes` to a very high number.
+To enable batching, you must also set the `batch_wait_duration` configuration option.
 
 ## [auth.saml]
 

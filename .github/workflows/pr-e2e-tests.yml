@@ -44,7 +44,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
     name: Build & Package Grafana
-    runs-on: ubuntu-latest-16-cores
+    runs-on: ubuntu-x64-xlarge
     permissions:
       contents: read
       id-token: write
@@ -70,10 +70,11 @@ jobs:
       # If no cache hit, build Grafana
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         env:
           CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
@@ -122,9 +123,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -220,11 +226,16 @@ jobs:
             path: e2e/old-arch/panels-suite
             flags: --flags="--env dashboardScene=false"
     name: ${{ matrix.suite }}
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -237,8 +248,9 @@ jobs:
       - name: chmod +x
         run: chmod +x ./e2e-runner
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz
@@ -266,8 +278,14 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
+      id-token: write
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
@@ -291,9 +309,10 @@ jobs:
     needs:
       - build-grafana
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -302,6 +321,10 @@ jobs:
         shardTotal: [8]
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -309,8 +332,9 @@ jobs:
         with:
           name: grafana-tar-gz
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
@@ -331,6 +355,11 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -372,8 +401,9 @@ jobs:
           name: grafana-tar-gz
 
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
@@ -397,7 +427,15 @@ jobs:
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -478,11 +516,16 @@ jobs:
     needs:
       - build-grafana
     name: A11y test
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
+      id-token: write
 
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+        if: github.event.pull_request.head.repo.fork == false
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -491,15 +534,17 @@ jobs:
           name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
+        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         with:
+          cache-binary: "true"
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json

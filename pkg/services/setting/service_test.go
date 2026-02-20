@@ -8,8 +8,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -17,6 +22,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/util/flowcontrol"
 )
 
 func TestRemoteSettingService_ListAsIni(t *testing.T) {
@@ -425,7 +431,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		settings, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -443,7 +449,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		_, continueToken, err := parseSettingList(strings.NewReader(jsonData))
+		_, continueToken, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Equal(t, "next-page-token", continueToken)
@@ -457,7 +463,7 @@ func TestParseSettingList(t *testing.T) {
 			"items": []
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 0)
@@ -488,7 +494,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 2)
@@ -515,7 +521,7 @@ func TestParseSettingList(t *testing.T) {
 			]
 		}`
 
-		settings, _, err := parseSettingList(strings.NewReader(jsonData))
+		settings, _, err := parseSettingList(context.Background(), strings.NewReader(jsonData))
 
 		require.NoError(t, err)
 		assert.Len(t, settings, 1)
@@ -531,7 +537,7 @@ func TestToIni(t *testing.T) {
 			{Section: "server", Key: "http_port", Value: "3000"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -545,7 +551,7 @@ func TestToIni(t *testing.T) {
 	t.Run("should handle empty settings list", func(t *testing.T) {
 		var settings []*Setting
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.NotNil(t, result)
@@ -559,7 +565,7 @@ func TestToIni(t *testing.T) {
 			{Section: "auth", Key: "disable_signout_menu", Value: "true"},
 		}
 
-		result, err := toIni(settings)
+		result, err := toIni(context.Background(), settings)
 
 		require.NoError(t, err)
 		assert.True(t, result.HasSection("auth"))
@@ -658,6 +664,207 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestListCache(t *testing.T) {
+	t.Run("should return cached result on second call with same namespace and selector", func(t *testing.T) {
+		var requestCount atomic.Int32
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+		}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClientWithCache(t, server.URL, 500, 5*time.Second)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		selector := metav1.LabelSelector{}
+
+		result1, err := client.List(ctx, selector)
+		require.NoError(t, err)
+		assert.Len(t, result1, 1)
+		assert.Equal(t, int32(1), requestCount.Load())
+
+		result2, err := client.List(ctx, selector)
+		require.NoError(t, err)
+		assert.Len(t, result2, 1)
+		assert.Equal(t, int32(1), requestCount.Load(), "second call should hit cache, not the server")
+
+		remoteClient := client.(*remoteSettingService)
+		assert.Equal(t, float64(1), testutil.ToFloat64(remoteClient.metrics.cacheHitTotal))
+	})
+
+	t.Run("should miss cache for different selectors", func(t *testing.T) {
+		var requestCount atomic.Int32
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+			{Section: "database", Key: "host", Value: "localhost"},
+		}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClientWithCache(t, server.URL, 500, 5*time.Second)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), requestCount.Load())
+
+		_, err = client.List(ctx, metav1.LabelSelector{
+			MatchLabels: map[string]string{"section": "server"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, int32(2), requestCount.Load(), "different selector should miss cache")
+	})
+
+	t.Run("should miss cache for different namespaces", func(t *testing.T) {
+		var requestCount atomic.Int32
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+		}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		defer server.Close()
+
+		client := newTestClientWithCache(t, server.URL, 500, 5*time.Second)
+		selector := metav1.LabelSelector{}
+
+		ctx1 := request.WithNamespace(context.Background(), "namespace-a")
+		_, err := client.List(ctx1, selector)
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), requestCount.Load())
+
+		ctx2 := request.WithNamespace(context.Background(), "namespace-b")
+		_, err = client.List(ctx2, selector)
+		require.NoError(t, err)
+		assert.Equal(t, int32(2), requestCount.Load(), "different namespace should miss cache")
+	})
+
+	t.Run("should not cache when cache is disabled", func(t *testing.T) {
+		var requestCount atomic.Int32
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+		}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestCount.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		defer server.Close()
+
+		config := Config{
+			URL:           server.URL,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			PageSize:      500,
+			CacheTTL:      -1,
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		remoteClient := client.(*remoteSettingService)
+		assert.Nil(t, remoteClient.cache, "cache should be nil when disabled")
+
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		selector := metav1.LabelSelector{}
+
+		_, err = client.List(ctx, selector)
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), requestCount.Load())
+
+		_, err = client.List(ctx, selector)
+		require.NoError(t, err)
+		assert.Equal(t, int32(2), requestCount.Load(), "every call should hit server when cache disabled")
+	})
+
+	t.Run("should use default cache TTL when CacheTTL is zero", func(t *testing.T) {
+		config := Config{
+			URL:           "https://example.com",
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		}
+		client, err := New(config)
+		require.NoError(t, err)
+
+		remoteClient := client.(*remoteSettingService)
+		assert.NotNil(t, remoteClient.cache, "cache should be enabled by default")
+		assert.NotNil(t, remoteClient.metrics.cacheHitTotal, "cacheHitTotal should be set when cache enabled")
+	})
+
+	t.Run("should not observe listResultSize on cache hit", func(t *testing.T) {
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+		}
+		server := newTestServer(t, settings, "")
+		defer server.Close()
+
+		client := newTestClientWithCache(t, server.URL, 500, 5*time.Second)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+		selector := metav1.LabelSelector{}
+
+		remoteClient := client.(*remoteSettingService)
+
+		// First call: actual fetch — expect 1 sample in histogram
+		_, err := client.List(ctx, selector)
+		require.NoError(t, err)
+		countAfterFirst := testutil.CollectAndCount(remoteClient.metrics.listResultSize)
+
+		// Second call: cache hit — sample count must not increase
+		_, err = client.List(ctx, selector)
+		require.NoError(t, err)
+		countAfterSecond := testutil.CollectAndCount(remoteClient.metrics.listResultSize)
+
+		assert.Equal(t, countAfterFirst, countAfterSecond, "listResultSize should not be observed on cache hit")
+	})
+
+	t.Run("should serialize concurrent fetches for the same cache key", func(t *testing.T) {
+		var concurrentMax atomic.Int32
+		var concurrent atomic.Int32
+		settings := []Setting{
+			{Section: "server", Key: "port", Value: "3000"},
+		}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cur := concurrent.Add(1)
+			for {
+				old := concurrentMax.Load()
+				if cur <= old || concurrentMax.CompareAndSwap(old, cur) {
+					break
+				}
+			}
+			time.Sleep(50 * time.Millisecond)
+			concurrent.Add(-1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		defer server.Close()
+
+		// Use very short TTL so the cache expires between requests
+		client := newTestClientWithCache(t, server.URL, 500, 10*time.Millisecond)
+
+		done := make(chan struct{})
+		selector := metav1.LabelSelector{}
+		count := 5
+		for range count {
+			go func() {
+				ctx := request.WithNamespace(context.Background(), "same-namespace")
+				_, _ = client.List(ctx, selector)
+				done <- struct{}{}
+			}()
+		}
+		for range count {
+			<-done
+		}
+
+		assert.Equal(t, int32(1), concurrentMax.Load(), "only one concurrent request per cache key should be allowed")
+	})
+}
+
 // Helper functions
 
 func newTestServer(t *testing.T, settings []Setting, continueToken string) *httptest.Server {
@@ -674,6 +881,20 @@ func newTestClient(t *testing.T, serverURL string, pageSize int64) Service {
 		URL:           serverURL,
 		WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
 		PageSize:      pageSize,
+		CacheTTL:      -1, // disable cache for existing tests
+	}
+	client, err := New(config)
+	require.NoError(t, err)
+	return client
+}
+
+func newTestClientWithCache(t *testing.T, serverURL string, pageSize int64, cacheTTL time.Duration) Service {
+	t.Helper()
+	config := Config{
+		URL:           serverURL,
+		WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+		PageSize:      pageSize,
+		CacheTTL:      cacheTTL,
 	}
 	client, err := New(config)
 	require.NoError(t, err)
@@ -704,6 +925,52 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 	return sb.String()
 }
 
+func TestInstrumentedRateLimiter(t *testing.T) {
+	t.Run("should increment counter when Wait blocks beyond threshold", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			counter := prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "test_throttle_total",
+			})
+
+			// QPS=1 and Burst=1: first call passes immediately, second must wait ~1s
+			rl := &instrumentedRateLimiter{
+				RateLimiter: flowcontrol.NewTokenBucketRateLimiter(1, 1),
+				waitCounter: counter,
+			}
+
+			ctx := t.Context()
+
+			// First Wait should not block (burst token available)
+			require.NoError(t, rl.Wait(ctx))
+			assert.Equal(t, float64(0), testutil.ToFloat64(counter))
+
+			// Second Wait blocks; synctest advances fake time past the token refill
+			require.NoError(t, rl.Wait(ctx))
+			assert.Equal(t, float64(1), testutil.ToFloat64(counter))
+		})
+	})
+
+	t.Run("should not increment counter when Wait is fast", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			counter := prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "test_throttle_total_fast",
+			})
+
+			// High QPS so Wait never blocks significantly
+			rl := &instrumentedRateLimiter{
+				RateLimiter: flowcontrol.NewTokenBucketRateLimiter(1000, 100),
+				waitCounter: counter,
+			}
+
+			ctx := t.Context()
+			for range 10 {
+				require.NoError(t, rl.Wait(ctx))
+			}
+			assert.Equal(t, float64(0), testutil.ToFloat64(counter))
+		})
+	})
+}
+
 // Benchmark tests for streaming JSON parser
 
 func BenchmarkParseSettingList(b *testing.B) {
@@ -712,9 +979,10 @@ func BenchmarkParseSettingList(b *testing.B) {
 
 	b.ResetTimer()
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 
@@ -724,9 +992,9 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 
 	b.ResetTimer()
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(reader)
+		_, _, _ = parseSettingList(context.Background(), reader)
 	}
 }
 

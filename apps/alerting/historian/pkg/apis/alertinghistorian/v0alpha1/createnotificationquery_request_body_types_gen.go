@@ -65,6 +65,8 @@ type CreateNotificationqueryRequestBody struct {
 	RuleUID *string `json:"ruleUID,omitempty"`
 	// GroupLabels optionally filters the entries by matching group labels.
 	GroupLabels *CreateNotificationqueryRequestMatchers `json:"groupLabels,omitempty"`
+	// Labels optionally filters the entries by matching alert labels.
+	Labels *CreateNotificationqueryRequestMatchers `json:"labels,omitempty"`
 }
 
 // NewCreateNotificationqueryRequestBody creates a new CreateNotificationqueryRequestBody object.
