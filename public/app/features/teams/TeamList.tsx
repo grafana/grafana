@@ -69,12 +69,7 @@ const TeamList = () => {
   const [sort, setSort] = useState<string>();
   const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
-  const { data: singleFolderCheck } = useSearchDashboardsAndFoldersQuery(
-    { type: 'folder', limit: 1 },
-    { skip: !config.featureToggles.teamFolders }
-  );
-
-  const [triggerFullFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
+  const [triggerFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
@@ -215,10 +210,11 @@ const TeamList = () => {
 
           const showDeleteModal = async () => {
             let ownedFolders: DashboardHit[] = [];
-            if (singleFolderCheck?.hits) {
-              const { data: foldersData } = await triggerFullFoldersQuery({
+            if (config.featureToggles.teamFolders) {
+              const { data: foldersData } = await triggerFoldersQuery({
                 type: 'folder',
                 ownerReference: [`iam.grafana.app/Team/${original.uid}`],
+                limit: 1,
               });
               if (foldersData?.hits) {
                 ownedFolders = foldersData.hits;
@@ -275,15 +271,7 @@ const TeamList = () => {
         },
       },
     ],
-    [
-      displayRolePicker,
-      isLoading,
-      styles.blockSkeleton,
-      roleOptions,
-      deleteTeam,
-      singleFolderCheck,
-      triggerFullFoldersQuery,
-    ]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, triggerFoldersQuery]
   );
 
   return (
