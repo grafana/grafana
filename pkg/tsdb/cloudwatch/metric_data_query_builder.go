@@ -72,7 +72,7 @@ func isSingleValue(values []string) bool {
 
 func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	knownDimensions := make(map[string][]string)
-	dimensionNames := []string{}
+	dimensionNames := make([]string, 0, len(query.Dimensions))
 	dimensionNamesWithoutKnownValues := []string{}
 
 	for key, values := range query.Dimensions {
@@ -92,7 +92,7 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	}
 
 	searchTerm := fmt.Sprintf(`MetricName="%s"`, query.MetricName)
-	keys := []string{}
+	keys := make([]string, 0, len(knownDimensions))
 	for k := range knownDimensions {
 		keys = append(keys, k)
 	}
@@ -150,7 +150,7 @@ func buildSearchExpressionLabel(query *models.CloudWatchQuery) string {
 }
 
 func escapeQuotes(arr []string) []string {
-	result := []string{}
+	result := make([]string, 0, len(arr))
 	for _, value := range arr {
 		value = strings.ReplaceAll(value, `"`, `\"`)
 		value = strings.ReplaceAll(value, `'`, `\'`)

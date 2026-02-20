@@ -1857,16 +1857,6 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/GroupByVariableForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2620,11 +2610,6 @@
       "count": 2
     }
   },
-  "public/app/features/library-panels/components/LibraryPanelCard/LibraryPanelCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/live/centrifuge/LiveDataStream.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2763,9 +2748,6 @@
   },
   "public/app/features/plugins/admin/state/actions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
       "count": 1
     }
   },

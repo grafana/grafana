@@ -102,7 +102,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	if opts.Ref == "" {
-		progress.ResetResults()
+		progress.ResetResults(true)
 		progress.SetMessage(ctx, "pull resources")
 
 		syncJob := provisioning.Job{
@@ -135,7 +135,11 @@ func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, pr
 
 		progress.SetMessage(ctx, "Deleting "+path)
 		if err := rw.Delete(ctx, path, opts.Ref, "Delete "+path); err != nil {
-			resultBuilder.WithError(fmt.Errorf("deleting file %s: %w", path, err))
+			if errors.Is(err, repository.ErrFileNotFound) {
+				resultBuilder.WithWarning(fmt.Errorf("deleting file %s: %w", path, err))
+			} else {
+				resultBuilder.WithError(fmt.Errorf("deleting file %s: %w", path, err))
+			}
 		}
 		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {

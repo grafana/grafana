@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.25.7
+go 1.26.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
@@ -8,8 +8,8 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.50.4
-	github.com/grafana/grafana-app-sdk/logging v0.50.2
+	github.com/grafana/grafana-app-sdk v0.51.3
+	github.com/grafana/grafana-app-sdk/logging v0.51.1
 	github.com/grafana/grafana-plugin-sdk-go v0.287.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
@@ -35,6 +35,7 @@ replace (
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
+	github.com/grafana/grafana/apps/example => ../example
 	github.com/grafana/grafana/apps/folder => ../folder
 	github.com/grafana/grafana/apps/iam => ../iam
 	github.com/grafana/grafana/apps/live => ../live
@@ -43,6 +44,7 @@ replace (
 	github.com/grafana/grafana/apps/plugins => ../plugins
 	github.com/grafana/grafana/apps/preferences => ../preferences
 	github.com/grafana/grafana/apps/provisioning => ../provisioning
+	github.com/grafana/grafana/apps/quotas => ../quotas
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
@@ -75,7 +77,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
+	github.com/VividCortex/mysqlerr v1.0.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.1 // indirect
@@ -172,7 +174,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260206150146-b5f69c55f91a // indirect
+	github.com/grafana/alerting v0.0.0-20260219164054-852c35175ed5 // indirect
 	github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
@@ -221,7 +223,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mattn/go-sqlite3 v1.14.32 // indirect
+	github.com/mattn/go-sqlite3 v1.14.34 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -327,12 +329,12 @@ require (
 	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/grpc v1.78.0 // indirect
+	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
