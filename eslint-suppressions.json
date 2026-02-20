@@ -2756,11 +2756,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/components/AppRootPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/datasource_srv.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
