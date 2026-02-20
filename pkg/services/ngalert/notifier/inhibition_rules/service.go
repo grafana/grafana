@@ -101,7 +101,7 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule definitions.I
 		return definitions.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
-	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
+	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -115,7 +115,7 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule definitions.I
 	return *created, nil
 }
 
-func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error) {
+func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, version string, orgID int64) (definitions.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
 		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -151,7 +151,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 		renamed = true
 	}
 
-	err = svc.checkOptimisticConcurrency(existing, prov, rule.Version, "update")
+	err = svc.checkOptimisticConcurrency(existing, prov, version, "update")
 	if err != nil {
 		return definitions.InhibitionRule{}, err
 	}
@@ -160,8 +160,7 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, name string, rule 
 		delete(revision.Config.ManagedInhibitionRules, existing.Name)
 	}
 
-	// Create the updated rule with all fields properly set
-	updated, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance, models.ResourceOriginGrafana)
+	updated, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
@@ -198,7 +197,6 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, name string, orgID
 		return err
 	}
 
-	// TODO: add optimistic locking by comparing existing version with client-provided version to prevent lost updates
 	err = svc.checkOptimisticConcurrency(existing, provenance, version, "delete")
 	if err != nil {
 		return err

@@ -304,9 +304,7 @@ receivers:
 		require.Equal(t, definitions.ManagedInhibitionRules{
 			"test-imported-inhibition-rule-00000000000": {
 				Name:       "test-imported-inhibition-rule-00000000000",
-				Version:    "8ea121175ec5f716",
 				Provenance: "converted_prometheus",
-				Origin:     "imported",
 				InhibitRule: definitions.InhibitRule{
 					SourceMatchers: []*labels.Matcher{
 						{
@@ -337,9 +335,7 @@ receivers:
 			},
 			"test-imported-inhibition-rule-00000000001": {
 				Name:       "test-imported-inhibition-rule-00000000001",
-				Version:    "74cb0d8b8dcff9f0",
 				Provenance: "converted_prometheus",
-				Origin:     "imported",
 				InhibitRule: definitions.InhibitRule{
 					SourceMatchers: []*labels.Matcher{
 						{

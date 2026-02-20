@@ -18,16 +18,14 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var (
-	_ grafanarest.Storage = (*legacyStorage)(nil)
-)
+var _ grafanarest.Storage = (*legacyStorage)(nil)
 
 // InhibitionRuleService defines the interface for inhibition rule operations
 type InhibitionRuleService interface {
 	GetInhibitionRules(ctx context.Context, orgID int64) ([]definitions.InhibitionRule, error)
 	GetInhibitionRule(ctx context.Context, name string, orgID int64) (definitions.InhibitionRule, error)
 	CreateInhibitionRule(ctx context.Context, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error)
-	UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, orgID int64) (definitions.InhibitionRule, error)
+	UpdateInhibitionRule(ctx context.Context, name string, rule definitions.InhibitionRule, version string, orgID int64) (definitions.InhibitionRule, error)
 	DeleteInhibitionRule(ctx context.Context, name string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
@@ -156,7 +154,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateInhibitionRule(ctx, name, rule, info.OrgID)
+	updated, err := s.service.UpdateInhibitionRule(ctx, name, rule, p.ResourceVersion, info.OrgID)
 	if err != nil {
 		return nil, false, err
 	}

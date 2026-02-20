@@ -21,9 +21,7 @@ import (
 var (
 	testGrafanaRule = definitions.InhibitionRule{
 		Name:       "managed-rule-1",
-		Version:    "43170b20451b343a",
 		Provenance: definitions.Provenance(models.ProvenanceNone),
-		Origin:     models.ResourceOriginGrafana,
 		InhibitRule: definitions.InhibitRule{
 			SourceMatchers: []*labels.Matcher{
 				{
@@ -45,10 +43,7 @@ var (
 
 	testImportedRule = definitions.InhibitionRule{
 		Name:       "test-mimir-imported-inhibition-rule-00000",
-		Version:    "0c8f497a54e04d8b",
 		Provenance: definitions.Provenance(models.ProvenanceConvertedPrometheus),
-		Origin:     models.ResourceOriginImported,
-
 		InhibitRule: definitions.InhibitRule{
 			SourceMatchers: []*labels.Matcher{
 				{
@@ -195,6 +190,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 		grafanaRules  []definitions.InhibitionRule
 		importedRules []definitions.InhibitionRule
 		ruleName      string
+		version       string
 		updatedRule   definitions.InhibitionRule
 		expErr        error
 		expRule       definitions.InhibitionRule
@@ -203,6 +199,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			name:         "can update grafana rule",
 			grafanaRules: grafanaRules,
 			ruleName:     testGrafanaRule.Name,
+			version:      testGrafanaRule.Fingerprint(),
 			updatedRule: func() definitions.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
@@ -211,7 +208,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() definitions.InhibitionRule {
 				r := testGrafanaRule
 				r.Equal = []string{"instance", "job"}
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance, models.ResourceOriginGrafana)
+				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),
@@ -220,6 +217,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			name:         "can update rule name (create new rule with updated name and delete old one)",
 			grafanaRules: grafanaRules,
 			ruleName:     testGrafanaRule.Name,
+			version:      testGrafanaRule.Fingerprint(),
 			updatedRule: func() definitions.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
@@ -228,7 +226,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 			expRule: func() definitions.InhibitionRule {
 				r := testGrafanaRule
 				r.Name = "managed-rule-1-renamed"
-				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance, models.ResourceOriginGrafana)
+				updated, err := legacy_storage.InhibitRuleToInhibitionRule(r.Name, r.InhibitRule, r.Provenance)
 				require.Nil(t, err)
 				return *updated
 			}(),
@@ -250,7 +248,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 				return revision, nil
 			}
 
-			result, err := sut.UpdateInhibitionRule(ctx, tc.ruleName, tc.updatedRule, orgID)
+			result, err := sut.UpdateInhibitionRule(ctx, tc.ruleName, tc.updatedRule, tc.version,orgID)
 			require.ErrorIs(t, err, tc.expErr)
 			require.Equal(t, tc.expRule, result)
 

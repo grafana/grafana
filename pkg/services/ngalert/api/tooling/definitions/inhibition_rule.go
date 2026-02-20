@@ -7,8 +7,6 @@ import (
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"go.yaml.in/yaml/v3"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const ResourceTypeInhibitionRule = "inhibition-rule"
@@ -20,18 +18,14 @@ type ManagedInhibitionRules map[string]*InhibitionRule
 type InhibitionRule struct {
 	Name        string `json:"name" yaml:"name"`
 	InhibitRule `json:",inline" yaml:",inline"`
-	Version     string                `json:"version,omitempty"`
-	Provenance  Provenance            `json:"provenance,omitempty"`
-	Origin      models.ResourceOrigin `json:"origin,omitempty"`
+	Provenance  Provenance `json:"provenance,omitempty"`
 }
 
 func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First, manually unmarshal our own fields
 	var temp struct {
-		Name       string                `yaml:"name"`
-		Provenance Provenance            `yaml:"provenance,omitempty"`
-		Origin     models.ResourceOrigin `yaml:"origin,omitempty"`
-		Version    string                `yaml:"version,omitempty"`
+		Name       string     `yaml:"name"`
+		Provenance Provenance `yaml:"provenance,omitempty"`
 	}
 	if err := unmarshal(&temp); err != nil {
 		return err
@@ -45,8 +39,6 @@ func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error
 	// Set our fields
 	ir.Name = temp.Name
 	ir.Provenance = temp.Provenance
-	ir.Origin = temp.Origin
-	ir.Version = temp.Version
 
 	return nil
 }

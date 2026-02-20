@@ -216,7 +216,7 @@ func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName
 	return false, groupBy
 }
 
-func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, provenance apimodels.Provenance, origin models.ResourceOrigin) (*apimodels.InhibitionRule, error) {
+func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, provenance apimodels.Provenance) (*apimodels.InhibitionRule, error) {
 	if name = strings.TrimSpace(name); name == "" {
 		return nil, fmt.Errorf("inhibition rule name must not be empty")
 	}
@@ -230,17 +230,13 @@ func InhibitRuleToInhibitionRule(name string, rule apimodels.InhibitRule, proven
 	}
 
 	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
-	if origin != models.ResourceOriginImported && len(name) > ualert.UIDMaxLength {
+	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > ualert.UIDMaxLength {
 		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
-	ir := &apimodels.InhibitionRule{
+	return &apimodels.InhibitionRule{
 		Name:        name,
 		InhibitRule: rule,
 		Provenance:  provenance,
-		Origin:      origin,
-	}
-	ir.Version = ir.Fingerprint()
-
-	return ir, nil
+	}, nil
 }

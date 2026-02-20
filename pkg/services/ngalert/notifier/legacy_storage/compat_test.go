@@ -153,8 +153,6 @@ func Test_InhibitRuleToInhibitionRule(t *testing.T) {
 				Name:        "some-really-long-inhibition-rule-name-001",
 				InhibitRule: testRule,
 				Provenance:  definitions.Provenance(models.ProvenanceConvertedPrometheus),
-				Origin:      models.ResourceOriginImported,
-				Version:     "96fb38b733158362",
 			},
 		},
 		{
@@ -167,15 +165,13 @@ func Test_InhibitRuleToInhibitionRule(t *testing.T) {
 				Name:        "inhibition-rule-1",
 				InhibitRule: testRule,
 				Provenance:  definitions.Provenance(models.ProvenanceNone),
-				Origin:      models.ResourceOriginGrafana,
-				Version:     "96fb38b733158362",
 			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := InhibitRuleToInhibitionRule(tc.ruleName, tc.inhibitRule, tc.provenance, tc.origin)
+			got, gotErr := InhibitRuleToInhibitionRule(tc.ruleName, tc.inhibitRule, tc.provenance)
 			if tc.expErr != nil {
 				require.EqualError(t, gotErr, tc.expErr.Error())
 			} else {

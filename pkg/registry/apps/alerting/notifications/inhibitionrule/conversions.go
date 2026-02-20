@@ -34,7 +34,7 @@ func ConvertToK8sResource(orgID int64, rule definitions.InhibitionRule, namespac
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.Name,
 			Namespace:       namespacer(orgID),
-			ResourceVersion: rule.Version,
+			ResourceVersion: rule.Fingerprint(),
 		},
 		Spec: convertDomainToK8sSpec(rule),
 	}
@@ -71,10 +71,8 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 
 func convertToDomainModel(rule *model.InhibitionRule) (definitions.InhibitionRule, error) {
 	result := definitions.InhibitionRule{
-		Version:    rule.ResourceVersion,
 		Name:       rule.Name,
 		Provenance: definitions.Provenance(ngmodels.ProvenanceNone),
-		Origin:     ngmodels.ResourceOriginGrafana,
 	}
 
 	// Convert source matchers from K8s format to prometheus format

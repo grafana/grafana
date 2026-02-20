@@ -181,7 +181,7 @@ func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitR
 		}
 		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir, err := InhibitRuleToInhibitionRule(name, rule, definitions.Provenance(models.ProvenanceConvertedPrometheus), models.ResourceOriginImported)
+		ir, err := InhibitRuleToInhibitionRule(name, rule, definitions.Provenance(models.ProvenanceConvertedPrometheus))
 		if err != nil {
 			return nil, err
 		}
