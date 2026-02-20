@@ -1,6 +1,9 @@
 import { DataQuery, LogsSortOrder } from '@grafana/schema';
 
+import { Options } from '../../../../public/app/plugins/panel/logstable/options/types';
+
 import { PreferredVisualisationType } from './data';
+import { FieldConfig } from './dataFrame';
 import { SelectableValue } from './select';
 import { TimeRange } from './time';
 
@@ -89,6 +92,8 @@ export interface ExploreLogsPanelState {
   // Column sort state for table view. Persists between query changes.
   tableSortBy?: string;
   tableSortDir?: 'asc' | 'desc';
+  // fieldConfig.defaults
+  tableFieldConfig: FieldConfig<Options>;
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

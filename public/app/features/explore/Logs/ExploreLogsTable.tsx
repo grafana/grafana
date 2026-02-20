@@ -5,7 +5,8 @@ import {
   DataFrame,
   EventBus,
   EventBusSrv,
-  FieldConfigSource,
+  ExploreLogsPanelState,
+  FieldConfig,
   PanelData,
   urlUtil,
 } from '@grafana/data';
@@ -17,12 +18,16 @@ import { Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 
+import { exploreLogsTableFieldConfigDefaults } from './constants';
+
 /**
  * New Logs Table panel
  * @param props
  * @constructor
  */
 export function ExploreLogsTable(props: {
+  tableFieldConfig: FieldConfig<Options> | undefined;
+  updatePanelState: (panelState: ExploreLogsPanelState) => void;
   eventBus: EventBus;
   data: PanelData;
   timeZone: 'utc' | 'browser' | string;
@@ -30,7 +35,6 @@ export function ExploreLogsTable(props: {
   width: number;
   height: number;
   onOptionsChange: (options: Options) => void;
-  onFieldConfigChange: (config: FieldConfigSource) => void;
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
@@ -39,7 +43,7 @@ export function ExploreLogsTable(props: {
     'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex' | 'fieldSelectorWidth'
   >;
 }) {
-  const { onClickFilterLabel, onClickFilterOutLabel } = props;
+  const { onClickFilterLabel, onClickFilterOutLabel, tableFieldConfig, updatePanelState } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
 
@@ -76,6 +80,8 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
+  console.log('fieldCOnfig', tableFieldConfig);
+
   return (
     <PanelContextProvider
       value={{
@@ -101,18 +107,17 @@ export function ExploreLogsTable(props: {
         width={props.width}
         height={props.height}
         fieldConfig={{
-          defaults: {
-            custom: {
-              filterable: true,
-            },
-          },
+          defaults: tableFieldConfig ?? exploreLogsTableFieldConfigDefaults,
           overrides: [],
         }}
         renderCounter={0}
         title={''}
         eventBus={props.eventBus}
         onOptionsChange={props.onOptionsChange}
-        onFieldConfigChange={props.onFieldConfigChange}
+        onFieldConfigChange={(config) => {
+          console.log('onFieldConfigChange', config);
+          updatePanelState({ tableFieldConfig: config.defaults });
+        }}
         replaceVariables={getTemplateSrv().replace}
         onChangeTimeRange={props.onChangeTimeRange}
       />

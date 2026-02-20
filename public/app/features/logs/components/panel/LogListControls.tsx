@@ -19,6 +19,7 @@ import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { LogsVisualisationType } from '../../../explore/Logs/constants';
 import { DownloadFormat } from '../../utils';
 
+import { getWrapButtonStyles } from './LogListCommon';
 import { useLogListContext } from './LogListContext';
 import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { useLogListSearchContext } from './LogListSearchContext';
@@ -780,22 +781,6 @@ const WrapLogMessageButton = ({ expanded }: LogSelectOptionProps) => {
       customTagText={prettifyJSON ? '+' : ''}
     />
   );
-};
-
-const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
-  return {
-    menuItemActive: css({
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        top: theme.spacing(0.5),
-        height: `calc(100% - ${theme.spacing(1)})`,
-        width: '2px',
-        backgroundColor: theme.colors.warning.main,
-      },
-    }),
-  };
 };
 
 export const CONTROLS_WIDTH_EXPANDED = 176;
