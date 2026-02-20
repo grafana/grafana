@@ -422,15 +422,15 @@ tls = true
 tenant_id =
 # Only available for the HTTP client. Disabled by default.
 # How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
-# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
-# If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
-# `batch_size_bytes` also needs to be set to enable batching.
+# Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+# If the wait duration is very long and the `batch_size_bytes` is very high, events might take a long time to be sent.
+# To enable batching, you must also set the `batch_size_bytes` configuration option.
 batch_wait_duration =
 # Only available for the HTTP client. Disabled by default.
-# How many events (in bytes) to accumulate in a single batch before sending it to Loki.
-# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
-# If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
-# `batch_wait_duration` also needs to be set to enable batching.
+# How many events, in bytes, to accumulate in a single batch before sending it to Loki.
+# Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+# If you want to always wait for the `batch_wait_duration`, set `batch_size_bytes` to a very high number.
+#To enable batching, you must also set the `batch_wait_duration` configuration option.
 batch_size_bytes =
 ```
 
