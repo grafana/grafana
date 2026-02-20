@@ -14,6 +14,7 @@ export interface WizardStepContentProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
   onRepositoryDeletion: (name: string) => Promise<void>;
   isCancelling: boolean;
+  goToStep: (stepId: WizardStep) => void;
 }
 
 export function WizardStepContent({
@@ -23,6 +24,7 @@ export function WizardStepContent({
   onGitHubAppSubmit,
   onRepositoryDeletion,
   isCancelling,
+  goToStep,
 }: WizardStepContentProps) {
   switch (activeStep) {
     case 'authType':
@@ -32,7 +34,7 @@ export function WizardStepContent({
     case 'bootstrap':
       return <BootstrapStep settingsData={settingsData} repoName={repoName} />;
     case 'synchronize':
-      return <SynchronizeStep onCancel={onRepositoryDeletion} isCancelling={isCancelling} />;
+      return <SynchronizeStep onCancel={onRepositoryDeletion} isCancelling={isCancelling} goToStep={goToStep} />;
     case 'finish':
       return <FinishStep />;
     default:
