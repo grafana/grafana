@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"dagger.io/dagger"
@@ -67,6 +68,23 @@ func Build(
 
 	if prog := opts.GoCacheProg; prog != "" {
 		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
+
+	// Mount toolexec binary if configured (only for linux-amd64/arm64)
+	switch distro {
+	case DistLinuxAMD64, DistLinuxARM64:
+		if hostPath := ResolveToolexecBinary(); hostPath != "" {
+			hostDir := filepath.Dir(hostPath)
+			hostFile := filepath.Base(hostPath)
+			containerPath := "/bin/" + hostFile
+
+			builder = builder.
+				WithMountedFile(
+					containerPath,
+					d.Host().Directory(hostDir).File(hostFile),
+				).
+				WithEnvVariable("GO_TRACE_TOOLEXEC_PATH", containerPath)
+		}
 	}
 
 	commitInfo := GetVCSInfo(src, opts.Version, opts.Enterprise)
