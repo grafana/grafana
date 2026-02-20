@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
@@ -43,7 +43,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		"to": "1692646267389"
 	}`)
 
-	req := &query.QueryDataRequest{}
+	req := &datasourceV0.QueryDataRequest{}
 	err := json.Unmarshal(request, req)
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	query := &data.DataQuery{}
 	err = json.Unmarshal(out, query)
 	require.NoError(t, err)
-	require.Equal(t, "spreadsheetID", query.GetString("spreadsheet"))
+	require.Equal(t, "spreadsheetID", req.Queries[0].GetString("spreadsheet"))
 
 	// The second query has an explicit time range, and legacy datasource name
 	out, err = json.MarshalIndent(req.Queries[1], "", "  ")
@@ -82,7 +82,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 
 func TestGetResponseCode(t *testing.T) {
 	t.Run("return 200 if no errors in responses", func(t *testing.T) {
-		assert.Equal(t, 200, query.GetResponseCode(&backend.QueryDataResponse{
+		assert.Equal(t, 200, datasourceV0.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
 					Error: nil,
@@ -94,7 +94,7 @@ func TestGetResponseCode(t *testing.T) {
 		}))
 	})
 	t.Run("return 400 if there is an error in the responses but no status code", func(t *testing.T) {
-		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
+		assert.Equal(t, 400, datasourceV0.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
 					Error: fmt.Errorf("some wild error"),
@@ -103,7 +103,7 @@ func TestGetResponseCode(t *testing.T) {
 		}))
 	})
 	t.Run("return 400 if there is a partial error but no status code", func(t *testing.T) {
-		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
+		assert.Equal(t, 400, datasourceV0.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
 					Error: nil,

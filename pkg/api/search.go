@@ -118,7 +118,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 func (hs *HTTPServer) ListSortOptions(c *contextmodel.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
-	res := []util.DynMap{}
+	res := make([]util.DynMap, 0, len(opts))
 	for _, o := range opts {
 		res = append(res, util.DynMap{
 			"name":        o.Name,
