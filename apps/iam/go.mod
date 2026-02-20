@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.26.0
+go 1.25.7
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(
@@ -45,7 +45,7 @@ replace (
 require (
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.51.4
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/client_golang v1.23.2

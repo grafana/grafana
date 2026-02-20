@@ -1,10 +1,10 @@
 module github.com/grafana/grafana/apps/alerting/rules
 
-go 1.26.0
+go 1.25.7
 
 require (
 	github.com/grafana/grafana-app-sdk v0.51.4
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/prometheus/common v0.67.5
 	k8s.io/apimachinery v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
