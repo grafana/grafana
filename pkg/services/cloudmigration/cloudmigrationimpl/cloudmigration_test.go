@@ -884,7 +884,7 @@ func TestGetPlugins(t *testing.T) {
 	require.Len(t, plugins, 3)
 
 	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
-	pluginsIDs := make([]string, 0)
+	pluginsIDs := make([]string, 0) //nolint:prealloc
 	for _, plugin := range plugins {
 		// Special case of using the settings from the settings store
 		if plugin.ID == "plugin-external-valid-grafana" {
@@ -1045,7 +1045,7 @@ func (m *gmsClientMock) MigrateData(_ context.Context, _ cloudmigration.CloudMig
 	panic("not implemented") // TODO: Implement
 }
 
-func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error) {
 	m.startSnapshotCalled++
 	return nil, nil
 }

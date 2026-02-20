@@ -308,7 +308,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
-	args := []any{
+	args := []any{ //nolint:prealloc
 		"operation", stats.operation,
 		"elapsedTime", elapsed,
 		"indexBuildTime", stats.indexBuildTime,

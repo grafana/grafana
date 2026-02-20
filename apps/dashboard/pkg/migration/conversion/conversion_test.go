@@ -233,22 +233,21 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			originalName := strings.TrimSuffix(fileName, ".json")
 
 			// Get all Dashboard versions from the manifest
-			for _, kind := range manifest.ManifestData.Kinds() {
-				if kind.Kind == "Dashboard" {
-					for _, version := range kind.Versions {
-						// Skip converting to the same version
-						if version.VersionName == sourceVersion {
-							continue
-						}
-
-						filename := fmt.Sprintf("%s.%s.json", originalName, version.VersionName)
+			for _, version := range manifest.ManifestData.Versions {
+				// Skip converting to the same version
+				if version.Name == sourceVersion {
+					continue
+				}
+				for _, kind := range version.Kinds {
+					if kind.Kind == "Dashboard" {
+						filename := fmt.Sprintf("%s.%s.json", originalName, version.Name)
 						typeMeta := metav1.TypeMeta{
-							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.VersionName),
+							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.Name),
 							Kind:       kind.Kind, // Dashboard
 						}
 
 						// Create target object based on version
-						switch version.VersionName {
+						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
 						case "v1beta1":
@@ -258,10 +257,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 						case "v2beta1":
 							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
 						default:
-							t.Logf("Unknown version %s, skipping", version.VersionName)
+							t.Logf("Unknown version %s, skipping", version.Name)
 						}
+						break
 					}
-					break
 				}
 			}
 
@@ -367,24 +366,23 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 			originalName := strings.TrimSuffix(file.Name(), ".json")
 
 			// Get all Dashboard versions from the manifest
-			for _, kind := range manifest.ManifestData.Kinds() {
-				if kind.Kind == "Dashboard" {
-					for _, version := range kind.Versions {
-						// Skip v1beta1 since that's our source version
-						if version.VersionName == "v1beta1" {
-							continue
-						}
-
+			for _, version := range manifest.ManifestData.Versions {
+				// Skip v1beta1 since that's our source version
+				if version.Name == "v1beta1" {
+					continue
+				}
+				for _, kind := range version.Kinds {
+					if kind.Kind == "Dashboard" {
 						// Prefix with v1beta1-mig- to indicate these came from v1beta1 dashboards
 						// that went through the migration pipeline
-						filename := fmt.Sprintf("v1beta1-mig-%s.%s.json", originalName, version.VersionName)
+						filename := fmt.Sprintf("v1beta1-mig-%s.%s.json", originalName, version.Name)
 						typeMeta := metav1.TypeMeta{
-							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.VersionName),
+							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.Name),
 							Kind:       kind.Kind, // Dashboard
 						}
 
 						// Create target object based on version
-						switch version.VersionName {
+						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
@@ -392,10 +390,10 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 						case "v2beta1":
 							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
 						default:
-							t.Logf("Unknown version %s, skipping", version.VersionName)
+							t.Logf("Unknown version %s, skipping", version.Name)
 						}
+						break
 					}
-					break
 				}
 			}
 

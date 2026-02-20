@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { mockTimeRange } from '@grafana/plugin-ui';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
