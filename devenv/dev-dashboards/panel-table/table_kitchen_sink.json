@@ -209,7 +209,7 @@
                 "value": [
                   {
                     "options": {
-                      "pattern": "up",
+                      "pattern": "/^up/",
                       "result": {
                         "color": "green",
                         "index": 0
@@ -219,7 +219,7 @@
                   },
                   {
                     "options": {
-                      "pattern": "down",
+                      "pattern": "/^down/",
                       "result": {
                         "color": "red",
                         "index": 1
@@ -721,7 +721,7 @@
                 "value": [
                   {
                     "options": {
-                      "pattern": "up",
+                      "pattern": "/^up/",
                       "result": {
                         "color": "green",
                         "index": 0
@@ -731,7 +731,7 @@
                   },
                   {
                     "options": {
-                      "pattern": "down",
+                      "pattern": "/^down/",
                       "result": {
                         "color": "red",
                         "index": 1
