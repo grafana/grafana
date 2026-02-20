@@ -34,6 +34,14 @@ export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
   return Object.values(structuredClone(panels));
 }
 
+export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
+  if (!initialized()) {
+    await initPanelPluginMetas();
+  }
+
+  return structuredClone(panels);
+}
+
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
   if (!initialized()) {
     await initPanelPluginMetas();

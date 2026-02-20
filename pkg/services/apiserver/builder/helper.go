@@ -57,6 +57,9 @@ var PathRewriters = []filters.PathRewriter{
 			if strings.HasSuffix(matches[1], "/query") {
 				result += "/name" // same as the rewrite pattern below
 			}
+			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
+				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
+			}
 			return result
 		},
 	},
