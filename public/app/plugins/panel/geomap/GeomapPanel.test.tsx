@@ -213,6 +213,11 @@ describe('GeomapPanel - View Listener', () => {
       setMinZoom: jest.fn(),
     };
 
+    // Make the View constructor return our tracked mockView so that
+    // views created by initMapView use the same on/un mocks we assert against
+    const ViewConstructor = require('ol/View');
+    ViewConstructor.mockImplementation(() => mockView);
+
     mockMap = {
       getView: jest.fn().mockReturnValue(mockView as unknown as View),
       setView: jest.fn(),
@@ -664,6 +669,83 @@ describe('GeomapPanel - View Listener', () => {
 
       panel.optionsChanged(oldOptions, newOptions);
       expect(mockMap.getControls).toHaveBeenCalled();
+    });
+
+    it('should register view listener when dashboardVariable is enabled via options change', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Initially no listener registered
+      expect(viewOnMock).not.toHaveBeenCalled();
+
+      const oldOptions = props.options;
+      const newOptions = createPropsWithVariable(props).options;
+
+      panel.optionsChanged(oldOptions, newOptions);
+
+      // Listener should now be registered on the new view
+      expect(viewOnMock).toHaveBeenCalledWith('change', expect.any(Function));
+    });
+
+    it('should immediately update the variable when dashboardVariable is first enabled', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      jest.mocked(transformExtent).mockReturnValue(MOCK_EXTENT_4326);
+
+      const oldOptions = props.options;
+      const newOptions = createPropsWithVariable(props).options;
+
+      panel.optionsChanged(oldOptions, newOptions);
+
+      // Should call updateGeoVariables immediately (with debounce)
+      jest.advanceTimersByTime(DEBOUNCE_TIMEOUT);
+      expect(locationService.partial).toHaveBeenCalledWith({ [`var-${VARIABLE_NAME}`]: `${MOCK_EXTENT_4326}` }, true);
+    });
+
+    it('should unregister old listener and register new one when view options change with dashboardVariable enabled', async () => {
+      panel = new GeomapPanel(createPropsWithVariable(props));
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Listener registered during initMapAsync
+      expect(viewOnMock).toHaveBeenCalledTimes(1);
+      const firstKey = viewOnMock.mock.results[0].value;
+
+      const oldOptions = createPropsWithVariable(props).options;
+      const newOptions = {
+        ...oldOptions,
+        view: {
+          ...oldOptions.view,
+          zoom: 10,
+        },
+      };
+
+      panel.optionsChanged(oldOptions, newOptions);
+
+      // Old listener should be unregistered
+      expect(viewUnMock).toHaveBeenCalledWith('change', firstKey.listener);
+      // New listener should be registered
+      expect(viewOnMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should unregister listener when dashboardVariable is disabled via options change', async () => {
+      panel = new GeomapPanel(createPropsWithVariable(props));
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      expect(viewOnMock).toHaveBeenCalledTimes(1);
+      const registeredKey = viewOnMock.mock.results[0].value;
+
+      const oldOptions = createPropsWithVariable(props).options;
+      const newOptions = createPropsWithoutVariable(props).options;
+
+      panel.optionsChanged(oldOptions, newOptions);
+
+      // Old listener should be unregistered
+      expect(viewUnMock).toHaveBeenCalledWith('change', registeredKey.listener);
+      // No new listener should be registered
+      expect(viewOnMock).toHaveBeenCalledTimes(1);
     });
   });
 

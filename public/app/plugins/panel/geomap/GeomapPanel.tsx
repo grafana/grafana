@@ -213,9 +213,24 @@ export class GeomapPanel extends Component<Props, State> {
 
     // Handle incremental view changes
     if (oldOptions.view !== newOptions.view) {
+      // Unregister existing listener from the current view before replacing it
+      if (this.viewListenerKey != null && this.map) {
+        const oldView = this.map.getView();
+        oldView.un('change', this.viewListenerKey.listener);
+        this.viewListenerKey = null;
+      }
+
       const view = this.initMapView(newOptions.view);
       if (this.map && view) {
         this.map.setView(view);
+
+        // Register new listener if dashboard variable sync is enabled
+        if (newOptions.view.dashboardVariable) {
+          this.viewListenerKey = view.on('change', () => {
+            this.updateGeoVariables(view, newOptions);
+          });
+          this.updateGeoVariables(view, newOptions);
+        }
       }
     }
 
