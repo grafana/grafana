@@ -36,7 +36,6 @@ describe('getSteps', () => {
 
 describe('getSyncStepStatus', () => {
   const defaultState = {
-    hasFieldErrors: false,
     hasError: false,
     isUnhealthy: false,
     isLoading: false,
