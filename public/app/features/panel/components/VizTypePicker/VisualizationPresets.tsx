@@ -79,9 +79,9 @@ export function VisualizationPresets({ presets, data, suggestion, onPreview, onA
         onItemClick={handlePresetClick}
         onItemApply={handleApplyClick}
         getItemKey={(item) => item.hash}
-        buttonLabel={t('panel.presets.edit', 'Edit')}
+        buttonLabel={t('panel.presets.configure-panel', 'Configure panel')}
         getButtonAriaLabel={(item) =>
-          t('panel.presets.edit-aria-label', 'Edit with {{presetName}} preset', {
+          t('panel.presets.configure-panel-aria-label', 'Configure {{presetName}} panel', {
             presetName: item.name,
           })
         }

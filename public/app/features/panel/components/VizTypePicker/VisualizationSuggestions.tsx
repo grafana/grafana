@@ -85,6 +85,7 @@ export function VisualizationSuggestions({
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
+  const [selectedSuggestionHasPresets, setSelectedSuggestionHasPresets] = useState<boolean>(false);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel =
     vizPanel?.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID || panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
@@ -128,17 +129,6 @@ export function VisualizationSuggestions({
       isAutoSelected = false,
       shouldCloseVizPicker = false
     ) => {
-      const applyOnChange = (withModKey: boolean) => {
-        setSuggestionHash(suggestion.hash);
-        onChange({
-          pluginId: suggestion.pluginId,
-          options: suggestion.options,
-          fieldConfig: suggestion.fieldConfig,
-          withModKey,
-          fromSuggestions: true,
-        });
-      };
-
       if (shouldCloseVizPicker) {
         VizSuggestionsInteractions.suggestionAccepted({
           pluginId: suggestion.pluginId,
@@ -146,22 +136,6 @@ export function VisualizationSuggestions({
           panelState,
           suggestionIndex: suggestionIndex + 1,
         });
-
-        if (config.featureToggles.vizPresets && onShowPresets && vizPanel) {
-          getPresetsForPanel(suggestion.pluginId, vizPanel)
-            .then((presetsResult) => {
-              if (presetsResult.presets && presetsResult.presets.length > 0) {
-                onShowPresets(suggestion, presetsResult.presets);
-                return;
-              }
-              applyOnChange(false);
-            })
-            .catch((error) => {
-              console.error('Failed to load presets:', error);
-              applyOnChange(false);
-            });
-          return;
-        }
       } else {
         VizSuggestionsInteractions.suggestionPreviewed({
           pluginId: suggestion.pluginId,
@@ -169,12 +143,84 @@ export function VisualizationSuggestions({
           panelState,
           isAutoSelected,
         });
+
+        // Check if this suggestion has presets when it's selected
+        if (config.featureToggles.vizPresets && vizPanel) {
+          getPresetsForPanel(suggestion.pluginId, vizPanel)
+            .then((presetsResult) => {
+              setSelectedSuggestionHasPresets(presetsResult.presets && presetsResult.presets.length > 0);
+            })
+            .catch(() => {
+              setSelectedSuggestionHasPresets(false);
+            });
+        }
       }
 
-      applyOnChange(!shouldCloseVizPicker);
+      setSuggestionHash(suggestion.hash);
+      onChange({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+        withModKey: !shouldCloseVizPicker,
+        fromSuggestions: true,
+      });
     },
-    [onChange, panelState, onShowPresets, vizPanel]
+    [onChange, panelState, vizPanel]
   );
+
+  const handleApplySuggestion = useCallback(
+    async (item: PanelPluginVisualizationSuggestion, index: number) => {
+      if (config.featureToggles.vizPresets && onShowPresets && vizPanel) {
+        try {
+          const presetsResult = await getPresetsForPanel(item.pluginId, vizPanel);
+          if (presetsResult.presets && presetsResult.presets.length > 0) {
+            onShowPresets(item, presetsResult.presets);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to load presets:', error);
+        }
+      }
+      applySuggestion(item, index, false, true);
+    },
+    [applySuggestion, onShowPresets, vizPanel]
+  );
+
+  const getButtonLabel = () => {
+    return config.featureToggles.vizPresets && selectedSuggestionHasPresets
+      ? t('panel.visualization-suggestions.view-style-options', 'View style options')
+      : t('panel.visualization-suggestions.configure-panel', 'Configure panel');
+  };
+
+  const getButtonAriaLabelForItem = (item: PanelPluginVisualizationSuggestion) => {
+    return config.featureToggles.vizPresets && selectedSuggestionHasPresets
+      ? t(
+          'panel.visualization-suggestions.view-style-options-aria-label',
+          'View style options for {{suggestionName}}',
+          {
+            suggestionName: item.name,
+          }
+        )
+      : t('panel.visualization-suggestions.configure-panel-aria-label', 'Configure {{suggestionName}} panel', {
+          suggestionName: item.name,
+        });
+  };
+
+  const getSecondaryButtonConfig = () => {
+    if (!config.featureToggles.vizPresets || !onShowPresets || !vizPanel) {
+      return undefined;
+    }
+
+    return {
+      onAction: (item: PanelPluginVisualizationSuggestion, index: number) => applySuggestion(item, index, false, true),
+      label: t('panel.visualization-suggestions.configure-panel', 'Configure panel'),
+      getAriaLabel: (item: PanelPluginVisualizationSuggestion) =>
+        t('panel.visualization-suggestions.configure-panel-aria-label', 'Configure {{suggestionName}} panel', {
+          suggestionName: item.name,
+        }),
+      shouldShow: () => selectedSuggestionHasPresets,
+    };
+  };
 
   useEffect(() => {
     if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
@@ -259,14 +305,11 @@ export function VisualizationSuggestions({
         data={data!}
         selectedItemKey={suggestionHash}
         onItemClick={(item, index) => applySuggestion(item, index)}
-        onItemApply={(item, index) => applySuggestion(item, index, false, true)}
+        onItemApply={handleApplySuggestion}
         getItemKey={(item) => item.hash}
-        buttonLabel={t('panel.visualization-suggestions.edit', 'Edit')}
-        getButtonAriaLabel={(item) =>
-          t('panel.visualization-suggestions.edit-aria-label', 'Edit {{suggestionName}} visualization', {
-            suggestionName: item.name,
-          })
-        }
+        buttonLabel={getButtonLabel()}
+        getButtonAriaLabel={getButtonAriaLabelForItem}
+        secondaryButton={getSecondaryButtonConfig()}
       />
     </>
   );

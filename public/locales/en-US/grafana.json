@@ -11853,14 +11853,14 @@
     "presets": {
       "back-button": "Back",
       "back-button-tooltip": "Go back",
-      "edit": "Edit",
-      "edit-aria-label": "Edit with {{presetName}} preset",
+      "configure-panel": "Configure panel",
+      "configure-panel-aria-label": "Configure {{presetName}} panel",
       "select-style": "Select style",
       "skip": "Skip"
     },
     "visualization-suggestions": {
-      "edit": "Edit",
-      "edit-aria-label": "Edit {{suggestionName}} visualization",
+      "configure-panel": "Configure panel",
+      "configure-panel-aria-label": "Configure {{suggestionName}} panel",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -11870,7 +11870,9 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
-      "unknown-viz-type": "Unknown visualization type"
+      "unknown-viz-type": "Unknown visualization type",
+      "view-style-options": "View style options",
+      "view-style-options-aria-label": "View style options for {{suggestionName}}"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"

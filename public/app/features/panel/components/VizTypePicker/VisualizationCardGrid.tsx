@@ -16,6 +16,13 @@ export interface VisualizationCardGridGroup {
   items: PanelPluginVisualizationSuggestion[];
 }
 
+export interface SecondaryButtonConfig {
+  onAction: (item: PanelPluginVisualizationSuggestion, index: number) => void;
+  label: string;
+  getAriaLabel: (item: PanelPluginVisualizationSuggestion) => string;
+  shouldShow: (item: PanelPluginVisualizationSuggestion) => boolean;
+}
+
 export interface Props {
   items?: PanelPluginVisualizationSuggestion[];
   groups?: VisualizationCardGridGroup[];
@@ -26,6 +33,7 @@ export interface Props {
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
   buttonLabel: string;
   getButtonAriaLabel: (item: PanelPluginVisualizationSuggestion) => string;
+  secondaryButton?: SecondaryButtonConfig;
 }
 
 export function VisualizationCardGrid({
@@ -38,6 +46,7 @@ export function VisualizationCardGrid({
   getItemKey,
   buttonLabel,
   getButtonAriaLabel,
+  secondaryButton,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
@@ -83,17 +92,32 @@ export function VisualizationCardGrid({
         ref={isFirst ? firstCardRef : undefined}
       >
         {isCardSelected && (
-          <Button
-            tabIndex={-1}
-            variant="primary"
-            size="md"
-            className={styles.applySuggestionButton}
-            data-testid={selectors.components.VisualizationPreview.confirm(item.name)}
-            aria-label={getButtonAriaLabel(item)}
-            onClick={() => onItemApply(item, itemIndex)}
-          >
-            {buttonLabel}
-          </Button>
+          <div className={styles.buttonContainer}>
+            <Button
+              tabIndex={-1}
+              variant="primary"
+              size="md"
+              className={styles.applySuggestionButton}
+              data-testid={selectors.components.VisualizationPreview.confirm(item.name)}
+              aria-label={getButtonAriaLabel(item)}
+              onClick={() => onItemApply(item, itemIndex)}
+            >
+              {buttonLabel}
+            </Button>
+            {secondaryButton && secondaryButton.shouldShow(item) && (
+              <Button
+                tabIndex={-1}
+                variant="primary"
+                fill="text"
+                size="sm"
+                className={styles.secondaryButton}
+                aria-label={secondaryButton.getAriaLabel(item)}
+                onClick={() => secondaryButton.onAction(item, itemIndex)}
+              >
+                {secondaryButton.label}
+              </Button>
+            )}
+          </div>
         )}
         <VisualizationSuggestionCard
           data={data}
@@ -156,13 +180,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-block',
       marginRight: theme.spacing(1),
     }),
-    applySuggestionButton: css({
+    buttonContainer: css({
       position: 'absolute',
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
       zIndex: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+    }),
+    applySuggestionButton: css({
       padding: theme.spacing(0, 2),
+    }),
+    secondaryButton: css({
+      padding: theme.spacing(0, 1),
     }),
   };
 };
