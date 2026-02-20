@@ -1,16 +1,4 @@
 /**
- * Dashboard Mutation Behavior
- *
- * Manages the lifecycle of the Dashboard Mutation API.
- * Added to DashboardScene's $behaviors in the serializers.
- *
- * On activation:
- *   - Creates a DashboardMutationClient for the parent DashboardScene
- *   - Registers it in the module-level store (dashboardMutationStore)
- *
- * On deactivation:
- *   - Unregisters the client from the store
- *
  * SECURITY: This behavior intentionally does NOT implement MutationClient
  * or expose an execute() method. It is reachable by plugins via
  * window.__grafanaSceneContext.state.$behaviors, so it must not provide
