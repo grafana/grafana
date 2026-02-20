@@ -14,9 +14,9 @@ import {
 import { ResourceDimensionMode } from '@grafana/schema';
 
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
+import { type Options, TooltipMode } from './panelcfg.gen';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
-import { Options, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**

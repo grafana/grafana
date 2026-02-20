@@ -5,7 +5,8 @@ import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { GeomapInstanceState, Options, MapViewConfig } from '../types';
+import { type Options, type MapViewConfig } from '../panelcfg.gen';
+import { GeomapInstanceState } from '../types';
 
 type Props = {
   labelWidth: number;

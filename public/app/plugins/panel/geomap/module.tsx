@@ -8,8 +8,9 @@ import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
+import { defaultMapViewConfig, type Options, TooltipMode } from './panelcfg.gen';
 import { geomapSuggestionsSupplier } from './suggestions';
-import { defaultMapViewConfig, Options, TooltipMode, GeomapInstanceState } from './types';
+import { GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()
