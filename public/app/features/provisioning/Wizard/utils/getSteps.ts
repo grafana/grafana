@@ -1,6 +1,7 @@
 import { ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 
+import { getFormErrors } from '../../utils/getFormErrors';
 import { Step } from '../Stepper';
 import { RepoType, StepStatusInfo, WizardStep } from '../types';
 
@@ -80,6 +81,8 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   }
 
   if (state.isUnhealthy && state.fieldErrors?.length) {
+    // Get the earliest step with field errors to navigate user to
+    const targetStep = getEarliestErrorStep(state.fieldErrors);
     // When health is unhealthy and has field errors, show the field errors
     const fieldMessages = state.fieldErrors.filter((e) => e.detail).map((e) => e.detail!);
 
@@ -98,7 +101,7 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
       },
       action: {
         label: t('provisioning.synchronize-step.review-configuration', 'Review configuration'),
-        onClick: () => state.goToStep('connection'),
+        onClick: () => state.goToStep(targetStep),
       },
     };
   }
@@ -118,4 +121,36 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   }
 
   return { status: 'idle' };
+}
+
+// Map field to step for form errors
+const FIELD_TO_STEP: Record<string, WizardStep> = {
+  'repository.token': 'authType',
+  'repository.tokenUser': 'authType',
+  'repository.url': 'authType',
+  'repository.branch': 'connection',
+  'repository.path': 'connection',
+  'repository.title': 'bootstrap',
+  'repository.sync.target': 'bootstrap',
+  'repository.sync.intervalSeconds': 'bootstrap',
+};
+
+const STEP_ORDER: WizardStep[] = ['authType', 'connection', 'bootstrap', 'synchronize', 'finish'];
+
+export function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
+  const formErrors = getFormErrors(fieldErrors);
+
+  let earliestIndex = STEP_ORDER.length;
+  for (const [formPath] of formErrors) {
+    const step = FIELD_TO_STEP[formPath];
+    if (step) {
+      const idx = STEP_ORDER.indexOf(step);
+      if (idx < earliestIndex) {
+        earliestIndex = idx;
+      }
+    }
+  }
+
+  // Default to 'authType' (first step) if no mapping found
+  return earliestIndex < STEP_ORDER.length ? STEP_ORDER[earliestIndex] : 'authType';
 }
