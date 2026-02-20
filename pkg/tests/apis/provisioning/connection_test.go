@@ -1582,10 +1582,11 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.github.installationID", installationIDError.Field, "Field must be spec.installationID")
 		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "999999999", installationIDError.BadValue, "BadValue must be the spec installationID")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
-		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.Origin)
+		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
+			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.BadValue, installationIDError.Origin)
 	})
 
 	t.Run("connection with invalid app ID becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1691,11 +1692,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.github.appID", appIDError.Field, "Field must be spec.appID")
-		assert.Equal(t, "appID mismatch: expected 123456, got 999999", appIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "appID mismatch", appIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "123456", appIDError.BadValue, "BadValue must be the spec appID")
 		assert.Empty(t, appIDError.Origin, "Origin should be empty")
 
-		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.Origin)
+		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
+			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.BadValue, appIDError.Origin)
 	})
 }
 
