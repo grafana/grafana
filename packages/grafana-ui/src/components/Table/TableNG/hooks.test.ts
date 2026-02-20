@@ -746,6 +746,52 @@ describe('TableNG hooks', () => {
           22
         );
       });
+
+      it('handles wrapped text in nested frames', () => {
+        fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+        const topFrame = createDataFrame({
+          fields: [
+            { name: 'foo', type: FieldType.string, values: ['1'] },
+            {
+              name: 'nested',
+              type: FieldType.nestedFrames,
+              values: [[createDataFrame({ fields: fieldsWithWrappedText })]],
+            },
+          ],
+        });
+        rows = frameToRecords(topFrame, 'nested');
+        const nestedRows = frameToRecords(createDataFrame({ fields: fieldsWithWrappedText }), 'nested', 0);
+
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            fields: topFrame.fields,
+            columnWidths: [330],
+            defaultHeight: 40,
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
+            hasNestedFrames: true,
+            visibleNestedRowCounts: [3],
+            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedFields: fieldsWithWrappedText,
+            nestedColWidths: [100, 100, 100],
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        expect(result.current(nestedRows[0])).toEqual(expect.any(Number));
+
+        expect(measureHeightFn).toHaveBeenCalledWith(
+          'Annie Lennox',
+          100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          fieldsWithWrappedText[0],
+          0,
+          22
+        );
+      });
     });
   });
 
