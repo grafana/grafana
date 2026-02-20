@@ -57,7 +57,7 @@ To create a dashboard from a template, follow these steps:
 In Grafana Cloud, you can customize a dashboard template using Grafana Assistant.
 When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-assist-v12.4.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v12.4.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" >}}
 
 Grafana Assistant analyses the template, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets create a working, relevant dashboard from a template without the need to manually map metrics and panels.
