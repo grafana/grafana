@@ -11,10 +11,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -95,7 +97,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
-			}, newChunkedWriter(w)); err != nil {
+			}, newChunkWriter(w)); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
 			}
 			return
@@ -136,45 +138,66 @@ func isRequestingChunkedResponse(accept string) bool {
 	return accept == "text/event-stream"
 }
 
-func newChunkedWriter(w http.ResponseWriter) backend.ChunkedDataWriter {
-	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10)
-	return backend.NewChunkedDataWriter(backend.DataFrameFormat_JSON,
-		func(chunk *pluginv2.QueryChunkedDataResponse) error {
-			if chunk.Format != pluginv2.DataFrameFormat_JSON {
-				return fmt.Errorf("expected json format")
-			}
+var (
+	_ backendplugin.RawChunkReceiver = (*rawChunkWriter)(nil)
+)
 
-			s.WriteRaw("data: ")
-			s.WriteObjectStart()
-			s.WriteObjectField("refId")
-			s.WriteString(chunk.RefId)
+type rawChunkWriter struct {
+	stream *jsoniter.Stream
+}
 
-			if chunk.FrameId != "" {
-				s.WriteMore()
-				s.WriteObjectField("frameId")
-				s.WriteString(chunk.FrameId)
-			}
+func newChunkWriter(w http.ResponseWriter) backendplugin.RawChunkReceiver {
+	return &rawChunkWriter{
+		stream: jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10),
+	}
+}
 
-			if chunk.Frame != nil {
-				s.WriteMore()
-				s.WriteObjectField("frame")
-				s.WriteRaw(string(chunk.Frame)) // must not contain newlines!
-			}
+// ReceivedChunk implements [backendplugin.RawChunkReceiver].
+func (r *rawChunkWriter) ReceivedChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
+	if chunk.Format != pluginv2.DataFrameFormat_JSON {
+		return fmt.Errorf("expected json format")
+	}
 
-			if chunk.Error != "" {
-				s.WriteMore()
-				s.WriteObjectField("error")
-				s.WriteString(chunk.Error)
+	r.stream.WriteRaw("data: ")
+	r.stream.WriteObjectStart()
+	r.stream.WriteObjectField("refId")
+	r.stream.WriteString(chunk.RefId)
 
-				if chunk.ErrorSource != "" {
-					s.WriteMore()
-					s.WriteObjectField("errorSource")
-					s.WriteString(chunk.ErrorSource)
-				}
-			}
+	if chunk.FrameId != "" {
+		r.stream.WriteMore()
+		r.stream.WriteObjectField("frameId")
+		r.stream.WriteString(chunk.FrameId)
+	}
 
-			s.WriteObjectEnd()
-			s.WriteRaw("\n\n") // marks the end of a message in SSE
-			return s.Flush()
-		})
+	if chunk.Frame != nil {
+		r.stream.WriteMore()
+		r.stream.WriteObjectField("frame")
+		r.stream.WriteRaw(string(chunk.Frame)) // must not contain newlines!
+	}
+
+	if chunk.Error != "" {
+		r.stream.WriteMore()
+		r.stream.WriteObjectField("error")
+		r.stream.WriteString(chunk.Error)
+
+		if chunk.ErrorSource != "" {
+			r.stream.WriteMore()
+			r.stream.WriteObjectField("errorSource")
+			r.stream.WriteString(chunk.ErrorSource)
+		}
+	}
+
+	r.stream.WriteObjectEnd()
+	r.stream.WriteRaw("\n\n") // marks the end of a message in SSE
+	return r.stream.Flush()
+}
+
+// WriteError implements [backend.ChunkedDataWriter].
+func (r *rawChunkWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
+	return fmt.Errorf("unexpected callback (WriteError)")
+}
+
+// WriteFrame implements [backend.ChunkedDataWriter].
+func (r *rawChunkWriter) WriteFrame(ctx context.Context, refID string, frameID string, f *data.Frame) error {
+	return fmt.Errorf("unexpected callback (WriteFrame)")
 }

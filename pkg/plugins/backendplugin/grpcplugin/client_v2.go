@@ -12,9 +12,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -190,20 +192,6 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 }
 
 func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
-	// frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	if chunk.Error != "" {
-	// 		chunkStatus := backend.Status(chunk.Status)
-	// 		errorSource := backend.ErrorSource(chunk.ErrorSource)
-	// 		chunkErr := backend.NewErrorWithSource(errors.New(chunk.Error), errorSource)
-	// 		return w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr)
-	// 	}
-
-	// 	return w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame)
-
 	if c.DataClient == nil {
 		return plugins.ErrMethodNotImplemented
 	}
@@ -220,6 +208,8 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		return fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
+	raw, isRaw := w.(backendplugin.RawChunkReceiver)
+
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
@@ -229,7 +219,31 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			return err
 		}
 
-		if err = w.WriteChunk(chunk); err != nil {
+		if isRaw {
+			if err = raw.ReceivedChunk(chunk); err != nil {
+				return err
+			}
+		}
+
+		if chunk.Format != pluginv2.DataFrameFormat_ARROW {
+			return fmt.Errorf("this client only accepts arrow format")
+		}
+
+		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
+		if err != nil {
+			return err
+		}
+
+		if chunk.Error != "" {
+			chunkStatus := backend.Status(chunk.Status)
+			errorSource := backend.ErrorSource(chunk.ErrorSource)
+			chunkErr := backend.NewErrorWithSource(errors.New(chunk.Error), errorSource)
+			if err = w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr); err != nil {
+				return err
+			}
+		}
+
+		if err = w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
 			return err
 		}
 	}

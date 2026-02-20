@@ -3,8 +3,9 @@ package coreplugin
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -100,6 +101,11 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
 	if cp.QueryChunkedDataHandler != nil {
+		raw, isRaw := w.(backendplugin.RawChunkReceiver)
+		if isRaw {
+			w = backend.NewChunkedDataWriter(req.Format, raw.ReceivedChunk)
+		}
+
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
 	}
