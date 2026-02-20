@@ -446,8 +446,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			Limit:    int64(batchSize),
 			Sort:     kv.SortOrderDesc}) {
 			if err != nil {
-				b.log.Error("failed to list collection before delete: %s", err)
-				return err
+				return fmt.Errorf("failed to list collection before delete: %s", err)
 			}
 
 			keysProcessed++
@@ -480,8 +479,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					Sort:     kv.SortOrderDesc,
 				}) {
 					if err != nil {
-						b.log.Error("failed to get keys for resource '%s': %s", dk, err)
-						return err
+						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
 					b.log.Info("garbage collection", "key to delete", deleteKey)
 					endKey = deleteKey
@@ -492,8 +490,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if !b.garbageCollection.DryRun {
 					err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
 					if err != nil {
-						b.log.Error("failed to batch delete keys: %s", err)
-						return err
+						return fmt.Errorf("failed to batch delete keys: %s", err)
 					}
 
 					keysDeleted = keysDeleted + int64(len(keysToDelete))
