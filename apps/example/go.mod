@@ -1,10 +1,10 @@
 module github.com/grafana/grafana/apps/example
 
-go 1.26.0
+go 1.25.7
 
 require (
-	github.com/grafana/grafana-app-sdk v0.51.3
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk v0.51.4
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	k8s.io/apimachinery v0.35.1
 	k8s.io/apiserver v0.35.1
