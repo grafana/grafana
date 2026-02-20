@@ -134,7 +134,7 @@ func createFields(frames data.Frames, propKeys []string) []*data.Field {
 
 // createPropKeys creates a sorted list of property keys from a map
 func createPropKeys(props map[string]string) []string {
-	propKeys := make([]string, 0)
+	propKeys := make([]string, 0, len(props))
 	for k := range props {
 		propKeys = append(propKeys, k)
 	}

@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
+import { useContactPointsNav } from '../../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../../AlertingPageWrapper';
@@ -37,8 +38,10 @@ const GlobalConfig = () => {
 };
 
 function GlobalConfigPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <GlobalConfig />
     </AlertmanagerPageWrapper>
   );

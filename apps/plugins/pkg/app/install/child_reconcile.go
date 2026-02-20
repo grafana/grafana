@@ -11,6 +11,7 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 var (
@@ -22,14 +23,16 @@ type ChildPluginReconciler struct {
 	operator.TypedReconciler[*pluginsv0alpha1.Plugin]
 	metaManager *meta.ProviderManager
 	registrar   Registrar
+	logger      logging.Logger
 }
 
 // NewChildPluginReconciler creates a new ChildPluginReconciler instance.
-func NewChildPluginReconciler(metaManager *meta.ProviderManager, registrar Registrar) *ChildPluginReconciler {
+func NewChildPluginReconciler(logger logging.Logger, metaManager *meta.ProviderManager, registrar Registrar) *ChildPluginReconciler {
 	reconciler := &ChildPluginReconciler{
 		TypedReconciler: operator.TypedReconciler[*pluginsv0alpha1.Plugin]{},
 		metaManager:     metaManager,
 		registrar:       registrar,
+		logger:          logger,
 	}
 	reconciler.ReconcileFunc = reconciler.reconcile
 	return reconciler
@@ -37,10 +40,15 @@ func NewChildPluginReconciler(metaManager *meta.ProviderManager, registrar Regis
 
 // reconcile is the main reconciliation loop for ChildPlugin resources.
 func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]) (operator.ReconcileResult, error) {
+	start := time.Now()
+	defer func() {
+		metrics.ChildReconciliationDurationSeconds.Observe(time.Since(start).Seconds())
+	}()
+
 	plugin := req.Object
-	logger := logging.FromContext(ctx).With(
+	logger := r.logger.WithContext(ctx).With(
 		"pluginId", plugin.Spec.Id,
-		"namespace", plugin.Namespace,
+		"requestNamespace", plugin.Namespace,
 		"version", plugin.Spec.Version,
 		"action", req.Action,
 		"parentId", plugin.Spec.ParentId,
@@ -58,6 +66,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	})
 	if err != nil {
 		logger.Error("Failed to get plugin metadata", "error", err)
+		metrics.ChildReconciliationTotal.WithLabelValues("error").Inc()
 		return operator.ReconcileResult{
 			RequeueAfter: &requeueAfter,
 		}, nil
@@ -65,6 +74,7 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	if len(result.Meta.Children) == 0 {
 		logger.Debug("Plugin has no children, skipping child plugin reconciliation")
+		metrics.ChildReconciliationTotal.WithLabelValues("success").Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
@@ -73,24 +83,36 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		"action", req.Action,
 	)
 
+	var reconcileResult operator.ReconcileResult
+	var reconcileErr error
+
 	switch req.Action {
 	case operator.ReconcileActionCreated, operator.ReconcileActionUpdated, operator.ReconcileActionResynced:
-		return r.registerChildren(ctx, plugin, result.Meta.Children)
+		reconcileResult, reconcileErr = r.registerChildren(ctx, plugin, result.Meta.Children)
 	case operator.ReconcileActionDeleted:
-		return r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
+		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
 	case operator.ReconcileActionUnknown:
-		break // handled by return statement below
+		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
+	default:
+		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	}
-	return operator.ReconcileResult{}, fmt.Errorf("invalid action: %d", req.Action)
+
+	status := "success"
+	if reconcileErr != nil || reconcileResult.RequeueAfter != nil {
+		status = "error"
+	}
+	metrics.ChildReconciliationTotal.WithLabelValues(status).Inc()
+
+	return reconcileResult, reconcileErr
 }
 
 func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string) (operator.ReconcileResult, error) {
-	logger := logging.FromContext(ctx)
+	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace)
 	retry := false
 	for _, childID := range children {
 		err := r.registrar.Unregister(ctx, namespace, childID, SourceChildPluginReconciler)
 		if err != nil && !errorsK8s.IsNotFound(err) {
-			logger.Error("Failed to unregister child plugin", "error", err, "childId", childID)
+			logger.Error("Failed to unregister child plugin", "error", err, "pluginId", childID)
 			retry = true
 		}
 	}
@@ -102,7 +124,7 @@ func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespac
 }
 
 func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string) (operator.ReconcileResult, error) {
-	logger := logging.FromContext(ctx)
+	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
 	retry := false
 	for _, childID := range children {
 		childInstall := &PluginInstall{
@@ -113,7 +135,7 @@ func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pl
 		}
 		err := r.registrar.Register(ctx, parent.Namespace, childInstall)
 		if err != nil {
-			logger.Error("Failed to register child plugin", "error", err, "childId", childID)
+			logger.Error("Failed to register child plugin", "error", err, "pluginId", childID)
 			retry = true
 		}
 	}

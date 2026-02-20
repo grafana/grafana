@@ -87,12 +87,46 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  // dashboards_new_variable_type_selected
+  // when a user selects a variable type when creating a new variable
+  newVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_variable_type_selected', properties);
+  },
+
+  // dashboards_delete_variable_button_clicked
+  // when a user deletes a variable
+  deleteVariableButtonClicked: (properties: { type: string }) => {
+    reportDashboardInteraction('delete_variable_button_clicked', properties);
+  },
+
+  // dashboards_variables_reordered
+  // when a user drags and drops a variable in the content outline
+  variablesReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('variables_reordered', properties);
+  },
+
+  // dashboards_add_annotation_button_clicked
+  // when a user clicks on 'Add annotation'
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_annotation_button_clicked', properties);
+  },
+  // dashboards_annotations_reordered
+  // when a user drags and drops an annotation in the content outline
+  annotationsReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('annotations_reordered', properties);
+  },
+
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
-    source: 'panel' | 'edit_pane'
+    source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
+  },
+
+  // Panel styles copy/paste interactions
+  panelStylesMenuClicked(action: 'copy' | 'paste', panelType: string, panelId: number, error?: boolean) {
+    reportDashboardInteraction('panel_styles_menu_clicked', { action, panelType, panelId, error });
   },
 
   // Dashboard edit item actions
@@ -117,13 +151,9 @@ export const DashboardInteractions = {
   trackPastePanelClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
   },
-  trackRemoveRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_row' });
+  trackDeleteDashboardElement(elementType: string) {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
   },
-  trackRemoveTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
-  },
-
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },

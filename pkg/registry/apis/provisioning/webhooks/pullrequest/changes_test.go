@@ -227,7 +227,7 @@ func TestCalculateChanges(t *testing.T) {
 				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 			},
 			changes: func() []repository.VersionedFileChange {
-				changes := []repository.VersionedFileChange{}
+				changes := make([]repository.VersionedFileChange, 0, 15)
 				for range 15 {
 					changes = append(changes, repository.VersionedFileChange{
 						Action: repository.FileActionCreated,
@@ -240,7 +240,7 @@ func TestCalculateChanges(t *testing.T) {
 			expectedInfo: changeInfo{
 				SkippedFiles: 5,
 				Changes: func() []fileChangeInfo {
-					changes := []fileChangeInfo{}
+					changes := make([]fileChangeInfo, 0, 10)
 					for range 10 {
 						changes = append(changes, fileChangeInfo{
 							Change: repository.VersionedFileChange{
@@ -861,7 +861,7 @@ func TestCalculateChanges(t *testing.T) {
 }
 
 func TestDummyImageURL(t *testing.T) {
-	urls := []string{}
+	urls := make([]string, 0, 10)
 	for i := range 10 {
 		urls = append(urls, getDummyRenderedURL(fmt.Sprintf("http://%d", i)))
 	}
@@ -895,7 +895,7 @@ func getDummyRenderedURL(url string) string {
 		v := binary.BigEndian.Uint64(bytes[0:8])
 		idx = int(v) % len(dummy)
 	}
-	return dummy[idx]
+	return dummy[idx] //nolint:gosec // idx is bounded by modulo len(dummy)
 }
 
 // FIXME: test these cases from the public interface once the component is refactored

@@ -213,7 +213,7 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(deleteButton).not.toBeInTheDocument();
   });
 
-  it('calls createBulkJob with branch workflow parameters when branch is selected', async () => {
+  it('calls createBulkJob with branch workflow parameters by default', async () => {
     const { user, mockCreateBulkJob, defaultRepository } = setup(null);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
@@ -229,20 +229,24 @@ describe('BulkDeleteProvisionedResource', () => {
     );
   });
 
-  it('calls createBulkJob with write workflow parameters when write is selected', async () => {
-    const { user, mockCreateBulkJob, defaultRepository } = setup(null);
-
-    // Switch to write workflow
-    const writeRadio = screen.getByRole('radio', { name: /Push to an existing branch/i });
-    await user.click(writeRadio);
+  it('calls createBulkJob with write workflow parameters for write-only repositories', async () => {
+    const writeOnlyRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['write'],
+    };
+    const { user, mockCreateBulkJob } = setup(writeOnlyRepository);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
     expect(mockCreateBulkJob).toHaveBeenCalledWith(
-      defaultRepository,
+      writeOnlyRepository,
       expect.objectContaining({
         action: 'delete',
         delete: expect.objectContaining({
+          ref: undefined,
           resources: expect.arrayContaining([
             expect.objectContaining({ name: 'folder-1', kind: 'Folder' }),
             expect.objectContaining({ name: 'dashboard-1', kind: 'Dashboard' }),

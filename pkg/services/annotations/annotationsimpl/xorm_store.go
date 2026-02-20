@@ -108,7 +108,7 @@ func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
 	// Run migration in a background goroutine to avoid blocking service startup
 	go func() {
 		l.Info("Starting annotation dashboard_uid migration in background")
-		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName(), l)
+		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName(), l)
 		if err != nil {
 			l.Error("failed to populate dashboard_uid for annotations", "error", err)
 		} else {
@@ -433,7 +433,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		// order of ORDER BY arguments match the order of a sql index for performance
 		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
 		if query.Limit > 0 {
-			orderBy += r.db.GetDialect().Limit(query.Limit)
+			orderBy += r.db.GetDialect().LimitOffset(query.Limit, query.Offset)
 		}
 		sql.WriteString(orderBy + " ) dt on dt.id = annotation.id")
 
@@ -571,7 +571,7 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		}
 
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]interface{}, 0) //nolint:prealloc
 		tagKey := `tag.` + r.db.GetDialect().Quote("key")
 		tagValue := `tag.` + r.db.GetDialect().Quote("value")
 

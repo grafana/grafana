@@ -374,7 +374,7 @@
           document.head.appendChild(cssLink);
 
           // Set custom fav icon if set in whitelabeling settings
-          const customFavIcon = window.grafanaBootData.settings.whitelabeling.favIcon;
+          const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
           if (customFavIcon) {
             let favicon = document.getElementById('grafana_favicon');
 

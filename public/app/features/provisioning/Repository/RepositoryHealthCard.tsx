@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query/react';
+import { Link } from 'react-router-dom-v5-compat';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, useGetConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
+import { CONNECTIONS_URL } from '../constants';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { formatTimestamp } from '../utils/time';
 
 import { CheckRepository } from './CheckRepository';
@@ -14,7 +17,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const status = repo.status;
   const connectionName = repo.spec?.connection?.name;
-  const { data: connection } = useGetConnectionQuery(connectionName ? { name: connectionName } : skipToken);
+  const { connection } = useConnectionStatus(connectionName);
 
   return (
     <Card noMargin className={styles.card}>
@@ -50,12 +53,10 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
 
           {!!status?.health?.message?.length && (
             <>
-              <div>
-                <Text color="secondary">
-                  <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
-                </Text>
-              </div>
-              <div>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
+              </Text>
+              <div className={styles.spanTwo}>
                 <Stack gap={1}>
                   {status.health.message.map((msg, idx) => (
                     <Text key={idx} variant="body">
@@ -74,7 +75,12 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.connection-status">Connection status:</Trans>
               </Text>
               <div className={styles.spanTwo}>
-                <ConnectionStatusBadge status={connection?.status} />
+                <Link to={`${CONNECTIONS_URL}/${connectionName}/edit`}>
+                  <ConnectionStatusBadge
+                    key={connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status || 'pending'}
+                    status={connection?.status}
+                  />
+                </Link>
               </div>
             </>
           )}
@@ -87,7 +93,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     spanTwo: css({
       gridColumn: 'span 2',
@@ -96,6 +102,7 @@ const getStyles = () => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     actions: css({
       marginTop: 'auto',

@@ -222,7 +222,6 @@ export function PanelChrome({
       ) {
         return;
       }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -247,7 +246,8 @@ export function PanelChrome({
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
       if (
         evt.target instanceof Element &&
-        (evt.target.closest('button,a,canvas,svg') || evt.target.classList.contains('u-over'))
+        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container') ||
+          evt.target.classList.contains('u-over'))
       ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
@@ -434,6 +434,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>
@@ -595,7 +596,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
       gap: theme.spacing(1),
     }),
     subHeader: css({
@@ -623,6 +624,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       display: 'flex',
       minWidth: 0,
+      paddingLeft: theme.spacing.x0_5,
       '& > h2': {
         minWidth: 0,
       },

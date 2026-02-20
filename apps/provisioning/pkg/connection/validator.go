@@ -117,9 +117,13 @@ func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisio
 					fieldPath = fieldPath.Child(part)
 				}
 			}
+			var badValue any = ""
+			if testError.BadValue != nil {
+				badValue = testError.BadValue
+			}
 			list = append(list, field.Invalid(
 				fieldPath,
-				"",
+				badValue,
 				testError.Detail,
 			))
 		}

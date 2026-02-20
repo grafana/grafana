@@ -48,6 +48,7 @@ export interface Options {
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: ('ms' | 'ns');
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 

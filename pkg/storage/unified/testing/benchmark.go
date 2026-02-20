@@ -56,7 +56,7 @@ func (opts *BenchmarkOptions) String() string {
 	)
 }
 
-// BenchmarkResult contains the benchmark metrics
+// BenchmarkResult contains the benchmark metrics for a particular operation.
 type BenchmarkResult struct {
 	TotalDuration time.Duration
 	WriteCount    int
@@ -64,6 +64,34 @@ type BenchmarkResult struct {
 	P50Latency    time.Duration
 	P90Latency    time.Duration
 	P99Latency    time.Duration
+}
+
+func (r BenchmarkResult) String() string {
+	var out strings.Builder
+
+	fmt.Fprintf(&out, "Total Duration: %v\n", r.TotalDuration)
+	fmt.Fprintf(&out, "Write Count: %d\n", r.WriteCount)
+	fmt.Fprintf(&out, "Throughput: %.2f writes/sec\n", r.Throughput)
+	fmt.Fprintf(&out, "P50 Latency: %v\n", r.P50Latency)
+	fmt.Fprintf(&out, "P90 Latency: %v\n", r.P90Latency)
+	fmt.Fprintf(&out, "P99 Latency: %v\n", r.P99Latency)
+
+	return out.String()
+}
+
+// BenchmarkResults aggregates results of a benchmark run for
+// create/update/delete operations.
+type BenchmarkResults struct {
+	CreateResults BenchmarkResult
+	UpdateResults BenchmarkResult
+	DeleteResults BenchmarkResult
+}
+
+func (r BenchmarkResults) String() string {
+	return fmt.Sprintf(
+		"CREATE:\n%s\n\nUPDATE:\n%s\n\nDELETE:\n%s\n",
+		r.CreateResults, r.UpdateResults, r.DeleteResults,
+	)
 }
 
 // initializeBackend sets up the backend with initial resources for each group and resource type combination
@@ -89,71 +117,97 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 }
 
 // runStorageBackendBenchmark runs a write throughput benchmark
-func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
-	// Create channels for workers
-	jobs := make(chan int, opts.NumResources)
-	latencies := make([]time.Duration, opts.NumResources)
+func runStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, opts *BenchmarkOptions) *BenchmarkResults {
+	performOperation := func(operation func(context.Context, int, string, string, string, string) error) BenchmarkResult {
+		// Create channels for workers
+		jobs := make(chan int, opts.NumResources)
+		latencies := make([]time.Duration, opts.NumResources)
 
-	// Fill the jobs channel
-	for i := 0; i < opts.NumResources; i++ {
-		jobs <- i
-	}
-	close(jobs)
+		// Fill the jobs channel
+		for i := 0; i < opts.NumResources; i++ {
+			jobs <- i
+		}
+		close(jobs)
 
-	g, ctx := errgroup.WithContext(ctx)
+		g, groupCtx := errgroup.WithContext(t.Context())
+		startTime := time.Now()
 
-	// Start workers
-	startTime := time.Now()
-	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		g.Go(func() error {
-			for jobID := range jobs {
-				// Calculate a unique ID for this job that's guaranteed to be unique across all workers
-				uniqueID := jobID
+		for workerID := 0; workerID < opts.Concurrency; workerID++ {
+			g.Go(func() error {
+				for jobID := range jobs {
+					// Calculate a unique ID for this job that's guaranteed to be unique across all workers
+					uniqueID := jobID
 
-				// Generate deterministic and unique resource details
-				namespace := fmt.Sprintf("ns-%d", uniqueID%opts.NumNamespaces)
-				group := fmt.Sprintf("group-%d", uniqueID%opts.NumGroups)
-				resourceType := fmt.Sprintf("resource-%d", uniqueID%opts.NumResourceTypes)
-				// Ensure name is unique by using the global uniqueID
-				name := fmt.Sprintf("item-%d", uniqueID)
+					// Generate deterministic and unique resource details
+					namespace := fmt.Sprintf("ns-%d", uniqueID%opts.NumNamespaces)
+					group := fmt.Sprintf("group-%d", uniqueID%opts.NumGroups)
+					resourceType := fmt.Sprintf("resource-%d", uniqueID%opts.NumResourceTypes)
+					// Ensure name is unique by using the global uniqueID
+					name := fmt.Sprintf("item-%d", uniqueID)
 
-				writeStart := time.Now()
-				_, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
-					WithNamespace(namespace),
-					WithGroup(group),
-					WithResource(resourceType),
-					WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
-
-				if err != nil {
-					return err
+					opStart := time.Now()
+					if err := operation(groupCtx, jobID, namespace, group, resourceType, name); err != nil {
+						return err
+					}
+					latencies[jobID] = time.Since(opStart)
 				}
 
-				latencies[jobID] = time.Since(writeStart)
-			}
+				return nil
+			})
+		}
 
-			return nil
-		})
+		// Wait for all workers to complete
+		require.NoError(t, g.Wait())
+
+		// Sort latencies for percentile calculation
+		slices.Sort(latencies)
+
+		totalDuration := time.Since(startTime)
+		return BenchmarkResult{
+			TotalDuration: time.Since(startTime),
+			WriteCount:    opts.NumResources,
+			Throughput:    float64(opts.NumResources) / totalDuration.Seconds(),
+			P50Latency:    latencies[len(latencies)*50/100],
+			P90Latency:    latencies[len(latencies)*90/100],
+			P99Latency:    latencies[len(latencies)*99/100],
+		}
 	}
 
-	// Wait for all workers to complete
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
+	rvs := make([]int64, opts.NumResources)
 
-	totalDuration := time.Since(startTime)
-	throughput := float64(opts.NumResources) / totalDuration.Seconds()
+	createResult := performOperation(func(ctx context.Context, jobID int, namespace, group, resource, name string) error {
+		var err error
+		rvs[jobID], err = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+			WithNamespace(namespace),
+			WithGroup(group),
+			WithResource(resource),
+			WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
 
-	// Sort latencies for percentile calculation
-	slices.Sort(latencies)
+		return err
+	})
 
-	return &BenchmarkResult{
-		TotalDuration: totalDuration,
-		WriteCount:    opts.NumResources,
-		Throughput:    throughput,
-		P50Latency:    latencies[len(latencies)*50/100],
-		P90Latency:    latencies[len(latencies)*90/100],
-		P99Latency:    latencies[len(latencies)*99/100],
-	}, nil
+	updateResult := performOperation(func(ctx context.Context, jobID int, namespace, group, resource, name string) error {
+		var err error
+		rvs[jobID], err = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED,
+			WithNamespaceAndRV(namespace, rvs[jobID]),
+			WithGroup(group),
+			WithResource(resource),
+			WithValue(strings.Repeat("9876543210ZYXWVUTSRQPONMLKJIHGFEDCBAzyxwvutsrqponmlkjihgfedcba", 20))) // ~1.21 KiB
+
+		return err
+	})
+
+	deleteResult := performOperation(func(ctx context.Context, jobID int, namespace, group, resource, name string) error {
+		_, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_DELETED,
+			WithNamespaceAndRV(namespace, rvs[jobID]),
+			WithGroup(group),
+			WithResource(resource),
+		)
+
+		return err
+	})
+
+	return &BenchmarkResults{createResult, updateResult, deleteResult}
 }
 
 // RunStorageBackendBenchmark runs a benchmark test for a storage backend implementation
@@ -162,19 +216,13 @@ func RunStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, o
 	require.NoError(t, initializeBackend(t.Context(), backend, opts))
 
 	// Run the benchmark
-	result, err := runStorageBackendBenchmark(t.Context(), backend, opts)
-	require.NoError(t, err)
+	results := runStorageBackendBenchmark(t, backend, opts)
 
 	// Log the results for better visibility.
 	t.Logf("Benchmark Configuration: %s", opts)
 	t.Logf("")
 	t.Logf("Benchmark Results:")
-	t.Logf("Total Duration: %v", result.TotalDuration)
-	t.Logf("Write Count: %d", result.WriteCount)
-	t.Logf("Throughput: %.2f writes/sec", result.Throughput)
-	t.Logf("P50 Latency: %v", result.P50Latency)
-	t.Logf("P90 Latency: %v", result.P90Latency)
-	t.Logf("P99 Latency: %v", result.P99Latency)
+	t.Logf("\n%s", results)
 }
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
@@ -203,7 +251,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	size := int64(10000) // force the index to be on disk
 	index, err := backend.BuildIndex(ctx, nr, size, nil, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false)
+	}, nil, false, time.Time{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize backend: %w", err)
 	}

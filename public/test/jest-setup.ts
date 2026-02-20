@@ -2,6 +2,7 @@
 import './global-jquery-shim';
 
 import { TransformStream } from 'node:stream/web';
+import { MessageChannel, MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
@@ -126,6 +127,26 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
+// originally using just global.MessageChannel = MessageChannel
+// however this results in open handles in jest tests
+// see https://github.com/facebook/react/issues/26608#issuecomment-1734172596
+global.MessageChannel = class {
+  port1: MessagePort;
+  port2: MessagePort;
+  constructor() {
+    const channel = new MessageChannel();
+    this.port1 = new Proxy(channel.port1, {
+      set(port1, prop, value) {
+        const result = Reflect.set(port1, prop, value);
+        if (prop === 'onmessage') {
+          port1.unref();
+        }
+        return result;
+      },
+    });
+    this.port2 = channel.port2;
+  }
+};
 global.BroadcastChannel = class BroadcastChannel {
   onmessage() {}
   onmessageerror() {}

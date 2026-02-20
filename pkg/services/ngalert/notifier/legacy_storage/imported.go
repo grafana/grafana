@@ -5,13 +5,13 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ImportedConfigRevision struct {
+	identifier     string
 	rev            *ConfigRevision
 	opts           definition.MergeOpts
 	importedConfig *definition.PostableApiAlertingConfig
@@ -26,6 +26,7 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	}
 	// support only one config for now
 	mimirCfg := rev.Config.ExtraConfigs[0]
+	result.identifier = mimirCfg.Identifier
 	opts := definition.MergeOpts{
 		DedupSuffix:     mimirCfg.Identifier,
 		SubtreeMatchers: mimirCfg.MergeMatchers,
@@ -70,7 +71,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -97,9 +98,9 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterva
 	)
 
 	// Apply renames to imported intervals
-	result := make([]config.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	result := make([]definitions.AmMuteTimeInterval, 0, len(importedTime)+len(importedMute))
 
-	pushRenamed := func(mt config.MuteTimeInterval) {
+	pushRenamed := func(mt definitions.AmMuteTimeInterval) {
 		if newName, renamed := renames[mt.Name]; renamed {
 			mt.Name = newName
 		}
@@ -107,7 +108,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterva
 	}
 
 	for _, ti := range importedTime {
-		pushRenamed(config.MuteTimeInterval(ti))
+		pushRenamed(definitions.AmMuteTimeInterval(ti))
 	}
 
 	for _, mti := range importedMute {
@@ -132,4 +133,22 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		}
 	}
 	return m
+}
+
+func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	renamed, err := definition.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
+	}
+
+	definition.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
+
+	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
+	mr.Provenance = models.ProvenanceConvertedPrometheus
+	mr.Origin = models.ResourceOriginImported
+	return mr, nil
 }

@@ -21,7 +21,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.Check", r.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("Check").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.check(ctx, r)
@@ -194,7 +194,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 }
 
 func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, relation, object string, contextuals *openfgav1.ContextualTupleKeys, resourceCtx *structpb.Struct) (*openfgav1.CheckResponse, error) {
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	res, err := s.openFGAClient.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{

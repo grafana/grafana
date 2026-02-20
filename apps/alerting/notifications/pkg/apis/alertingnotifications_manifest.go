@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"createReceiverIntegrationTestAlert":{"type":"object","required":["labels","annotations"],"properties":{"annotations":{"type":"object","additionalProperties":{"type":"string"}},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"additionalProperties":false},"createReceiverIntegrationTestIntegration":{"type":"object","required":["type","version","settings"],"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"type":"object","additionalProperties":{"type":"boolean"}},"settings":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{}}},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
+	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":true,"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"createReceiverIntegrationTestAlert":{"type":"object","required":["labels","annotations"],"properties":{"annotations":{"type":"object","additionalProperties":{"type":"string"}},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"additionalProperties":false},"createReceiverIntegrationTestIntegration":{"type":"object","required":["type","version","settings"],"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"type":"object","additionalProperties":{"type":"boolean"}},"settings":{"type":"object","additionalProperties":true},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
 	versionSchemaReceiverv0alpha1      app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaReceiverv0alpha1, &versionSchemaReceiverv0alpha1)
 	rawSchemaRoutingTreev0alpha1       = []byte(`{"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"Route":{"additionalProperties":false,"properties":{"active_time_intervals":{"items":{"type":"string"},"type":"array"},"continue":{"type":"boolean"},"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"matchers":{"items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"mute_time_intervals":{"items":{"type":"string"},"type":"array"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["continue"],"type":"object"},"RouteDefaults":{"additionalProperties":false,"properties":{"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"}},"required":["receiver"],"type":"object"},"RoutingTree":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"defaults":{"$ref":"#/components/schemas/RouteDefaults"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["defaults","routes"],"type":"object"}}`)
@@ -178,9 +178,354 @@ var appManifestData = app.ManifestData{
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
+				Namespaced: map[string]spec3.PathProps{
+					"/integrationtypeschemas": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getIntegrationtypeschemas",
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"),
+																						}},
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+				},
+				Cluster: map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{
+					"getIntegrationtypeschemasField": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"dependsOn": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"description": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"element": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"inputType": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"label": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"placeholder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"propertyName": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"protected": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"required": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"secure": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"selectOptions": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasSelectOption"),
+												}},
+										},
+									},
+								},
+								"showWhen": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasShowWhen"),
+									},
+								},
+								"subformOptions": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+												}},
+										},
+									},
+								},
+								"validationRule": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"element",
+								"inputType",
+								"label",
+								"description",
+								"placeholder",
+								"propertyName",
+								"showWhen",
+								"required",
+								"validationRule",
+								"secure",
+								"dependsOn",
+							},
+						},
+					},
+					"getIntegrationtypeschemasIntegrationTypeSchema": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "IntegrationTypeSchema - receiver integration schema format",
+							Properties: map[string]spec.Schema{
+								"currentVersion": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"deprecated": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"description": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"heading": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"info": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"versions": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion"),
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"currentVersion",
+								"name",
+								"versions",
+							},
+						},
+					},
+					"getIntegrationtypeschemasIntegrationTypeSchemaResource": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
+							Properties: map[string]spec.Schema{
+								"metadata": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										Properties: map[string]spec.Schema{
+											"name": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"namespace": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+										Required: []string{
+											"name",
+											"namespace",
+										},
+									},
+								},
+								"spec": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+									},
+								},
+							},
+							Required: []string{
+								"metadata",
+								"spec",
+							},
+						},
+					},
+					"getIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"canCreate": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"deprecated": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"info": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"options": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+												}},
+										},
+									},
+								},
+								"typeAlias": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"version": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"version",
+								"canCreate",
+								"options",
+							},
+						},
+					},
+					"getIntegrationtypeschemasSelectOption": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"description": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"label": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{},
+								},
+							},
+							Required: []string{
+								"label",
+								"value",
+								"description",
+							},
+						},
+					},
+					"getIntegrationtypeschemasShowWhen": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"is": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"is",
+							},
+						},
+					},
+				},
 			},
 		},
 	},
@@ -209,7 +554,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTest{},
+	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestResponse{},
+
+	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -235,7 +582,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+	"v0alpha1|Receiver|test|POST": &v0alpha1.CreateReceiverIntegrationTestRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

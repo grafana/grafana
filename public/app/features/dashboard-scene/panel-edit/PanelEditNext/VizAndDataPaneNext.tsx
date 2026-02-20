@@ -17,8 +17,9 @@ import { useVizAndDataPaneLayout } from './hooks';
 export function VizAndDataPaneNext({
   model,
   containerHeight = 800,
-}: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
-  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
+  containerWidth = 800,
+}: SceneComponentProps<PanelEditor> & { containerHeight?: number; containerWidth?: number }) {
+  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight, containerWidth);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
@@ -27,16 +28,11 @@ export function VizAndDataPaneNext({
 
   const nextDataPane = scene.dataPane;
 
-  const vizSizeClass = css({
-    height: layout.vizResize.height,
-    maxHeight: containerHeight - 80,
-  });
   const sidebarSizeClass = css({
-    height: layout.sidebarSize === SidebarSize.Mini ? layout.bottomPaneHeight : layout.expandedSidebarHeight,
-    width: layout.sidebarResize.width,
+    height: layout.sidebarSize === SidebarSize.Mini ? '100%' : layout.expandedSidebarHeight,
   });
   const dataPaneSizeClass = css({
-    height: layout.bottomPaneHeight,
+    height: '100%',
   });
 
   return (
@@ -46,10 +42,14 @@ export function VizAndDataPaneNext({
           <scene.controls.Component model={scene.controls} />
         </div>
       )}
-      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout }, vizSizeClass)}>
+      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <scene.panelToShow.Component model={scene.panelToShow} />
         <div className={styles.vizResizerWrapper}>
-          <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
+          <div
+            ref={layout.vizResizeHandle.ref}
+            className={layout.vizResizeHandle.className}
+            data-testid="viz-resizer"
+          />
         </div>
       </div>
       <QueryEditorContextWrapper dataPane={nextDataPane}>
@@ -100,7 +100,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     sidebar: css({
       gridArea: 'sidebar',
-      overflow: 'visible',
+      overflow: 'hidden',
       position: 'relative',
       boxSizing: 'border-box',
       paddingBottom: theme.spacing(2),
@@ -110,7 +110,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gridArea: 'viz',
       overflow: 'visible',
       height: '100%',
-      minHeight: 100,
       position: 'relative',
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
@@ -139,9 +138,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     fixedSizeViz: css({
       height: '100vh',
-    }),
-    fullSizeEditor: css({
-      height: 'max-content',
     }),
     expandDataPane: css({
       display: 'flex',

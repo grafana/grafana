@@ -102,6 +102,18 @@ func TestManagedRoutes_Sort(t *testing.T) {
 	require.Equal(t, UserDefinedRoutingTreeName, routes[2].Name)
 }
 
+func TestManagedRoutes_Contains(t *testing.T) {
+	routes := ManagedRoutes{
+		{Name: "x"},
+		{Name: UserDefinedRoutingTreeName},
+		{Name: "z"},
+	}
+	assert.True(t, routes.Contains("x"))
+	assert.True(t, routes.Contains("z"))
+	assert.True(t, routes.Contains(UserDefinedRoutingTreeName))
+	assert.False(t, routes.Contains("missing"))
+}
+
 func TestWithManagedRoutes(t *testing.T) {
 	rev := func(root *definitions.Route, managedRoutes map[string]*definitions.Route) *ConfigRevision {
 		return &ConfigRevision{

@@ -152,17 +152,22 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
+// Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
 var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
+	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
+
+	// allow access to all datasource types
+	"*.datasource.grafana.app:*",
 
 	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
 	"secret.grafana.app/securevalues:decrypt",

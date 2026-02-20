@@ -176,6 +176,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore frontend build manifest
 manifest.json
+manifest-react19.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
@@ -267,3 +268,4 @@ devenv/blocks/auth/signer/keys/ec_private_key.pem
 
 # Spec-kit files shouldn't be committed without a major design process
 .specs
+.playwright-mcp/

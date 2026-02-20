@@ -57,7 +57,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
                 }
               }
             }
@@ -849,6 +849,55 @@
         }
       ]
     },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/access": {
+      "get": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect GET requests to access of DataSource",
+        "operationId": "getDataSourceAccess",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "DatasourceAccessInfo",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DatasourceAccessInfo",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/health": {
       "get": {
         "tags": [
@@ -918,7 +967,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
                 }
@@ -1277,6 +1326,42 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse": {
+        "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "results": {
+            "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
+                }
+              ]
+            }
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
+            "kind": "QueryDataResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec": {
         "type": "object",
         "required": [
@@ -1329,42 +1414,6 @@
           }
         },
         "additionalProperties": true
-      },
-      "com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse": {
-        "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
-        "type": "object",
-        "required": [
-          "results"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "results": {
-            "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
-              ]
-            }
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "grafana-testdata-datasource.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          }
-        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
@@ -1781,8 +1830,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

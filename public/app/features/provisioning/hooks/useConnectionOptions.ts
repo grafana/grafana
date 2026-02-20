@@ -5,22 +5,23 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { ExternalRepository } from '../types';
+import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-interface ExternalRepository {
-  name?: string;
-  owner?: string;
-  url?: string;
-}
-
 export function useConnectionOptions(enabled: boolean) {
-  const [connections, connectionsLoading] = useConnectionList(enabled ? {} : skipToken);
+  const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
 
+  // Only fetch repos for ready connections
   const connectionNames = useMemo(
-    () => githubConnections.map((conn) => conn.metadata?.name).filter((name): name is string => Boolean(name)),
+    () =>
+      githubConnections
+        .filter((c) => isConnectionReady(c.status))
+        .map((conn) => conn.metadata?.name)
+        .filter((name): name is string => Boolean(name)),
     [githubConnections]
   );
 
@@ -91,5 +92,11 @@ export function useConnectionOptions(enabled: boolean) {
     });
   }, [githubConnections, reposByConnection, reposLoading]);
 
-  return { options, isLoading: connectionsLoading || reposLoading };
+  return {
+    options,
+    isLoading: connectionsLoading || reposLoading,
+    connections: githubConnections,
+    error,
+    refetch,
+  };
 }

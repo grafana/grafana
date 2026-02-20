@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -59,8 +60,9 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
-	plugins := []string{}
-	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+	allPlugins := hs.pluginStore.Plugins(c.Req.Context())
+	plugins := make([]string, 0, len(allPlugins))
+	for _, p := range allPlugins {
 		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
 	}
 	keys["plugins"] = sortedHash(plugins, hash)
@@ -213,6 +215,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		JwtUrlLogin:                          hs.Cfg.JWTAuth.URLLogin,
 		LiveEnabled:                          hs.Cfg.LiveMaxConnections != 0,
 		LiveMessageSizeLimit:                 hs.Cfg.LiveMessageSizeLimit,
+		LiveNamespaced:                       true, // frontend will select a namespaced channel vs orgId channel
 		AutoAssignOrg:                        hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                   hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                     hs.Cfg.SigV4AuthEnabled,
@@ -316,6 +319,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
@@ -331,6 +335,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Caching: dtos.FrontendSettingsCachingDTO{
 			Enabled:           hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 			CleanCacheEnabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("clean_cache_enabled").MustBool(true),
+			DefaultTTLMs:      hs.Cfg.SectionWithEnvOverrides("caching").Key("ttl").MustDuration(time.Minute * 5).Milliseconds(),
 		},
 		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
