@@ -3667,17 +3667,20 @@
     {
       "metadata": {
         "name": "restrictedPluginApis",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1771593178037",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-20 13:12:58.037168 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

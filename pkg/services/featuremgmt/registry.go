@@ -1988,11 +1988,11 @@ var (
 		{
 			Name:         "restrictedPluginApis",
 			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaPluginsPlatformSquad,
 			HideFromDocs: true,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
