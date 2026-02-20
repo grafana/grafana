@@ -10,6 +10,7 @@ import { KioskMode } from 'app/types/dashboard';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { MegaMenuInteractions } from './MegaMenu/analytics';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 
 export interface AppChromeState {
@@ -141,9 +142,10 @@ export class AppChromeService {
     if (megaMenuDocked && updatePersistedState) {
       store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
-    reportInteraction('grafana_mega_menu_open', {
-      state: newOpenState,
-    });
+    // reportInteraction('grafana_mega_menu_open', {
+    //   state: newOpenState,
+    // });
+    MegaMenuInteractions.open({ state: newOpenState });
     this.update({
       megaMenuOpen: newOpenState,
     });
@@ -153,7 +155,8 @@ export class AppChromeService {
     if (updatePersistedState) {
       store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
     }
-    reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
+    MegaMenuInteractions.docked({ state: newDockedState });
+    // reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,
     });
