@@ -492,8 +492,6 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 	}
 
 	// if there are candidates to delete, we will batch delete them.
-	// We will do this in a separate loop to avoid holding locks on
-	// the datastore while we are scanning for candidates
 	if rowsProcessed > 0 && len(candidates) > 0 {
 		keysToDelete := []string{}
 
