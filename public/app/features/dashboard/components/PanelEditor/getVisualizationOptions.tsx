@@ -136,6 +136,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         id: htmlId,
+        value: value,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -282,6 +283,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         id: htmlId,
+        value: value,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -354,6 +356,7 @@ export function fillOptionsPaneItems(
       new OptionsPaneItemDescriptor({
         title: pluginOption.name,
         id: htmlId,
+        value: access.getValue(pluginOption.path),
         description: pluginOption.description,
         render: function renderEditor() {
           return (
