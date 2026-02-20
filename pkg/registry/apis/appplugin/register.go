@@ -31,8 +31,6 @@ var (
 	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
 )
 
-const VERSION = "v0alpha1"
-
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
 	pluginID             string
@@ -43,33 +41,6 @@ type AppPluginAPIBuilder struct {
 	pluginAssets         *pluginassets.Service
 	cfg                  *setting.Cfg
 	accessControl        ac.AccessControl
-}
-
-// NewAppPluginAPIBuilder creates a single AppPluginAPIBuilder for the given plugin ID.
-// This is used by the standalone factory (factory.go) where plugin discovery isn't available.
-func NewAppPluginAPIBuilder(
-	pluginID string,
-	pluginStore pluginstore.Store,
-	pluginSettings pluginsettings.Service,
-	pluginsUpdateChecker *updatemanager.PluginsService,
-	pluginAssets *pluginassets.Service,
-	cfg *setting.Cfg,
-	accessControl ac.AccessControl,
-) *AppPluginAPIBuilder {
-	groupName := pluginID + ".app.grafana.app"
-	return &AppPluginAPIBuilder{
-		pluginID: pluginID,
-		groupVersion: schema.GroupVersion{
-			Group:   groupName,
-			Version: VERSION,
-		},
-		pluginStore:          pluginStore,
-		pluginSettings:       pluginSettings,
-		pluginsUpdateChecker: pluginsUpdateChecker,
-		pluginAssets:         pluginAssets,
-		cfg:                  cfg,
-		accessControl:        accessControl,
-	}
 }
 
 func RegisterAPIService(
@@ -99,7 +70,7 @@ func RegisterAPIService(
 			pluginID: pluginJSON.ID,
 			groupVersion: schema.GroupVersion{
 				Group:   groupName,
-				Version: VERSION,
+				Version: apppluginv0alpha1.VERSION,
 			},
 			pluginStore:          pluginStore,
 			pluginSettings:       pluginSettings,
@@ -111,7 +82,7 @@ func RegisterAPIService(
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
-	return last, nil // only used for wire
+	return last, nil
 }
 
 // getAppPlugins discovers all installed app plugins.

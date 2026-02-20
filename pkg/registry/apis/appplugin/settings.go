@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -57,6 +58,10 @@ func (s *settingsStorage) GetSingularName() string {
 }
 
 func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	if name != "current" {
+		return nil, apierrors.NewNotFound(s.resource, name)
+	}
+
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

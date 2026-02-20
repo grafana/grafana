@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -21,6 +23,20 @@ import (
 
 	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
+
+func TestSettingsGet_InvalidName(t *testing.T) {
+	gr := schema.GroupResource{Group: "appplugin.grafana.app", Resource: "settings"}
+	storage := &settingsStorage{
+		pluginID: "test-app",
+		resource: gr,
+	}
+
+	ctx := request.WithNamespace(context.Background(), "default")
+	obj, err := storage.Get(ctx, "not-current", nil)
+	require.Nil(t, obj)
+	require.Error(t, err)
+	require.True(t, apierrors.IsNotFound(err))
+}
 
 // TestSettingsGet_JSONMatchesLegacyEndpoint tests that the JSON matches the legacy endpoint.
 func TestSettingsGet_JSONMatchesLegacyEndpoint(t *testing.T) {
