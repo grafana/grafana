@@ -3,7 +3,9 @@ import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+
+import { SIDEBAR_CARD_HEIGHT } from '../../constants';
 
 import { useDropIndicator } from './useDropIndicator';
 
@@ -25,8 +27,15 @@ export function DraggableList<T>({
   onDragEnd,
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
-  const { indicator, containerRef, setItemRef, handleBeforeCapture, handleDragStart, handleDragUpdate, handleDragEnd } =
-    useDropIndicator({ itemCount: items.length, onDragStart, onDragEnd });
+  const theme = useTheme2();
+
+  const { indicator, containerRef, handleBeforeCapture, handleDragStart, handleDragUpdate, handleDragEnd } =
+    useDropIndicator({
+      itemHeight: SIDEBAR_CARD_HEIGHT,
+      itemSpacing: theme.spacing.gridSize,
+      onDragStart,
+      onDragEnd,
+    });
 
   return (
     <DragDropContext
@@ -51,10 +60,7 @@ export function DraggableList<T>({
                 <Draggable key={key} draggableId={key} index={index}>
                   {(dragProvided) => (
                     <div
-                      ref={(el) => {
-                        dragProvided.innerRef(el);
-                        setItemRef(index, el);
-                      }}
+                      ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
                       className={styles.draggableItem}
