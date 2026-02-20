@@ -89,6 +89,21 @@ func TestQuotaTracker_ReleaseUnlimited(t *testing.T) {
 	require.True(t, tracker.TryAcquire())
 }
 
+func TestQuotaTracker_ReleaseNeverGoesBelowZero(t *testing.T) {
+	tracker := NewQuotaTracker(1, 10)
+
+	// Release more times than the current count
+	tracker.Release() // 1 -> 0
+	tracker.Release() // should stay at 0
+	tracker.Release() // should stay at 0
+
+	// Current is 0, so we should be able to acquire exactly 10 times
+	for i := 0; i < 10; i++ {
+		require.True(t, tracker.TryAcquire(), "acquire %d should succeed", i)
+	}
+	require.False(t, tracker.TryAcquire(), "acquire at limit should fail")
+}
+
 func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 	limit := int64(100)
 	tracker := NewQuotaTracker(0, limit)
