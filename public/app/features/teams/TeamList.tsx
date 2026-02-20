@@ -29,6 +29,7 @@ import {
 } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
@@ -70,6 +71,7 @@ const TeamList = () => {
   const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
   const [triggerFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
+  const notifyApp = useAppNotification();
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
@@ -211,11 +213,22 @@ const TeamList = () => {
           const showDeleteModal = async () => {
             let ownedFolders: DashboardHit[] = [];
             if (config.featureToggles.teamFolders) {
-              const { data: foldersData } = await triggerFoldersQuery({
+              const { data: foldersData, isError } = await triggerFoldersQuery({
                 type: 'folder',
                 ownerReference: [`iam.grafana.app/Team/${original.uid}`],
                 limit: 1,
               });
+
+              if (isError) {
+                notifyApp.error(
+                  t(
+                    'teams.team-list.failed-to-check-folders',
+                    'Failed to check if the team owns folders. Please try again.'
+                  )
+                );
+                return;
+              }
+
               if (foldersData?.hits) {
                 ownedFolders = foldersData.hits;
               }
@@ -271,7 +284,7 @@ const TeamList = () => {
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, triggerFoldersQuery]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, triggerFoldersQuery, notifyApp]
   );
 
   return (
