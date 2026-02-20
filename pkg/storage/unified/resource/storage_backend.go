@@ -329,7 +329,7 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_ = b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
@@ -339,24 +339,21 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
-func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
+func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
 	start := time.Now()
-
-	deletedByKey := map[string]int64{}
 
 	// get group and resources
 	groupResources, err := b.dataStore.getGroupResources(ctx)
 	if err != nil {
 		b.log.Error("failed to list group resources for garbage collection", "error", err)
-		return deletedByKey
+		return
 	}
 
 	// for each pair of group and resource
 	for _, gr := range groupResources {
 		// this function will return a map with the number of deleted entries for this group and resource
-		resourceKey := gr.Group + "/" + gr.Resource
 		totalDeleted := int64(0)
 
 		// get the cutoff timestamp for this resource, allowing for resource-specific cutoff logic (e.g. different retention for dashboards)
@@ -415,11 +412,11 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"rows", totalDeleted,
 				"seconds", time.Since(start).Seconds(),
 			)
-			deletedByKey[resourceKey] += totalDeleted
+			return
 		}
 	}
 
-	return deletedByKey
+	return
 }
 
 // garbageCollectBatch scans batches of entries in the datastore for a given group+resource,

@@ -480,10 +480,34 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			})
 		require.NoError(t, err)
 
+		// count how many history entries there are before GC runs - should be 2 (created and deleted)
+		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count := 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 2, count)
+
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		results := b.runGarbageCollection(ctx, cutoffTimestamp)
-		require.NoError(t, err)
-		require.Equal(t, int64(2), results["group/resource"])
+		b.runGarbageCollection(ctx, cutoffTimestamp)
+
+		// count how many history entries there are after GC runs - should be 0
+		historyResp = storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count = 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 0, count)
 	})
 
 	t.Run("will respect dashboard retention settings", func(t *testing.T) {
@@ -526,9 +550,33 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(1 * time.Hour).UnixMicro() // everything eligible for deletion (except dashboards)
-		results := b.runGarbageCollection(ctx, cutoffTimestamp)
-		require.Equal(t, int64(2), results["group/resource"])
-		require.Zero(t, results["dashboard.grafana.app/dashboards"])
+		b.runGarbageCollection(ctx, cutoffTimestamp)
+
+		// count how many history entries there are for group/resource - should be 0 (they were deleted by GC)
+		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/",
+			EndKey:   "group/resource0",
+		})
+		count := 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 0, count)
+
+		// count how many history entries there are for dashboard.grafana.app/dashboards - should be 2 (created and deleted)
+		historyResp = storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "dashboard.grafana.app/dashboards/",
+			EndKey:   "dashboard.grafana.app/dashboards0",
+		})
+		count = 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 2, count)
 
 		trashResp, err := server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_TRASH,
