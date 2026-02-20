@@ -123,7 +123,12 @@ func TestService(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				ctx := context.Background()
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), NewFakeMigrationStatusReader(), ProvideMetrics(prometheus.NewRegistry()))
+				// Build a fake MigrationStatusReader that matches the config-based modes.
+				statusReader := NewFakeMigrationStatusReader(
+					"dashboards.dashboard.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode),
+					"folders.folder.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode),
+				)
+				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader, ProvideMetrics(prometheus.NewRegistry()))
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")
