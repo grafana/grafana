@@ -1,9 +1,7 @@
 import { PanelData } from '@grafana/data';
 import { Dashboard, Panel } from '@grafana/schema';
 
-import { AssistantGenerationButton } from './AssistantGeneration';
 import { GenAIButton } from './GenAIButton';
-import { buildAssistantTitlePrompt } from './assistantContext';
 import { useGenerationProvider } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
@@ -25,22 +23,11 @@ const TITLE_GENERATION_STANDARD_PROMPT =
 export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard, data }: GenAIPanelTitleButtonProps) => {
   const { provider, isLoading } = useGenerationProvider();
 
-  if (isLoading || provider === 'none') {
+  // When assistant is available, AITextInput handles generation directly - no addon button needed
+  if (isLoading || provider === 'none' || provider === 'assistant') {
     return null;
   }
 
-  if (provider === 'assistant') {
-    return (
-      <AssistantGenerationButton
-        getPrompt={() => buildAssistantTitlePrompt(panel, dashboard, data)}
-        onGenerate={onGenerate}
-        eventTrackingSrc={EventTrackingSrc.panelTitle}
-        toggleTipTitle={'Improve your panel title'}
-      />
-    );
-  }
-
-  // LLM plugin
   return (
     <GenAIButton
       messages={() => getLLMMessages(panel, dashboard)}

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import { AITextArea, AITextInput } from '@grafana/assistant';
 import { CoreApp, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -8,6 +9,11 @@ import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
+import {
+  buildDescriptionInputSystemPrompt,
+  buildTitleInputSystemPrompt,
+} from 'app/features/dashboard/components/GenAI/assistantContext';
+import { useIsAssistantAvailable } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -182,12 +188,40 @@ export function PanelFrameTitleInput({
   id?: string;
 }) {
   const { title } = panel.useState();
+  const isAssistant = useIsAssistantAvailable();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
-  let ref = useEditPaneInputAutoFocus({
+  const ref = useEditPaneInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
   });
+
+  const systemPrompt = useMemo(() => {
+    if (!isAssistant) {
+      return undefined;
+    }
+    const dashboard = getDashboardSceneFor(panel);
+    return buildTitleInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+  }, [isAssistant, panel]);
+
+  const isDefaultTitle = !title || title === t('dashboard.new-panel-title', 'New panel');
+  const displayTitle = isAssistant && isDefaultTitle ? '' : title;
+
+  if (isAssistant) {
+    return (
+      <AITextInput
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+        value={displayTitle}
+        onChange={(val) => updatePanelTitleState(panel, val)}
+        onComplete={(val) => editPanelTitleAction(panel, val)}
+        systemPrompt={systemPrompt}
+        origin="grafana/panel-metadata/title"
+        placeholder={t('dashboard-scene.panel-title-input.placeholder', 'Type a title or let AI generate one...')}
+        autoGenerate={isDefaultTitle}
+        streaming
+      />
+    );
+  }
 
   return (
     <Input
@@ -197,8 +231,6 @@ export function PanelFrameTitleInput({
       value={title}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
-      // The full action (that can be undone) is done by setPanelTitle,
-      // But to see changes in the input field, canvas and outline we change the real value here
       onChange={(e) => updatePanelTitleState(panel, e.currentTarget.value)}
     />
   );
@@ -206,7 +238,38 @@ export function PanelFrameTitleInput({
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description } = panel.useState();
+  const isAssistant = useIsAssistantAvailable();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
+
+  const systemPrompt = useMemo(() => {
+    if (!isAssistant) {
+      return undefined;
+    }
+    const dashboard = getDashboardSceneFor(panel);
+    return buildDescriptionInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+  }, [isAssistant, panel]);
+
+  if (isAssistant) {
+    return (
+      <AITextArea
+        value={description ?? ''}
+        onChange={(val) => panel.setState({ description: val })}
+        onComplete={(val) => {
+          dashboardEditActions.edit({
+            description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+            source: panel,
+            perform: () => panel.setState({ description: val }),
+            undo: () => panel.setState({ description: prevDescription }),
+          });
+        }}
+        systemPrompt={systemPrompt}
+        origin="grafana/panel-metadata/description"
+        placeholder={t('dashboard-scene.panel-description-input.placeholder', 'Type a description or let AI generate one...')}
+        autoGenerate={!description}
+        streaming
+      />
+    );
+  }
 
   return (
     <TextArea
