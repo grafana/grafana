@@ -3,6 +3,7 @@ module github.com/grafana/grafana/apps/alerting/historian
 go 1.25.7
 
 require (
+	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260220113344-1de0d0f76785
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e
 	github.com/grafana/grafana-app-sdk v0.51.4
@@ -13,7 +14,7 @@ require (
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/trace v1.40.0
 	k8s.io/apimachinery v0.35.1
-	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
+	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
 require (
