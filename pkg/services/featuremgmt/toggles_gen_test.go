@@ -16,6 +16,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -473,24 +475,44 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 		}
 	}
 
-	header := []string{"Feature toggle name", "Description"}
+	header := []any{"Feature toggle name", "Description"}
 	if showEnableByDefault {
 		header = append(header, "Enabled by default")
 	}
 
 	sb := &strings.Builder{}
-	table := tablewriter.NewWriter(sb)
-	table.SetHeader(header)
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-	table.SetAutoFormatHeaders(false)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.AppendBulk(data) // Add Bulk Data
-	table.Render()
+	table := tablewriter.NewTable(sb,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleMarkdown),
+			Borders: tw.Border{
+				Top:    tw.Off,
+				Bottom: tw.Off,
+			},
+		})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoFormat: tw.Off,
+				},
+				Alignment: tw.CellAlignment{
+					Global: tw.AlignLeft,
+				},
+			},
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoWrap: tw.WrapNone,
+				},
+				Alignment: tw.CellAlignment{
+					Global: tw.AlignLeft,
+				},
+			},
+		}),
+	)
+	table.Header(header...)
+	_ = table.Bulk(data) // Add Bulk Data
+	_ = table.Render()
 
-	// Markdown table formatting (from prittier)
+	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
 	return strings.ReplaceAll(v, "--|", "- |")
 }
