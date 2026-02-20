@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/quotas
 
-go 1.26.0
+go 1.25.7
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(
@@ -44,8 +44,8 @@ replace (
 
 require (
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.51.3
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk v0.51.4
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
