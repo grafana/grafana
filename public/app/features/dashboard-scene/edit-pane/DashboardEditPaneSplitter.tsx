@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,6 +18,7 @@ import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboa
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
+import { DashboardSidebarPaneName } from './DashboardEditPane';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 
 interface Props {
@@ -63,6 +64,12 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
+  // Code pane needs more width than other panes to be useful. Not persisting the width though.
+  // Store original width before expanding for code pane, restore when switching away.
+  const CODE_PANE_MIN_WIDTH = 700;
+  const originalPaneWidthRef = useRef<number | null>(null);
+  const previousPaneRef = useRef<DashboardSidebarPaneName | undefined>(undefined);
+
   /**
    * Enable / disable selection based on dashboard isEditing state
    */
@@ -83,6 +90,26 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
   });
+
+  useEffect(() => {
+    const wasCodePane = previousPaneRef.current === 'code';
+    const isCodePane = openPane === 'code';
+    previousPaneRef.current = openPane;
+
+    if (isCodePane && !wasCodePane) {
+      // Opening code pane - store original width and expand if needed
+      if (sidebarContext.paneWidth < CODE_PANE_MIN_WIDTH) {
+        originalPaneWidthRef.current = sidebarContext.paneWidth;
+        const diff = CODE_PANE_MIN_WIDTH - sidebarContext.paneWidth;
+        sidebarContext.onResize(diff);
+      }
+    } else if (wasCodePane && !isCodePane && originalPaneWidthRef.current !== null) {
+      // Leaving code pane - restore original width
+      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+      originalPaneWidthRef.current = null;
+    }
+  }, [openPane, sidebarContext]);
 
   /**
    * Sync docked state to editPane state
