@@ -31,6 +31,7 @@ import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { initializeDashboardRunningQueryCount } from '../../query/state/runningQueryCount';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { trackDashboardLoaded } from '../utils/tracking';
@@ -257,6 +258,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
+      const panels = collectDashboardPanels(dashboard.panels);
+      initializeDashboardRunningQueryCount(
+        panels.map((panel) => ({
+          id: panel.id,
+          hasQueries: Boolean(panel.targets?.length) && !config.panels[panel.type]?.skipDataQuery,
+        }))
+      );
+
       if (!config.publicDashboardAccessToken) {
         args.keybindingSrv.setupDashboardBindings(dashboard);
       }
@@ -301,6 +310,26 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
+}
+
+function collectDashboardPanels(panels: PanelModel[], acc: PanelModel[] = []): PanelModel[] {
+  for (const panel of panels) {
+    if (panel.type === 'row') {
+      if (panel.panels?.length) {
+        collectDashboardPanels(panel.panels, acc);
+      }
+      continue;
+    }
+
+    if (panel.panels?.length) {
+      collectDashboardPanels(panel.panels, acc);
+      continue;
+    }
+
+    acc.push(panel);
+  }
+
+  return acc;
 }
 
 function addPanelsFromLocalStorage(model: DashboardDTO) {

@@ -3,6 +3,7 @@ export declare global {
     __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
+    __grafanaRunningQueryCount?: number;
     __grafana_load_failed: () => void;
     grafanaBootData: import('@grafana/data').BootData;
 
