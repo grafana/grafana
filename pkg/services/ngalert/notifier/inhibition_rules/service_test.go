@@ -248,7 +248,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 				return revision, nil
 			}
 
-			result, err := sut.UpdateInhibitionRule(ctx, tc.ruleName, tc.updatedRule, tc.version,orgID)
+			result, err := sut.UpdateInhibitionRule(ctx, tc.ruleName, tc.updatedRule, tc.version, orgID)
 			require.ErrorIs(t, err, tc.expErr)
 			require.Equal(t, tc.expRule, result)
 
