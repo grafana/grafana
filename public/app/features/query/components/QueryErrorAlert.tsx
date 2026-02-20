@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
-import { OpenAssistantButton, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { OpenAssistantButton, createAssistantContextItem, useAssistant, useProvidePageContext } from '@grafana/assistant';
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
@@ -16,6 +17,9 @@ export function QueryErrorAlert({ error, query }: Props) {
   const { isAvailable } = useAssistant();
 
   const message = error?.message ?? error?.data?.message ?? 'Query error';
+
+  const context = useMemo(() => buildAssistantContext(error, message, query), [error, message, query]);
+  useProvidePageContext(/\/explore.*/, context);
 
   return (
     <div className={styles.wrapper}>
@@ -40,7 +44,6 @@ export function QueryErrorAlert({ error, query }: Props) {
           <OpenAssistantButton
             origin="grafana/query-editor-error"
             prompt={`Help me analyze and fix the following ${error.type ? `\`${error.type}\`` : ''} query error: \`\`\`${message}\`\`\``}
-            context={buildAssistantContext(error, message, query)}
             title={t('query.query-error-alert.fix-with-assistant', 'Fix with Assistant')}
             size="sm"
           />
