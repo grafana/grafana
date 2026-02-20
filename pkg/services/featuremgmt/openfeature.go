@@ -86,9 +86,8 @@ func createRemoteProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error)
 		return nil, err
 	}
 
-	// Create provider from HTTP client
-	if cfg.OpenFeature.ProviderType == features.FeaturesServiceProviderType {
-		return newFeaturesServiceProvider(cfg.OpenFeature.URL.String(), httpcli)
-	}
-	return newOFREPProvider(cfg.OpenFeature.URL.String(), httpcli)
+	// Both FeaturesServiceProviderType and OFREPProviderType use the OFREP provider.
+	// We previously used the go-feature-flag SDK provider for FeaturesServiceProviderType,
+	// but go-feature-flag's relay proxy implements OFREP.
+	return features.NewOFREPProvider(cfg.OpenFeature.URL.String(), httpcli)
 }
