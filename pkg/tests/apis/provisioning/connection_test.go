@@ -1699,99 +1699,6 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, BadValue=%s, Origin=%s",
 			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.BadValue, appIDError.Origin)
 	})
-
-	t.Run("connection with installation missing permissions becomes unhealthy with fieldErrors", func(t *testing.T) {
-		// Create a connection that has valid app ID but installation lacks required permissions
-		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "test-connection-install-perms",
-				"namespace": namespace,
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "github",
-				"github": map[string]any{
-					"appID":          "123456",
-					"installationID": "454545",
-				},
-			},
-			"secure": map[string]any{
-				"privateKey": map[string]any{
-					"create": privateKeyBase64,
-				},
-			},
-		}}
-
-		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
-		require.NoError(t, err)
-		require.NotNil(t, createdUnstructured)
-
-		// Set up a mock where app has all permissions but installation lacks contents permission
-		var appID int64 = 123456
-		appSlug := "appSlug"
-		var installationID int64 = 454545
-		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
-					},
-				},
-			),
-			ghmock.WithRequestMatch(
-				ghmock.GetAppInstallationsByInstallationId, github.Installation{
-					ID: &installationID,
-					// No Permissions - simulates an installation that has not yet accepted the App's permissions
-				},
-			),
-		)
-		helper.SetGithubConnectionFactory(connectionFactory)
-
-		connName := createdUnstructured.GetName()
-
-		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
-		})
-
-		// Wait for reconciliation - connection should become unhealthy due to insufficient installation permissions
-		require.Eventually(t, func() bool {
-			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			return conn.Status.ObservedGeneration == conn.Generation &&
-				conn.Status.Health.Checked > 0 &&
-				!conn.Status.Health.Healthy
-		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
-
-		// Verify the connection is unhealthy and has fieldErrors
-		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
-		require.NoError(t, err)
-		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
-		require.NotNil(t, readyCondition, "Ready condition should exist")
-		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
-		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason")
-
-		require.NotEmpty(t, conn.Status.FieldErrors, "fieldErrors should be populated for installation with no permissions")
-
-		for _, installPermError := range conn.Status.FieldErrors {
-			assert.Equal(t, metav1.CauseTypeForbidden, installPermError.Type, "Type must be Forbidden")
-			assert.Equal(t, "spec.github.installationID", installPermError.Field, "Field must be spec.github.installationID")
-			assert.Contains(t, installPermError.Detail, "https://github.com/settings/installations/454545", "Detail must include installation URL")
-			assert.Empty(t, installPermError.Origin, "Origin should be empty")
-		}
-
-		t.Logf("Verified %d installation permission fieldErrors", len(conn.Status.FieldErrors))
-	})
 }
 
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
@@ -2643,7 +2550,42 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 	return app
 }
 
-func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
+// createInstallationWithPermissions creates a GitHub installation with specific permissions
+func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
+	installation := &github.Installation{
+		ID:   github.Ptr(id),
+		Permissions: &github.InstallationPermissions{
+			Contents:        github.Ptr("write"),
+			Metadata:        github.Ptr("read"),
+			PullRequests:    github.Ptr("write"),
+			RepositoryHooks: github.Ptr("write"),
+		},
+	}
+
+	// Set permissions based on the map
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		installation.Permissions = installationPerms
+	}
+
+	return installation
+}
+
+func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
@@ -2749,6 +2691,225 @@ func TestIntegrationProvisioning_GithubPermissionValidation(t *testing.T) {
 					RepositoryHooks: github.Ptr("write"),
 				},
 			}
+
+			connectionFactory.Client = ghmock.NewMockedHTTPClient(
+				ghmock.WithRequestMatchHandler(
+					ghmock.GetApp,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write(ghmock.MustMarshal(app))
+					}),
+				),
+				ghmock.WithRequestMatchHandler(
+					ghmock.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write(ghmock.MustMarshal(installation))
+					}),
+				),
+			)
+			helper.SetGithubConnectionFactory(connectionFactory)
+
+			// Create connection
+			connection := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name":      fmt.Sprintf("test-conn-%s", strings.ReplaceAll(tc.name, " ", "-")),
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			}}
+
+			c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, c)
+			t.Cleanup(func() {
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+					require.NoError(collect, err)
+				}, waitTimeoutDefault, waitIntervalDefault)
+			})
+
+			restConfig := helper.Org1.Admin.NewRestConfig()
+			provisioningClient, err := clientset.NewForConfig(restConfig)
+			require.NoError(t, err)
+			connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+
+			// Wait for health check to complete
+			var conn *provisioning.Connection
+			require.Eventually(t, func() bool {
+				var err error
+				conn, err = connClient.Get(ctx, c.GetName(), metav1.GetOptions{})
+				if err != nil {
+					return false
+				}
+				// Health check should have run
+				return conn.Status.ObservedGeneration == conn.Generation &&
+					conn.Status.Health.Checked > 0
+			}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and health checked")
+
+			// Validate health status
+			if tc.expectHealthy {
+				assert.True(t, conn.Status.Health.Healthy, "connection should be healthy with valid permissions")
+				assert.Empty(t, conn.Status.FieldErrors, "should have no field errors when healthy")
+
+				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+			} else {
+				assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy with invalid permissions")
+				assert.Len(t, conn.Status.FieldErrors, tc.expectedErrorCount,
+					"should have expected number of field errors")
+
+				// Validate error details
+				if tc.expectedErrorCount > 0 {
+					for _, fieldError := range conn.Status.FieldErrors {
+						assert.Equal(t, metav1.CauseTypeForbidden, fieldError.Type,
+							"error type should be Forbidden for permission issues")
+
+						if len(tc.expectedErrorFields) > 0 {
+							assert.Contains(t, tc.expectedErrorFields, fieldError.Field,
+								"error should reference expected field")
+						}
+
+						if tc.expectedErrorDetail != "" {
+							assert.Contains(t, fieldError.Detail, tc.expectedErrorDetail,
+								"error detail should contain expected message")
+						}
+					}
+				}
+
+				readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+				assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
+				assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason,
+					"Ready condition should have InvalidSpec reason")
+			}
+		})
+	}
+}
+
+func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Base64 encoded test private key
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	testCases := []struct {
+		name                string
+		permissions         map[string]string
+		expectHealthy       bool
+		expectedErrorCount  int
+		expectedErrorFields []string
+		expectedErrorDetail string // substring to check in error detail
+	}{
+		{
+			name: "success - all permissions present",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:      true,
+			expectedErrorCount: 0,
+		},
+		{
+			name: "failure - missing contents permission",
+			permissions: map[string]string{
+				"contents":      "", // missing
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.installationID"},
+			expectedErrorDetail: "lacks required 'contents' permission",
+		},
+		{
+			name: "failure - insufficient contents permission",
+			permissions: map[string]string{
+				"contents":      "read", // insufficient
+				"metadata":      "read",
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.installationID"},
+			expectedErrorDetail: "requires 'write', has 'read'",
+		},
+		{
+			name: "failure - missing metadata permission",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "", // missing
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:       false,
+			expectedErrorCount:  1,
+			expectedErrorFields: []string{"spec.github.installationID"},
+			expectedErrorDetail: "lacks required 'metadata' permission",
+		},
+		{
+			name: "failure - multiple missing permissions",
+			permissions: map[string]string{
+				"contents":      "read", // insufficient
+				"metadata":      "",     // missing
+				"pull_requests": "",     // missing
+				"webhooks":      "write",
+			},
+			expectHealthy:      false,
+			expectedErrorCount: 3, // all three failures
+		},
+		{
+			name: "success - write satisfies read requirement",
+			permissions: map[string]string{
+				"contents":      "write",
+				"metadata":      "write", // write satisfies read
+				"pull_requests": "write",
+				"webhooks":      "write",
+			},
+			expectHealthy:      true,
+			expectedErrorCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+			app := &github.App{
+				ID:   github.Ptr(int64(123456)),
+				Slug: github.Ptr("test-app"),
+				Owner: &github.User{
+					Login: github.Ptr("test-owner"),
+				},
+				Permissions: &github.InstallationPermissions{
+					Contents:        github.Ptr("write"),
+					Metadata:        github.Ptr("read"),
+					PullRequests:    github.Ptr("write"),
+					RepositoryHooks: github.Ptr("write"),
+				},
+			}
+			installation := createAppInstallationWithPermissions(454545, tc.permissions)
 
 			connectionFactory.Client = ghmock.NewMockedHTTPClient(
 				ghmock.WithRequestMatchHandler(
