@@ -89,6 +89,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
   private _draggedTab: TabItem | undefined;
+  private _targetTabIndex: number | undefined;
 
   public constructor() {
     super({});
@@ -286,7 +287,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
   }
 
-  private _onTabDragPointerUp() {
+  private _onTabDragPointerUp(evt: PointerEvent) {
+    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY);
+    if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
+      this._targetTabIndex = this._lastDropTarget
+        ?.getTabsIncludingRepeats()
+        .findIndex((t) => t.state.key === tabUnderMouse);
+    }
+
     document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
     document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
     // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
@@ -309,7 +317,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     const sourceManager = this._sourceDropTarget;
     const destinationManager = this._lastDropTarget;
-    targetIndex = targetIndex ?? destinationManager.getTabsIncludingRepeats().length;
+    targetIndex = targetIndex ?? this._targetTabIndex ?? destinationManager.getTabsIncludingRepeats().length;
 
     const tab = this._draggedTab;
 
