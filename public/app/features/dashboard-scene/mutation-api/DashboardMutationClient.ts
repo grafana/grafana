@@ -1,15 +1,16 @@
 /**
  * Dashboard Mutation Client
  *
- * Validates and executes dashboard mutation commands. Each mutation goes through:
+ * API for programmatic dashboard mutations. Provides
+ * a declarative, command-based API where callers describe *what* to
+ * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the executor handles Scenes
+ * internals, payload validation (via Zod schemas), permission checks, and
+ * transactional execution with structured error responses.
+ *
+ * Each mutation goes through:
  * 1. Command lookup (is it a registered command?)
  * 2. Permission check (can the user edit this dashboard?)
  * 3. Payload validation (does the payload match the Zod schema?)
- * 4. Handler execution (apply the change to the Scenes model)
- *
- * This class is created by DashboardMutationBehavior on scene activation
- * and stored in the module-level dashboardMutationStore -- never on the
- * scene tree itself.
  */
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
@@ -57,7 +58,7 @@ export class DashboardMutationClient implements MutationClient {
     try {
       const result = await registration.handler(validationResult.data, context);
 
-      if (result.success) {
+      if (result.success && result.changes.length > 0) {
         this.scene.forceRender();
       }
 

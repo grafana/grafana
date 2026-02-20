@@ -229,11 +229,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
-    // SECURITY: The mutation client is managed by DashboardMutationBehavior
-    // (added to $behaviors in the serializers). The behavior stores the client
-    // in a module-level store -- never on this scene instance -- so plugins
-    // cannot reach it via window.__grafanaSceneContext.
-
     this._initializePanelSearch();
 
     if (this.state.isEditing) {

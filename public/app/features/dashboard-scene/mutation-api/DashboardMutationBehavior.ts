@@ -1,7 +1,7 @@
 /**
  * Dashboard Mutation Behavior
  *
- * SceneObject behavior that manages the lifecycle of the Dashboard Mutation API.
+ * Manages the lifecycle of the Dashboard Mutation API.
  * Added to DashboardScene's $behaviors in the serializers.
  *
  * On activation:
