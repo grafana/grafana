@@ -10,10 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -102,26 +98,38 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 		userTeamIDSet[strconv.FormatInt(id, 10)] = struct{}{}
 	}
 
-	teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(sj)
-	if err != nil {
-		return nil, fmt.Errorf("get team HTTP headers: %w", err)
-	}
-	if teamHTTPHeaders == nil || len(teamHTTPHeaders.Headers) == 0 {
-		return headers, nil
-	}
-
-	for teamIDStr, rules := range teamHTTPHeaders.Headers {
-		if _, isUserTeam := userTeamIDSet[teamIDStr]; !isUserTeam {
-			continue
-		}
-		for _, rule := range rules {
-			if rule.Header == "" || rule.LBACRule == "" {
+	teamHTTPHeaders := data["teamHttpHeaders"]
+	if lbacHeaders, ok := teamHTTPHeaders.(map[string]interface{})["headers"]; ok {
+		headerMap := lbacHeaders.(map[string]interface{})
+		for teamID, accessRuleValue := range headerMap {
+			if _, isUserTeam := userTeamIDSet[teamID]; !isUserTeam {
 				continue
 			}
-			if existing := headers[rule.Header]; existing != "" {
-				headers[rule.Header] = existing + "," + rule.LBACRule
-			} else {
-				headers[rule.Header] = rule.LBACRule
+			rules := accessRuleValue.([]interface{})
+			for _, accessRule := range rules {
+				header := accessRule.(map[string]interface{})
+				headerName := ""
+				headerValue := ""
+				for key, value := range header {
+					if key == "header" {
+						if s, ok := value.(string); ok {
+							headerName = s
+						}
+						continue
+					}
+					if key == "value" {
+						if s, ok := value.(string); ok {
+							headerValue = s
+						}
+					}
+				}
+				if headerName != "" && headerValue != "" {
+					if existing := headers[headerName]; existing != "" {
+						headers[headerName] = existing + "," + headerValue
+					} else {
+						headers[headerName] = headerValue
+					}
+				}
 			}
 		}
 	}
