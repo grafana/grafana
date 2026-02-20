@@ -340,25 +340,25 @@ receivers:
 					SourceMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "critical",
+							Name:  "__grafana_managed_route__",
+							Value: "test",
 						},
 						{
 							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
+							Name:  "severity",
+							Value: "critical",
 						},
 					},
 					TargetMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "warning",
+							Name:  "__grafana_managed_route__",
+							Value: "test",
 						},
 						{
 							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
+							Name:  "severity",
+							Value: "warning",
 						},
 					},
 					Equal: []string{"instance"},
