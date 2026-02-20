@@ -309,25 +309,25 @@ receivers:
 					SourceMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "SourceAlert",
+							Name:  "__grafana_managed_route__",
+							Value: "test",
 						},
 						{
 							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
+							Name:  "alertname",
+							Value: "SourceAlert",
 						},
 					},
 					TargetMatchers: []*labels.Matcher{
 						{
 							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "TargetAlert",
+							Name:  "__grafana_managed_route__",
+							Value: "test",
 						},
 						{
 							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
+							Name:  "alertname",
+							Value: "TargetAlert",
 						},
 					},
 					Equal: []string{"cluster"},

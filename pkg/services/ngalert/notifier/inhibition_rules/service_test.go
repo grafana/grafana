@@ -48,25 +48,25 @@ var (
 			SourceMatchers: []*labels.Matcher{
 				{
 					Type:  labels.MatchEqual,
-					Name:  "alertname",
-					Value: "ImportedAlert",
+					Name:  "__grafana_managed_route__",
+					Value: "test-mimir",
 				},
 				{
 					Type:  labels.MatchEqual,
-					Name:  "__grafana_managed_route__",
-					Value: "test-mimir",
+					Name:  "alertname",
+					Value: "ImportedAlert",
 				},
 			},
 			TargetMatchers: []*labels.Matcher{
 				{
 					Type:  labels.MatchEqual,
-					Name:  "alertname",
-					Value: "ImportedTarget",
+					Name:  "__grafana_managed_route__",
+					Value: "test-mimir",
 				},
 				{
 					Type:  labels.MatchEqual,
-					Name:  "__grafana_managed_route__",
-					Value: "test-mimir",
+					Name:  "alertname",
+					Value: "ImportedTarget",
 				},
 			},
 			Equal: []string{"cluster"},
