@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -225,7 +226,7 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	defer span.End()
 
 	store, err := r.server.GetStore(ctx, namespace)
-	if err != nil && err != zanzana.StoreNotFoundError {
+	if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
 		return fmt.Errorf("failed to get store: %w", err)
 	}
 

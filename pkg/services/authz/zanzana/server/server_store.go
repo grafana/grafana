@@ -72,7 +72,7 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 		}
 	}
 
-	return nil, zanzana.StoreNotFoundError
+	return nil, zanzana.ErrStoreNotFound
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
