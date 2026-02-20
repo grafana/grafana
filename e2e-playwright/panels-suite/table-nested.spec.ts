@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { getCell, waitForTableLoad, getColumnIdx, getCellHeight } from './table-utils';
 
@@ -6,8 +6,37 @@ const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 4000 } });
 
+/**
+ * takes the kitchen sink dashboard and adds transformations so it can temporarily be a nested table.
+ */
+const convertKitchenSinkToNestedTable = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
+  await expect(
+    dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+  ).toBeVisible();
+
+  // add a group to nested tables transformation to the panel and group by Info.
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations'))).toBeVisible();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();
+  await dashboardPage
+    .getByGrafanaSelector(selectors.components.TransformTab.newTransform('Group to nested tables'))
+    .click();
+  await dashboardPage
+    .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
+    .getByLabel('Info')
+    .click();
+  await dashboardPage
+    .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
+    .getByLabel('Info')
+    .fill('Group by');
+  await dashboardPage
+    .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
+    .getByLabel('Info')
+    .press('Enter');
+};
+
 test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () => {
-  test('expand and collapse a nested table', async ({ gotoDashboardPage, selectors, page }) => {
+  test('expand and collapse', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -32,7 +61,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(page.locator('[role="row"]')).toHaveCount(3); // back to original state
   });
 
-  test('sorting in a nested table', async ({ gotoDashboardPage, selectors, page }) => {
+  test('sorting', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -140,7 +169,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     expect(await secondNestedTable.locator('[role="row"]').count()).toBe(secondTableRowCount);
   });
 
-  test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
+  test('word wrap, hover overflow, max cell height, and cell inspect', async ({
     gotoDashboardPage,
     selectors,
     page,
@@ -150,29 +179,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
-    ).toBeVisible();
-
-    // add a group to nested tables transformation to the panel and group by State.
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations'))).toBeVisible();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.TransformTab.newTransform('Group to nested tables'))
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
-      .getByLabel('State')
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
-      .getByLabel('State')
-      .fill('Group by');
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.TransformTab.transformationEditor('Group to nested tables'))
-      .getByLabel('State')
-      .press('Enter');
+    await convertKitchenSinkToNestedTable(dashboardPage, selectors);
 
     await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
@@ -222,5 +229,71 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     expect(loremIpsumText).toBeDefined();
     await loremIpsumCell.getByLabel('Inspect value').click();
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
+  });
+
+  test('tooltip from field', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await convertKitchenSinkToNestedTable(dashboardPage, selectors);
+
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+
+    const firstCaret = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret)
+      .first();
+
+    // test hovering over and blurring the caret, and whether the tooltip appears and disappears as expected.
+    await firstCaret.hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking outside of it should close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking inside of it should NOT close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper
+    );
+    await tooltip.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
   });
 });
