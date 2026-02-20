@@ -69,15 +69,14 @@ describe('getSyncStepStatus', () => {
     const result = getSyncStepStatus({
       ...defaultState,
       isUnhealthy: true,
-      fieldErrors: [{ field: 'repository.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
+      fieldErrors: [{ field: 'secure.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
       goToStep,
     });
     expect(result.status).toBe('error');
     expect(result).toHaveProperty('action');
-    // Verify the action calls goToStep with 'connection'
     if ('action' in result && result.action?.onClick) {
       result.action.onClick();
-      expect(goToStep).toHaveBeenCalledWith('connection');
+      expect(goToStep).toHaveBeenCalledWith('authType');
     }
   });
 
@@ -116,9 +115,23 @@ describe('getSyncStepStatus', () => {
       ...defaultState,
       hasError: true,
       isUnhealthy: true,
-      fieldErrors: [{ field: 'repository.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
+      fieldErrors: [{ field: 'secure.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
     });
     expect(result.status).toBe('error');
     expect(result).not.toHaveProperty('action');
+  });
+
+  it('navigates to connection step for branch field errors', () => {
+    const goToStep = jest.fn();
+    const result = getSyncStepStatus({
+      ...defaultState,
+      isUnhealthy: true,
+      fieldErrors: [{ field: 'github.branch', detail: 'Branch not found', type: 'FieldValueInvalid' }],
+      goToStep,
+    });
+    if ('action' in result && result.action?.onClick) {
+      result.action.onClick();
+      expect(goToStep).toHaveBeenCalledWith('connection');
+    }
   });
 });
