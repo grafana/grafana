@@ -189,29 +189,29 @@ Manage the Knowledge Graph stack configuration through the Grafana API. This res
 
 #### Arguments
 
-| Name                        | Type           | Required | Description                                                                                                                                                                                                             |
-| --------------------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name                        | Type           | Required | Description                                                                                                                                                                                                                       |
+| --------------------------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cloud_access_policy_token` | `string`       | Yes      | A Grafana Cloud Access Policy token with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`. Used for Grafana Cloud API access, Mimir authentication, and assertion detector webhook authentication. Sensitive. |
-| `grafana_token`             | `string`       | No       | A Grafana Service Account token for installing dashboards and Grafana Managed Alerts. Create using `grafana_cloud_stack_service_account_token`. Sensitive.                                                              |
-| `dataset`                   | `list(object)` | No       | Manual dataset configuration. When specified, auto-detection is skipped. Refer to [dataset block](#dataset-block) for details.                                                                                          |
+| `grafana_token`             | `string`       | No       | A Grafana Service Account token for installing dashboards and Grafana Managed Alerts. Create using `grafana_cloud_stack_service_account_token`. Sensitive.                                                                        |
+| `dataset`                   | `list(object)` | No       | Manual dataset configuration. When specified, auto-detection is skipped. Refer to [dataset block](#dataset-block) for details.                                                                                                    |
 
 #### Attributes
 
-| Name      | Type     | Description                                |
-| --------- | -------- | ------------------------------------------ |
-| `enabled` | `bool`   | Whether the stack is currently enabled.    |
-| `status`  | `string` | Current onboarding status of the stack.    |
-| `version` | `int`    | Configuration version number.              |
+| Name      | Type     | Description                             |
+| --------- | -------- | --------------------------------------- |
+| `enabled` | `bool`   | Whether the stack is currently enabled. |
+| `status`  | `string` | Current onboarding status of the stack. |
+| `version` | `int`    | Configuration version number.           |
 
 #### Dataset block
 
 Each `dataset` block supports the following:
 
-| Name               | Type           | Required | Description                                                                                                                            |
-| ------------------ | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`             | `string`       | Yes      | The dataset type: `kubernetes`, `otel`, `prometheus`, or `aws`.                                                                        |
-| `disabled_vendors` | `list(string)` | No       | List of vendors to disable for this dataset.                                                                                           |
-| `filter_group`     | `list(object)` | No       | Filter groups for custom label mappings. Refer to [filter group block](#filter-group-block) for details.                               |
+| Name               | Type           | Required | Description                                                                                              |
+| ------------------ | -------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| `type`             | `string`       | Yes      | The dataset type: `kubernetes`, `otel`, `prometheus`, or `aws`.                                          |
+| `disabled_vendors` | `list(string)` | No       | List of vendors to disable for this dataset.                                                             |
+| `filter_group`     | `list(object)` | No       | Filter groups for custom label mappings. Refer to [filter group block](#filter-group-block) for details. |
 
 #### Filter group block
 
@@ -230,11 +230,11 @@ Each `filter_group` block supports the following:
 
 Each `filter` block supports the following:
 
-| Name       | Type           | Required | Description                                                       |
-| ---------- | -------------- | -------- | ----------------------------------------------------------------- |
-| `name`     | `string`       | Yes      | The label name to filter on.                                      |
-| `operator` | `string`       | Yes      | The filter operator: `=`, `!=`, `=~`, or `!~`.                   |
-| `values`   | `list(string)` | Yes      | The values to match against.                                      |
+| Name       | Type           | Required | Description                                    |
+| ---------- | -------------- | -------- | ---------------------------------------------- |
+| `name`     | `string`       | Yes      | The label name to filter on.                   |
+| `operator` | `string`       | Yes      | The filter operator: `=`, `!=`, `=~`, or `!~`. |
+| `values`   | `list(string)` | Yes      | The values to match against.                   |
 
 #### Example
 
