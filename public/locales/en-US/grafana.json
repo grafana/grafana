@@ -3140,6 +3140,17 @@
       "label-silence-start-and-end": "Silence start and end",
       "placeholder-select-time-range": "Select time range"
     },
+    "silence-view": {
+      "affected-alerts": "Affected alerts",
+      "alert-rule": "Alert rule",
+      "error": "Error loading silence",
+      "loading": "Loading silence...",
+      "matchers": "Matching labels",
+      "page-nav": {
+        "parent": "Silences",
+        "text": "Silence"
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "for {{duration}}"
     },
@@ -3448,7 +3459,8 @@
       },
       "title-edit": "Edit",
       "title-recreate": "Recreate",
-      "title-unsilence": "Unsilence"
+      "title-unsilence": "Unsilence",
+      "title-view": "View"
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -13945,7 +13957,8 @@
       "no-matching-silences": "No matching silences found;",
       "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
       "recreate-button": "Recreate",
-      "unsilence-button": "Unsilence"
+      "unsilence-button": "Unsilence",
+      "view-button": "View"
     }
   },
   "silences-table": {
