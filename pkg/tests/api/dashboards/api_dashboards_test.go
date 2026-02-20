@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1421,4 +1422,88 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+}
+
+func TestIntegrationSearchCreatedByLegacyAPI(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+		UnifiedStorageEnableSearch: true,
+	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create a dashboard as admin
+	createDashboard(t, grafanaListedAddr, "CreatedBy test dashboard", 0, "")
+
+	// Get the admin user's UID via GET /api/user
+	userResp, err := http.Get(fmt.Sprintf("http://admin:admin@%s/api/user", grafanaListedAddr)) // nolint:gosec
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, userResp.StatusCode)
+
+	var userProfile struct {
+		UID string `json:"uid"`
+	}
+	err = json.NewDecoder(userResp.Body).Decode(&userProfile)
+	require.NoError(t, err)
+	err = userResp.Body.Close()
+	require.NoError(t, err)
+	require.NotEmpty(t, userProfile.UID)
+
+	createdByValue := fmt.Sprintf("user:%s", userProfile.UID)
+
+	// Search with matching createdBy — dashboard should be found
+	var results model.HitList
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		u := fmt.Sprintf("http://admin:admin@%s/api/search?type=dash-db&createdBy=%s",
+			grafanaListedAddr, url.QueryEscape(createdByValue))
+		resp, err := http.Get(u) // nolint:gosec
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		err = json.Unmarshal(b, &results)
+		require.NoError(t, err)
+
+		assert.Greater(collect, results.Len(), 0, "Dashboard should be found when filtering by createdBy")
+	}, 10*time.Second, 250*time.Millisecond)
+
+	found := false
+	for _, hit := range results {
+		if hit.Title == "CreatedBy test dashboard" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "Dashboard 'CreatedBy test dashboard' should be in search results")
+
+	// Search with non-matching createdBy — dashboard should NOT be found
+	u := fmt.Sprintf("http://admin:admin@%s/api/search?type=dash-db&createdBy=%s",
+		grafanaListedAddr, url.QueryEscape("user:nonexistent-uid"))
+	resp, err := http.Get(u) // nolint:gosec
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var noResults model.HitList
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	err = json.Unmarshal(b, &noResults)
+	require.NoError(t, err)
+
+	for _, hit := range noResults {
+		assert.NotEqual(t, "CreatedBy test dashboard", hit.Title,
+			"Dashboard should not appear when filtering by a different createdBy")
+	}
 }
