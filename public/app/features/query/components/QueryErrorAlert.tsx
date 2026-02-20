@@ -1,7 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { OpenAssistantButton, createAssistantContextItem, useAssistant, useProvidePageContext } from '@grafana/assistant';
+import {
+  OpenAssistantButton,
+  createAssistantContextItem,
+  useAssistant,
+  useProvidePageContext,
+} from '@grafana/assistant';
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
