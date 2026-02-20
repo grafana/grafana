@@ -87,8 +87,9 @@ describe('TeamPages', () => {
       pageName: 'folders',
     });
 
-    const folderLinkLabel = await screen.findByText('Team Folder');
+    const folderLinkLabel = await screen.findByText('/Team Folder');
     expect(folderLinkLabel.closest('a')).toHaveAttribute('href', '/dashboards/f/team-folder-1');
-    expect(screen.getByText('Dashboards')).toBeInTheDocument();
+    const parentFolderLink = screen.getByText('/Dashboards');
+    expect(parentFolderLink.closest('a')).toHaveAttribute('href', '/dashboards/f/general');
   });
 });

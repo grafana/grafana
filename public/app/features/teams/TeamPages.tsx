@@ -148,7 +148,7 @@ function TeamFolders({ teamUid }: { teamUid: string }) {
             href={`/dashboards/f/${original.name}`}
             title={t('teams.team-pages.team-folders.open-folder', 'Open folder')}
           >
-            {original.title}
+            /{original.title}
           </TextLink>
         ),
       },
@@ -194,7 +194,20 @@ function ParentFolderCell({ parentUid }: { parentUid?: string }) {
   }
 
   const parentTitle = parentUid === GENERAL_FOLDER_UID ? GENERAL_FOLDER_TITLE : parentFolder?.title;
-  return <>{parentTitle ?? '-'}</>;
+  if (!parentTitle || !parentUid) {
+    return <>-</>;
+  }
+
+  return (
+    <TextLink
+      color="primary"
+      inline={false}
+      href={`/dashboards/f/${parentUid}`}
+      title={t('teams.team-pages.team-folders.open-parent-folder', 'Open parent folder')}
+    >
+      /{parentTitle}
+    </TextLink>
+  );
 }
 
 export default TeamPages;
