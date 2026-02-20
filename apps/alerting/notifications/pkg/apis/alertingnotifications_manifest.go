@@ -582,7 +582,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+	"v0alpha1|Receiver|test|POST": &v0alpha1.CreateReceiverIntegrationTestRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
