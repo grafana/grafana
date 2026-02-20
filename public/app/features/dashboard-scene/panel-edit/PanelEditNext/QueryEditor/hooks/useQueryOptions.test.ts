@@ -2,9 +2,9 @@ import { renderHook } from '@testing-library/react';
 
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
-import { PanelTimeRange } from '../../../scene/panel-timerange/PanelTimeRange';
+import { PanelTimeRange } from '../../../../scene/panel-timerange/PanelTimeRange';
+import { ds1SettingsMock } from '../testUtils';
 
-import { ds1SettingsMock } from './testUtils';
 import { useQueryOptions } from './useQueryOptions';
 
 describe('useQueryOptions', () => {

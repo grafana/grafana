@@ -4,7 +4,7 @@ import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { QueryGroupOptions } from 'app/types/query';
 
-import { PanelTimeRange } from '../../../scene/panel-timerange/PanelTimeRange';
+import { PanelTimeRange } from '../../../../scene/panel-timerange/PanelTimeRange';
 
 interface UseQueryOptionsParams {
   panel: VizPanel;

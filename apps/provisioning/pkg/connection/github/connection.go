@@ -54,7 +54,8 @@ const (
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	logger := logging.FromContext(ctx)
 
-	if c.secrets.Token.IsZero() {
+	// If given token doesn't exists, or the privateKey is being renewed, we need to generate a new token for testing.
+	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
 		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
@@ -112,9 +113,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "appID").String(),
-						Detail: fmt.Sprintf("invalid app ID: %s", c.obj.Spec.GitHub.AppID),
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "appID").String(),
+						Detail:   "invalid app ID",
+						BadValue: c.obj.Spec.GitHub.AppID,
 					},
 				},
 			}, nil
@@ -141,9 +143,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "appID").String(),
-						Detail: "verify appID is correct",
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "appID").String(),
+						Detail:   "verify appID is correct",
+						BadValue: c.obj.Spec.GitHub.AppID,
 					},
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
@@ -162,9 +165,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueNotFound,
-						Field:  field.NewPath("spec", "github", "appID").String(),
-						Detail: "app not found",
+						Type:     metav1.CauseTypeFieldValueNotFound,
+						Field:    field.NewPath("spec", "github", "appID").String(),
+						Detail:   "app not found",
+						BadValue: c.obj.Spec.GitHub.AppID,
 					},
 				},
 			}, nil
@@ -194,9 +198,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "appID").String(),
-						Detail: "verify appID is correct",
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "appID").String(),
+						Detail:   "verify appID is correct",
+						BadValue: c.obj.Spec.GitHub.AppID,
 					},
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
@@ -219,16 +224,17 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 			Success: false,
 			Errors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "github", "appID").String(),
-					Detail: fmt.Sprintf("appID mismatch: expected %s, got %d", c.obj.Spec.GitHub.AppID, app.ID),
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    field.NewPath("spec", "github", "appID").String(),
+					Detail:   "appID mismatch",
+					BadValue: c.obj.Spec.GitHub.AppID,
 				},
 			},
 		}, nil
 	}
 
-	// Validate permissions from the app
-	permissionErrors := validateAppPermissions(app.Permissions)
+	// Validate the app's permissions.
+	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions)
 	if len(permissionErrors) > 0 {
 		logger.Info("GitHub App permission validation failed", "appID", c.obj.Spec.GitHub.AppID, "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
@@ -242,7 +248,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		logger.Info("error getting app installation", "installationID", c.obj.Spec.GitHub.InstallationID, "error", err)
 		// Check for specific error types
@@ -257,9 +263,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: ErrAuthentication.Error(),
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Detail:   ErrAuthentication.Error(),
+						BadValue: c.obj.Spec.GitHub.InstallationID,
 					},
 				},
 			}, nil
@@ -273,9 +280,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: "installation not found",
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Detail:   "installation not found",
+						BadValue: c.obj.Spec.GitHub.InstallationID,
 					},
 				},
 			}, nil
@@ -289,9 +297,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: ErrServiceUnavailable.Error(),
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Detail:   ErrServiceUnavailable.Error(),
+						BadValue: c.obj.Spec.GitHub.InstallationID,
 					},
 				},
 			}, nil
@@ -306,13 +315,30 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "github", "installationID").String(),
-						Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Detail:   "invalid installation ID",
+						BadValue: c.obj.Spec.GitHub.InstallationID,
 					},
 				},
 			}, nil
 		}
+	}
+
+	// Validate that the installation has accepted the required permissions.
+	// Installation permissions may lag behind App permissions when the App owner added new
+	// permissions but the installation owner has not yet accepted them on GitHub.
+	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions)
+	if len(installationPermErrors) > 0 {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors:  installationPermErrors,
+		}, nil
 	}
 
 	return &provisioning.TestResults{
@@ -441,58 +467,86 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
 }
 
-// validateAppPermissions checks if the given app has required permissions
-func validateAppPermissions(permissions AppPermissions) []provisioning.ErrorDetails {
-	var errors []provisioning.ErrorDetails
+type permissionTarget int
+
+const (
+	permissionTargetApp permissionTarget = iota
+	permissionTargetInstallation
+)
+
+// validatePermissions checks if the given app or installation has required permissions.
+// For installations, permissions may differ from App permissions when the App's permissions
+// were updated but the installation owner has not yet accepted them on GitHub.
+func validatePermissions(target permissionTarget, id string, permissions Permissions) []provisioning.ErrorDetails {
+	var errs []provisioning.ErrorDetails
 
 	requiredPerms := map[string]struct {
-		current  AppPermission
-		required AppPermission
+		current  Permission
+		required Permission
 	}{
 		"contents": {
 			current:  permissions.Contents,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 		"metadata": {
 			current:  permissions.Metadata,
-			required: AppPermissionRead,
+			required: PermissionRead,
 		},
 		"pull_requests": {
 			current:  permissions.PullRequests,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 		"webhooks": {
 			current:  permissions.Webhooks,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 	}
 
 	for name, perm := range requiredPerms {
 		if perm.current < perm.required {
-			detail := fmt.Sprintf(
-				"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
-				name,
-				toAppPermissionString(perm.required),
-				toAppPermissionString(perm.current),
-			)
-			errors = append(errors, provisioning.ErrorDetails{
-				Type:   metav1.CauseTypeForbidden,
-				Field:  field.NewPath("spec", "github", "appID").String(),
-				Detail: detail,
+			var detail string
+			var fieldPath string
+
+			switch target {
+			case permissionTargetApp:
+				detail = fmt.Sprintf(
+					"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
+					name,
+					toAppPermissionString(perm.required),
+					toAppPermissionString(perm.current),
+				)
+				fieldPath = field.NewPath("spec", "github", "appID").String()
+			case permissionTargetInstallation:
+				detail = fmt.Sprintf(
+					"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s/%s",
+					name,
+					toAppPermissionString(perm.required),
+					toAppPermissionString(perm.current),
+					githubInstallationURL,
+					id,
+				)
+				fieldPath = field.NewPath("spec", "github", "installationID").String()
+			}
+
+			errs = append(errs, provisioning.ErrorDetails{
+				Type:     metav1.CauseTypeForbidden,
+				Field:    fieldPath,
+				Detail:   detail,
+				BadValue: id,
 			})
 		}
 	}
 
-	return errors
+	return errs
 }
 
-func toAppPermissionString(permissions AppPermission) string {
+func toAppPermissionString(permissions Permission) string {
 	switch permissions {
-	case AppPermissionNone:
+	case PermissionNone:
 		return ""
-	case AppPermissionRead:
+	case PermissionRead:
 		return "read"
-	case AppPermissionWrite:
+	case PermissionWrite:
 		return "write"
 	}
 
