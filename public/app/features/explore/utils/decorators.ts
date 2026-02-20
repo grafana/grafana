@@ -15,6 +15,7 @@ import {
   DataSourceApi,
 } from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
+import { getPanelPluginMetas, PanelPluginMetas } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types/explore';
 
@@ -22,14 +23,13 @@ import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
-import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
+export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<ExplorePanelData> => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
   const rawPrometheusFrames: DataFrame[] = [];
@@ -38,9 +38,14 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
   const customFrames: DataFrame[] = [];
+  const panels = await getPanelPluginMetas();
+  const panelsById: PanelPluginMetas = {};
+  for (const p of panels) {
+    panelsById[p.id] = p;
+  }
 
   for (const frame of data.series) {
-    if (canFindPanel(frame)) {
+    if (canFindPanel(frame, panelsById)) {
       customFrames.push(frame);
       continue;
     }
@@ -308,7 +313,7 @@ export function decorateData(
         correlations,
       })
     ),
-    map(decorateWithFrameTypeMetadata),
+    mergeMap(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(logsResultDecorator),
     mergeMap(decorateWithRawPrometheusResult),
@@ -331,9 +336,9 @@ function isTimeSeries(frame: DataFrame): boolean {
  *
  * @param frame
  */
-function canFindPanel(frame: DataFrame): boolean {
+function canFindPanel(frame: DataFrame, panelsById: PanelPluginMetas): boolean {
   if (!!frame.meta?.preferredVisualisationPluginId) {
-    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+    return Boolean(panelsById[frame.meta?.preferredVisualisationPluginId]);
   }
   return false;
 }

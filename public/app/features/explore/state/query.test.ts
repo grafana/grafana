@@ -164,6 +164,7 @@ describe('runQueries', () => {
   beforeEach(() => {
     config.queryHistoryEnabled = false;
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   it('should pass dataFrames to state even if there is error in response', async () => {
@@ -196,21 +197,24 @@ describe('runQueries', () => {
   });
 
   it('should set state to done if query completes without emitting', async () => {
+    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     await dispatch(runQueries({ exploreId: 'left' }));
-    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
   });
 
   it('shows results only after correlations are loaded', async () => {
+    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     await dispatch(runQueries({ exploreId: 'left' }));
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 
