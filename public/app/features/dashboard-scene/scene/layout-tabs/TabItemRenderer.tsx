@@ -200,12 +200,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 /**
- * A hack to remove snap-back effect from pangea/dnd.
- * When dragging to another tabs manager pangea thinks it was dropped outisde of a droppable
- * and creates a snap-back effect. Setting timing to "0" seems to confuse pange to think drop
- * hasn't finished so we set it to a very small number.
+ * Disabling animation as per docs in https://github.com/hello-pangea/dnd/blob/main/docs/guides/drop-animation.md?#skipping-the-drop-animation
  *
- * This will eventually be removed when we start using LayoutOrchestrator for dragging within a tab as well
+ * > If you do have use case where it makes sense to remove the drop animation you will need to add a transition-duration
+ * > property of **almost** 0s. This will skip the drop animation. Do not make the transition-duration actually 0s.
+ * > It should be set at a near 0s value such as 0.001s. The reason for this is that if you set transition-duration to 0s
+ * > then a onTransitionEnd event will not fire - and we use that to know when the drop animation is finished.
+ *
+ * We want to disable the drop to cover the case:
+ * - A tab is dragged to a different tab manager
+ * - DashboardLaoytOrchestrator takes care of handling the drag
+ * - hello-pangea/dnd takes core only of dragging within the same tab manager, but doesn't know how the tab was dropped
+ *   into a different manager and creates a "snap back" animation of the tab going back to its original position
  */
 function getDraggableStyle(style: React.CSSProperties | undefined, snapshot: DraggableStateSnapshot) {
   if (!style || !snapshot.isDropAnimating || !snapshot.dropAnimation) {
