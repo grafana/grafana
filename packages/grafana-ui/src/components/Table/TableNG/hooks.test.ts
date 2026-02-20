@@ -12,6 +12,7 @@ import {
   useRowHeight,
   useReducerEntries,
   useManagedSort,
+  useNestedRows,
 } from './hooks';
 import { TableRow } from './types';
 import { createTypographyContext, frameToRecords } from './utils';
@@ -275,6 +276,42 @@ describe('TableNG hooks', () => {
       expect(result.current.pageRangeStart).toBe(3);
       expect(result.current.pageRangeEnd).toBe(3);
       expect(result.current.rows.length).toBe(1);
+    });
+  });
+
+  describe('useNestedRows', () => {
+    it('should return the nested rows', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[createDataFrame({ fields })]], config: {} },
+        ],
+      });
+
+      const { result } = renderHook(() => useNestedRows(frameToRecords(frame, 'nested'), true, 'nested', {}, []));
+      expect(result.current).toMatchSnapshot();
+    });
+
+    it('should apply sorting and filtering', () => {
+      const { fields } = setupData();
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[createDataFrame({ fields })]], config: {} },
+        ],
+      });
+
+      const { result } = renderHook(() =>
+        useNestedRows(
+          frameToRecords(frame, 'nested'),
+          true,
+          'nested',
+          { name: { filteredSet: new Set(['Alice']), displayName: 'name' } },
+          [{ columnKey: 'name', direction: 'ASC' }]
+        )
+      );
+      expect(result.current).toMatchSnapshot();
     });
   });
 
