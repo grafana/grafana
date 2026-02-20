@@ -195,7 +195,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
-        layout: 'combobox',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       });
     case 'groupby':
       return new GroupByVariable(initialState);

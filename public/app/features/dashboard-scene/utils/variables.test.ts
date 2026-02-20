@@ -461,11 +461,6 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: undefined,
-      defaultKeys: undefined,
-      drilldownRecommendationsEnabled: undefined,
-      layout: 'combobox',
     });
   });
 
@@ -551,11 +546,6 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
-      collapsible: undefined,
-      $behaviors: undefined,
-      allowCustomValue: undefined,
-      drilldownRecommendationsEnabled: undefined,
-      layout: 'combobox',
     });
   });
 
