@@ -85,7 +85,7 @@ export function TransformationTypePicker() {
             key={slug}
             label={label}
             selected={selectedFilter === slug}
-            onClick={() => setSelectedFilter(slug)}
+            onClick={() => setSelectedFilter(selectedFilter === slug ? null : slug)}
           />
         ))}
       </Stack>

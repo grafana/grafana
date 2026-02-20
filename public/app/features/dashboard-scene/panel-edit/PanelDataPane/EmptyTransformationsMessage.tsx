@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
+import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -137,7 +137,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   key={transform.id}
                   transform={transform}
                   onClick={handleTransformationClick}
-                  showIllustrations
+                  showIllustrations={true}
                   showPluginState={false}
                   showTags={false}
                   data={props.data}
