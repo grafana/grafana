@@ -292,7 +292,11 @@ describe('ProvisioningWizard', () => {
 
       // Fill required fields on authType step
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'ghp_testtoken');
-      await pasteIntoInput(user, screen.getByRole('textbox', { name: /Repository URL/i }), 'https://github.com/o/r');
+      await pasteIntoInput(
+        user,
+        screen.getByRole('textbox', { name: /Repository URL/i }),
+        'https://github.com/test/repo'
+      );
 
       // Proceed to next step
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
@@ -323,7 +327,7 @@ describe('ProvisioningWizard', () => {
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
-        url: 'https://github.com/o/r',
+        url: 'https://github.com/test/repo',
       });
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -363,7 +367,7 @@ describe('ProvisioningWizard', () => {
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
-        url: 'https://github.com/o/r',
+        url: 'https://github.com/test/repo',
       });
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -420,7 +424,7 @@ describe('ProvisioningWizard', () => {
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
-        url: 'https://github.com/o/r',
+        url: 'https://github.com/test/repo',
         branch: 'invalid-branch',
       });
 
@@ -476,7 +480,7 @@ describe('ProvisioningWizard', () => {
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
-        url: 'https://github.com/o/r',
+        url: 'https://github.com/test/repo',
       });
 
       // First connection attempt — fails with URL error (field not on this step)
@@ -514,7 +518,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(
         user,
         screen.getByPlaceholderText('https://github.com/owner/repository'),
-        'https://github.com/o/r'
+        'https://github.com/test/repo'
       );
 
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
@@ -541,7 +545,7 @@ describe('ProvisioningWizard', () => {
 
       await navigateToConnectionStep(user, 'gitlab', {
         token: 'glpat-test',
-        url: 'https://gitlab.com/o/r',
+        url: 'https://gitlab.com/test/repo',
       });
 
       // Connection step fields
@@ -560,7 +564,7 @@ describe('ProvisioningWizard', () => {
       await navigateToConnectionStep(user, 'bitbucket', {
         token: 'test-token',
         tokenUser: 'test-user',
-        url: 'https://bitbucket.org/o/r',
+        url: 'https://bitbucket.org/test/repo',
       });
 
       // Connection step fields
@@ -579,7 +583,7 @@ describe('ProvisioningWizard', () => {
       await navigateToConnectionStep(user, 'git', {
         token: 'test-token',
         tokenUser: 'test-user',
-        url: 'https://git.example.com/o/r.git',
+        url: 'https://git.example.com/test/repo.git',
       });
 
       // Connection step fields
@@ -608,7 +612,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(
         user,
         screen.getByPlaceholderText('https://bitbucket.org/owner/repository'),
-        'https://bitbucket.org/o/r'
+        'https://bitbucket.org/test/repo'
       );
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
@@ -622,7 +626,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(
         user,
         screen.getByPlaceholderText('https://git.example.com/owner/repository.git'),
-        'https://git.example.com/o/r.git'
+        'https://git.example.com/test/repo.git'
       );
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
