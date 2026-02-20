@@ -300,7 +300,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
-	t.Run("test endpoint returns 403 for insufficient permissions", func(t *testing.T) {
+	t.Run("dryRun call with App's insufficient permissions returns 403", func(t *testing.T) {
 		// Setup mock with insufficient permissions
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 
@@ -386,7 +386,97 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		}
 	})
 
-	t.Run("test endpoint succeeds with all permissions", func(t *testing.T) {
+	t.Run("dryRun call with App Installation's insufficient permissions returns 403", func(t *testing.T) {
+		// Setup mock with insufficient permissions
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+
+		app := createAppWithPermissions(123456, map[string]string{
+			// App has all permissions
+			"contents":      "write",
+			"metadata":      "read",
+			"pull_requests": "write",
+			"webhooks":      "write",
+		})
+		installation := createAppInstallationWithPermissions(454545, map[string]string{
+			"contents":      "read", // needs write
+			"metadata":      "read",
+			"pull_requests": "read", // needs write
+			"webhooks":      "read", // needs write
+		})
+
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		// Create connection config for test
+		config := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name": "test",
+				},
+				"spec": map[string]any{
+					"title": "Test Connection",
+					"type":  "github",
+					"github": map[string]any{
+						"appID":          "123456",
+						"installationID": "454545",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": privateKeyBase64,
+					},
+				},
+			},
+		}
+
+		// Create with dryRun - that would test the connection
+		c, err := helper.Connections.Resource.Create(ctx, config, metav1.CreateOptions{
+			DryRun: []string{"All"},
+		})
+		require.Error(t, err)
+		require.Nil(t, c)
+
+		var k8sErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &k8sErr))
+
+		require.Equal(t, metav1.StatusReasonInvalid, k8sErr.Status().Reason)
+		require.NotNil(t, k8sErr.Status().Details)
+
+		for _, reason := range k8sErr.Status().Details.Causes {
+			require.Equal(t, metav1.CauseTypeFieldValueInvalid, reason.Type)
+			require.Equal(t, "spec.github.installationID", reason.Field)
+
+			switch {
+			case strings.Contains(reason.Message, "pull_requests"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "webhooks"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "contents"):
+				require.Contains(t, reason.Message, "requires 'write', has 'read'")
+			case strings.Contains(reason.Message, "metadata"):
+				t.Fatalf("should not error on metadata")
+			}
+		}
+	})
+
+	t.Run("dryRun call with App's and Installation's all permissions succeeds", func(t *testing.T) {
 		// Setup mock with all required permissions
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 
@@ -398,6 +488,12 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 		})
 		installation := &github.Installation{
 			ID: github.Ptr(int64(454545)),
+			Permissions: &github.InstallationPermissions{
+				Contents:        github.Ptr("write"),
+				Metadata:        github.Ptr("read"),
+				PullRequests:    github.Ptr("write"),
+				RepositoryHooks: github.Ptr("write"),
+			},
 		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
