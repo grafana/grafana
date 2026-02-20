@@ -75,7 +75,11 @@ const lokiDataSource = mockDataSource({
 });
 
 describe('Step2AlertRules', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
+    // useAsync from react-use triggers state updates outside act() when parsing YAML
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     setupDataSources(prometheusDataSource, lokiDataSource);
     grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
 
@@ -108,6 +112,10 @@ describe('Step2AlertRules', () => {
         })
       )
     );
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('Step2Content rendering', () => {
@@ -174,7 +182,7 @@ describe('Step2AlertRules', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByText(/rules yaml file/i)).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid-file-upload-input-field')).toBeInTheDocument();
     });
 
     it('should show YAML source option', () => {
@@ -317,17 +325,6 @@ describe('Step2AlertRules', () => {
   });
 
   describe('YAML validation and source switching', () => {
-    let consoleErrorSpy: jest.SpyInstance;
-
-    beforeEach(() => {
-      // useAsync from react-use triggers state updates outside act() when parsing YAML
-      consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-    });
-
-    afterEach(() => {
-      consoleErrorSpy.mockRestore();
-    });
-
     it('should show validation error immediately when uploading an invalid YAML file', async () => {
       const invalidYaml = new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' });
 
