@@ -15,9 +15,11 @@ import { createViewLink } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { hashRule } from '../../utils/rule-id';
 import { getRulePluginOrigin, isProvisionedRule, prometheusRuleType } from '../../utils/rules';
+import { sortRules } from '../../utils/rulesSorting';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
+import { useRulesSorting } from './RulesSortingSelector';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -29,6 +31,7 @@ export const RuleListStateView = ({ namespaces }: Props) => {
   const [ref, { width }] = useMeasure<HTMLUListElement>();
 
   const isLoading = useDataSourcesLoadingState();
+  const { sortOrder } = useRulesSorting();
 
   const groupedRules = useMemo(() => {
     const result: GroupedRules = new Map([
@@ -52,10 +55,14 @@ export const RuleListStateView = ({ namespaces }: Props) => {
       )
     );
 
-    result.forEach((rules) => rules.sort((a, b) => a.name.localeCompare(b.name)));
+    // Apply user sorting preference or default to alphabetical
+    result.forEach((rules, state) => {
+      const sortedRules = sortOrder ? sortRules(rules, sortOrder) : rules.sort((a, b) => a.name.localeCompare(b.name));
+      result.set(state, sortedRules);
+    });
 
     return result;
-  }, [namespaces]);
+  }, [namespaces, sortOrder]);
 
   const entries = groupedRules.entries();
 
