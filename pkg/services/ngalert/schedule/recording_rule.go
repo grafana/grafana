@@ -298,8 +298,15 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
+
+	// Calculate write timestamp: scheduledAt - evaluation offset
+	// This matches Prometheus behavior where the metric timestamp reflects
+	// when the data was actually queried, not when the evaluation was scheduled.
+	evaluationOffset := ev.rule.GetRecordingRuleEvaluationOffset()
+	writeTimestamp := ev.scheduledAt.Add(-evaluationOffset)
+
 	writeStart := r.clock.Now()
-	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
+	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, writeTimestamp, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -308,7 +315,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		return fmt.Errorf("remote write failed: %w", err)
 	}
 
-	logger.Debug("Metrics written", "duration", writeDur)
+	logger.Debug("Metrics written", "duration", writeDur, "evaluationOffset", evaluationOffset, "writeTimestamp", writeTimestamp)
 	span.AddEvent("metrics written", trace.WithAttributes(
 		attribute.Int64("frames", int64(len(frames))),
 	))
