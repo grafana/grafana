@@ -51,4 +51,29 @@ describe('getFieldsWithStats', () => {
     expect(fieldNames).toContain('level');
     expect(fieldNames).toContain('hostname');
   });
+
+  it('should accumulate cardinality counts across multiple dataframes', () => {
+    const frame1 = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'level', type: FieldType.string, values: ['info', 'warn'] },
+        { name: 'hostname', type: FieldType.string, values: ['h1', 'h2'] },
+      ],
+    });
+    const frame2 = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [3000, 4000] },
+        { name: 'message', type: FieldType.string, values: ['c', 'd'] },
+        { name: 'level', type: FieldType.string, values: ['error', 'info'] },
+        { name: 'hostname', type: FieldType.string, values: ['h3', 'h4'] },
+      ],
+    });
+
+    const result = getFieldsWithStats([frame1, frame2]);
+
+    // level (severity) and hostname (extraField) each have 2 values per frame = 4 total across both frames
+    expect(result.find((f) => f.name === 'level')?.stats.percentOfLinesWithLabel).toBe(100);
+    expect(result.find((f) => f.name === 'hostname')?.stats.percentOfLinesWithLabel).toBe(100);
+  });
 });

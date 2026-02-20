@@ -22,7 +22,8 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
     const fields = (logsFrame?.extraFields ?? [])
       .filter((field) => !field?.config?.custom?.hidden)
       .map((field) => {
-        cardinality.set(field.name, field.values.filter((value) => value !== null && value !== undefined).length);
+        const count = field.values.filter((value) => value !== null && value !== undefined).length;
+        cardinality.set(field.name, (cardinality.get(field.name) ?? 0) + count);
         return field.name;
       });
 
