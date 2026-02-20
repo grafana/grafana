@@ -195,10 +195,10 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
 
   const vizResize = useRatioResize({
     direction: 'vertical',
-    initialRatio: 0.5,
+    initialRatio: 0.55,
     containerRef,
-    minRatio: 0.2,
-    maxRatio: 0.8,
+    minRatio: 0.1,
+    maxRatio: 0.9,
     className: css({ height: 2, width: '100%' }),
   });
 
@@ -225,6 +225,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
       setSidebarSize,
       isScrollingLayout,
       isDataPaneCollapsed,
+      gridStyles,
       sidebarResizeHandle: {
         ref: sidebarResize.handleRef,
         className: sidebarResize.className,
@@ -236,9 +237,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
     },
     actions: {
       onToggleCollapse,
-    },
-    grid: {
-      gridStyles,
     },
   };
 }

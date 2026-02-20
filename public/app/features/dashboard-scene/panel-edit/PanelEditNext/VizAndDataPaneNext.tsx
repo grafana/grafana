@@ -16,7 +16,7 @@ import { useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerRef);
+  const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
@@ -26,7 +26,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
   const nextDataPane = scene.dataPane;
 
   return (
-    <div ref={containerRef} className={styles.pageContainer} style={grid.gridStyles}>
+    <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
       {scene.controls && (
         <div className={styles.controlsWrapper}>
           <scene.controls.Component model={scene.controls} />
@@ -83,22 +83,24 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       display: 'grid',
       gap: theme.spacing(2),
       overflow: 'hidden',
+      paddingBottom: theme.spacing(2),
     }),
     sidebar: css({
       gridArea: 'sidebar',
       position: 'relative',
-      paddingBottom: theme.spacing(2),
       paddingLeft: theme.spacing(2),
       minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
     }),
     sidebarContent: css({
-      overflow: 'hidden',
       height: '100%',
     }),
     viz: css({
       gridArea: 'viz',
       overflow: 'visible',
       position: 'relative',
+      minHeight: 0,
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
@@ -106,7 +108,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     dataPane: css({
       gridArea: 'data-pane',
       overflow: 'hidden',
-      paddingBottom: theme.spacing(2),
+      minHeight: 0,
     }),
     controlsWrapper: css({
       gridArea: 'controls',
@@ -143,7 +145,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     sidebarResizeHandle: css({
       position: 'absolute',
       top: 0,
-      bottom: theme.spacing(2),
+      bottom: 0,
       right: 0,
     }),
     resizeHandlePill: css({
