@@ -296,7 +296,7 @@ func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		s.log.Warn("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		s.log.Debug("oauth2: cannot fetch token", "status", resp.Status, "body", body)
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
 	}
 
