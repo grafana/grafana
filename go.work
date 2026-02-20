@@ -33,12 +33,12 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/infra/features
 	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
 	./pkg/storage/unified/resource/kv
-	./pkg/infra/features
 )
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f
