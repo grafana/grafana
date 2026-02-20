@@ -94,7 +94,7 @@ const RefreshPickerComponent = memo((props: Props) => {
     selectedValue = { value: '' };
   }
 
-  const durationAriaLabel = selectedValue.ariaLabel;
+  const durationAriaLabel = selectedValue.ariaLabel ?? selectedValue.label;
   const ariaLabelDurationSelectedMessage = t(
     'refresh-picker.aria-label.duration-selected',
     'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
@@ -151,25 +151,22 @@ export const RefreshPicker = Object.assign(RefreshPickerComponent, {
   autoOption,
 });
 
-export const translateOption = (option: string) => {
+export const translateOption = (option: string): SelectableValue<string> => {
   switch (option) {
     case liveOption.value:
       return {
         label: t('refresh-picker.live-option.label', 'Live'),
         value: option,
-        ariaLabel: t('refresh-picker.live-option.aria-label', 'Live'),
       };
     case offOption.value:
       return {
         label: t('refresh-picker.off-option.label', 'Off'),
         value: option,
-        ariaLabel: t('refresh-picker.off-option.aria-label', 'Off'),
       };
     case autoOption.value:
       return {
         label: t('refresh-picker.auto-option.label', 'Auto'),
         value: option,
-        ariaLabel: t('refresh-picker.auto-option.aria-label', 'Auto'),
       };
   }
   return {
