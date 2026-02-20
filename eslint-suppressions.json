@@ -3021,11 +3021,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/RenameByRegexTransformer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/SortByTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
