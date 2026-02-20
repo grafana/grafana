@@ -17,16 +17,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type pluginUpdateChecker interface {
+	HasUpdate(ctx context.Context, pluginID string) (string, bool)
+}
 
 // settingsStorage serves the "settings" resource as a read-only singleton named "current".
 type settingsStorage struct {
 	pluginID             string
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
-	pluginsUpdateChecker *updatemanager.PluginsService
+	pluginsUpdateChecker pluginUpdateChecker
 	pluginAssets         *pluginassets.Service
 	cfg                  *setting.Cfg
 	resource             schema.GroupResource

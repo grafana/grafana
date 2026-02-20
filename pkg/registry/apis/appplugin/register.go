@@ -130,7 +130,7 @@ func getAppPlugins(ctx context.Context, pluginSources sources.Registry) ([]plugi
 			}
 
 			if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-				backend.Logger.Info("Found duplicate app plugin %s when registering API groups.", p.Primary.JSONData.ID)
+				backend.Logger.Debug("Found duplicate app plugin %s when registering API groups.", p.Primary.JSONData.ID)
 				continue
 			}
 
