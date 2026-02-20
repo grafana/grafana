@@ -3804,7 +3804,6 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-window": "npm:2.0.0"
     "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
@@ -3835,8 +3834,8 @@ __metadata:
     typescript: "npm:5.9.2"
     uuid: "npm:11.1.0"
   peerDependencies:
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
   languageName: unknown
   linkType: soft
 
@@ -11562,15 +11561,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/79b70b7c33161efb14bf69115792843de8e038594136a8373cfbbcc4066c49fd611dd2d3592a9a81d19d21c075bf14e5e73a64f4d9ad32e45d4d5493f5f53918
-  languageName: node
-  linkType: hard
-
-"@types/react-window@npm:2.0.0":
-  version: 2.0.0
-  resolution: "@types/react-window@npm:2.0.0"
-  dependencies:
-    react-window: "npm:*"
-  checksum: 10/4c11d4e1e6b95ab482b79a6aaff87a8cd2978a08925c6b0fff7e856716608ccb50162e5cbf9ad02bff892681c7795cc9f3e376ede994ebfbcc55161fe8ab0517
   languageName: node
   linkType: hard
 
@@ -30517,16 +30507,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window@npm:*, react-window@npm:2.2.7":
-  version: 2.2.7
-  resolution: "react-window@npm:2.2.7"
-  peerDependencies:
-    react: ^18.0.0 || ^19.0.0
-    react-dom: ^18.0.0 || ^19.0.0
-  checksum: 10/94fc2aad2702d66a778c41e3caa6c47281b92cd4f3c04bfc8ee733581e08e9310697d00d86c50121f3328911492fcba272ab28e4d3cd399d95d0b15ce0d840e9
-  languageName: node
-  linkType: hard
-
 "react-window@npm:1.8.11":
   version: 1.8.11
   resolution: "react-window@npm:1.8.11"
@@ -30537,6 +30517,16 @@ __metadata:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 10/bdbac2b664c5a799443b97a32b2f60a00cc13cc14ca8a8b1e81e2dc7dd00d8d54f05743113972fe1a641b57ada5d874b59c3cbe7e8a07a88c6713a0fb65d60f6
+  languageName: node
+  linkType: hard
+
+"react-window@npm:2.2.7":
+  version: 2.2.7
+  resolution: "react-window@npm:2.2.7"
+  peerDependencies:
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/94fc2aad2702d66a778c41e3caa6c47281b92cd4f3c04bfc8ee733581e08e9310697d00d86c50121f3328911492fcba272ab28e4d3cd399d95d0b15ce0d840e9
   languageName: node
   linkType: hard
 
