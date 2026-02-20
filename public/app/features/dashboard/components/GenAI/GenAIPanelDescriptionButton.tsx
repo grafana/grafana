@@ -3,9 +3,7 @@ import { Dashboard, Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
-import { AssistantGenerationButton } from './AssistantGeneration';
 import { GenAIButton } from './GenAIButton';
-import { buildAssistantDescriptionPrompt } from './assistantContext';
 import { useGenerationProvider } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
@@ -45,18 +43,11 @@ export const GenAIPanelDescriptionButton = ({
     return null;
   }
 
+  // When assistant is available, AITextArea handles generation directly - no addon button needed
   if (provider === 'assistant') {
-    return (
-      <AssistantGenerationButton
-        getPrompt={() => buildAssistantDescriptionPrompt(panel, dashboard, data)}
-        onGenerate={onGenerate}
-        eventTrackingSrc={EventTrackingSrc.panelDescription}
-        toggleTipTitle={'Improve your panel description'}
-      />
-    );
+    return null;
   }
 
-  // LLM plugin
   return (
     <GenAIButton
       messages={() => getLLMMessages(panel, dashboard)}

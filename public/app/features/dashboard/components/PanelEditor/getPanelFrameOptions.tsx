@@ -1,11 +1,19 @@
+import { useState } from 'react';
+
+import { AITextArea, AITextInput } from '@grafana/assistant';
+import { PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { Dashboard, Panel } from '@grafana/schema';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
+import { buildDescriptionInputSystemPrompt, buildTitleInputSystemPrompt } from '../GenAI/assistantContext';
+import { useIsAssistantAvailable } from '../GenAI/hooks';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -39,6 +47,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }
   };
 
+  const saveModel = panel.getSaveModel();
+  const dashboardModel = dashboard.getSaveModelClone();
+
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
@@ -48,19 +59,21 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         popularRank: 1,
         render: function renderTitle(descriptor) {
           return (
-            <Input
-              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+            <LegacyPanelTitleInput
               id={descriptor.props.id}
+              panel={saveModel}
+              dashboard={dashboardModel}
+              data={props.data}
               defaultValue={panel.title}
-              onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
+              onCommit={(title) => onPanelConfigChange('title', title)}
             />
           );
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
             onGenerate={setPanelTitle}
-            panel={panel.getSaveModel()}
-            dashboard={dashboard.getSaveModelClone()}
+            panel={saveModel}
+            dashboard={dashboardModel}
             data={props.data}
           />
         ),
@@ -74,19 +87,21 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         value: panel.description,
         render: function renderDescription(descriptor) {
           return (
-            <TextArea
-              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
+            <LegacyPanelDescriptionInput
               id={descriptor.props.id}
-              defaultValue={panel.description}
-              onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
+              panel={saveModel}
+              dashboard={dashboardModel}
+              data={props.data}
+              defaultValue={panel.description ?? ''}
+              onCommit={(desc) => onPanelConfigChange('description', desc)}
             />
           );
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
             onGenerate={setPanelDescription}
-            panel={panel.getSaveModel()}
-            dashboard={dashboard.getSaveModelClone()}
+            panel={saveModel}
+            dashboard={dashboardModel}
             data={props.data}
           />
         ),
@@ -202,4 +217,80 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           })
         )
     );
+}
+
+interface LegacyPanelInputProps {
+  id: string;
+  panel: Panel;
+  dashboard: Dashboard;
+  data?: PanelData;
+  defaultValue: string;
+  onCommit: (value: string) => void;
+}
+
+function LegacyPanelTitleInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
+  const isAssistant = useIsAssistantAvailable();
+  const isDefault = !defaultValue || defaultValue === NEW_PANEL_TITLE;
+  const [value, setValue] = useState(isAssistant && isDefault ? '' : defaultValue);
+  const systemPrompt = isAssistant ? buildTitleInputSystemPrompt(panel, dashboard, data) : undefined;
+
+  if (isAssistant) {
+    return (
+      <AITextInput
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+        value={value}
+        onChange={(val) => {
+          setValue(val);
+          onCommit(val);
+        }}
+        systemPrompt={systemPrompt}
+        origin="grafana/panel-metadata/title"
+        placeholder={t('dashboard.panel-title-input.placeholder', 'Type a title or let AI generate one...')}
+        autoGenerate={isDefault}
+        streaming
+      />
+    );
+  }
+
+  return (
+    <Input
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+      id={id}
+      defaultValue={defaultValue}
+      onBlur={(e) => onCommit(e.currentTarget.value)}
+    />
+  );
+}
+
+function LegacyPanelDescriptionInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
+  const isAssistant = useIsAssistantAvailable();
+  const [value, setValue] = useState(defaultValue);
+  const systemPrompt = isAssistant ? buildDescriptionInputSystemPrompt(panel, dashboard, data) : undefined;
+
+  if (isAssistant) {
+    return (
+      <AITextArea
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
+        value={value}
+        onChange={(val) => {
+          setValue(val);
+          onCommit(val);
+        }}
+        systemPrompt={systemPrompt}
+        origin="grafana/panel-metadata/description"
+        placeholder={t('dashboard.panel-description-input.placeholder', 'Type a description or let AI generate one...')}
+        autoGenerate={!defaultValue}
+        streaming
+      />
+    );
+  }
+
+  return (
+    <TextArea
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
+      id={id}
+      defaultValue={defaultValue}
+      onBlur={(e) => onCommit(e.currentTarget.value)}
+    />
+  );
 }

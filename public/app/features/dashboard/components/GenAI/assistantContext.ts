@@ -1,84 +1,43 @@
 import { getPanelDataSummary, PanelData } from '@grafana/data';
 import { Dashboard, Panel } from '@grafana/schema';
 
-const TITLE_SOFT_LIMIT = 80; // Soft limit; prefer concise but allow natural phrasing
+import { getFilteredPanelString } from './utils';
+
+const TITLE_SOFT_LIMIT = 80;
 const DESCRIPTION_CHAR_LIMIT = 200;
 
-const ASSISTANT_OUTPUT_INSTRUCTION =
-  "Only return what you're asked for, no reasoning, no explanation whatsoever just the bits that are explicitly requested.";
+const ASSISTANT_OUTPUT_INSTRUCTION = [
+  "Only return what you're asked for, no reasoning, no explanation whatsoever just the bits that are explicitly requested.",
+  'Never ask questions or request clarification. Always produce a result based on the provided context.',
+  'If the user message is empty, generate based on the panel context alone.',
+].join('\n');
 
 /**
- * Extract query-related content from panel targets for context.
- * Returns an array of strings: full query expressions plus any metric/target fields.
- * Targets vary by datasource: Prometheus/Loki use `expr`, Graphite uses `target`, OpenTSDB uses `metric`, etc.
+ * Extract sample labels from PanelData for richer context.
+ * Collects unique label key-value pairs across fields (capped for prompt size).
  */
-function getQueryContextFromTargets(panel: Panel): string[] {
-  const targets = panel.targets ?? [];
-  const items: string[] = [];
-  const seen = new Set<string>();
-
-  for (const target of targets) {
-    if (target && typeof target === 'object') {
-      // expr (Prometheus, Loki)
-      const expr = 'expr' in target ? target.expr : undefined;
-      if (typeof expr === 'string' && expr.trim() && !seen.has(expr)) {
-        seen.add(expr);
-        items.push(expr);
-      }
-      // query (generic, Elasticsearch, etc.)
-      const query = 'query' in target ? target.query : undefined;
-      if (typeof query === 'string' && query.trim() && !seen.has(query)) {
-        seen.add(query);
-        items.push(query);
-      }
-      // target (Graphite)
-      const targetStr = 'target' in target ? target.target : undefined;
-      if (typeof targetStr === 'string' && targetStr.trim() && !seen.has(targetStr)) {
-        seen.add(targetStr);
-        items.push(targetStr);
-      }
-      // metric (OpenTSDB, CloudWatch)
-      const metric = 'metric' in target ? target.metric : undefined;
-      if (typeof metric === 'string' && metric.trim() && !seen.has(metric)) {
-        seen.add(metric);
-        items.push(`metric: ${metric}`);
-      }
-    }
-  }
-
-  return items;
-}
-
-/**
- * Extract metric names from panel data.
- * Prometheus fields often have labels.__name__ or the field name is the metric.
- */
-function getMetricNamesFromData(data: PanelData): string[] {
-  const names = new Set<string>();
+function getSampleLabels(data: PanelData): string[] {
+  const labelEntries = new Set<string>();
 
   for (const frame of data.series ?? []) {
     for (const field of frame.fields) {
-      // Prometheus: __name__ in labels is the metric name
       const labels = field.labels;
-      if (labels && typeof labels === 'object' && '__name__' in labels) {
-        const nameValue = Object.getOwnPropertyDescriptor(labels, '__name__')?.value;
-        if (typeof nameValue === 'string' && nameValue.trim()) {
-          names.add(nameValue);
+      if (labels && typeof labels === 'object') {
+        for (const [key, value] of Object.entries(labels)) {
+          if (key && value && labelEntries.size < 30) {
+            labelEntries.add(`${key}="${value}"`);
+          }
         }
-      }
-      // Field name often is the metric (e.g. from Prometheus, or Value for single-stat)
-      if (field.name && field.name !== 'Time' && field.name !== 'time') {
-        names.add(field.name);
       }
     }
   }
 
-  return [...names];
+  return [...labelEntries];
 }
 
 /**
  * Build data context when PanelData is available (queries have run).
- * Includes metric names, field names, and row counts for richer context.
+ * Includes metric names, sample labels, field names, and row counts.
  */
 function buildDataContext(data?: PanelData): string {
   if (!data?.series?.length) {
@@ -88,72 +47,47 @@ function buildDataContext(data?: PanelData): string {
   const summary = getPanelDataSummary(data.series);
   const parts: string[] = [];
 
-  const metricNames = getMetricNamesFromData(data);
-  if (metricNames.length > 0) {
-    parts.push(`Metrics being visualized: ${metricNames.slice(0, 15).join(', ')}${metricNames.length > 15 ? '...' : ''}`);
-  }
-
   if (summary.hasData) {
     parts.push(`Data: ${summary.frameCount} frame(s), ${summary.rowCountTotal} total rows`);
   }
 
   const fieldNames = data.series.flatMap((f) => f.fields.map((field) => field.name));
-  const uniqueFieldNames = [...new Set(fieldNames)].filter(
-    (n) => n && n !== 'Time' && n !== 'time'
-  );
+  const uniqueFieldNames = [...new Set(fieldNames)].filter((n) => n && n !== 'Time' && n !== 'time');
   if (uniqueFieldNames.length > 0) {
-    parts.push(`Field names: ${uniqueFieldNames.slice(0, 20).join(', ')}${uniqueFieldNames.length > 20 ? '...' : ''}`);
+    parts.push(
+      `Field names: ${uniqueFieldNames.slice(0, 20).join(', ')}${uniqueFieldNames.length > 20 ? '...' : ''}`
+    );
   }
 
-  return parts.length > 0 ? parts.join('. ') : '';
+  const sampleLabels = getSampleLabels(data);
+  if (sampleLabels.length > 0) {
+    parts.push(`Sample labels: ${sampleLabels.join(', ')}`);
+  }
+
+  return parts.length > 0 ? parts.join('\n') : '';
 }
 
 /**
- * Build panel context for Assistant - visualization type, datasource, queries, and data when available.
+ * Build full context string with the panel JSON and live data summary.
  */
-function buildPanelContext(panel: Panel, data?: PanelData): string {
+function buildFullContext(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
   const parts: string[] = [];
 
-  if (panel.type) {
-    parts.push(`Visualization type: ${panel.type}`);
+  if (dashboard.title != null && dashboard.title !== '') {
+    parts.push(`Dashboard title: ${dashboard.title}`);
+  }
+  if (dashboard.description != null && dashboard.description !== '') {
+    parts.push(`Dashboard description: ${dashboard.description}`);
   }
 
-  const dsRef = panel.datasource;
-  if (dsRef && typeof dsRef === 'object' && 'type' in dsRef) {
-    const typeProp = Object.getOwnPropertyDescriptor(dsRef, 'type')?.value;
-    if (typeof typeProp === 'string') {
-      parts.push(`Datasource: ${typeProp}`);
-    }
-  }
-
-  const queryContext = getQueryContextFromTargets(panel);
-  if (queryContext.length > 0) {
-    parts.push(`Queries and metrics being queried:\n${queryContext.map((e) => `- ${e}`).join('\n')}`);
-  }
+  parts.push(`Panel definition:\n${getFilteredPanelString(panel)}`);
 
   const dataContext = buildDataContext(data);
   if (dataContext) {
     parts.push(dataContext);
   }
 
-  return parts.join('\n');
-}
-
-/**
- * Build dashboard context - only include when defined.
- */
-function buildDashboardContext(dashboard: Dashboard): string {
-  const parts: string[] = [];
-
-  if (dashboard.title != null && dashboard.title !== '') {
-    parts.push(`Dashboard title: ${dashboard.title}`);
-  }
-
-  if (dashboard.description != null && dashboard.description !== '') {
-    parts.push(`Dashboard description: ${dashboard.description}`);
-  }
-
-  return parts.length > 0 ? parts.join('\n') : '';
+  return parts.join('\n\n');
 }
 
 export interface AssistantPromptResult {
@@ -177,19 +111,28 @@ export function buildAssistantTitlePrompt(
     ASSISTANT_OUTPUT_INSTRUCTION,
   ].join('\n');
 
-  const dashboardContext = buildDashboardContext(dashboard);
-  const panelContext = buildPanelContext(panel, data);
-
-  const promptParts: string[] = [];
-  if (dashboardContext) {
-    promptParts.push(dashboardContext);
-  }
-  promptParts.push(panelContext);
-
   return {
     systemPrompt,
-    prompt: promptParts.join('\n\n'),
+    prompt: buildFullContext(panel, dashboard, data),
   };
+}
+
+/**
+ * Build a combined system prompt for AITextInput (title field).
+ * Merges instructions and panel/dashboard context into a single system prompt
+ * so the user's typed text becomes the user prompt.
+ */
+export function buildTitleInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
+  const { systemPrompt, prompt } = buildAssistantTitlePrompt(panel, dashboard, data);
+  return [systemPrompt, 'Panel context:', prompt].join('\n\n');
+}
+
+/**
+ * Build a combined system prompt for AITextArea (description field).
+ */
+export function buildDescriptionInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
+  const { systemPrompt, prompt } = buildAssistantDescriptionPrompt(panel, dashboard, data);
+  return [systemPrompt, 'Panel context:', prompt].join('\n\n');
 }
 
 /**
@@ -209,17 +152,8 @@ export function buildAssistantDescriptionPrompt(
     ASSISTANT_OUTPUT_INSTRUCTION,
   ].join('\n');
 
-  const dashboardContext = buildDashboardContext(dashboard);
-  const panelContext = buildPanelContext(panel, data);
-
-  const promptParts: string[] = [];
-  if (dashboardContext) {
-    promptParts.push(dashboardContext);
-  }
-  promptParts.push(panelContext);
-
   return {
     systemPrompt,
-    prompt: promptParts.join('\n\n'),
+    prompt: buildFullContext(panel, dashboard, data),
   };
 }
