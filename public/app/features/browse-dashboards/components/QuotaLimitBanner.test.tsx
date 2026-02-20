@@ -1,8 +1,11 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { store } from '@grafana/data';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import { QUOTAS_USAGE_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -16,57 +19,50 @@ jest.mock('../../provisioning/utils/isFreeTierLicense', () => ({
   isFreeTierLicense: () => mockIsFreeTier,
 }));
 
-const QUOTAS_URL = '/apis/quotas.grafana.app/v0alpha1/namespaces/:namespace/usage';
+function usageResponse(group: string | null, resource: string | null, data: { usage: number; limit: number }) {
+  return {
+    apiVersion: 'quotas.grafana.app/v0alpha1',
+    kind: 'GetUsageResponse',
+    group,
+    resource,
+    namespace: 'default',
+    ...data,
+  };
+}
 
 function mockUsage(dashboards: { usage: number; limit: number }, folders: { usage: number; limit: number }) {
   server.use(
-    http.get(QUOTAS_URL, ({ request }) => {
+    http.get(QUOTAS_USAGE_URL, ({ request }) => {
       const url = new URL(request.url);
       const group = url.searchParams.get('group');
       const resource = url.searchParams.get('resource');
-      const data = group === 'dashboard.grafana.app' ? dashboards : folders;
+      const data = group === DASHBOARD_API_GROUP ? dashboards : folders;
 
-      return HttpResponse.json({
-        apiVersion: 'quotas.grafana.app/v0alpha1',
-        kind: 'GetUsageResponse',
-        group,
-        resource,
-        namespace: 'default',
-        ...data,
-      });
+      return HttpResponse.json(usageResponse(group, resource, data));
     })
   );
 }
 
-function mockError() {
+function mockErrorForResource(errorGroup?: string, successData?: { usage: number; limit: number }) {
   server.use(
-    http.get(QUOTAS_URL, () => {
-      return HttpResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-    })
-  );
-}
-
-function mockErrorForResource(errorGroup: string, successData: { usage: number; limit: number }) {
-  server.use(
-    http.get(QUOTAS_URL, ({ request }) => {
+    http.get(QUOTAS_USAGE_URL, ({ request }) => {
       const url = new URL(request.url);
       const group = url.searchParams.get('group');
       const resource = url.searchParams.get('resource');
 
-      if (group === errorGroup) {
+      if (!errorGroup || group === errorGroup) {
         return HttpResponse.json({ message: 'Internal Server Error' }, { status: 500 });
       }
 
-      return HttpResponse.json({
-        apiVersion: 'quotas.grafana.app/v0alpha1',
-        kind: 'GetUsageResponse',
-        group,
-        resource,
-        namespace: 'default',
-        ...successData,
-      });
+      return HttpResponse.json(usageResponse(group, resource, successData!));
     })
   );
+}
+
+async function expectNoAlert() {
+  await waitFor(() => {
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 }
 
 const errorAlert = { name: /hit your storage limits/i };
@@ -83,35 +79,30 @@ describe('QuotaLimitBanner', () => {
   });
 
   describe('renders nothing', () => {
-    it('when feature flag is off', async () => {
-      config.featureToggles.kubernetesUnifiedStorageQuotas = false;
-      render(<QuotaLimitBanner />);
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    describe('when feature flag is off', () => {
+      testWithFeatureToggles({ disable: ['kubernetesUnifiedStorageQuotas'] });
+
+      it('renders nothing', async () => {
+        render(<QuotaLimitBanner />);
+        await expectNoAlert();
       });
     });
 
     it('when both queries error', async () => {
-      mockError();
+      mockErrorForResource();
       render(<QuotaLimitBanner />);
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      });
+      await expectNoAlert();
     });
 
     it('when both resources are below threshold', async () => {
       render(<QuotaLimitBanner />);
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      });
+      await expectNoAlert();
     });
 
     it('when limit is 0', async () => {
       mockUsage({ usage: 100, limit: 0 }, { usage: 100, limit: 0 });
       render(<QuotaLimitBanner />);
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      });
+      await expectNoAlert();
     });
   });
 
@@ -142,7 +133,7 @@ describe('QuotaLimitBanner', () => {
     });
 
     it('shows when one query errors but the other is at limit', async () => {
-      mockErrorForResource('folder.grafana.app', { usage: 1000, limit: 1000 });
+      mockErrorForResource(FOLDER_API_GROUP, { usage: 1000, limit: 1000 });
       render(<QuotaLimitBanner />);
       expect(await screen.findByRole('alert', errorAlert)).toBeInTheDocument();
     });
