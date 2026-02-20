@@ -14,7 +14,6 @@ import (
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -45,8 +44,6 @@ func ProvideAppInstaller(
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
 ) (*AppInstaller, error) {
-	metrics.MustRegister(registerer)
-
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
 		if err := registerAccessControlRoles(accessControlService); err != nil {
@@ -62,7 +59,13 @@ func ProvideAppInstaller(
 	})
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager, false)
+	i, err := pluginsapp.NewPluginsAppInstaller(pluginsapp.PluginAppInstallerConfig{
+		Logger:                logger,
+		Authorizer:            authorizer,
+		MetaProviderManager:   metaProviderManager,
+		EnableChildReconciler: false,
+		PrometheusRegisterer:  registerer,
+	})
 	if err != nil {
 		return nil, err
 	}
