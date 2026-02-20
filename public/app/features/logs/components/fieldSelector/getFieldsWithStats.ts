@@ -30,7 +30,7 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
     const severityFieldNames: string[] = [];
     if (logsFrame?.severityField && !logsFrame.severityField.config?.custom?.hidden) {
       const count = logsFrame.severityField.values.filter((value) => value !== null && value !== undefined).length;
-      cardinality.set(logsFrame.severityField.name, count);
+      cardinality.set(logsFrame.severityField.name, (cardinality.get(logsFrame.severityField.name) ?? 0) + count);
       severityFieldNames.push(logsFrame.severityField.name);
     }
 
