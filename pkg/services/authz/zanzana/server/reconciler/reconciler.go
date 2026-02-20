@@ -225,12 +225,18 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	defer span.End()
 
 	store, err := r.server.GetStore(ctx, namespace)
-	if err != nil {
+	if err != nil && err != zanzana.StoreNotFoundError {
 		return fmt.Errorf("failed to get store: %w", err)
 	}
 
 	if store != nil {
 		return nil
+	}
+
+	// Create store if it doesn't exist
+	_, err = r.server.GetStoreInfo(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to create store: %w", err)
 	}
 
 	err = r.reconcileNamespace(ctx, namespace)

@@ -12,6 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
+// GetStoreInfo returns store information for a given namespace.
+// This is used by the reconciler to access store IDs for direct operations.
+func (s *Server) GetStoreInfo(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
+	return s.getStoreInfo(ctx, namespace)
+}
+
 func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
 	s.storesMU.Lock()
 	defer s.storesMU.Unlock()
@@ -66,7 +72,7 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 		}
 	}
 
-	return nil, fmt.Errorf("store not found")
+	return nil, zanzana.StoreNotFoundError
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
