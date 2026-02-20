@@ -2,10 +2,13 @@ package stream_utils
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -28,10 +31,10 @@ func SetHeadersFromIncomingContext(ctx context.Context) (map[string]string, erro
 	// get the plugin from context
 	plugin := backend.PluginConfigFromContext(ctx)
 
-	// get the HTTP headers
-	teamHeaders, error := getTeamHTTPHeaders(plugin)
-	if error != nil {
-		return nil, error
+	// get the HTTP headers for the current user's teams only (LBAC)
+	teamHeaders, err := getTeamHTTPHeaders(ctx, plugin)
+	if err != nil {
+		return nil, err
 	}
 
 	// get the rest of the incoming headers
@@ -46,63 +49,60 @@ func SetHeadersFromIncomingContext(ctx context.Context) (map[string]string, erro
 	return headers, nil
 }
 
-func getTeamHTTPHeaders(plugin backend.PluginContext) (map[string]string, error) {
+// getTeamHTTPHeaders returns HTTP headers for LBAC: only the rules for teams the current user belongs to.
+// This matches the grafana-enterprise teamhttpheaders middleware behavior so that each user only gets
+// headers for their own teams' rules.
+func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext) (map[string]string, error) {
 	headers := map[string]string{}
-	// Grab the JSON data from the datasource instance settings
-	jsonData := plugin.DataSourceInstanceSettings.JSONData
-	var data map[string]interface{}
-	err := json.Unmarshal(jsonData, &data)
-	if err != nil {
-		return nil, err
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil || requester.IsNil() {
+		return headers, nil
 	}
 
-	// fetch team http headers
-	if teamHttpHeaders, ok := data["teamHttpHeaders"]; ok {
-		// team headers have the following structure
-		// headers: [<team_id>: [{header: <header_name>, value: <header_value>}]]
-		// header_value is whatever the user has set under LBAC permissions for their given rule.
-		if lbacHeaders, ok := teamHttpHeaders.(map[string]interface{})["headers"]; ok {
-			headerMap := lbacHeaders.(map[string]interface{})
-			labelPolicyKey, labelPolicyValue := getLabelPolicyKeyValue(headerMap)
+	userTeamIDs := requester.GetTeams()
+	if len(userTeamIDs) == 0 {
+		return headers, nil
+	}
 
-			if labelPolicyKey != "" && labelPolicyValue != "" {
-				headers[labelPolicyKey] = labelPolicyValue
+	userTeamIDSet := make(map[string]struct{}, len(userTeamIDs))
+	for _, id := range userTeamIDs {
+		userTeamIDSet[strconv.FormatInt(id, 10)] = struct{}{}
+	}
+
+	jsonData := plugin.DataSourceInstanceSettings.JSONData
+	if len(jsonData) == 0 {
+		return headers, nil
+	}
+	sj, err := simplejson.NewJson(jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("parse datasource jsonData: %w", err)
+	}
+
+	teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(sj)
+	if err != nil {
+		return nil, fmt.Errorf("get team HTTP headers: %w", err)
+	}
+	if teamHTTPHeaders == nil || len(teamHTTPHeaders.Headers) == 0 {
+		return headers, nil
+	}
+
+	for teamIDStr, rules := range teamHTTPHeaders.Headers {
+		if _, isUserTeam := userTeamIDSet[teamIDStr]; !isUserTeam {
+			continue
+		}
+		for _, rule := range rules {
+			if rule.Header == "" || rule.LBACRule == "" {
+				continue
+			}
+			if existing := headers[rule.Header]; existing != "" {
+				headers[rule.Header] = existing + "," + rule.LBACRule
+			} else {
+				headers[rule.Header] = rule.LBACRule
 			}
 		}
 	}
 	return headers, nil
-}
-
-func getLabelPolicyKeyValue(headerWithRules map[string]interface{}) (string, string) {
-	labelPolicyKey := ""
-	labelPolicyValue := ""
-	// we go through each teams' rule and ignoring the team, go through their set rules and prepare them to be all appended for the X-Prom-Label-Policy header value
-	// the result will be a comma separated list of the rules:
-	// "<rule_num>:<rule_value>, <rule_num>:<rule_value>"
-	for _, accessRuleValue := range headerWithRules {
-		rules := accessRuleValue.([]interface{})
-		for _, accessRule := range rules {
-			header := accessRule.(map[string]interface{})
-			for key, value := range header {
-				// for now, team headers only contain a single header key value, but in case in the future more are introduced, we make sure we only set the one we care about.
-				if key == "header" && value == "X-Prom-Label-Policy" {
-					labelPolicyKey = value.(string)
-					continue
-				}
-				if key == "value" {
-					if valueStr, ok := value.(string); ok {
-						if labelPolicyValue == "" {
-							labelPolicyValue = valueStr
-						} else {
-							labelPolicyValue += "," + valueStr
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return labelPolicyKey, labelPolicyValue
 }
 
 func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) (map[string]string, error) {
