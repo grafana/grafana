@@ -509,8 +509,8 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 		}),
 	)
 	table.Header(header...)
-	table.Bulk(data) // Add Bulk Data
-	table.Render()
+	_ = table.Bulk(data) // Add Bulk Data
+	_ = table.Render()
 
 	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
