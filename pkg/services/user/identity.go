@@ -139,7 +139,7 @@ func (u *SignedInUser) GetExtra() map[string][]string {
 }
 
 func (u *SignedInUser) GetGroups() []string {
-	groups := []string{}
+	groups := make([]string, 0, len(u.Teams))
 	for _, t := range u.Teams {
 		groups = append(groups, strconv.FormatInt(t, 10))
 	}

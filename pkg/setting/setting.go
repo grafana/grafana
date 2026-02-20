@@ -361,6 +361,7 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+	KubernetesAnnotationsAppEnabled    bool
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -831,6 +832,8 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
+	cfg.KubernetesAnnotationsAppEnabled = section.Key("kubernetes_annotations_app_enabled").MustBool(false)
+
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
 		// ensure that the configuration does not exceed the respective column size
