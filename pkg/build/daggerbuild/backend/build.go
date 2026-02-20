@@ -72,8 +72,7 @@ func Build(
 	}
 
 	// go-trace-toolexec-exporter only has binaries for linux-amd64 and linux-arm64
-	switch distro {
-	case DistLinuxAMD64, DistLinuxARM64:
+	if distro == DistLinuxAMD64 || distro == DistLinuxARM64 {
 		hostPath := ResolveToolexecBinary()
 		logFile := os.Getenv("GOCACHE_TOOLEXEC_TRACES_LOG_FILE")
 
