@@ -2095,11 +2095,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ShareModal.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx": {
     "no-restricted-syntax": {
       "count": 3
