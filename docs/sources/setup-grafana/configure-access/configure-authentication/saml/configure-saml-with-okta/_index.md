@@ -45,7 +45,7 @@ Grafana supports user authentication through Okta, which is useful when you want
      | Email                       | Email - `user.email`                                 | `assertion_attribute_email = Email`       |
      | DisplayName                 | DisplayName - `user.firstName + " " + user.lastName` | `assertion_attribute_name = DisplayName`  |
 
-   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`, ensure it matches the `asssertion_attribute_groups` setting in Grafana) and set filter to `Matches regex .*` to return all user groups.
+   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`, ensure it matches the `assertion_attribute_groups` setting in Grafana) and set filter to `Matches regex .*` to return all user groups. To use these groups for role assignment, refer to [Configure role sync with Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-with-okta).
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.

@@ -4982,8 +4982,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions"
+          "group"
         ],
         "properties": {
           "description": {
@@ -4995,7 +4994,21 @@
             "default": ""
           },
           "permissions": {
-            "description": "delegatable?: bool created? updated?",
+            "description": "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "permissionsOmitted": {
+            "description": "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "roleRefs": {
+            "description": "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
             "type": "array",
             "items": {
               "default": {}
@@ -5022,6 +5035,25 @@
           },
           "scope": {
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CoreRolespecRoleRef": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "Kind of role being referenced (for now only GlobalRole is supported)",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "Name of the role being referenced",
             "type": "string",
             "default": ""
           }
@@ -5705,8 +5737,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions"
+          "group"
         ],
         "properties": {
           "description": {
@@ -5718,7 +5749,21 @@
             "default": ""
           },
           "permissions": {
-            "description": "delegatable?: bool created? updated?",
+            "description": "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "permissionsOmitted": {
+            "description": "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "roleRefs": {
+            "description": "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
             "type": "array",
             "items": {
               "default": {}
@@ -5745,6 +5790,25 @@
           },
           "scope": {
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GlobalRolespecRoleRef": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "Kind of role being referenced (for now only GlobalRole is supported)",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "Name of the role being referenced",
             "type": "string",
             "default": ""
           }
@@ -6029,8 +6093,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions"
+          "group"
         ],
         "properties": {
           "description": {
@@ -6042,7 +6105,21 @@
             "default": ""
           },
           "permissions": {
-            "description": "delegatable?: bool created? updated?",
+            "description": "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "permissionsOmitted": {
+            "description": "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "roleRefs": {
+            "description": "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
             "type": "array",
             "items": {
               "default": {}
@@ -6069,6 +6146,25 @@
           },
           "scope": {
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecRoleRef": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "description": "Kind of role being referenced (for now only GlobalRole is supported)",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "Name of the role being referenced",
             "type": "string",
             "default": ""
           }

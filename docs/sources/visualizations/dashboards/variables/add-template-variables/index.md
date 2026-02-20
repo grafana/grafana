@@ -558,7 +558,8 @@ You can even deeply nest properties and still access them using familiar variabl
 ### Multi-property query variables
 
 Because query configuration is different for each data source, there's no one way to set up a JSON array to create a multi-property query variable.
-For information on configuring a multi-property query variable, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
+For PostgreSQL, refer to [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/).
+For other data sources, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
 For configuration information on all other data source plugins, refer to the [Plugins documentation](https://grafana.com/docs/plugins/).
 
 ## Global variables
