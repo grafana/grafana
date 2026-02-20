@@ -71,6 +71,20 @@ Set the following options to provide basic information about a panel and define 
 | Panel links            | Add [links to the panel](ref:links-to-the-panel) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title.                                                                                                                                                                 |
 | Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                                                                        |
 
+### Description formatting
+
+The **Description** field supports [GitHub Flavored Markdown](https://github.github.com/gfm/). You can use it to add formatting to panel descriptions in the tooltip.
+
+Common supported formatting includes:
+
+- **Emphasis:** Use `**bold**`, `_italics_`, and `~~strikethrough~~`.
+- **Links:** Use `[Link text](https://example.com)`.
+- **Lists:** Use ordered and unordered lists.
+- **Code:** Use inline code and fenced code blocks.
+- **Tables and blockquotes:** Use standard GFM table and quote syntax.
+
+Grafana sanitizes the rendered description content before display, and removes unsafe HTML.
+
 You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards](ref:set-up-generative-ai-features-for-dashboards).
 
 ## Configure repeating panels
