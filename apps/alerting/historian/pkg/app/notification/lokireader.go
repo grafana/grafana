@@ -193,12 +193,11 @@ func buildQuery(query Query) (string, error) {
 
 // runQuery runs the query and collects results, grouping alerts into notifications.
 func (l *LokiReader) runQuery(ctx context.Context, logql string, from, to time.Time, limit int64) ([]Entry, error) {
-	// Note that we don't limit what Loki returns, which means Loki will return
-	// whatever the server-side configured maximum is (usually 5000).
+	// Note that we ask Loki for the configured maximum lines (usually 5000).
 	// This means that if some notifications have lots of alerts, then we may not
 	// return enough entries.
 	entries := make([]Entry, 0)
-	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), 0)
+	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), 5000)
 	if err != nil {
 		return nil, fmt.Errorf("loki range query: %w", err)
 	}
