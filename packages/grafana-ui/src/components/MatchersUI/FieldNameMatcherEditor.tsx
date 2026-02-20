@@ -6,11 +6,11 @@ import { t } from '@grafana/i18n';
 import { Select } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
+import { useSelectOptions, frameHasName, useAllFieldDisplayNames } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id } = props;
-  const names = useFieldDisplayNames(data);
+  const { series, annotations = [], options, onChange: onChangeFromProps, id } = props;
+  const names = useAllFieldDisplayNames(series, annotations);
   const selectOptions = useSelectOptions(names, options);
 
   const onChange = useCallback(

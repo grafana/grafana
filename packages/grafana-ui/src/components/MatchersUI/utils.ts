@@ -70,6 +70,22 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
 /**
  * @internal
  */
+export function useAllFieldDisplayNames(series: DataFrame[], annotations: DataFrame[]) {
+  const seriesNames = useFieldDisplayNames(series);
+  const annoNames = useFieldDisplayNames(annotations);
+
+  return useMemo<FrameFieldsDisplayNames>(() => {
+    return {
+      display: new Set([...seriesNames.display, ...annoNames.display]),
+      raw: new Set([...seriesNames.raw, ...annoNames.raw]),
+      fields: new Map([...seriesNames.fields.entries(), ...annoNames.fields.entries()]),
+    };
+  }, [seriesNames, annoNames]);
+}
+
+/**
+ * @internal
+ */
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
