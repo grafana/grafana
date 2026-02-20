@@ -4,7 +4,7 @@ import { AzureAuthType, AzureCredentials, getAzureClouds } from '@grafana/azure-
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ConfigSection } from '@grafana/plugin-ui';
-import { Select, Field } from '@grafana/ui';
+import { Field, Select, Stack } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 
@@ -45,7 +45,11 @@ export const AzureCredentialsForm = (props: Props) => {
     let opts: Array<SelectableValue<AzureAuthType>> = [
       {
         value: 'clientsecret',
-        label: 'App Registration',
+        label: 'App Registration (Client Secret)',
+      },
+      {
+        value: 'clientcertificate',
+        label: 'App Registration (Client Certificate)',
       },
     ];
 
@@ -100,44 +104,47 @@ export const AzureCredentialsForm = (props: Props) => {
 
   return (
     <ConfigSection title={t('components.azure-credentials-form.title-authentication', 'Authentication')}>
-      {authTypeOptions.length > 1 && (
-        <Field
-          label={t('components.azure-credentials-form.label-authentication', 'Authentication')}
-          description={t(
-            'components.azure-credentials-form.description-authentication',
-            'Choose the type of authentication to Azure services'
-          )}
-          data-testid={selectors.components.configEditor.authType.select}
-          htmlFor="authentication-type"
-        >
-          <Select
-            className="width-15"
-            value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
-            options={authTypeOptions}
-            onChange={onAuthTypeChange}
+      <Stack direction="column" gap={1.5}>
+        {authTypeOptions.length > 1 && (
+          <Field
+            label={t('components.azure-credentials-form.label-authentication', 'Authentication')}
+            description={t(
+              'components.azure-credentials-form.description-authentication',
+              'Choose the type of authentication to Azure services'
+            )}
+            data-testid={selectors.components.configEditor.authType.select}
+            htmlFor="authentication-type"
+            noMargin
+          >
+            <Select
+              className="width-15"
+              value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
+              options={authTypeOptions}
+              onChange={onAuthTypeChange}
+              disabled={disabled}
+            />
+          </Field>
+        )}
+        {(credentials.authType === 'clientsecret' || credentials.authType === 'clientcertificate') && (
+          <AppRegistrationCredentials
+            credentials={credentials}
+            azureCloudOptions={getAzureCloudOptions()}
+            onCredentialsChange={onCredentialsChange}
             disabled={disabled}
           />
-        </Field>
-      )}
-      {credentials.authType === 'clientsecret' && (
-        <AppRegistrationCredentials
-          credentials={credentials}
-          azureCloudOptions={getAzureCloudOptions()}
-          onCredentialsChange={onCredentialsChange}
-          disabled={disabled}
-        />
-      )}
-      {props.children}
-      {credentials.authType === 'currentuser' && (
-        <CurrentUserFallbackCredentials
-          credentials={credentials}
-          azureCloudOptions={getAzureCloudOptions()}
-          onCredentialsChange={onCredentialsChange}
-          disabled={disabled}
-          managedIdentityEnabled={managedIdentityEnabled}
-          workloadIdentityEnabled={workloadIdentityEnabled}
-        />
-      )}
+        )}
+        {props.children}
+        {credentials.authType === 'currentuser' && (
+          <CurrentUserFallbackCredentials
+            credentials={credentials}
+            azureCloudOptions={getAzureCloudOptions()}
+            onCredentialsChange={onCredentialsChange}
+            disabled={disabled}
+            managedIdentityEnabled={managedIdentityEnabled}
+            workloadIdentityEnabled={workloadIdentityEnabled}
+          />
+        )}
+      </Stack>
     </ConfigSection>
   );
 };

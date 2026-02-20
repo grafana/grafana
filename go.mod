@@ -14,8 +14,8 @@ require (
 	filippo.io/age v1.2.1 // @grafana/identity-access-team
 	github.com/1NCE-GmbH/grpc-go-pool v0.0.0-20231117122434-2a5bb974daa2 // @grafana/grafana-search-and-storage
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/partner-datasources
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // @grafana/identity-access-team
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0 // @grafana/grafana-backend-group
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0 // @grafana/identity-access-team
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // @grafana/grafana-backend-group
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // @grafana/grafana-backend-group
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/grafana-backend-group
@@ -101,11 +101,11 @@ require (
 	github.com/grafana/grafana-app-sdk v0.51.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.51.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.4.3 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // @grafana/partner-datasources
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.10.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.287.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.289.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 	github.com/grafana/nanogit v0.3.5 // indirect; @grafana/grafana-git-ui-sync-team
@@ -144,7 +144,7 @@ require (
 	github.com/mocktools/go-smtp-mock/v2 v2.5.1 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
+	github.com/olekukonko/tablewriter v1.1.3 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk v1.17.0 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
@@ -212,7 +212,7 @@ require (
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // @grafana/alerting-backend
 	golang.org/x/mod v0.33.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.50.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.34.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.35.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
 	golang.org/x/text v0.34.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.14.0 // @grafana/grafana-backend-group
@@ -335,7 +335,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
 	github.com/FZambia/eagle v0.2.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.53.0 // indirect
@@ -542,7 +542,7 @@ require (
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-ieproxy v0.0.12 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/maypok86/otter v1.2.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect

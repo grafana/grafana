@@ -17,6 +17,18 @@ export const components = {
     clientSecret: {
       input: 'data-testid client-secret',
     },
+    clientCertificate: {
+      input: 'data-testid client-certificate',
+    },
+    privateKey: {
+      input: 'data-testid private-key',
+    },
+    certificatePassword: {
+      input: 'data-testid private-key-password',
+    },
+    certificateFormat: {
+      select: 'data-testid certificate-format',
+    },
     loadSubscriptions: {
       button: 'data-testid load-subscriptions',
     },
