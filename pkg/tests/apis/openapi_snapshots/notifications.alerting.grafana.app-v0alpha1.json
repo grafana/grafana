@@ -3439,10 +3439,7 @@
           },
           "settings": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {}
-            }
+            "additionalProperties": true
           },
           "type": {
             "type": "string"

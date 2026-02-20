@@ -232,7 +232,7 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
         </Alert>
       )}
       {hasPoliciesData && (
-        <Stack direction="column" gap={3}>
+        <Stack direction="column" gap={1}>
           <NotificationPoliciesFilter
             onChangeMatchers={setLabelMatchersFilter}
             onChangeReceiver={setContactPointFilter}

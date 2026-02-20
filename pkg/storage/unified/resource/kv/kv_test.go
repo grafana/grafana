@@ -175,7 +175,7 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		}
 
 		// List keys from section1 only
-		var foundKeys1 []string
+		var foundKeys1 []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section1, ListOptions{}) {
 			require.NoError(t, err)
 			foundKeys1 = append(foundKeys1, k)
@@ -183,7 +183,7 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		require.Equal(t, keys1, foundKeys1)
 
 		// List keys from section2 only
-		var foundKeys2 []string
+		var foundKeys2 []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, section2, ListOptions{}) {
 			require.NoError(t, err)
 			foundKeys2 = append(foundKeys2, k)

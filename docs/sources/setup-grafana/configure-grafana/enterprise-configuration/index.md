@@ -220,11 +220,11 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### log_datasource_query_request_body
 
-Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+Whether to record data source queries' request body. This can significantly increase the size of your logs. Disabled by default.
 
 ### log_datasource_query_response_body
 
-Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+Whether to record data source queries' response body. This can significantly increase the size of your logs. Disabled by default.
 
 ### verbose
 

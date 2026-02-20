@@ -86,6 +86,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     }
   };
 
+  const retryJob = () => {
+    setJob(undefined);
+    startSynchronization();
+  };
+
   if (isLoading || healthStatusNotReady) {
     return (
       <Box padding={4}>
@@ -112,7 +117,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     );
   }
   if (job) {
-    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
+    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" onRetry={retryJob} />;
   }
 
   return (

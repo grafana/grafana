@@ -1,9 +1,9 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
-import { trackDeleteDashboardElement } from 'app/features/dashboard-scene/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardEditPane } from './DashboardEditPane';
 
@@ -26,7 +26,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
     } else if (onDelete) {
       onDelete();
     }
-    trackDeleteDashboardElement(elementInfo);
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
   return (

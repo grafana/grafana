@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.7
+GO_VERSION = 1.26.0
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -136,17 +136,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue

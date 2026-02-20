@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/prometheus/alertmanager/config"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -57,8 +55,8 @@ type staticContactPointValidator struct {
 // apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
 type apiAlertingConfig[R receiver] interface {
 	GetReceivers() []R
-	GetMuteTimeIntervals() []config.MuteTimeInterval
-	GetTimeIntervals() []config.TimeInterval
+	GetMuteTimeIntervals() []definitions.AmMuteTimeInterval
+	GetTimeIntervals() []definitions.TimeInterval
 	GetRoute() *definitions.Route
 }
 

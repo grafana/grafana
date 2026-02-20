@@ -61,7 +61,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
@@ -91,7 +91,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
@@ -123,7 +123,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 
 				nc.On("Clean", mock.Anything, "test-namespace", pr).Return(nil)
 				// Reset progress and sync job succeeds
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
@@ -153,7 +153,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				// Cleaner should be skipped - no cleaner-related mocks
 				// Sync job should run
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
@@ -183,7 +183,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				// Sync job should run and fail
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
@@ -212,7 +212,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 
 				// Sync job and cleanup should also run
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
@@ -244,7 +244,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental
@@ -274,7 +274,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil && job.Spec.Push.Message == "test migration message"
 				}), pr).Return(nil)
-				pr.On("ResetResults").Return()
+				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Pull != nil && !job.Spec.Pull.Incremental

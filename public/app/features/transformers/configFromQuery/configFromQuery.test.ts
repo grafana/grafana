@@ -1,8 +1,13 @@
-import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 
-import { extractConfigFromQuery, ConfigFromQueryTransformOptions } from './configFromQuery';
+import {
+  extractConfigFromQuery,
+  getConfigFromDataTransformer,
+  ConfigFromQueryTransformOptions,
+} from './configFromQuery';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -25,6 +30,16 @@ describe('config from data', () => {
         config: { displayName: 'SeriesA' },
       },
     ],
+  });
+
+  it('should return data unchanged when configRefId does not match any frame', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'missing',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results).toEqual([config, seriesA]);
   });
 
   it('Select and apply with two frames and default mappings and reducer', () => {
@@ -109,6 +124,108 @@ describe('config from data', () => {
     const results = extractConfigFromQuery(options, [config, seriesA]);
     expect(results.length).toBe(1);
     expect(results[0].fields[1].config.displayName).toBe('first-name');
+  });
+});
+
+describe('preserves frame properties', () => {
+  const config = toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [1, 2] },
+      { name: 'Max', type: FieldType.number, values: [1, 10, 50] },
+      { name: 'Min', type: FieldType.number, values: [1, 10, 5] },
+    ],
+    refId: 'A',
+  });
+
+  it('should preserve frame name on output frames', () => {
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [2, 3, 4] },
+      ],
+    });
+    seriesB.name = 'cpu-utilization';
+    seriesB.refId = 'B';
+
+    const seriesC = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [5, 6, 7] },
+      ],
+    });
+    seriesC.name = 'memory-usage';
+    seriesC.refId = 'B';
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesB, seriesC]);
+
+    expect(results.length).toBe(2);
+    expect(results[0].name).toBe('cpu-utilization');
+    expect(results[1].name).toBe('memory-usage');
+  });
+
+  it('should preserve frame meta on output frames', () => {
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [2, 3, 4] },
+      ],
+    });
+    seriesB.name = 'request-rate';
+    seriesB.refId = 'B';
+    seriesB.meta = { executedQueryString: 'SELECT rate FROM requests' };
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesB]);
+
+    expect(results.length).toBe(1);
+    expect(results[0].name).toBe('request-rate');
+    expect(results[0].meta?.executedQueryString).toBe('SELECT rate FROM requests');
+  });
+});
+
+describe('transformer operator pipeline', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([getConfigFromDataTransformer()]);
+  });
+
+  it('should apply config via the operator', async () => {
+    const config = toDataFrame({
+      fields: [{ name: 'Max', type: FieldType.number, values: [200] }],
+      refId: 'config',
+    });
+
+    const series = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+    series.name = 'throughput';
+    series.refId = 'A';
+
+    const cfg = {
+      id: DataTransformerID.configFromData,
+      options: {
+        configRefId: 'config',
+        mappings: [],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [config, series])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result.length).toBe(1);
+      expect(result[0].name).toBe('throughput');
+      expect(result[0].fields[1].config.max).toBe(200);
+    });
   });
 });
 

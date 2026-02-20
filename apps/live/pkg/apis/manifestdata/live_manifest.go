@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaChannelv1alpha1     = []byte(`{"Channel":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"data":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"DataFrame schema","type":"object"},"minute_rate":{"description":"The message count in the last min","type":"integer"},"path":{"description":"The Channel path","type":"string"}},"required":["path","minute_rate","data"],"type":"object"}}`)
+	rawSchemaChannelv1alpha1     = []byte(`{"Channel":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"data":{"additionalProperties":true,"description":"DataFrame schema","type":"object"},"minute_rate":{"description":"The message count in the last min","type":"integer"},"path":{"description":"The Channel path","type":"string"}},"required":["path","minute_rate","data"],"type":"object"}}`)
 	versionSchemaChannelv1alpha1 app.VersionSchema
 	_                            = json.Unmarshal(rawSchemaChannelv1alpha1, &versionSchemaChannelv1alpha1)
 )

@@ -1,14 +1,20 @@
 package alerting
 
 import (
+	"encoding/json"
 	"net/http"
 	"path"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/alerting/receivers/opsgenie"
+	opsgeniev1 "github.com/grafana/alerting/receivers/opsgenie/v1"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -53,6 +59,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, status)
 	}
 
+	apiClient.EnsureMuteTiming(t, apimodels.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: "maintenance_window"}})
+	apiClient.EnsureReceiver(t, apimodels.EmbeddedContactPoint{Name: "opsgenie", Type: string(opsgenie.Type), Settings: simplejson.MustJson([]byte(opsgeniev1.FullValidConfigForTesting))})
+
 	t.Run("create and get alertmanager configuration", func(t *testing.T) {
 		identifier := "test-create-get-config"
 		defer cleanup(identifier)
@@ -73,6 +82,11 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 		response := apiClient.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
 		require.Equal(t, "success", response.Status)
+
+		t.Run("should return renamed resources", func(t *testing.T) {
+			assert.Contains(t, response.RenameResources.Receivers, "opsgenie")
+			assert.Contains(t, response.RenameResources.TimeIntervals, "maintenance_window")
+		})
 
 		getHeaders := map[string]string{
 			"X-Grafana-Alerting-Config-Identifier": identifier,
@@ -145,6 +159,20 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			responseConfig, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
 			requireStatusCode(t, http.StatusOK, status, "")
 			require.NotEmpty(t, responseConfig.AlertmanagerConfig)
+		})
+
+		t.Run("POST with invalid identifier should fail", func(t *testing.T) {
+			headers := map[string]string{
+				"Content-Type":                         "application/yaml",
+				"X-Grafana-Alerting-Config-Identifier": "-test-",
+			}
+
+			amConfig := apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: string(configYaml),
+			}
+
+			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
+			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
 		t.Run("POST with invalid merge matchers format should fail", func(t *testing.T) {
@@ -263,7 +291,6 @@ receivers:
 	t.Run("multiple extra configurations conflict", func(t *testing.T) {
 		firstIdentifier := "first-config"
 		secondIdentifier := "second-config"
-		defer cleanup(firstIdentifier)
 
 		// Create first configuration
 		firstHeaders := map[string]string{
@@ -313,6 +340,60 @@ receivers:
 		requireStatusCode(t, http.StatusConflict, status, "")
 		require.Contains(t, body, "multiple extra configurations are not supported")
 		require.Contains(t, body, firstIdentifier)
+
+		t.Run("should override existing configuration if specified", func(t *testing.T) {
+			defer cleanup(secondIdentifier)
+			secondHeaders["X-Grafana-Alerting-Config-Force-Replace"] = "true"
+
+			response2 := apiClient.ConvertPrometheusPostAlertmanagerConfig(t, amConfig2, secondHeaders)
+			require.Equal(t, "success", response2.Status)
+
+			getHeaders := map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": firstIdentifier,
+			}
+
+			_, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
+			requireStatusCode(t, http.StatusNotFound, status, "")
+
+			getHeaders = map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": secondIdentifier,
+			}
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
+			requireStatusCode(t, http.StatusOK, status, "")
+		})
+	})
+
+	t.Run("dry-run should not create configuration", func(t *testing.T) {
+		identifier := "config"
+		// Create first configuration
+		firstHeaders := map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+			"X-Grafana-Alerting-Dry-Run":           "true",
+		}
+
+		amConfig := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: string(configYaml),
+			TemplateFiles: map[string]string{
+				"first.tmpl": `{{ define "first.template" }}First Config{{ end }}`,
+			},
+		}
+
+		_, status, body := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, firstHeaders)
+		require.Equal(t, http.StatusOK, status)
+
+		response := apimodels.ConvertAlertmanagerResponse{}
+		err := json.Unmarshal([]byte(body), &response)
+		require.NoError(t, err)
+
+		t.Run("should return renamed resources", func(t *testing.T) {
+			assert.Contains(t, response.RenameResources.Receivers, "opsgenie")
+			assert.Contains(t, response.RenameResources.TimeIntervals, "maintenance_window")
+		})
+
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, firstHeaders)
+		requireStatusCode(t, http.StatusNotFound, status, "")
 	})
 }
 

@@ -374,3 +374,61 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
+
+// ============================================================================
+// Alerts Activity Banner & View Experience Telemetry
+// ============================================================================
+
+/**
+ * Track banner impression - fired once per session when banner is first shown.
+ * Note: user_id, org_id, grafana_version, and other common properties are automatically
+ * tracked by the analytics infrastructure.
+ */
+export function trackAlertsActivityBannerImpression() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
+}
+
+/**
+ * Track when user clicks "Open Alerts Activity" CTA
+ */
+export function trackAlertsActivityBannerClickTry() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_click');
+}
+
+/**
+ * Track when user dismisses the banner
+ */
+export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
+  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
+    dismissed_until: dismissedUntil,
+  });
+}
+
+// ============================================================================
+// View Experience Toggle Telemetry (persistent control near page title)
+// ============================================================================
+
+// Payload for view experience toggle telemetry.
+
+export interface ViewExperienceToggleEventPayload {
+  currentView: 'v1' | 'v2';
+  targetView: 'v1' | 'v2';
+}
+
+/**
+ * Track when user clicks the view experience toggle (either direction)
+ */
+export function trackViewExperienceToggleClick(
+  payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
+) {
+  reportInteraction('grafana_alerting_view_experience_toggle', { ...payload });
+}
+
+/**
+ * Track when view experience preference is persisted (or fails to persist)
+ */
+export function trackViewExperienceToggleConfirmed(
+  payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
+) {
+  reportInteraction('grafana_alerting_view_experience_confirmed', { ...payload });
+}

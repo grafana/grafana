@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Box, Menu, useStyles2 } from '@grafana/ui';
@@ -14,9 +15,17 @@ interface DashboardControlsMenuProps {
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
+  isEditing?: boolean;
 }
 
-export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
+export function DashboardControlsMenu({
+  variables,
+  links,
+  annotations,
+  dashboardUID,
+  isEditing,
+}: DashboardControlsMenuProps) {
+  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   return (
     <Box
       minWidth={32}
@@ -38,7 +47,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {/* Variables */}
       {variables.map((variable, index) => (
         <div key={variable.state.key}>
-          <VariableValueSelectWrapper variable={variable} inMenu />
+          <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
         </div>
       ))}
 
@@ -46,7 +55,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {annotations.length > 0 &&
         annotations.map((layer, index) => (
           <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu />
+            <DataLayerControl layer={layer} inMenu isEditingNewLayouts={isEditingNewLayouts} />
           </div>
         ))}
 

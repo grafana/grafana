@@ -49,12 +49,12 @@ func TestLegacyStorageList(t *testing.T) {
 	require.NotNil(t, list)
 	require.Equal(t, len(list), 4)
 
-	uidsFromServiceFolder := []string{}
+	uidsFromServiceFolder := make([]string, 0, len(folderService.ExpectedFolders))
 	for _, f := range folderService.ExpectedFolders {
 		uidsFromServiceFolder = append(uidsFromServiceFolder, f.UID)
 	}
 
-	uidsReturnedByList := []string{}
+	uidsReturnedByList := make([]string, 0, len(list))
 	for _, obj := range list {
 		f, ok := obj.(*folderv1.Folder)
 		require.Equal(t, true, ok)

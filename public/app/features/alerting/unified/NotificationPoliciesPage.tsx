@@ -60,7 +60,7 @@ const NotificationPoliciesTabs = () => {
       <>
         <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
         <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
-        <PoliciesList />
+        <PolicyTreeTab />
       </>
     );
   }

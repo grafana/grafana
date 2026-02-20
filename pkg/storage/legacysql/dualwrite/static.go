@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 // NewStaticStorage -- temporary shim
@@ -23,7 +24,9 @@ func NewStaticStorage(
 }
 
 type staticService struct {
-	cfg *setting.Cfg
+	cfg          *setting.Cfg
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *Metrics
 }
 
 // Used in tests
@@ -41,6 +44,9 @@ func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMod
 
 func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	config := m.cfg.UnifiedStorage[gr.String()]
+
+	m.logStorageModeComparison(gr, config.DualWriterMode)
+
 	switch config.DualWriterMode {
 	case rest.Mode1:
 		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true}, nil
@@ -54,6 +60,43 @@ func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage,
 		fallthrough
 	default:
 		return legacy, nil
+	}
+}
+
+// logStorageModeComparison logs the storage mode from MigrationStatusReader alongside the
+// current config mode for observability.
+func (m *staticService) logStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
+	if m.statusReader == nil {
+		return
+	}
+	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
+	if err != nil {
+		logger.Warn("Failed to get storage mode from MigrationStatusReader",
+			"resource", gr.String(), "error", err)
+		return
+	}
+
+	currentMode := storageModeFromConfigMode(configMode)
+	if currentMode != newMode && m.metrics != nil {
+		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
+	}
+
+	logger.Info("Storage mode comparison",
+		"resource", gr.String(),
+		"newMode", newMode.String(),
+		"currentMode", currentMode.String(),
+	)
+}
+
+// storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.
+func storageModeFromConfigMode(mode rest.DualWriterMode) unifiedmigrations.StorageMode {
+	switch {
+	case mode >= rest.Mode4:
+		return unifiedmigrations.StorageModeUnified
+	case mode >= rest.Mode1:
+		return unifiedmigrations.StorageModeDualWrite
+	default:
+		return unifiedmigrations.StorageModeLegacy
 	}
 }
 

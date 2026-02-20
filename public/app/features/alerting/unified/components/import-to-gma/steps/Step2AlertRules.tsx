@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -10,6 +9,7 @@ import {
   Box,
   Combobox,
   ComboboxOption,
+  Divider,
   Field,
   FileUpload,
   InlineField,
@@ -17,7 +17,6 @@ import {
   RadioButtonList,
   Stack,
   Text,
-  useStyles2,
 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
@@ -27,11 +26,13 @@ import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
 import { ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions } from '../Wizard/constants';
 import { useRoutingTrees } from '../useRoutingTrees';
+import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { isStep2Valid } from './utils';
 
@@ -40,8 +41,6 @@ interface Step2ContentProps {
   step1Skipped: boolean;
   /** Whether the user has permission to import rules */
   canImport: boolean;
-  /** Callback to report validation state changes */
-  onValidationChange?: (isValid: boolean) => void;
 }
 
 const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceType.Loki];
@@ -51,34 +50,23 @@ const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceTyp
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step2Content({ step1Completed, step1Skipped, canImport, onValidationChange }: Step2ContentProps) {
-  const styles = useStyles2(getStyles);
+export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2ContentProps) {
   const {
     control,
     register,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
-  const [
-    rulesSource,
-    rulesDatasourceUID,
-    rulesDatasourceName,
-    rulesYamlFile,
-    selectedRoutingTree,
-    policyTreeName,
-    namespace,
-    targetDatasourceUID,
-  ] = watch([
+  const [rulesSource, rulesDatasourceUID, rulesDatasourceName, rulesYamlFile, policyTreeName, namespace] = watch([
     'rulesSource',
     'rulesDatasourceUID',
     'rulesDatasourceName',
     'rulesYamlFile',
-    'selectedRoutingTree',
     'policyTreeName',
     'namespace',
-    'targetDatasourceUID',
   ]);
 
   // Get namespaces and groups for filtering
@@ -139,23 +127,6 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
     return options;
   }, [step1Completed, policyTreeName, routingTrees]);
 
-  // Validation logic
-  const isValid = useMemo(() => {
-    return isStep2Valid({
-      canImport,
-      rulesSource,
-      rulesYamlFile,
-      rulesDatasourceUID,
-      selectedRoutingTree,
-      targetDatasourceUID,
-    });
-  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
-
-  // Report validation changes to parent
-  useEffect(() => {
-    onValidationChange?.(isValid);
-  }, [isValid, onValidationChange]);
-
   return (
     <Stack direction="column" gap={3}>
       {step1Skipped && (
@@ -181,13 +152,14 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       )}
 
       {/* Notification Routing Card */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
+      <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
+        <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
             {t('alerting.import-to-gma.step2.policy-title', 'Notification Routing')}
           </Text>
-        </div>
-        <div className={styles.cardContent}>
+        </Box>
+        <Divider spacing={0} />
+        <Box padding={2}>
           <Text color="secondary" variant="bodySmall">
             <Trans i18nKey="alerting.import-to-gma.step2.policy-desc">
               Choose how imported alerts should be routed to contact points.
@@ -218,17 +190,18 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
               />
             </Field>
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Import Source Card */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
+      <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
+        <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
             {t('alerting.import-to-gma.step2.source-title', 'Import Source')}
           </Text>
-        </div>
-        <div className={styles.cardContent}>
+        </Box>
+        <Divider spacing={0} />
+        <Box padding={2}>
           <Field noMargin>
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (
@@ -265,6 +238,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                         onChange={(ds: DataSourceInstanceSettings) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
+                          // Auto-populate target datasource if not yet selected
+                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                            setValue('targetDatasourceUID', ds.uid);
+                          }
                         }}
                         noDefault
                         width={40}
@@ -358,21 +335,41 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                   )}
                   control={control}
                   name="rulesYamlFile"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
+                    },
+                    validate: async (value) => {
+                      if (!value) {
+                        return t('alerting.import-to-gma.step2.yaml-required', 'Please select a file');
+                      }
+                      try {
+                        await parseYamlFileToRulerRulesConfigDTO(value, value.name);
+                        return true;
+                      } catch (error) {
+                        return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
+                          error: stringifyErrorLike(error),
+                        });
+                      }
+                    },
+                  }}
                 />
               </Field>
             )}
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Additional Settings Card */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
+      <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
+        <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
             {t('alerting.import-to-gma.step2.settings-title', 'Additional Settings')}
           </Text>
-        </div>
-        <div className={styles.cardContent}>
+        </Box>
+        <Divider spacing={0} />
+        <Box padding={2}>
           <Stack direction="column" gap={2}>
             <Field
               label={t('alerting.import-to-gma.step2.target-folder', 'Target folder')}
@@ -465,17 +462,21 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
               </InlineField>
             </Box>
           </Stack>
-        </div>
-      </div>
+        </Box>
+      </Box>
     </Stack>
   );
 }
 
 /**
- * Hook to check if Step 2 form is valid
+ * Hook to check if Step 2 form is valid.
+ * Checks both that required fields are filled AND that there are no validation errors.
  */
 export function useStep2Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<ImportFormValues>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
   const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -484,33 +485,22 @@ export function useStep2Validation(canImport: boolean): boolean {
     'targetDatasourceUID',
   ]);
 
-  return useMemo(() => {
-    return isStep2Valid({
-      canImport,
-      rulesSource,
-      rulesYamlFile,
-      rulesDatasourceUID,
-      selectedRoutingTree,
-      targetDatasourceUID,
-    });
-  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
-}
+  const hasStep2Errors =
+    !!errors.rulesSource ||
+    !!errors.rulesDatasourceUID ||
+    !!errors.rulesYamlFile ||
+    !!errors.selectedRoutingTree ||
+    !!errors.targetDatasourceUID;
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  card: css({
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    overflow: 'hidden',
-  }),
-  cardHeader: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: theme.spacing(2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  cardContent: css({
-    padding: theme.spacing(2),
-  }),
-});
+  if (!canImport || hasStep2Errors) {
+    return false;
+  }
+
+  return isStep2Valid({
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  });
+}

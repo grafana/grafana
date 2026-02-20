@@ -882,7 +882,12 @@ const injectedRtkApi = api
         providesTags: ['datasources'],
       }),
       getDataSourceCacheConfig: build.query<GetDataSourceCacheConfigApiResponse, GetDataSourceCacheConfigApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache` }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache`,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         providesTags: ['enterprise'],
       }),
       setDataSourceCacheConfig: build.mutation<SetDataSourceCacheConfigApiResponse, SetDataSourceCacheConfigApiArg>({
@@ -890,6 +895,9 @@ const injectedRtkApi = api
           url: `/datasources/${queryArg.dataSourceUid}/cache`,
           method: 'POST',
           body: queryArg.cacheConfigSetter,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
         }),
         invalidatesTags: ['enterprise'],
       }),
@@ -898,11 +906,23 @@ const injectedRtkApi = api
         invalidatesTags: ['enterprise'],
       }),
       disableDataSourceCache: build.mutation<DisableDataSourceCacheApiResponse, DisableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/disable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/disable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       enableDataSourceCache: build.mutation<EnableDataSourceCacheApiResponse, EnableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/enable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/enable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       queryMetricsWithExpressions: build.mutation<
@@ -2727,10 +2747,12 @@ export type CallDatasourceResourceWithUidApiArg = {
 export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
 export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
@@ -2740,10 +2762,12 @@ export type CleanDataSourceCacheApiArg = {
 export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | QueryDataResponseContainsTheResultsFromAQueryDataRequest
@@ -5627,14 +5651,28 @@ export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
 export type Userinfo = object;
 export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
+  /** ForceQuery indicates whether the original URL contained a query ('?') character.
+    When set, the String method will include a trailing '?', even when RawQuery is empty. */
   ForceQuery?: boolean;
   Fragment?: string;
   Host?: string;
+  /** OmitHost indicates the URL has an empty host (authority).
+    When set, the String method will not include the host when it is empty. */
   OmitHost?: boolean;
   Opaque?: string;
   Path?: string;
+  /** RawFragment is an optional field containing an encoded fragment hint.
+    See the EscapedFragment method for more details.
+    
+    In general, code should call EscapedFragment instead of reading RawFragment. */
   RawFragment?: string;
+  /** RawPath is an optional field containing an encoded path hint.
+    See the EscapedPath method for more details.
+    
+    In general, code should call EscapedPath instead of reading RawPath. */
   RawPath?: string;
+  /** RawQuery contains the encoded query values, without the initial '?'.
+    Use URL.Query to decode the query. */
   RawQuery?: string;
   Scheme?: string;
   User?: Userinfo;

@@ -267,6 +267,13 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
+	Receiver                  = config.Receiver
+	Regexp                    = config.Regexp
+	Matchers                  = config.Matchers
+	MatchRegexps              = config.MatchRegexps
+	AmMuteTimeInterval        = config.MuteTimeInterval
+	TimeInterval              = config.TimeInterval
+	InhibitRule               = config.InhibitRule
 )
 
 type MergeResult struct {
@@ -609,15 +616,11 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.ReceiverStatus
-
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
 	Body []alertingmodels.ReceiverStatus
 }
-
-type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {

@@ -105,6 +105,29 @@ export const DashboardLibraryInteractions = {
   entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
+
+  compatibilityCheckTriggered: (properties: {
+    dashboardId: string;
+    dashboardTitle: string;
+    datasourceType: string;
+    triggerMethod: 'manual' | 'auto_initial_load';
+    eventLocation: EventLocation;
+  }) => {
+    reportDashboardLibraryInteraction('compatibility_check_triggered', properties);
+  },
+
+  compatibilityCheckCompleted: (properties: {
+    dashboardId: string;
+    dashboardTitle: string;
+    datasourceType: string;
+    score: number;
+    metricsFound: number;
+    metricsTotal: number;
+    triggerMethod: 'manual' | 'auto_initial_load';
+    eventLocation: EventLocation;
+  }) => {
+    reportDashboardLibraryInteraction('compatibility_check_completed', properties);
+  },
 };
 
 const reportDashboardLibraryInteraction = (name: string, properties?: Record<string, unknown>) => {
