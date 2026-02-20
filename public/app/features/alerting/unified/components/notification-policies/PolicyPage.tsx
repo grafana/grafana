@@ -42,8 +42,8 @@ function PolicyPage() {
       navId={navId}
       accessType="notification"
       pageNav={{
-        ...pageNav,
         text: routeName,
+        parentItem: pageNav,
       }}
       renderTitle={(title) => <Title name={title} returnToFallback={'/alerting/routes'} />}
       subTitle={t(
