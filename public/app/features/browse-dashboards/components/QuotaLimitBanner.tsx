@@ -64,7 +64,12 @@ export function QuotaLimitBanner() {
     window.open(QUOTA_EXTENSION_URL, '_blank');
   };
 
-  const extensionButtonContent = t('browse-dashboards.quota-banner.request-extension', 'Request quota extension');
+  const extensionProps = isPaying
+    ? {
+        onRemove: handleRequestExtension,
+        buttonContent: t('browse-dashboards.quota-banner.request-extension', 'Request quota extension'),
+      }
+    : {};
 
   return (
     <>
@@ -72,8 +77,7 @@ export function QuotaLimitBanner() {
         <Alert
           severity="error"
           title={t('browse-dashboards.quota-banner.at-limit-title', "You've hit your storage limits")}
-          onRemove={isPaying ? handleRequestExtension : undefined}
-          buttonContent={isPaying ? extensionButtonContent : undefined}
+          {...extensionProps}
         >
           {atLimitResources.map((r) => formatDetail(r)).join(' ')}{' '}
           <Trans i18nKey="browse-dashboards.quota-banner.at-limit-body">
@@ -85,8 +89,7 @@ export function QuotaLimitBanner() {
         <Alert
           severity="warning"
           title={t('browse-dashboards.quota-banner.nearing-title', "You're nearing your storage limits")}
-          onRemove={isPaying ? handleRequestExtension : undefined}
-          buttonContent={isPaying ? extensionButtonContent : undefined}
+          {...extensionProps}
         >
           {nearingResources.map((r) => formatDetail(r)).join(' ')}{' '}
           <Trans i18nKey="browse-dashboards.quota-banner.nearing-body">

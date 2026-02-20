@@ -81,6 +81,10 @@ export interface ListFolderQueryArgs {
   permission?: PermissionLevel;
 }
 
+// Don't invalidate individual getFolder tags — the resource no longer exists and refetching would 404
+const invalidateListOnSuccess = (result: unknown, error: unknown) =>
+  error ? [] : [{ type: 'getFolder' as const, id: 'LIST' }];
+
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
@@ -188,8 +192,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
-      // Don't invalidate individual getFolder tags — the folder no longer exists and refetching would 404
-      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
+      invalidatesTags: invalidateListOnSuccess,
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -329,8 +332,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* folders. used in the delete modal.
     deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
-      // Don't invalidate individual getFolder tags — the folders no longer exist and refetching would 404
-      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
+      invalidatesTags: invalidateListOnSuccess,
       queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
@@ -363,8 +365,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
-      // Don't invalidate individual getFolder tags — deleted dashboards don't need folder refetch that could 404
-      invalidatesTags: (result, error) => (error ? [] : [{ type: 'getFolder', id: 'LIST' }]),
+      invalidatesTags: invalidateListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
