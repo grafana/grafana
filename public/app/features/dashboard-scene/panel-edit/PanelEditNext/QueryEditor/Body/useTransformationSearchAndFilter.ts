@@ -12,6 +12,7 @@ export interface UseTransformationSearchResult {
   categories: TransformerCategoryOption[];
   filteredTransformations: TransformerRegistryItem[];
   onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+  allTransformationsCount: number;
 }
 
 export function useTransformationSearchAndFilter(
@@ -64,5 +65,6 @@ export function useTransformationSearchAndFilter(
     categories,
     filteredTransformations,
     onSearchKeyDown,
+    allTransformationsCount: allTransformations.length,
   };
 }

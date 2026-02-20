@@ -48,8 +48,6 @@ export function CardEditorRenderer() {
         data={data?.series ?? []}
         datasourceUid={dsSettings?.uid}
         queries={queries}
-        compactMode
-        showIllustrations={false}
       />
     );
   }
