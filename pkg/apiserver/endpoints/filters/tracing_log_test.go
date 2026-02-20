@@ -95,12 +95,25 @@ func TestSpanContextFromHeaders(t *testing.T) {
 		assert.Equal(t, "00f067aa0ba902b7", sc.SpanID().String())
 	})
 
+	t.Run("should extract traceID when Grafana-Upstream-Traceparent header is present", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		req.Header.Set("Grafana-Upstream-Traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+
+		sc := spanContextFromHeaders(req)
+
+		require.True(t, sc.IsValid())
+		assert.Equal(t, "4bf92f3577b34da6a3ce929d0e0e4736", sc.TraceID().String())
+		assert.Equal(t, "00f067aa0ba902b7", sc.SpanID().String())
+	})
+
 	t.Run("should return invalid span context when no trace headers are present", func(t *testing.T) {
 		t.Parallel()
 
 		req := httptest.NewRequest(http.MethodGet, "/test", nil)
 
-		sc := spanContextFromHeadersWithPropagator(req, propagation.TraceContext{})
+		sc := spanContextFromHeaders(req)
 
 		assert.False(t, sc.IsValid())
 	})
