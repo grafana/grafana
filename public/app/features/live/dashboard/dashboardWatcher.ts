@@ -24,6 +24,19 @@ import { DashboardEvent, DashboardEventAction } from './types';
 // It is used for filtering out dashboard edit events from the same browsing session
 const sessionId = uuidv4();
 
+// Get or create tab-specific ID for multi-tab support
+// This fixes the issue where multiple tabs in the same browser cannot see each other's edits
+const TAB_ID_KEY = 'grafana-dashboard-tab-id';
+
+const getTabId = (): string => {
+  let tabId = window.sessionStorage.getItem(TAB_ID_KEY);
+  if (!tabId) {
+    tabId = uuidv4();
+    window.sessionStorage.setItem(TAB_ID_KEY, tabId);
+  }
+  return tabId;
+};
+
 class DashboardWatcher {
   private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
 
@@ -50,6 +63,7 @@ class DashboardWatcher {
     if (channel && uid) {
       getGrafanaLiveSrv().publish(channel, {
         sessionId,
+        tabId: getTabId(),
         uid,
         action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
         timestamp: Date.now(),
@@ -109,7 +123,9 @@ class DashboardWatcher {
       }
 
       if (isLiveChannelMessageEvent(event)) {
-        if (event.message.sessionId === sessionId) {
+        const message = event.message as DashboardEvent & { tabId?: string };
+
+        if (message.sessionId === sessionId && message.tabId === getTabId()) {
           return; // skip internal messages
         }
 
