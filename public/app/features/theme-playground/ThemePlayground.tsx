@@ -14,6 +14,7 @@ import sapphiredusk from '@grafana/data/themes/definitions/sapphiredusk.json';
 import synthwave from '@grafana/data/themes/definitions/synthwave.json';
 import tron from '@grafana/data/themes/definitions/tron.json';
 import victorian from '@grafana/data/themes/definitions/victorian.json';
+import wild90s from '@grafana/data/themes/definitions/wild90s.json';
 import zen from '@grafana/data/themes/definitions/zen.json';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
@@ -58,6 +59,7 @@ const experimentalDefinitions: Record<string, unknown> = {
   synthwave,
   tron,
   victorian,
+  wild90s,
   zen,
 };
 
