@@ -45,7 +45,10 @@ func SomeFunc(ctx context.Context) error {
   }
 
   // Initialize OpenFeature with authenticated provider
-  providerURL, _ := url.Parse("https://features-service-url")
+  providerURL, err := url.Parse("https://features-service-url")
+  if err != nil {
+    return fmt.Errorf("failed to parse provider URL: %w", err)
+  }
 
   config := features.OpenFeatureConfig{
     ProviderType: features.FeaturesServiceProviderType,
