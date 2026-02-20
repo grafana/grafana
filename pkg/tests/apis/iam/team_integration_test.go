@@ -18,11 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationTeams$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationTeams(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Add rest.Mode4 when it's supported
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -246,12 +246,17 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, res)
 
+		withoutEmail, err := env.SQLStore.GetSqlxSession().Exec(ctx, "INSERT INTO team (org_id, uid, name, email, is_provisioned, external_uid, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			helper.Org1.Admin.Identity.GetOrgID(), "t000000002", "List Team 2", nil, nil, nil, time.Now(), time.Now())
+		require.NoError(t, err)
+		require.NotNil(t, withoutEmail)
+
 		list, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, list)
 
 		// Cleanup
-		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid = ?", "t000000001")
+		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid IN (?, ?)", "t000000001", "t000000002")
 		require.NoError(t, err)
 	})
 }
