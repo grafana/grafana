@@ -1,7 +1,16 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  isDateTime,
+  isValidGrafanaDuration,
+  rangeUtil,
+  RawTimeRange,
+  TimeOption,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -68,10 +77,25 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const timeOption = useTimeOption(value.raw, quickOptions);
+  const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
+    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+    const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
+
+    if (customTimeOption) {
+      const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
+
+      if (!alreadyExists) {
+        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+      }
+    }
+
+    return { filteredQuickOptions: filtered, customTimeOption: undefined };
+  }, [searchTerm, quickOptions]);
+
+  const timeOption = customTimeOption || baseTimeOption;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
@@ -87,6 +111,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 width={0}
                 value={searchTerm}
                 onChange={setSearchQuery}
+                escapeRegex={false}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
