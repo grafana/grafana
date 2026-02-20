@@ -83,20 +83,24 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 	}()
 
 	for _, zf := range pluginArchive.File {
-		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
-		// nolint:gosec
-		fullPath := filepath.Join(fs.pluginsDir, zf.Name)
+		// Resolve the destination path for this archive entry within the plugin directory
+		relPath := removeGitBuildFromName(zf.Name, pluginDirName)
 
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) ||
-			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
-			return "", fmt.Errorf(
-				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, fs.pluginsDir)
+		// Strip redundant top-level plugin directory if present (e.g. "test-app/...")
+		relPath = strings.TrimPrefix(relPath, pluginDirName+string(os.PathSeparator))
+		if relPath == "" {
+			relPath = "."
 		}
 
-		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
+		dstPath := filepath.Clean(filepath.Join(installDir, relPath)) // lgtm[go/zipslip]
+
+		// Ensure the resolved path does not escape the plugin directory (ZipSlip protection)
+		rel, err := filepath.Rel(installDir, dstPath)
+		if err != nil || filepath.IsAbs(zf.Name) || strings.HasPrefix(rel, "..") {
+			return "", fmt.Errorf(
+				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
+				zf.Name, installDir)
+		}
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
