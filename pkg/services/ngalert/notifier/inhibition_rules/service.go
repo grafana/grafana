@@ -2,6 +2,8 @@ package inhibition_rules
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -59,6 +61,10 @@ func (svc *Service) GetInhibitionRules(ctx context.Context, orgID int64) ([]defi
 	for _, r := range importedRules {
 		result = append(result, *r)
 	}
+
+	slices.SortFunc(result, func(a, b definitions.InhibitionRule) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	return result, nil
 }
