@@ -50,11 +50,10 @@ export function useQuotaLimits() {
 
   const resources = useMemo(
     () =>
-      [buildResourceStatus(dashboardQuery.data, 'dashboards'), buildResourceStatus(folderQuery.data, 'folders')].filter(
-        (r): r is ResourceStatus => r !== null
-      ),
+      [[dashboardQuery.data, 'dashboards'] as const, [folderQuery.data, 'folders'] as const]
+        .map(([query, group]) => buildResourceStatus(query, group))
+        .filter((r): r is ResourceStatus => r !== null),
     [dashboardQuery.data, folderQuery.data]
   );
-
   return { resources, isLoading, hasError, featureEnabled };
 }
