@@ -53,11 +53,11 @@ func TestGithubClient_GetApp(t *testing.T) {
 				ID:    12345,
 				Slug:  "my-test-app",
 				Owner: "grafana",
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionWrite,
-					Metadata:     conngh.AppPermissionRead,
-					PullRequests: conngh.AppPermissionWrite,
-					Webhooks:     conngh.AppPermissionWrite,
+				Permissions: conngh.Permissions{
+					Contents:     conngh.PermissionWrite,
+					Metadata:     conngh.PermissionRead,
+					PullRequests: conngh.PermissionWrite,
+					Webhooks:     conngh.PermissionWrite,
 				},
 			},
 			wantErr: nil,
@@ -252,11 +252,11 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionWrite,
-					Metadata:     conngh.AppPermissionRead,
-					PullRequests: conngh.AppPermissionWrite,
-					Webhooks:     conngh.AppPermissionWrite,
+				Permissions: conngh.Permissions{
+					Contents:     conngh.PermissionWrite,
+					Metadata:     conngh.PermissionRead,
+					PullRequests: conngh.PermissionWrite,
+					Webhooks:     conngh.PermissionWrite,
 				},
 			},
 			wantErr: false,
@@ -309,8 +309,8 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
-				Permissions: conngh.AppPermissions{
-					Contents: conngh.AppPermissionRead,
+				Permissions: conngh.Permissions{
+					Contents: conngh.PermissionRead,
 				},
 			},
 			wantErr: false,

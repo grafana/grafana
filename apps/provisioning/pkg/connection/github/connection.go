@@ -233,8 +233,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	// Validate permissions from the app
-	permissionErrors := validateAppPermissions(c.obj.Spec.GitHub.AppID, app.Permissions)
+	// Validate the app's permissions.
+	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions)
 	if len(permissionErrors) > 0 {
 		logger.Info("GitHub App permission validation failed", "appID", c.obj.Spec.GitHub.AppID, "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
@@ -328,7 +328,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// Validate that the installation has accepted the required permissions.
 	// Installation permissions may lag behind App permissions when the App owner added new
 	// permissions but the installation owner has not yet accepted them on GitHub.
-	installationPermErrors := validateInstallationPermissions(c.obj.Spec.GitHub.InstallationID, installation.Permissions)
+	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions)
 	if len(installationPermErrors) > 0 {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
@@ -467,94 +467,72 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 	return claims.Issuer == c.obj.Spec.GitHub.AppID
 }
 
-// validateAppPermissions checks if the given app has required permissions
-func validateAppPermissions(appID string, permissions AppPermissions) []provisioning.ErrorDetails {
-	var errors []provisioning.ErrorDetails
+type permissionTarget int
 
-	requiredPerms := map[string]struct {
-		current  AppPermission
-		required AppPermission
-	}{
-		"contents": {
-			current:  permissions.Contents,
-			required: AppPermissionWrite,
-		},
-		"metadata": {
-			current:  permissions.Metadata,
-			required: AppPermissionRead,
-		},
-		"pull_requests": {
-			current:  permissions.PullRequests,
-			required: AppPermissionWrite,
-		},
-		"webhooks": {
-			current:  permissions.Webhooks,
-			required: AppPermissionWrite,
-		},
-	}
+const (
+	permissionTargetApp permissionTarget = iota
+	permissionTargetInstallation
+)
 
-	for name, perm := range requiredPerms {
-		if perm.current < perm.required {
-			detail := fmt.Sprintf(
-				"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
-				name,
-				toAppPermissionString(perm.required),
-				toAppPermissionString(perm.current),
-			)
-			errors = append(errors, provisioning.ErrorDetails{
-				Type:     metav1.CauseTypeForbidden,
-				Field:    field.NewPath("spec", "github", "appID").String(),
-				Detail:   detail,
-				BadValue: appID,
-			})
-		}
-	}
-
-	return errors
-}
-
-// validateInstallationPermissions checks if the installation has accepted the required permissions.
-// Installation permissions may differ from App permissions when the App's permissions were updated
-// but the installation owner has not yet accepted them on GitHub.
-func validateInstallationPermissions(installationID string, permissions AppPermissions) []provisioning.ErrorDetails {
+// validatePermissions checks if the given app or installation has required permissions.
+// For installations, permissions may differ from App permissions when the App's permissions
+// were updated but the installation owner has not yet accepted them on GitHub.
+func validatePermissions(target permissionTarget, id string, permissions Permissions) []provisioning.ErrorDetails {
 	var errs []provisioning.ErrorDetails
 
 	requiredPerms := map[string]struct {
-		current  AppPermission
-		required AppPermission
+		current  Permission
+		required Permission
 	}{
 		"contents": {
 			current:  permissions.Contents,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 		"metadata": {
 			current:  permissions.Metadata,
-			required: AppPermissionRead,
+			required: PermissionRead,
 		},
 		"pull_requests": {
 			current:  permissions.PullRequests,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 		"webhooks": {
 			current:  permissions.Webhooks,
-			required: AppPermissionWrite,
+			required: PermissionWrite,
 		},
 	}
 
 	for name, perm := range requiredPerms {
 		if perm.current < perm.required {
-			detail := fmt.Sprintf(
-				"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s/%s",
-				name,
-				toAppPermissionString(perm.required),
-				toAppPermissionString(perm.current),
-				githubInstallationURL,
-				installationID,
-			)
+			var detail string
+			var fieldPath string
+
+			switch target {
+			case permissionTargetApp:
+				detail = fmt.Sprintf(
+					"GitHub App lacks required '%s' permission: requires '%s', has '%s'",
+					name,
+					toAppPermissionString(perm.required),
+					toAppPermissionString(perm.current),
+				)
+				fieldPath = field.NewPath("spec", "github", "appID").String()
+			case permissionTargetInstallation:
+				detail = fmt.Sprintf(
+					"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s/%s",
+					name,
+					toAppPermissionString(perm.required),
+					toAppPermissionString(perm.current),
+					githubInstallationURL,
+					id,
+				)
+				fieldPath = field.NewPath("spec", "github", "installationID").String()
+			}
+
 			errs = append(errs, provisioning.ErrorDetails{
-				Type:   metav1.CauseTypeForbidden,
-				Field:  field.NewPath("spec", "github", "installationID").String(),
-				Detail: detail,
+				Type:     metav1.CauseTypeForbidden,
+				Field:    fieldPath,
+				Detail:   detail,
+				BadValue: id,
 			})
 		}
 	}
@@ -562,13 +540,13 @@ func validateInstallationPermissions(installationID string, permissions AppPermi
 	return errs
 }
 
-func toAppPermissionString(permissions AppPermission) string {
+func toAppPermissionString(permissions Permission) string {
 	switch permissions {
-	case AppPermissionNone:
+	case PermissionNone:
 		return ""
-	case AppPermissionRead:
+	case PermissionRead:
 		return "read"
-	case AppPermissionWrite:
+	case PermissionWrite:
 		return "write"
 	}
 

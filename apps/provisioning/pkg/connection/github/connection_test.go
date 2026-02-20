@@ -182,21 +182,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -362,21 +362,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -567,11 +567,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionNone,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionNone,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -607,11 +607,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionRead,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionRead,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -647,11 +647,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionNone,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionNone,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -687,11 +687,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionNone,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionNone,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -727,11 +727,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionNone,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionNone,
 					},
 				}, nil)
 			},
@@ -767,11 +767,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionRead,
-						Metadata:     github.AppPermissionNone,
-						PullRequests: github.AppPermissionNone,
-						Webhooks:     github.AppPermissionNone,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionRead,
+						Metadata:     github.PermissionNone,
+						PullRequests: github.PermissionNone,
+						Webhooks:     github.PermissionNone,
 					},
 				}, nil)
 			},
@@ -799,11 +799,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrNotFound)
@@ -840,11 +840,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrAuthentication)
@@ -881,11 +881,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrServiceUnavailable)
@@ -922,11 +922,11 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, errors.New("unexpected error"))
@@ -963,21 +963,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionNone,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionNone,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -988,6 +988,7 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeForbidden,
 					Field:  "spec.github.installationID",
 					Detail: "GitHub App installation lacks required 'contents' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					BadValue: "456",
 				},
 			},
 		},
@@ -1012,21 +1013,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionRead,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionRead,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -1037,6 +1038,7 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeForbidden,
 					Field:  "spec.github.installationID",
 					Detail: "GitHub App installation lacks required 'contents' permission: requires 'write', has 'read'. Accept the updated permissions at https://github.com/settings/installations/456",
+					BadValue: "456",
 				},
 			},
 		},
@@ -1061,21 +1063,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionNone,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionNone,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -1086,6 +1088,7 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeForbidden,
 					Field:  "spec.github.installationID",
 					Detail: "GitHub App installation lacks required 'metadata' permission: requires 'read', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					BadValue: "456",
 				},
 			},
 		},
@@ -1110,21 +1113,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionNone,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionNone,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
@@ -1135,6 +1138,7 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeForbidden,
 					Field:  "spec.github.installationID",
 					Detail: "GitHub App installation lacks required 'pull_requests' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					BadValue: "456",
 				},
 			},
 		},
@@ -1159,21 +1163,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionNone,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionNone,
 					},
 				}, nil)
 			},
@@ -1184,6 +1188,7 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeForbidden,
 					Field:  "spec.github.installationID",
 					Detail: "GitHub App installation lacks required 'webhooks' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					BadValue: "456",
 				},
 			},
 		},
@@ -1208,21 +1213,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionRead,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionRead,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionRead,
-						Metadata:     github.AppPermissionNone,
-						PullRequests: github.AppPermissionNone,
-						Webhooks:     github.AppPermissionNone,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionRead,
+						Metadata:     github.PermissionNone,
+						PullRequests: github.PermissionNone,
+						Webhooks:     github.PermissionNone,
 					},
 				}, nil)
 			},
@@ -1250,21 +1255,21 @@ func TestConnection_Test(t *testing.T) {
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionWrite,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionWrite,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
 					ID:      456,
 					Enabled: true,
-					Permissions: github.AppPermissions{
-						Contents:     github.AppPermissionWrite,
-						Metadata:     github.AppPermissionWrite,
-						PullRequests: github.AppPermissionWrite,
-						Webhooks:     github.AppPermissionWrite,
+					Permissions: github.Permissions{
+						Contents:     github.PermissionWrite,
+						Metadata:     github.PermissionWrite,
+						PullRequests: github.PermissionWrite,
+						Webhooks:     github.PermissionWrite,
 					},
 				}, nil)
 			},
