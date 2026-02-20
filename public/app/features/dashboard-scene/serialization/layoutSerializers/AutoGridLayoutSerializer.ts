@@ -28,35 +28,7 @@ export function serializeAutoGridLayout(
   const defaults = defaultAutoGridLayoutSpec();
 
   const items = isSnapshot
-    ? layout.state.children.flatMap((child) => {
-        const base = serializeAutoGridItem(child);
-        // Snapshots should contain explicit panels, not a repeater definition.
-        delete base.spec.repeat;
-
-        if (!child.state.repeatedPanels?.length) {
-          return [base];
-        }
-
-        const cloneItems = child.state.repeatedPanels.map((panel) => {
-          if (!panel.state.key) {
-            throw new Error('Snapshot serialization expected repeat clone to have a key');
-          }
-
-          const layoutItem: AutoGridLayoutItemKind = {
-            kind: 'AutoGridLayoutItem',
-            spec: {
-              element: {
-                kind: 'ElementReference',
-                name: panel.state.key,
-              },
-            },
-          };
-
-          return layoutItem;
-        });
-
-        return [base, ...cloneItems];
-      })
+    ? layout.state.children.flatMap(getRepeatedPanelsForSnapshot)
     : layout.state.children.map(serializeAutoGridItem);
 
   return {
@@ -99,6 +71,36 @@ export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKin
   }
 
   return layoutItem;
+}
+
+function getRepeatedPanelsForSnapshot(child: AutoGridItem): AutoGridLayoutItemKind[] {
+  const base = serializeAutoGridItem(child);
+  // Snapshots should contain explicit panels, not a repeater definition.
+  delete base.spec.repeat;
+
+  if (!child.state.repeatedPanels?.length) {
+    return [base];
+  }
+
+  const cloneItems = child.state.repeatedPanels.map((panel) => {
+    if (!panel.state.key) {
+      throw new Error('Snapshot serialization expected repeat clone to have a key');
+    }
+
+    const layoutItem: AutoGridLayoutItemKind = {
+      kind: 'AutoGridLayoutItem',
+      spec: {
+        element: {
+          kind: 'ElementReference',
+          name: panel.state.key,
+        },
+      },
+    };
+
+    return layoutItem;
+  });
+
+  return [base, ...cloneItems];
 }
 
 export function deserializeAutoGridLayout(
