@@ -428,6 +428,15 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("deleting a contact point referenced by a route returns ErrContactPointReferenced", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// UID1 is the sole integration in receiver "grafana-default-email",
+		// which is referenced in a route. Deleting it should fail with a conflict error.
+		err := sut.DeleteContactPoint(context.Background(), 1, "UID1")
+		require.ErrorIs(t, err, ErrContactPointReferenced)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
