@@ -625,6 +625,7 @@ github.com/grafana/alerting v0.0.0-20260220113344-1de0d0f76785 h1:D03Bg3jEkZFliG
 github.com/grafana/alerting v0.0.0-20260220113344-1de0d0f76785/go.mod h1:mReddzc4K93zI4Lb6NvuN3zDkDOXM2YnJtrveFFMa6Q=
 github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67 h1:4t3595k0Ef94NOlg4Br785+cTgAKa4rqeo9lMHbV1fs=
 github.com/grafana/authlib v0.0.0-20260203153107-16a114a99f67/go.mod h1:za8MGa5J9Bbgm2XorXc+FbGe72ln46OpN5o8P1uX9Og=
+github.com/grafana/authlib v0.0.0-20260216083710-9b774d02c736/go.mod h1:TZHiNIUlZa3p1ElRPnSQaHK1fIm/nPdJvlvdWqThggU=
 github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc h1:wagsf4me4j/UFNocyMJHz5/803XpnfGJtNj8/YWy0j0=
 github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -669,6 +670,7 @@ github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a534
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 h1:X+2YciYSxvMQK0UZ7sg45ZVabVZBeBuvMkmuI2V3Fak=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7/go.mod h1:lW34nIZuQ8UDPdkon5fmfp2l3+ZkQ2me/+oecHYLOII=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.8/go.mod h1:mi7YA+gCzVem12exXy46ZespvGtX/lZmD/RLnQhVW7U=
 github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed/go.mod h1:tMWxXQ9wFIaZeTI9F+hmhFiGpFmhOHzyShyFUhRm0H4=
 github.com/hashicorp/consul/api v1.12.0/go.mod h1:6pVBMo0ebnYdt2S3H87XhekM/HHrUoTD2XXb/VrZVy0=
 github.com/hashicorp/consul/api v1.31.2 h1:NicObVJHcCmyOIl7Z9iHPvvFrocgTYo9cITSGg0/7pw=
@@ -948,6 +950,7 @@ github.com/onsi/gomega v1.39.1 h1:1IJLAad4zjPn2PsnhH70V4DKRFlrCzGBNrNaru+Vf28=
 github.com/onsi/gomega v1.39.1/go.mod h1:hL6yVALoTOxeWudERyfppUcZXjMwIMLnuSfruD2lcfg=
 github.com/open-feature/go-sdk v1.17.0 h1:/OUBBw5d9D61JaNZZxb2Nnr5/EJrEpjtKCTY3rspJQk=
 github.com/open-feature/go-sdk v1.17.0/go.mod h1:lPxPSu1UnZ4E3dCxZi5gV3et2ACi8O8P+zsTGVsDZUw=
+github.com/open-feature/go-sdk v1.17.1/go.mod h1:+2UML7oZADJa0Swg27d6pu5kLKeCpZM2X2hWcGQutJ0=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 h1:megzzlQGjsRVWDX8oJnLaa5eEcsAHekiL4Uvl3jSAcY=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6/go.mod h1:K1gDKvt76CGFLSUMHUydd5ba2V5Cv69gQZsdbnXhAm8=
 github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 h1:+w02ezTV6VpTkeUFD+w2j8T1sy4lNE0ogugTFkb4iGY=
@@ -1736,8 +1739,10 @@ google.golang.org/genproto v0.0.0-20250715232539-7130f93afb79 h1:Nt6z9UHqSlIdIGJ
 google.golang.org/genproto v0.0.0-20250715232539-7130f93afb79/go.mod h1:kTmlBHMPqR5uCZPBvwa2B18mvubkjyY3CRLI0c6fj0s=
 google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 h1:merA0rdPeUV3YIIfHHcH4qBkiQAc1nfCKSI7lB4cV2M=
 google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409/go.mod h1:fl8J1IvUjCilwZzQowmw2b7HQB2eAuYBabMXzWurF+I=
+google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57/go.mod h1:kSJwQxqmFXeo79zOmbrALdflXQeAYcUbgS7PbpMknCY=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 h1:H86B94AW+VfJWDqFeEbBPhEtHzJwJfTbgE2lZa54ZAQ=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409/go.mod h1:j9x/tPzZkyxcgEFkiKEEGxfvyumM01BEtsW8xzOahRQ=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57/go.mod h1:j9x/tPzZkyxcgEFkiKEEGxfvyumM01BEtsW8xzOahRQ=
 google.golang.org/grpc v1.17.0/go.mod h1:6QZJwpn2B+Zp71q/5VxRsJ6NXXVCE5NRUHRo+f3cWCs=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
