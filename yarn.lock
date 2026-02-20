@@ -3804,7 +3804,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-window": "npm:1.8.8"
+    "@types/react-window": "npm:2.0.0"
     "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
@@ -3824,7 +3824,7 @@ __metadata:
     react-highlight-words: "npm:0.21.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
-    react-window: "npm:1.8.11"
+    react-window: "npm:2.2.7"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -11562,6 +11562,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/79b70b7c33161efb14bf69115792843de8e038594136a8373cfbbcc4066c49fd611dd2d3592a9a81d19d21c075bf14e5e73a64f4d9ad32e45d4d5493f5f53918
+  languageName: node
+  linkType: hard
+
+"@types/react-window@npm:2.0.0":
+  version: 2.0.0
+  resolution: "@types/react-window@npm:2.0.0"
+  dependencies:
+    react-window: "npm:*"
+  checksum: 10/4c11d4e1e6b95ab482b79a6aaff87a8cd2978a08925c6b0fff7e856716608ccb50162e5cbf9ad02bff892681c7795cc9f3e376ede994ebfbcc55161fe8ab0517
   languageName: node
   linkType: hard
 
@@ -30505,6 +30514,16 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 10/4f4c097a2948f8da71d13199289d85c89720e41888ea50039d2b8e6d7cf160300e97f66421c53420d8cb95b3ece74940c07ebd23bddd7a705a679d7e2dc2957e
+  languageName: node
+  linkType: hard
+
+"react-window@npm:*, react-window@npm:2.2.7":
+  version: 2.2.7
+  resolution: "react-window@npm:2.2.7"
+  peerDependencies:
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/94fc2aad2702d66a778c41e3caa6c47281b92cd4f3c04bfc8ee733581e08e9310697d00d86c50121f3328911492fcba272ab28e4d3cd399d95d0b15ce0d840e9
   languageName: node
   linkType: hard
 
