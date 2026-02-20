@@ -1762,7 +1762,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -11675,6 +11677,8 @@
     },
     "user-invite-form": {
       "back": "戻る",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "メールアドレスまたはユーザー名",
       "label-name": "名前",
       "label-send-invite-email": "招待メールを送信",
@@ -13153,6 +13157,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13194,6 +13202,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13221,14 +13230,16 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "カード{{id}}を選択",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
-      "transformations": "変換"
+      "transformations": "変換",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

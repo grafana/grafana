@@ -24,8 +24,6 @@ import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
-import { queryLogger } from '../utils';
-
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { emitDataRequestEvent } from './queryAnalytics';
 
@@ -164,7 +162,6 @@ export function runRequest(
     // handle errors
     catchError((err) => {
       console.error('runRequest.catchError', err);
-      queryLogger.logError(err);
       return of({
         ...state.panelData,
         state: LoadingState.Error,

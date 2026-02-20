@@ -11,16 +11,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
-
 	"github.com/grafana/codejen"
-	"github.com/grafana/cuetsy"
 	"github.com/grafana/grafana/pkg/codegen"
 )
 
@@ -81,12 +77,6 @@ func main() {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
 
-	commfsys := elsedie(genCommon(ctx, groot))("common schemas failed")
-	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
-	if err = jfs.Merge(commfsys); err != nil {
-		die(err)
-	}
-
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
 			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
@@ -94,51 +84,6 @@ func main() {
 	} else if err = jfs.Write(context.Background(), groot); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
-}
-
-type dummyCommonJenny struct{}
-
-func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
-	fsys := codejen.NewFS()
-	path := filepath.Join("packages", "grafana-schema", "src", "common")
-	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
-
-	commonFiles := make([]string, 0)
-	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
-			return nil
-		}
-		commonFiles = append(commonFiles, path)
-		return nil
-	})
-
-	instance := load.Instances(commonFiles, &load.Config{})[0]
-	if instance.Err != nil {
-		return nil, instance.Err
-	}
-
-	v := ctx.BuildInstance(instance)
-	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
-		Export: true,
-	}))("failed to generate common schema TS")
-
-	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
-	return fsys, nil
-}
-
-func (j dummyCommonJenny) JennyName() string {
-	return "CommonSchemaJenny"
-}
-
-func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
-	return nil, nil
-}
-
-var pkgReplace = regexp.MustCompile("^package kindsys")
-
-func packageMapper(f codejen.File) (codejen.File, error) {
-	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
-	return f, nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {

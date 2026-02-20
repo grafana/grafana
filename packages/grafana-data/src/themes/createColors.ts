@@ -77,6 +77,7 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
         disabledOpacity: z.number().optional(),
       }),
 
+      scrollbar: z.string().optional(),
       hoverFactor: z.number(),
       contrastThreshold: z.number(),
       tonalOffset: z.number(),
@@ -189,6 +190,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%)',
   };
 
+  scrollbar = `rgba(${this.whiteBase}, 0.3)`;
+
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.15;
@@ -271,6 +274,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%)',
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%)',
   };
+
+  scrollbar = `rgba(${this.blackBase}, 0.3)`;
 
   contrastThreshold = 3;
   hoverFactor = 0.03;
