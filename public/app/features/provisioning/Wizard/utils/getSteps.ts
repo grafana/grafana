@@ -14,6 +14,7 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
       name: authStepText,
       title: authStepText,
       submitOnNext: true,
+      formFields: ['repository.url', 'repository.token', 'repository.tokenUser'],
     },
     {
       id: 'connection',
@@ -24,6 +25,7 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
         ? t('provisioning.wizard.title-connect', 'Connect to external storage')
         : t('provisioning.wizard.title-configure-repo', 'Configure repository'),
       submitOnNext: true,
+      formFields: ['repository.branch', 'repository.path'],
     },
     {
       id: 'bootstrap',

@@ -2230,13 +2230,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "kubernetesAnnotations",
-			Description: "Enables app platform API for annotations",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
