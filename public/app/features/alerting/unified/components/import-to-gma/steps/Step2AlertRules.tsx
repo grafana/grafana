@@ -1,12 +1,15 @@
+import { isEmpty } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useAsync, useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   Box,
+  CodeEditor,
+  Collapse,
   Combobox,
   ComboboxOption,
   Divider,
@@ -20,17 +23,22 @@ import {
 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
   DataSourceType,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
-import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
+import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
 import { ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions } from '../Wizard/constants';
+import { useGetRulesThatMightBeOverwritten } from '../hooks';
+import { filterRulerRulesConfig } from '../useImport';
 import { useRoutingTrees } from '../useRoutingTrees';
+import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { isStep2Valid } from './utils';
 
@@ -48,27 +56,74 @@ const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceTyp
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
+const EMPTY_RULER_CONFIG: RulerRulesConfigDTO = {};
+
 export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2ContentProps) {
   const {
     control,
     register,
     watch,
     setValue,
+    getValues,
+    trigger,
+    clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
-  const [rulesSource, rulesDatasourceUID, rulesDatasourceName, rulesYamlFile, policyTreeName, namespace] = watch([
+  const [
+    rulesSource,
+    rulesDatasourceUID,
+    rulesDatasourceName,
+    rulesYamlFile,
+    policyTreeName,
+    namespace,
+    ruleGroup,
+    targetFolder,
+  ] = watch([
     'rulesSource',
     'rulesDatasourceUID',
     'rulesDatasourceName',
     'rulesYamlFile',
     'policyTreeName',
     'namespace',
+    'ruleGroup',
+    'targetFolder',
   ]);
 
   // Get namespaces and groups for filtering
   const { namespaceGroups, isLoading: isLoadingNamespaces } = useGetNameSpacesByDatasourceName(
     rulesSource === 'datasource' ? (rulesDatasourceName ?? undefined) : undefined
+  );
+
+  // Fetch rules to check for potential overrides in the target folder
+  const { rulerRules: rulesFromDatasource } = useGetRulerRules(
+    rulesSource === 'datasource' ? (rulesDatasourceName ?? undefined) : undefined
+  );
+
+  const { value: rulesFromYaml = EMPTY_RULER_CONFIG } = useAsync(async () => {
+    if (!rulesYamlFile || rulesSource !== 'yaml') {
+      return EMPTY_RULER_CONFIG;
+    }
+    try {
+      return await parseYamlFileToRulerRulesConfigDTO(rulesYamlFile, rulesYamlFile.name);
+    } catch {
+      return EMPTY_RULER_CONFIG;
+    }
+  }, [rulesSource, rulesYamlFile]);
+
+  const { rulesToBeImported, someRulesAreSkipped } = useMemo(() => {
+    if (rulesSource === 'datasource') {
+      const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(rulesFromDatasource, namespace, ruleGroup);
+      return { rulesToBeImported: filteredConfig, someRulesAreSkipped };
+    }
+    return { rulesToBeImported: rulesFromYaml, someRulesAreSkipped: false };
+  }, [rulesSource, rulesFromDatasource, rulesFromYaml, namespace, ruleGroup]);
+
+  const skipOverrideCheck = !targetFolder || isEmpty(rulesToBeImported);
+  const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(
+    skipOverrideCheck,
+    targetFolder,
+    rulesToBeImported
   );
 
   const namespaceOptions: Array<ComboboxOption<string>> = useMemo(
@@ -91,9 +146,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     setValue('ruleGroup', undefined);
   }, [rulesDatasourceName, setValue]);
 
-  const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI ?? false;
-
-  const rulesSourceOptions = getRulesSourceOptions(isImportYamlEnabled);
+  const rulesSourceOptions = getRulesSourceOptions(true);
 
   // Fetch available routing trees from the k8s API
   const { routingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
@@ -204,7 +257,14 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
               render={({ field: { onChange, ref, ...field } }) => (
                 <RadioButtonList
                   {...field}
-                  onChange={(value) => setValue('rulesSource', value)}
+                  onChange={(value) => {
+                    setValue('rulesSource', value);
+                    if (value === 'datasource') {
+                      setValue('rulesYamlFile', null);
+                    }
+                    clearErrors('rulesYamlFile');
+                    clearErrors('rulesDatasourceUID');
+                  }}
                   options={rulesSourceOptions}
                 />
               )}
@@ -235,6 +295,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                         onChange={(ds: DataSourceInstanceSettings) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
+                          // Auto-populate target datasource if not yet selected
+                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                            setValue('targetDatasourceUID', ds.uid);
+                          }
                         }}
                         noDefault
                         width={40}
@@ -318,6 +382,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                         const file = event.currentTarget.files?.[0];
                         if (file) {
                           onChange(file);
+                          trigger('rulesYamlFile');
                         }
                       }}
                     >
@@ -328,6 +393,25 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                   )}
                   control={control}
                   name="rulesYamlFile"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
+                    },
+                    validate: async (value) => {
+                      if (!value) {
+                        return t('alerting.import-to-gma.step2.yaml-required', 'Please select a file');
+                      }
+                      try {
+                        await parseYamlFileToRulerRulesConfigDTO(value, value.name);
+                        return true;
+                      } catch (error) {
+                        return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
+                          error: stringifyErrorLike(error),
+                        });
+                      }
+                    },
+                  }}
                 />
               </Field>
             )}
@@ -438,15 +522,74 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
           </Stack>
         </Box>
       </Box>
+
+      {/* Skipped rules info */}
+      {someRulesAreSkipped && (
+        <Alert
+          title={t('alerting.import-to-gma.step2.plugin-rules-warning-title', 'Some rules are excluded from import')}
+          severity="info"
+        >
+          <Trans i18nKey="alerting.import-to-gma.step2.plugin-rules-warning-body">
+            Rules managed by plugins, integrations, or Synthetic Monitoring have been detected and will not be imported.
+          </Trans>
+        </Alert>
+      )}
+
+      {/* Override Warning */}
+      {!isEmpty(rulesThatMightBeOverwritten) && (
+        <OverrideWarning rulesThatMightBeOverwritten={rulesThatMightBeOverwritten} />
+      )}
     </Stack>
   );
 }
 
+function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOverwritten: RulerRulesConfigDTO }) {
+  const [showDetails, toggleShowDetails] = useToggle(false);
+
+  return (
+    <Alert
+      title={t('alerting.import-to-gma.step2.override-warning-title', 'Some existing rules may be overwritten')}
+      severity="warning"
+    >
+      <Stack direction="column" gap={1}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.import-to-gma.step2.override-warning-body">
+            The target folder already contains alert rules that share the same namespace as the rules being imported.
+            These existing rules may be overwritten or removed during the import.
+          </Trans>
+        </Text>
+        <Collapse
+          label={t('alerting.import-to-gma.step2.override-warning-details', 'Rules that might be overwritten')}
+          isOpen={showDetails}
+          onToggle={toggleShowDetails}
+        >
+          <CodeEditor
+            width="100%"
+            height={300}
+            language="json"
+            value={JSON.stringify(rulesThatMightBeOverwritten, null, 2)}
+            monacoOptions={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              lineNumbers: 'on',
+              readOnly: true,
+            }}
+          />
+        </Collapse>
+      </Stack>
+    </Alert>
+  );
+}
+
 /**
- * Hook to check if Step 2 form is valid
+ * Hook to check if Step 2 form is valid.
+ * Checks both that required fields are filled AND that there are no validation errors.
  */
 export function useStep2Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<ImportFormValues>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
   const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -455,14 +598,22 @@ export function useStep2Validation(canImport: boolean): boolean {
     'targetDatasourceUID',
   ]);
 
-  return useMemo(() => {
-    return isStep2Valid({
-      canImport,
-      rulesSource,
-      rulesYamlFile,
-      rulesDatasourceUID,
-      selectedRoutingTree,
-      targetDatasourceUID,
-    });
-  }, [canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID]);
+  const hasStep2Errors =
+    !!errors.rulesSource ||
+    (rulesSource === 'datasource' && !!errors.rulesDatasourceUID) ||
+    (rulesSource === 'yaml' && !!errors.rulesYamlFile) ||
+    !!errors.selectedRoutingTree ||
+    !!errors.targetDatasourceUID;
+
+  if (!canImport || hasStep2Errors) {
+    return false;
+  }
+
+  return isStep2Valid({
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  });
 }

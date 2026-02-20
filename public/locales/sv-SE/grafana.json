@@ -1768,7 +1768,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -11729,6 +11731,8 @@
     },
     "user-invite-form": {
       "back": "Tillbaka",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-post eller användarnamn",
       "label-name": "Namn",
       "label-send-invite-email": "Skicka inbjudan per e-post",
@@ -13214,6 +13218,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13255,6 +13263,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13282,14 +13291,18 @@
       "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Välj kort {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
-      "transformations": "Omvandlingar"
+      "transformations": "Omvandlingar",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",

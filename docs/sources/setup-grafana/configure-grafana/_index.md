@@ -222,7 +222,7 @@ Dashboards are reloaded when the JSON files change.
 
 #### `protocol`
 
-`http`,`https`,`h2` or `socket`
+`http`,`https`,`h2`,`socket` or `socket_h2`
 
 #### `min_tls_version`
 

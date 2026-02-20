@@ -75,7 +75,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 
 // panelSummary take panel info and returns entity summaries for the given panel and all its collapsed panels.
 func panelSummary(panel PanelSummaryInfo, uid string, dashboardRefs ReferenceAccumulator) []*entity.EntitySummary {
-	panels := []*entity.EntitySummary{}
+	panels := []*entity.EntitySummary{} //nolint:prealloc
 
 	panelRefs := NewReferenceAccumulator()
 	p := &entity.EntitySummary{
