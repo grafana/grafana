@@ -1,0 +1,46 @@
+{
+  "_docs": "Team notifications configuration. To onboard a team: add an entry below with area_labels, file_patterns, Slack channel IDs, and invite the bot to each channel.",
+  "teams": [
+    {
+      "name": "alerting",
+      "adoption_date": "YYYY-MM-DD",
+      "file_patterns": [
+        "pkg/services/ngalert/**",
+        "pkg/services/alerting/**",
+        "public/app/features/alerting/**",
+        "docs/alerting/**"
+      ],
+      "area_labels": ["area/alerting"],
+      "slack_channels": {
+        "pr": "REPLACE_WITH_CHANNEL_ID",
+        "fr": "REPLACE_WITH_CHANNEL_ID"
+      },
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
+    },
+    {
+      "name": "dashboard",
+      "adoption_date": "YYYY-MM-DD",
+      "file_patterns": [
+        "pkg/services/dashboards/**",
+        "public/app/features/dashboard/**",
+        "docs/dashboard/**"
+      ],
+      "area_labels": ["area/dashboard"],
+      "slack_channels": {
+        "pr": "REPLACE_WITH_CHANNEL_ID",
+        "fr": "REPLACE_WITH_CHANNEL_ID"
+      },
+      "enabled": {
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
+      }
+    }
+  ]
+}
