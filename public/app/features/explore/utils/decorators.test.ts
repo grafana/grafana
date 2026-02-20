@@ -9,8 +9,10 @@ import {
   toDataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
+  PanelPluginMeta,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types/explore';
@@ -27,11 +29,6 @@ jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  isPanelPluginInstalled: (id: string) => id === 'someCustomPanelPlugin',
 }));
 
 const getTestContext = () => {
@@ -353,6 +350,10 @@ describe('decorateWithLogsResult', () => {
 });
 
 describe('decorateWithCustomFrames', () => {
+  beforeEach(() => {
+    setPanelPluginMetas({});
+  });
+
   it('returns empty array if no custom frames', async () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
@@ -366,6 +367,7 @@ describe('decorateWithCustomFrames', () => {
     expect((await decorateWithFrameTypeMetadata(panelData)).customFrames).toEqual([]);
   });
   it('returns data if we have custom frames', async () => {
+    setPanelPluginMetas({ someCustomPanelPlugin: { id: 'someCustomPanelPlugin' } as PanelPluginMeta });
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const customFrame = toDataFrame({
       name: 'custom-panel',

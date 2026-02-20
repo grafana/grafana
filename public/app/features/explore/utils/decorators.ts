@@ -15,6 +15,7 @@ import {
   DataSourceApi,
 } from '@grafana/data';
 import { config, CorrelationData, isPanelPluginInstalled } from '@grafana/runtime';
+import { getPanelPluginMetas, PanelPluginMetas } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types/explore';
 
@@ -37,9 +38,14 @@ export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<Ex
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
   const customFrames: DataFrame[] = [];
+  const panels = await getPanelPluginMetas();
+  const panelsById: PanelPluginMetas = {};
+  for (const p of panels) {
+    panelsById[p.id] = p;
+  }
 
   for (const frame of data.series) {
-    if (await canFindPanel(frame)) {
+    if (canFindPanel(frame, panelsById)) {
       customFrames.push(frame);
       continue;
     }
@@ -330,9 +336,9 @@ function isTimeSeries(frame: DataFrame): boolean {
  *
  * @param frame
  */
-function canFindPanel(frame: DataFrame): Promise<boolean> {
+function canFindPanel(frame: DataFrame, panelsById: PanelPluginMetas): boolean {
   if (!!frame.meta?.preferredVisualisationPluginId) {
-    return isPanelPluginInstalled(frame.meta?.preferredVisualisationPluginId);
+    return Boolean(panelsById[frame.meta?.preferredVisualisationPluginId]);
   }
-  return Promise.resolve(false);
+  return false;
 }
