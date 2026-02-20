@@ -27,13 +27,8 @@ export const VizSuggestionsInteractions = {
     reportVizSuggestionsInteraction('suggestion_accepted', properties);
   },
 
-  suggestionApplied: (properties: {
-    pluginId: string;
-    suggestionName: string;
-    panelState: PanelState;
-    suggestionIndex: number;
-  }) => {
-    reportVizSuggestionsInteraction('suggestion_applied', properties);
+  suggestionSaved: (properties: { pluginId: string; fromSuggestions: boolean }) => {
+    reportVizSuggestionsInteraction('suggestion_saved', properties);
   },
 };
 
