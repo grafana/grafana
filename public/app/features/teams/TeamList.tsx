@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { SortingRule } from 'react-table';
 
@@ -23,10 +23,7 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import {
-  useSearchDashboardsAndFoldersQuery,
-  useLazySearchDashboardsAndFoldersQuery,
-} from 'app/api/clients/dashboard/v0alpha1';
+import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -72,6 +69,7 @@ const TeamList = () => {
   const [deleteTeam] = useDeleteTeam();
   const [triggerFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
   const notifyApp = useAppNotification();
+  const foldersQueryRef = useRef<ReturnType<typeof triggerFoldersQuery> | null>(null);
 
   const teams = teamData?.teams || [];
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
@@ -90,6 +88,14 @@ const TeamList = () => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (foldersQueryRef.current) {
+        foldersQueryRef.current.abort();
+      }
+    };
   }, []);
 
   const columns: Array<Column<TeamWithRoles>> = useMemo(
@@ -213,11 +219,13 @@ const TeamList = () => {
           const showDeleteModal = async () => {
             let ownedFolders: DashboardHit[] = [];
             if (config.featureToggles.teamFolders) {
-              const { data: foldersData, isError } = await triggerFoldersQuery({
+              foldersQueryRef.current = triggerFoldersQuery({
                 type: 'folder',
                 ownerReference: [`iam.grafana.app/Team/${original.uid}`],
                 limit: 1,
               });
+
+              const { data: foldersData, isError } = await foldersQueryRef.current;
 
               if (isError) {
                 notifyApp.error(
