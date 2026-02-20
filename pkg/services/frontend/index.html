@@ -160,6 +160,12 @@
       [[if .Assets.ContentDeliveryURL]]
         window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
       [[end]]
+
+      [[if .RenderBindingSupported]]
+        // For the image-renderer to check support for render binding calls
+        window.__grafanaRenderBindingSupported = true;
+        console.log('Render binding supported');
+      [[end]]
     </script>
 
     <script nonce="[[.Nonce]]">

@@ -251,6 +251,10 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
+	// FlagReportRenderBinding
+	// Enables render binding support for report rendering
+	FlagReportRenderBinding = "reportRenderBinding"
+
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"

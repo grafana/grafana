@@ -3626,6 +3626,19 @@
     },
     {
       "metadata": {
+        "name": "reportRenderBinding",
+        "resourceVersion": "1771507642870",
+        "creationTimestamp": "2026-02-19T13:27:22Z"
+      },
+      "spec": {
+        "description": "Enables render binding support for report rendering",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingCsvEncodingOptions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-08T12:56:54Z"
