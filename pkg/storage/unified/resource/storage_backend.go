@@ -412,11 +412,8 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"rows", totalDeleted,
 				"seconds", time.Since(start).Seconds(),
 			)
-			return
 		}
 	}
-
-	return
 }
 
 // garbageCollectBatch scans batches of entries in the datastore for a given group+resource,
@@ -464,7 +461,8 @@ func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resou
 		// update the next end key for pagination. We will use this to continue scanning in the next batch
 		nextEndKey = dataKey
 
-		// if the action is deleted and the resource version is older than the cutoff, get all previous versions of the same resource and delete them in batch
+		// if the action is deleted and the resource version is older than the cutoff, get all previous versions
+		// of the same resource and delete them in batch
 		if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
 			startKey := ListRequestKey{
 				Group:     dk.Group,
