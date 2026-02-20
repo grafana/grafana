@@ -234,7 +234,7 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	}
 
 	// Create store if it doesn't exist
-	_, err = r.server.GetStoreInfo(ctx, namespace)
+	_, err = r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to create store: %w", err)
 	}

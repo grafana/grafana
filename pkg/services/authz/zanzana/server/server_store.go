@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-// GetStoreInfo returns store information for a given namespace.
+// GetOrCreateStore returns store information about store for a given namespace.
 // This is used by the reconciler to access store IDs for direct operations.
-func (s *Server) GetStoreInfo(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
+func (s *Server) GetOrCreateStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
 	return s.getStoreInfo(ctx, namespace)
 }
 

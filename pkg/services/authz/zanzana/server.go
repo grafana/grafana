@@ -31,7 +31,7 @@ type ServerInternal interface {
 	Server
 	RunReconciler(ctx context.Context) error
 	GetStore(ctx context.Context, namespace string) (*StoreInfo, error)
-	GetStoreInfo(ctx context.Context, namespace string) (*StoreInfo, error)
+	GetOrCreateStore(ctx context.Context, namespace string) (*StoreInfo, error)
 	ListAllStores(ctx context.Context) ([]StoreInfo, error)
 	WriteTuples(ctx context.Context, store *StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error
 	GetOpenFGAServer() openfgav1.OpenFGAServiceServer

@@ -117,7 +117,7 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 	var continuationToken string
 
 	// Get store info for the namespace
-	storeInfo, err := r.server.GetStoreInfo(ctx, namespace)
+	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get store info: %w", err)
 	}
@@ -154,7 +154,7 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 // Uses the server's WriteTuples method directly to avoid authzextv1 ↔ openfgav1 conversions.
 func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string, toAdd, toDelete []*openfgav1.TupleKey) error {
 	// Get store info for the namespace
-	storeInfo, err := r.server.GetStoreInfo(ctx, namespace)
+	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get store info: %w", err)
 	}
