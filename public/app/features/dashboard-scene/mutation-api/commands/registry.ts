@@ -2,7 +2,7 @@
  * Command Registry
  *
  * Imports all command definitions and provides lookup helpers.
- * The MutationExecutor iterates over ALL_COMMANDS generically.
+ * The DashboardMutationClient iterates over ALL_COMMANDS generically.
  */
 
 import { addVariableCommand } from './addVariable';

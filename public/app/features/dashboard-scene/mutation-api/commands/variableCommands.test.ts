@@ -1,7 +1,7 @@
 import { SceneVariableSet } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
-import { MutationExecutor } from '../MutationExecutor';
+import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
@@ -32,14 +32,14 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
 }
 
 describe('Variable mutation commands', () => {
-  let executor: MutationExecutor;
+  let executor: DashboardMutationClient;
   let scene: ReturnType<typeof buildMockScene>;
 
   beforeEach(() => {
     // Scenes library warns when re-parenting variables via replaceVariableSet
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     scene = buildMockScene({ editable: true });
-    executor = new MutationExecutor(scene);
+    executor = new DashboardMutationClient(scene);
   });
 
   it('ADD_VARIABLE adds a variable to the dashboard', async () => {
@@ -212,7 +212,7 @@ describe('Variable mutation commands', () => {
 
   it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
     scene = buildMockScene({ editable: true, isEditing: true });
-    executor = new MutationExecutor(scene);
+    executor = new DashboardMutationClient(scene);
 
     const result = await executor.execute({
       type: 'ENTER_EDIT_MODE',
@@ -246,7 +246,7 @@ describe('Variable mutation commands', () => {
 
   it('rejects commands when dashboard is not editable', async () => {
     scene = buildMockScene({ editable: false });
-    executor = new MutationExecutor(scene);
+    executor = new DashboardMutationClient(scene);
 
     const result = await executor.execute({
       type: 'ADD_VARIABLE',

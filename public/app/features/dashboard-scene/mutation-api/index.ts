@@ -17,7 +17,4 @@ export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/regist
 
 export type { MutationCommand } from './commands/types';
 
-/**
- * @internal Not part of the public API surface.
- */
-export { MutationExecutor } from './MutationExecutor';
+export { DashboardMutationBehavior } from './DashboardMutationBehavior';
