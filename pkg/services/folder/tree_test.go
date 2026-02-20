@@ -88,7 +88,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 	tree := NewFolderTree(folders)
 
 	t.Run("general folder has no ancestors", func(t *testing.T) {
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range tree.Ancestors(GeneralFolderUID) {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -96,7 +96,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 	})
 
 	t.Run("top-level folder has general as ancestor", func(t *testing.T) {
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range tree.Ancestors("root") {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -104,7 +104,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 	})
 
 	t.Run("leaf folder has all ancestors including general", func(t *testing.T) {
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range tree.Ancestors("level3") {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -112,7 +112,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 	})
 
 	t.Run("middle folder has partial ancestors including general", func(t *testing.T) {
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range tree.Ancestors("level2") {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -120,7 +120,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 	})
 
 	t.Run("non-existent folder returns empty iterator", func(t *testing.T) {
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range tree.Ancestors("nonexistent") {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -135,7 +135,7 @@ func TestFolderTree_Ancestors(t *testing.T) {
 		}
 		treePartial := NewFolderTree(foldersPartial)
 
-		var ancestors []string
+		var ancestors []string //nolint:prealloc
 		for node := range treePartial.Ancestors("child") {
 			ancestors = append(ancestors, node.UID)
 		}
@@ -180,7 +180,7 @@ func TestFolderTree_Children(t *testing.T) {
 	})
 
 	t.Run("leaf folder has no children", func(t *testing.T) {
-		var children []string
+		var children []string //nolint:prealloc
 		for node := range tree.Children("grandchild1") {
 			children = append(children, node.UID)
 		}
@@ -198,7 +198,7 @@ func TestFolderTree_Children(t *testing.T) {
 	})
 
 	t.Run("non-existent folder returns empty iterator", func(t *testing.T) {
-		var children []string
+		var children []string //nolint:prealloc
 		for node := range tree.Children("nonexistent") {
 			children = append(children, node.UID)
 		}
@@ -213,7 +213,7 @@ func TestFolderTree_Children(t *testing.T) {
 		tree := NewFolderTree(folders)
 
 		// Iterate children of General folder
-		var children []string
+		var children []string //nolint:prealloc
 		for node := range tree.Children(GeneralFolderUID) {
 			children = append(children, node.UID)
 		}

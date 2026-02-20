@@ -619,6 +619,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
@@ -1153,11 +1158,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
-  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1498,10 +1498,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
-  * Redirects the request to teams related endpoints to the app platform API
+  * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
   kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables external group mapping APIs in the app platform
+  * @default false
+  */
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
   /**
   * Use the new APIs for syncing users to teams
   * @default false
@@ -1532,4 +1542,9 @@ export interface FeatureToggles {
   * @default false
   */
   react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
 }
