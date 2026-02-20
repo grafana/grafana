@@ -3820,11 +3820,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/mixed/module.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 2
-    }
-  },
   "public/app/plugins/datasource/mssql/azureauth/AzureCredentialsForm.tsx": {
     "no-restricted-syntax": {
       "count": 10
