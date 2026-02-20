@@ -18,7 +18,7 @@ import { KeyedVariableIdentifier } from '../../state/types';
 import { toKeyedVariableIdentifier } from '../../utils';
 import { VariableInput } from '../shared/VariableInput';
 import { VariableLink } from '../shared/VariableLink';
-import VariableOptions from '../shared/VariableOptions';
+import { VariableOptions } from '../shared/VariableOptions';
 import { NavigationKey, VariablePickerProps } from '../types';
 
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';

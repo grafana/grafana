@@ -3205,9 +3205,6 @@
   "public/app/features/variables/pickers/shared/VariableOptions.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/variables/query/QueryVariableEditor.tsx": {
