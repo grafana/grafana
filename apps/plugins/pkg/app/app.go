@@ -116,18 +116,16 @@ type PluginAppInstaller struct {
 	logger      logging.Logger
 
 	// restConfig is set during InitializeApp and used by the client factory
-	restConfig *restclient.Config
-	ready      chan struct{}
-	readyOnce  sync.Once
+	restConfig     *restclient.Config
+	restConfigOnce sync.Once
+	ready          chan struct{}
 }
 
 func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
-	if p.restConfig == nil {
+	p.restConfigOnce.Do(func() {
 		p.restConfig = &restConfig
-		p.readyOnce.Do(func() {
-			close(p.ready)
-		})
-	}
+		close(p.ready)
+	})
 	return p.AppInstaller.InitializeApp(restConfig)
 }
 

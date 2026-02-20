@@ -491,6 +491,8 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// Convert an alerting rule to a recording rule.
+	// Use CopyRule to avoid race with background goroutines still reading the original rule.
+	alertRule3 = models.CopyRule(alertRule3)
 	models.ConvertToRecordingRule(alertRule3)
 	alertRule3.Version++
 	ruleStore.PutRule(ctx, alertRule3)
@@ -603,6 +605,14 @@ func TestProcessTicks(t *testing.T) {
 		// Wait for all evaluations to complete
 		time.Sleep(100 * time.Millisecond)
 
+		// Copy evalOrderByGroup under lock to avoid race
+		mutex.Lock()
+		evalOrderByGroupCopy := make(map[string][]string, len(evalOrderByGroup))
+		for k, v := range evalOrderByGroup {
+			evalOrderByGroupCopy[k] = append([]string{}, v...)
+		}
+		mutex.Unlock()
+
 		// Group rules by their group for expected order
 		expectedOrderByGroup := make(map[string][]string)
 		for _, rule := range rules {
@@ -624,7 +634,7 @@ func TestProcessTicks(t *testing.T) {
 
 		// Verify that rules within each group were evaluated in correct order
 		for groupKey, expectedUIDs := range expectedOrderByGroup {
-			actualUIDs, evaluated := evalOrderByGroup[groupKey]
+			actualUIDs, evaluated := evalOrderByGroupCopy[groupKey]
 			if !evaluated {
 				// Some groups might not be evaluated during the test
 				continue
