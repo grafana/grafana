@@ -2,7 +2,7 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "12.4.0-pre",
+  "version": "13.0.0-pre",
   "dependencies": {
     "react": "18.3.1",
     "terser-webpack-plugin": "5.3.14",

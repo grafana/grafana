@@ -204,7 +204,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		deletes := []string{
+		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
 			"DELETE FROM playlist_item WHERE playlist_id IN (SELECT id FROM playlist WHERE org_id = ?)",
 			"DELETE FROM playlist WHERE org_id = ?",

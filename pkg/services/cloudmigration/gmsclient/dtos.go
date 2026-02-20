@@ -75,3 +75,7 @@ var (
 	GMSErrorMessageInstanceCheckingError = "checking if instance is reachable"
 	GMSErrorMessageInstanceFetching      = "fetching instance by stack id"
 )
+
+type StartSnapshotRequestDTO struct {
+	Algo string `json:"algo,omitempty"`
+}

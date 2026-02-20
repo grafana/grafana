@@ -806,6 +806,10 @@ export class LokiDatasource
     return result.map((value: string) => ({ text: value }));
   }
 
+  async getGroupByKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
+  }
+
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
