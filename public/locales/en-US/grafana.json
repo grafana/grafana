@@ -4984,6 +4984,7 @@
       "label-hidden": "Hidden",
       "label-name": "Name",
       "label-show-in": "Show in",
+      "loading-placeholder-text": "Loading panels...",
       "placeholder-choose-panels": "Choose panels",
       "preview-in-dashboard": "Preview in dashboard",
       "query": "Query",
@@ -6405,6 +6406,7 @@
       "label-enabled": "Enabled",
       "label-name": "Name",
       "label-show-in": "Show in",
+      "loading-placeholder-text": "Loading panels...",
       "placeholder-choose-panels": "Choose panels",
       "query": "Query",
       "title-annotation-support-source": "No annotation support for this data source"
