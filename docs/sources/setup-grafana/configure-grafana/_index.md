@@ -335,6 +335,10 @@ Mode where the socket should be set when `protocol=socket`. Make sure that Grafa
 
 Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
+#### `serve_on_socket`
+
+If set to `true` and the primary `protocol` is `http`, `https`, or `h2`, Grafana will additionally serve on the Unix domain socket configured via `socket`. Defaults to `false`.
+
 #### `cdn_url`
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana adds edition and version paths.
