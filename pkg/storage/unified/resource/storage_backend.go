@@ -340,7 +340,7 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 // runGarbageCollection identifies deleted resources that are safe
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
-	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
 	start := time.Now()
 
@@ -426,7 +426,7 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 // identifies deleted resources that are safe to be fully removed, and deletes all their keys.
 // It returns the number of deleted entries, the number of rows processed, and the next end key for pagination.
 func (b *kvStorageBackend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int, startKey, endKey string) (int64, int64, string, error) {
-	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.garbageCollectBatch")
 	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
 	defer span.End()
 
