@@ -115,7 +115,7 @@ func (db *MySQLDialect) SQLType(c *Column) string {
 }
 
 func (db *MySQLDialect) UpdateTableSQL(tableName string, columns []*Column) string {
-	var statements = []string{}
+	statements := make([]string, 0, 1+len(columns))
 
 	statements = append(statements, "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
 

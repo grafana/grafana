@@ -198,7 +198,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			name: "failure - privateKey is invalid when validating token",
+			// PrivateKey.Create is set → triggers the key-rotation branch (if-branch),
+			// so GenerateJWTToken is called instead of parseJWTToken.
+			// With an invalid secrets.PrivateKey the generation fails.
+			name: "failure - privateKey is invalid when rotating key (PrivateKey.Create is set)",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -232,6 +235,37 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
+			// No PrivateKey.Create → no key rotation → else branch parses the existing token.
+			// With an invalid secrets.PrivateKey the parse fails.
+			name: "failure - privateKey is invalid when validating existing token",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+				// No Secure.PrivateKey.Create — no key rotation, uses else branch
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: "invalidPrivateKey",
+				Token:      token,
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.privateKey",
+					Detail: "invalid private key",
+				},
+			},
+		},
+		{
+			// Token is zero → if-branch → GenerateJWTToken is called.
+			// With an invalid secrets.PrivateKey the generation fails.
 			name: "failure - privateKey is invalid when generating token",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -262,13 +296,45 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			name: "failure - token issuer is a different appID",
+			// No PrivateKey.Create → else branch → parseJWTToken validates the token issuer.
+			// The token was issued for appID "123" but connection.AppID is "678" → issuer mismatch.
+			name: "failure - token issuer is a different appID (else branch, no key rotation)",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "678",
+						InstallationID: "456",
+					},
+				},
+				// No Secure.PrivateKey.Create — no key rotation, uses else branch to check token issuer
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token, // issued for appID "123", not "678"
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.appID",
+					Detail:   "invalid app ID",
+					BadValue: "678",
+				},
+			},
+		},
+		{
+			// PrivateKey.Create is set + valid key + existing token → key rotation path:
+			// regenerates token with new key and proceeds to GitHub API.
+			name: "success - key rotation with valid new private key",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
@@ -285,15 +351,25 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			expectedCode:  http.StatusUnauthorized,
-			expectSuccess: false,
-			expectedErrors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.appID",
-					Detail: "invalid app ID: 678",
-				},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
+					ID:   123,
+					Slug: "test-app",
+					Permissions: github.AppPermissions{
+						Contents:     github.AppPermissionWrite,
+						Metadata:     github.AppPermissionRead,
+						PullRequests: github.AppPermissionWrite,
+						Webhooks:     github.AppPermissionWrite,
+					},
+				}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{
+					ID:      456,
+					Enabled: true,
+				}, nil)
 			},
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
 		},
 		{
 			name: "failure - GetApp returns service unavailable",
@@ -348,9 +424,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.appID",
-					Detail: "verify appID is correct",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.appID",
+					Detail:   "verify appID is correct",
+					BadValue: appID,
 				},
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
@@ -383,9 +460,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.appID",
-					Detail: "appID mismatch: expected 123, got 999",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.appID",
+					Detail:   "appID mismatch",
+					BadValue: appID,
 				},
 			},
 		},
@@ -413,9 +491,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.appID",
-					Detail: "verify appID is correct",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.appID",
+					Detail:   "verify appID is correct",
+					BadValue: appID,
 				},
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
@@ -448,9 +527,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueNotFound,
-					Field:  "spec.github.appID",
-					Detail: "app not found",
+					Type:     metav1.CauseTypeFieldValueNotFound,
+					Field:    "spec.github.appID",
+					Detail:   "app not found",
+					BadValue: appID,
 				},
 			},
 		},
@@ -487,9 +567,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.appID",
-					Detail: "GitHub App lacks required 'contents' permission: requires 'write', has ''",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'contents' permission: requires 'write', has ''",
+					BadValue: appID,
 				},
 			},
 		},
@@ -526,9 +607,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.appID",
-					Detail: "GitHub App lacks required 'contents' permission: requires 'write', has 'read'",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'contents' permission: requires 'write', has 'read'",
+					BadValue: appID,
 				},
 			},
 		},
@@ -565,9 +647,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.appID",
-					Detail: "GitHub App lacks required 'metadata' permission: requires 'read', has ''",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'metadata' permission: requires 'read', has ''",
+					BadValue: appID,
 				},
 			},
 		},
@@ -604,9 +687,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.appID",
-					Detail: "GitHub App lacks required 'pull_requests' permission: requires 'write', has ''",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'pull_requests' permission: requires 'write', has ''",
+					BadValue: appID,
 				},
 			},
 		},
@@ -643,9 +727,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.appID",
-					Detail: "GitHub App lacks required 'webhooks' permission: requires 'write', has ''",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.appID",
+					Detail:   "GitHub App lacks required 'webhooks' permission: requires 'write', has ''",
+					BadValue: appID,
 				},
 			},
 		},
@@ -715,9 +800,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: "installation not found",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.installationID",
+					Detail:   "installation not found",
+					BadValue: "456",
 				},
 			},
 		},
@@ -755,9 +841,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: github.ErrAuthentication.Error(),
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.installationID",
+					Detail:   github.ErrAuthentication.Error(),
+					BadValue: "456",
 				},
 			},
 		},
@@ -795,9 +882,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: github.ErrServiceUnavailable.Error(),
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.installationID",
+					Detail:   github.ErrServiceUnavailable.Error(),
+					BadValue: "456",
 				},
 			},
 		},
@@ -835,9 +923,10 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.github.installationID",
-					Detail: "invalid installation ID: 456",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "spec.github.installationID",
+					Detail:   "invalid installation ID",
+					BadValue: "456",
 				},
 			},
 		},

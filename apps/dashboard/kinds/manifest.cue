@@ -89,4 +89,5 @@ manifest: {
 			]
 		}
 	}
+	roles: {}
 }

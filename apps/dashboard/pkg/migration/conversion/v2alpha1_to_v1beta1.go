@@ -1640,6 +1640,14 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 		varMap["datasource"] = datasource
 	}
 
+	// Handle defaultValue if present
+	if spec.DefaultValue != nil {
+		varMap["defaultValue"] = map[string]interface{}{
+			"text":  convertStringOrArrayOfStringToV1(spec.DefaultValue.Text),
+			"value": convertStringOrArrayOfStringToV1(spec.DefaultValue.Value),
+		}
+	}
+
 	return varMap, nil
 }
 
@@ -1688,6 +1696,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
 			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
+			}
 			filters = append(filters, filterMap)
 		}
 		varMap["filters"] = filters
@@ -1713,6 +1724,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			}
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
+			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
 			}
 			baseFilters = append(baseFilters, filterMap)
 		}

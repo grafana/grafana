@@ -51,6 +51,7 @@ func generateInformerSupplier(informerConfig InformerConfig, metrics *reconciler
 			return nil, err
 		}
 
+		//nolint:staticcheck
 		return operator.NewConcurrentInformer(
 			informer,
 			operator.ConcurrentInformerOptions{

@@ -2459,7 +2459,7 @@
           }
         }
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse": {
+      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataResponse": {
         "description": "Generic query properties",
         "type": "object",
         "properties": {
@@ -2570,7 +2570,7 @@
         },
         "additionalProperties": true
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
+      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataSourceRef": {
         "description": "The datasource",
         "type": "object",
         "required": [
@@ -3012,7 +3012,7 @@
             "description": "The default datasource type",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataSourceRef"
               }
             ]
           },
@@ -3064,7 +3064,7 @@
             "description": "The datasource queries",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse"
+              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataResponse"
             },
             "x-kubernetes-list-type": "atomic"
           },
