@@ -16,22 +16,6 @@ labels:
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300
-refs:
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  variable-syntax-advanced-variable-format-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
 ---
 
 # Graphite template variables
@@ -40,7 +24,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in drop-down selection boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
+For an introduction to templating and template variables, refer to the [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/) documentation.
 
 To view an example templated dashboard, refer to [Graphite Templated Nested dashboard](https://play.grafana.org/d/cvDFGseGz/graphite-templated-nested).
 
@@ -101,7 +85,7 @@ server=~${servers:regex}
 
 This query tells Grafana to format the selected values in the `servers` variable as a regular expression (e.g., (`server1`|`server2`) if two servers are selected).
 
-For more information, refer to [Advanced variable format options](ref:variable-syntax-advanced-variable-format-options).
+For more information, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
 ### Filter with multiple expressions
 
