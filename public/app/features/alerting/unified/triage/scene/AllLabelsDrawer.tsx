@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AdHocFiltersVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 import { useSceneContext } from '@grafana/scenes-react';
-import { Button, Drawer, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { VARIABLES } from '../constants';
 
@@ -18,7 +18,7 @@ interface AllLabelsDrawerProps {
   onClose: () => void;
 }
 
-const DEFAULT_VISIBLE_LABELS = 12;
+const DEFAULT_VISIBLE_LABELS = 24;
 const DEFAULT_VISIBLE_VALUES = 12;
 
 export function AllLabelsDrawer({ allLabels, onClose }: AllLabelsDrawerProps) {
@@ -54,20 +54,9 @@ export function AllLabelsDrawer({ allLabels, onClose }: AllLabelsDrawerProps) {
               >
                 {label.key}
               </Button>
-              <span className={styles.labelCount}>
-                <Trans
-                  i18nKey="alerting.triage.label-instance-count"
-                  values={{ count: label.count }}
-                  defaults={'({{ count }} instances)'}
-                />
-              </span>
             </span>
-            <span className={styles.headerColPending}>
-              <PendingCount count={label.pending} />
-            </span>
-            <span className={styles.headerColFiring}>
-              <FiringCount count={label.firing} />
-            </span>
+            <PendingCount count={label.pending} />
+            <FiringCount count={label.firing} />
             <LabelValuesList values={label.values} onValueClick={(value) => handleValueClick(label.key, value)} />
           </Fragment>
         ))}
@@ -88,38 +77,39 @@ export function AllLabelsDrawer({ allLabels, onClose }: AllLabelsDrawerProps) {
 // --- Shared components ---
 
 export function FiringCount({ count }: { count: number }) {
-  const styles = useStyles2(getLabelBadgeCountStyles);
   if (count === 0) {
-    return null;
+    return <span />;
   }
   return (
-    <span className={styles.firingCount}>
-      <Icon name="exclamation-circle" size="xs" />
-      {count}
-    </span>
+    <Text color="error" tabular>
+      <Stack direction="row" gap={0.25} alignItems="center">
+        <Icon name="exclamation-circle" size="xs" />
+        {count}
+      </Stack>
+    </Text>
   );
 }
 
 export function PendingCount({ count }: { count: number }) {
-  const styles = useStyles2(getLabelBadgeCountStyles);
   if (count === 0) {
-    return null;
+    return <span />;
   }
   return (
-    <span className={styles.pendingCount}>
-      <Icon name="circle" size="xs" />
-      {count}
-    </span>
+    <Text color="warning" tabular>
+      <Stack direction="row" gap={0.25} alignItems="center">
+        <Icon name="circle" size="xs" />
+        {count}
+      </Stack>
+    </Text>
   );
 }
 
 export function LabelBadgeCounts({ firing, pending }: { firing: number; pending: number }) {
-  const styles = useStyles2(getLabelBadgeCountStyles);
   return (
-    <span className={styles.counts}>
+    <Stack direction="row" gap={0.5} alignItems="center">
       <FiringCount count={firing} />
       <PendingCount count={pending} />
-    </span>
+    </Stack>
   );
 }
 
@@ -164,12 +154,8 @@ function LabelValuesList({ values, onValueClick }: LabelValuesListProps) {
           >
             {value}
           </Button>
-          <span className={styles.valueColPending}>
-            <PendingCount count={pending} />
-          </span>
-          <span className={styles.valueColFiring}>
-            <FiringCount count={firing} />
-          </span>
+          <PendingCount count={pending} />
+          <FiringCount count={firing} />
         </Fragment>
       ))}
       {hasMore && !expanded && (
@@ -187,91 +173,39 @@ function LabelValuesList({ values, onValueClick }: LabelValuesListProps) {
 
 // --- Styles ---
 
-export const getLabelBadgeCountStyles = (theme: GrafanaTheme2) => ({
-  counts: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-  }),
-  firingCount: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.error.text,
-  }),
-  pendingCount: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.warning.text,
-  }),
-});
-
 const getDrawerStyles = (theme: GrafanaTheme2) => ({
   drawerContent: css({
     display: 'grid',
     gridTemplateColumns: `${theme.spacing(2)} minmax(0, 1fr) max-content max-content`,
     alignItems: 'center',
+    justifyItems: 'end',
     rowGap: theme.spacing(0.25),
     columnGap: theme.spacing(1),
   }),
   sectionSeparator: css({
     gridColumn: '1 / -1',
+    justifySelf: 'stretch',
     borderTop: `1px solid ${theme.colors.border.weak}`,
     marginTop: theme.spacing(0.75),
     marginBottom: theme.spacing(0.75),
   }),
   labelHeaderKey: css({
     gridColumn: '1 / 3',
+    justifySelf: 'start',
     display: 'inline-flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
   }),
-  labelCount: css({
-    color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeightRegular,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  headerColPending: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.warning.text,
-    justifySelf: 'end',
-    fontVariantNumeric: 'tabular-nums',
-  }),
-  headerColFiring: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.error.text,
-    justifySelf: 'end',
-    fontVariantNumeric: 'tabular-nums',
-  }),
   labelKeyButton: css({
     fontWeight: theme.typography.fontWeightBold,
   }),
-  valueColPending: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.warning.text,
-    justifySelf: 'end',
-    fontVariantNumeric: 'tabular-nums',
-  }),
-  valueColFiring: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.25),
-    color: theme.colors.error.text,
-    justifySelf: 'end',
-    fontVariantNumeric: 'tabular-nums',
-  }),
   spanAllColumns: css({
     gridColumn: '1 / -1',
+    justifySelf: 'start',
   }),
   valueButton: css({
     gridColumn: '2',
+    justifySelf: 'stretch',
     minWidth: 0,
     '& > span': {
       overflow: 'hidden',
