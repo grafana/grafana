@@ -105,10 +105,10 @@
     "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query": {
       "post": {
         "tags": [
-          "DataSource"
+          "Query"
         ],
         "description": "Query any datasources (with expressions)",
-        "operationId": "createQueryDataResponse",
+        "operationId": "queryDatasources",
         "requestBody": {
           "content": {
             "application/json": {
@@ -162,13 +162,13 @@
         }
       ]
     },
-    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/sqlschemas": {
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query/sqlschemas": {
       "post": {
         "tags": [
-          "Query SQL Schemas"
+          "Query"
         ],
-        "description": "Get a SQL Schema for a set of queries",
-        "operationId": "querySqlSchemas",
+        "description": "Send the same request you would send to /query, and get a schema that will represent the response",
+        "operationId": "querySQLSchemas",
         "parameters": [
           {
             "name": "namespace",
@@ -181,27 +181,6 @@
             "example": "default"
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueryRequestSchema"
-              },
-              "examples": {
-                "A": {
-                  "summary": "Random walk (testdata)",
-                  "description": "Use testdata to execute a random walk query",
-                  "value": "{\n\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\"scenarioId\": \"random_walk_table\",\n\t\t\t\t\t\t\t\t\"seriesCount\": 1,\n\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\"type\": \"grafana-testdata-datasource\",\n\t\t\t\t\t\t\t\t\"uid\": \"PD8C576611E62080A\"\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\"intervalMs\": 60000,\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 20\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t],\n\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t}"
-                },
-                "B": {
-                  "summary": "With deprecated datasource name",
-                  "description": "Includes an old style string for datasource reference",
-                  "value": "{\n\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\t\"type\": \"grafana-googlesheets-datasource\",\n\t\t\t\t\t\t\t\t\t\"uid\": \"b1808c48-9fc9-4045-82d7-081781f8a553\"\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\"cacheDurationSeconds\": 300,\n\t\t\t\t\t\t\t\t\"spreadsheet\": \"spreadsheetID\",\n\t\t\t\t\t\t\t\t\"datasourceId\": 4,\n\t\t\t\t\t\t\t\t\"intervalMs\": 30000,\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 794\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"Z\",\n\t\t\t\t\t\t\t\t\"datasource\": \"old\",\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 10,\n\t\t\t\t\t\t\t\t\"timeRange\": {\n\t\t\t\t\t\t\t\t\t\"from\": \"100\",\n\t\t\t\t\t\t\t\t\t\"to\": \"200\"\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t],\n\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t}"
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "content": {

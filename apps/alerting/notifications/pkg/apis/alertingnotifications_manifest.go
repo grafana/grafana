@@ -20,18 +20,21 @@ import (
 )
 
 var (
-	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":true,"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"createReceiverIntegrationTestAlert":{"type":"object","required":["labels","annotations"],"properties":{"annotations":{"type":"object","additionalProperties":{"type":"string"}},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"additionalProperties":false},"createReceiverIntegrationTestIntegration":{"type":"object","required":["type","version","settings"],"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"type":"object","additionalProperties":{"type":"boolean"}},"settings":{"type":"object","additionalProperties":true},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
-	versionSchemaReceiverv0alpha1      app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaReceiverv0alpha1, &versionSchemaReceiverv0alpha1)
-	rawSchemaRoutingTreev0alpha1       = []byte(`{"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"Route":{"additionalProperties":false,"properties":{"active_time_intervals":{"items":{"type":"string"},"type":"array"},"continue":{"type":"boolean"},"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"matchers":{"items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"mute_time_intervals":{"items":{"type":"string"},"type":"array"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["continue"],"type":"object"},"RouteDefaults":{"additionalProperties":false,"properties":{"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"}},"required":["receiver"],"type":"object"},"RoutingTree":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"defaults":{"$ref":"#/components/schemas/RouteDefaults"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["defaults","routes"],"type":"object"}}`)
-	versionSchemaRoutingTreev0alpha1   app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaRoutingTreev0alpha1, &versionSchemaRoutingTreev0alpha1)
-	rawSchemaTemplateGroupv0alpha1     = []byte(`{"TemplateGroup":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TemplateKind":{"enum":["grafana","mimir"],"type":"string"},"spec":{"additionalProperties":false,"properties":{"content":{"type":"string"},"kind":{"$ref":"#/components/schemas/TemplateKind","default":"grafana"},"title":{"type":"string"}},"required":["title","content","kind"],"type":"object"}}`)
-	versionSchemaTemplateGroupv0alpha1 app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaTemplateGroupv0alpha1, &versionSchemaTemplateGroupv0alpha1)
-	rawSchemaTimeIntervalv0alpha1      = []byte(`{"Interval":{"additionalProperties":false,"properties":{"days_of_month":{"items":{"type":"string"},"type":"array"},"location":{"type":"string"},"months":{"items":{"type":"string"},"type":"array"},"times":{"items":{"$ref":"#/components/schemas/TimeRange"},"type":"array"},"weekdays":{"items":{"type":"string"},"type":"array"},"years":{"items":{"type":"string"},"type":"array"}},"type":"object"},"TimeInterval":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TimeRange":{"additionalProperties":false,"properties":{"end_time":{"type":"string"},"start_time":{"type":"string"}},"required":["start_time","end_time"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"name":{"type":"string"},"time_intervals":{"items":{"$ref":"#/components/schemas/Interval"},"type":"array"}},"required":["name","time_intervals"],"type":"object"}}`)
-	versionSchemaTimeIntervalv0alpha1  app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaTimeIntervalv0alpha1, &versionSchemaTimeIntervalv0alpha1)
+	rawSchemaInhibitionRulev0alpha1     = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
+	versionSchemaInhibitionRulev0alpha1 app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaInhibitionRulev0alpha1, &versionSchemaInhibitionRulev0alpha1)
+	rawSchemaReceiverv0alpha1           = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":true,"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"createReceiverIntegrationTestAlert":{"type":"object","required":["labels","annotations"],"properties":{"annotations":{"type":"object","additionalProperties":{"type":"string"}},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"additionalProperties":false},"createReceiverIntegrationTestIntegration":{"type":"object","required":["type","version","settings"],"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"type":"object","additionalProperties":{"type":"boolean"}},"settings":{"type":"object","additionalProperties":true},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
+	versionSchemaReceiverv0alpha1       app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaReceiverv0alpha1, &versionSchemaReceiverv0alpha1)
+	rawSchemaRoutingTreev0alpha1        = []byte(`{"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"Route":{"additionalProperties":false,"properties":{"active_time_intervals":{"items":{"type":"string"},"type":"array"},"continue":{"type":"boolean"},"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"matchers":{"items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"mute_time_intervals":{"items":{"type":"string"},"type":"array"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["continue"],"type":"object"},"RouteDefaults":{"additionalProperties":false,"properties":{"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"}},"required":["receiver"],"type":"object"},"RoutingTree":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"defaults":{"$ref":"#/components/schemas/RouteDefaults"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["defaults","routes"],"type":"object"}}`)
+	versionSchemaRoutingTreev0alpha1    app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaRoutingTreev0alpha1, &versionSchemaRoutingTreev0alpha1)
+	rawSchemaTemplateGroupv0alpha1      = []byte(`{"TemplateGroup":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TemplateKind":{"enum":["grafana","mimir"],"type":"string"},"spec":{"additionalProperties":false,"properties":{"content":{"type":"string"},"kind":{"$ref":"#/components/schemas/TemplateKind","default":"grafana"},"title":{"type":"string"}},"required":["title","content","kind"],"type":"object"}}`)
+	versionSchemaTemplateGroupv0alpha1  app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaTemplateGroupv0alpha1, &versionSchemaTemplateGroupv0alpha1)
+	rawSchemaTimeIntervalv0alpha1       = []byte(`{"Interval":{"additionalProperties":false,"properties":{"days_of_month":{"items":{"type":"string"},"type":"array"},"location":{"type":"string"},"months":{"items":{"type":"string"},"type":"array"},"times":{"items":{"$ref":"#/components/schemas/TimeRange"},"type":"array"},"weekdays":{"items":{"type":"string"},"type":"array"},"years":{"items":{"type":"string"},"type":"array"}},"type":"object"},"TimeInterval":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TimeRange":{"additionalProperties":false,"properties":{"end_time":{"type":"string"},"start_time":{"type":"string"}},"required":["start_time","end_time"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"name":{"type":"string"},"time_intervals":{"items":{"$ref":"#/components/schemas/Interval"},"type":"array"}},"required":["name","time_intervals"],"type":"object"}}`)
+	versionSchemaTimeIntervalv0alpha1   app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaTimeIntervalv0alpha1, &versionSchemaTimeIntervalv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -43,6 +46,14 @@ var appManifestData = app.ManifestData{
 			Name:   "v0alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "InhibitionRule",
+					Plural:     "InhibitionRules",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaInhibitionRulev0alpha1,
+				},
+
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
@@ -540,10 +551,11 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Receiver/v0alpha1":      v0alpha1.ReceiverKind(),
-	"RoutingTree/v0alpha1":   v0alpha1.RoutingTreeKind(),
-	"TemplateGroup/v0alpha1": v0alpha1.TemplateGroupKind(),
-	"TimeInterval/v0alpha1":  v0alpha1.TimeIntervalKind(),
+	"InhibitionRule/v0alpha1": v0alpha1.InhibitionRuleKind(),
+	"Receiver/v0alpha1":       v0alpha1.ReceiverKind(),
+	"RoutingTree/v0alpha1":    v0alpha1.RoutingTreeKind(),
+	"TemplateGroup/v0alpha1":  v0alpha1.TemplateGroupKind(),
+	"TimeInterval/v0alpha1":   v0alpha1.TimeIntervalKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -582,7 +594,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+	"v0alpha1|Receiver|test|POST": &v0alpha1.CreateReceiverIntegrationTestRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

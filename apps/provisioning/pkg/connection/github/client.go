@@ -50,22 +50,22 @@ type App struct {
 	// Owner represents the GH account/org owning the app
 	Owner string
 	// Permissions granted to the GitHub App
-	Permissions AppPermissions
+	Permissions Permissions
 }
-type AppPermission int
+type Permission int
 
 const (
-	AppPermissionNone AppPermission = iota
-	AppPermissionRead
-	AppPermissionWrite
+	PermissionNone Permission = iota
+	PermissionRead
+	PermissionWrite
 )
 
-// AppPermissions represents the permissions granted to a GitHub App installation
-type AppPermissions struct {
-	Contents     AppPermission
-	Metadata     AppPermission
-	PullRequests AppPermission
-	Webhooks     AppPermission
+// Permissions represents the permissions granted to a GitHub Apps and their installations.
+type Permissions struct {
+	Contents     Permission
+	Metadata     Permission
+	PullRequests Permission
+	Webhooks     Permission
 }
 
 // AppInstallation represents a Github App Installation.
@@ -74,6 +74,10 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
+	// Permissions granted to this installation.
+	// These may differ from App permissions if the installation owner has not yet accepted
+	// the App's updated permissions on GitHub.
+	Permissions Permissions
 }
 
 // InstallationToken represents a Github App Installation Access Token.
@@ -114,11 +118,11 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
 		Owner: app.GetOwner().GetLogin(),
-		Permissions: AppPermissions{
-			Contents:     toAppPermission(app.GetPermissions().GetContents()),
-			Metadata:     toAppPermission(app.GetPermissions().GetMetadata()),
-			PullRequests: toAppPermission(app.GetPermissions().GetPullRequests()),
-			Webhooks:     toAppPermission(app.GetPermissions().GetRepositoryHooks()),
+		Permissions: Permissions{
+			Contents:     toPermission(app.GetPermissions().GetContents()),
+			Metadata:     toPermission(app.GetPermissions().GetMetadata()),
+			PullRequests: toPermission(app.GetPermissions().GetPullRequests()),
+			Webhooks:     toPermission(app.GetPermissions().GetRepositoryHooks()),
 		},
 	}, nil
 }
@@ -149,17 +153,23 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
+		Permissions: Permissions{
+			Contents:     toPermission(installation.GetPermissions().GetContents()),
+			Metadata:     toPermission(installation.GetPermissions().GetMetadata()),
+			PullRequests: toPermission(installation.GetPermissions().GetPullRequests()),
+			Webhooks:     toPermission(installation.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 
-func toAppPermission(permissions string) AppPermission {
+func toPermission(permissions string) Permission {
 	switch permissions {
 	case "read":
-		return AppPermissionRead
+		return PermissionRead
 	case "write":
-		return AppPermissionWrite
+		return PermissionWrite
 	default:
-		return AppPermissionNone
+		return PermissionNone
 	}
 }
 

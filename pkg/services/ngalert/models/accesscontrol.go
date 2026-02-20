@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	ScopeReceiversRoot = "receivers"
-	AlertRolesGroup    = "Alerting"
+	ScopeReceiversRoot       = "receivers"
+	ScopeInhibitionRulesRoot = "inhibition-rules"
+	AlertRolesGroup          = "Alerting"
 
 	PermissionView  ReceiverPermission = "View"
 	PermissionEdit  ReceiverPermission = "Edit"
@@ -21,8 +22,10 @@ const (
 )
 
 var (
-	ScopeReceiversProvider = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
-	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeReceiversProvider       = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
+	ScopeReceiversAll            = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeInhibitionRulesProvider = accesscontrol.NewScopeProvider(ScopeInhibitionRulesRoot)
+	ScopeInhibitionRulesAll      = ScopeInhibitionRulesProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {

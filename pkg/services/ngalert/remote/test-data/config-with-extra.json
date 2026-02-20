@@ -35,7 +35,7 @@
       {
         "extra_template": "{{ define \"my_message\" }}TEST{{ end }}"
       },
-      "alertmanager_config": "{\"receivers\":[{\"webhook_configs\":[{\"url\":\"http://localhost\"}],\"name\":\"webhook\"}],\"route\":{\"receiver\":\"webhook\"}}"
+      "alertmanager_config": "{\"receivers\":[{\"webhook_configs\":[{\"url\":\"http://localhost\"}],\"name\":\"webhook\"}],\"route\":{\"receiver\":\"webhook\"},\"inhibit_rules\":[{\"source_matchers\":[\"alertname=SourceAlert\"],\"target_matchers\":[\"alertname=TargetAlert\"],\"equal\":[\"instance\"]}]}"
     }
   ]
 }
