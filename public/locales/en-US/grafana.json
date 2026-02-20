@@ -5414,9 +5414,6 @@
       "title": "Edit filters",
       "value": "Value"
     },
-    "filters-verview": {
-      "title": "Edit filters"
-    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Send custom feedback",
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
