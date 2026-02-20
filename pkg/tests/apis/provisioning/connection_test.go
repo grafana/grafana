@@ -2553,7 +2553,7 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 // createInstallationWithPermissions creates a GitHub installation with specific permissions
 func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
 	installation := &github.Installation{
-		ID:   github.Ptr(id),
+		ID: github.Ptr(id),
 		Permissions: &github.InstallationPermissions{
 			Contents:        github.Ptr("write"),
 			Metadata:        github.Ptr("read"),
