@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"testing"
 	"time"
 
@@ -106,7 +105,7 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 	return storageBackend.WriteEvent(ctx, event)
 }
 
-func TestIntegrationGarbageCollectionBatch(t *testing.T) {
+func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	gcConfig := GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           false,
@@ -154,25 +153,21 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Equal(t, 0, len(listResp.Items))
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // Everything eligible for deletion
-		rowsDeleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100, "group/resource/", "group/resource0")
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsDeleted)
-		require.Equal(t, int64(2), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource1/\d+~created~folderuid$`), nextEndKey)
 
-		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
-			Source: resourcepb.ListRequest_HISTORY,
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: "namespace",
-					Group:     "group",
-					Resource:  "resource",
-				},
-			},
+		// count how many history entries there are after GC runs - should be 0
+		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
 		})
-		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
-		require.Len(t, historyResp.Items, 0)
+		count := 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 0, count)
 	})
 
 	t.Run("will only garbage collect eligible resources before cutoff", func(t *testing.T) {
@@ -209,11 +204,8 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := rv2 + 1
-		rowsDeleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100, "group/resource/", "group/resource0")
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsDeleted)
-		require.Equal(t, int64(4), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource1/\d+~created~folderuid$`), nextEndKey)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_HISTORY,
@@ -284,11 +276,8 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, rowsProcessed, nexEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100, "group/resource/", "group/resource0")
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsDeleted)
-		require.Equal(t, int64(2), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource1/\d+~created~folderuid$`), nexEndKey)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_HISTORY,
@@ -321,7 +310,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Len(t, trashResp.Items, 1)
 	})
 
-	// TODO: review this
 	t.Run("will limit candidate batch size", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
@@ -371,11 +359,9 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		// require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 1, "group/resource/", "group/resource0")
+		b.garbageCollection.BatchSize = 1
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsDeleted)
-		require.Equal(t, int64(1), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource2/\d+~created~folderuid$`), nextEndKey)
 
 		trashResp, err = server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_TRASH,
@@ -425,11 +411,8 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100, "group/resource/", "group/resource0")
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsDeleted) // the deleted and the created event for resource1 should be deleted, but not the recreated one
-		require.Equal(t, int64(3), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource1/\d+~created~folderuid$`), nextEndKey)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_HISTORY,
