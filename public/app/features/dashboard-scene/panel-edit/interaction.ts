@@ -5,5 +5,4 @@ export const INTERACTION_ITEM = {
   CHANGE_TAB: 'change_tab', // for ref - PanelVizTypePicker
   SEARCH: 'search', // for ref - PanelVizTypePicker
   BACK_BUTTON: 'back_button', // for ref - PanelVizTypePicker
-  PANEL_SUGGESTION_APPLIED: 'panel_suggestion_applied', // for ref - PanelOptionsPane
 };
