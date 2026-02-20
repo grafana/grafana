@@ -68,7 +68,7 @@ jobs:
 
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
         with:
           repo_secrets: |
             OPENAI_API_KEY=community-openai:key
