@@ -1108,11 +1108,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/TimeSeries/TimeSeries.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/TimeSeries/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
