@@ -2,8 +2,11 @@ package builder_test
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -75,6 +79,49 @@ func TestAddPostStartHooks(t *testing.T) {
 					require.True(t, ok)
 				}
 			}
+		})
+	}
+}
+
+func TestRedirection(t *testing.T) {
+	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte(r.URL.Path))
+		require.NoError(t, err)
+	})
+	handler := filters.WithPathRewriters(mockHandler, builder.PathRewriters)
+	tests := []struct {
+		name   string
+		url    string
+		expect string
+	}{
+		{
+			name:   "query to datasource",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/connections",
+		}, {
+			name:   "query to datasource (with name hack)",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/name",
+		}, {
+			name:   "query sqlschemas",
+			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/sqlschemas",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
+		}, {
+			name:   "name hack in datasource service",
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query",
+			expect: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/name", // hack :(
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", tt.url, nil)
+			assert.NoError(t, err)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+			assert.Equal(t, http.StatusOK, rr.Code)
+			assert.Equal(t, tt.expect, rr.Body.String())
 		})
 	}
 }
