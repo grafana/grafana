@@ -123,34 +123,10 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   return { status: 'idle' };
 }
 
-// Map field to step for form errors
-const FIELD_TO_STEP: Record<string, WizardStep> = {
-  'repository.token': 'authType',
-  'repository.tokenUser': 'authType',
-  'repository.url': 'authType',
-  'repository.branch': 'connection',
-  'repository.path': 'connection',
-  'repository.title': 'bootstrap',
-  'repository.sync.target': 'bootstrap',
-  'repository.sync.intervalSeconds': 'bootstrap',
-};
-
-const STEP_ORDER: WizardStep[] = ['authType', 'connection', 'bootstrap', 'synchronize', 'finish'];
+const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url']);
 
 export function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
   const formErrors = getFormErrors(fieldErrors);
-
-  let earliestIndex = STEP_ORDER.length;
-  for (const [formPath] of formErrors) {
-    const step = FIELD_TO_STEP[formPath];
-    if (step) {
-      const idx = STEP_ORDER.indexOf(step);
-      if (idx < earliestIndex) {
-        earliestIndex = idx;
-      }
-    }
-  }
-
-  // Default to 'authType' (first step) if no mapping found
-  return earliestIndex < STEP_ORDER.length ? STEP_ORDER[earliestIndex] : 'authType';
+  // If any of the form errors are in the auth type fields, return the auth type step, otherwise return the connection step
+  return formErrors.some(([path]) => AUTH_TYPE_FIELDS.has(path)) ? 'authType' : 'connection';
 }
