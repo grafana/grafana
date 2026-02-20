@@ -50,17 +50,17 @@ describe('getSyncStepStatus', () => {
   });
 
   it('returns running when loading', () => {
-    const result = getSyncStepStatus({ ...defaultState, isLoading: true });
+    const result = getSyncStepStatus({ ...defaultState, isLoading: true, fieldErrors: undefined });
     expect(result.status).toBe('running');
   });
 
   it('returns running when health status not ready', () => {
-    const result = getSyncStepStatus({ ...defaultState, healthStatusNotReady: true });
+    const result = getSyncStepStatus({ ...defaultState, healthStatusNotReady: true, fieldErrors: undefined });
     expect(result.status).toBe('running');
   });
 
   it('returns error when query has error', () => {
-    const result = getSyncStepStatus({ ...defaultState, hasError: true });
+    const result = getSyncStepStatus({ ...defaultState, hasError: true, fieldErrors: undefined });
     expect(result.status).toBe('error');
     expect(result).toHaveProperty('error');
   });
@@ -70,7 +70,7 @@ describe('getSyncStepStatus', () => {
     const result = getSyncStepStatus({
       ...defaultState,
       isUnhealthy: true,
-      hasFieldErrors: true,
+      fieldErrors: [{ field: 'repository.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
       goToStep,
     });
     expect(result.status).toBe('error');
@@ -87,6 +87,7 @@ describe('getSyncStepStatus', () => {
       ...defaultState,
       isUnhealthy: true,
       repositoryHealthMessages: ['Token expired'],
+      fieldErrors: undefined,
     });
     expect(result.status).toBe('error');
     expect(result).not.toHaveProperty('action');
@@ -96,7 +97,7 @@ describe('getSyncStepStatus', () => {
   });
 
   it('returns idle when everything is healthy', () => {
-    const result = getSyncStepStatus(defaultState);
+    const result = getSyncStepStatus({ ...defaultState, fieldErrors: undefined });
     expect(result.status).toBe('idle');
   });
 
@@ -105,6 +106,7 @@ describe('getSyncStepStatus', () => {
       ...defaultState,
       isLoading: true,
       hasError: true,
+      fieldErrors: undefined,
       isUnhealthy: true,
     });
     expect(result.status).toBe('running');
@@ -115,7 +117,7 @@ describe('getSyncStepStatus', () => {
       ...defaultState,
       hasError: true,
       isUnhealthy: true,
-      hasFieldErrors: true,
+      fieldErrors: [{ field: 'repository.token', detail: 'Token is invalid', type: 'FieldValueInvalid' }],
     });
     expect(result.status).toBe('error');
     expect(result).not.toHaveProperty('action');
