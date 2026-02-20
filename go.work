@@ -27,6 +27,7 @@ use (
 	./apps/scope
 	./apps/secret
 	./apps/shorturl
+	./apps/stalebot
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver
