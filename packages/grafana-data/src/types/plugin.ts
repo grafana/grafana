@@ -104,6 +104,9 @@ export interface PluginMeta<T extends KeyValue = {}> {
 
   // Paths to the translations for the plugin
   translations?: Record<string, string>;
+  
+  // Category for organizing plugins (datasources, apps, etc.)
+  category?: string;
 }
 
 interface PluginDependencyInfo {
