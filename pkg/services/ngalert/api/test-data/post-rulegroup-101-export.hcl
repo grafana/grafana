@@ -173,4 +173,49 @@ resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
       from   = "condition"
     }
   }
+  rule {
+    name = "recording rule with target"
+
+    data {
+      ref_id = "query"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "000000002"
+      model          = "{\"expr\":\"rate(http_requests_total[5m])\",\"hide\":false,\"interval\":\"\",\"intervalMs\":1000,\"legendFormat\":\"\",\"maxDataPoints\":100,\"refId\":\"query\"}"
+    }
+    data {
+      ref_id = "reduced"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "__expr__"
+      model          = "{\"expression\":\"query\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"reducer\":\"mean\",\"refId\":\"reduced\",\"type\":\"reduce\"}"
+    }
+    data {
+      ref_id = "condition"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "__expr__"
+      model          = "{\"expression\":\"$reduced > 5\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"refId\":\"condition\",\"type\":\"math\"}"
+    }
+
+    is_paused = false
+
+    record {
+      metric                = "http_requests_rate"
+      from                  = "condition"
+      target_datasource_uid = "000000003"
+    }
+  }
 }
