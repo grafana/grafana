@@ -188,6 +188,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	configProviderExtras,
+	withOTelSet,
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.

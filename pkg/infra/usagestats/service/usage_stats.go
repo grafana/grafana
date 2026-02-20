@@ -14,8 +14,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -171,7 +173,7 @@ var sendUsageStats = func(uss *UsageStats, ctx context.Context, data *bytes.Buff
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	uss.tracer.Inject(ctx, req.Header, span)
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 	resp, err := client.Do(req)
 	if err != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf("failed to send usage stats: %v", err))

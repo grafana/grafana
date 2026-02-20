@@ -325,9 +325,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	kvStore := kvstore.ProvideService(sqlStore)
+	tracer := otelTracer()
 	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	bundleregistryService := bundleregistry.ProvideService()
-	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
+	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracer, accessControl, bundleregistryService)
 	if err != nil {
 		return nil, err
 	}
@@ -394,9 +395,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	validate := pipeline.ProvideValidationStage(pluginManagementCfg, validation, angularinspectorService)
-	tracer := otelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
-	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
+	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracer)
 	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
@@ -713,14 +713,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	grafanaService, err := updatemanager.ProvideGrafanaService(cfg, tracingService)
+	grafanaService, err := updatemanager.ProvideGrafanaService(cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
 	managedpluginsNoop := managedplugins.NewNoop()
 	preinstallImpl := pluginchecker.ProvidePreinstall(cfg)
 	plugincheckerService := pluginchecker.ProvideService(managedpluginsNoop, noop, preinstallImpl)
-	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracingService, featureToggles, plugincheckerService)
+	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracer, featureToggles, plugincheckerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1016,9 +1016,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	kvStore := kvstore.ProvideService(sqlStore)
+	tracer := otelTracer()
 	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	bundleregistryService := bundleregistry.ProvideService()
-	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
+	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracer, accessControl, bundleregistryService)
 	if err != nil {
 		return nil, err
 	}
@@ -1085,9 +1086,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	validate := pipeline.ProvideValidationStage(pluginManagementCfg, validation, angularinspectorService)
-	tracer := otelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
-	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
+	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracer)
 	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
@@ -1406,14 +1406,14 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	grafanaService, err := updatemanager.ProvideGrafanaService(cfg, tracingService)
+	grafanaService, err := updatemanager.ProvideGrafanaService(cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
 	managedpluginsNoop := managedplugins.NewNoop()
 	preinstallImpl := pluginchecker.ProvidePreinstall(cfg)
 	plugincheckerService := pluginchecker.ProvideService(managedpluginsNoop, noop, preinstallImpl)
-	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracingService, featureToggles, plugincheckerService)
+	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracer, featureToggles, plugincheckerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1708,9 +1708,10 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	providerProvider := provider.ProvideEncryptionProvider()
 	kvStore := kvstore.ProvideService(sqlStore)
 	routeRegisterImpl := routing.ProvideRegister()
+	tracer := otelTracer()
 	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	bundleregistryService := bundleregistry.ProvideService()
-	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
+	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracer, accessControl, bundleregistryService)
 	if err != nil {
 		return Runner{}, err
 	}
@@ -1743,7 +1744,6 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	if err != nil {
 		return Runner{}, err
 	}
-	tracer := otelTracer()
 	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegisterer()
 	globalDataKeyStorage, err := encryption.ProvideGlobalDataKeyStorage(databaseDatabase, tracer, registerer)
