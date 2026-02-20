@@ -187,7 +187,7 @@ describe('PanelDataTransformationsTab', () => {
       jest.mocked(reportInteraction).mockClear();
     });
 
-    it('reports grafana_panel_transformation_deleted when user deletes a transformation', async () => {
+    it('reports grafana_panel_transformations_clicked with action remove when user deletes a transformation', async () => {
       const onChangeTransformation = jest.fn();
       const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], onChangeTransformation);
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
@@ -199,13 +199,15 @@ describe('PanelDataTransformationsTab', () => {
       await userEvent.click(confirmButton);
 
       expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformation_deleted', {
-        transformation_id: 'calculateField',
-        transformations_remaining: 0,
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        type: 'calculateField',
+        action: 'remove',
+        total_transformations: 0,
       });
     });
 
-    it('reports transformations_remaining when user deletes one of multiple transformations', async () => {
+    it('reports total_transformations when user deletes one of multiple transformations', async () => {
       const onChangeTransformation = jest.fn();
       const modelMock = createModelMock(
         mockData,
@@ -223,13 +225,15 @@ describe('PanelDataTransformationsTab', () => {
       const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
       await userEvent.click(confirmButton);
 
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformation_deleted', {
-        transformation_id: 'calculateField',
-        transformations_remaining: 1,
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        type: 'calculateField',
+        action: 'remove',
+        total_transformations: 1,
       });
     });
 
-    it('reports grafana_panel_transformations_deleted_all when user deletes all transformations', async () => {
+    it('reports grafana_panel_transformations_clicked with action delete_all when user deletes all transformations', async () => {
       const onChangeTransformation = jest.fn();
       const modelMock = createModelMock(
         mockData,
@@ -248,8 +252,10 @@ describe('PanelDataTransformationsTab', () => {
       await userEvent.click(confirmButton);
 
       expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_deleted_all', {
-        transformations_removed: 2,
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        action: 'delete_all',
+        total_transformations: 0,
       });
     });
   });
