@@ -1,6 +1,6 @@
 ---
 description: Configure the Knowledge Graph stack using Terraform
-menuTitle: Knowledge Graph stack
+menuTitle: Configure the Knowledge Graph stack
 title: Configure the Knowledge Graph stack using Terraform
 weight: 150
 keywords:
@@ -28,7 +28,16 @@ Before you begin, ensure you have the following:
 - [Knowledge Graph enabled](/docs/grafana-cloud/knowledge-graph/get-started/) on your Grafana Cloud stack
 - A Cloud Access Policy with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`
 
-## Create required tokens
+## Dataset types
+
+The following dataset types are available:
+
+- **`kubernetes`**: Kubernetes metrics. Requires [Kubernetes Monitoring](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/) to be enabled on your stack.
+- **`otel`**: Application Observability metrics. Requires [Application Observability](/docs/grafana-cloud/monitor-applications/application-observability/) to be enabled on your stack.
+- **`prometheus`**: Standard Prometheus metrics.
+- **`aws`**: Amazon Web Services metrics.
+
+## Create the required tokens
 
 Before you configure the Knowledge Graph stack, create the Cloud Access Policy and Grafana Service Account tokens that the resource requires.
 
@@ -103,13 +112,13 @@ resource "grafana_asserts_stack" "main" {
 
 When you apply this configuration, the resource:
 
-1. Provisions API tokens for GCom, Mimir, and the assertion detector
+1. Provisions API tokens for Grafana Cloud, Mimir, and the assertion detector
 1. Auto-detects available datasets based on your stack's metrics
 1. Enables the stack with the detected datasets
 
-## Manual dataset configuration
+## Configure the dataset manually
 
-Use manual dataset configuration when your metrics use non-standard label names, for example a custom environment label. Each `dataset` block configures one dataset type.
+Use manual configuration when your metrics use non-standard label names, for example a custom environment label. Each `dataset` block configures one dataset type.
 
 ```terraform
 resource "grafana_asserts_stack" "manual" {
@@ -134,7 +143,7 @@ resource "grafana_asserts_stack" "manual" {
 When you specify one or more `dataset` blocks, auto-detection is skipped. You must define all datasets you want to configure.
 {{< /admonition >}}
 
-## Multi-dataset configuration with filters
+## Configure multiple datasets with filters
 
 Configure multiple dataset types with custom label mappings and metric filters:
 
@@ -172,15 +181,6 @@ resource "grafana_asserts_stack" "multi_dataset" {
 }
 ```
 
-## Dataset types
-
-The following dataset types are available:
-
-- **`kubernetes`**: Kubernetes metrics. Requires [Kubernetes Monitoring](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/) to be enabled on your stack.
-- **`otel`**: Application Observability metrics. Requires [Application Observability](/docs/grafana-cloud/monitor-applications/application-observability/) to be enabled on your stack.
-- **`prometheus`**: Standard Prometheus metrics.
-- **`aws`**: Amazon Web Services metrics.
-
 ## Resource reference
 
 ### `grafana_asserts_stack`
@@ -191,7 +191,7 @@ Manage the Knowledge Graph stack configuration through the Grafana API. This res
 
 | Name                        | Type           | Required | Description                                                                                                                                                                                                             |
 | --------------------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloud_access_policy_token` | `string`       | Yes      | A Grafana Cloud Access Policy token with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`. Used for GCom API access, Mimir authentication, and assertion detector webhook authentication. Sensitive. |
+| `cloud_access_policy_token` | `string`       | Yes      | A Grafana Cloud Access Policy token with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`. Used for Grafana Cloud API access, Mimir authentication, and assertion detector webhook authentication. Sensitive. |
 | `grafana_token`             | `string`       | No       | A Grafana Service Account token for installing dashboards and Grafana Managed Alerts. Create using `grafana_cloud_stack_service_account_token`. Sensitive.                                                              |
 | `dataset`                   | `list(object)` | No       | Manual dataset configuration. When specified, auto-detection is skipped. Refer to [dataset block](#dataset-block) for details.                                                                                          |
 
@@ -262,7 +262,7 @@ resource "grafana_asserts_stack" "example" {
 
 - Create a dedicated Cloud Access Policy for the Knowledge Graph stack with only the required scopes
 - Use separate Service Accounts for different purposes rather than sharing a single admin token
-- Rotate tokens regularly and use Terraform's sensitive variable handling to avoid exposing tokens in logs
+- Rotate tokens regularly and use sensitive variable handling in Terraform to avoid exposing tokens in logs
 - Store tokens in a secret management system and reference them through Terraform variables
 
 ### Dataset configuration
@@ -276,7 +276,7 @@ resource "grafana_asserts_stack" "example" {
 
 - Use filter groups when your metrics use non-standard label names
 - Match your `env_label` and `site_label` values to the actual label names in your Prometheus metrics
-- Use regex operators (`=~`, `!~`) in filters for flexible value matching across regions or environments
+- Use regular expression operators (`=~`, `!~`) in filters for flexible value matching across regions or environments
 - Keep filter configurations consistent across datasets for predictable behavior
 
 ## Validation
