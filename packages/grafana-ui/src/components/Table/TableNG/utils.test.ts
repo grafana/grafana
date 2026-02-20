@@ -52,6 +52,7 @@ import {
   displayJsonValue,
   prepareSparklineValue,
   buildInspectValue,
+  applyFilter,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1444,6 +1445,102 @@ describe('TableNG utils', () => {
   });
 
   describe('applySort', () => {
+    it('returns the same records if no sort columns are provided', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2, 1] },
+          { name: 'value', values: [30, 20, 10] },
+        ],
+      });
+      const sorted = applySort(frameToRecords(frame), frame.fields, [], getColumnTypes(frame.fields), false);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 30 },
+        { time: 2, value: 20 },
+        { time: 1, value: 10 },
+      ]);
+    });
+
+    it('sorts the records by the sort columns', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2, 2] },
+          { name: 'value', values: [10, 20, 30, 40] },
+          { name: 'value2', values: [40, 20, 40, 30] },
+        ],
+      });
+      const sortColumns: SortColumn[] = [
+        { columnKey: 'time', direction: 'ASC' },
+        { columnKey: 'value2', direction: 'DESC' },
+      ];
+      const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 10, value2: 40 },
+        { time: 1, value: 20, value2: 20 },
+        { time: 2, value: 30, value2: 40 },
+        { time: 2, value: 40, value2: 30 },
+      ]);
+    });
+
+    it('does not mutate the original records', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 3, 2] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+      const rows = frameToRecords(frame);
+      const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
+      const sorted = applySort(rows, frame.fields, sortColumns, getColumnTypes(frame.fields), false);
+      expect(rows).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 3, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 2, value: 30 },
+        { time: 3, value: 20 },
+      ]);
+    });
+
+    it('handles nested frames', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2] },
+          { name: 'value', values: [30, 20, 10] },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: [
+              [createDataFrame({ fields: [{ name: 'value2', values: [10, 30] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [20, 40] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [40, 30] }] })],
+            ],
+          },
+        ],
+      });
+      const sorted = applySort(
+        frameToRecords(frame, 'nested'),
+        frame.fields,
+        [
+          { columnKey: 'value2', direction: 'DESC' },
+          { columnKey: 'value', direction: 'ASC' },
+        ],
+        getColumnTypes(frame.fields),
+        true
+      );
+
+      // the sort method won't sort the values in the nested data frame's "fields" here. useNestedRows calls applySort on the nested rows.
+      expect(sorted).toMatchObject([
+        { time: 2, value: 10 },
+        { data: { fields: [{ name: 'value2', values: [40, 30] }] } },
+        { time: 1, value: 20 },
+        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
+        { time: 1, value: 30 },
+        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
+      ]);
+    });
+
     it('sorts by nanos', () => {
       const frame = createDataFrame({
         fields: [
@@ -1454,12 +1551,183 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
-      const records = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
+      const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
-      expect(records).toMatchObject([
+      expect(sorted).toMatchObject([
         { time: 1, value: 20 },
         { time: 1, value: 10 },
         { time: 2, value: 30 },
+      ]);
+    });
+  });
+
+  describe('applyFilter', () => {
+    it('returns the same records if no filter columns are provided', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+      const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+    });
+
+    it('filters the records by the filter columns', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time' } },
+        frame.fields,
+        false
+      );
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+      ]);
+    });
+
+    it('filters the records by the filter columns with a nested frame', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: [
+              [createDataFrame({ fields: [{ name: 'value2', values: [10, 30] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [20, 40] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [40, 30] }] })],
+            ],
+          },
+        ],
+      });
+      const records = frameToRecords(frame, 'nested');
+      const filtered = applyFilter(
+        records,
+        {
+          time: { filteredSet: new Set(['1']), displayName: 'time' },
+          value2: { filteredSet: new Set(['10']), displayName: 'value2' },
+        },
+        frame.fields,
+        true
+      );
+
+      // the filter method won't filter the values in the nested data frame's "fields" here. useNestedRows calls applyFilter on the nested rows.
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
+        { time: 1, value: 20 },
+        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
+      ]);
+    });
+
+    it('filters the records by the filter columns with a nested frame and a parent index', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame, 'nested', 3);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
+        frame.fields,
+        false
+      );
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+      ]);
+
+      // using a parent index that doesn't match the rows in the set, the rows should not be filtered.
+      const filtered2 = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 2 } },
+        frame.fields,
+        false
+      );
+      expect(filtered2).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+    });
+
+    it('does not mutate the original records', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time' } },
+        frame.fields,
+        false
+      );
+      expect(records).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
       ]);
     });
   });

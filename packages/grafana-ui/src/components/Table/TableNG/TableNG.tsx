@@ -1022,7 +1022,7 @@ const renderRowFactory = (
 
     const isExpanded = expandedRows.has(row.__index);
     // Don't render non expanded child rows
-    if (row.__depth > 0 && !expandedRows.has(row.__index)) {
+    if (row.__depth > 0 && !isExpanded) {
       return null;
     }
 
