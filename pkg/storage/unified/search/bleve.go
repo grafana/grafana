@@ -2080,6 +2080,10 @@ func (s *batchAuthzSearcher) initPullIterator() {
 }
 
 // parseDocInfo extracts document information needed for authorization
+// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
+// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
+// index it becomes a binary encoded number that has some other internal meaning. Using ExternalID() will get the
+// correct doc ID regardless of the index type.
 func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, bool) {
 	// Get external ID
 	externalID, err := s.indexReader.ExternalID(doc.IndexInternalID)
