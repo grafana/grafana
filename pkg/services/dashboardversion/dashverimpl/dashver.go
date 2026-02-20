@@ -244,7 +244,14 @@ func (s *Service) listDashboardVersionsThroughK8s(
 	fieldSelector := "metadata.name=" + dashboardUID
 
 	// We need to fetch (start + limit) items to be able to skip the first 'start' items
-	// and return 'limit' items after that offset
+	// and return 'limit' items after that offset.
+	//
+	// Note: This implementation fetches items in memory and then slices them, which works well
+	// for typical use cases (small offsets, < 100 versions per dashboard), but may be inefficient
+	// for dashboards with many versions (>1000) and large offset values.
+	// K8s doesn't support native offset pagination - it only supports token-based pagination
+	// (Limit + Continue). An alternative would be to skip pages using Continue tokens, but this
+	// adds complexity for minimal practical benefit given typical dashboard version counts.
 	totalToFetch := start + limit
 
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{

@@ -3,6 +3,7 @@ package dashverimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -477,88 +478,136 @@ func TestListDashboardVersions(t *testing.T) {
 	})
 
 	t.Run("List should respect start parameter to skip versions", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
-		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures()
+		// Helper to create a version object
+		createVersion := func(generation int64) unstructured.Unstructured {
+			return unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{
+					"name":            "uid",
+					"resourceVersion": fmt.Sprintf("%d", 10+generation),
+					"generation":      generation,
+					"labels": map[string]any{
+						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+				},
+				"spec": map[string]any{},
+			}}
+		}
 
-		dashboardService.On("GetDashboardUIDByID", mock.Anything,
-			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
-			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+		// All available versions (5, 4, 3, 2, 1) in descending order
+		allVersions := []unstructured.Unstructured{
+			createVersion(5),
+			createVersion(4),
+			createVersion(3),
+			createVersion(2),
+			createVersion(1),
+		}
 
-		// Create 5 versions (5, 4, 3, 2, 1) in descending order
-		allVersions := &unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{
-				{Object: map[string]any{
-					"metadata": map[string]any{
-						"name":            "uid",
-						"resourceVersion": "15",
-						"generation":      int64(5),
-						"labels": map[string]any{
-							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
-						},
-					},
-					"spec": map[string]any{},
-				}},
-				{Object: map[string]any{
-					"metadata": map[string]any{
-						"name":            "uid",
-						"resourceVersion": "14",
-						"generation":      int64(4),
-						"labels": map[string]any{
-							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
-						},
-					},
-					"spec": map[string]any{},
-				}},
-				{Object: map[string]any{
-					"metadata": map[string]any{
-						"name":            "uid",
-						"resourceVersion": "13",
-						"generation":      int64(3),
-						"labels": map[string]any{
-							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
-						},
-					},
-					"spec": map[string]any{},
-				}},
-				{Object: map[string]any{
-					"metadata": map[string]any{
-						"name":            "uid",
-						"resourceVersion": "12",
-						"generation":      int64(2),
-						"labels": map[string]any{
-							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
-						},
-					},
-					"spec": map[string]any{},
-				}},
-				{Object: map[string]any{
-					"metadata": map[string]any{
-						"name":            "uid",
-						"resourceVersion": "11",
-						"generation":      int64(1),
-						"labels": map[string]any{
-							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
-						},
-					},
-					"spec": map[string]any{},
-				}},
+		tests := []struct {
+			name             string
+			start            int
+			limit            int
+			k8sReturnsCount  int   // how many items K8s returns (will be min(start+limit, 5))
+			expectedVersions []int // expected version numbers in order
+			expectedCount    int
+		}{
+			{
+				name:             "no offset, get first 2 versions",
+				start:            0,
+				limit:            2,
+				k8sReturnsCount:  2, // K8s returns 2 items (0+2)
+				expectedVersions: []int{5, 4},
+				expectedCount:    2,
+			},
+			{
+				name:             "offset by 2, get next 2 versions",
+				start:            2,
+				limit:            2,
+				k8sReturnsCount:  4, // K8s returns 4 items (2+2)
+				expectedVersions: []int{3, 2},
+				expectedCount:    2,
+			},
+			{
+				name:             "offset by 1, get next 3 versions",
+				start:            1,
+				limit:            3,
+				k8sReturnsCount:  4, // K8s returns 4 items (1+3)
+				expectedVersions: []int{4, 3, 2},
+				expectedCount:    3,
+			},
+			{
+				name:             "offset equals total items, return empty",
+				start:            5,
+				limit:            2,
+				k8sReturnsCount:  5, // K8s returns all 5 items (5+2 requested but only 5 exist)
+				expectedVersions: []int{},
+				expectedCount:    0,
+			},
+			{
+				name:             "offset exceeds total items, return empty",
+				start:            10,
+				limit:            2,
+				k8sReturnsCount:  5, // K8s returns all 5 items (10+2 requested but only 5 exist)
+				expectedVersions: []int{},
+				expectedCount:    0,
+			},
+			{
+				name:             "get all versions",
+				start:            0,
+				limit:            5,
+				k8sReturnsCount:  5, // K8s returns all 5 items (0+5)
+				expectedVersions: []int{5, 4, 3, 2, 1},
+				expectedCount:    5,
+			},
+			{
+				name:             "offset at end, get last version",
+				start:            4,
+				limit:            1,
+				k8sReturnsCount:  5, // K8s returns all 5 items (4+1)
+				expectedVersions: []int{1},
+				expectedCount:    1,
+			},
+			{
+				name:             "offset by 3, limit exceeds remaining items",
+				start:            3,
+				limit:            5,
+				k8sReturnsCount:  5, // K8s returns all 5 items (3+5 requested but only 5 exist)
+				expectedVersions: []int{2, 1},
+				expectedCount:    2,
 			},
 		}
 
-		// Query with start=2, limit=2 should skip first 2 versions and return versions 3, 2
-		query := dashver.ListDashboardVersionsQuery{DashboardID: 42, Start: 2, Limit: 2}
-		mockCli.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(allVersions, nil).Once()
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				dashboardService := dashboards.NewFakeDashboardService(t)
+				dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+				mockCli := new(client.MockK8sHandler)
+				dashboardVersionService.k8sclient = mockCli
 
-		res, err := dashboardVersionService.List(context.Background(), &query)
-		require.Nil(t, err)
-		require.Equal(t, 2, len(res.Versions))
-		// After skipping the first 2 versions (5 and 4), we should get versions 3 and 2
-		require.Equal(t, 3, res.Versions[0].Version)
-		require.Equal(t, 2, res.Versions[1].Version)
+				dashboardService.On("GetDashboardUIDByID", mock.Anything,
+					mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+					Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+
+				query := dashver.ListDashboardVersionsQuery{DashboardID: 42, Start: tt.start, Limit: tt.limit}
+				mockCli.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
+
+				// Mock K8s to return the number of items specified by k8sReturnsCount
+				// This simulates K8s returning items up to the requested limit or all available items
+				k8sResponse := &unstructured.UnstructuredList{
+					Items: allVersions[:tt.k8sReturnsCount],
+				}
+				mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(k8sResponse, nil).Once()
+
+				res, err := dashboardVersionService.List(context.Background(), &query)
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedCount, len(res.Versions), "unexpected number of versions returned")
+
+				// Verify the version numbers match expectations
+				for i, expectedVersion := range tt.expectedVersions {
+					require.Equal(t, expectedVersion, res.Versions[i].Version,
+						"version at index %d should be %d", i, expectedVersion)
+				}
+			})
+		}
 	})
 }
 
