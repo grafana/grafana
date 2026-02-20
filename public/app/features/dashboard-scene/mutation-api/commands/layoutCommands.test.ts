@@ -7,7 +7,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { MutationExecutor } from '../MutationExecutor';
+import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutableDashboardScene, MutationResult } from '../types';
 
 // Mock the edit-pane actions so that perform() is called synchronously
@@ -214,7 +214,7 @@ describe('Layout mutation commands', () => {
   describe('ADD_ROW', () => {
     it('adds a row to a RowsLayout', async () => {
       const scene = buildRowsScene(['Existing']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result: MutationResult = await executor.execute({
         type: 'ADD_ROW',
@@ -234,7 +234,7 @@ describe('Layout mutation commands', () => {
 
     it('inserts a row at a specific position', async () => {
       const scene = buildRowsScene(['First', 'Third']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -254,7 +254,7 @@ describe('Layout mutation commands', () => {
   describe('REMOVE_ROW', () => {
     it('removes a row by path', async () => {
       const scene = buildRowsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_ROW',
@@ -269,7 +269,7 @@ describe('Layout mutation commands', () => {
 
     it('fails for invalid path', async () => {
       const scene = buildRowsScene(['A']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_ROW',
@@ -282,7 +282,7 @@ describe('Layout mutation commands', () => {
 
     it('fails when moveContentTo is the same path as the row being removed', async () => {
       const scene = buildRowsScene(['A', 'B']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_ROW',
@@ -297,7 +297,7 @@ describe('Layout mutation commands', () => {
   describe('UPDATE_ROW', () => {
     it('updates row title', async () => {
       const scene = buildRowsScene(['Old Title']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_ROW',
@@ -314,7 +314,7 @@ describe('Layout mutation commands', () => {
 
     it('updates row collapse state', async () => {
       const scene = buildRowsScene(['Row']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_ROW',
@@ -333,7 +333,7 @@ describe('Layout mutation commands', () => {
   describe('MOVE_ROW', () => {
     it('reorders a row within the same parent', async () => {
       const scene = buildRowsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_ROW',
@@ -350,7 +350,7 @@ describe('Layout mutation commands', () => {
 
     it('moves a row to the end when toPosition is omitted', async () => {
       const scene = buildRowsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_ROW',
@@ -366,7 +366,7 @@ describe('Layout mutation commands', () => {
   describe('ADD_TAB', () => {
     it('adds a tab to a TabsLayout', async () => {
       const scene = buildTabsScene(['Existing']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -386,7 +386,7 @@ describe('Layout mutation commands', () => {
 
     it('inserts a tab at a specific position', async () => {
       const scene = buildTabsScene(['First', 'Third']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -406,7 +406,7 @@ describe('Layout mutation commands', () => {
   describe('REMOVE_TAB', () => {
     it('removes a tab by path', async () => {
       const scene = buildTabsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_TAB',
@@ -421,7 +421,7 @@ describe('Layout mutation commands', () => {
 
     it('fails for invalid path', async () => {
       const scene = buildTabsScene(['A']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_TAB',
@@ -434,7 +434,7 @@ describe('Layout mutation commands', () => {
 
     it('fails when moveContentTo is the same path as the tab being removed', async () => {
       const scene = buildTabsScene(['A', 'B']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'REMOVE_TAB',
@@ -449,7 +449,7 @@ describe('Layout mutation commands', () => {
   describe('UPDATE_TAB', () => {
     it('updates tab title', async () => {
       const scene = buildTabsScene(['Old Title']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_TAB',
@@ -468,7 +468,7 @@ describe('Layout mutation commands', () => {
   describe('MOVE_TAB', () => {
     it('reorders a tab within the same parent', async () => {
       const scene = buildTabsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_TAB',
@@ -485,7 +485,7 @@ describe('Layout mutation commands', () => {
 
     it('moves a tab to the end when toPosition is omitted', async () => {
       const scene = buildTabsScene(['A', 'B', 'C']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_TAB',
@@ -501,7 +501,7 @@ describe('Layout mutation commands', () => {
   describe('GET_LAYOUT', () => {
     it('returns RowsLayout with path annotations on rows', async () => {
       const scene = buildRowsScene(['Alpha', 'Beta']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
@@ -516,7 +516,7 @@ describe('Layout mutation commands', () => {
 
     it('returns TabsLayout with path annotations on tabs', async () => {
       const scene = buildTabsScene(['Tab X', 'Tab Y']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
@@ -531,7 +531,7 @@ describe('Layout mutation commands', () => {
 
     it('returns empty elements for layouts with no panels', async () => {
       const scene = buildRowsScene(['Empty Row']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
@@ -544,7 +544,7 @@ describe('Layout mutation commands', () => {
     it('is rejected when feature toggle is disabled', async () => {
       config.featureToggles.dashboardNewLayouts = false;
       const scene = buildRowsScene(['Row']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({ type: 'GET_LAYOUT', payload: {} });
 
@@ -556,7 +556,7 @@ describe('Layout mutation commands', () => {
   describe('MOVE_PANEL', () => {
     it('moves a panel from one row to another', async () => {
       const scene = buildRowsSceneWithPanels();
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const body = scene.state.body as unknown as RowsLayoutManager;
 
       // Row 1 has panel-1, Row 2 has panel-2
@@ -581,7 +581,7 @@ describe('Layout mutation commands', () => {
 
     it('returns no-op when toParent is omitted and no position is provided', async () => {
       const scene = buildRowsSceneWithPanels();
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_PANEL',
@@ -597,7 +597,7 @@ describe('Layout mutation commands', () => {
 
     it('repositions a panel within the same group when position is provided', async () => {
       const scene = buildRowsSceneWithPanels();
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_PANEL',
@@ -626,7 +626,7 @@ describe('Layout mutation commands', () => {
 
     it('fails when element is not found', async () => {
       const scene = buildRowsSceneWithPanels();
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_PANEL',
@@ -642,7 +642,7 @@ describe('Layout mutation commands', () => {
 
     it('fails when target path is invalid', async () => {
       const scene = buildRowsSceneWithPanels();
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'MOVE_PANEL',
@@ -681,7 +681,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'ADD_ROW',
         payload: {
@@ -728,7 +728,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'MOVE_ROW',
         payload: {
@@ -771,7 +771,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'ADD_ROW',
         payload: {
@@ -787,7 +787,7 @@ describe('Layout mutation commands', () => {
     it('converts grid to tabs with only the requested tab (no extra "New tab")', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
       const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([panelA]));
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -813,7 +813,7 @@ describe('Layout mutation commands', () => {
 
     it('converts grid to tabs with empty grid - single tab only', async () => {
       const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([]));
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -844,7 +844,7 @@ describe('Layout mutation commands', () => {
       });
       const rowsBody = new RowsLayoutManager({ rows: [row1, row2] });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -880,7 +880,7 @@ describe('Layout mutation commands', () => {
       });
       const tabsBody = new TabsLayoutManager({ tabs: [tab1, tab2] });
       const scene = buildSceneWithLayoutParent(tabsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -906,7 +906,7 @@ describe('Layout mutation commands', () => {
     it('converts grid to rows by nesting grid inside the requested row', async () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
       const scene = buildSceneWithLayoutParent(DefaultGridLayoutManager.fromVizPanels([panelA]));
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -946,7 +946,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'ADD_TAB',
         payload: {
@@ -969,7 +969,7 @@ describe('Layout mutation commands', () => {
         tabs: [new TabItem({ title: 'Outer Tab', layout: innerTabs })],
       });
       const scene = buildSceneWithLayoutParent(outerTabs);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -991,7 +991,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Outer Row', layout: innerRows })],
       });
       const scene = buildSceneWithLayoutParent(outerRows);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -1014,7 +1014,7 @@ describe('Layout mutation commands', () => {
       });
       const rowsBody = new RowsLayoutManager({ rows: [rowWithTabs] });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -1037,7 +1037,7 @@ describe('Layout mutation commands', () => {
       });
       const tabsBody = new TabsLayoutManager({ tabs: [tabWithRows] });
       const scene = buildSceneWithLayoutParent(tabsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -1059,7 +1059,7 @@ describe('Layout mutation commands', () => {
         tabs: [new TabItem({ title: 'Tab A', layout: innerRows })],
       });
       const scene = buildSceneWithLayoutParent(tabsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -1083,7 +1083,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row A', layout: innerTabs })],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -1109,7 +1109,7 @@ describe('Layout mutation commands', () => {
         ],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1130,7 +1130,7 @@ describe('Layout mutation commands', () => {
         ],
       });
       const scene = buildSceneWithLayoutParent(tabsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1147,7 +1147,7 @@ describe('Layout mutation commands', () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
       const gridBody = DefaultGridLayoutManager.fromVizPanels([panelA]);
       const scene = buildSceneWithLayoutParent(gridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1164,7 +1164,7 @@ describe('Layout mutation commands', () => {
     it('applies v2beta1 AutoGridLayout options during conversion', async () => {
       const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
       const scene = buildSceneWithLayoutParent(gridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1187,7 +1187,7 @@ describe('Layout mutation commands', () => {
     it('maps custom columnWidthMode with columnWidth pixel value', async () => {
       const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
       const scene = buildSceneWithLayoutParent(gridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1208,7 +1208,7 @@ describe('Layout mutation commands', () => {
       const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
       const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([panelA]));
       const scene = buildSceneWithLayoutParent(autoGridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1227,7 +1227,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1244,7 +1244,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1259,7 +1259,7 @@ describe('Layout mutation commands', () => {
     it('update-only mode: applies options to existing AutoGridLayout', async () => {
       const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([]));
       const scene = buildSceneWithLayoutParent(autoGridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1281,7 +1281,7 @@ describe('Layout mutation commands', () => {
       const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([]));
       autoGridBody.setState({ maxColumnCount: 3 });
       const scene = buildSceneWithLayoutParent(autoGridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1299,7 +1299,7 @@ describe('Layout mutation commands', () => {
     it('rejects options on non-AutoGrid layout type', async () => {
       const gridBody = DefaultGridLayoutManager.fromVizPanels([]);
       const scene = buildSceneWithLayoutParent(gridBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1319,7 +1319,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1338,7 +1338,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Row A', layout: DefaultGridLayoutManager.fromVizPanels([]) })],
       });
       const scene = buildSceneWithLayoutParent(rowsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1357,7 +1357,7 @@ describe('Layout mutation commands', () => {
         rows: [new RowItem({ title: 'Outer Row', layout: innerTabs })],
       });
       const scene = buildSceneWithLayoutParent(outerRows);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1381,7 +1381,7 @@ describe('Layout mutation commands', () => {
         ],
       });
       const scene = buildSceneWithLayoutParent(tabsBody);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_LAYOUT',
@@ -1419,7 +1419,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'REMOVE_ROW',
         payload: {
@@ -1461,7 +1461,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'REMOVE_ROW',
         payload: { path: '/rows/0', moveContentTo: '/rows/1' },
@@ -1506,7 +1506,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
         payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
@@ -1548,7 +1548,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
         payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
@@ -1591,7 +1591,7 @@ describe('Layout mutation commands', () => {
         }),
       } as unknown as MutableDashboardScene;
 
-      const executor = new MutationExecutor(tabsScene);
+      const executor = new DashboardMutationClient(tabsScene);
       const result = await executor.execute({
         type: 'REMOVE_TAB',
         payload: { path: '/tabs/0', moveContentTo: '/tabs/1' },
@@ -1606,7 +1606,7 @@ describe('Layout mutation commands', () => {
     it('rejects layout commands when dashboard is not editable', async () => {
       const scene = buildRowsScene(['A']);
       (scene.canEditDashboard as jest.Mock).mockReturnValue(false);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -1624,7 +1624,7 @@ describe('Layout mutation commands', () => {
   describe('repeat support', () => {
     it('ADD_ROW passes repeat to RowItem', async () => {
       const scene = buildRowsScene(['Existing']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
@@ -1641,7 +1641,7 @@ describe('Layout mutation commands', () => {
 
     it('ADD_TAB passes repeat to TabItem', async () => {
       const scene = buildTabsScene(['Existing']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_TAB',
@@ -1658,7 +1658,7 @@ describe('Layout mutation commands', () => {
 
     it('UPDATE_ROW sets repeat', async () => {
       const scene = buildRowsScene(['Row A']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_ROW',
@@ -1681,7 +1681,7 @@ describe('Layout mutation commands', () => {
       });
       const body = new RowsLayoutManager({ rows: [row] });
       const scene = buildSceneWithLayoutParent(body);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_ROW',
@@ -1697,7 +1697,7 @@ describe('Layout mutation commands', () => {
 
     it('UPDATE_TAB sets repeat', async () => {
       const scene = buildTabsScene(['Tab A']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_TAB',
@@ -1720,7 +1720,7 @@ describe('Layout mutation commands', () => {
       });
       const body = new TabsLayoutManager({ tabs: [tab] });
       const scene = buildSceneWithLayoutParent(body);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'UPDATE_TAB',
@@ -1739,7 +1739,7 @@ describe('Layout mutation commands', () => {
     it('rejects layout commands when dashboardNewLayouts is disabled', async () => {
       config.featureToggles.dashboardNewLayouts = false;
       const scene = buildRowsScene(['A']);
-      const executor = new MutationExecutor(scene);
+      const executor = new DashboardMutationClient(scene);
 
       const result = await executor.execute({
         type: 'ADD_ROW',
