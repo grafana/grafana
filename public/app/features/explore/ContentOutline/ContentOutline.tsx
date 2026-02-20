@@ -7,8 +7,9 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
+import { ContentOutlineItemContextProps } from './types';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
