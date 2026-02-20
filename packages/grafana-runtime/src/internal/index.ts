@@ -34,6 +34,7 @@ export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../servi
 export {
   useAppPluginMeta,
   useAppPluginMetas,
+  useListedPanelPluginMetas,
   usePanelPluginMeta,
   usePanelPluginMetas,
   usePanelPluginMetasMap,
@@ -41,6 +42,7 @@ export {
 export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
 export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
 export {
+  getListedPanelPluginMetas,
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,

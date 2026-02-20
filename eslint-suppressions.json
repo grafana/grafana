@@ -2633,11 +2633,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/state/util.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/playlist/PlaylistForm.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 2
