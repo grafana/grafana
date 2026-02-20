@@ -39,6 +39,7 @@ export function CardEditorRenderer() {
       <TransformationTypePicker />
     ) : (
       <EmptyTransformationsMessage
+        showHeaderText={false}
         onShowPicker={() => setPendingTransformation({ showPicker: true })}
         onAddTransformation={finalizePendingTransformation}
         onGoToQueries={() => {
