@@ -35,9 +35,9 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 
 	var evalCtx openfeature.EvaluationContext
 	if config.TargetingKey != "" {
-		evalCtx = openfeature.NewTargetlessEvaluationContext(contextAttrs)
-	} else {
 		evalCtx = openfeature.NewEvaluationContext(config.TargetingKey, contextAttrs)
+	} else {
+		evalCtx = openfeature.NewTargetlessEvaluationContext(contextAttrs)
 	}
 	openfeature.SetEvaluationContext(evalCtx)
 
