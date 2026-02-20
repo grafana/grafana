@@ -8,7 +8,7 @@
 package v0alpha1
 
 import (
-	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	datasourcev0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -954,7 +954,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The default datasource type",
-							Ref:         ref(datav0alpha1.DataSourceRef{}.OpenAPIModelName()),
+							Ref:         ref(datasourcev0alpha1.DataSourceRef{}.OpenAPIModelName()),
 						},
 					},
 					"gridPos": {
@@ -996,7 +996,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(datav0alpha1.DataQuery{}.OpenAPIModelName()),
+										Ref: ref(datasourcev0alpha1.DataQuery{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1007,7 +1007,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			datav0alpha1.DataQuery{}.OpenAPIModelName(), datav0alpha1.DataSourceRef{}.OpenAPIModelName(), GridPos{}.OpenAPIModelName(), commonv0alpha1.Unstructured{}.OpenAPIModelName()},
+			datasourcev0alpha1.DataQuery{}.OpenAPIModelName(), datasourcev0alpha1.DataSourceRef{}.OpenAPIModelName(), GridPos{}.OpenAPIModelName(), commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 
