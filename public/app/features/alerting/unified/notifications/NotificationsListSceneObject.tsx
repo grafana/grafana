@@ -375,8 +375,11 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           )}
           {alert.startsAt && (
             <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="alerting.notifications-scene.started">
-                Started: {dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}
+              <Trans
+                i18nKey="alerting.notifications-scene.started"
+                values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
+              >
+                Started: {{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
               </Trans>
             </Text>
           )}

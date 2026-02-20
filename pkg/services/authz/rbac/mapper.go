@@ -27,10 +27,6 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
-	// VerbForAction returns the K8s verb for the given RBAC action.
-	// If multiple verbs map to the same action, returns the first match.
-	// If no verb is found, returns empty string and false.
-	VerbForAction(action string) (string, bool)
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
 }
@@ -90,16 +86,6 @@ func (t translation) SkipScope(verb string) bool {
 		return t.skipScopeOnVerb[verb]
 	}
 	return false
-}
-
-// Reverse lookup: find which k8s verbs map to the RBAC action
-func (t translation) VerbForAction(action string) (string, bool) {
-	for verb, rbacAction := range t.verbMapping {
-		if rbacAction == action {
-			return verb, true
-		}
-	}
-	return "", false
 }
 
 func (t translation) Resource() string {
@@ -303,6 +289,17 @@ func NewMapperRegistry() MapperRegistry {
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
 		"query.grafana.app": {
+			"query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
+		},
+		"datasource.grafana.app": { // duplicate the query group here
 			"query": translation{
 				resource:  "datasources",
 				attribute: "uid",

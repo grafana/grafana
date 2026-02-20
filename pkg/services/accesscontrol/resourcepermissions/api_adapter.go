@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/authlib/types"
 	"golang.org/x/text/cases"
@@ -162,6 +163,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 				permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
 				permDTO.IsServiceAccount = userDetails.IsServiceAccount
 				permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
+				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
@@ -174,19 +176,35 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 				permDTO.TeamUID = teamDetails.UID
 				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
 				permDTO.RoleName = fmt.Sprintf("managed:teams:%d:permissions", teamDetails.ID)
+				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 			} else {
 				permDTO.TeamUID = name
 				permDTO.Team = name
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
-			permDTO.RoleName = fmt.Sprintf("managed:builtins:%s:permissions", name)
+			permDTO.RoleName = fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(name))
+			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
 		}
 
 		dto = append(dto, permDTO)
 	}
 
 	return dto, nil
+}
+
+func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
+	if a.service.store == nil {
+		return 0
+	}
+
+	permissionID, err := a.service.store.GetPermissionIDByRoleName(context.Background(), orgID, roleName)
+	if err != nil {
+		a.logger.Debug("Failed to get permission ID from legacy database", "error", err, "roleName", roleName, "orgID", orgID)
+		return 0
+	}
+
+	return permissionID
 }
 
 func (a *api) getAPIGroup() string {
@@ -376,6 +394,7 @@ func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string,
 	}
 
 	k8sPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(permissions))
+
 	for _, perm := range permissions {
 		if perm.Permission == "" {
 			continue

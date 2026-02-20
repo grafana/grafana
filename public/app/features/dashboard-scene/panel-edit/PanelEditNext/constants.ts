@@ -27,8 +27,11 @@ export enum SidebarSize {
   Full = 'full',
 }
 
+export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+
 export const QUERY_EDITOR_COLORS = {
   footerBackground: '#1e2939',
+  sidebarFooterBackground: '#141820',
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',

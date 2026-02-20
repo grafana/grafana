@@ -34,6 +34,7 @@ Learn about the following Grafana APIs:
 
 - [HTTP API](./api-reference/http-api/)
 - [Cloud API](./api-reference/cloud-api/)
+- [Synthetic Monitoring API](./api-reference/synthetic-monitoring-api/)
 - [Tracing API](./api-reference/tracing-api/)
 
 ## Other resources

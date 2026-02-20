@@ -10,16 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -157,7 +155,7 @@ var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
 // NOTE: this struct may have issues when decoding JSON that requires the special handling
-// registered in https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.228.0/experimental/apis/data/v0alpha1/query.go#L298
+// registered in https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.228.0/experimental/apis/datasource/v0alpha1/query.go#L298
 type QueryModel struct {
 	PrometheusQueryProperties    `json:",inline"`
 	sdkapi.CommonQueryProperties `json:",inline"`
@@ -235,7 +233,7 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 
 	if len(scopeFilters) > 0 {
 		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-			var filters []string
+			filters := make([]string, 0, len(scopeFilters))
 			for _, f := range scopeFilters {
 				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}
@@ -245,7 +243,7 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 
 	if len(model.AdhocFilters) > 0 {
 		span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-			var filters []string
+			var filters []string //nolint:prealloc
 			for _, f := range model.AdhocFilters {
 				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}

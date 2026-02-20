@@ -83,7 +83,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (out *cloudmigration.StartSnapshotResponse, err error) {
+func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession, algo cloudmigration.EncryptionAlgo) (out *cloudmigration.StartSnapshotResponse, err error) {
 	path, err := c.buildURL(session.ClusterSlug, "/api/v1/start-snapshot")
 	if err != nil {
 		return nil, err
@@ -92,8 +92,13 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSStartSnapshotTimeout)
 	defer cancel()
 
+	body, err := json.Marshal(&StartSnapshotRequestDTO{Algo: string(algo)})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
 	// Send the request to cms with the associated auth token
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		c.log.Error("error creating http request to start snapshot", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
