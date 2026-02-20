@@ -265,7 +265,7 @@ export function buildVizAndDataPaneGrid({
   }
 
   // Convert ratio to fractional units (e.g. 0.5 → 1fr:1fr, 0.6 → 1.5fr:1fr).
-  // vizRatio is clamped to [0.2, 0.8] so 0 and 1 are unreachable.
+  // vizRatio is clamped to [0.1, 0.9] so 0 and 1 are unreachable.
   const vizFr = vizRatio / (1 - vizRatio);
   rows.push(`${vizFr}fr`);
   grid.push(['viz', 'viz']);
