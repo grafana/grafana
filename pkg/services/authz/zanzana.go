@@ -25,13 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -116,6 +114,7 @@ func ProvideEmbeddedZanzanaService(
 		server:     server,
 		restConfig: restConfig,
 		tracer:     tracer,
+		logger:     log.New("zanzana.server"),
 	}
 }
 
@@ -126,6 +125,7 @@ type EmbeddedZanzanaService struct {
 	server     zanzana.Server
 	restConfig apiserver.RestConfigProvider
 	tracer     tracing.Tracer
+	logger     log.Logger
 }
 
 func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
@@ -140,24 +140,9 @@ func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
 			return nil
 		}
 
-		clientFactory := resources.NewClientFactory(s.restConfig)
-		logger := log.New("zanzana.mt-reconciler")
-		rec := reconciler.NewReconciler(
-			srv,
-			clientFactory,
-			reconciler.Config{
-				Workers:        s.cfg.ZanzanaReconciler.Workers,
-				Interval:       s.cfg.ZanzanaReconciler.Interval,
-				WriteBatchSize: s.cfg.ZanzanaReconciler.WriteBatchSize,
-				QueueSize:      s.cfg.ZanzanaReconciler.QueueSize,
-			},
-			logger,
-			s.tracer,
-		)
-
 		go func() {
-			if err := rec.Run(ctx); err != nil {
-				logger.Error("MT reconciler stopped with error", "error", err)
+			if err := srv.RunReconciler(ctx); err != nil {
+				s.logger.Error("MT reconciler stopped with error", "error", err)
 			}
 		}()
 	}
