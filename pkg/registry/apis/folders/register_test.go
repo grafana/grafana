@@ -144,10 +144,11 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
-				storage:    us,
-				parents:    newParentsGetter(us, 2), // Max Depth of 2
+				namespacer:           func(_ int64) string { return "123" },
+				folderSvc:            foldertest.NewFakeService(),
+				storage:              us,
+				parents:              newParentsGetter(us, 4),
+				maxNestedFolderDepth: 4,
 			}
 
 			tt.input.obj.Name = tt.input.name
