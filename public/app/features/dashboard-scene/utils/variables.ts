@@ -41,6 +41,10 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
+  // Link GroupByVariable to AdHocFiltersVariable with matching datasource
+  // so the unified AdHoc UI can manage GroupBy selections
+  linkGroupByToAdHocVariables(variableObjects);
+
   return new SceneVariableSet({
     variables: variableObjects,
   });
@@ -319,5 +323,25 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
+  }
+}
+
+/**
+ * Links GroupByVariable instances to AdHocFiltersVariable instances that share
+ * the same datasource. This enables the unified AdHoc UI to also manage GroupBy
+ * selections through the operator dropdown.
+ */
+export function linkGroupByToAdHocVariables(variables: SceneVariable[]) {
+  const groupByVars = variables.filter((v): v is GroupByVariable => v instanceof GroupByVariable);
+  const adHocVars = variables.filter((v): v is AdHocFiltersVariable => v instanceof AdHocFiltersVariable);
+
+  for (const adHoc of adHocVars) {
+    const matchingGroupBy = groupByVars.find(
+      (gb) => gb.state.datasource?.uid === adHoc.state.datasource?.uid
+    );
+
+    if (matchingGroupBy) {
+      adHoc.setState({ groupByVariable: matchingGroupBy });
+    }
   }
 }
