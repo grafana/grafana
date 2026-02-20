@@ -75,8 +75,9 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 			Name(historicJobName).
 			Do(ctx).StatusCode(&statusCode)
 
-		require.NoError(t, result.Error(), "editor should be able to GET historic job")
-		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		require.Error(t, result.Error(), "editor should not be able to GET historic job")
+		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 	})
 
 	t.Run("viewer cannot GET historic job", func(t *testing.T) {

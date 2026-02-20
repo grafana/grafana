@@ -389,7 +389,7 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		}, ""))
 	case provisioning.HistoricJobResourceInfo.GetName():
 		// Historic jobs are read-only and admin-only (not editor)
-		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.HistoricJobResourceInfo.GetName(),
