@@ -13390,15 +13390,12 @@
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
     "auto-option": {
-      "aria-label": "",
-      "label": ""
+      "label": "Auto"
     },
     "live-option": {
-      "aria-label": "Turn on live streaming",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
     "tooltip": {
