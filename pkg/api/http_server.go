@@ -563,8 +563,10 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 
 		// golang.org/pkg/os does not have chgrp
 		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
-		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
-			return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+		if hs.Cfg.SocketGid != -1 {
+			if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
+				return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+			}
 		}
 
 		listeners = append(listeners, listener)
@@ -587,8 +589,10 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 
 		// golang.org/pkg/os does not have chgrp
 		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
-		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
-			return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+		if hs.Cfg.SocketGid != -1 {
+			if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
+				return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
+			}
 		}
 
 		listeners = append(listeners, listener)
