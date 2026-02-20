@@ -36,6 +36,7 @@ describe('useWizardSubmission', () => {
     name: 'Connection',
     title: 'Set up connection',
     submitOnNext: true,
+    formFields: ['repository.branch', 'repository.path'],
   };
 
   const bootstrapStep: Step<WizardStep> = {
@@ -50,6 +51,7 @@ describe('useWizardSubmission', () => {
     name: 'Auth Type',
     title: 'Select auth type',
     submitOnNext: true,
+    formFields: ['repository.url', 'repository.token', 'repository.tokenUser'],
   };
 
   function createMockMethods() {
