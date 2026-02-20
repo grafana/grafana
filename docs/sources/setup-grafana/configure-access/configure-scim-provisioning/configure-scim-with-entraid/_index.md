@@ -54,6 +54,7 @@ To enable SCIM provisioning in Grafana, create a service account and generate a 
 
 ### Create a service account
 
+1. Navigate to **Administration > Users and access > Service accounts**
 1. Click **Add service account**
 1. Create the service account with a name (for example, "SCIM provisioning").
 1. In the **Roles** dropdown, select the following roles for the service account:
