@@ -17,11 +17,13 @@ import {
   usePanelPluginMetas,
   usePanelPluginInstalled,
   usePanelPluginVersion,
+  usePanelPluginMetasMap,
 } from './hooks';
 import {
   getListedPanelPluginIds,
   getPanelPluginMeta,
   getPanelPluginMetas,
+  getPanelPluginMetasMap,
   getPanelPluginVersion,
   isPanelPluginInstalled,
   setPanelPluginMetas,
@@ -42,6 +44,7 @@ jest.mock('./panels', () => ({
   ...jest.requireActual('./panels'),
   getPanelPluginMeta: jest.fn(),
   getPanelPluginMetas: jest.fn(),
+  getPanelPluginMetasMap: jest.fn(),
   isPanelPluginInstalled: jest.fn(),
   getPanelPluginVersion: jest.fn(),
   getListedPanelPluginIds: jest.fn(),
@@ -52,6 +55,7 @@ const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
 const getAppPluginVersionMock = jest.mocked(getAppPluginVersion);
 const getPanelPluginMetaMock = jest.mocked(getPanelPluginMeta);
 const getPanelPluginMetasMock = jest.mocked(getPanelPluginMetas);
+const getPanelPluginMetasMapMock = jest.mocked(getPanelPluginMetasMap);
 const isPanelPluginInstalledMock = jest.mocked(isPanelPluginInstalled);
 const getPanelPluginVersionMock = jest.mocked(getPanelPluginVersion);
 const getListedPanelPluginIdsMock = jest.mocked(getListedPanelPluginIds);
@@ -327,6 +331,46 @@ describe('usePanelPluginMetas', () => {
     getPanelPluginMetasMock.mockRejectedValue(new Error('Some error'));
 
     const { result } = renderHook(() => usePanelPluginMetas());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
+describe('usePanelPluginMetasMap', () => {
+  beforeEach(() => {
+    setPanelPluginMetas(panels);
+    jest.resetAllMocks();
+    getPanelPluginMetasMapMock.mockImplementation(actualPanels.getPanelPluginMetasMap);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => usePanelPluginMetasMap());
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => usePanelPluginMetasMap());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(panels);
+  });
+
+  it('should return correct values if usePanelPluginMetasMap throws', async () => {
+    getPanelPluginMetasMapMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => usePanelPluginMetasMap());
 
     await waitFor(() => expect(result.current.loading).toEqual(false));
 
