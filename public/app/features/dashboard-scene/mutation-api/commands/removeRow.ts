@@ -32,6 +32,10 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
     try {
       const { path, moveContentTo } = payload;
 
+      if (moveContentTo === path) {
+        throw new Error(`moveContentTo cannot be the same path as the row being removed`);
+      }
+
       // Resolve the row to remove
       const resolved = resolveLayoutPath(scene.state.body, path);
       if (!(resolved.item instanceof RowItem)) {

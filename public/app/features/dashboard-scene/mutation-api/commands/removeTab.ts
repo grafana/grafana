@@ -32,6 +32,10 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
     try {
       const { path, moveContentTo } = payload;
 
+      if (moveContentTo === path) {
+        throw new Error(`moveContentTo cannot be the same path as the tab being removed`);
+      }
+
       const resolved = resolveLayoutPath(scene.state.body, path);
       if (!(resolved.item instanceof TabItem)) {
         throw new Error(`Path "${path}" does not point to a tab`);

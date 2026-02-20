@@ -279,6 +279,19 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('out of bounds');
     });
+
+    it('fails when moveContentTo is the same path as the row being removed', async () => {
+      const scene = buildRowsScene(['A', 'B']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'REMOVE_ROW',
+        payload: { path: '/rows/0', moveContentTo: '/rows/0' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same path');
+    });
   });
 
   describe('UPDATE_ROW', () => {
@@ -417,6 +430,19 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('out of bounds');
+    });
+
+    it('fails when moveContentTo is the same path as the tab being removed', async () => {
+      const scene = buildTabsScene(['A', 'B']);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'REMOVE_TAB',
+        payload: { path: '/tabs/0', moveContentTo: '/tabs/0' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('same path');
     });
   });
 
@@ -1249,6 +1275,25 @@ describe('Layout mutation commands', () => {
       expect(body.state.maxColumnCount).toBe(5);
       expect(body.state.columnWidth).toBe('narrow');
       expect(body.state.fillScreen).toBe(true);
+    });
+
+    it('returns actual previousValue when updating AutoGrid options', async () => {
+      const autoGridBody = AutoGridLayoutManager.createFromLayout(DefaultGridLayoutManager.fromVizPanels([]));
+      autoGridBody.setState({ maxColumnCount: 3 });
+      const scene = buildSceneWithLayoutParent(autoGridBody);
+      const executor = new MutationExecutor(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_LAYOUT',
+        payload: { path: '/', options: { maxColumnCount: 6 } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes).toHaveLength(1);
+      const change = result.changes[0];
+      expect(change.previousValue).not.toBe('applied');
+      expect((change.previousValue as Record<string, unknown>).maxColumnCount).toBe(3);
+      expect((change.newValue as Record<string, unknown>).maxColumnCount).toBe(6);
     });
 
     it('rejects options on non-AutoGrid layout type', async () => {

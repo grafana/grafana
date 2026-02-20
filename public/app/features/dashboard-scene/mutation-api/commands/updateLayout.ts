@@ -89,8 +89,13 @@ function applyAutoGridOptions(
     patch.rowHeight = options.rowHeightMode === 'custom' ? (options.rowHeight ?? 200) : options.rowHeightMode;
   }
   if (Object.keys(patch).length > 0) {
+    const stateRecord: Record<string, unknown> = { ...layout.state };
+    const prev: Record<string, unknown> = {};
+    for (const key of Object.keys(patch)) {
+      prev[key] = stateRecord[key];
+    }
     layout.setState(patch);
-    return [{ path, previousValue: 'applied', newValue: patch }];
+    return [{ path, previousValue: prev, newValue: patch }];
   }
   return [];
 }
