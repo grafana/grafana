@@ -3,7 +3,7 @@
  *
  * API for programmatic dashboard mutations. Provides
  * a declarative, command-based API where callers describe *what* to
- * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the executor handles Scenes
+ * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the client handles Scenes
  * internals, payload validation (via Zod schemas), permission checks, and
  * transactional execution with structured error responses.
  *
@@ -74,7 +74,7 @@ export class DashboardMutationClient implements MutationClient {
 
   private registerCommand(cmd: MutationCommand): void {
     this.commands.set(cmd.name, {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: executor validates with Zod before dispatch
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,
       canExecute: cmd.permission,
     });

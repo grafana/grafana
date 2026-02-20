@@ -69,6 +69,19 @@ describe('DashboardMutationBehavior', () => {
     );
   });
 
+  it('does not register client when no DashboardScene ancestor exists', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const behavior = new DashboardMutationBehavior();
+    const deactivate = behavior.activate();
+
+    expect(getDashboardMutationClient()).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith('Failed to register Dashboard Mutation API:', expect.any(Error));
+
+    deactivate();
+    errorSpy.mockRestore();
+  });
+
   describe('security: behavior does not expose execute()', () => {
     it('the behavior object on $behaviors has no execute method', () => {
       const { scene, deactivate } = buildAndActivateScene();

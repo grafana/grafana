@@ -38,6 +38,7 @@ export class DashboardMutationBehavior extends SceneObjectBase<SceneObjectState>
       setDashboardMutationClient(client);
     } catch (error) {
       console.error('Failed to register Dashboard Mutation API:', error);
+      return;
     }
 
     return () => {
