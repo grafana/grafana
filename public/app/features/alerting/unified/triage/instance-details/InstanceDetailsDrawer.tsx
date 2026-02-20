@@ -20,7 +20,9 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
+import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { QueryVisualization } from './QueryVisualization';
+import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
@@ -75,6 +77,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     return { historyRecords, annotations };
   }, [stateHistoryData]);
 
+  const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
+
   if (error) {
     return (
       <Drawer
@@ -109,6 +113,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
         </Stack>
+        {instanceState && <InstanceStateInfoBanner state={instanceState} />}
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>
