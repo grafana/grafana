@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { JSX } from 'react';
 
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement, LineStyle, SortOrder } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
@@ -38,6 +38,7 @@ export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
 
 export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
   displayMode: LegendDisplayMode;
+  sortOrder?: SortOrder;
 }
 
 export interface VizLegendItem<T = any> {
