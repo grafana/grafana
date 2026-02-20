@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { useGetUsageQuery } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { type GetUsageResponse, useGetUsageQuery } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config } from '@grafana/runtime';
 
 const WARNING_THRESHOLD = 0.85;
@@ -13,23 +13,6 @@ export interface ResourceStatus {
   state: QuotaState;
   usage: number;
   limit: number;
-}
-
-interface QuotaUsageResponse {
-  usage: number;
-  limit: number;
-}
-
-// TODO: Remove once the generated API types include usage/limit fields
-function isQuotaUsageResponse(data: unknown): data is QuotaUsageResponse {
-  return (
-    typeof data === 'object' &&
-    data !== null &&
-    'usage' in data &&
-    'limit' in data &&
-    typeof data.usage === 'number' &&
-    typeof data.limit === 'number'
-  );
 }
 
 function getQuotaState(usage: number, limit: number): QuotaState {
@@ -45,8 +28,8 @@ function getQuotaState(usage: number, limit: number): QuotaState {
   return 'ok';
 }
 
-function buildResourceStatus(data: unknown, kind: ResourceStatus['kind']): ResourceStatus | null {
-  if (!isQuotaUsageResponse(data)) {
+function buildResourceStatus(data: GetUsageResponse | undefined, kind: ResourceStatus['kind']): ResourceStatus | null {
+  if (!data) {
     return null;
   }
   const state = getQuotaState(data.usage, data.limit);
