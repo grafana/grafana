@@ -13,6 +13,7 @@ import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/util
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { SystemVariablesSection } from './variables/SystemVariablesSection';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
 import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
@@ -229,6 +230,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { editIndex } = model.useState();
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
+  const defaultVariables = useMemo(() => variables.filter((v) => Boolean(v.state?.source)), [variables]);
   const saveModel = model.getSaveModel();
 
   if (editIndex !== undefined && variables[editIndex]) {
@@ -261,6 +263,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onAdd={onAdd}
         onEdit={onEdit}
       />
+      {defaultVariables.length > 0 && <SystemVariablesSection variables={defaultVariables} />}
       <VariablesUnknownTable variables={variables} dashboard={saveModel} />
     </Page>
   );

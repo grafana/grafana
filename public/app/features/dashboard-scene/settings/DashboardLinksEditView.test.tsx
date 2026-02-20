@@ -12,6 +12,13 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { NEW_LINK } from './links/utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getList: () => [{ meta: { id: 'prometheus', name: 'Prometheus' } }],
+  }),
+}));
+
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
 }
@@ -197,6 +204,48 @@ describe('DashboardLinksEditView', () => {
 
       expect(getByText('Edit link')).toBeInTheDocument();
       expect(getByText('Back to list')).toBeInTheDocument();
+    });
+
+    it('should not show System links section when no links have source', () => {
+      dashboard.setState({
+        links: [{ ...NEW_LINK, title: 'user-link' }],
+      });
+      const { queryByText } = render(<settings.Component model={settings} />);
+
+      expect(queryByText('System links')).not.toBeInTheDocument();
+      expect(queryByText('user-link')).toBeInTheDocument();
+    });
+
+    it('should show System links section when links have source', () => {
+      const defaultLink = {
+        ...NEW_LINK,
+        title: 'Datasource link',
+        source: { type: 'datasource' as const, ref: { group: 'prometheus' } },
+      };
+      dashboard.setState({ links: [defaultLink] });
+      const { getByText } = render(<settings.Component model={settings} />);
+
+      expect(getByText('System links')).toBeInTheDocument();
+    });
+
+    it('should show User defined links first then System links when both present', () => {
+      const userLink = { ...NEW_LINK, title: 'My link' };
+      const defaultLink = {
+        ...NEW_LINK,
+        title: 'DS link',
+        source: { type: 'datasource' as const, ref: { group: 'prometheus' } },
+      };
+      dashboard.setState({ links: [defaultLink, userLink] });
+      const { getByText } = render(<settings.Component model={settings} />);
+
+      expect(getByText('User defined links')).toBeInTheDocument();
+      expect(getByText('System links')).toBeInTheDocument();
+      expect(getByText('My link')).toBeInTheDocument();
+
+      const container = document.body;
+      const userDefinedIndex = container.textContent!.indexOf('User defined links');
+      const systemLinksIndex = container.textContent!.indexOf('System links');
+      expect(userDefinedIndex).toBeLessThan(systemLinksIndex);
     });
   });
 });
