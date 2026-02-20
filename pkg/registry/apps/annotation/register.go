@@ -224,6 +224,38 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 				} else {
 					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
 				}
+			case "spec.tags":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					opts.Tags = append(opts.Tags, r.Value)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.tags (only = and == supported)", r.Operator)
+				}
+			case "spec.tagsMatchAny":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					booleanValue, err := strconv.ParseBool(r.Value)
+					if err != nil {
+						return nil, fmt.Errorf("spec.tagsMatchAny must be 'true' or 'false', got %q: %w", r.Value, err)
+					}
+					opts.TagsMatchAny = booleanValue
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.tagsMatchAny (only = and == supported)", r.Operator)
+				}
+			case "spec.scopes":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					opts.Scopes = append(opts.Scopes, r.Value)
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.scopes (only = and == supported)", r.Operator)
+				}
+			case "spec.scopesMatchAny":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					booleanValue, err := strconv.ParseBool(r.Value)
+					if err != nil {
+						return nil, fmt.Errorf("spec.scopesMatchAny must be 'true' or 'false', got %q: %w", r.Value, err)
+					}
+					opts.ScopesMatchAny = booleanValue
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.scopesMatchAny (only = and == supported)", r.Operator)
+				}
 			default:
 				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
 			}
