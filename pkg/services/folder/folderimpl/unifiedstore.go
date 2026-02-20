@@ -47,7 +47,7 @@ func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service,
 		log:              log.New("folder-store"),
 		userService:      userService,
 		tracer:           tracer,
-		absoluteMaxDepth: cfg.Folder.AbsoluteMaxNestedFolderDepth,
+		absoluteMaxDepth: cfg.AbsoluteMaxNestedFolderDepth,
 	}
 }
 

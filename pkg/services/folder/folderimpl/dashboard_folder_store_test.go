@@ -122,7 +122,7 @@ func TestIntegrationGetDashFolderStore(t *testing.T) {
 	folderStore := ProvideStore(db, cfg)
 	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	dashFolderStore := newDashboardFolderStore(db, cfg.Folder.AbsoluteMaxNestedFolderDepth)
+	dashFolderStore := newDashboardFolderStore(db, cfg.AbsoluteMaxNestedFolderDepth)
 
 	orgID := CreateOrg(t, db, cfg)
 

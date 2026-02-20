@@ -98,7 +98,7 @@ func ProvideService(
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
 		dashboardStore:         dashboardStore,
-		dashboardFolderStore:   newDashboardFolderStore(db, cfg.Folder.AbsoluteMaxNestedFolderDepth),
+		dashboardFolderStore:   newDashboardFolderStore(db, cfg.AbsoluteMaxNestedFolderDepth),
 		store:                  store,
 		features:               features,
 		accessControl:          ac,

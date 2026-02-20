@@ -45,7 +45,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 		features:                  features,
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: searchDashboardsPageLimit,
-		absoluteMaxDepth:          cfg.Folder.AbsoluteMaxNestedFolderDepth,
+		absoluteMaxDepth:          cfg.AbsoluteMaxNestedFolderDepth,
 	}
 }
 

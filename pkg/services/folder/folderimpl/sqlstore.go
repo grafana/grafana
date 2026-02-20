@@ -34,7 +34,7 @@ type FolderStoreImpl struct {
 var _ folder.Store = (*FolderStoreImpl)(nil)
 
 func ProvideStore(db db.DB, cfg *setting.Cfg) *FolderStoreImpl {
-	return &FolderStoreImpl{db: db, log: log.New("folder-store"), absoluteMaxDepth: cfg.Folder.AbsoluteMaxNestedFolderDepth}
+	return &FolderStoreImpl{db: db, log: log.New("folder-store"), absoluteMaxDepth: cfg.AbsoluteMaxNestedFolderDepth}
 }
 
 func (ss *FolderStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
