@@ -357,7 +357,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth: setting.AbsoluteMaxNestedFolderDepth,
+			maxDepth: 4,
 		},
 		{
 			name: "error when moving exceeds max depth",
@@ -388,7 +388,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    setting.AbsoluteMaxNestedFolderDepth,
+			maxDepth:    4,
 			expectedErr: "[folder.maximum-depth-reached]",
 		},
 		{
