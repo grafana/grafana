@@ -294,17 +294,12 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 	}
 
 	mockAccess := &mockAccessClient{
-		allowed: true, // Allow regular access
-		compileFn: func(user types.AuthInfo, req types.ListRequest) types.ItemChecker {
-			return func(name, folder string) bool {
-				if req.Verb == utils.VerbSetPermissions {
-					if requester, ok := user.(identity.Requester); ok && requester.GetIsGrafanaAdmin() {
-						return true // Admin users can access trash
-					}
-					return false // Non-admin users cannot access trash
-				}
-				return false
+		userCheckFn: func(user types.AuthInfo, verb, name, folder string) bool {
+			if verb == utils.VerbSetPermissions {
+				requester, ok := user.(identity.Requester)
+				return ok && requester.GetIsGrafanaAdmin()
 			}
+			return true // allow regular CRUD
 		},
 	}
 
@@ -498,7 +493,8 @@ type mockAccessClient struct {
 	allowed    bool
 	allowedMap map[string]bool
 	checkFn    func(types.CheckRequest, string)
-	compileFn  func(user types.AuthInfo, req types.ListRequest) types.ItemChecker
+	// userCheckFn, when set, fully controls the Check result for every call.
+	userCheckFn func(user types.AuthInfo, verb, name, folder string) bool
 }
 
 func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
@@ -514,13 +510,14 @@ func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req t
 		}
 	}
 
+	if m.userCheckFn != nil {
+		return types.CheckResponse{Allowed: m.userCheckFn(user, req.Verb, req.Name, folder)}, nil
+	}
+
 	return types.CheckResponse{Allowed: m.allowed}, nil
 }
 
 func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
-	if m.compileFn != nil {
-		return m.compileFn(user, req), types.NoopZookie{}, nil
-	}
 	return func(name, folder string) bool {
 		key := fmt.Sprintf("%s:%s", folder, req.Verb)
 		if allowed, exists := m.allowedMap[key]; exists {

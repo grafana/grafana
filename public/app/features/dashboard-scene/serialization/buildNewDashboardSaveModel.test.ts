@@ -34,6 +34,7 @@ const fakeDsMock: DataSourceApi = {
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
   getTagKeys: jest.fn(),
+  getGroupByKeys: jest.fn(),
   uid: 'fake-std',
 };
 

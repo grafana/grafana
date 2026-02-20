@@ -1,0 +1,41 @@
+{
+  "title": "V2 dashboard with elements",
+  "tags": ["v2", "elements"],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 0,
+      "title": "Timeseries panel",
+      "description": "A v2 panel",
+      "type": "TimeseriesPanel",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ],
+      "transformer": ["merge", "groupBy"]
+    },
+    {
+      "id": 0,
+      "title": "Library panel instance",
+      "libraryPanel": "lib-uid-123",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

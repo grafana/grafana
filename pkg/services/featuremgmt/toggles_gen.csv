@@ -119,6 +119,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-02-18,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
 2025-10-28,dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
+2026-02-18,dashboardTemplatesAssistantButton,experimental,@grafana/sharing-squad,false,false,true
 2024-05-24,alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 2026-01-14,alertingNavigationV2,experimental,@grafana/alerting-squad,false,false,false
 2025-12-19,alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
@@ -276,7 +277,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
-2025-11-06,kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2025-11-12,awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-12-04,opentsdbBackendMigration,GA,@grafana/oss-big-tent,false,true,false
