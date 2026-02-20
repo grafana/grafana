@@ -2620,11 +2620,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/LogDetails.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/logs/components/LogDetailsRow.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
