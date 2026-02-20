@@ -1,3 +1,4 @@
+import { ErrorDetails } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 
 import { Step } from '../Stepper';
@@ -47,11 +48,15 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
 };
 
 interface SyncStepState {
-  hasFieldErrors: boolean;
+  /** Repo field errors from the repository status */
+  fieldErrors: ErrorDetails[] | undefined;
+  /** Whether the repository status query has an error */
   hasError: boolean;
+  /** Whether the repository is unhealthy */
   isUnhealthy: boolean;
   isLoading: boolean;
   healthStatusNotReady: boolean;
+  /** Health messages from the repository status endpoint */
   repositoryHealthMessages: string[] | undefined;
   goToStep: (stepId: WizardStep) => void;
 }
@@ -74,15 +79,22 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
     };
   }
 
-  if (state.isUnhealthy && state.hasFieldErrors) {
+  if (state.isUnhealthy && state.fieldErrors?.length) {
+    // When health is unhealthy and has field errors, show the field errors
+    const fieldMessages = state.fieldErrors.filter((e) => e.detail).map((e) => e.detail!);
+
     return {
       status: 'error',
       error: {
         title: t('provisioning.synchronize-step.field-errors', 'Configuration errors detected'),
-        message: t(
-          'provisioning.synchronize-step.field-errors-message',
-          'There are issues with the repository configuration. Please review your settings.'
-        ),
+        message: fieldMessages.length
+          ? fieldMessages
+          : [
+              t(
+                'provisioning.synchronize-step.field-errors-message',
+                'There are issues with the repository configuration. Please review your settings.'
+              ),
+            ],
       },
       action: {
         label: t('provisioning.synchronize-step.review-configuration', 'Review configuration'),
@@ -92,11 +104,15 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   }
 
   if (state.isUnhealthy) {
+    // When health is unhealthy and has no field errors, show the health messages
     return {
       status: 'error',
       error: {
-        title: t('provisioning.synchronize-step.repository-unhealthy', 'The repository cannot be synchronized'),
-        message: state.repositoryHealthMessages ?? [],
+        title: t(
+          'provisioning.synchronize-step.repository-unhealthy',
+          'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
+        ),
+        message: state.repositoryHealthMessages ?? '',
       },
     };
   }

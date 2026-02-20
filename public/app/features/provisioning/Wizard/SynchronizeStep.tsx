@@ -43,8 +43,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     isLoading,
   } = useRepositoryStatus(repoName);
 
-  const hasFieldErrors = Boolean(fieldErrors?.length);
-
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
     isHealthy,
     healthStatusNotReady,
@@ -57,9 +55,10 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   const [job, setJob] = useState<Job>();
 
   useEffect(() => {
+    // This useEffect is used to update the step status info based on the repository status and the form errors
     setStepStatusInfo(
       getSyncStepStatus({
-        hasFieldErrors,
+        fieldErrors,
         hasError,
         isUnhealthy,
         isLoading,
@@ -69,7 +68,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
       })
     );
   }, [
-    hasFieldErrors,
+    fieldErrors,
     hasError,
     isUnhealthy,
     isLoading,
