@@ -193,6 +193,21 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      conditionalRendering: {
+        variable: {
+          valueInput: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable value input',
+          },
+          variableSelection: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+        },
+        timeRange: {
+          select: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
+          }
+        }
+      },
     },
     DashNav: {
       nav: {
