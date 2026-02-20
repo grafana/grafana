@@ -179,8 +179,8 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
-	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
+	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", setting.AbsoluteMaxNestedFolderDepth, "")
+	require.Len(t, ancestorUIDs, setting.AbsoluteMaxNestedFolderDepth)
 
 	t.Cleanup(func() {
 		for _, uid := range ancestorUIDs[1:] {

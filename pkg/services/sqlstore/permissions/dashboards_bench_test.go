@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -66,8 +67,8 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 }
 
 func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) db.DB {
-	if nestingLevel > folder.MaxNestedFolderDepth {
-		nestingLevel = folder.MaxNestedFolderDepth
+	if nestingLevel > setting.AbsoluteMaxNestedFolderDepth {
+		nestingLevel = setting.AbsoluteMaxNestedFolderDepth
 	}
 
 	store, cfg := db.InitTestDBWithCfg(b)

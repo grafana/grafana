@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -194,7 +195,7 @@ func TestValidateCreate(t *testing.T) {
 					},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: setting.AbsoluteMaxNestedFolderDepth,
 		},
 		{
 			name: "cannot create a circular reference",
@@ -356,7 +357,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: setting.AbsoluteMaxNestedFolderDepth,
 		},
 		{
 			name: "error when moving exceeds max depth",
@@ -387,7 +388,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
+			maxDepth:    setting.AbsoluteMaxNestedFolderDepth,
 			expectedErr: "[folder.maximum-depth-reached]",
 		},
 		{

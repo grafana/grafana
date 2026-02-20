@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -397,7 +398,7 @@ func (ss *FolderStoreImpl) getParentsMySQL(ctx context.Context, q folder.GetPare
 
 			folders = append(folders, f.WithURL())
 			uid = f.ParentUID
-			if len(folders) > folder.MaxNestedFolderDepth {
+			if len(folders) > setting.AbsoluteMaxNestedFolderDepth {
 				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
 			}
 		}
@@ -410,7 +411,7 @@ func (ss *FolderStoreImpl) getParentsMySQL(ctx context.Context, q folder.GetPare
 func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	height := -1
 	queue := []string{foldrUID}
-	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
+	for len(queue) > 0 && height <= setting.AbsoluteMaxNestedFolderDepth {
 		length := len(queue)
 		height++
 		for i := 0; i < length; i++ {
@@ -428,8 +429,8 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 			}
 		}
 	}
-	if height > folder.MaxNestedFolderDepth {
-		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
+	if height > setting.AbsoluteMaxNestedFolderDepth {
+		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", setting.AbsoluteMaxNestedFolderDepth)
 	}
 	return height, nil
 }
@@ -588,7 +589,7 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 		// but it's the best we can do without recursive CTE
 		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 			s := strings.Builder{}
-			args := make([]any, 0, 1+folder.MaxNestedFolderDepth)
+			args := make([]any, 0, 1+setting.AbsoluteMaxNestedFolderDepth)
 			args = append(args, orgID)
 			// covered by UQE_folder_org_id_uid
 			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
@@ -596,7 +597,7 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 			s.WriteString(getFullpathJoinsSQL())
 			s.WriteString(` WHERE f0.org_id=?`)
 			s.WriteString(` AND (`)
-			for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+			for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth; i++ {
 				if i > 1 {
 					s.WriteString(` OR `)
 				}
@@ -623,18 +624,18 @@ func getFullpathSQL(dialect migrator.Dialect) string {
 	if dialect.DriverName() == migrator.MySQL {
 		escaped = `\\/`
 	}
-	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
+	concatCols := make([]string, 0, setting.AbsoluteMaxNestedFolderDepth)
 	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))
-	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+	for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth; i++ {
 		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '%s'), '')", i, escaped), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
 }
 
 func getFullapathUIDsSQL(dialect migrator.Dialect) string {
-	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
+	concatCols := make([]string, 0, setting.AbsoluteMaxNestedFolderDepth)
 	concatCols = append(concatCols, "COALESCE(f0.uid, '')")
-	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+	for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth; i++ {
 		concatCols = append([]string{fmt.Sprintf("COALESCE(f%d.uid, '')", i), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
@@ -642,8 +643,8 @@ func getFullapathUIDsSQL(dialect migrator.Dialect) string {
 
 // getFullpathJoinsSQL returns a SQL fragment that joins the same table multiple times to get the full path of a folder.
 func getFullpathJoinsSQL() string {
-	joins := make([]string, 0, folder.MaxNestedFolderDepth)
-	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+	joins := make([]string, 0, setting.AbsoluteMaxNestedFolderDepth)
+	for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth; i++ {
 		// covered by UQE_folder_org_id_uid
 		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
@@ -653,7 +654,7 @@ func getFullpathJoinsSQL() string {
 func getAncestorsSQL(dialect migrator.Dialect, ancestorUIDs []string, start int, end int, origSQL string, origArgs []any) (string, []any) {
 	s2 := strings.Builder{}
 	s2.WriteString(origSQL)
-	args2 := make([]any, 0, len(ancestorUIDs)*folder.MaxNestedFolderDepth)
+	args2 := make([]any, 0, len(ancestorUIDs)*setting.AbsoluteMaxNestedFolderDepth)
 	args2 = append(args2, origArgs...)
 
 	partialAncestorUIDs := ancestorUIDs[start:min(end, len(ancestorUIDs))]
@@ -663,7 +664,7 @@ func getAncestorsSQL(dialect migrator.Dialect, ancestorUIDs []string, start int,
 	}
 	s2.WriteString(` AND ( f0.uid IN (?` + strings.Repeat(", ?", len(partialAncestorUIDs)-1) + `)`)
 	args2 = append(args2, partialArgs...)
-	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+	for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth; i++ {
 		s2.WriteString(fmt.Sprintf(` OR f%d.uid IN (?`+strings.Repeat(", ?", len(partialAncestorUIDs)-1)+`)`, i))
 		args2 = append(args2, partialArgs...)
 	}

@@ -22,6 +22,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
@@ -291,7 +292,7 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 
 	height := -1
 	queue := []string{foldrUID}
-	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
+	for len(queue) > 0 && height <= setting.AbsoluteMaxNestedFolderDepth {
 		length := len(queue)
 		height++
 		for i := 0; i < length; i++ {
@@ -309,8 +310,8 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 			}
 		}
 	}
-	if height > folder.MaxNestedFolderDepth {
-		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
+	if height > setting.AbsoluteMaxNestedFolderDepth {
+		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", setting.AbsoluteMaxNestedFolderDepth)
 	}
 	return height, nil
 }

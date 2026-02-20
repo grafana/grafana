@@ -25,14 +25,8 @@ var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPubli
 var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
-	GeneralFolderUID = "general"
-	RootFolderUID    = ""
-	// MaxNestedFolderDepth is the absolute maximum nesting depth for folders.
-	// This value drives SQL JOIN chain generation and must not be lowered without
-	// a corresponding schema migration. The effective limit is controlled by
-	// setting.FolderSettings.MaxNestedFolderDepth (default 4, configurable via
-	// the [folder] section in grafana.ini).
-	MaxNestedFolderDepth  = 7
+	GeneralFolderUID      = "general"
+	RootFolderUID         = ""
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
