@@ -2904,8 +2904,7 @@
         "type": "opsgenie",
         "versions": [
           {
-            "canCreate": false,
-            "deprecated": true,
+            "canCreate": true,
             "options": [
               {
                 "dependsOn": "",
