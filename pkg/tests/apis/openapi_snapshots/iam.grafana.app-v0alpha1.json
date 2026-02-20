@@ -4982,9 +4982,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions",
-          "permissionsOmitted"
+          "group"
         ],
         "properties": {
           "description": {
@@ -5739,9 +5737,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions",
-          "permissionsOmitted"
+          "group"
         ],
         "properties": {
           "description": {
@@ -6097,9 +6093,7 @@
         "required": [
           "title",
           "description",
-          "group",
-          "permissions",
-          "permissionsOmitted"
+          "group"
         ],
         "properties": {
           "description": {
