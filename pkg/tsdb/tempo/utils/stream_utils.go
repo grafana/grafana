@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -28,25 +29,26 @@ func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamR
 
 // When we receive a new query request we should make sure that all incoming HTTP headers are being forwarding to the grpc stream request
 // this is to make sure that no headers are lost when we make the actual call to Tempo later on.
+// Team HTTP headers (LBAC) are only added when the forwardTeamHeadersTempo feature toggle is enabled.
 func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
-	// get the plugin from context
 	plugin := backend.PluginConfigFromContext(ctx)
 
-	// get the HTTP headers for the current user's teams only (LBAC)
-	teamHeaders, err := getTeamHTTPHeaders(ctx, plugin, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	// get the rest of the incoming headers
 	headers, err := getClientOptionsHeaders(ctx, plugin, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	for key, value := range teamHeaders {
-		headers[key] = value
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	if cfg != nil && cfg.FeatureToggles().IsEnabled(featuremgmt.FlagForwardTeamHeadersTempo) {
+		teamHeaders, err := getTeamHTTPHeaders(ctx, plugin, logger)
+		if err != nil {
+			return nil, err
+		}
+		for key, value := range teamHeaders {
+			headers[key] = value
+		}
 	}
+
 	return headers, nil
 }
 
@@ -89,6 +91,7 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 	}
 
 	userTeamIDs := requester.GetTeams()
+	backend.Logger.Warn("userTeamIDs", "userTeamIDs", userTeamIDs)
 	if len(userTeamIDs) == 0 {
 		return headers, nil
 	}
@@ -98,6 +101,7 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 		userTeamIDSet[strconv.FormatInt(id, 10)] = struct{}{}
 	}
 
+	backend.Logger.Warn("data", "data", data, "userTeamIDSet", userTeamIDSet)
 	teamHTTPHeaders := data["teamHttpHeaders"]
 	if lbacHeaders, ok := teamHTTPHeaders.(map[string]interface{})["headers"]; ok {
 		headerMap := lbacHeaders.(map[string]interface{})
@@ -133,6 +137,7 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 			}
 		}
 	}
+	backend.Logger.Warn("headers", "headers", headers)
 	return headers, nil
 }
 
