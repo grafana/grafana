@@ -217,9 +217,7 @@ export function DashList(props: PanelProps<Options>) {
             <Box marginBottom={2} paddingTop={0.5} key={`dash-group-${i}`}>
               {showHeadings && (
                 <Box marginRight={1} paddingX={1} paddingY={0.25}>
-                  <Text variant="h6" element="h6">
-                    {header}
-                  </Text>
+                  <Text variant="h6">{header}</Text>
                 </Box>
               )}
               {renderList(dashboards)}
