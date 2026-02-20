@@ -167,28 +167,26 @@ export function useFiltersOverviewState({
         adhocFilters.state
       );
 
-      // Fetch keys from datasource
-      keys.push(...(await adhocFilters._getKeys(null)));
-
-      // Add groupBy values if not present
-      if (groupByVariable) {
-        const existing = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
-        for (const v of getGroupByValues(groupByVariable)) {
-          if (!existing.has(v)) {
-            keys.push({ label: v, value: v });
-          }
+      const existingKeyValues = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
+      for (const key of await adhocFilters._getKeys(null)) {
+        const keyValue = key.value ?? key.label;
+        if (keyValue && !existingKeyValues.has(keyValue)) {
+          keys.push(key);
+          existingKeyValues.add(keyValue);
         }
       }
 
-      // Initialize groupBy state
       const isGrouped: Record<string, boolean> = {};
       if (groupByVariable) {
         for (const v of getGroupByValues(groupByVariable)) {
           isGrouped[v] = true;
+          if (!existingKeyValues.has(v)) {
+            keys.push({ label: v, value: v });
+            existingKeyValues.add(v);
+          }
         }
       }
 
-      // Groups come from keys and only change on init; set all to open
       const { groupNames } = splitKeysByGroup(keys);
       const openGroups: Record<string, boolean> = Object.fromEntries(groupNames.map((g) => [g, true]));
 
@@ -205,7 +203,9 @@ export function useFiltersOverviewState({
       setLoading(false);
     };
 
-    init();
+    init().catch(() => {
+      setLoading(false);
+    });
   }, [adhocFilters, groupByVariable]);
 
   const { groupNames } = useMemo(() => splitKeysByGroup(state.keys), [state.keys]);
@@ -222,79 +222,75 @@ export function useFiltersOverviewState({
     return buildListItems(ungroupedKeys, groupNames, groupedKeys, state.openGroups);
   }, [filteredKeys, state.openGroups]);
 
-  // Actions
-  const actions: FiltersOverviewActions = useMemo(
-    () => ({
-      toggleGroup: (group, isOpen) => {
-        setState((prev) => ({ ...prev, openGroups: { ...prev.openGroups, [group]: isOpen } }));
-      },
+  const actions: FiltersOverviewActions = {
+    toggleGroup: (group, isOpen) => {
+      setState((prev) => ({ ...prev, openGroups: { ...prev.openGroups, [group]: isOpen } }));
+    },
 
-      setOperator: (key, operator) => {
-        setState((prev) => ({ ...prev, operatorsByKey: { ...prev.operatorsByKey, [key]: operator } }));
-      },
+    setOperator: (key, operator) => {
+      setState((prev) => ({ ...prev, operatorsByKey: { ...prev.operatorsByKey, [key]: operator } }));
+    },
 
-      setSingleValue: (key, value) => {
-        setState((prev) => ({ ...prev, singleValuesByKey: { ...prev.singleValuesByKey, [key]: value } }));
-      },
+    setSingleValue: (key, value) => {
+      setState((prev) => ({ ...prev, singleValuesByKey: { ...prev.singleValuesByKey, [key]: value } }));
+    },
 
-      setMultiValues: (key, values) => {
-        setState((prev) => ({ ...prev, multiValuesByKey: { ...prev.multiValuesByKey, [key]: values } }));
-      },
+    setMultiValues: (key, values) => {
+      setState((prev) => ({ ...prev, multiValuesByKey: { ...prev.multiValuesByKey, [key]: values } }));
+    },
 
-      toggleGroupBy: (key, nextValue) => {
-        setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
-      },
+    toggleGroupBy: (key, nextValue) => {
+      setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
+    },
 
-      getValueOptionsForKey: async (key, operator, inputValue) => {
-        if (!adhocFilters) {
-          return [];
-        }
+    getValueOptionsForKey: async (key, operator, inputValue) => {
+      if (!adhocFilters) {
+        return [];
+      }
 
-        let options = valueOptionsByKey[key];
-        if (!options) {
-          const filter: AdHocFilterWithLabels = { key, operator, value: '' };
-          const values = await adhocFilters._getValuesFor(filter);
-          options = values.map((v) => ({
-            label: v.label ?? v.value ?? '',
-            value: v.value ?? '',
-          }));
-          setValueOptionsByKey((prev) => ({ ...prev, [key]: options }));
-        }
+      let options = valueOptionsByKey[key];
+      if (!options) {
+        const filter: AdHocFilterWithLabels = { key, operator, value: '' };
+        const values = await adhocFilters._getValuesFor(filter);
+        options = values.map((v) => ({
+          label: v.label ?? v.value ?? '',
+          value: v.value ?? '',
+        }));
+        setValueOptionsByKey((prev) => ({ ...prev, [key]: options }));
+      }
 
-        if (!inputValue) {
-          return options;
-        }
-        const lowered = inputValue.toLowerCase();
-        return options.filter((o) => (o.label ?? o.value).toLowerCase().includes(lowered));
-      },
+      if (!inputValue) {
+        return options;
+      }
+      const lowered = inputValue.toLowerCase();
+      return options.filter((o) => (o.label ?? o.value).toLowerCase().includes(lowered));
+    },
 
-      applyChanges: () => {
-        if (groupByVariable) {
-          const { nextValues, nextText } = buildGroupByUpdate(state.keys, state.isGrouped);
-          groupByVariable.changeValueTo(nextValues, nextText, true);
-        }
+    applyChanges: () => {
+      if (groupByVariable) {
+        const { nextValues, nextText } = buildGroupByUpdate(state.keys, state.isGrouped);
+        groupByVariable.changeValueTo(nextValues, nextText, true);
+      }
 
-        if (adhocFilters) {
-          const { nextFilters, nextOriginFilters, nonApplicableOriginFilters, nonApplicableFilters } =
-            buildAdHocApplyFilters({
-              keys: state.keys,
-              isOriginByKey: state.isOriginByKey,
-              operatorsByKey: state.operatorsByKey,
-              singleValuesByKey: state.singleValuesByKey,
-              multiValuesByKey: state.multiValuesByKey,
-              existingOriginFilters: adhocFilters.state.originFilters ?? [],
-              existingFilters: adhocFilters.state.filters ?? [],
-            });
-
-          adhocFilters.setState({
-            filters: [...nextFilters, ...nonApplicableFilters],
-            originFilters: adhocFilters.validateOriginFilters([...nextOriginFilters, ...nonApplicableOriginFilters]),
+      if (adhocFilters) {
+        const { nextFilters, nextOriginFilters, nonApplicableOriginFilters, nonApplicableFilters } =
+          buildAdHocApplyFilters({
+            keys: state.keys,
+            isOriginByKey: state.isOriginByKey,
+            operatorsByKey: state.operatorsByKey,
+            singleValuesByKey: state.singleValuesByKey,
+            multiValuesByKey: state.multiValuesByKey,
+            existingOriginFilters: adhocFilters.state.originFilters ?? [],
+            existingFilters: adhocFilters.state.filters ?? [],
           });
-        }
-      },
-    }),
-    [adhocFilters, groupByVariable, state, valueOptionsByKey]
-  );
+
+        adhocFilters.setState({
+          filters: [...nextFilters, ...nonApplicableFilters],
+          originFilters: adhocFilters.validateOriginFilters([...nextOriginFilters, ...nonApplicableOriginFilters]),
+        });
+      }
+    },
+  };
 
   return {
     state,

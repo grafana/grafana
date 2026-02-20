@@ -5,7 +5,6 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Combobox, ComboboxOption, Icon, MultiCombobox, Tooltip, useStyles2 } from '@grafana/ui';
 
-// Group header component
 interface GroupHeaderProps {
   group: string;
   isOpen: boolean;
@@ -34,7 +33,6 @@ export const GroupHeader = memo(({ group, isOpen, onToggle }: GroupHeaderProps) 
 
 GroupHeader.displayName = 'GroupHeader';
 
-// Filter row component
 interface FilterRowProps {
   keyOption: SelectableValue<string>;
   keyValue: string;

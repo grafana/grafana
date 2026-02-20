@@ -15,7 +15,7 @@ import { MULTI_OPERATOR_VALUES } from './utils';
 const GROUP_HEADER_HEIGHT = 32;
 const FILTER_ROW_HEIGHT = 32;
 const ROW_GAP = 8;
-const SKELETON_ROW_COUNT = 30;
+const SKELETON_ROW_COUNT = 5;
 
 interface DashboardFiltersOverviewProps {
   adhocFilters?: AdHocFiltersVariable;
@@ -150,7 +150,6 @@ export const DashboardFiltersOverview = ({
   );
 };
 
-// Footer component
 interface FooterProps {
   onApply: () => void;
   onApplyAndClose: () => void;

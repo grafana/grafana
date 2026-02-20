@@ -30,7 +30,7 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
       iconOnly={false}
       aria-label={tooltip}
       tooltip={tooltip}
-      data-testid="scopes-dashboards-expand"
+      data-testid="filters-overview-expand"
       disabled={dashboard.state.isEditing}
       onClick={onClick}
       variant={'canvas'}

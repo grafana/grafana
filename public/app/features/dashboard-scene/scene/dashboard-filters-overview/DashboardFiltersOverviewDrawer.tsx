@@ -53,7 +53,7 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
     <Drawer
       title={
         <div className={styles.drawerHeader}>
-          <span className={styles.drawerTitle}>{t('dashboard.filters-verview.title', 'Edit filters')}</span>
+          <span className={styles.drawerTitle}>{t('dashboard.filters-overview.title', 'Edit filters')}</span>
           <DashboardFiltersOverviewSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
       }

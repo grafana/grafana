@@ -41,8 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
     alignItems: 'center',
-    minWidth: 220,
-    marginRight: theme.spacing(4),
+    flex: 1,
     overflow: 'hidden',
   }),
   input: css({
