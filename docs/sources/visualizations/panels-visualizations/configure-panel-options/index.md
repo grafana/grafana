@@ -77,7 +77,7 @@ The **Description** field supports [GitHub Flavored Markdown](https://github.git
 
 Common supported formatting includes:
 
-- **Emphasis:** Use `**bold**`, `_italics_`, and `~~strikethrough~~`.
+- **Emphasis:** Use `**bold**`, `_italics_`, and `~~crossed-out text~~`.
 - **Links:** Use `[Link text](https://example.com)`.
 - **Lists:** Use ordered and unordered lists.
 - **Code:** Use inline code and fenced code blocks.
