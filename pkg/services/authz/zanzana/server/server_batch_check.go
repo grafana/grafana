@@ -43,6 +43,10 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
+	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
+		return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
+
 	res, err := s.batchCheck(ctx, r)
 	if err != nil {
 		span.RecordError(err)
