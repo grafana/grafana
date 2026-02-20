@@ -62,6 +62,12 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
    - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
+### Align SAML identifier with SCIM `externalId`
+
+When you use SAML with SCIM provisioning, align the SCIM `externalId` with the SAML user identifier. Use a stable IdP attribute (for example, Entra ID `user.objectid`) as the SCIM `externalId`, and send that same value as a SAML claim. Configure Grafana to read this claim with the `assertion_attribute_external_uid` setting so SAML authentication links to the SCIM-provisioned user and its permissions.
+
+If the SAML identifier and SCIM `externalId` differ, Grafana may not link the authenticated user to the intended SCIM profile, which can result in incorrect access. Verify your IdP sends a stable, unique identifier and that it matches the SCIM `externalId`. Refer to your IdP docs and the Grafana SCIM integration guides for [Entra ID](configure-scim-with-entraid/) and [Okta](configure-scim-with-okta/) for attribute configuration details.
+
 ## Configure SCIM using the Grafana user interface
 
 You can configure SCIM in Grafana using the Grafana user interface. To do this, navigate to **Administration > Authentication > SCIM**.
@@ -93,7 +99,7 @@ The SCIM UI also displays information that may help you configure SCIM in your i
 After configuring SCIM in Grafana, configure your identity provider:
 
 - [Configure SCIM with Okta](configure-scim-with-okta/)
-- [Configure SCIM with Entra ID](configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](configure-scim-with-entraid/)
 
 ## Configure SCIM using the configuration file
 
@@ -185,5 +191,5 @@ The following table compares SCIM with other synchronization methods to help you
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
 - [Troubleshoot SCIM provisioning](troubleshooting/)
-- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-entraid/)
 - [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-okta/)
