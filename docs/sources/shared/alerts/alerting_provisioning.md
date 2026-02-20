@@ -1357,10 +1357,10 @@ GET /api/v1/provisioning/policies/export
 
 #### Parameters
 
-| Name        | Source | Type    | Go type | Required | Default | Description                                                                                                                                  |
-| ----------- | ------ | ------- | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `download`  | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                           |
-| `format`    | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence. |
+| Name        | Source | Type    | Go type | Required | Default | Description                                                                                                                                       |
+| ----------- | ------ | ------- | ------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `download`  | query  | boolean | `bool`  |          |         | Whether to initiate a download of the file or not.                                                                                                |
+| `format`    | query  | string  | string  |          | `yaml`  | Format of the downloaded file, either `yaml`, `json` or `hcl`. Accept header can also be used, but the query parameter will take precedence.      |
 | `routeName` | query  | string  | string  |          |         | Name of a specific routing tree to export. Requires the `alertingMultiplePolicies` feature flag. If omitted, the default policy tree is exported. |
 
 #### All responses
