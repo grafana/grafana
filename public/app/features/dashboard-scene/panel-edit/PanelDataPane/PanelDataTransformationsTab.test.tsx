@@ -23,7 +23,12 @@ import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCo
 import { findVizPanelByKey } from '../../utils/utils';
 import { testDashboard } from '../testfiles/testDashboard';
 
-import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
+import {
+  PanelDataTransformationsTab,
+  PanelDataTransformationsTabRendered,
+  handleTransformationChange,
+  handleTransformationRemove,
+} from './PanelDataTransformationsTab';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -258,6 +263,194 @@ describe('PanelDataTransformationsTab', () => {
         total_transformations: 0,
       });
     });
+  });
+});
+
+describe('handleTransformationChange', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  it('reports edit interaction on first change at an index', () => {
+    const reportedEdits = new Set<number>();
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [
+      { id: 'calculateField', options: {} },
+      { id: 'organize', options: {} },
+    ];
+
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { mode: 'binary' } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: 'calculateField',
+      action: 'edit',
+    });
+  });
+
+  it('does not report edit interaction on subsequent changes at the same index', () => {
+    const reportedEdits = new Set<number>();
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [{ id: 'calculateField', options: {} }];
+
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 1 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 2 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 3 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports separately for different indices', () => {
+    const reportedEdits = new Set<number>();
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [
+      { id: 'calculateField', options: {} },
+      { id: 'organize', options: {} },
+    ];
+
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 1 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+    handleTransformationChange(
+      1,
+      { id: 'organize', options: { b: 1 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+
+    expect(reportInteraction).toHaveBeenCalledTimes(2);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: 'calculateField',
+      action: 'edit',
+    });
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: 'organize',
+      action: 'edit',
+    });
+  });
+
+  it('always calls onChangeTransformations regardless of dedup state', () => {
+    const reportedEdits = new Set<number>();
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [{ id: 'calculateField', options: {} }];
+
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 1 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+    handleTransformationChange(
+      0,
+      { id: 'calculateField', options: { a: 2 } },
+      transformations,
+      reportedEdits,
+      onChangeTransformations
+    );
+
+    expect(onChangeTransformations).toHaveBeenCalledTimes(2);
+    expect(onChangeTransformations).toHaveBeenNthCalledWith(1, [{ id: 'calculateField', options: { a: 1 } }]);
+    expect(onChangeTransformations).toHaveBeenNthCalledWith(2, [{ id: 'calculateField', options: { a: 2 } }]);
+  });
+});
+
+describe('handleTransformationRemove', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  it('reports remove interaction with correct type and remaining count', () => {
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [
+      { id: 'calculateField', options: {} },
+      { id: 'organize', options: {} },
+    ];
+
+    handleTransformationRemove(0, transformations, onChangeTransformations);
+
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: 'calculateField',
+      action: 'remove',
+      total_transformations: 1,
+    });
+  });
+
+  it('reports total_transformations as 0 when removing the last transformation', () => {
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [{ id: 'calculateField', options: {} }];
+
+    handleTransformationRemove(0, transformations, onChangeTransformations);
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: 'calculateField',
+      action: 'remove',
+      total_transformations: 0,
+    });
+  });
+
+  it('calls onChangeTransformations with the transformation removed', () => {
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [
+      { id: 'calculateField', options: {} },
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+    ];
+
+    handleTransformationRemove(1, transformations, onChangeTransformations);
+
+    expect(onChangeTransformations).toHaveBeenCalledTimes(1);
+    expect(onChangeTransformations).toHaveBeenCalledWith([
+      { id: 'calculateField', options: {} },
+      { id: 'reduce', options: {} },
+    ]);
+  });
+
+  it('does not mutate the original transformations array', () => {
+    const onChangeTransformations = jest.fn();
+    const transformations: DataTransformerConfig[] = [
+      { id: 'calculateField', options: {} },
+      { id: 'organize', options: {} },
+    ];
+
+    handleTransformationRemove(0, transformations, onChangeTransformations);
+
+    expect(transformations).toHaveLength(2);
   });
 });
 

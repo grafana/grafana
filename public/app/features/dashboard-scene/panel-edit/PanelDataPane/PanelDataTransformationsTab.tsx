@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -215,6 +215,45 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   );
 }
 
+export function handleTransformationChange(
+  index: number,
+  transformation: DataTransformerConfig,
+  transformations: DataTransformerConfig[],
+  reportedEdits: Set<number>,
+  onChangeTransformations: (t: DataTransformerConfig[]) => void
+) {
+  if (transformation?.id && !reportedEdits.has(index)) {
+    reportedEdits.add(index);
+    reportInteraction('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: transformation.id,
+      action: 'edit',
+    });
+  }
+  const newTransformations = transformations.slice();
+  newTransformations[index] = transformation;
+  onChangeTransformations(newTransformations);
+}
+
+export function handleTransformationRemove(
+  index: number,
+  transformations: DataTransformerConfig[],
+  onChangeTransformations: (t: DataTransformerConfig[]) => void
+) {
+  const removed = transformations[index];
+  if (removed?.id) {
+    reportInteraction('grafana_panel_transformations_clicked', {
+      context: 'transformations_list',
+      type: removed.id,
+      action: 'remove',
+      total_transformations: transformations.length - 1,
+    });
+  }
+  const newTransformations = transformations.slice();
+  newTransformations.splice(index, 1);
+  onChangeTransformations(newTransformations);
+}
+
 interface TransformationEditorProps {
   transformations: DataTransformerConfig[];
   model: PanelDataTransformationsTab;
@@ -222,6 +261,7 @@ interface TransformationEditorProps {
 }
 
 function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
+  const reportedEdits = useRef(new Set<number>());
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
 
   const onDragEnd = (result: DropResult) => {
@@ -248,30 +288,12 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <TransformationOperationRows
                 onChange={(index, transformation) => {
-                  if (transformation?.id) {
-                    reportInteraction('grafana_panel_transformations_clicked', {
-                      context: 'transformations_list',
-                      type: transformation.id,
-                      action: 'edit',
-                    });
-                  }
-                  const newTransformations = transformations.slice();
-                  newTransformations[index] = transformation;
-                  model.onChangeTransformations(newTransformations);
+                  handleTransformationChange(index, transformation, transformations, reportedEdits.current, (t) =>
+                    model.onChangeTransformations(t)
+                  );
                 }}
                 onRemove={(index) => {
-                  const removed = transformations[index];
-                  if (removed?.id) {
-                    reportInteraction('grafana_panel_transformations_clicked', {
-                      context: 'transformations_list',
-                      type: removed.id,
-                      action: 'remove',
-                      total_transformations: transformations.length - 1,
-                    });
-                  }
-                  const newTransformations = transformations.slice();
-                  newTransformations.splice(index, 1);
-                  model.onChangeTransformations(newTransformations);
+                  handleTransformationRemove(index, transformations, (t) => model.onChangeTransformations(t));
                 }}
                 configs={transformationEditorRows}
                 data={data}
