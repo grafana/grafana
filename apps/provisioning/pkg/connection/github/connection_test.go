@@ -985,9 +985,9 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.installationID",
-					Detail: "GitHub App installation lacks required 'contents' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.installationID",
+					Detail:   "GitHub App installation lacks required 'contents' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
 					BadValue: "456",
 				},
 			},
@@ -1035,9 +1035,9 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.installationID",
-					Detail: "GitHub App installation lacks required 'contents' permission: requires 'write', has 'read'. Accept the updated permissions at https://github.com/settings/installations/456",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.installationID",
+					Detail:   "GitHub App installation lacks required 'contents' permission: requires 'write', has 'read'. Accept the updated permissions at https://github.com/settings/installations/456",
 					BadValue: "456",
 				},
 			},
@@ -1085,9 +1085,9 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.installationID",
-					Detail: "GitHub App installation lacks required 'metadata' permission: requires 'read', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.installationID",
+					Detail:   "GitHub App installation lacks required 'metadata' permission: requires 'read', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
 					BadValue: "456",
 				},
 			},
@@ -1135,9 +1135,9 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.installationID",
-					Detail: "GitHub App installation lacks required 'pull_requests' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.installationID",
+					Detail:   "GitHub App installation lacks required 'pull_requests' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
 					BadValue: "456",
 				},
 			},
@@ -1185,9 +1185,9 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeForbidden,
-					Field:  "spec.github.installationID",
-					Detail: "GitHub App installation lacks required 'webhooks' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
+					Type:     metav1.CauseTypeForbidden,
+					Field:    "spec.github.installationID",
+					Detail:   "GitHub App installation lacks required 'webhooks' permission: requires 'write', has ''. Accept the updated permissions at https://github.com/settings/installations/456",
 					BadValue: "456",
 				},
 			},
