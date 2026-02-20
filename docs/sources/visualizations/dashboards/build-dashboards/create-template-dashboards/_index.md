@@ -62,6 +62,10 @@ When you choose this option, a preconfigured prompt is entered into the Assistan
 Grafana Assistant analyses the template, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets create a working, relevant dashboard from a template without the need to manually map metrics and panels.
 
+Grafana Assistant can query specific data sources.
+For the list, click here.
+https://grafana.com/docs/grafana-cloud/machine-learning/assistant/guides/querying/
+
 ## Create dashboards from suggestions
 
 {{< docs/public-preview product="Suggested dashboards" >}}
