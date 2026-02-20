@@ -56,6 +56,8 @@ const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceTyp
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
+const EMPTY_RULER_CONFIG: RulerRulesConfigDTO = {};
+
 export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2ContentProps) {
   const {
     control,
@@ -98,18 +100,16 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     rulesSource === 'datasource' ? (rulesDatasourceName ?? undefined) : undefined
   );
 
-  const emptyConfig: RulerRulesConfigDTO = useMemo(() => ({}), []);
-
-  const { value: rulesFromYaml = emptyConfig } = useAsync(async () => {
+  const { value: rulesFromYaml = EMPTY_RULER_CONFIG } = useAsync(async () => {
     if (!rulesYamlFile || rulesSource !== 'yaml') {
-      return emptyConfig;
+      return EMPTY_RULER_CONFIG;
     }
     try {
       return await parseYamlFileToRulerRulesConfigDTO(rulesYamlFile, rulesYamlFile.name);
     } catch {
-      return emptyConfig;
+      return EMPTY_RULER_CONFIG;
     }
-  }, [rulesSource, rulesYamlFile, emptyConfig]);
+  }, [rulesSource, rulesYamlFile]);
 
   const { rulesToBeImported, someRulesAreSkipped } = useMemo(() => {
     if (rulesSource === 'datasource') {
