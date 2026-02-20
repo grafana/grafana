@@ -38,7 +38,7 @@ jobs:
           echo "::notice::Manual trigger by $ACTOR"
           if [ -n "$TEAM_FILTER" ]; then
             ALLOWED_TEAMS="alerting dashboard"
-            if [[ ! " $ALLOWED_TEAMS " =~ " $TEAM_FILTER " ]]; then
+            if [[ ! " $ALLOWED_TEAMS " == *" $TEAM_FILTER "* ]]; then
               echo "::error::Invalid team_filter: $TEAM_FILTER. Allowed values: $ALLOWED_TEAMS (or empty for all)"
               exit 1
             fi
