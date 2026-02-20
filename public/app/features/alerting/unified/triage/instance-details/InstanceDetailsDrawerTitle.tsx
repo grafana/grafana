@@ -32,7 +32,13 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
         <Box flex={1} />
       </Stack>
       {folder && rule && (
-        <InstanceLocation folderTitle={stringifyFolder(folder)} groupName={rule.rule_group} ruleName={rule.title} />
+        <InstanceLocation
+          folderTitle={stringifyFolder(folder)}
+          groupName={rule.rule_group}
+          ruleName={rule.title}
+          namespaceUid={rule.namespace_uid}
+          ruleUid={rule.uid}
+        />
       )}
     </Stack>
   );

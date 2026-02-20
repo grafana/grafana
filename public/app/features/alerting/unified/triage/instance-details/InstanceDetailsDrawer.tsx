@@ -7,7 +7,18 @@ import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Box,
+  Drawer,
+  Icon,
+  LoadingBar,
+  LoadingPlaceholder,
+  Stack,
+  Text,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -16,7 +27,10 @@ import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
+import { groups as alertingGroups } from '../../utils/navigation';
+import { createRelativeUrl } from '../../utils/url';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
@@ -163,18 +177,38 @@ export interface InstanceLocationProps {
   folderTitle: string;
   groupName: string;
   ruleName: string;
+  namespaceUid?: string;
+  ruleUid?: string;
 }
 
-export function InstanceLocation({ folderTitle, groupName, ruleName }: InstanceLocationProps) {
+export function InstanceLocation({ folderTitle, groupName, ruleName, namespaceUid, ruleUid }: InstanceLocationProps) {
+  const groupUrl =
+    namespaceUid != null
+      ? alertingGroups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, namespaceUid, groupName)
+      : undefined;
+  const ruleViewUrl = ruleUid ? createRelativeUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUid}/view`) : undefined;
+
   return (
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon size="xs" name="folder" />
       <Stack direction="row" alignItems="center" gap={0.5}>
         <Text variant="bodySmall">{folderTitle}</Text>
         <Icon size="sm" name="angle-right" />
-        <Text variant="bodySmall">{groupName}</Text>
+        {groupUrl ? (
+          <TextLink href={groupUrl} variant="bodySmall" color="primary" inline={false}>
+            {groupName}
+          </TextLink>
+        ) : (
+          <Text variant="bodySmall">{groupName}</Text>
+        )}
         <Icon size="sm" name="angle-right" />
-        <Text variant="bodySmall">{ruleName}</Text>
+        {ruleViewUrl ? (
+          <TextLink href={ruleViewUrl} variant="bodySmall" color="primary" inline={false}>
+            {ruleName}
+          </TextLink>
+        ) : (
+          <Text variant="bodySmall">{ruleName}</Text>
+        )}
       </Stack>
     </Stack>
   );
