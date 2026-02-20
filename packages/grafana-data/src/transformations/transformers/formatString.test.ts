@@ -23,12 +23,26 @@ const frame = toDataFrame({
 
 const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get('names');
 
-const options = (format: FormatStringOutput, substringStart?: number, substringEnd?: number) => {
+const options = ({
+  format,
+  substringStart = 0,
+  substringEnd = 100,
+  regex = '(.*)',
+  replacePattern: replacePattern = '$1',
+}: {
+  format: FormatStringOutput;
+  substringStart?: number;
+  substringEnd?: number;
+  regex?: string;
+  replacePattern?: string;
+}) => {
   return {
     stringField: 'names',
-    substringStart: substringStart ?? 0,
-    substringEnd: substringEnd ?? 100,
+    substringStart,
+    substringEnd,
     outputFormat: format,
+    regex,
+    replacePattern,
   };
 };
 
@@ -49,10 +63,13 @@ describe('Format String Transformer', () => {
       FormatStringOutput.KebabCase,
       FormatStringOutput.Trim,
     ];
-    const newValues = [];
+    const newValues: string[][] = [];
 
     for (let i = 0; i < formats.length; i++) {
-      const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(options(formats[i])));
+      var formatterOptions = options({
+        format: formats[i],
+      });
+      const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(formatterOptions));
       const newFrame = formatter(frame, [frame]);
       newValues.push(newFrame[0].values);
     }
@@ -73,13 +90,28 @@ describe('Format String Transformer', () => {
   });
 
   it('will convert string to substring', () => {
-    const formatter = createStringFormatter(
-      fieldMatches,
-      getFormatStringFunction(options(FormatStringOutput.Substring, 2, 5))
-    );
+    var formatterOptions = options({
+      format: FormatStringOutput.Substring,
+      substringStart: 2,
+      substringEnd: 5,
+    });
+    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(formatterOptions));
     const newFrame = formatter(frame, [frame]);
     const newValues = newFrame[0].values;
 
     expect(newValues).toEqual(['ice', 'B', 'cha', 'vid', 'ma ', '']);
+  });
+
+  it('will perform regex replacement', () => {
+    var formatterOptions = options({
+      format: FormatStringOutput.RegexReplace,
+      regex: '(.?).?(.?.?.?).*',
+      replacePattern: '$2 --- $1',
+    });
+    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(formatterOptions));
+    const newFrame = formatter(frame, [frame]);
+    const newValues = newFrame[0].values;
+
+    expect(newValues).toEqual(['ice --- a', 'B --- B', 'cha ---  ', 'vid --- d', 'ma  --- E', ' --- ']);
   });
 });
