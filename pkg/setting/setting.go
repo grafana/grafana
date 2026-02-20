@@ -527,6 +527,8 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	Folder FolderSettings
+
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
@@ -1424,6 +1426,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+	cfg.Folder = readFolderSettings(iniFile)
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
