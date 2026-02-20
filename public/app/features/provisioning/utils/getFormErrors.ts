@@ -3,7 +3,7 @@ import { Path } from 'react-hook-form';
 import { ErrorDetails, StatusCause, Status } from 'app/api/clients/provisioning/v0alpha1';
 import { extractStatusCauses } from 'app/api/utils';
 
-import { WizardFormData, WizardStep } from '../Wizard/types';
+import { WizardFormData } from '../Wizard/types';
 import { ConnectionFormData, RepositoryFormData } from '../types';
 
 export type RepositoryField = keyof WizardFormData['repository'];
