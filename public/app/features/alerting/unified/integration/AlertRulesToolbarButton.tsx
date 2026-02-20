@@ -2,6 +2,7 @@ import { useContext } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -24,6 +25,14 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
     return null;
   }
 
+  const hasFiringRules = namespaces.some((namespace) =>
+    namespace.groups.some((group) =>
+      group.rules.some(
+        (rule) => rule.type === PromRuleType.Alerting && rule.state === PromAlertingRuleState.Firing
+      )
+    )
+  );
+
   const onShowDrawer = () => {
     showModal(AlertRulesDrawer, {
       dashboardUid: dashboardUid,
@@ -37,6 +46,7 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
       icon="bell"
       onClick={onShowDrawer}
       key="button-alerting"
+      variant={hasFiringRules ? 'destructive' : 'default'}
     />
   );
 }
