@@ -92,22 +92,20 @@ function CompactStatRow({ color, icon, instanceCount, ruleCount, stateLabel }: C
   return (
     <div className={styles.statRow}>
       <Icon name={icon} size="sm" className={colorClass} />
-      <span className={`${styles.statValue} ${colorClass}`}>{instanceCount}</span>
-      <span className={styles.statLabel}>
+      <span className={`${styles.stateLabel} ${colorClass}`}>
         {stateLabel === 'firing' ? (
-          <Trans i18nKey="alerting.triage.compact-firing-instances">firing instances</Trans>
+          <Trans i18nKey="alerting.triage.compact-firing">firing</Trans>
         ) : (
-          <Trans i18nKey="alerting.triage.compact-pending-instances">pending instances</Trans>
+          <Trans i18nKey="alerting.triage.compact-pending">pending</Trans>
         )}
       </span>
-      <span className={styles.separator}>|</span>
+      <span className={`${styles.statValue} ${colorClass}`}>{instanceCount}</span>
+      <span className={styles.statLabel}>
+        <Trans i18nKey="alerting.triage.compact-instances">instances</Trans>
+      </span>
       <span className={`${styles.statValue} ${colorClass}`}>{ruleCount}</span>
       <span className={styles.statLabel}>
-        {stateLabel === 'firing' ? (
-          <Trans i18nKey="alerting.triage.compact-firing-rules">rules</Trans>
-        ) : (
-          <Trans i18nKey="alerting.triage.compact-pending-rules">rules</Trans>
-        )}
+        <Trans i18nKey="alerting.triage.compact-rules">rules</Trans>
       </span>
     </div>
   );
@@ -185,6 +183,7 @@ function TopLabelsSection() {
 }
 
 function SummaryStatsContent() {
+  const styles = useStyles2(getCompactStatStyles);
   const filter = useQueryFilter();
   const alertstateFilter = parseAlertstateFilter(filter);
 
@@ -229,7 +228,7 @@ function SummaryStatsContent() {
   return (
     <Stack direction="column" gap={2}>
       <Box backgroundColor="secondary" borderRadius="default" padding={1.5}>
-        <Stack direction="column" gap={0.5}>
+        <div className={styles.statsGrid}>
           {alertstateFilter.includes(PromAlertingRuleState.Firing) && (
             <CompactStatRow
               color="error"
@@ -248,7 +247,7 @@ function SummaryStatsContent() {
               stateLabel="pending"
             />
           )}
-        </Stack>
+        </div>
       </Box>
       <ErrorBoundaryAlert style="alertbox">
         <TopLabelsSection />
@@ -271,22 +270,29 @@ export class SummaryStatsScene extends SceneObjectBase<SceneObjectState> {
 }
 
 const getCompactStatStyles = (theme: GrafanaTheme2) => ({
-  statRow: css({
-    display: 'flex',
+  statsGrid: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content max-content max-content max-content max-content max-content',
     alignItems: 'center',
-    gap: theme.spacing(0.75),
+    columnGap: theme.spacing(1.5),
+    rowGap: theme.spacing(0.5),
     fontSize: theme.typography.body.fontSize,
+  }),
+  statRow: css({
+    display: 'contents',
   }),
   statValue: css({
     fontWeight: theme.typography.fontWeightBold,
     fontSize: theme.typography.h4.fontSize,
+    textAlign: 'right',
+    fontVariantNumeric: 'tabular-nums',
+  }),
+  stateLabel: css({
+    fontWeight: theme.typography.fontWeightMedium,
   }),
   statLabel: css({
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  separator: css({
-    color: theme.colors.text.disabled,
   }),
   errorColor: css({
     color: theme.colors.error.text,
