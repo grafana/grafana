@@ -55,6 +55,7 @@ func RegisterAppInstaller(
 	}
 
 	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
+	var searchHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
 	if service != nil {
 		mapper := grafrequest.GetNamespaceMapper(cfg)
 
@@ -69,6 +70,9 @@ func RegisterAppInstaller(
 
 		// Create the tags handler using the sqlAdapter (which implements TagProvider)
 		tagHandler = newTagsHandler(sqlAdapter)
+
+		// Create the search handler
+		searchHandler = newSearchHandler(sqlAdapter)
 	}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
@@ -77,7 +81,8 @@ func RegisterAppInstaller(
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: &annotationapp.AnnotationConfig{
-			TagHandler: tagHandler,
+			TagHandler:    tagHandler,
+			SearchHandler: searchHandler,
 		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())

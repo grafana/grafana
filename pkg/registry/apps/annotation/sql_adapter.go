@@ -102,6 +102,8 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		Limit:        queryLimit,
 		Offset:       offset,
 		AlertID:      -1,
+		Tags:         opts.Tags,
+		MatchAny:     opts.TagsMatchAny,
 	}
 
 	items, err := a.repo.Find(ctx, query)
