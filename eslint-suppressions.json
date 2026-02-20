@@ -4193,11 +4193,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/nodeGraph/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/piechart/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
