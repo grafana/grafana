@@ -337,6 +337,13 @@ abstract class DataSourceApi<
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
+   * Get tag keys for group by variables. Implementing this method independently from getTagKeys
+   * allows a datasource to support group by variables without necessarily supporting adhoc filters,
+   * and vice versa.
+   */
+  getGroupByKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
    * Get tag values for adhoc filters
    */
   getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;

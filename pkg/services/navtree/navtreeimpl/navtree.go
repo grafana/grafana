@@ -222,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
 		ctx := c.Req.Context()
 		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			var children []*navtree.NavLink
+			children := make([]*navtree.NavLink, 0, 1)
 			// setup guide (a submenu item under Home)
 			children = append(children, &navtree.NavLink{
 				Id:         "home-setup-guide",

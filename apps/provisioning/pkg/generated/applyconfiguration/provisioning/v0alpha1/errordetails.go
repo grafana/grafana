@@ -33,6 +33,9 @@ type ErrorDetailsApplyConfiguration struct {
 	// This can be useful for tooling or debugging, and may reference a specific rule, function, or service.
 	// This field is optional and may be empty.
 	Origin *string `json:"origin,omitempty"`
+	// BadValue is the value of the field that was determined to be invalid, if applicable.
+	// This can be any type. This field is optional and may be omitted if not relevant.
+	BadValue *any `json:"badValue,omitempty"`
 }
 
 // ErrorDetailsApplyConfiguration constructs a declarative configuration of the ErrorDetails type for use with
@@ -70,5 +73,13 @@ func (b *ErrorDetailsApplyConfiguration) WithDetail(value string) *ErrorDetailsA
 // If called multiple times, the Origin field is set to the value of the last call.
 func (b *ErrorDetailsApplyConfiguration) WithOrigin(value string) *ErrorDetailsApplyConfiguration {
 	b.Origin = &value
+	return b
+}
+
+// WithBadValue sets the BadValue field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the BadValue field is set to the value of the last call.
+func (b *ErrorDetailsApplyConfiguration) WithBadValue(value any) *ErrorDetailsApplyConfiguration {
+	b.BadValue = &value
 	return b
 }

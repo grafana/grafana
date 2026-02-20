@@ -910,7 +910,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			{pageNumber: 4, pageSize: 1, startToken: ""}, // Will be set in the test - last page with remaining item
 		}
 
-		var allItems []*resourcepb.ResourceWrapper
+		var allItems []*resourcepb.ResourceWrapper //nolint:prealloc
 
 		// Request first page with NotOlderThan and ResourceVersion=0 (should start from oldest)
 		for i, page := range pages {
