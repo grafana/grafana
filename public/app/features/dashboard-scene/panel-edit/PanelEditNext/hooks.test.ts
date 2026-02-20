@@ -1,5 +1,14 @@
-import { buildVizAndDataPaneGrid, getDefaultSidebarRatio } from './hooks';
+import { renderHook } from '@testing-library/react';
+import React from 'react';
 
+import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, useRatioResize } from './hooks';
+
+jest.mock('@grafana/ui', () => ({
+  useStyles2: jest.fn(() => ({ dragHandleVertical: 'drag-v', dragHandleHorizontal: 'drag-h' })),
+  getDragStyles: jest.fn(),
+}));
+
+// Prevent heavy transitive imports (@grafana/scenes, @grafana/runtime) from loading.
 jest.mock('./constants', () => ({
   SidebarSize: { Mini: 'mini', Full: 'full' },
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
@@ -61,5 +70,59 @@ describe('getDefaultSidebarRatio', () => {
     [1799, 0.25, 'returns the default sidebar just below the FHD threshold (< 1800px)'],
   ])('%s', (width, expected) => {
     expect(getDefaultSidebarRatio(width)).toBe(expected);
+  });
+});
+
+describe('useRatioResize', () => {
+  function makeContainerRef(width: number, height: number): React.RefObject<HTMLElement> {
+    const el = document.createElement('div');
+    el.getBoundingClientRect = () => ({
+      width,
+      height,
+      top: 0,
+      left: 0,
+      bottom: height,
+      right: width,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    });
+    return { current: el };
+  }
+
+  it('applies getDefaultRatio using the measured container width', () => {
+    const getDefaultRatio = jest.fn(() => 0.2);
+    const containerRef = makeContainerRef(1200, 600);
+
+    const { result } = renderHook(() =>
+      useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
+    );
+
+    expect(getDefaultRatio).toHaveBeenCalledWith(1200);
+    expect(result.current.ratio).toBe(0.2);
+  });
+
+  it('applies getDefaultRatio using the measured container height when direction is vertical', () => {
+    const getDefaultRatio = jest.fn(() => 0.3);
+    const containerRef = makeContainerRef(1200, 600);
+
+    const { result } = renderHook(() =>
+      useRatioResize({ direction: 'vertical', initialRatio: 0.5, containerRef, getDefaultRatio })
+    );
+
+    expect(getDefaultRatio).toHaveBeenCalledWith(600);
+    expect(result.current.ratio).toBe(0.3);
+  });
+
+  it('does not apply getDefaultRatio when the container has no size — avoids incorrect ratio before layout', () => {
+    const getDefaultRatio = jest.fn(() => 0.2);
+    const containerRef = makeContainerRef(0, 0);
+
+    const { result } = renderHook(() =>
+      useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
+    );
+
+    expect(getDefaultRatio).not.toHaveBeenCalled();
+    expect(result.current.ratio).toBe(0.5);
   });
 });
