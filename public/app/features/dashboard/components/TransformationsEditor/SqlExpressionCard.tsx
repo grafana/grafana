@@ -10,7 +10,7 @@ export interface SqlExpressionCardProps {
   testId?: string;
 }
 
-export function SqlExpressionCard({ name, description, onClick, imageUrl, testId }: SqlExpressionCardProps) {
+export function SqlExpressionCard({ name, description, imageUrl, onClick, testId }: SqlExpressionCardProps) {
   const styles = useStyles2(getCardStyles);
 
   return (

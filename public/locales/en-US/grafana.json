@@ -6130,6 +6130,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "Clear search",
+      "no-transformations-found": "No transformations found",
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
@@ -6609,7 +6611,6 @@
     },
     "empty-transformations-message": {
       "add-transformation": "Add transformation",
-      "new-badge": "New",
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
