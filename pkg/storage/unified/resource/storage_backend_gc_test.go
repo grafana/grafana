@@ -55,7 +55,8 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 			},
 		},
 	}
-	value, _ := u.MarshalJSON()
+	value, err := u.MarshalJSON()
+	require.NoError(t, err)
 
 	res := &unstructured.Unstructured{
 		Object: map[string]any{},
