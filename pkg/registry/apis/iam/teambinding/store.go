@@ -243,6 +243,9 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 
 	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
 	if err != nil {
+		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+			return nil, apierrors.NewConflict(bindingResource.GroupResource(), teamMemberObj.Name, err)
+		}
 		return nil, err
 	}
 

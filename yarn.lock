@@ -20816,8 +20816,10 @@ __metadata:
     publint: "npm:^0.3.12"
     re-resizable: "npm:6.11.2"
     react: "npm:18.3.1"
+    react-19: "npm:react@^19.2.4"
     react-diff-viewer-continued: "npm:^3.4.0"
     react-dom: "npm:18.3.1"
+    react-dom-19: "npm:react-dom@^19.2.4"
     react-draggable: "npm:4.5.0"
     react-dropzone: "npm:^14.2.3"
     react-grid-layout: "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch"
@@ -29666,6 +29668,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-19@npm:react@^19.2.4":
+  version: 19.2.4
+  resolution: "react@npm:19.2.4"
+  checksum: 10/18179fe217f67eb2d0bc61cd04e7ad3c282ea09a1dface7eacd71816f62609f4bbf566c447c704335284deb8397b00bca084e0cd60e6f437279a7498e2d0bfe0
+  languageName: node
+  linkType: hard
+
 "react-calendar@npm:^4.8.0":
   version: 4.8.0
   resolution: "react-calendar@npm:4.8.0"
@@ -29815,6 +29824,17 @@ __metadata:
     resolve: "npm:^1.22.1"
     strip-indent: "npm:^4.0.0"
   checksum: 10/501e5fa0d00e32ee27559f44462a34e9531018ccb46c51efbe60b98a4c077f43dbe8999da5bb91d2ab45a83a34099436a3b725fdabd3f218dbb4493c0b1c9f95
+  languageName: node
+  linkType: hard
+
+"react-dom-19@npm:react-dom@^19.2.4":
+  version: 19.2.4
+  resolution: "react-dom@npm:19.2.4"
+  dependencies:
+    scheduler: "npm:^0.27.0"
+  peerDependencies:
+    react: ^19.2.4
+  checksum: 10/ec17721a8cb131bc33480a9f738bc5bbfe4bd11b11cf69f3f473605346578a329ad26ceef6ef0761ea67a4b455803407dd7ed4ba3d8a5abd2cee8c32d221e498
   languageName: node
   linkType: hard
 
