@@ -475,6 +475,91 @@ func TestListDashboardVersions(t *testing.T) {
 		_, err := dashboardVersionService.List(context.Background(), &query)
 		require.ErrorIs(t, dashboards.ErrDashboardNotFound, err)
 	})
+
+	t.Run("List should respect start parameter to skip versions", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures()
+
+		dashboardService.On("GetDashboardUIDByID", mock.Anything,
+			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+
+		// Create 5 versions (5, 4, 3, 2, 1) in descending order
+		allVersions := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "15",
+						"generation":      int64(5),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "14",
+						"generation":      int64(4),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "13",
+						"generation":      int64(3),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "12",
+						"generation":      int64(2),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+				{Object: map[string]any{
+					"metadata": map[string]any{
+						"name":            "uid",
+						"resourceVersion": "11",
+						"generation":      int64(1),
+						"labels": map[string]any{
+							utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+						},
+					},
+					"spec": map[string]any{},
+				}},
+			},
+		}
+
+		// Query with start=2, limit=2 should skip first 2 versions and return versions 3, 2
+		query := dashver.ListDashboardVersionsQuery{DashboardID: 42, Start: 2, Limit: 2}
+		mockCli.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
+		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(allVersions, nil).Once()
+
+		res, err := dashboardVersionService.List(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 2, len(res.Versions))
+		// After skipping the first 2 versions (5 and 4), we should get versions 3 and 2
+		require.Equal(t, 3, res.Versions[0].Version)
+		require.Equal(t, 2, res.Versions[1].Version)
+	})
 }
 
 func TestRestoreVersion(t *testing.T) {
