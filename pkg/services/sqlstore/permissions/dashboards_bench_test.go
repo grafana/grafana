@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -52,7 +51,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported, store.GetDialect())
+		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported, store.GetDialect(), 7)
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
@@ -67,8 +66,8 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 }
 
 func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) db.DB {
-	if nestingLevel > setting.AbsoluteMaxNestedFolderDepth {
-		nestingLevel = setting.AbsoluteMaxNestedFolderDepth
+	if nestingLevel > 7 {
+		nestingLevel = 7
 	}
 
 	store, cfg := db.InitTestDBWithCfg(b)
@@ -76,7 +75,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store))
 	require.NoError(b, err)
 
-	fStore := folderimpl.ProvideStore(store)
+	fStore := folderimpl.ProvideStore(store, cfg)
 	folderSvc := folderimpl.ProvideService(
 		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore,
 		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)

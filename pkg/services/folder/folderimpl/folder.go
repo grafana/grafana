@@ -98,7 +98,7 @@ func ProvideService(
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
 		dashboardStore:         dashboardStore,
-		dashboardFolderStore:   newDashboardFolderStore(db),
+		dashboardFolderStore:   newDashboardFolderStore(db, cfg.Folder.AbsoluteMaxNestedFolderDepth),
 		store:                  store,
 		features:               features,
 		accessControl:          ac,
@@ -129,7 +129,7 @@ func ProvideService(
 		features,
 	)
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer, cfg)
 
 	srv.unifiedStore = unifiedStore
 	srv.k8sclient = k8sHandler

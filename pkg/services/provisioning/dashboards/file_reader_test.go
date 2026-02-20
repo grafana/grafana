@@ -130,7 +130,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
 	features := featuremgmt.WithFeatures()
-	fStore := folderimpl.ProvideStore(sql)
+	fStore := folderimpl.ProvideStore(sql, cfgT)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)

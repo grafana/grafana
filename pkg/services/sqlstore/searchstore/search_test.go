@@ -260,6 +260,7 @@ func TestIntegrationBuilder_RBAC(t *testing.T) {
 						tc.features,
 						recursiveQueriesAreSupported,
 						store.GetDialect(),
+						7,
 					),
 				},
 				Dialect:  store.GetDialect(),

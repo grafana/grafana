@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -484,7 +483,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, setting.AbsoluteMaxNestedFolderDepth),
+				parents:    newParentsGetter(us, 7),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -578,7 +577,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, setting.AbsoluteMaxNestedFolderDepth),
+				parents:    newParentsGetter(us, 7),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -684,7 +683,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
-		parents:    newParentsGetter(us, setting.AbsoluteMaxNestedFolderDepth),
+		parents:    newParentsGetter(us, 7),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

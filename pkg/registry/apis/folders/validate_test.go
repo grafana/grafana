@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -195,7 +194,7 @@ func TestValidateCreate(t *testing.T) {
 					},
 				},
 			},
-			maxDepth: setting.AbsoluteMaxNestedFolderDepth,
+			maxDepth: 7,
 		},
 		{
 			name: "cannot create a circular reference",

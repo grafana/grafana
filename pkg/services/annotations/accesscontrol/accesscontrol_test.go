@@ -29,7 +29,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	}
 
 	// Create permission filters
-	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect())
+	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect(), 7)
 	p2 := searchstore.OrgFilter{OrgId: 1}
 
 	// If DashboardUID is provided, it should be added as a filter
@@ -80,6 +80,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 		features:                  featuremgmt.WithFeatures(),
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: 100,
+		absoluteMaxDepth:          7,
 	}
 
 	// First call without DashboardUID

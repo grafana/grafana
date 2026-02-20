@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
@@ -33,6 +32,7 @@ type accessControlDashboardPermissionFilter struct {
 	folderAction        string
 	folderActionSets    []string
 	features            featuremgmt.FeatureToggles
+	absoluteMaxDepth    int
 
 	where clause
 	// any recursive CTE queries (if supported)
@@ -54,7 +54,7 @@ type PermissionsFilter interface {
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboardaccess.PermissionType and query type
 // The filter is configured to use the new permissions filter (without subqueries) if the feature flag is enabled
 // The filter is configured to use the old permissions filter (with subqueries) if the feature flag is disabled
-func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect) PermissionsFilter {
+func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect, absoluteMaxDepth int) PermissionsFilter {
 	needEdit := permissionLevel > dashboardaccess.PERMISSION_VIEW
 
 	var folderAction string
@@ -104,7 +104,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 
 	f := &accessControlDashboardPermissionFilter{
 		user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-		features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
+		features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect, absoluteMaxDepth: absoluteMaxDepth,
 	}
 	f.buildClauses(dialect)
 	return f
@@ -364,17 +364,17 @@ func actionsToCheck(action string, actionSets []string, permissions map[string][
 }
 
 func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTable string, leftCol string, rightTableCol string, orgID int64) (string, []any) {
-	wheres := make([]string, 0, setting.AbsoluteMaxNestedFolderDepth+1)
-	args := make([]any, 0, len(permSelectorArgs)*(setting.AbsoluteMaxNestedFolderDepth+1))
+	wheres := make([]string, 0, f.absoluteMaxDepth+1)
+	args := make([]any, 0, len(permSelectorArgs)*(f.absoluteMaxDepth+1))
 
-	joins := make([]string, 0, setting.AbsoluteMaxNestedFolderDepth+2)
+	joins := make([]string, 0, f.absoluteMaxDepth+2)
 
 	// covered by UQE_folder_org_id_uid
 	tmpl := "INNER JOIN folder %s ON %s.%s = %s.uid AND %s.org_id = %s.org_id "
 
 	prev := "d"
 	onCol := "uid"
-	for i := 1; i <= setting.AbsoluteMaxNestedFolderDepth+2; i++ {
+	for i := 1; i <= f.absoluteMaxDepth+2; i++ {
 		t := fmt.Sprintf("f%d", i)
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)
