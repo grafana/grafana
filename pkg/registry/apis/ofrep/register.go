@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,16 +23,22 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+var _ builder.HTTPRouteRegistrar = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -76,6 +82,36 @@ func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) 
 	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
 	return b, nil
+}
+
+// RegisterHTTPRoutes registers the cluster-global /ofrep/v1/... routes directly
+// on Grafana's HTTP router, bypassing the k8s apiserver. Authentication is
+// handled by Grafana's ContextHandler middleware which populates c.SignedInUser
+// before this handler runs.
+func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
+	rr.Group("/ofrep", func(r routing.RouteRegister) {
+		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
+			b.rootAllFlagsHandler(c.Resp, c.Req)
+		}))
+		r.Post("/v1/evaluate/flags/:flagKey", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
+			req := mux.SetURLVars(c.Req, map[string]string{
+				"flagKey": web.Params(c.Req)[":flagKey"],
+			})
+			b.rootOneFlagHandler(c.Resp, req)
+		}))
+	})
+}
+
+// grafanaHTTPHandler wraps a ReqContext handler to set up the identity context
+// from Grafana's signed-in user before calling the inner handler.
+func (b *APIBuilder) grafanaHTTPHandler(inner func(*contextmodel.ReqContext)) func(*contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
+		if c.SignedInUser != nil {
+			ctx := identity.WithRequester(c.Req.Context(), c.SignedInUser)
+			c.Req = c.Req.WithContext(ctx)
+		}
+		inner(c)
+	}
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -138,6 +174,24 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				},
 			}}}
 
+	flagsResponse := &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: spec.MapProperty(nil),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -160,23 +214,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO... real type?
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -212,23 +250,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO, real type
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -312,6 +334,72 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
 }
 
+func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.root.evalFlag")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
+	flagKey := mux.Vars(r)["flagKey"]
+	if flagKey == "" {
+		_ = tracing.Errorf(span, "flagKey parameter is required")
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
+		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	span.SetAttributes(attribute.String("flag_key", flagKey))
+
+	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
+
+	if !isAuthedReq && !isPublicFlag(flagKey) {
+		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
+		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
+		return
+	}
+
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+		if !b.validateNamespaceIfPresent(r) {
+			_ = tracing.Errorf(span, namespaceMismatchMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(namespaceMismatchMsg)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
+		return
+	}
+
+	b.evalFlagStatic(ctx, flagKey, w)
+}
+
+func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.root.evalAllFlags")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
+	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
+
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+		if !b.validateNamespaceIfPresent(r) {
+			_ = tracing.Errorf(span, namespaceMismatchMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(namespaceMismatchMsg)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
+		return
+	}
+
+	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
+}
+
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -352,6 +440,52 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 		return false
 	}
 	return user.GetIdentityType() != types.TypeUnauthenticated
+}
+
+// validateNamespaceIfPresent checks if the namespace in the evaluation context matches the authenticated user's
+// namespace, but only if the evaluation context includes a namespace. If no namespace is present in the body,
+// validation is skipped and the request is considered valid. This is used for cluster-global routes where
+// namespace is not part of the URL.
+func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request) bool {
+	_, span := tracing.Start(r.Context(), "ofrep.validateNamespaceIfPresent")
+	defer span.End()
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		_ = tracing.Errorf(span, "failed to read request body: %w", err)
+		b.logger.Error("Error reading evaluation request body", "error", err)
+		span.SetAttributes(attribute.Bool("validation.success", false))
+		return false
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	evalCtxNamespace := b.namespaceFromEvalCtx(body)
+	if evalCtxNamespace == "" {
+		// No namespace in eval context -- nothing to validate
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return true
+	}
+
+	span.SetAttributes(attribute.String("request.body", string(body)))
+
+	user, ok := types.AuthInfoFrom(r.Context())
+	if !ok {
+		// No auth info -- can't validate, but that's fine; unauthed requests are
+		// gated on public flags by the caller
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return true
+	}
+
+	authNamespace := user.GetNamespace()
+	if authNamespace == "" {
+		// Unauthenticated user has no namespace -- skip validation
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return true
+	}
+
+	valid := evalCtxNamespace == authNamespace
+	span.SetAttributes(attribute.Bool("validation.success", valid))
+	return valid
 }
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
