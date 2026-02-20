@@ -17,6 +17,8 @@ import { CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
 
+import { filterHiddenQueries } from './filterHiddenQueries';
+
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 export const MIXED_REQUEST_PREFIX = 'mixed-';
 
@@ -35,10 +37,12 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    // Remove any invalid queries
-    const queries = request.targets.filter((t) => {
-      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
-    });
+    // Remove any invalid queries and filter hidden queries
+    const queries = filterHiddenQueries(
+      request.targets.filter((t) => {
+        return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
+      })
+    );
 
     if (!queries.length) {
       return of({ data: [] }); // nothing
