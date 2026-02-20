@@ -287,6 +287,8 @@ type DashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// The source that registered the link (if any)
+	Source *ControlSourceRef `json:"source,omitempty"`
 }
 
 // NewDashboardLink creates a new DashboardLink object.
@@ -312,6 +314,26 @@ const (
 // Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 const DashboardLinkPlacement = "inControlsMenu"
+
+type ControlSourceRef = DatasourceControlSourceRef
+
+// NewControlSourceRef creates a new ControlSourceRef object.
+func NewControlSourceRef() *ControlSourceRef {
+	return NewDatasourceControlSourceRef()
+}
+
+type DatasourceControlSourceRef struct {
+	Type string                                 `json:"type"`
+	Ref  DashboardDatasourceControlSourceRefRef `json:"ref"`
+}
+
+// NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
+func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
+	return &DatasourceControlSourceRef{
+		Type: "datasource",
+		Ref:  *NewDashboardDatasourceControlSourceRefRef(),
+	}
+}
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -1113,6 +1135,15 @@ type DashboardSpecTemplating struct {
 // NewDashboardSpecTemplating creates a new DashboardSpecTemplating object.
 func NewDashboardSpecTemplating() *DashboardSpecTemplating {
 	return &DashboardSpecTemplating{}
+}
+
+type DashboardDatasourceControlSourceRefRef struct {
+	Group *string `json:"group,omitempty"`
+}
+
+// NewDashboardDatasourceControlSourceRefRef creates a new DashboardDatasourceControlSourceRefRef object.
+func NewDashboardDatasourceControlSourceRefRef() *DashboardDatasourceControlSourceRefRef {
+	return &DashboardDatasourceControlSourceRefRef{}
 }
 
 type DashboardFieldConfigSourceOverrides struct {

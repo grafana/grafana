@@ -305,6 +305,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			source?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 
@@ -852,6 +854,15 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			ref: {
+				group?: string
+			}
+		} 
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

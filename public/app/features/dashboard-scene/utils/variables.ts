@@ -14,15 +14,17 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
 
-export function createVariablesForDashboard(oldModel: DashboardModel) {
+export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
   const variableObjects = oldModel.templating.list
     .map((v) => {
       try {
@@ -36,13 +38,26 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
+  const defaultVariableObjects = defaultVariables
+    ? defaultVariables
+        .map((v) => {
+          try {
+            return createSceneVariableFromVariableModelV2(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+        .filter((v): v is SceneVariable => Boolean(v))
+    : [];
+
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...defaultVariableObjects, ...variableObjects],
   });
 }
 
@@ -143,6 +158,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    source: variable.source,
   };
   if (variable.type === 'adhoc') {
     const originFilters: AdHocVariableFilter[] = [];

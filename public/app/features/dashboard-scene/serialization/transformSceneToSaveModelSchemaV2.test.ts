@@ -208,6 +208,25 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           tooltip: '',
           type: 'link',
         },
+        // This link is was added by a datasource, we wouldn't like it to end up in the JSON schema
+        {
+          title: 'Default link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          source: {
+            type: 'datasource',
+            ref: {
+              group: 'datasource',
+            },
+          },
+        },
       ],
       body: new DefaultGridLayoutManager({
         grid: new SceneGridLayout({

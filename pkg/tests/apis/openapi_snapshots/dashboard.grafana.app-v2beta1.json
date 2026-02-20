@@ -1196,6 +1196,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -1679,6 +1682,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -1801,6 +1807,9 @@
             "type": "boolean",
             "default": false
           },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "valuesFormat": {
             "type": "string"
           }
@@ -1844,6 +1853,14 @@
           "placement": {
             "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
             "type": "string"
+          },
+          "source": {
+            "description": "The source that registered the link (if any)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+              }
+            ]
           },
           "tags": {
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
@@ -1971,6 +1988,28 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef": {
+        "description": "Source information for controls (e.g. variables or links)",
+        "type": "object",
+        "required": [
+          "type",
+          "ref"
+        ],
+        "properties": {
+          "ref": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardV2beta1DatasourceControlSourceRefRef"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceVariableKind": {
         "description": "Datasource variable kind",
         "type": "object",
@@ -2073,6 +2112,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -2536,6 +2578,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -2680,6 +2725,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -3216,6 +3264,9 @@
             "type": "string",
             "default": ""
           },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "staticOptions": {
             "type": "array",
             "items": {
@@ -3636,6 +3687,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -3799,6 +3853,9 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           }
         }
       },
@@ -3980,6 +4037,15 @@
         "type": "object",
         "properties": {
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardV2beta1DatasourceControlSourceRefRef": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "description": "The plugin type-id",
             "type": "string"
           }
         }
