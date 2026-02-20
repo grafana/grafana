@@ -17,6 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	sqlite3TXLock      = "immediate"
+	sqlite3BusyTimeout = "5000"
+	sqlite3SyncFlag    = "NORMAL"
+	sqlite3CacheSize   = "2000"
+	sqlite3Mode        = "rwc"
+)
+
 type DatabaseConfig struct {
 	Type                        string
 	Host                        string
@@ -200,11 +208,19 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			return err
 		}
 
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
+		sqliteConnParams := make(url.Values)
+		sqliteConnParams.Add("_txlock", sqlite3TXLock)
+		sqliteConnParams.Add("_busy_timeout", sqlite3BusyTimeout)
+		sqliteConnParams.Add("_synchronous", sqlite3SyncFlag)
+		sqliteConnParams.Add("_cache_size", sqlite3CacheSize)
+		sqliteConnParams.Add("cache", dbCfg.CacheMode)
+		sqliteConnParams.Add("mode", sqlite3Mode)
 
 		if dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
+			sqliteConnParams.Add("_journal_mode", "WAL")
 		}
+
+		cnnstr = fmt.Sprintf("file:%s?%s", dbCfg.Path, sqliteConnParams.Encode())
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	default:
