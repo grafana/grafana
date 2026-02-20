@@ -15,6 +15,7 @@ import (
 	k8testing "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -414,7 +415,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			progress.On("TooManyErrors").Return(nil).Maybe()
 
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewQuotaTracker(0, 0))
 
 			if tt.expectError {
 				require.Error(t, err)
