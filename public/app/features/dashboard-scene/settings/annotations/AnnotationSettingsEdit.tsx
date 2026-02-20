@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema';
 import {
@@ -28,6 +29,7 @@ import {
   Alert,
   ComboboxOption,
   Combobox,
+  LoadingPlaceholder,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
@@ -226,22 +228,32 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     return -1;
   };
 
+  const { loading, value: panelPluginMetas } = usePanelPluginMetasMap();
+
   const selectablePanels: Array<SelectableValue<number>> = useMemo(
     () =>
       panels
         // Filtering out rows at the moment, revisit to only include panels that support annotations
         // However the information to know if a panel supports annotations requires it to be already loaded
         // panel.plugin?.dataSupport?.annotations
-        .filter((panel) => config.panels[panel.state.pluginId])
+        .filter((panel) => panelPluginMetas?.[panel.state.pluginId])
         .map((panel) => ({
           value: getPanelIdForVizPanel(panel),
           label: panel.state.title ?? `Panel ${getPanelIdForVizPanel(panel)}`,
           description: panel.state.description,
-          imgUrl: config.panels[panel.state.pluginId].info.logos.small,
+          imgUrl: panelPluginMetas?.[panel.state.pluginId].info.logos.small,
         }))
         .sort(sortFn) ?? [],
-    [panels]
+    [panels, panelPluginMetas]
   );
+
+  if (loading) {
+    return (
+      <LoadingPlaceholder
+        text={t('dashboard-scene.annotation-settings-edit.loading-placeholder-text', 'Loading panels...')}
+      />
+    );
+  }
 
   return (
     <div>
