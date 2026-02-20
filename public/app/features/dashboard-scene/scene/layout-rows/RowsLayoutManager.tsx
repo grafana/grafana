@@ -46,7 +46,6 @@ export class RowsLayoutManager
   public static Component = RowLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
   public readonly isDashboardDropTarget = true as const;
-  protected _renderBeforeActivation = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {

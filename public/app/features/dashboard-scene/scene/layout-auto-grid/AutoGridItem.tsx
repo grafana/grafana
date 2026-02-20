@@ -45,7 +45,6 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
   public readonly isDashboardLayoutItem = true;
   public containerRef = React.createRef<HTMLDivElement>();
   private _prevRepeatValues?: VariableValueSingle[];
-  protected _renderBeforeActivation = true;
 
   public constructor(state: AutoGridItemState) {
     super({ ...state, conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty() });

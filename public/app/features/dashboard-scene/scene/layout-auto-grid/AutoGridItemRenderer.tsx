@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, sceneGraph, SceneComponentProps, VizPanel } from '@grafana/scenes';
@@ -28,6 +28,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // Check if this grid is a drop target for external drags
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { isDropTarget } = layoutManager.useState();
+
+  useEffect(() => {
+    return () => console.log('AutoGridItemRenderer unmounted');
+  }, []);
 
   const Wrapper = useMemo(
     () =>

@@ -164,6 +164,8 @@ export interface DashboardSceneState extends SceneObjectState {
   layoutOrchestrator?: DashboardLayoutOrchestrator;
 }
 
+SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
@@ -194,8 +196,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
-
-  protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,

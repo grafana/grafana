@@ -3,3 +3,7 @@
 * Repeated tab current tab undefind
 * Query waiting for variables
 * going into edit mode / leaving edit mode 
+
+Verify https://github.com/grafana/scenes/pull/405 is not impacted 
+> Working on fixing "viewPanel" for repeated panels on full page reload, and this old condition caused the panel to be empty as the row level SceneVariableSet is not active when viewing the panel.
+> This old condition is not needed anymore now that we have fixed the flow of activation by not rendering components until they are active (so that higher level objects are activated before children).
