@@ -9621,12 +9621,16 @@
       },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
+        "expander-column-name": "Expand nested rows",
         "no-data": "No data"
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sparkline": {
         "no-data": "no data"
+      },
+      "tooltip": {
+        "trigger": "Toggle tooltip"
       }
     },
     "tags": {
