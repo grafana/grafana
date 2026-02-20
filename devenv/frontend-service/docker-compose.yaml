@@ -156,7 +156,7 @@ services:
       - tempo-data:/var/tempo
 
   tempo:
-    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
+    image: grafana/tempo:2.10.1@sha256:9371af1b75b4e057eb77f22dc4dd4d9176cd6985e29f181527be6723b7f29c41
     volumes:
       - tempo-data:/var/lib/tempo
       - ./configs/tempo.yaml:/etc/tempo/tempo.yaml
