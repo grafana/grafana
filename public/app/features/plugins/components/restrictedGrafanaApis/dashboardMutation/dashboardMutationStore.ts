@@ -3,10 +3,8 @@
  *
  * Module-level store for the active MutationClient reference.
  *
- * SECURITY: The client reference is stored here (not on the DashboardScene
- * object tree) so that plugins cannot reach it via
- * window.__grafanaSceneContext. Plugins access mutations exclusively
- * through RestrictedGrafanaApis.
+ * The client reference is stored here and not on the DashboardScene object tree
+ * so that plugins cannot reach it via window.__grafanaSceneContext.
  */
 
 import type { MutationClient } from 'app/features/dashboard-scene/mutation-api/types';
