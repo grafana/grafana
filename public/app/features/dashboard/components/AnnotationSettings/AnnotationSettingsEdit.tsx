@@ -214,13 +214,23 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         </Field>
         <Field
           label={t('dashboard.annotation-settings-edit.label-color', 'Color')}
-          description={t(
-            'dashboard.annotation-settings-edit.description-color-annotation-event-markers',
-            'Color to use for the annotation event markers'
-          )}
+          description={
+            <span id="color-picker-description">
+              {t(
+                'dashboard.annotation-settings-edit.description-color-annotation-event-markers',
+                'Color to use for the annotation event markers'
+              )}
+            </span>
+          }
+          htmlFor="color-picker"
         >
           <Stack>
-            <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
+            <ColorValueEditor
+              value={annotation?.iconColor}
+              onChange={onColorChange}
+              id="color-picker"
+              aria-describedby="color-picker-description"
+            />
           </Stack>
         </Field>
         <Field
