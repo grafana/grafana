@@ -43,7 +43,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	tempoDatasource, dsInfoErr := s.getDSInfo(ctx, request.PluginContext)
 
 	// get incoming and team http headers and append to stream request.
-	headers, err := stream_utils.SetHeadersFromIncomingContext(ctx)
+	headers, err := stream_utils.SetHeadersFromIncomingContext(ctx, s.logger)
 	if err != nil {
 		return err
 	}
