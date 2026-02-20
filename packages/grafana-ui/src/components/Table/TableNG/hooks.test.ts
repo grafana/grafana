@@ -307,8 +307,8 @@ describe('TableNG hooks', () => {
           frameToRecords(frame, 'nested'),
           true,
           'nested',
-          { name: { filteredSet: new Set(['Alice']), displayName: 'name' } },
-          [{ columnKey: 'name', direction: 'ASC' }]
+          { name: { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name' } },
+          [{ columnKey: 'age', direction: 'ASC' }]
         )
       );
       expect(result.current).toMatchSnapshot();
