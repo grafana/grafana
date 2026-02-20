@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
