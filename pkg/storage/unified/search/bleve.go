@@ -1211,7 +1211,7 @@ func (b *bleveIndex) getIndex(
 
 // nolint:gocyclo
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
-	_, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest")
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
