@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 var tenantGVR = schema.GroupVersionResource{
@@ -31,10 +33,18 @@ const (
 	annotationPendingDeleteAfter = "cloud.grafana.com/pending-delete-after"
 )
 
+// PendingDeleteRecord represents a tenant that is pending deletion.
+type PendingDeleteRecord struct {
+	TenantID    string `json:"tenantId"`
+	DeleteAfter string `json:"deleteAfter"`
+}
+
 // TenantWatcher watches Tenant CRDs via a Kubernetes informer and syncs
 // pending-delete state to the KV store.
 type TenantWatcher struct {
 	log    log.Logger
+	kv     KV
+	ctx    context.Context
 	stopCh chan struct{}
 }
 
@@ -128,7 +138,7 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 }
 
 // NewTenantWatcher creates and starts a TenantWatcher.
-func NewTenantWatcher(ctx context.Context, kv KV, cfg TenantWatcherConfig) (*TenantWatcher, error) {
+func NewTenantWatcher(ctx context.Context, kv KV, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
 	restCfg, err := NewTenantRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building tenant REST config: %w", err)
@@ -151,6 +161,8 @@ func NewTenantWatcher(ctx context.Context, kv KV, cfg TenantWatcherConfig) (*Ten
 
 	tw := &TenantWatcher{
 		log:    logger,
+		kv:     kv,
+		ctx:    ctx,
 		stopCh: make(chan struct{}),
 	}
 
@@ -200,11 +212,44 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 // markPendingDelete records that a tenant is pending deletion in the KV store.
 func (tw *TenantWatcher) markPendingDelete(name string, deleteAfter string) {
 	tw.log.Debug("marking tenant as pending-delete", "tenant", name, "deleteAfter", deleteAfter)
-	// TODO: upsert record into KV store with tenant name and deleteAfter timestamp
+
+	record := PendingDeleteRecord{
+		TenantID:    name,
+		DeleteAfter: deleteAfter,
+	}
+	data, err := json.Marshal(record)
+	if err != nil {
+		tw.log.Error("failed to marshal pending-delete record", "tenant", name, "error", err)
+		return
+	}
+
+	w, err := tw.kv.Save(tw.ctx, kv.PendingDelete, name)
+	if err != nil {
+		tw.log.Error("failed to open pending-delete writer", "tenant", name, "error", err)
+		return
+	}
+	defer func() {
+		if cerr := w.Close(); cerr != nil {
+			tw.log.Error("failed to close pending-delete writer", "tenant", name, "error", cerr)
+		}
+	}()
+
+	if _, err := w.Write(data); err != nil {
+		tw.log.Error("failed to write pending-delete record", "tenant", name, "error", err)
+	}
+}
+
+func (tw *TenantWatcher) markResourcesPendingDelete() {
+	// TODO
+	// 1. List all resources for the tenant from the kv datastore
+	// 2. For each resource add a pending delete label to it using the write callback function
+	// 3. When completed, store something either in the kv store or write it to the tenant on the tenant apiserver
 }
 
 // clearPendingDelete removes the pending-delete record for a tenant from the KV store, if one exists.
 func (tw *TenantWatcher) clearPendingDelete(name string) {
 	tw.log.Debug("clearing pending-delete for tenant", "tenant", name)
-	// TODO: remove record from KV store if it exists
+	if err := tw.kv.Delete(tw.ctx, kv.PendingDelete, name); err != nil {
+		tw.log.Error("failed to clear pending-delete record", "tenant", name, "error", err)
+	}
 }
