@@ -1504,6 +1504,8 @@ export type Condition = {
   type: string;
 };
 export type ErrorDetails = {
+  /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
+  badValue?: any;
   /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
   detail?: string;
   /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
