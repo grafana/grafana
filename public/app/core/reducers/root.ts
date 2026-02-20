@@ -16,7 +16,7 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
 import invitesReducers from 'app/features/invites/state/reducers';
-import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
+import importDashboardReducers from 'app/features/manage-dashboards/import/legacy/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';

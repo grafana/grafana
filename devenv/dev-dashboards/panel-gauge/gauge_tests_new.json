@@ -108,7 +108,7 @@
         }
       ],
       "title": "Plain",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -184,7 +184,7 @@
         }
       ],
       "title": "Center glow",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -260,7 +260,7 @@
         }
       ],
       "title": "Center and bar glow",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -336,7 +336,7 @@
         }
       ],
       "title": "Sparkline",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -412,7 +412,7 @@
         }
       ],
       "title": "Square butts",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -488,7 +488,7 @@
         }
       ],
       "title": "Square butts gauge",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -577,7 +577,7 @@
         }
       ],
       "title": "Bar width 0,1",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -653,7 +653,7 @@
         }
       ],
       "title": "Bar width 0,32",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -729,7 +729,7 @@
         }
       ],
       "title": "Bar width 0,57",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -805,7 +805,7 @@
         }
       ],
       "title": "Bar width 0,8",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -894,7 +894,7 @@
         }
       ],
       "title": "Plain thresholds",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -970,7 +970,7 @@
         }
       ],
       "title": "Thresholds segmented",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1046,7 +1046,7 @@
         }
       ],
       "title": "Segmented + gradient",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1122,7 +1122,7 @@
         }
       ],
       "title": "Plain thresholds",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1198,7 +1198,7 @@
         }
       ],
       "title": "Thresholds circle segmented",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1291,7 +1291,7 @@
         }
       ],
       "title": "Thresholds labels",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1371,7 +1371,7 @@
         }
       ],
       "title": "Thresholds labels only",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1451,7 +1451,7 @@
         }
       ],
       "title": "Thresholds labels + circle",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1545,7 +1545,7 @@
         }
       ],
       "title": "Auto gradient + classic palette",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1625,7 +1625,7 @@
         }
       ],
       "title": "Continuous color scheme ",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1735,7 +1735,7 @@
         }
       ],
       "title": "Active gateways",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1832,7 +1832,7 @@
         }
       ],
       "title": "Active pods",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1912,7 +1912,7 @@
         }
       ],
       "title": "Backend",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1992,7 +1992,7 @@
         }
       ],
       "title": "Backend",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -2067,7 +2067,7 @@
         }
       ],
       "title": "Numeric, no series",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -2131,7 +2131,188 @@
         }
       ],
       "title": "Non-numeric",
-      "type": "radialbar"
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 40,
+      "panels": [],
+      "title": "Data Links",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "links": [
+            {
+              "title": "Grafana",
+              "url": "https://grafana.com"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 60
+      },
+      "id": 38,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "circle",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": false
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 100,
+          "min": 1,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 22,
+          "startValue": 1
+        }
+      ],
+      "title": "Single link",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "links": [
+            {
+              "title": "Grafana",
+              "url": "https://grafana.com"
+            },
+            {
+              "title": "Grafana - What's new",
+              "url": "https://grafana.com/docs/grafana/latest/whatsnew/"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 60
+      },
+      "id": 39,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "circle",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": false
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 100,
+          "min": 1,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 22,
+          "startValue": 1
+        }
+      ],
+      "title": "Multiple links",
+      "type": "gauge"
     }
   ],
   "preload": false,

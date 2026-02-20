@@ -15,7 +15,7 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   return [...workflows, 'branch'];
 };
 
-export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
+export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
@@ -25,7 +25,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch,
+    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
     path: data.path,
   };
 
@@ -35,15 +35,25 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
+      // Add connection reference at spec level if using GitHub App
+      // connection name is only available for the app flow
+      // Prefer data.connectionName over the parameter for consistency
+      const finalConnectionName = data.connectionName || connectionName;
+      if (finalConnectionName) {
+        spec.connection = { name: finalConnectionName };
+      }
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
       break;
     case 'bitbucket':
-      spec.bitbucket = baseConfig;
+      spec.bitbucket = {
+        ...baseConfig,
+        tokenUser: data.tokenUser,
+      };
       break;
     case 'git':
-      spec.git = baseConfig;
+      spec.git = { ...baseConfig, tokenUser: data.tokenUser };
       break;
     case 'local':
       spec.local = {
@@ -59,6 +69,8 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  // tokenUser is only available for bitbucket and pure git
+  const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
 
   return structuredClone({
     ...spec,
@@ -66,27 +78,24 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec.local,
     branch: remoteConfig?.branch || '',
     url: remoteConfig?.url || '',
+    tokenUser: tokenUser || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
+    connectionName: spec.connection?.name,
   });
 };
 
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
-      const name = repository.url ?? 'github';
-      return name.replace('https://github.com/', '');
     case 'gitlab':
-      const gitlabName = repository.url ?? 'gitlab';
-      return gitlabName.replace('https://gitlab.com/', '');
     case 'bitbucket':
-      const bitbucketName = repository.url ?? 'bitbucket';
-      return bitbucketName.replace('https://bitbucket.org/', '');
-    case 'git':
-      const gitName = repository.url ?? 'git';
-      return gitName.replace(/^https?:\/\/[^\/]+\//, '');
+    case 'git': {
+      const repoUrl = repository.url ?? repository.type;
+      return repoUrl.replace(/^https?:\/\/[^\/]+\//, '');
+    }
     case 'local':
       return repository.path ?? 'local';
     default:

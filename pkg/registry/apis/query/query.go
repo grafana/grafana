@@ -10,16 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/dsquerierclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -28,11 +18,21 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	service "github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -157,6 +157,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					}
 				}
 				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+				b.reportStatus(ctx, *statusCode)
 			},
 
 			func(err error) {
@@ -168,6 +169,18 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				}
 
 				span.RecordError(err)
+
+				statusCode := 0
+				var k8sErr *errorsK8s.StatusError
+				if errors.As(err, &k8sErr) {
+					statusCode = int(k8sErr.Status().Code)
+				} else {
+					// we do not know what kind of error it is,
+					// we do not know what status code will get assigned to it,
+					// so we use the zero to indicate the unknown.
+					connectLogger.Debug("Connect: unknown error returned", "error", err)
+				}
+				b.reportStatus(ctx, statusCode)
 			})
 
 		raw := &query.QueryDataRequest{}

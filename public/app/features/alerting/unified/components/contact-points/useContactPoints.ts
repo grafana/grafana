@@ -16,13 +16,14 @@ import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/ale
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';
 import { onCallApi } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';
-import { usePluginBridge } from '../../hooks/usePluginBridge';
+import { useIrmPlugin } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { enhanceContactPointsWithMetadata } from './utils';
@@ -40,7 +41,6 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const {
   useGetAlertmanagerConfigurationQuery,
   useGetContactPointsStatusQuery,
-  useGrafanaNotifiersQuery,
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
@@ -63,8 +63,8 @@ const defaultOptions = {
  * Otherwise, returns no data
  */
 const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
-  const { installed, loading } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
-  const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
+  const { pluginId, installed, loading } = useIrmPlugin(SupportedPlugin.OnCall);
+  const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery({ pluginId }, { skip: skip || !installed });
 
   return useMemo(() => {
     if (installed) {
@@ -131,8 +131,12 @@ export const useGrafanaContactPoints = ({
 }: GrafanaFetchOptions & Skippable = {}) => {
   const namespace = getAPINamespace();
   const potentiallySkip = { skip };
+
+  // Get the IRM/OnCall plugin information
+  const irmOrOnCallPlugin = useIrmPlugin(SupportedPlugin.OnCall);
+
   const onCallResponse = useOnCallIntegrations(potentiallySkip);
-  const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
+  const alertNotifiers = useIntegrationTypeSchemas(potentiallySkip);
   const contactPointsListResponse = useK8sContactPoints({ namespace }, potentiallySkip);
 
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
@@ -163,6 +167,7 @@ export const useGrafanaContactPoints = ({
       status: contactPointsStatusResponse.data,
       notifiers: alertNotifiers.data,
       onCallIntegrations: onCallResponse?.data,
+      onCallPluginId: irmOrOnCallPlugin.pluginId,
       contactPoints: contactPointsListResponse.data || [],
       alertmanagerConfiguration: alertmanagerConfigResponse.data,
     });
@@ -177,6 +182,7 @@ export const useGrafanaContactPoints = ({
     contactPointsListResponse,
     contactPointsStatusResponse,
     onCallResponse,
+    irmOrOnCallPlugin.pluginId,
   ]);
 };
 

@@ -184,6 +184,10 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
 
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
+
 	return response.Success("Data source deleted")
 }
 
@@ -270,6 +274,10 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
 
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
+
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      ds.ID,
@@ -278,10 +286,12 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 // swagger:route DELETE /datasources/name/{name} datasources deleteDataSourceByName
 //
-// Delete an existing data source by name.
+// Delete an existing data source by name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: deleteDataSourceByNameResponse
@@ -309,13 +319,17 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.GetOrgID()}
+	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.GetOrgID(), UID: dataSource.UID}
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), dataSource.UID)
+
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(dataSource.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
@@ -597,10 +611,12 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 
 // swagger:route GET /datasources/name/{name} datasources getDataSourceByName
 //
-// Get a single data source by Name.
+// Get a single data source by Name.  This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceResponse
@@ -624,10 +640,12 @@ func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.R
 
 // swagger:route GET /datasources/id/{name} datasources getDataSourceIdByName
 //
-// Get data source Id by Name.
+// Get data source Id by Name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceIDResponse
@@ -841,7 +859,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	err = hs.DataSourceRequestValidator.Validate(ds, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}

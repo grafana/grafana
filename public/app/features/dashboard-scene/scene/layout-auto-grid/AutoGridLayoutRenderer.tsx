@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getTestIdForLayout } from '../../utils/test-utils';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
@@ -17,7 +19,11 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator, isEditing } = useDashboardState(model);
+  const {
+    layoutOrchestrator,
+    isEditing,
+    meta: { isEmbedded },
+  } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
@@ -26,7 +32,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return null;
   }
 
-  const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
+  const showCanvasActions = !isEmbedded && !isRepeatCloneOrChildOf(model) && isEditing;
 
   if (soloPanelContext) {
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
@@ -56,6 +62,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
 
   return (
     <div
+      data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}

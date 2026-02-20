@@ -1,12 +1,15 @@
 package conversion
 
 import (
+	"context"
 	"fmt"
+
+	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"k8s.io/apimachinery/pkg/conversion"
 )
 
 // ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
@@ -15,12 +18,25 @@ import (
 // The dsIndexProvider is used to resolve default datasources when queries/variables/annotations
 // don't have explicit datasource references.
 func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+	// if available, use parent context from scope so tracing works
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2alpha1_to_v1beta1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+	)
+	defer span.End()
+
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")
 
 	// Convert the spec to v1beta1 unstructured format
-	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(&in.Spec)
+	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(ctx, &in.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
@@ -28,10 +44,19 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 	// Set the dashboard JSON directly at the Spec.Object level
 	out.Spec.Object = dashboardJSON
 
+	if schemaVer, ok := dashboardJSON["schemaVersion"]; ok {
+		if schemaVerInt, ok := schemaVer.(int); ok {
+			span.SetAttributes(attribute.Int("target.schema_version", schemaVerInt))
+		}
+	}
+
 	return nil
 }
 
-func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+func convertDashboardSpec_V2alpha1_to_V1beta1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
+	defer span.End()
+
 	dashboard := make(map[string]interface{})
 
 	// Convert basic fields
@@ -89,6 +114,13 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	dashboard["annotations"] = map[string]interface{}{
 		"list": annotations,
 	}
+
+	span.SetAttributes(
+		attribute.Int("conversion.panels_count", len(panels)),
+		attribute.Int("conversion.variables_count", len(variables)),
+		attribute.Int("conversion.annotations_count", len(annotations)),
+		attribute.Int("conversion.links_count", len(in.Links)),
+	)
 
 	return dashboard, nil
 }
@@ -201,12 +233,15 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 //   - AutoGridLayout: Calculates gridPos based on column count and row height
 //   - TabsLayout: Tabs become expanded row panels; content is flattened
 func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) ([]interface{}, error) {
+	// Find the maximum panel ID from all elements to use for row panel IDs.
+	nextRowID := getMaxPanelIDFromElements(elements) + 1
+
 	if layout.GridLayoutKind != nil {
 		return convertGridLayoutToPanels(elements, layout.GridLayoutKind)
 	}
 
 	if layout.RowsLayoutKind != nil {
-		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind)
+		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind, &nextRowID)
 	}
 
 	if layout.AutoGridLayoutKind != nil {
@@ -214,11 +249,32 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 	}
 
 	if layout.TabsLayoutKind != nil {
-		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind)
+		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind, &nextRowID)
 	}
 
 	// No layout specified, return empty panels
 	return []interface{}{}, nil
+}
+
+// getMaxPanelIDFromElements finds the maximum panel ID across all dashboard elements.
+// This is used to determine the starting ID for row panels during V2 to V1 conversion.
+func getMaxPanelIDFromElements(elements map[string]dashv2alpha1.DashboardElement) int64 {
+	var maxID int64 = 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			id := int64(element.PanelKind.Spec.Id)
+			if id > maxID {
+				maxID = id
+			}
+		}
+		if element.LibraryPanelKind != nil {
+			id := int64(element.LibraryPanelKind.Spec.Id)
+			if id > maxID {
+				maxID = id
+			}
+		}
+	}
+	return maxID
 }
 
 func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, gridLayout *dashv2alpha1.DashboardGridLayoutKind) ([]interface{}, error) {
@@ -243,21 +299,23 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 // convertRowsLayoutToPanels converts a RowsLayout to V1 panels.
 // All nested structures (rows within rows, tabs within rows) are flattened to the root level.
 // Each row becomes a row panel, and nested content is added sequentially after it.
-func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind) ([]interface{}, error) {
-	return convertNestedLayoutToPanels(elements, rowsLayout, nil, 0)
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, nextRowID *int64) ([]interface{}, error) {
+	return convertNestedLayoutToPanels(elements, rowsLayout, nil, 0, nextRowID)
 }
 
 // convertNestedLayoutToPanels handles arbitrary nesting of RowsLayout and TabsLayout.
 // It processes each row/tab in order, tracking Y position to ensure panels don't overlap.
 // The function recursively flattens nested structures to produce a flat V1 panel array.
-func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, yOffset int64) ([]interface{}, error) {
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, yOffset int64, nextRowID *int64) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
 	currentY := yOffset
 
 	// Process RowsLayout
 	if rowsLayout != nil {
 		for _, row := range rowsLayout.Spec.Rows {
-			rowPanels, newY, err := processRowItem(elements, &row, currentY)
+			rowPanels, newY, err := processRowItem(elements, &row, currentY, nextRowID)
 			if err != nil {
 				return nil, err
 			}
@@ -269,7 +327,7 @@ func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardEleme
 	// Process TabsLayout (tabs are converted to rows)
 	if tabsLayout != nil {
 		for _, tab := range tabsLayout.Spec.Tabs {
-			tabPanels, newY, err := processTabItem(elements, &tab, currentY)
+			tabPanels, newY, err := processTabItem(elements, &tab, currentY, nextRowID)
 			if err != nil {
 				return nil, err
 			}
@@ -288,7 +346,9 @@ func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardEleme
 //   - Collapsed row: Panels stored inside row.panels with absolute Y positions
 //   - Expanded row: Panels added to top level after the row panel
 //   - Nested layouts: Parent row is preserved; nested content is flattened after it
-func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, startY int64) ([]interface{}, int64, error) {
+//
+// nextRowID is a pointer to the next available ID for row panels, incremented after each use.
+func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, startY int64, nextRowID *int64) ([]interface{}, int64, error) {
 	panels := make([]interface{}, 0)
 	currentY := startY
 
@@ -300,7 +360,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		if !isHiddenHeader {
 			rowPanel := map[string]interface{}{
 				"type": "row",
-				"id":   -1,
+				"id":   *nextRowID,
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": currentY,
@@ -308,6 +368,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 					"h": 1,
 				},
 			}
+			*nextRowID++
 			if row.Spec.Title != nil {
 				rowPanel["title"] = *row.Spec.Title
 			}
@@ -318,7 +379,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		}
 
 		// Then process nested rows
-		nestedPanels, err := convertNestedLayoutToPanels(elements, row.Spec.Layout.RowsLayoutKind, nil, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, row.Spec.Layout.RowsLayoutKind, nil, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -333,7 +394,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		if !isHiddenHeader {
 			rowPanel := map[string]interface{}{
 				"type": "row",
-				"id":   -1,
+				"id":   *nextRowID,
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": currentY,
@@ -341,6 +402,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 					"h": 1,
 				},
 			}
+			*nextRowID++
 			if row.Spec.Title != nil {
 				rowPanel["title"] = *row.Spec.Title
 			}
@@ -351,7 +413,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		}
 
 		// Then process nested tabs
-		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, row.Spec.Layout.TabsLayoutKind, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, row.Spec.Layout.TabsLayoutKind, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -366,8 +428,9 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 	if !isHiddenHeader {
 		rowPanel := map[string]interface{}{
 			"type": "row",
-			"id":   -1,
+			"id":   *nextRowID,
 		}
+		*nextRowID++
 
 		if row.Spec.Title != nil {
 			rowPanel["title"] = *row.Spec.Title
@@ -423,17 +486,19 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 // Each tab becomes an expanded row panel (collapsed=false) with an empty panels array.
 // The tab's content is flattened and added to the top level after the row panel.
 // Nested layouts within the tab are recursively processed.
-func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dashv2alpha1.DashboardTabsLayoutTabKind, startY int64) ([]interface{}, int64, error) {
+// nextRowID is a pointer to the next available ID for row panels, incremented after each use.
+func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dashv2alpha1.DashboardTabsLayoutTabKind, startY int64, nextRowID *int64) ([]interface{}, int64, error) {
 	panels := make([]interface{}, 0)
 	currentY := startY
 
 	// Create a row panel for this tab (tabs become expanded rows)
 	rowPanel := map[string]interface{}{
 		"type":      "row",
-		"id":        -1,
+		"id":        *nextRowID,
 		"collapsed": false,
 		"panels":    []interface{}{},
 	}
+	*nextRowID++
 
 	if tab.Spec.Title != nil {
 		rowPanel["title"] = *tab.Spec.Title
@@ -456,7 +521,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 	// Handle nested layouts inside the tab
 	if tab.Spec.Layout.RowsLayoutKind != nil {
 		// Nested RowsLayout inside tab
-		nestedPanels, err := convertNestedLayoutToPanels(elements, tab.Spec.Layout.RowsLayoutKind, nil, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, tab.Spec.Layout.RowsLayoutKind, nil, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -464,7 +529,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		currentY = getMaxYFromPanels(nestedPanels, currentY)
 	} else if tab.Spec.Layout.TabsLayoutKind != nil {
 		// Nested TabsLayout inside tab
-		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, tab.Spec.Layout.TabsLayoutKind, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, tab.Spec.Layout.TabsLayoutKind, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -973,8 +1038,9 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 // V1 has no native tab concept, so tabs are converted to expanded row panels.
 // Each tab becomes a row panel (collapsed=false, panels=[]) with its content
 // flattened to the top level. Tab order is preserved in the output.
-func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind) ([]interface{}, error) {
-	return convertNestedLayoutToPanels(elements, nil, tabsLayout, 0)
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, nextRowID *int64) ([]interface{}, error) {
+	return convertNestedLayoutToPanels(elements, nil, tabsLayout, 0, nextRowID)
 }
 
 func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem *dashv2alpha1.DashboardGridLayoutItemKind) (map[string]interface{}, error) {
@@ -1375,6 +1441,12 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 		varMap["regexApplyTo"] = string(*spec.RegexApplyTo)
 	}
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if len(spec.StaticOptions) > 0 {
+		varMap["staticOptions"] = convertVariableOptionsToV1(spec.StaticOptions)
+	}
+	if spec.StaticOptionsOrder != nil {
+		varMap["staticOptionsOrder"] = string(*spec.StaticOptionsOrder)
+	}
 
 	// Convert query - handle LEGACY_STRING_VALUE_KEY
 	querySpec := spec.Query.Spec
@@ -1568,6 +1640,14 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 		varMap["datasource"] = datasource
 	}
 
+	// Handle defaultValue if present
+	if spec.DefaultValue != nil {
+		varMap["defaultValue"] = map[string]interface{}{
+			"text":  convertStringOrArrayOfStringToV1(spec.DefaultValue.Text),
+			"value": convertStringOrArrayOfStringToV1(spec.DefaultValue.Value),
+		}
+	}
+
 	return varMap, nil
 }
 
@@ -1616,6 +1696,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
 			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
+			}
 			filters = append(filters, filterMap)
 		}
 		varMap["filters"] = filters
@@ -1641,6 +1724,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			}
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
+			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
 			}
 			baseFilters = append(baseFilters, filterMap)
 		}

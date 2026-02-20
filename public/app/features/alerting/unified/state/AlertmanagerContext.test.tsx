@@ -2,8 +2,8 @@ import { renderHook } from '@testing-library/react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 
+import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import store from 'app/core/store';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 

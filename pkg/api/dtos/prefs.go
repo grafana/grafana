@@ -19,7 +19,6 @@ type UpdatePrefsCmd struct {
 	QueryHistory   *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language       string                       `json:"language"`
 	RegionalFormat string                       `json:"regionalFormat"`
-	Cookies        []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar         *pref.NavbarPreference       `json:"navbar,omitempty"`
 }
 
@@ -38,6 +37,5 @@ type PatchPrefsCmd struct {
 	RegionalFormat   *string                      `json:"regionalFormat,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
-	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 }

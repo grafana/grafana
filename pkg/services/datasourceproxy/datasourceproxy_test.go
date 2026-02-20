@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -131,6 +132,6 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 type fakeDataSourceRequestValidator struct{}
 
-func (rv *fakeDataSourceRequestValidator) Validate(_ *datasources.DataSource, _ *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(_ string, _ *simplejson.Json, _ *http.Request) error {
 	return nil
 }

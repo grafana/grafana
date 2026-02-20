@@ -316,7 +316,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -350,6 +350,11 @@ export interface FieldConfig {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -612,6 +617,11 @@ export const defaultActionVariable = (): ActionVariable => ({
 
 // Action variable type
 export const ActionVariableType = "string";
+
+// How null values should be handled
+export type NullValueMode = "null" | "connected" | "null as zero";
+
+export const defaultNullValueMode = (): NullValueMode => ("null");
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1148,6 +1158,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({

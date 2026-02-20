@@ -2,7 +2,9 @@ package correlations
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -78,27 +80,53 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		}
 	}
 
-	if options.Continue != "" {
-		return nil, fmt.Errorf("paging not yet supported")
+	page := int64(0)
+	limit := int64(100000)
+	if options != nil {
+		if options.Limit > 0 {
+			limit = options.Limit
+		}
+		if options.Continue != "" {
+			token, err := decodeContinueToken(options.Continue)
+			if err != nil {
+				return nil, err
+			}
+			if token.Limit != limit {
+				return nil, fmt.Errorf("continue token limit does not match the previous request")
+			}
+			page = token.Page
+		}
 	}
 
 	rsp, err := s.service.GetCorrelations(ctx, correlations.GetCorrelationsQuery{
 		OrgId:      orgID,
-		Limit:      1000,
+		Limit:      limit + 1, // the plus one indicates we have reached the limit
+		Page:       page,
 		SourceUIDs: uids,
 	})
 	if err != nil {
 		return nil, err
 	}
 	list := &correlationsV0.CorrelationList{
-		Items: make([]correlationsV0.Correlation, len(rsp.Correlations)),
+		Items: make([]correlationsV0.Correlation, 0, len(rsp.Correlations)),
 	}
+
 	for i, orig := range rsp.Correlations {
+		if i >= int(limit) {
+			remaining := rsp.TotalCount - (page * limit) - int64(len(list.Items))
+			if remaining > 0 {
+				list.RemainingItemCount = &remaining
+			}
+
+			list.Continue = encodeContinueToken(page+1, limit)
+			break
+		}
+
 		c, err := correlations.ToResource(orig, s.namespacer)
 		if err != nil {
 			return nil, err
 		}
-		list.Items[i] = *c
+		list.Items = append(list.Items, *c)
 	}
 	return list, nil
 }
@@ -192,4 +220,34 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
+}
+
+type continueToken struct {
+	Page  int64
+	Limit int64
+}
+
+func encodeContinueToken(page, limit int64) string {
+	data := fmt.Sprintf("%d/%d", page, limit)
+	return b64.StdEncoding.EncodeToString([]byte(data)) // use base64 so it is not treated like query params
+}
+
+func decodeContinueToken(s string) (token continueToken, err error) {
+	decoded, err := b64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return token, fmt.Errorf("invalid continue token")
+	}
+	parts := strings.Split(string(decoded), "/")
+	if len(parts) != 2 {
+		return token, fmt.Errorf("invalid continue token")
+	}
+	token.Page, err = strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return token, fmt.Errorf("invalid continue token (page)")
+	}
+	token.Limit, err = strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return token, fmt.Errorf("invalid continue token")
+	}
+	return token, nil
 }

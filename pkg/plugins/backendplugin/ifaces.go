@@ -22,6 +22,7 @@ type Plugin interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler

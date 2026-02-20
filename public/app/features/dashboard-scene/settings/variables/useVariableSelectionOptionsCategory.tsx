@@ -109,7 +109,7 @@ function AllowCustomSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={allowCustomValue}
+      value={allowCustomValue ?? true}
       onChange={(evt) => variable.setState({ allowCustomValue: evt.currentTarget.checked })}
     />
   );

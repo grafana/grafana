@@ -64,6 +64,7 @@ describe('Selector', () => {
 
   afterEach(async () => {
     locationService.replace('');
+    window.localStorage.clear();
     await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
   });
 
@@ -102,8 +103,10 @@ describe('Selector', () => {
       state: null,
     };
 
-    jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
-    jest.spyOn(locationService, 'getSearch').mockReturnValue(new URLSearchParams(mockLocation.search));
+    const getLocationSpy = jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
+    const getSearchSpy = jest
+      .spyOn(locationService, 'getSearch')
+      .mockReturnValue(new URLSearchParams(mockLocation.search));
 
     await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
     await renderDashboard();
@@ -112,11 +115,15 @@ describe('Selector', () => {
     await openSelector();
     expectResultApplicationsGrafanaSelected();
 
-    jest.spyOn(locationService, 'getLocation').mockRestore();
-    jest.spyOn(locationService, 'getSearch').mockRestore();
+    getLocationSpy.mockRestore();
+    getSearchSpy.mockRestore();
   });
 
   describe('Recent scopes', () => {
+    // Increased timeout for these tests as they involve many async operations
+    // and may timeout on slower CI environments with the default 30s timeout
+    jest.setTimeout(60000);
+
     it('Recent scopes should appear after selecting a second set of scopes', async () => {
       await openSelector();
       await expandResultApplications();

@@ -43,169 +43,126 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  transformations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  configure-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+  annotations-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+  alerting-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+  google-authentication:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+  troubleshooting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
 ---
 
 # Google Cloud Monitoring data source
 
-Grafana ships with built-in support for Google Cloud Monitoring.
-This topic describes queries, templates, variables, and other configuration specific to the Google Cloud Monitoring data source.
+Google Cloud Monitoring (formerly Stackdriver) is Google Cloud Platform's native monitoring and observability service that collects metrics, events, and metadata from GCP resources, hosted uptime probes, and application instrumentation. The Google Cloud Monitoring data source in Grafana allows you to query and visualize this data alongside metrics from other systems, creating unified dashboards for comprehensive infrastructure and application monitoring.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
+Grafana includes built-in support for Google Cloud Monitoring, so you don't need to install a plugin.
 
-Once you've added the Google Cloud Monitoring data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) and apply [annotations](#annotations) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+## Get started
 
-## Before you begin
+The following documents will help you get started with the Google Cloud Monitoring data source:
 
-Complete the following before you configure the data source.
+- [Configure the data source](ref:configure-gcm) - Set up authentication and connect to Google Cloud
+- [Query editor](ref:query-editor) - Create and edit Metric and SLO queries
+- [Template variables](ref:template-variables) - Create dynamic dashboards with Google Cloud Monitoring variables
+- [Annotations](ref:annotations-gcm) - Overlay Google Cloud Monitoring events on graphs
+- [Alerting](ref:alerting-gcm) - Create alert rules based on GCP metrics and SLOs
+- [Google authentication](ref:google-authentication) - Configure authentication methods for GCP access
+- [Troubleshooting](ref:troubleshooting) - Solve common configuration and query errors
 
-### Configure Google authentication
+## Supported query types
 
-Before you can request data from Google Cloud Monitoring, you must configure authentication.
-All requests to Google APIs are performed on the server-side by the Grafana backend.
+The Google Cloud Monitoring data source supports the following query types:
 
-For authentication options and configuration details, refer to [Google authentication](google-authentication/).
+| Query type                          | Description                                                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Metrics**                         | Query time series data from GCP resources using the Monitoring Query Language (MQL) or the visual builder. |
+| **Service Level Objectives (SLOs)** | Query SLO data defined in Google Cloud Monitoring to track service reliability and error budgets.          |
 
-When configuring Google authentication, keep in mind the following additional steps related to Google Cloud Monitoring.
+## Additional features
 
-#### Configure a GCP Service Account
+After you configure the Google Cloud Monitoring data source, you can:
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file](google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+- Create a wide variety of [visualizations](ref:visualizations) using GCP metrics.
+- Configure and use [template variables](ref:variables) for dynamic dashboards.
+- Add [transformations](ref:transformations) to manipulate query results.
+- Add [annotations](ref:annotate-visualizations) to overlay events on your graphs.
+- Set up [alerting](ref:alerting) based on GCP metrics.
+- Use [Explore](ref:explore) to investigate your Google Cloud data without building a dashboard.
 
-{{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
+## Pre-configured dashboards
 
-#### Grant the GCE Default Service Account scope
-
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [Configure a GCE Default Service Account](google-authentication/#configure-a-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
-
-### Enable necessary Google Cloud Platform APIs
-
-Before you can request data from Google Cloud Monitoring, you must first enable necessary APIs on the Google end.
-
-1. Open the Monitoring and Cloud Resource Manager API pages:
-   - [Monitoring API](https://console.cloud.google.com/apis/library/monitoring.googleapis.com)
-   - [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
-
-1. On each page, click the `Enable` button.
-
-   {{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
-
-## Configure the data source
-
-To configure basic settings for the data source, complete the following steps:
-
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `Google Cloud Monitoring` in the search bar.
-1. Click **Google Cloud Monitoring**.
-
-   The **Settings** tab of the data source is displayed.
-
-1. Set the data source's basic configuration options:
-
-   | Name                | Description                                                                                                                                                                                                                                                                                                                                                                                                                       |
-   | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                          |
-   | **Default**         | Sets whether the data source is pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                      |
-   | **Universe Domain** | The universe domain to connect to. For more information, refer to [Documentation on universe domains](https://docs.cloud.google.com/python/docs/reference/monitoring/latest/google.cloud.monitoring_v3.services.service_monitoring_service.ServiceMonitoringServiceAsyncClient#google_cloud_monitoring_v3_services_service_monitoring_service_ServiceMonitoringServiceAsyncClient_universe_domain). Defaults to `googleapis.com`. |
-
-### Provision the data source
-
-You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
-
-#### Provisioning examples
-
-**Using the JWT (Service Account key file) authentication type:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Google Cloud Monitoring
-    type: stackdriver
-    access: proxy
-    jsonData:
-      tokenUri: https://oauth2.googleapis.com/token
-      clientEmail: stackdriver@myproject.iam.gserviceaccount.com
-      authenticationType: jwt
-      defaultProject: my-project-name
-      universeDomain: googleapis.com
-    secureJsonData:
-      privateKey: |
-        -----BEGIN PRIVATE KEY-----
-        POSEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCb1u1Srw8ICYHS
-        ...
-        yA+23427282348234=
-        -----END PRIVATE KEY-----
-```
-
-**Using the JWT (Service Account private key path) authentication type:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Google Cloud Monitoring
-    type: stackdriver
-    access: proxy
-    jsonData:
-      tokenUri: https://oauth2.googleapis.com/token
-      clientEmail: stackdriver@myproject.iam.gserviceaccount.com
-      authenticationType: jwt
-      defaultProject: my-project-name
-      universeDomain: googleapis.com
-      privateKeyPath: /etc/secrets/gce.pem
-```
-
-**Using GCE Default Service Account authentication:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Google Cloud Monitoring
-    type: stackdriver
-    access: proxy
-    jsonData:
-      authenticationType: gce
-      universeDomain: googleapis.com
-```
-
-## Import pre-configured dashboards
-
-The Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services.
-These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
+The Google Cloud Monitoring data source includes pre-configured dashboards for popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" class="docs-image--no-shadow" max-width="650px" caption="Curated dashboards for Google Cloud Monitoring" >}}
 
-**To import curated dashboards:**
+To import a pre-configured dashboard:
 
-1. Navigate to the data source's [configuration page](#configure-the-data-source).
-1. Select the **Dashboards** tab.
+1. Go to **Connections** > **Data sources**.
+1. Select your Google Cloud Monitoring data source.
+1. Click the **Dashboards** tab.
+1. Click **Import** next to the dashboard you want to use.
 
-   This displays the curated selection of importable dashboards.
+The dashboards include a [template variable](ref:template-variables) populated with the projects accessible by the configured [service account](ref:google-authentication) each time you load the dashboard. After Grafana loads the dashboard, you can select a project from the dropdown list.
 
-1. Select **Import** for the dashboard to import.
+To customize an imported dashboard, save it under a different name. Otherwise, Grafana upgrades can overwrite your customizations with the new version.
 
-The dashboards include a [template variable](template-variables/) populated with the projects accessible by the configured [Service Account](google-authentication/) each time you load the dashboard.
-After Grafana loads the dashboard, you can select a project from the dropdown list.
+## Related resources
 
-**To customize an imported dashboard:**
-
-To customize one of these dashboards, we recommend that you save it under a different name.
-If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
-
-## Query the data source
-
-The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
-
-For details, refer to the [query editor documentation](query-editor/).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/).
+- [Google Cloud Monitoring documentation](https://cloud.google.com/monitoring/docs)
+- [Monitoring Query Language (MQL) reference](https://cloud.google.com/monitoring/mql/reference)
+- [Google Cloud metrics list](https://cloud.google.com/monitoring/api/metrics_gcp)
+- [Grafana community forum](https://community.grafana.com/)

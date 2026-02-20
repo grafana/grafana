@@ -33,6 +33,7 @@ export const defaultApiConfig: APIEditorConfig = {
   contentType: 'application/json',
   queryParams: [],
   headerParams: [],
+  successMessage: 'API call was successful',
 };
 
 export const defaultStyleConfig: ButtonStyleConfig = {

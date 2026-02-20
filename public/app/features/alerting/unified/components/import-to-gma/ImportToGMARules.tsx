@@ -24,12 +24,14 @@ import {
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { Folder } from '../../types/rule-form';
 import {
   DataSourceType,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../utils/datasource';
+import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -108,7 +110,7 @@ const ImportToGMARules = () => {
 
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.import-to-gma.pageTitle', 'Import alert rules'),
       }}
@@ -454,7 +456,7 @@ function DataSourceField() {
             {t('alerting.import-to-gma.datasource.label', 'Data source')}
           </Text>
           <NeedHelpInfo
-            externalLink={'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/'}
+            externalLink={DOCS_URL_ALERTING_MIGRATION}
             linkText={`Read importing to Grafana alerting`}
             contentText={t(
               'alerting.import-to-gma.datasource.help-info.content',

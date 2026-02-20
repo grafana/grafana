@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -17,7 +18,7 @@ import {
   SceneGridLayoutDragStartEvent,
   SceneObject,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
@@ -31,6 +32,7 @@ import {
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
@@ -652,7 +654,10 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   }
 
   return (
-    <div className={cx(styles.container, isEditing && styles.containerEditing)}>
+    <div
+      className={cx(styles.container, isEditing && styles.containerEditing)}
+      data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
+    >
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>
@@ -686,6 +691,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
     }),
     containerEditing: css({
+      '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+
       // In editing the add actions should live at the bottom of the grid so we have to
       // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {

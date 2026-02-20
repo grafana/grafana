@@ -447,6 +447,8 @@ export {
 export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
+  type DashboardMutationAPI,
+  type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
@@ -599,6 +601,7 @@ export {
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
+export { type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBindingStatus,
@@ -686,7 +689,6 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
-  type DataSourceSelectItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -796,6 +798,8 @@ export {
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type DataSourceWithLogsContextSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  hasLogsLabelTypesSupport,
   hasLogsContextSupport,
   SupplementaryQueryType,
   type SupplementaryQueryOptions,

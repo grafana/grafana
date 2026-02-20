@@ -503,13 +503,16 @@ describe('linkSrv', () => {
   });
 
   describe('getPanelLinksVariableSuggestions', () => {
-    it('then it should return template variables, json properties and built-ins', () => {
+    it('then it should return template variables, options properties and built-ins', () => {
       const templateSrvWithJsonValues = initTemplateSrv('key', [
         {
           type: 'custom',
           name: 'customServers',
           valuesFormat: 'json',
-          query: '[{"name":"web","ip":"192.168.0.100"},{"name":"ads","ip":"192.168.0.142"}]',
+          options: [
+            { text: 'web', value: 'web', properties: { name: 'web', ip: '192.168.0.100' } },
+            { text: 'ads', value: 'ads', properties: { name: 'ads', ip: '192.168.0.142' } },
+          ],
         },
       ]);
       setTemplateSrv(templateSrvWithJsonValues);

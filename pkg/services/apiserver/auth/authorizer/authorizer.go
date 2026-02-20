@@ -10,6 +10,18 @@ import (
 	"k8s.io/apiserver/pkg/authorization/union"
 )
 
+// NewAllowAuthorizer returns an authorizer that systematically allows access for resource requests.
+// Correct authorization has to be performed elsewhere (e.g. at the storage layer based on a target resource).
+func NewAllowAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
 var _ authorizer.Authorizer = (*GrafanaAuthorizer)(nil)
 
 type GrafanaAuthorizer struct {
@@ -29,7 +41,7 @@ type GrafanaAuthorizer struct {
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
 func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
-	authorizers := []authorizer.Authorizer{
+	authorizers := []authorizer.Authorizer{ //nolint:prealloc
 		NewImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
 		newNamespaceAuthorizer(),

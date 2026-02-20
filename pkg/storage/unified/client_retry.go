@@ -51,7 +51,7 @@ func unaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterce
 func connectionBackoffOptions() grpc.DialOption {
 	return grpc.WithConnectParams(grpc.ConnectParams{
 		Backoff: backoff.Config{
-			BaseDelay:  100 * time.Millisecond,
+			BaseDelay:  1 * time.Second,
 			Multiplier: 1.6,
 			Jitter:     0.2,
 			MaxDelay:   10 * time.Second,

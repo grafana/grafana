@@ -8,6 +8,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -251,8 +252,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-			ac.EvalPermission(ac.ActionAlertingReceiversTest),
+			accesscontrol.TestReceiversPreconditionEval,
+			accesscontrol.TestReceiverNew,
 		)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
 		eval = ac.EvalAny(

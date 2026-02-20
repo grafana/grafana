@@ -7,8 +7,8 @@ import {
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
@@ -22,13 +22,14 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 import { makeExportableV1, makeExportableV2, LibraryElementExport } from './exporters';
 
-jest.mock('app/core/store', () => {
-  return {
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
     getBool: jest.fn(),
     getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
-  };
-});
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

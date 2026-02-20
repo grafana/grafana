@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -27,9 +26,11 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
+	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-
+	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -216,6 +217,10 @@ func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFact
 	c.env.GithubConnectionFactory = f
 }
 
+func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
+	c.env.GithubRepoFactory = f
+}
+
 func (c *K8sTestHelper) GetListenerAddress() string {
 	return c.listenerAddress
 }
@@ -345,7 +350,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := []any{}
+	clean := make([]any, 0, len(v.Items))
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}
@@ -461,6 +466,7 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
+	Headers     map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -565,6 +571,9 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
+	}
+	for k, v := range params.Headers {
+		req.Header.Set(k, v)
 	}
 
 	rsp, err := sharedHTTPClient.Do(req)
@@ -880,15 +889,29 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			Method: http.MethodGet,
 			Path:   path,
 			User:   h.Org1.Admin,
-		}, &AnyResource{})
+		}, &spec3.OpenAPI{})
 
 		require.NotNil(t, rsp.Response)
 		if rsp.Response.StatusCode != 200 {
 			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
 		}
 
+		var err error
+		body := rsp.Body
+
+		// Clear the plugin version and build stamp from snapshot
+		if v, ok := rsp.Result.Info.Extensions["x-grafana-plugin"]; ok && v != nil {
+			if pluginInfo, ok := v.(map[string]any); ok {
+				delete(pluginInfo, "version")
+				delete(pluginInfo, "build")
+
+				body, err = rsp.Result.MarshalJSON()
+				require.NoError(t, err)
+			}
+		}
+
 		var prettyJSON bytes.Buffer
-		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
 		pretty := prettyJSON.String()
 
@@ -897,7 +920,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-		body, err := os.ReadFile(fpath)
+		body, err = os.ReadFile(fpath)
 		if err == nil {
 			if !assert.JSONEq(t, string(body), pretty) {
 				t.Logf("openapi spec has changed: %s", path)

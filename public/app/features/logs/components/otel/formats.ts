@@ -7,7 +7,7 @@ import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
  * The presence of this field along log fields determines OTel origin.
  */
 export const OTEL_PROBE_FIELD = 'severity_number';
-const OTEL_LANGUAGE_UNKNOWN = 'unknown';
+export const OTEL_LANGUAGE_UNKNOWN = 'unknown';
 
 export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
   const languagesSet = new Set<string>();
@@ -80,7 +80,7 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   );
 }
 
-function getSuggestedOTelDisplayFormat() {
+export function getSuggestedOTelDisplayFormat() {
   return ['scope_name', ...getDefaultOTelDisplayFormat()];
 }
 

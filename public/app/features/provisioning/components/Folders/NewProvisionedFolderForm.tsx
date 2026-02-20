@@ -22,7 +22,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   folder?: Folder;
 }
 interface Props {
@@ -30,7 +30,7 @@ interface Props {
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, repository, workflowOptions, folder, onDismiss }: FormProps) {
+function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
@@ -45,14 +45,16 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
-    if (prUrl) {
-      const url = buildResourceBranchRedirectUrl({
-        paramName: 'new_pull_request_url',
-        paramValue: prUrl,
-        repoType: info.repoType,
-      });
-      navigate(url);
-    }
+    // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
+    const paramValue = prUrl ?? repository?.url ?? '';
+
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue,
+      repoType: info.repoType,
+    });
+
+    navigate(url);
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
@@ -170,8 +172,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hidePath
           />
@@ -210,10 +211,12 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
-    folderUid: parentFolder?.uid,
-    title: '', // Empty title for new folders
-  });
+  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData(
+    {
+      folderUid: parentFolder?.uid,
+      title: '', // Empty title for new folders
+    }
+  );
 
   if (isReadOnlyRepo || !initialValues) {
     return (
@@ -234,7 +237,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
       folder={folder}
     />
   );

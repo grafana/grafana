@@ -43,6 +43,19 @@ When enabled, Grafana exposes a number of metrics, including:
 - Grafana active alerts
 - Grafana performance
 
+#### Native histogram format
+
+Grafana exposes HTTP request metrics using native histograms for a more accurate representation of metric distributions. By default, both native histograms and classic histogram buckets are exposed for compatibility.
+
+To reduce metric cardinality, you can disable classic histogram buckets and expose only native histograms by setting the following option in your configuration file:
+
+```
+[metrics]
+# Enable classic HTTP histogram buckets alongside native histograms
+# Set to false to only expose native histogram format (reduces cardinality)
+classic_http_histogram_enabled = false
+```
+
 ### Pull metrics from Grafana into Prometheus
 
 These instructions assume you have already added Prometheus as a data source in Grafana.

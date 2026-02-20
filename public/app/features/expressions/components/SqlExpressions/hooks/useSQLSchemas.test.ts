@@ -11,9 +11,9 @@ describe('isDashboardDatasource', () => {
       { refId: 'C', datasource: { uid: 'mysql-uid', type: 'mysql' } },
     ];
 
-    const backendQueries = queries.filter((q) => !isDashboardDatasource(q));
+    const nonDashboardQueries = queries.filter((q) => !isDashboardDatasource(q));
 
-    expect(backendQueries.map((q) => q.refId)).toEqual(['A', 'C']);
+    expect(nonDashboardQueries.map((q) => q.refId)).toEqual(['A', 'C']);
   });
 
   it('returns true when query has dashboard datasource uid', () => {

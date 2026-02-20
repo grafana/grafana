@@ -9,7 +9,7 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-import { BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { BackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -80,6 +80,40 @@ describe('upload, search and trace query types', () => {
   });
 });
 
+describe('template variable interpolation', () => {
+  it('should interpolate template variables in TraceID queries', () => {
+    const templateSrv = {
+      replace: (value: string, scopedVars: ScopedVars): string => {
+        return value.replace(/\$\{(\w+)\}|\$(\w+)/g, (_match, var1, var2) => {
+          const key = var1 || var2;
+          const scopedVar = scopedVars[key];
+          return scopedVar?.value ?? '';
+        });
+      },
+      containsTemplate: (val: string): boolean => {
+        return val.includes('$');
+      },
+    } as TemplateSrv;
+
+    const ds = new JaegerDatasource(defaultSettings, templateSrv);
+
+    const interpolated = ds.interpolateVariablesInQueries(
+      [
+        {
+          refId: 'A',
+          queryType: undefined,
+          query: '${traceID}',
+        } as JaegerQuery,
+      ],
+      {
+        traceID: { value: 'Yyij7GaxbMkkus6NJEcAr6UedJxTCuYl' },
+      } as unknown as ScopedVars
+    );
+
+    expect(interpolated[0].query).toBe('Yyij7GaxbMkkus6NJEcAr6UedJxTCuYl');
+  });
+});
+
 describe('node graph functionality', () => {
   it('should include node graph frames when nodeGraph is enabled for trace queries', async () => {
     const settingsWithNodeGraph = {
@@ -147,7 +181,6 @@ function setupQueryMock(type: 'trace' | 'search') {
 }
 
 const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
-  id: 0,
   uid: '0',
   type: 'tracing',
   name: 'jaeger',

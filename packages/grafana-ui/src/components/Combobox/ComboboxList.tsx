@@ -18,7 +18,7 @@ interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
   highlightedIndex: number | null;
   selectedItems?: Array<ComboboxOption<T>>;
-  scrollRef: React.RefObject<HTMLDivElement>;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
@@ -130,7 +130,6 @@ export const ComboboxList = <T extends string | number>({
                   index: virtualRow.index,
                   id: itemId,
                   'aria-describedby': groupHeaderId,
-                  disabled: item.infoOption,
                 })}
               >
                 {isMultiSelect && (

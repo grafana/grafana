@@ -6,12 +6,8 @@ import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getDatasourceFromQueryRunner,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-} from '../utils/utils';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -36,22 +32,12 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return false;
     }
 
-    // If feature flag is enabled we pass the info of whether annotation can be added through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
-
     // If RBAC is enabled there are additional conditions to check.
     return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canAdd);
   };
 
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
-
-    // If feature flag is enabled we pass the info of whether annotation can be edited through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
 
     if (dashboardUID) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
@@ -62,11 +48,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
-
-    // If feature flag is enabled we pass the info of whether annotation can be deleted through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
 
     if (dashboardUID) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);

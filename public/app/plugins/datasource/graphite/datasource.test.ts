@@ -63,7 +63,6 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
 });
 
 const instanceSettings = {
-  id: 1,
   uid: 'graphiteUid',
   type: 'graphite',
   readOnly: false,
@@ -996,6 +995,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,series2)');
+      expect(results[2].targetFull).toBe('asPercent(series1,series2)');
     });
 
     it('should replace target placeholder for hidden series', () => {
@@ -1016,6 +1016,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[0].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references', () => {
@@ -1036,6 +1037,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[2].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references with template variables', () => {
@@ -1072,6 +1074,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
+      expect(results[2].targetFull).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
     });
 
     it('should use scoped variables when nesting query references', () => {
@@ -1114,6 +1117,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[1].target).toBe('sumSeries(scopedValue)');
+      expect(results[1].targetFull).toBe('sumSeries(scopedValue)');
     });
 
     it('should apply scoped variables to nested references with hidden targets', () => {
@@ -1156,6 +1160,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[0].target).toBe('avg(web01.cpu)');
+      expect(results[0].targetFull).toBe('avg(web01.cpu)');
     });
 
     it('should not recursively replace queries that reference themselves', () => {
@@ -1170,6 +1175,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
       );
     });
@@ -1196,6 +1204,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
       );
     });
@@ -1245,6 +1256,7 @@ describe('graphiteDatasource', () => {
           originalTargetMap
         );
         expect(results[0].target).toEqual('my.b.*');
+        expect(results[0].targetFull).toEqual('my.b.*');
       });
 
       it('globs for more than one variable', () => {
@@ -1275,6 +1287,7 @@ describe('graphiteDatasource', () => {
         );
 
         expect(results[0].target).toEqual('my.{a,b}.*');
+        expect(results[0].targetFull).toEqual('my.{a,b}.*');
       });
     });
   });

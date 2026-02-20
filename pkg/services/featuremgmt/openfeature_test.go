@@ -15,7 +15,6 @@ import (
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +25,7 @@ func TestCreateProvider(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		cfg                   setting.OpenFeatureSettings
-		expectedProvider      string
+		expectedProvider      setting.OpenFeatureProviderType
 		expectExchangeRequest *authlib.TokenExchangeRequest
 		failSigning           bool
 	}{
@@ -105,7 +104,7 @@ func TestCreateProvider(t *testing.T) {
 				}
 			}
 
-			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
+			tokenExchangeMiddleware := TestingTokenExchangeMiddleware(tokenExchangeClient)
 			httpClient, err := createHTTPClient(tokenExchangeMiddleware)
 			require.NoError(t, err, "failed to create features-service http client")
 			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClient)

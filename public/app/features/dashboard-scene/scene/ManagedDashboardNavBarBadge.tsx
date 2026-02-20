@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { getManagedByRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -32,10 +33,7 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
       break;
     case ManagerKind.Repo:
-      text = t('dashboard-scene.managed-badge.repository', 'Managed by: Repository {{title}}', {
-        title: repoData?.spec?.title || id,
-        interpolation: { escapeValue: false },
-      });
+      text = getManagedByRepositoryTooltip(repoData?.spec?.title || id);
       break;
     default:
       text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');

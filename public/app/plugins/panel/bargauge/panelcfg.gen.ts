@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/bargauge/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface Options extends common.OptionsWithLegend, common.SingleStatBaseOptions {

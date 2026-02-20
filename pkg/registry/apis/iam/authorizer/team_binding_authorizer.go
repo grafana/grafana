@@ -97,8 +97,8 @@ func (r *TeamBindingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Obj
 	teamName := concreteObj.Spec.TeamRef.Name
 	checkReq := types.CheckRequest{
 		Namespace: authInfo.GetNamespace(),
-		Group:     iamv0.GROUP,
-		Resource:  iamv0.TeamResourceInfo.GetName(),
+		Group:     iamv0.TeamResourceInfo.GroupResource().Group,
+		Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
 		Verb:      utils.VerbSetPermissions,
 		Name:      teamName,
 	}
@@ -138,6 +138,7 @@ func (r *TeamBindingAuthorizer) FilterList(ctx context.Context, list runtime.Obj
 		Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
 		Verb:      utils.VerbGetPermissions,
 	}
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	canView, _, err := r.accessClient.Compile(ctx, authInfo, listReq)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)

@@ -23,19 +23,7 @@ weight: 200
 System for Cross-domain Identity Management (SCIM) is an open standard that allows automated user provisioning and management. With SCIM, you can automate the provisioning of users and groups from your identity provider to Grafana.
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and select Grafana Cloud plans in [public preview](https://grafana.com/docs/release-life-cycle/).
-Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-This feature is behind the `enableSCIM` feature toggle.
-You can enable feature toggles through configuration file or environment variables.
-
-For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
-
-{{< /admonition >}}
-
-{{< admonition type="warning" >}}
-
-**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 ## Benefits
@@ -66,7 +54,7 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 
 When you use SAML with SCIM provisioning, align the SCIM `externalId` with the SAML user identifier. Use a stable IdP attribute (for example, Entra ID `user.objectid`) as the SCIM `externalId`, and send that same value as a SAML claim. Configure Grafana to read this claim with the `assertion_attribute_external_uid` setting so SAML authentication links to the SCIM-provisioned user and its permissions.
 
-If the SAML identifier and SCIM `externalId` differ, Grafana may not link the authenticated user to the intended SCIM profile, which can result in incorrect access. Verify your IdP sends a stable, unique identifier and that it matches the SCIM `externalId`. Refer to your IdP docs and the Grafana SCIM integration guides for [Entra ID](configure-scim-with-azuread/) and [Okta](configure-scim-with-okta/) for attribute configuration details.
+If the SAML identifier and SCIM `externalId` differ, Grafana may not link the authenticated user to the intended SCIM profile, which can result in incorrect access. Verify your IdP sends a stable, unique identifier and that it matches the SCIM `externalId`. Refer to your IdP docs and the Grafana SCIM integration guides for [Entra ID](configure-scim-with-entraid/) and [Okta](configure-scim-with-okta/) for attribute configuration details.
 
 ## Configure SCIM using the Grafana user interface
 
@@ -99,7 +87,7 @@ The SCIM UI also displays information that may help you configure SCIM in your i
 After configuring SCIM in Grafana, configure your identity provider:
 
 - [Configure SCIM with Okta](configure-scim-with-okta/)
-- [Configure SCIM with Entra ID](configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](configure-scim-with-entraid/)
 
 ## Configure SCIM using the configuration file
 
@@ -191,5 +179,5 @@ The following table compares SCIM with other synchronization methods to help you
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
 - [Troubleshoot SCIM provisioning](troubleshooting/)
-- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-entraid/)
 - [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-okta/)

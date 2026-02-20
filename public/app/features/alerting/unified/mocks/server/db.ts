@@ -123,7 +123,6 @@ const dataSourceFactory = DataSourceFactory.define(({ sequence, params, afterBui
 
   const uid = params.uid ?? `mock-ds-${sequence}`;
   return {
-    id: params.id ?? sequence,
     uid,
     type: DataSourceType.Prometheus,
     name: `Prometheus-${uid}`,
@@ -231,6 +230,7 @@ const grafanaContactPointFactory = GrafanaContactPointFactory.define(({ sequence
       'grafana.com/access/canDelete': 'true',
       'grafana.com/access/canReadSecrets': 'true',
       'grafana.com/access/canWrite': 'true',
+      'grafana.com/access/canTest': 'true',
       'grafana.com/inUse/routes': '0',
       'grafana.com/inUse/rules': '1',
       'grafana.com/provenance': 'none',

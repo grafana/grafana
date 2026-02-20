@@ -222,7 +222,7 @@ Dashboards are reloaded when the JSON files change.
 
 #### `protocol`
 
-`http`,`https`,`h2` or `socket`
+`http`,`https`,`h2`,`socket` or `socket_h2`
 
 #### `min_tls_version`
 
@@ -1671,10 +1671,6 @@ Enables the [Content Security Policy Violations instrumentation](https://grafana
 #### `instrumentations_tracing_enabled`
 
 Enables the [Tracing instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/tracing-instrumentation/) for Grafana Faro, defaults to `true`.
-
-#### `web_vitals_attribution_enabled`
-
-Enables sending [attribution data for web vitals](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/web-vitals/#web-vitals-attribution-data) with the Performance instrumentation, defaults to `true`.
 
 #### `log_endpoint_requests_per_second_limit`
 

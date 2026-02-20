@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 
+import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
@@ -8,7 +9,7 @@ import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
-import { getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
 import { SyncRepository } from './SyncRepository';
@@ -32,13 +33,23 @@ export function RepositoryListItem({ repository }: Props) {
 
       meta.push(
         <TextLink key="link" external href={href}>
-          {href.split('/').slice(3).join('/')}
+          {formatRepoUrl(href)}
         </TextLink>
       );
     } else if (spec?.type === 'local') {
       meta.push(
         <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
+        </Text>
+      );
+    }
+
+    if (status?.sync?.finished) {
+      meta.push(
+        <Text variant="bodySmall" color="secondary" key="last-sync">
+          {t('provisioning.repository-card.last-sync', 'Last sync: {{date}}', {
+            date: dateTimeFormatTimeAgo(status.sync.finished),
+          })}
         </Text>
       );
     }
@@ -82,11 +93,7 @@ export function RepositoryListItem({ repository }: Props) {
         </Stack>
       </Card.Description>
 
-      <Card.Meta>
-        <Stack gap={2} direction="row" wrap>
-          {getRepositoryMeta()}
-        </Stack>
-      </Card.Meta>
+      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">

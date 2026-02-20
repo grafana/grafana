@@ -5,6 +5,7 @@ import { Button, Stack, Text } from '@grafana/ui';
 
 import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { RuleFormValues } from '../../../types/rule-form';
+import { DOCS_URL_ANNOTATION_LABEL } from '../../../utils/docs';
 import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
@@ -43,9 +44,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
               {text}
             </Text>
             <NeedHelpInfo
-              externalLink={
-                'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'
-              }
+              externalLink={DOCS_URL_ANNOTATION_LABEL}
               linkText={`Read about labels`}
               contentText="The dropdown only displays labels that you have previously used for alerts.
               Select a label from the options below or type in a new one."
