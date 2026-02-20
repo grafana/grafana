@@ -58,7 +58,7 @@ func readSignerSettings(cfg *setting.Cfg) (*signerSettings, error) {
 	s.tokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
 
 	if s.token == "" || s.tokenExchangeURL == "" {
-		return nil, fmt.Errorf("authorization:  missing token or tokenExchangeUrl")
+		return nil, fmt.Errorf("authorization: missing token or tokenExchangeUrl")
 	}
 
 	return s, nil

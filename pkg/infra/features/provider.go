@@ -14,7 +14,7 @@ func NewOFREPProvider(url string, client *http.Client) (openfeature.FeatureProvi
 		return nil, fmt.Errorf("URL is required for OFREP provider")
 	}
 
-	options := []ofrep.Option{}
+	var options []ofrep.Option
 	if client != nil {
 		options = append(options, ofrep.WithClient(client))
 	}

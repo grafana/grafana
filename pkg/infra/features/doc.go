@@ -40,7 +40,6 @@
 //	}
 //
 //	config := features.OpenFeatureConfig{
-//		ProviderType: features.FeaturesServiceProviderType,
 //		URL:          providerURL,
 //		HTTPClient:   httpClient,
 //		TargetingKey: "stacks-123",
