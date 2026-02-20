@@ -2728,11 +2728,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/PluginDashboards.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/helpers.ts": {
     "no-restricted-syntax": {
       "count": 2
