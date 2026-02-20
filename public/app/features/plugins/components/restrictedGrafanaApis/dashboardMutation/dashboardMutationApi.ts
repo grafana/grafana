@@ -1,21 +1,7 @@
-/**
- * Dashboard Mutation API -- Restricted API wrapper.
- *
- * This module provides the API object exposed to plugins via RestrictedGrafanaApis.
- *
- * The active MutationClient is managed by DashboardMutationBehavior (a $behavior
- * on DashboardScene) which stores it in dashboardMutationStore on
- * activation and clears it on deactivation.
- *
- * Plugins access this through RestrictedGrafanaApis context -- they cannot
- * import this module directly because it lives inside the core bundle.
- */
-
 import type { DashboardMutationAPI } from '@grafana/data';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
+import { getDashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/dashboardMutationStore';
 import type { MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
-
-import { getDashboardMutationClient } from './dashboardMutationStore';
 
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {

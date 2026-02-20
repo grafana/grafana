@@ -1,8 +1,8 @@
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
+import { setDashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/dashboardMutationStore';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
 import { dashboardMutationApi } from './dashboardMutationApi';
-import { setDashboardMutationClient } from './dashboardMutationStore';
 
 function createMockClient(): MutationClient {
   return {

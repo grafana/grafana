@@ -1,13 +1,10 @@
 import { SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { dashboardMutationApi } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
-import {
-  getDashboardMutationClient,
-  setDashboardMutationClient,
-} from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationStore';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardMutationBehavior } from './DashboardMutationBehavior';
+import { getDashboardMutationClient, setDashboardMutationClient } from './dashboardMutationStore';
 
 function buildAndActivateScene(): { scene: DashboardScene; deactivate: () => void } {
   const scene = new DashboardScene({
