@@ -2032,12 +2032,14 @@ func (s *batchAuthzSearcher) Next(searchCtx *search.SearchContext) (*search.Docu
 
 // initPullIterator sets up the FilterAuthorized iterator as a pull iterator
 func (s *batchAuthzSearcher) initPullIterator() {
-	// Create iter.Seq that pulls documents from searcher and parses them
+	var iterErr error
+
 	candidates := func(yield func(docInfo) bool) {
 		for {
 			doc, err := s.searcher.Next(s.searchCtx)
 			if err != nil {
 				s.log.Debug("Error getting next document", "error", err)
+				iterErr = err
 				return
 			}
 			if doc == nil {
@@ -2066,11 +2068,15 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	// FilterAuthorized extracts auth from context and batches internally
 	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn)
 
-	// Convert push iterator to pull iterator
-	s.next, s.stop = iter.Pull2(authzIter)
+	s.next, s.stop = iter.Pull2(func(yield func(docInfo, error) bool) {
+		authzIter(yield)
+		if iterErr != nil {
+			var zero docInfo
+			yield(zero, iterErr)
+		}
+	})
 }
 
 // parseDocInfo extracts document information needed for authorization
