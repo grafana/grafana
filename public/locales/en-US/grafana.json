@@ -14074,6 +14074,28 @@
         "label-none": "None"
       }
     },
+    "inline": {
+      "colorMode": {
+        "backgroundGradient": "Background gradient",
+        "backgroundSolid": "Background solid",
+        "none": "None",
+        "value": "Value"
+      },
+      "quickEdit": {
+        "colorMode": "Color mode",
+        "panelTitle": "Stat: {{title}}",
+        "textMode": "Text mode",
+        "title": "Quick edit",
+        "tooltip": "Quick edit"
+      },
+      "textMode": {
+        "auto": "Auto",
+        "name": "Name",
+        "none": "None",
+        "value": "Value",
+        "valueAndName": "Value and name"
+      }
+    },
     "name-color-modcolor-mode-options": {
       "label": "Color mode"
     },
@@ -14111,6 +14133,7 @@
       "label-on": "On"
     }
   },
+  "stat.inline.quickEdit.panelTitle.untitled": "Stat: Untitled",
   "state-timeline": {
     "align-values-options": {
       "label-center": "Center",
@@ -14508,6 +14531,30 @@
         }
       }
     },
+    "inline": {
+      "legend": {
+        "list": "List",
+        "off": "Off",
+        "placement": {
+          "bottom": "Bottom",
+          "right": "Right"
+        },
+        "table": "Table"
+      },
+      "quickEdit": {
+        "button": "Quick edit",
+        "legend": "Legend",
+        "legendPlacement": "Legend placement",
+        "panelTitle": "Time series: {{title}}",
+        "title": "Quick edit",
+        "tooltip": "Tooltip"
+      },
+      "tooltip": {
+        "multi": "All",
+        "none": "Off",
+        "single": "Single"
+      }
+    },
     "insert-nulls-editor": {
       "disconnect-options": {
         "label-never": "Never",
@@ -14553,6 +14600,7 @@
       "tooltip-remove-timezone": "Remove timezone"
     }
   },
+  "timeseries.inline.quickEdit.panelTitle.untitled": "Time series: Untitled",
   "traces": {
     "adhocFilters": {
       "customValue": "Type a value",
