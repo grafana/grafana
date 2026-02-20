@@ -1,12 +1,12 @@
 module github.com/grafana/grafana/apps/dashboard
 
-go 1.26.0
+go 1.25.7
 
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
-	github.com/grafana/grafana-app-sdk v0.51.3
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk v0.51.4
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana-plugin-sdk-go v0.289.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -135,8 +135,8 @@ require (
 	golang.org/x/tools v0.42.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
