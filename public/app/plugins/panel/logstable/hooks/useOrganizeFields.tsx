@@ -117,7 +117,7 @@ const organizeFields = async (
         custom: {
           ...fieldConfig.defaults.custom,
           ...field.config.custom,
-          width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName, options),
+          width: getFieldWidth(field.config.custom?.width, fieldIndex, options),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
             isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)

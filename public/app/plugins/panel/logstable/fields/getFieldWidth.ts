@@ -1,28 +1,15 @@
-import { Field, getFieldDisplayName } from '@grafana/data';
-
 import { DEFAULT_FIRST_FIELD_WIDTH, ROW_ACTION_BUTTON_WIDTH } from '../constants';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 
-export function getFieldWidth(
-  width: number | undefined,
-  field: Field,
-  fieldIndex: number,
-  timeFieldName: string,
-  options: LogsTableOptions
-) {
+export function getFieldWidth(width: number | undefined, fieldIndex: number, options: LogsTableOptions) {
   if (width !== undefined) {
     return width;
   }
 
-  return getDefaultFieldWidth(field, fieldIndex, timeFieldName, options);
+  return getDefaultFieldWidth(fieldIndex, options);
 }
 
-function getDefaultFieldWidth(
-  field: Field,
-  fieldIndex: number,
-  timeFieldName: string,
-  options: LogsTableOptions
-): number | undefined {
+function getDefaultFieldWidth(fieldIndex: number, options: LogsTableOptions): number | undefined {
   if (fieldIndex !== 0) {
     return undefined;
   }
