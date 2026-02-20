@@ -46,7 +46,7 @@ export function useQuotaLimits() {
   const folderQuery = useGetUsageQuery(featureEnabled ? { group: FOLDER_API_GROUP, resource: 'folders' } : skipToken);
 
   const isLoading = dashboardQuery.isLoading || folderQuery.isLoading;
-  const hasError = Boolean(dashboardQuery.error && folderQuery.error);
+  const allQueriesFailed = Boolean(dashboardQuery.error && folderQuery.error);
 
   const resources = useMemo(
     () =>
@@ -55,5 +55,5 @@ export function useQuotaLimits() {
         .filter((r): r is ResourceStatus => r !== null),
     [dashboardQuery.data, folderQuery.data]
   );
-  return { resources, isLoading, hasError, featureEnabled };
+  return { resources, isLoading, allQueriesFailed, featureEnabled };
 }
