@@ -9,6 +9,7 @@ import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
+import TileLayer from 'ol/layer/Tile';
 import { fromLonLat, transformExtent } from 'ol/proj';
 import { Component, ReactNode } from 'react';
 import * as React from 'react';
@@ -30,7 +31,7 @@ import { MeasureVectorLayer } from './components/MeasureVectorLayer';
 import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
-import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, Options, MapLayerState, MapViewConfig, TooltipMode } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
@@ -396,7 +397,45 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.mouseWheelZoom?.setActive(Boolean(options.mouseWheelZoom));
 
-    if (options.showAttribution) {
+    // Handle attribution visibility per layer based on required vs optional
+    let hasAnyAttribution = false;
+
+    for (const layerState of this.layers) {
+      const layerType = layerState.options.type;
+      const layerRegistryItem = layerType ? geomapLayerRegistry.getIfExists(layerType) : null;
+      const requiresAttribution = layerRegistryItem?.requiresAttribution === true;
+
+      // Check if this layer's source has attribution capability
+      const layer = layerState.layer;
+      if (layer instanceof TileLayer) {
+        const source = layer.getSource();
+        if (source && typeof source.getAttributions === 'function') {
+          const currentAttributions = source.getAttributions();
+
+          // Store original attribution if not already stored
+          if (!layerState.originalAttribution && currentAttributions) {
+            layerState.originalAttribution = currentAttributions;
+          }
+
+          // Show attribution if it's required OR if user has enabled optional attributions
+          if (requiresAttribution || options.showAttribution) {
+            // Restore original attribution if we had cleared it
+            if (layerState.originalAttribution && typeof source.setAttributions === 'function') {
+              source.setAttributions(layerState.originalAttribution);
+            }
+            hasAnyAttribution = true;
+          } else {
+            // Hide optional attribution by clearing it
+            if (typeof source.setAttributions === 'function') {
+              source.setAttributions(null);
+            }
+          }
+        }
+      }
+    }
+
+    // Add attribution control if there are any attributions to show
+    if (hasAnyAttribution) {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
     }
 
