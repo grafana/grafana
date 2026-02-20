@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Opsgenie
 title: Configure Opsgenie for Alerting
-weight: 0
+weight: 145
 ---
 
 {{< admonition type="caution" >}}
@@ -45,7 +45,9 @@ To create your Opsgenie integration in Grafana Alerting, complete the following 
 1. Enter a contact point name.
 1. From the **Integration** list, select **Opsgenie**.
 1. In the **API key** field, paste in your API key.
-1. In the **Alert API URL**, enter `https://api.opsgenie.com/v2/alerts`.
+1. Configure the **Alert API URL**.
+   1. For Grafana Alertmanager, enter `https://api.opsgenie.com/v2/alerts`.
+   1. For other Alertmanagers, enter the host for sending Opsgenie API requests, depending on the hosted region.
 1. Click **Test** to check that your integration works.
 
    A test alert notification is sent to the Alerts page in Opsgenie.
