@@ -375,7 +375,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rowsDeleted)
 		require.Equal(t, int64(1), rowsProcessed)
-		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource2/\d+~deleted~folderuid$`), nextEndKey)
+		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource2/\d+~created~folderuid$`), nextEndKey)
 
 		trashResp, err = server.List(ctx, &resourcepb.ListRequest{
 			Source: resourcepb.ListRequest_TRASH,
@@ -393,7 +393,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		// require.Len(t, trashResp.Items, 1)
 	})
 
-	t.Run("will not delete rows when resource is deleted then recreated with same name", func(t *testing.T) {
+	t.Run("will delete rows from before the resource gets deleted, but it will keep rows from after the resource gets recreated with same name", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
@@ -427,7 +427,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
 		rowsDeleted, rowsProcessed, nextEndKey, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100, "group/resource/", "group/resource0")
 		require.NoError(t, err)
-		require.Equal(t, int64(0), rowsDeleted)
+		require.Equal(t, int64(2), rowsDeleted) // the deleted and the created event for resource1 should be deleted, but not the recreated one
 		require.Equal(t, int64(3), rowsProcessed)
 		require.Regexp(t, regexp.MustCompile(`^group/resource/namespace/resource1/\d+~created~folderuid$`), nextEndKey)
 
