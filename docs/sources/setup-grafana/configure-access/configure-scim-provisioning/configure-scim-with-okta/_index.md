@@ -52,24 +52,13 @@ To enable SCIM provisioning in Grafana, create a service account and generate an
 ### Create a service account
 
 1. Navigate to **Administration > Users and access > Service accounts**
-2. Click **Add service account**
-3. Create a new service account with **Role: "None"**
-4. In the service account **Permissions** tab, add these permissions:
+1. Click **Add service account**
+1. Create the service account with a name (for example, "SCIM provisioning").
+1. In the **Roles** dropdown, select the following roles for the service account:
+   - **User administration** — required for user sync (create, read, update, and remove users in the organization)
+   - **Teams** — required for group sync (create, read, update, and delete teams, and manage team memberships)
 
-   **Allow the service account to sync users:**
-   - `org.users:read`
-   - `org.users:write`
-   - `org.users:add`
-   - `org.users:remove`
-
-   **Allow the service account to sync groups:**
-   - `teams:read`
-   - `teams:create`
-   - `teams:write`
-   - `teams:delete`
-
-5. Create a new token for the newly created service account and save it securely
-   - This token will be used in the Okta configuration
+1. Create a new token for the newly created service account and save it securely. This token will be used in the Okta configuration.
 
 ## Configure SCIM in Okta
 
