@@ -539,7 +539,6 @@ type FindPersistedDashboardsQuery struct {
 	ManagerIdentity      string
 	SourcePath           string
 	ManagerIdentityNotIn []string
-	CreatedBy            string
 
 	Filters []any
 
