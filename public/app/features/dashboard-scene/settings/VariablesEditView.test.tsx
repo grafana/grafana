@@ -1,4 +1,6 @@
+import { screen } from '@testing-library/react';
 import { of } from 'rxjs';
+import { render } from 'test/test-utils';
 
 import {
   FieldType,
@@ -250,6 +252,64 @@ describe('VariablesEditView', () => {
 
       expect(getSourceVariable().getValue()).toBe('newValue');
       expect(getDependantPanel().getDescription()).toContain('newValue');
+    });
+  });
+
+  describe('System variables section', () => {
+    it('should not show System variables section when no variables have source', async () => {
+      const result = await buildTestScene();
+      const variableView = result.variableView;
+
+      render(<variableView.Component model={variableView} />);
+
+      expect(screen.queryByText('System variables')).not.toBeInTheDocument();
+    });
+
+    it('should show System variables section when at least one variable has source', async () => {
+      const result = await buildTestScene();
+      const { variableView } = result;
+      const variableSet = variableView.getVariableSet();
+      const variables = variableSet.state.variables;
+      const defaultVariable = new CustomVariable({
+        name: 'systemVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        source: {
+          type: 'datasource',
+          ref: { group: 'test' },
+        },
+      });
+      variableSet.setState({ variables: [...variables, defaultVariable] });
+
+      render(<variableView.Component model={variableView} />);
+
+      expect(screen.getByText('System variables')).toBeInTheDocument();
+    });
+
+    it('should show User defined variables first then System variables when both present', async () => {
+      const result = await buildTestScene();
+      const { variableView } = result;
+      const variableSet = variableView.getVariableSet();
+      const variables = variableSet.state.variables;
+      const defaultVariable = new CustomVariable({
+        name: 'systemVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        source: {
+          type: 'datasource',
+          ref: { group: 'test' },
+        },
+      });
+      variableSet.setState({ variables: [...variables, defaultVariable] });
+
+      render(<variableView.Component model={variableView} />);
+
+      const container = document.body;
+      const userDefinedIndex = container.textContent!.indexOf('User defined variables');
+      const systemLinksIndex = container.textContent!.indexOf('System variables');
+      expect(userDefinedIndex).toBeLessThan(systemLinksIndex);
     });
   });
 });
