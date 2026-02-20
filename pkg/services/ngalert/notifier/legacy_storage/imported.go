@@ -196,9 +196,19 @@ func applyManagedRouteMatcher(identifier string, rules []definitions.InhibitRule
 	matcher := managedRouteMatcher(identifier)
 
 	for _, rule := range rules {
-		rule.SourceMatchers = append(rule.SourceMatchers, matcher)
-		rule.TargetMatchers = append(rule.TargetMatchers, matcher)
-		result = append(result, rule)
+		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
+		sm = append(sm, matcher)
+		sm = append(sm, rule.SourceMatchers...)
+
+		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
+		tm = append(tm, matcher)
+		tm = append(tm, rule.TargetMatchers...)
+
+		result = append(result, definitions.InhibitRule{
+			SourceMatchers: sm,
+			TargetMatchers: tm,
+			Equal:          slices.Clone(rule.Equal),
+		})
 	}
 
 	return result

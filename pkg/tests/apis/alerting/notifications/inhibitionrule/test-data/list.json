@@ -17,25 +17,25 @@
         "source_matchers": [
           {
             "type": "=",
-            "label": "alertname",
-            "value": "HighCPU"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           },
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "alertname",
+            "value": "HighCPU"
           }
         ],
         "target_matchers": [
           {
             "type": "=",
-            "label": "alertname",
-            "value": "CPUWarning"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           },
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "alertname",
+            "value": "CPUWarning"
           }
         ],
         "equal": [
@@ -57,25 +57,25 @@
         "source_matchers": [
           {
             "type": "=",
-            "label": "severity",
-            "value": "critical"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           },
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "severity",
+            "value": "critical"
           }
         ],
         "target_matchers": [
           {
             "type": "=",
-            "label": "severity",
-            "value": "warning"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           },
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "severity",
+            "value": "warning"
           }
         ],
         "equal": [
