@@ -413,6 +413,37 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "dryRun with bad value in error propagates bad value to field error",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			operation:     admission.Create,
+			dryRun:        true,
+			factoryErrors: field.ErrorList{},
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    400,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    "spec.github.appID",
+						Detail:   "appID mismatch",
+						BadValue: "123",
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: "appID mismatch",
+		},
+		{
 			name: "non-dryRun does not run runtime validation",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
