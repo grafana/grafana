@@ -113,6 +113,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		"namespace", req.GetNamespace(),
 		"group", req.GetGroup(),
 		"resource", req.GetResource(),
+		"subresource", req.GetSubresource(),
 		"verb", req.GetVerb(),
 	)
 	defer func(start time.Time) {
