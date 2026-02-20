@@ -1,6 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type GetUsageResponse, useGetUsageQuery } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config } from '@grafana/runtime';
 
@@ -39,11 +41,9 @@ function buildResourceStatus(data: GetUsageResponse | undefined, kind: ResourceS
 export function useQuotaLimits() {
   const featureEnabled = Boolean(config.featureToggles.kubernetesUnifiedStorageQuotas);
   const dashboardQuery = useGetUsageQuery(
-    featureEnabled ? { group: 'dashboard.grafana.app', resource: 'dashboards' } : skipToken
+    featureEnabled ? { group: DASHBOARD_API_GROUP, resource: 'dashboards' } : skipToken
   );
-  const folderQuery = useGetUsageQuery(
-    featureEnabled ? { group: 'folder.grafana.app', resource: 'folders' } : skipToken
-  );
+  const folderQuery = useGetUsageQuery(featureEnabled ? { group: FOLDER_API_GROUP, resource: 'folders' } : skipToken);
 
   const isLoading = dashboardQuery.isLoading || folderQuery.isLoading;
   const hasError = Boolean(dashboardQuery.error && folderQuery.error);

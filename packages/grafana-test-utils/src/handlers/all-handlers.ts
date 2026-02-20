@@ -12,6 +12,7 @@ import appPlatformDashboardv0alpha1Handlers from './apis/dashboard.grafana.app/v
 import appPlatformDashboardv1beta1Handlers from './apis/dashboard.grafana.app/v1beta1/handlers';
 import appPlatformFolderv1beta1Handlers from './apis/folder.grafana.app/v1beta1/handlers';
 import appPlatformIamv0alpha1Handlers from './apis/iam.grafana.app/v0alpha1/handlers';
+import appPlatformQuotasv0alpha1Handlers from './apis/quotas.grafana.app/v0alpha1/handlers';
 import appPlatformScopev0alpha1Handlers from './apis/scope.grafana.app/v0alpha1/handlers';
 
 const allHandlers: HttpHandler[] = [
@@ -29,6 +30,7 @@ const allHandlers: HttpHandler[] = [
   ...appPlatformDashboardv1beta1Handlers,
   ...appPlatformFolderv1beta1Handlers,
   ...appPlatformIamv0alpha1Handlers,
+  ...appPlatformQuotasv0alpha1Handlers,
   ...appPlatformCollectionsv1alpha1Handlers,
   ...appPlatformScopev0alpha1Handlers,
 ];
