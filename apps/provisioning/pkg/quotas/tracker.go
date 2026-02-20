@@ -37,5 +37,7 @@ func (q *QuotaTracker) Release() {
 	}
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	q.current--
+	if q.current > 0 {
+		q.current--
+	}
 }
