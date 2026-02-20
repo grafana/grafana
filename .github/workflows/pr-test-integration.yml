@@ -104,7 +104,7 @@ jobs:
         if: matrix.shard != 'profiled'
         env:
           SHARD: ${{ matrix.shard }}
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           SKIP_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
@@ -118,7 +118,7 @@ jobs:
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
         env:
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           PROFILED_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
@@ -220,7 +220,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=1 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -265,7 +265,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=1 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -309,7 +309,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -race -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -347,7 +347,7 @@ jobs:
         if: matrix.shard != 'profiled'
         env:
           SHARD: ${{ matrix.shard }}
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           SKIP_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
@@ -356,12 +356,12 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -race -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
         env:
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           PROFILED_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
@@ -468,7 +468,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=1 go test -p=1 -race -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -518,7 +518,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=1 go test -p=1 -race -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
