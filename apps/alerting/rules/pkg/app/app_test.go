@@ -46,6 +46,39 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 	}
 }
 
+func TestAlertRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
+	dsUID := v1.AlertRuleDatasourceUID("prometheus")
+	r := &v1.AlertRule{}
+	r.SetGroupVersionKind(v1.AlertRuleKind().GroupVersionKind())
+	r.Name = "uid-1"
+	r.Namespace = "ns1"
+	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
+	r.Labels = map[string]string{}
+	r.Spec = v1.AlertRuleSpec{
+		Title:   "ok",
+		Trigger: v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
+		Expressions: v1.AlertRuleExpressionMap{
+			"A": v1.AlertRuleExpression{
+				Model:         map[string]any{"expr": "up"},
+				Source:        boolPtr(true),
+				DatasourceUID: &dsUID,
+				RelativeTimeRange: &v1.AlertRuleRelativeTimeRange{
+					From: v1.AlertRulePromDurationWMillis("600s"),
+					To:   v1.AlertRulePromDurationWMillis("0s"),
+				},
+			},
+		},
+		NoDataState:  v1.DefaultNoDataState,
+		ExecErrState: v1.DefaultExecErrState,
+	}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := alertrule.NewValidator(makeDefaultRuntimeConfig())
+	if err := validator.Validate(context.Background(), req); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
 func TestAlertRuleValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.AlertRule)) error {
 		r := baseAlertRule()
@@ -80,6 +113,32 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 		r.Spec.Labels["__reserved__"] = v1.AlertRuleTemplateString("x")
 	}); err == nil {
 		t.Errorf("want reserved label key error")
+	}
+	// Expression validation: no source expression
+	if err := mk(func(r *v1.AlertRule) {
+		r.Spec.Expressions = v1.AlertRuleExpressionMap{
+			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}},
+		}
+	}); err == nil {
+		t.Errorf("want no source expression error")
+	}
+	// Expression validation: multiple source expressions
+	if err := mk(func(r *v1.AlertRule) {
+		r.Spec.Expressions = v1.AlertRuleExpressionMap{
+			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)},
+			"B": v1.AlertRuleExpression{Model: map[string]any{"expr": "2"}, Source: boolPtr(true)},
+		}
+	}); err == nil {
+		t.Errorf("want multiple source expressions error")
+	}
+	// Expression validation: non-expression query without relative time range
+	if err := mk(func(r *v1.AlertRule) {
+		dsUID := v1.AlertRuleDatasourceUID("prometheus")
+		r.Spec.Expressions = v1.AlertRuleExpressionMap{
+			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true), DatasourceUID: &dsUID},
+		}
+	}); err == nil {
+		t.Errorf("want query expression requires relative time range error")
 	}
 }
 
@@ -122,6 +181,39 @@ func TestRecordingRuleValidation_Success(t *testing.T) {
 	}
 }
 
+func TestRecordingRuleValidation_SuccessWithDatasourceQuery(t *testing.T) {
+	dsUID := v1.RecordingRuleDatasourceUID("prometheus")
+	r := &v1.RecordingRule{}
+	r.SetGroupVersionKind(v1.RecordingRuleKind().GroupVersionKind())
+	r.Name = "uid-2"
+	r.Namespace = "ns1"
+	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
+	r.Labels = map[string]string{}
+	r.Spec = v1.RecordingRuleSpec{
+		Title:   "ok",
+		Trigger: v1.RecordingRuleIntervalTrigger{Interval: v1.RecordingRulePromDuration("60s")},
+		Expressions: v1.RecordingRuleExpressionMap{
+			"A": v1.RecordingRuleExpression{
+				Model:         map[string]any{"expr": "up"},
+				Source:        boolPtr(true),
+				DatasourceUID: &dsUID,
+				RelativeTimeRange: &v1.RecordingRuleRelativeTimeRange{
+					From: v1.RecordingRulePromDurationWMillis("600s"),
+					To:   v1.RecordingRulePromDurationWMillis("0s"),
+				},
+			},
+		},
+		Metric:              "test_metric",
+		TargetDatasourceUID: "ds1",
+	}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig())
+	if err := validator.Validate(context.Background(), req); err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+}
+
 func TestRecordingRuleValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.RecordingRule)) error {
 		r := baseRecordingRule()
@@ -151,6 +243,32 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 		r.Spec.Labels["__reserved__"] = v1.RecordingRuleTemplateString("x")
 	}); err == nil {
 		t.Errorf("want reserved label key error")
+	}
+	// Expression validation: no source expression
+	if err := mk(func(r *v1.RecordingRule) {
+		r.Spec.Expressions = v1.RecordingRuleExpressionMap{
+			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}},
+		}
+	}); err == nil {
+		t.Errorf("want no source expression error")
+	}
+	// Expression validation: multiple source expressions
+	if err := mk(func(r *v1.RecordingRule) {
+		r.Spec.Expressions = v1.RecordingRuleExpressionMap{
+			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)},
+			"B": v1.RecordingRuleExpression{Model: map[string]any{"expr": "2"}, Source: boolPtr(true)},
+		}
+	}); err == nil {
+		t.Errorf("want multiple source expressions error")
+	}
+	// Expression validation: non-expression query without relative time range
+	if err := mk(func(r *v1.RecordingRule) {
+		dsUID := v1.RecordingRuleDatasourceUID("prometheus")
+		r.Spec.Expressions = v1.RecordingRuleExpressionMap{
+			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true), DatasourceUID: &dsUID},
+		}
+	}); err == nil {
+		t.Errorf("want query expression requires relative time range error")
 	}
 }
 
