@@ -147,6 +147,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if queryHandler, ok := svc.(backend.QueryDataHandler); ok {
 		opts.QueryDataHandler = queryHandler
 	}
+	if handler, ok := svc.(backend.QueryChunkedDataHandler); ok {
+		opts.QueryChunkedDataHandler = handler
+	}
 	if resourceHandler, ok := svc.(backend.CallResourceHandler); ok {
 		opts.CallResourceHandler = resourceHandler
 	}
@@ -160,8 +163,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 		opts.AdmissionHandler = storageHandler
 	}
 
-	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
-		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {
+	if opts.QueryDataHandler != nil || opts.QueryChunkedDataHandler != nil ||
+		opts.CheckHealthHandler != nil || opts.StreamHandler != nil ||
+		opts.CallResourceHandler != nil {
 		return coreplugin.New(opts)
 	}
 

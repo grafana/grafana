@@ -68,14 +68,14 @@ type Plugin struct {
 }
 
 var (
-	_ = backend.CollectMetricsHandler(&Plugin{})
-	_ = backend.CheckHealthHandler(&Plugin{})
-	_ = backend.QueryDataHandler(&Plugin{})
-	_ = backend.QueryChunkedDataHandler(&Plugin{})
-	_ = backend.CallResourceHandler(&Plugin{})
-	_ = backend.StreamHandler(&Plugin{})
-	_ = backend.AdmissionHandler(&Plugin{})
-	_ = backend.ConversionHandler(&Plugin{})
+	_ backend.CollectMetricsHandler   = (*Plugin)(nil)
+	_ backend.CheckHealthHandler      = (*Plugin)(nil)
+	_ backend.QueryDataHandler        = (*Plugin)(nil)
+	_ backend.QueryChunkedDataHandler = (*Plugin)(nil)
+	_ backend.CallResourceHandler     = (*Plugin)(nil)
+	_ backend.StreamHandler           = (*Plugin)(nil)
+	_ backend.AdmissionHandler        = (*Plugin)(nil)
+	_ backend.ConversionHandler       = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
