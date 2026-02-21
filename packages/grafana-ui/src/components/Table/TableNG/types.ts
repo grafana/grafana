@@ -55,9 +55,11 @@ export type FilterType = Record<
   string,
   {
     filteredSet: Set<string>;
+    displayName: string;
     filtered?: Array<SelectableValue<unknown>>;
     searchFilter?: string;
     operator?: SelectableValue<FilterOperator>;
+    parentIndex?: number;
   }
 >;
 
@@ -91,6 +93,7 @@ export interface TableRow {
   // Nested table properties
   data?: DataFrame;
   __expanded?: boolean; // For row expansion state
+  __parentIndex?: number; // For nested table parent tracking
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
@@ -281,7 +284,16 @@ export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOpti
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
 // Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame, nestedFramesFieldName?: string) => TableRow[];
+export type FrameToRowsConverter = (
+  frame: DataFrame,
+  nestedFramesFieldName?: string,
+  nestedRowIndex?: number
+) => TableRow[];
+
+export interface NestedRowEntry {
+  raw: TableRow[];
+  final: TableRow[];
+}
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;

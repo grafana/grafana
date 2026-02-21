@@ -65,22 +65,30 @@ export const getAllFieldTypeIconOptions: () => Array<SelectableValue<FieldType>>
   },
 ];
 
+const populateFieldTypeCounts = (data: DataFrame[], counts: Map<FieldType, number>): Map<FieldType, number> => {
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      const key = field.type || FieldType.other;
+      if (key === FieldType.nestedFrames && Boolean(field.values[0])) {
+        // walk through the nested frame's fields in the first row, since
+        // each row should have the same fields.
+        populateFieldTypeCounts(field.values[0], counts);
+        continue;
+      }
+      let v = counts.get(key);
+      if (!v) {
+        v = 0;
+      }
+      counts.set(key, v + 1);
+    }
+  }
+  return counts;
+};
+
 const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   return useMemo(() => {
-    const counts: Map<FieldType, number> = new Map();
-    for (const t of getAllFieldTypeIconOptions()) {
-      counts.set(t.value!, 0);
-    }
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        const key = field.type || FieldType.other;
-        let v = counts.get(key);
-        if (!v) {
-          v = 0;
-        }
-        counts.set(key, v + 1);
-      }
-    }
+    const counts = new Map<FieldType, number>();
+    populateFieldTypeCounts(data, counts);
     return counts;
   }, [data]);
 };

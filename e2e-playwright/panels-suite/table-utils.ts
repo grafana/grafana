@@ -1,5 +1,7 @@
 import { Page, Locator } from '@playwright/test';
 
+import { expect } from '@grafana/plugin-e2e';
+
 export const getCell = (loc: Page | Locator, rowIdx: number, colIdx: number) =>
   loc
     .getByRole('row')
@@ -28,4 +30,9 @@ export const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
     throw new Error(`Could not find the "${columnName}" column in the table`);
   }
   return result;
+};
+
+// helper utils
+export const waitForTableLoad = async (loc: Page | Locator) => {
+  await expect(loc.locator('.rdg')).toBeVisible();
 };

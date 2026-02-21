@@ -218,7 +218,7 @@
                 "value": [
                   {
                     "options": {
-                      "pattern": "up",
+                      "pattern": "/^up/",
                       "result": {
                         "color": "green",
                         "index": 0
@@ -228,7 +228,7 @@
                   },
                   {
                     "options": {
-                      "pattern": "down",
+                      "pattern": "/^down/",
                       "result": {
                         "color": "red",
                         "index": 1
@@ -623,9 +623,6 @@
           },
           "custom": {
             "align": "auto",
-            "cellOptions": {
-              "type": "color-background"
-            },
             "filterable": true,
             "footer": {
               "reducer": []
@@ -649,7 +646,188 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["sum"]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["countAll"]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Google this term",
+                    "url": "https://google.com/search?q=${__value:percentencode}"
+                  }
+                ]
+              },
+              {
+                "id": "actions",
+                "value": [
+                  {
+                    "fetch": {
+                      "body": "{}",
+                      "headers": [["Content-Type", "application/json"]],
+                      "method": "GET",
+                      "queryParams": [],
+                      "url": "https://grafana.com"
+                    },
+                    "title": "My action",
+                    "type": "fetch"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "pattern": "/^up/",
+                      "result": {
+                        "color": "green",
+                        "index": 0
+                      }
+                    },
+                    "type": "regex"
+                  },
+                  {
+                    "options": {
+                      "pattern": "/^down/",
+                      "result": {
+                        "color": "red",
+                        "index": 1
+                      }
+                    },
+                    "type": "regex"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "continuous-YlRd"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "areaM2"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-purples"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 12,

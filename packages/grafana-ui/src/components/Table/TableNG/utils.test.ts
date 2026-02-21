@@ -19,7 +19,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { MeasureCellHeightEntry } from './types';
+import { MeasureCellHeightEntry, TableRow } from './types';
 import {
   extractPixelValue,
   frameToRecords,
@@ -52,6 +52,7 @@ import {
   displayJsonValue,
   prepareSparklineValue,
   buildInspectValue,
+  applyFilter,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -225,6 +226,49 @@ describe('TableNG utils', () => {
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
+    });
+
+    it('should handle nested frames', () => {
+      const childFrame1 = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2] },
+          { name: 'value', values: [10, 20] },
+        ],
+      });
+      const childFrame2 = createDataFrame({
+        fields: [
+          { name: 'time', values: [3, 4] },
+          { name: 'value', values: [30, 40] },
+        ],
+      });
+      const parentFrame = createDataFrame({
+        fields: [
+          { name: 'id', values: [100, 200] },
+          { name: 'nested', values: [[childFrame1], [childFrame2]], type: FieldType.nestedFrames },
+        ],
+      });
+
+      const records = frameToRecords(parentFrame, 'nested');
+      expect(records).toHaveLength(4);
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
+      expect(records[1]).toEqual({ __depth: 1, __index: 0, data: childFrame1 });
+      expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
+      expect(records[3]).toEqual({ __depth: 1, __index: 1, data: childFrame2 });
+    });
+
+    it('should render a nested row correctly', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2] },
+          { name: 'value', values: [10, 20] },
+        ],
+      });
+
+      const records = frameToRecords(frame, 'nested', 3);
+
+      expect(records).toHaveLength(2);
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
+      expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
     });
   });
 
@@ -1183,6 +1227,7 @@ describe('TableNG utils', () => {
 
   describe('getRowHeight', () => {
     let fields: Field[];
+    let rows: TableRow[];
     let measurers: MeasureCellHeightEntry[];
 
     beforeEach(() => {
@@ -1200,6 +1245,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
+      rows = frameToRecords(createDataFrame({ fields }));
       measurers = [
         {
           measure: jest.fn(
@@ -1218,43 +1264,43 @@ describe('TableNG utils', () => {
 
     it('should use the default height for single-line rows', () => {
       // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
-      expect(getRowHeight(fields, 0, [30, 30], 36, measurers, 20, 10)).toBe(36);
+      expect(getRowHeight(fields, { __index: 0, __depth: 0 }, [30, 30], 36, measurers, 20, 10)).toBe(36);
     });
 
     it('should use the default height for multi-line rows which are shorter than the default height', () => {
       // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
-      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 5, 5)).toBe(36);
+      expect(getRowHeight(fields, { __index: 3, __depth: 0 }, [30, 30], 36, measurers, 5, 5)).toBe(36);
     });
 
     it('should return the row height using line measurers for multi-line', () => {
       // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
-      expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(70);
+      expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
 
       // 4 lines @ 15px (789 122 349 932), 15px vertical padding
-      expect(getRowHeight(fields, 4, [30, 30], 36, measurers, 15, 15)).toBe(75);
+      expect(getRowHeight(fields, rows[4], [30, 30], 36, measurers, 15, 15)).toBe(75);
     });
 
     it('should take colWidths into account when calculating max wrap cell', () => {
-      getRowHeight(fields, 3, [50, 60], 36, measurers, 20, 10);
+      getRowHeight(fields, rows[3], [50, 60], 36, measurers, 20, 10);
       expect(measurers[0].measure).toHaveBeenCalledWith('longer one here', 50, fields[0], 3, 20);
       expect(measurers[1].measure).toHaveBeenCalledWith(123456, 60, fields[1], 3, 20);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
-      getRowHeight(fields, -1, [50, 60], 36, measurers, 20, 10);
+      getRowHeight(fields, { __index: -1, __depth: 0 }, [50, 60], 36, measurers, 20, 10);
       expect(measurers[0].measure).toHaveBeenCalledWith('Name', 50, fields[0], -1, 20);
       expect(measurers[1].measure).toHaveBeenCalledWith('Age', 60, fields[1], -1, 20);
     });
 
     it('should ignore columns which do not have measurers', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [measurers[1]], 20, 10);
+      const height = getRowHeight(fields, rows[3], [30, 30], 36, [measurers[1]], 20, 10);
       // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
       expect(height).toBe(50);
     });
 
     it('should return the default height if there are no measurers to apply', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
+      const height = getRowHeight(fields, rows[3], [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
     });
 
@@ -1281,14 +1327,14 @@ describe('TableNG utils', () => {
       // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
       // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
       it('uses the estimate value rather than the precise value to select the row height', () => {
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
         jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(36);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(36);
 
         // this is what we really care about - we want to save on performance by not calling the measure in this case.
         expect(measurers[1].measure).not.toHaveBeenCalled();
@@ -1302,7 +1348,7 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - thresholdOffset);
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
-        expect(getRowHeight(fields, 3, [30, 30], 36, measurers, 20, 10)).toBe(50);
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
     });
   });
@@ -1399,6 +1445,102 @@ describe('TableNG utils', () => {
   });
 
   describe('applySort', () => {
+    it('returns the same records if no sort columns are provided', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2, 1] },
+          { name: 'value', values: [30, 20, 10] },
+        ],
+      });
+      const sorted = applySort(frameToRecords(frame), frame.fields, [], getColumnTypes(frame.fields), false);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 30 },
+        { time: 2, value: 20 },
+        { time: 1, value: 10 },
+      ]);
+    });
+
+    it('sorts the records by the sort columns', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2, 2] },
+          { name: 'value', values: [10, 20, 30, 40] },
+          { name: 'value2', values: [40, 20, 40, 30] },
+        ],
+      });
+      const sortColumns: SortColumn[] = [
+        { columnKey: 'time', direction: 'ASC' },
+        { columnKey: 'value2', direction: 'DESC' },
+      ];
+      const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 10, value2: 40 },
+        { time: 1, value: 20, value2: 20 },
+        { time: 2, value: 30, value2: 40 },
+        { time: 2, value: 40, value2: 30 },
+      ]);
+    });
+
+    it('does not mutate the original records', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 3, 2] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+      const rows = frameToRecords(frame);
+      const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
+      const sorted = applySort(rows, frame.fields, sortColumns, getColumnTypes(frame.fields), false);
+      expect(rows).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 3, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+      expect(sorted).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 2, value: 30 },
+        { time: 3, value: 20 },
+      ]);
+    });
+
+    it('handles nested frames', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2] },
+          { name: 'value', values: [30, 20, 10] },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: [
+              [createDataFrame({ fields: [{ name: 'value2', values: [10, 30] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [20, 40] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [40, 30] }] })],
+            ],
+          },
+        ],
+      });
+      const sorted = applySort(
+        frameToRecords(frame, 'nested'),
+        frame.fields,
+        [
+          { columnKey: 'value2', direction: 'DESC' },
+          { columnKey: 'value', direction: 'ASC' },
+        ],
+        getColumnTypes(frame.fields),
+        true
+      );
+
+      // the sort method won't sort the values in the nested data frame's "fields" here. useNestedRows calls applySort on the nested rows.
+      expect(sorted).toMatchObject([
+        { time: 2, value: 10 },
+        { data: { fields: [{ name: 'value2', values: [40, 30] }] } },
+        { time: 1, value: 20 },
+        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
+        { time: 1, value: 30 },
+        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
+      ]);
+    });
+
     it('sorts by nanos', () => {
       const frame = createDataFrame({
         fields: [
@@ -1409,12 +1551,183 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
-      const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
+      const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
-      expect(records).toMatchObject([
+      expect(sorted).toMatchObject([
         { time: 1, value: 20 },
         { time: 1, value: 10 },
         { time: 2, value: 30 },
+      ]);
+    });
+  });
+
+  describe('applyFilter', () => {
+    it('returns the same records if no filter columns are provided', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+      const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+    });
+
+    it('filters the records by the filter columns', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time' } },
+        frame.fields,
+        false
+      );
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+      ]);
+    });
+
+    it('filters the records by the filter columns with a nested frame', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'nested',
+            type: FieldType.nestedFrames,
+            values: [
+              [createDataFrame({ fields: [{ name: 'value2', values: [10, 30] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [20, 40] }] })],
+              [createDataFrame({ fields: [{ name: 'value2', values: [40, 30] }] })],
+            ],
+          },
+        ],
+      });
+      const records = frameToRecords(frame, 'nested');
+      const filtered = applyFilter(
+        records,
+        {
+          time: { filteredSet: new Set(['1']), displayName: 'time' },
+          value2: { filteredSet: new Set(['10']), displayName: 'value2' },
+        },
+        frame.fields,
+        true
+      );
+
+      // the filter method won't filter the values in the nested data frame's "fields" here. useNestedRows calls applyFilter on the nested rows.
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
+        { time: 1, value: 20 },
+        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
+      ]);
+    });
+
+    it('filters the records by the filter columns with a nested frame and a parent index', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame, 'nested', 3);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
+        frame.fields,
+        false
+      );
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+      ]);
+
+      // using a parent index that doesn't match the rows in the set, the rows should not be filtered.
+      const filtered2 = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 2 } },
+        frame.fields,
+        false
+      );
+      expect(filtered2).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+    });
+
+    it('does not mutate the original records', () => {
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1, 1, 2],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const records = frameToRecords(frame);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set(['1']), displayName: 'time' } },
+        frame.fields,
+        false
+      );
+      expect(records).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
+        { time: 2, value: 30 },
+      ]);
+      expect(filtered).toMatchObject([
+        { time: 1, value: 10 },
+        { time: 1, value: 20 },
       ]);
     });
   });

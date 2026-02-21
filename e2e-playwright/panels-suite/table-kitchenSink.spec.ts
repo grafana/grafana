@@ -2,16 +2,11 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
-
-// helper utils
-const waitForTableLoad = async (loc: Page | Locator) => {
-  await expect(loc.locator('.rdg')).toBeVisible();
-};
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
@@ -341,33 +336,6 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
-  });
-
-  test('Tests nested table expansion', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '4' }),
-    });
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Nested tables'))
-    ).toBeVisible();
-
-    await waitForTableLoad(page);
-
-    await expect(page.locator('[role="row"]')).toHaveCount(3); // header + 2 rows
-
-    const firstRowExpander = dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
-      .first();
-
-    await firstRowExpander.click();
-    await expect(page.locator('[role="row"]')).not.toHaveCount(3); // more rows are present now, it is dynamic tho.
-
-    // TODO: test sorting
-
-    await firstRowExpander.click();
-    await expect(page.locator('[role="row"]')).toHaveCount(3); // back to original state
   });
 
   test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { memo, MemoExoticComponent } from 'react';
+import { memo, MemoExoticComponent, NamedExoticComponent } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
@@ -17,10 +17,16 @@ import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
-export const AutoCellRenderer = memo((props: TableCellRendererProps) => (
-  <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
-));
-AutoCellRenderer.displayName = 'AutoCellRenderer';
+const wrapComponentInMemo = <P extends object>(fn: React.FunctionComponent<P>, name: string) => {
+  const result = memo<P>(fn);
+  result.displayName = name;
+  return result;
+};
+
+export const AutoCellRenderer = wrapComponentInMemo(
+  (props: TableCellRendererProps) => <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />,
+  'AutoCellRenderer'
+);
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
@@ -34,7 +40,7 @@ function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
 }
 
 interface CellRegistryEntry {
-  renderer: MemoExoticComponent<TableCellRenderer>;
+  renderer: MemoExoticComponent<TableCellRenderer> | NamedExoticComponent<TableCellRendererProps>;
   getStyles?: TableCellStyles;
   testField?: (field: Field) => boolean;
 }
@@ -57,82 +63,98 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     getStyles: mixinAutoCellStyles(getJsonCellStyles),
   },
   [TableCellDisplayMode.Actions]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions ?? (() => [])} />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions ?? (() => [])} />
+      ),
+      'ActionsCellRenderer'
+    ),
     getStyles: getActionsCellStyles,
   },
   [TableCellDisplayMode.DataLinks]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />,
+      'DataLinksCellRenderer'
+    ),
     getStyles: getDataLinksStyles,
   },
   [TableCellDisplayMode.Gauge]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <BarGaugeCell
-        field={props.field}
-        value={props.value}
-        theme={props.theme}
-        height={props.height}
-        width={props.width}
-        rowIdx={props.rowIdx}
-      />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <BarGaugeCell
+          field={props.field}
+          value={props.value}
+          theme={props.theme}
+          height={props.height}
+          width={props.width}
+          rowIdx={props.rowIdx}
+        />
+      ),
+      'BarGaugeCellRenderer'
+    ),
   },
   [TableCellDisplayMode.Sparkline]: {
     // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <SparklineCell
-        value={props.value}
-        field={props.field}
-        timeRange={props.timeRange}
-        rowIdx={props.rowIdx}
-        theme={props.theme}
-        width={props.width}
-      />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <SparklineCell
+          value={props.value}
+          field={props.field}
+          timeRange={props.timeRange}
+          rowIdx={props.rowIdx}
+          theme={props.theme}
+          width={props.width}
+        />
+      ),
+      'SparklineCellRenderer'
+    ),
     getStyles: getSparklineCellStyles,
   },
   [TableCellDisplayMode.Geo]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />,
+      'GeoCellRenderer'
+    ),
     getStyles: getGeoCellStyles,
   },
   [TableCellDisplayMode.Image]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
+      ),
+      'ImageCellRenderer'
+    ),
     getStyles: getImageStyles,
   },
   [TableCellDisplayMode.Pill]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <PillCell
-        rowIdx={props.rowIdx}
-        field={props.field}
-        theme={props.theme}
-        getTextColorForBackground={props.getTextColorForBackground}
-      />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <PillCell
+          rowIdx={props.rowIdx}
+          field={props.field}
+          theme={props.theme}
+          getTextColorForBackground={props.getTextColorForBackground}
+        />
+      ),
+      'PillCellRenderer'
+    ),
     getStyles: getPillStyles,
     testField: (field: Field) =>
       field.type === FieldType.string ||
       (field.type === FieldType.other && field.values.some((val) => Array.isArray(val))),
   },
   [TableCellDisplayMode.Markdown]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => (
-      <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
-    )),
+    renderer: wrapComponentInMemo(
+      (props: TableCellRendererProps) => (
+        <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
+      ),
+      'MarkdownCellRenderer'
+    ),
     getStyles: getMarkdownCellStyles,
     testField: (field: Field) => field.type === FieldType.string,
   },
   [TableCellDisplayMode.Custom]: {
-    // eslint-disable-next-line react/display-name
-    renderer: memo((props: TableCellRendererProps) => {
+    renderer: wrapComponentInMemo((props: TableCellRendererProps) => {
       if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
         return null; // nonsensical case, but better to typeguard it than throw.
       }
@@ -140,7 +162,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       return (
         <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />
       );
-    }),
+    }, 'CustomCellRenderer'),
   },
 };
 

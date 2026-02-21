@@ -9,6 +9,7 @@ import { TABLE } from './constants';
 import {
   FilterType,
   FooterFieldState,
+  NestedRowEntry,
   SortByBehavior,
   TableRow,
   TableSortByFieldState,
@@ -17,7 +18,6 @@ import {
 } from './types';
 import {
   getDisplayName,
-  processNestedTableRows,
   applySort,
   getColumnTypes,
   getRowHeight,
@@ -25,74 +25,21 @@ import {
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
   IS_SAFARI_26,
+  applyFilter,
+  frameToRecords,
 } from './utils';
-
-// Helper function to get displayed value
-const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
-  const field = fields.find((field) => getDisplayName(field) === key);
-  if (!field || !field.display) {
-    return '';
-  }
-  const displayedValue = formattedValueToString(field.display(row[key]));
-  return displayedValue;
-};
-
-export interface FilteredRowsResult {
-  rows: TableRow[];
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
-}
 
 export interface FilteredRowsOptions {
   hasNestedFrames: boolean;
 }
 
-export function useFilteredRows(
-  rows: TableRow[],
-  fields: Field[],
-  { hasNestedFrames }: FilteredRowsOptions
-): FilteredRowsResult {
-  // TODO: allow persisted filter selection via url
+export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
-  const filterValues = useMemo(() => Object.entries(filter), [filter]);
-
-  const crossFilterOrder: FilteredRowsResult['crossFilterOrder'] = useMemo(
-    () => Array.from(new Set(filterValues.map(([key]) => key))),
-    [filterValues]
+  const filteredRows = useMemo(
+    () => applyFilter(rows, filter, fields, hasNestedFrames),
+    [rows, filter, fields, hasNestedFrames]
   );
-
-  const [filteredRows, crossFilterRows] = useMemo(() => {
-    const crossFilterRows: FilteredRowsResult['crossFilterRows'] = {};
-
-    const filterRows = (row: TableRow): boolean => {
-      for (const [key, value] of filterValues) {
-        const displayedValue = getDisplayedValue(row, key, fields);
-        if (!value.filteredSet.has(displayedValue)) {
-          return false;
-        }
-        // collect rows for crossFilter
-        crossFilterRows[key] = crossFilterRows[key] ?? [];
-        crossFilterRows[key].push(row);
-      }
-      return true;
-    };
-
-    const filteredRows = hasNestedFrames
-      ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
-      : rows.filter(filterRows);
-
-    return [filteredRows, crossFilterRows];
-  }, [filterValues, rows, fields, hasNestedFrames]);
-
-  return {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  };
+  return { rows: filteredRows, filter, setFilter };
 }
 
 export interface SortedRowsOptions {
@@ -150,7 +97,7 @@ export function useSortedRows(
 
   const sortedRows = useMemo(
     () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, hasNestedFrames, columnTypes]
+    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
   );
 
   return {
@@ -280,6 +227,36 @@ export function usePaginatedRows(
   };
 }
 
+export const useNestedRows = (
+  rows: TableRow[],
+  hasNestedFrames: boolean,
+  nestedFramesFieldName: string | undefined,
+  filter: FilterType,
+  sortColumns: SortColumn[]
+): NestedRowEntry[] => {
+  return useMemo(() => {
+    const result: NestedRowEntry[] = [];
+    if (!hasNestedFrames || !nestedFramesFieldName) {
+      return result;
+    }
+
+    for (const parentRow of rows) {
+      // Type guard to check if data exists as it's optional
+      const nestedData = parentRow.data;
+      if (!nestedData) {
+        continue;
+      }
+
+      const rawRows = frameToRecords(nestedData, nestedFramesFieldName, parentRow.__index);
+      const filteredRows = applyFilter(rawRows, filter, nestedData.fields);
+      const sortedRows = applySort(filteredRows, nestedData.fields, sortColumns, getColumnTypes(nestedData.fields));
+      result[parentRow.__index] = { raw: rawRows, final: sortedRows };
+    }
+
+    return result;
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter]);
+};
+
 const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
@@ -338,7 +315,7 @@ export function useHeaderHeight({
     }
     return getRowHeight(
       fields,
-      -1,
+      { __index: -1, __depth: 0 },
       columnAvailableWidths,
       TABLE.HEADER_HEIGHT,
       measurers,
@@ -355,65 +332,141 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: NonNullable<CSSProperties['height']>;
-  expandedRows: Set<number>;
+  visibleNestedRowCounts: Array<number | null>;
   typographyCtx: TypographyCtx;
   maxHeight?: number;
+  nestedRows: NestedRowEntry[];
+  nestedFields: Field[];
+  nestedColWidths: number[];
 }
 
+const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - (2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT));
+
+// TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
   columnWidths,
   fields,
-  hasNestedFrames,
   defaultHeight,
-  expandedRows,
   typographyCtx,
   maxHeight,
+  hasNestedFrames,
+  visibleNestedRowCounts,
+  nestedFields,
+  nestedColWidths,
+  nestedRows,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const nestedMeasurers = useMemo(
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
+    [nestedFields, typographyCtx, maxHeight]
+  );
+
+  const getNestedRowHeightWithCache = useMemo(() => {
+    if (typeof defaultHeight === 'string') {
+      return () => 0;
+    }
+
+    if ((nestedMeasurers?.length ?? 0) === 0) {
+      return () => defaultHeight;
+    }
+
+    const nestedRowCache: Array<number[] | undefined> = visibleNestedRowCounts.map((count) =>
+      count == null ? undefined : Array(count)
+    );
+
+    return (row: TableRow) => {
+      if (row.__parentIndex == null) {
+        return 0;
+      }
+
+      const nestedRowCacheEntry = nestedRowCache[row.__parentIndex];
+      if (nestedRowCacheEntry == null) {
+        return 0;
+      }
+
+      if (typeof defaultHeight === 'string') {
+        return 0;
+      }
+
+      const trueNestedColWidths = getTrueColWidths(nestedColWidths);
+      let result = nestedRowCacheEntry[row.__index];
+      if (result == null) {
+        result = nestedRowCacheEntry[row.__index] = getRowHeight(
+          nestedFields,
+          row,
+          trueNestedColWidths,
+          defaultHeight,
+          nestedMeasurers
+        );
+      }
+      return result;
+    };
+  }, [nestedFields, nestedColWidths, defaultHeight, nestedMeasurers, visibleNestedRowCounts]);
+
   const measurers = useMemo(
     () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
     [fields, typographyCtx, maxHeight]
   );
-  const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
+  const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
-  const colWidths = useMemo(() => {
-    const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
-    return columnWidths.map((c) => c - columnWidthAffordance);
-  }, [columnWidths]);
+  const getRowHeightWithCache = useMemo(() => {
+    if (typeof defaultHeight === 'string') {
+      return () => 0;
+    }
+
+    if (!hasWrappedCols) {
+      return () => defaultHeight;
+    }
+
+    const trueColWidths = getTrueColWidths(columnWidths);
+    const cache: Array<number | undefined> = Array(fields[0].values.length);
+    return (row: TableRow) => {
+      let result = cache[row.__index];
+      if (result == null) {
+        result = cache[row.__index] = getRowHeight(fields, row, trueColWidths, defaultHeight, measurers);
+      }
+      return result;
+    };
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
+    if (typeof defaultHeight === 'string' || !(hasWrappedCols || hasNestedFrames)) {
       return defaultHeight;
     }
 
-    // this cache should get blown away on resize, data refresh, updated fields, etc.
-    // caching by __index is ok because sorting does not modify the __index.
-    const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       // nested rows
       if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows.has(row.__index)) {
+        const visibleNestedRowCount = visibleNestedRowCounts[row.__index];
+        if (visibleNestedRowCount == null) {
           return 0;
         }
 
-        const rowCount = row.data?.length ?? 0;
-        if (rowCount === 0) {
+        // if expanded with no rows, height === no data height
+        if (visibleNestedRowCount === 0) {
           return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
         }
 
         const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
-        return defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
+        const nestedRowsHeight = nestedRows[row.__index].final.reduce(
+          (acc, row) => acc + getNestedRowHeightWithCache(row),
+          0
+        );
+        return nestedRowsHeight + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
       }
 
-      // regular rows
-      let result = cache[row.__index];
-      if (!result) {
-        result = cache[row.__index] = getRowHeight(fields, row.__index, colWidths, defaultHeight, measurers);
-      }
-      return result;
+      return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
     };
-  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, expandedRows]);
+  }, [
+    getNestedRowHeightWithCache,
+    getRowHeightWithCache,
+    defaultHeight,
+    hasNestedFrames,
+    hasWrappedCols,
+    nestedRows,
+    visibleNestedRowCounts,
+  ]);
 
   return rowHeight;
 }
