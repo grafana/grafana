@@ -55,8 +55,6 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 }
 
 // getTeamHTTPHeaders returns HTTP headers for LBAC: only the rules for teams the current user belongs to.
-// This matches the grafana-enterprise teamhttpheaders middleware behavior so that each user only gets
-// headers for their own teams' rules.
 func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logger log.Logger) (map[string]string, error) {
 	headers := map[string]string{}
 
