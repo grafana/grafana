@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
@@ -33,12 +34,13 @@ func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamR
 func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
 	plugin := backend.PluginConfigFromContext(ctx)
 
-	headers, err := getClientOptionsHeaders(ctx, plugin, logger)
+	headers, err := getClientOptionsHeaders(ctx, plugin)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := backend.GrafanaConfigFromContext(ctx)
+	// we will only fetch and forward team headers if the feature toggle is enabled
 	if cfg != nil && cfg.FeatureToggles().IsEnabled(featuremgmt.FlagForwardTeamHeadersTempo) {
 		teamHeaders, err := getTeamHTTPHeaders(ctx, plugin, logger)
 		if err != nil {
@@ -67,6 +69,8 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 		return headers, nil
 	}
 
+	dsUID := plugin.DataSourceInstanceSettings.UID
+
 	jsonData := plugin.DataSourceInstanceSettings.JSONData
 	var data map[string]interface{}
 	err := json.Unmarshal(jsonData, &data)
@@ -76,6 +80,7 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 
 	// no team headers present in the datasource settings
 	if _, exists := data["teamHttpHeaders"]; !exists {
+		logger.Debug("No teamHttpHeaders in datasource settings", "datasource_uid", dsUID)
 		return headers, nil
 	}
 
@@ -86,13 +91,13 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 
 	// Only support team HTTP headers for users
 	if !requester.IsIdentityType(claims.TypeUser) {
-		logger.Debug("teamHttpHeaders is not supported for identity type %s", "identityType", requester.GetIdentityType())
+		logger.Debug("teamHttpHeaders is not supported for identity type", "identityType", requester.GetIdentityType(), "datasource_uid", dsUID)
 		return headers, nil
 	}
 
 	userTeamIDs := requester.GetTeams()
-	backend.Logger.Warn("userTeamIDs", "userTeamIDs", userTeamIDs)
 	if len(userTeamIDs) == 0 {
+		logger.Debug("User has no team memberships, skipping team headers", "datasource_uid", dsUID)
 		return headers, nil
 	}
 
@@ -101,7 +106,7 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 		userTeamIDSet[strconv.FormatInt(id, 10)] = struct{}{}
 	}
 
-	backend.Logger.Warn("data", "data", data, "userTeamIDSet", userTeamIDSet)
+	rulesProcessed := 0
 	teamHTTPHeaders := data["teamHttpHeaders"]
 	if lbacHeaders, ok := teamHTTPHeaders.(map[string]interface{})["headers"]; ok {
 		headerMap := lbacHeaders.(map[string]interface{})
@@ -116,14 +121,14 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 				headerValue := ""
 				for key, value := range header {
 					if key == "header" {
-						if s, ok := value.(string); ok {
-							headerName = s
+						if rawHeaderName, ok := value.(string); ok {
+							headerName = rawHeaderName
 						}
 						continue
 					}
 					if key == "value" {
-						if s, ok := value.(string); ok {
-							headerValue = s
+						if rawLBACRule, ok := value.(string); ok {
+							headerValue = url.QueryEscape(rawLBACRule)
 						}
 					}
 				}
@@ -133,15 +138,16 @@ func getTeamHTTPHeaders(ctx context.Context, plugin backend.PluginContext, logge
 					} else {
 						headers[headerName] = headerValue
 					}
+					rulesProcessed++
 				}
 			}
 		}
 	}
-	backend.Logger.Warn("headers", "headers", headers)
+	logger.Debug("Finished processing team HTTP headers", "datasource_uid", dsUID, "rules_processed", rulesProcessed, "user_teams", len(userTeamIDs))
 	return headers, nil
 }
 
-func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext, logger log.Logger) (map[string]string, error) {
+func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) (map[string]string, error) {
 	headers := map[string]string{}
 	opts, err := plugin.DataSourceInstanceSettings.HTTPClientOptions(ctx)
 	if err != nil {
