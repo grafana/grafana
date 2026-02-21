@@ -227,13 +227,13 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(capturedRequest).toBeDefined();
+      expect(capturedRequest).not.toBeNull();
     });
 
-    expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
-    expect(capturedRequest!.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
-    expect(capturedRequest!.url.searchParams.get('message')).toBe('Initial commit');
-    expect(capturedRequest!.body).toEqual(newDashboard);
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Initial commit');
+    expect(capturedRequest?.body).toEqual(newDashboard);
   });
 
   it('should update an existing dashboard successfully', async () => {
@@ -291,13 +291,13 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(capturedRequest).toBeDefined();
+      expect(capturedRequest).not.toBeNull();
     });
 
-    expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
-    expect(capturedRequest!.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
-    expect(capturedRequest!.url.searchParams.get('message')).toBe('Update dashboard');
-    expect(capturedRequest!.body).toEqual(updatedDashboard);
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Update dashboard');
+    expect(capturedRequest?.body).toEqual(updatedDashboard);
   });
 
   it('should send correct request body when save returns an error', async () => {
@@ -347,13 +347,13 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(capturedRequest).toBeDefined();
+      expect(capturedRequest).not.toBeNull();
     });
 
-    expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/error-dashboard.json');
-    expect(capturedRequest!.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
-    expect(capturedRequest!.url.searchParams.get('message')).toBe('Error commit');
-    expect(capturedRequest!.body).toEqual(newDashboard);
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/error-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Error commit');
+    expect(capturedRequest?.body).toEqual(newDashboard);
   });
 
   it('should disable save button when dashboard is not dirty', () => {
@@ -499,12 +499,12 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(capturedRequest).toBeDefined();
+      expect(capturedRequest).not.toBeNull();
     });
 
-    expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
-    expect(capturedRequest!.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
-    expect(capturedRequest!.url.searchParams.get('message')).toBe('Save with raw JSON');
-    expect(capturedRequest!.body).toEqual(dashboardFromRawJson);
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Save with raw JSON');
+    expect(capturedRequest?.body).toEqual(dashboardFromRawJson);
   });
 });
