@@ -859,6 +859,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
     }
   }
+
+  setPrefetchedApiResponse(uid: string, response: object) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    dashboardLoaderSrv.setPrefetchedResponse(uid, response as DashboardWithAccessInfo<DashboardDataDTO>);
+  }
 }
 
 export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
@@ -1058,6 +1063,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
     }
   }
+
+  setPrefetchedApiResponse(uid: string, response: object) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    this.dashboardLoader.setPrefetchedResponse(uid, response as DashboardWithAccessInfo<DashboardV2Spec>);
+  }
 }
 
 export function shouldForceV2API(): boolean {
@@ -1088,6 +1098,18 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       if (error instanceof DashboardVersionError) {
         const manager = isV2StoredVersion(error.data.storedVersion) ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
+
+        if (error.data.source && error.data.access && error.data.kind) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const source = error.data.source as { metadata?: { name?: string } };
+          const sourceUid = source.metadata?.name;
+
+          if (sourceUid) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const response = { ...(source as object), access: error.data.access, kind: error.data.kind };
+            manager.setPrefetchedApiResponse(sourceUid, response);
+          }
+        }
         return await operation(manager);
       } else {
         throw error;
