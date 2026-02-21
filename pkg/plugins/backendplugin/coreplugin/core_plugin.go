@@ -7,7 +7,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
