@@ -6050,7 +6050,8 @@
     "transformation-editor": {
       "input-data": "Data input",
       "output-data": "Data output",
-      "title-debug-transformation": "Debug transformasi"
+      "title-debug-transformation": "Debug transformasi",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Terapkan transformasi ke"

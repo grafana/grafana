@@ -6131,7 +6131,8 @@
     "transformation-editor": {
       "input-data": "Vstupní údaje",
       "output-data": "Výstupní data",
-      "title-debug-transformation": "Ladit transformaci"
+      "title-debug-transformation": "Ladit transformaci",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Použít transformaci na"

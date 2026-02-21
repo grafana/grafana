@@ -6131,7 +6131,8 @@
     "transformation-editor": {
       "input-data": "Ввод данных",
       "output-data": "Данные вывода",
-      "title-debug-transformation": "Отладка преобразования"
+      "title-debug-transformation": "Отладка преобразования",
+      "copy": ""
     },
     "transformation-filter": {
       "label-apply-transformation-to": "Применить преобразование к"
