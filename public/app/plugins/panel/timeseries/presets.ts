@@ -27,23 +27,20 @@ const withDefaults = (
 
 /**
  * Creates the default preset using the current panel's configuration
- * Captures the exact styling of the current panel
+ * Captures the current panel state including all defaults and overrides
  */
 const defaultPreset = (
   context: PresetsSupplierContext<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  const currentCustom = context.fieldConfig?.defaults?.custom;
-  const currentColor = context.fieldConfig?.defaults?.color;
-
   return {
     name: t('timeseries.presets.default', 'Default'),
-    fieldConfig: {
-      defaults: {
-        custom: currentCustom,
-        color: currentColor,
-      },
-      overrides: [],
-    },
+    fieldConfig: defaultsDeep(
+      {},
+      {
+        defaults: context.fieldConfig?.defaults ?? {},
+        overrides: context.fieldConfig?.overrides ?? [],
+      }
+    ),
   };
 };
 
