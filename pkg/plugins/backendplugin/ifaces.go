@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -38,8 +37,3 @@ const (
 	TargetInMemory Target = "in_memory"
 	TargetLocal    Target = "local"
 )
-
-type RawChunkReceiver interface {
-	backend.ChunkedDataWriter
-	ReceivedChunk(chunk *pluginv2.QueryChunkedDataResponse) error
-}

@@ -17,7 +17,7 @@ import (
 	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -225,7 +225,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		return fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
-	raw, isRaw := w.(backendplugin.RawChunkReceiver)
+	raw, isRaw := w.(chunked.RawChunkReceiver)
 
 	for {
 		chunk, err := stream.Recv()
@@ -237,7 +237,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		}
 
 		if isRaw {
-			if err = raw.ReceivedChunk(chunk); err != nil {
+			if err = raw.OnChunk(chunk); err != nil {
 				return err
 			}
 		}
@@ -267,7 +267,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 }
 
 func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
-	raw, isRaw := w.(backendplugin.RawChunkReceiver)
+	raw, isRaw := w.(chunked.RawChunkReceiver)
 
 	// Execute a regular QueryData non-chunked request (using JSON encoding if raw)
 	protoResp, err := c.queryData(ctx,
@@ -284,39 +284,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 
 	// The raw handler can skip decode and then re-encode
 	if isRaw {
-		for refId, res := range protoResp.Responses {
-			for idx, frame := range res.Frames {
-				// TODO: verify requested format
-				if req.Format == backend.DataFrameFormat_JSON && frame[0] != '{' {
-					f, err := data.UnmarshalArrowFrame(frame)
-					if err != nil {
-						return err
-					}
-					frame, err = f.MarshalJSON()
-					if err != nil {
-						return err
-					}
-				}
-
-				if err = raw.ReceivedChunk(&pluginv2.QueryChunkedDataResponse{
-					RefId:   refId,
-					FrameId: fmt.Sprintf("%d", idx),
-					Frame:   frame,
-				}); err != nil {
-					return err
-				}
-			}
-			if res.Error != "" {
-				if err = raw.ReceivedChunk(&pluginv2.QueryChunkedDataResponse{
-					RefId:       refId,
-					Error:       res.Error,
-					ErrorSource: res.ErrorSource,
-				}); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
+		return chunked.ProcessRawResponse(ctx, req.Format, protoResp, raw)
 	}
 
 	// Send the responses as individual chunks
@@ -324,15 +292,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 	if err != nil {
 		return err
 	}
-	for refId, res := range rsp.Responses {
-		for idx, frame := range res.Frames {
-			w.WriteFrame(ctx, refId, fmt.Sprintf("%d", idx), frame)
-		}
-		if res.Error != nil {
-			w.WriteError(ctx, refId, res.Status, res.Error)
-		}
-	}
-	return nil
+	return chunked.ProcessTypedResponse(ctx, rsp, w)
 }
 
 func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

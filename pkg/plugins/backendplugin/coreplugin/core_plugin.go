@@ -2,13 +2,13 @@ package coreplugin
 
 import (
 	"context"
-	"fmt"
 
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -101,8 +101,8 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
 	ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-	if raw, isRaw := w.(backendplugin.RawChunkReceiver); isRaw {
-		w = backend.NewChunkedDataWriter(req.Format, raw.ReceivedChunk)
+	if raw, isRaw := w.(chunked.RawChunkReceiver); isRaw {
+		w = backend.NewChunkedDataWriter(req.Format, raw.OnChunk) // converts to requested format
 	}
 
 	if cp.QueryChunkedDataHandler != nil {
@@ -121,20 +121,7 @@ func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryCh
 	if err != nil {
 		return err
 	}
-
-	for refID, res := range resp.Responses {
-		for idx, frame := range res.Frames {
-			if err = w.WriteFrame(ctx, refID, fmt.Sprintf("%d", idx), frame); err != nil {
-				return err
-			}
-		}
-		if res.Error != nil {
-			if err = w.WriteError(ctx, refID, res.Status, res.Error); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return chunked.ProcessTypedResponse(ctx, resp, w)
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
