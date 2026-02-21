@@ -16,11 +16,23 @@ import {
 } from '@grafana/ui';
 
 import { LogGroup } from '../../../dataquery.gen';
-import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../../resources/types';
+import {
+  DescribeLogGroupsRequest,
+  ResourceResponse,
+  LogGroupResponse,
+  LogGroupOrderBy,
+} from '../../../resources/types';
 import getStyles from '../../styles';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 
 import Search from './Search';
+
+const ORDER_BY_OPTIONS: Array<{ value: LogGroupOrderBy; label: string }> = [
+  { value: 'nameAsc', label: 'Name (A–Z)' },
+  { value: 'nameDesc', label: 'Name (Z–A)' },
+  { value: 'accountIdAsc', label: 'Account ID (A–Z)' },
+  { value: 'accountIdDesc', label: 'Account ID (Z–A)' },
+];
 
 type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
@@ -44,6 +56,7 @@ export const LogGroupsSelector = ({
   const [selectedLogGroups, setSelectedLogGroups] = useState(props.selectedLogGroups ?? []);
   const [searchPhrase, setSearchPhrase] = useState('');
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
+  const [orderBy, setOrderBy] = useState<LogGroupOrderBy>('nameAsc');
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
   const selectedLogGroupsCounter = useMemo(
@@ -89,6 +102,8 @@ export const LogGroupsSelector = ({
       const possibleLogGroups = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
+        listAllLogGroups: true,
+        orderBy,
       });
       setSelectableLogGroups(
         possibleLogGroups.map((lg) => ({
@@ -146,25 +161,36 @@ export const LogGroupsSelector = ({
             accountOptions={accountOptions}
             accountId={searchAccountId}
           />
+
+          <EditorField label="Sort by" tooltip="Order in which log groups are listed">
+            <Select<LogGroupOrderBy>
+              value={ORDER_BY_OPTIONS.find((o) => o.value === orderBy)}
+              options={ORDER_BY_OPTIONS}
+              onChange={(opt) => {
+                const v = opt?.value;
+                if (v) {
+                  setOrderBy(v);
+                  searchFn(searchPhrase, searchAccountId);
+                }
+              }}
+              aria-label="Sort log groups by"
+            />
+          </EditorField>
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && selectableLogGroups.length >= 25 && (
+          {!isLoading && selectableLogGroups.length > 0 && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
-                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
-                search.
-                <p>
-                  A{' '}
-                  <TextLink
-                    external
-                    href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
-                  >
-                    maximum{' '}
-                  </TextLink>{' '}
-                  of 50 Cloudwatch log groups can be queried at one time.
-                </p>
+                Showing up to 1,000 log groups. Use the search box or sort order to find log groups. A{' '}
+                <TextLink
+                  external
+                  href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
+                >
+                  maximum of 50
+                </TextLink>{' '}
+                CloudWatch log groups can be queried at one time.
               </div>
               <Space layout="block" v={1} />
             </>

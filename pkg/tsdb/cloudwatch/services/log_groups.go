@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -54,13 +56,47 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 			})
 		}
 
+		// Cap total results when listing all to avoid unbounded memory and time
+		if req.MaxResults > 0 && int32(len(result)) >= req.MaxResults {
+			result = result[:req.MaxResults]
+			break
+		}
+
 		if !req.ListAllLogGroups || response.NextToken == nil {
 			break
 		}
 		input.NextToken = response.NextToken
 	}
 
+	if req.MaxResults > 0 && len(result) > int(req.MaxResults) {
+		result = result[:req.MaxResults]
+	}
+
+	sortLogGroupsBy(result, req.OrderBy)
 	return result, nil
+}
+
+// sortLogGroupsBy sorts result in place by name or accountId, asc or desc.
+func sortLogGroupsBy(result []resources.ResourceResponse[resources.LogGroup], orderBy string) {
+	if orderBy == "" {
+		return
+	}
+	accountId := func(r resources.ResourceResponse[resources.LogGroup]) string {
+		if r.AccountId != nil {
+			return *r.AccountId
+		}
+		return ""
+	}
+	switch orderBy {
+	case resources.OrderByNameAsc:
+		sort.Slice(result, func(i, j int) bool { return strings.Compare(result[i].Value.Name, result[j].Value.Name) < 0 })
+	case resources.OrderByNameDesc:
+		sort.Slice(result, func(i, j int) bool { return strings.Compare(result[i].Value.Name, result[j].Value.Name) > 0 })
+	case resources.OrderByAccountIDAsc:
+		sort.Slice(result, func(i, j int) bool { return strings.Compare(accountId(result[i]), accountId(result[j])) < 0 })
+	case resources.OrderByAccountIDDesc:
+		sort.Slice(result, func(i, j int) bool { return strings.Compare(accountId(result[i]), accountId(result[j])) > 0 })
+	}
 }
 
 func (s *LogGroupsService) GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {

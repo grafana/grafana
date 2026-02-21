@@ -70,12 +70,27 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   getLogGroups(params: DescribeLogGroupsRequest): Promise<Array<ResourceResponse<LogGroupResponse>>> {
-    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', {
-      ...params,
+    const query: Record<string, string> = {
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
-      accountId: this.templateSrv.replace(params.accountId),
+      accountId: this.templateSrv.replace(params.accountId ?? ''),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
-    });
+    };
+    if (params.logGroupNamePrefix != null && params.logGroupNamePrefix !== '') {
+      query.logGroupNamePrefix = params.logGroupNamePrefix;
+    }
+    if (params.logGroupPattern != null && params.logGroupPattern !== '') {
+      query.logGroupPattern = params.logGroupPattern;
+    }
+    if (params.orderBy != null && params.orderBy !== '') {
+      query.orderBy = params.orderBy;
+    }
+    if (params.maxResults != null && params.maxResults > 0) {
+      query.maxResults = String(params.maxResults);
+    }
+    if (params.limit != null && params.limit > 0) {
+      query.limit = String(params.limit);
+    }
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', query);
   }
 
   getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {

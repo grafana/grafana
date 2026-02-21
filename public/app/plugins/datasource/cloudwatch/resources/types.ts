@@ -29,11 +29,16 @@ export interface GetMetricsRequest extends ResourceRequest {
   namespace?: string;
 }
 
+/** Sort order for log groups (backend: nameAsc | nameDesc | accountIdAsc | accountIdDesc) */
+export type LogGroupOrderBy = 'nameAsc' | 'nameDesc' | 'accountIdAsc' | 'accountIdDesc';
+
 export interface DescribeLogGroupsRequest extends ResourceRequest {
   logGroupNamePrefix?: string;
   logGroupPattern?: string;
   limit?: number;
   listAllLogGroups?: boolean;
+  orderBy?: LogGroupOrderBy;
+  maxResults?: number;
   accountId?: string;
 }
 

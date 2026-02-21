@@ -178,6 +178,61 @@ func TestGetLogGroups(t *testing.T) {
 			},
 		}, resp)
 	})
+
+	t.Run("Should sort by name descending when OrderBy is nameDesc", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("DescribeLogGroups", mock.Anything).Return(
+			&cloudwatchlogs.DescribeLogGroupsOutput{
+				LogGroups: []cloudwatchlogstypes.LogGroup{
+					{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+					{Arn: utils.Pointer("arn:aws:logs:us-east-1:222:log-group:group_b"), LogGroupName: utils.Pointer("group_b")},
+					{Arn: utils.Pointer("arn:aws:logs:us-east-1:333:log-group:group_c"), LogGroupName: utils.Pointer("group_c")},
+				},
+			}, nil)
+		service := NewLogGroupsService(mockLogsAPI, false)
+
+		resp, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{
+			OrderBy: resources.OrderByNameDesc,
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "group_c", resp[0].Value.Name)
+		assert.Equal(t, "group_b", resp[1].Value.Name)
+		assert.Equal(t, "group_a", resp[2].Value.Name)
+	})
+
+	t.Run("Should cap results at MaxResults when ListAllLogGroups is true", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			Limit:            2,
+			ListAllLogGroups: true,
+			MaxResults:       3,
+		}
+		mockLogsAPI.On("DescribeLogGroups", mock.MatchedBy(func(input *cloudwatchlogs.DescribeLogGroupsInput) bool {
+			return input.NextToken == nil
+		})).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g1"), LogGroupName: utils.Pointer("g1")},
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g2"), LogGroupName: utils.Pointer("g2")},
+			},
+			NextToken: utils.Pointer("tok"),
+		}, nil)
+		mockLogsAPI.On("DescribeLogGroups", mock.MatchedBy(func(input *cloudwatchlogs.DescribeLogGroupsInput) bool {
+			return input.NextToken != nil && *input.NextToken == "tok"
+		})).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g3"), LogGroupName: utils.Pointer("g3")},
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g4"), LogGroupName: utils.Pointer("g4")},
+			},
+		}, nil)
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 3)
+		assert.Equal(t, "g1", resp[0].Value.Name)
+		assert.Equal(t, "g2", resp[1].Value.Name)
+		assert.Equal(t, "g3", resp[2].Value.Name)
+	})
 }
 
 func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
