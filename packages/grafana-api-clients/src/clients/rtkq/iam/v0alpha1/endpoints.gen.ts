@@ -735,6 +735,44 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['User'],
       }),
+      getUserStatus: build.query<GetUserStatusApiResponse, GetUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['User'],
+      }),
+      replaceUserStatus: build.mutation<ReplaceUserStatusApiResponse, ReplaceUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.user,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['User'],
+      }),
+      updateUserStatus: build.mutation<UpdateUserStatusApiResponse, UpdateUserStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/status`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['User'],
+      }),
       getUserTeams: build.query<GetUserTeamsApiResponse, GetUserTeamsApiArg>({
         query: (queryArg) => ({
           url: `/users/${queryArg.name}/teams`,
@@ -1760,6 +1798,43 @@ export type UpdateUserApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetUserStatusApiResponse = /** status 200 OK */ User;
+export type GetUserStatusApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceUserStatusApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
+export type ReplaceUserStatusApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  user: User;
+};
+export type UpdateUserStatusApiResponse = /** status 200 OK */ User | /** status 201 Created */ User;
+export type UpdateUserStatusApiArg = {
+  /** name of the User */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
 export type GetUserTeamsApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList;
 export type GetUserTeamsApiArg = {
   /** name of the UserTeamList */
@@ -2165,8 +2240,13 @@ export type UserSpec = {
   role: string;
   title: string;
 };
+export type UserTeamSyncStatus = {
+  lastSyncAt: number;
+  state: string;
+};
 export type UserStatus = {
   lastSeenAt: number;
+  teamSync?: UserTeamSyncStatus;
 };
 export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2274,6 +2354,10 @@ export const {
   useReplaceUserMutation,
   useDeleteUserMutation,
   useUpdateUserMutation,
+  useGetUserStatusQuery,
+  useLazyGetUserStatusQuery,
+  useReplaceUserStatusMutation,
+  useUpdateUserStatusMutation,
   useGetUserTeamsQuery,
   useLazyGetUserTeamsQuery,
 } = injectedRtkApi;
