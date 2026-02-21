@@ -336,4 +336,37 @@ export const WithCustomHeader: TableStoryObj = {
     getRowId: (r) => r.id,
   },
 };
+
+export const WithColumnWidth: TableStoryObj = {
+  args: {
+    columns: [
+      {
+        id: 'firstName',
+        header: 'First Name',
+        sortType: 'string',
+        width: '25%', // Percentage width - 25% of table
+      },
+      {
+        id: 'lastName',
+        header: 'Last Name',
+        sortType: 'string',
+        width: 200, // Pixel width as number
+      },
+      {
+        id: 'car',
+        header: 'Car',
+        sortType: 'string',
+        // No width - auto-sized, fills remaining space
+      },
+      {
+        id: 'age',
+        header: 'Age',
+        sortType: 'number',
+        width: '100px', // Pixel width as string
+      },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+  },
+};
 export default meta;

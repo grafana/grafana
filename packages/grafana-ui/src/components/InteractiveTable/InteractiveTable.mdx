@@ -117,6 +117,34 @@ export const MyComponent = () => {
 };
 ```
 
+### Column Widths
+
+Columns can be configured with optional fixed widths using pixels, percentages, or any valid CSS width value.
+
+<Story id="experimental-interactivetable--with-column-width" />
+
+```tsx
+const columns: Array<Column<TableData>> = [
+  // Percentage width - takes 25% of table width
+  { id: 'firstName', header: 'First Name', width: '25%' },
+
+  // Pixel width - takes specified pixels (proportionally scaled if table is 100% width)
+  { id: 'lastName', header: 'Last Name', width: 200 },
+
+  // Auto width - fills remaining space
+  { id: 'description', header: 'Description' },
+
+  // Narrow fixed width
+  { id: 'actions', header: '', width: '80px' },
+];
+```
+
+**Width behavior:**
+
+- **Percentage widths** (`'25%'`): Column takes the specified percentage of the table width.
+- **Pixel widths** (`200` or `'200px'`): When all columns have explicit widths, they are proportionally scaled to fill the table. To get exact pixel widths, leave at least one column without a width to absorb remaining space.
+- **No width** (default): Column width is determined automatically based on content.
+
 ### Custom Header Rendering
 
 Column headers can be customized using strings, React elements, or renderer functions. The `header` property accepts any value that matches React Table's `Renderer` type.
