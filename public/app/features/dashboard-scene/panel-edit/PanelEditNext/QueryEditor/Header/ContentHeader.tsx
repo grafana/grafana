@@ -151,7 +151,7 @@ export function ContentHeader({
   return (
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        {cardType !== QueryEditorType.Query && <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />}
 
         {cardType === QueryEditorType.Alert && selectedAlert && (
           <>
@@ -291,16 +291,22 @@ const getStyles = (
 };
 
 // TODO: This is a hacky solution to create an inline datasource picker.
+// We override internal Input component styles to make it appear borderless and compact.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
-    // Target the Input component inside the picker
+    '& > div, & div': {
+      border: 'none',
+    },
     input: {
       border: 'none',
       backgroundColor: theme.colors.background.secondary,
+      // Override the inline paddingLeft set by the Input component's prefix measurement logic
+      paddingLeft: `${theme.spacing(3.5)} !important`,
     },
-    // Remove borders from all nested divs
-    '& > div, & div': {
-      border: 'none',
+    '[class*="input-prefix"]': {
+      paddingLeft: 0,
+      paddingRight: 0,
+      minWidth: 'auto',
     },
   }),
 });
