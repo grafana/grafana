@@ -63,7 +63,7 @@ type Server struct {
 	metrics *metrics
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
 	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
@@ -74,7 +74,7 @@ func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tra
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig)
 }
 
 func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
@@ -88,10 +88,10 @@ func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -112,61 +112,67 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	}
 
 	var clientFactory resources.ClientFactory
-	configProviders := make(map[string]apiserver.RestConfigProvider)
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
-		if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler mode is mt")
-		}
-		if cfg.ZanzanaReconciler.IAMAPIServerURL == "" {
-			return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler mode is mt")
-		}
-
-		grpcAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-		token := grpcAuthSection.Key("token").MustString("")
-		tokenExchangeURL := grpcAuthSection.Key("token_exchange_url").MustString("")
-
-		if token == "" || tokenExchangeURL == "" {
-			return nil, fmt.Errorf("token and token_exchange_url must be set in [grpc_client_authentication] when reconciler is enabled")
-		}
-
-		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            token,
-			TokenExchangeURL: tokenExchangeURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create token exchange client: %w", err)
-		}
-
-		// Build per-group REST configs with group-specific audiences
-		apiServerURLs := map[string]string{
-			"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
-			"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
-		}
-
-		for group, url := range apiServerURLs {
-			// Each API group gets its own audience for proper token scoping
-			audienceProvider := clientauth.NewStaticAudienceProvider(group)
-			namespaceProvider := clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)
-
-			restConfig := &clientrest.Config{
-				Host:    url,
-				APIPath: "/apis",
-				TLSClientConfig: clientrest.TLSClientConfig{
-					Insecure: cfg.ZanzanaReconciler.TLSInsecure,
-				},
-				WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
-					tokenExchangeClient,
-					audienceProvider,
-					namespaceProvider,
-				),
+		if restConfig != nil {
+			// Embedded mode: use LoopbackClientConfig via the eventual provider
+			clientFactory = resources.NewClientFactory(restConfig)
+		} else {
+			// Standalone mode: use explicit URLs with token exchange
+			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
+				return nil, fmt.Errorf("reconciler_folder_apiserver_url must be set when reconciler mode is mt")
+			}
+			if cfg.ZanzanaReconciler.IAMAPIServerURL == "" {
+				return nil, fmt.Errorf("reconciler_iam_apiserver_url must be set when reconciler mode is mt")
 			}
 
-			configProviders[group] = apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
-				return restConfig, nil
-			})
-		}
+			grpcAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+			token := grpcAuthSection.Key("token").MustString("")
+			tokenExchangeURL := grpcAuthSection.Key("token_exchange_url").MustString("")
 
-		clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders)
+			if token == "" || tokenExchangeURL == "" {
+				return nil, fmt.Errorf("token and token_exchange_url must be set in [grpc_client_authentication] when reconciler is enabled")
+			}
+
+			tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+				Token:            token,
+				TokenExchangeURL: tokenExchangeURL,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+			}
+
+			// Build per-group REST configs with group-specific audiences
+			configProviders := make(map[string]apiserver.RestConfigProvider)
+			apiServerURLs := map[string]string{
+				"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
+				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
+			}
+
+			for group, url := range apiServerURLs {
+				// Each API group gets its own audience for proper token scoping
+				audienceProvider := clientauth.NewStaticAudienceProvider(group)
+				namespaceProvider := clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)
+
+				standaloneRestConfig := &clientrest.Config{
+					Host:    url,
+					APIPath: "/apis",
+					TLSClientConfig: clientrest.TLSClientConfig{
+						Insecure: cfg.ZanzanaReconciler.TLSInsecure,
+					},
+					WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+						tokenExchangeClient,
+						audienceProvider,
+						namespaceProvider,
+					),
+				}
+
+				configProviders[group] = apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
+					return standaloneRestConfig, nil
+				})
+			}
+
+			clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders)
+		}
 	}
 
 	var mtReconciler zanzana.MTReconciler

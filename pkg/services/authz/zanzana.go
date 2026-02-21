@@ -85,7 +85,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 }
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
-func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Server, error) {
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (zanzana.Server, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zServer.NewNoopServer(), nil
@@ -93,7 +93,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 
 	logger := log.New("zanzana.server")
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, db, logger, tracer, reg)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, db, logger, tracer, reg, restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -106,26 +106,23 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 func ProvideEmbeddedZanzanaService(
 	cfg *setting.Cfg,
 	server zanzana.Server,
-	restConfig apiserver.RestConfigProvider,
 	tracer tracing.Tracer,
 ) *EmbeddedZanzanaService {
 	return &EmbeddedZanzanaService{
-		cfg:        cfg,
-		server:     server,
-		restConfig: restConfig,
-		tracer:     tracer,
-		logger:     log.New("zanzana.server"),
+		cfg:    cfg,
+		server: server,
+		tracer: tracer,
+		logger: log.New("zanzana.server"),
 	}
 }
 
 // EmbeddedZanzanaService wraps the embedded zanzana server as a background service
 // to ensure Close() is called during shutdown.
 type EmbeddedZanzanaService struct {
-	cfg        *setting.Cfg
-	server     zanzana.Server
-	restConfig apiserver.RestConfigProvider
-	tracer     tracing.Tracer
-	logger     log.Logger
+	cfg    *setting.Cfg
+	server zanzana.Server
+	tracer tracing.Tracer
+	logger log.Logger
 }
 
 func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
