@@ -122,7 +122,6 @@ func TestLogGroupsRoute(t *testing.T) {
 			LogGroupNamePattern: nil,
 			ListAllLogGroups:     false,
 			OrderBy:             "",
-			MaxResults:          1000,
 		})
 	})
 
@@ -141,7 +140,6 @@ func TestLogGroupsRoute(t *testing.T) {
 			LogGroupNamePrefix: nil,
 			ListAllLogGroups:   false,
 			OrderBy:            "",
-			MaxResults:         1000,
 		})
 	})
 
@@ -156,8 +154,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
-			Limit:      2,
-			MaxResults: 1000,
+			Limit: 2,
 		})
 	})
 
@@ -174,7 +171,6 @@ func TestLogGroupsRoute(t *testing.T) {
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:              50,
 			LogGroupNamePrefix: utils.Pointer("some-prefix"),
-			MaxResults:         1000,
 		})
 	})
 
@@ -191,7 +187,6 @@ func TestLogGroupsRoute(t *testing.T) {
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:               50,
 			LogGroupNamePattern: utils.Pointer("some-pattern"),
-			MaxResults:          1000,
 		})
 	})
 
@@ -210,7 +205,6 @@ func TestLogGroupsRoute(t *testing.T) {
 			ResourceRequest:  resources.ResourceRequest{AccountId: utils.Pointer("some-account-id")},
 			ListAllLogGroups: true,
 			OrderBy:          "nameAsc",
-			MaxResults:       1000,
 		})
 	})
 
@@ -227,7 +221,6 @@ func TestLogGroupsRoute(t *testing.T) {
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:           50,
 			ResourceRequest: resources.ResourceRequest{AccountId: utils.Pointer("some-account-id")},
-			MaxResults:      1000,
 		})
 	})
 

@@ -57,8 +57,8 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 		}
 
 		// Cap total results when listing all to avoid unbounded memory and time
-		if req.MaxResults > 0 && int32(len(result)) >= req.MaxResults {
-			result = result[:req.MaxResults]
+		if int32(len(result)) >= resources.MaxLogGroupsResults {
+			result = result[:resources.MaxLogGroupsResults]
 			break
 		}
 
@@ -68,8 +68,8 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 		input.NextToken = response.NextToken
 	}
 
-	if req.MaxResults > 0 && len(result) > int(req.MaxResults) {
-		result = result[:req.MaxResults]
+	if len(result) > int(resources.MaxLogGroupsResults) {
+		result = result[:resources.MaxLogGroupsResults]
 	}
 
 	sortLogGroupsBy(result, req.OrderBy)

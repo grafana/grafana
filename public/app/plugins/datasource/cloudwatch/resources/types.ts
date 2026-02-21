@@ -38,7 +38,6 @@ export interface DescribeLogGroupsRequest extends ResourceRequest {
   limit?: number;
   listAllLogGroups?: boolean;
   orderBy?: LogGroupOrderBy;
-  maxResults?: number;
   accountId?: string;
 }
 

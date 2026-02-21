@@ -201,38 +201,42 @@ func TestGetLogGroups(t *testing.T) {
 		assert.Equal(t, "group_a", resp[2].Value.Name)
 	})
 
-	t.Run("Should cap results at MaxResults when ListAllLogGroups is true", func(t *testing.T) {
+	t.Run("Should cap results at MaxLogGroupsResults when ListAllLogGroups is true", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		req := resources.LogGroupsRequest{
-			Limit:            2,
+			Limit:            500,
 			ListAllLogGroups: true,
-			MaxResults:       3,
 		}
+		// First page: 600 results
 		mockLogsAPI.On("DescribeLogGroups", mock.MatchedBy(func(input *cloudwatchlogs.DescribeLogGroupsInput) bool {
 			return input.NextToken == nil
 		})).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
-			LogGroups: []cloudwatchlogstypes.LogGroup{
-				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g1"), LogGroupName: utils.Pointer("g1")},
-				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g2"), LogGroupName: utils.Pointer("g2")},
-			},
+			LogGroups: makeLogGroups(0, 600),
 			NextToken: utils.Pointer("tok"),
 		}, nil)
+		// Second page: 600 more (total 1200, cap at 1000)
 		mockLogsAPI.On("DescribeLogGroups", mock.MatchedBy(func(input *cloudwatchlogs.DescribeLogGroupsInput) bool {
 			return input.NextToken != nil && *input.NextToken == "tok"
 		})).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
-			LogGroups: []cloudwatchlogstypes.LogGroup{
-				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g3"), LogGroupName: utils.Pointer("g3")},
-				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:g4"), LogGroupName: utils.Pointer("g4")},
-			},
+			LogGroups: makeLogGroups(600, 600),
 		}, nil)
 		service := NewLogGroupsService(mockLogsAPI, false)
 		resp, err := service.GetLogGroups(context.Background(), req)
 		assert.NoError(t, err)
-		assert.Len(t, resp, 3)
-		assert.Equal(t, "g1", resp[0].Value.Name)
-		assert.Equal(t, "g2", resp[1].Value.Name)
-		assert.Equal(t, "g3", resp[2].Value.Name)
+		assert.Len(t, resp, int(resources.MaxLogGroupsResults))
 	})
+}
+
+func makeLogGroups(start, count int) []cloudwatchlogstypes.LogGroup {
+	out := make([]cloudwatchlogstypes.LogGroup, count)
+	for i := 0; i < count; i++ {
+		n := start + i
+		out[i] = cloudwatchlogstypes.LogGroup{
+			Arn:           utils.Pointer(fmt.Sprintf("arn:aws:logs:us-east-1:111:log-group:g%d", n)),
+			LogGroupName:  utils.Pointer(fmt.Sprintf("g%d", n)),
+		}
+	}
+	return out
 }
 
 func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {

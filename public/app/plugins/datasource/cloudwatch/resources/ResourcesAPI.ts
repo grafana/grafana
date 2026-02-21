@@ -84,9 +84,6 @@ export class ResourcesAPI extends CloudWatchRequest {
     if (params.orderBy != null && params.orderBy !== '') {
       query.orderBy = params.orderBy;
     }
-    if (params.maxResults != null && params.maxResults > 0) {
-      query.maxResults = String(params.maxResults);
-    }
     if (params.limit != null && params.limit > 0) {
       query.limit = String(params.limit);
     }
