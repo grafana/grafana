@@ -6,17 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	jsoniter "github.com/json-iterator/go"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -90,14 +87,13 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
 
-		// Requesting chunked query response
-		if isRequestingChunkedResponse(req.Header.Get("accept")) {
+		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
 			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
-			}, newChunkWriter(w)); err != nil {
+			}, chunked.NewHTTPWriter(w)); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
 			}
 			return
@@ -132,72 +128,4 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
-}
-
-func isRequestingChunkedResponse(accept string) bool {
-	return accept == "text/event-stream"
-}
-
-var (
-	_ backendplugin.RawChunkReceiver = (*rawChunkWriter)(nil)
-)
-
-type rawChunkWriter struct {
-	stream *jsoniter.Stream
-}
-
-func newChunkWriter(w http.ResponseWriter) backendplugin.RawChunkReceiver {
-	return &rawChunkWriter{
-		stream: jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, w, 1024*10),
-	}
-}
-
-// ReceivedChunk implements [backendplugin.RawChunkReceiver].
-func (r *rawChunkWriter) ReceivedChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
-	if chunk.Format != pluginv2.DataFrameFormat_JSON {
-		return fmt.Errorf("expected json format")
-	}
-
-	r.stream.WriteRaw("data: ")
-	r.stream.WriteObjectStart()
-	r.stream.WriteObjectField("refId")
-	r.stream.WriteString(chunk.RefId)
-
-	if chunk.FrameId != "" {
-		r.stream.WriteMore()
-		r.stream.WriteObjectField("frameId")
-		r.stream.WriteString(chunk.FrameId)
-	}
-
-	if chunk.Frame != nil {
-		r.stream.WriteMore()
-		r.stream.WriteObjectField("frame")
-		r.stream.WriteRaw(string(chunk.Frame)) // must not contain newlines!
-	}
-
-	if chunk.Error != "" {
-		r.stream.WriteMore()
-		r.stream.WriteObjectField("error")
-		r.stream.WriteString(chunk.Error)
-
-		if chunk.ErrorSource != "" {
-			r.stream.WriteMore()
-			r.stream.WriteObjectField("errorSource")
-			r.stream.WriteString(chunk.ErrorSource)
-		}
-	}
-
-	r.stream.WriteObjectEnd()
-	r.stream.WriteRaw("\n\n") // marks the end of a message in SSE
-	return r.stream.Flush()
-}
-
-// WriteError implements [backend.ChunkedDataWriter].
-func (r *rawChunkWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	return fmt.Errorf("unexpected callback (WriteError)")
-}
-
-// WriteFrame implements [backend.ChunkedDataWriter].
-func (r *rawChunkWriter) WriteFrame(ctx context.Context, refID string, frameID string, f *data.Frame) error {
-	return fmt.Errorf("unexpected callback (WriteFrame)")
 }
