@@ -1,4 +1,3 @@
-import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
@@ -455,7 +454,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
         const t = indexByName.get(dispName);
         const b = indexByName.get(fillBelowDispName);
-        if (isNumber(b) && isNumber(t)) {
+        if (typeof b === 'number' && typeof t === 'number') {
           builder.addBand({
             series: [t, b],
             fill: undefined, // using null will have the band use fill options from `t`

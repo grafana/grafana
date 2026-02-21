@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { useState, type JSX } from 'react';
 
 import { getCellLinks } from '../../../utils/table';
@@ -20,7 +19,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   let value = cell.value;
   let displayValue = value;
 
-  if (isString(value)) {
+  if (typeof value === 'string') {
     try {
       value = JSON.parse(value);
     } catch {} // ignore errors
