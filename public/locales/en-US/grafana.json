@@ -5677,10 +5677,7 @@
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration",
-      "suggestions": {
-        "empty-state-message": "Run a query to start seeing suggested visualizations"
-      }
+      "missing-config": "Missing panel configuration"
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
@@ -11908,6 +11905,10 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
+      "or-divider": "OR",
+      "run-query-hint": "Run a query to start seeing suggested visualizations",
+      "start-without-data-description": "Add panels that don't require a query",
+      "start-without-data-title": "Start without data",
       "unknown-viz-type": "Unknown visualization type"
     },
     "viz-type-picker": {
