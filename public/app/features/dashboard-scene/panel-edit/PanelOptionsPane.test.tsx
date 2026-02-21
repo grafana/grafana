@@ -62,6 +62,7 @@ describe('PanelOptionsPane', () => {
       });
 
       expect(panel.state.options).toEqual({ showHeader: false });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((panel.state.fieldConfig.defaults.custom as any).axisBorderShow).toEqual(true);
     });
 
@@ -192,7 +193,12 @@ function setupTest(panelId: string) {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const optionsPane = new PanelOptionsPane({ panelRef: panel.getRef(), listMode: OptionFilter.All, searchQuery: '' });
+  const optionsPane = new PanelOptionsPane({
+    panelRef: panel.getRef(),
+    listMode: OptionFilter.All,
+    searchQuery: '',
+    suggestionApplied: false,
+  });
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error

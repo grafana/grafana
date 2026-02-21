@@ -26,6 +26,10 @@ export const VizSuggestionsInteractions = {
   }) => {
     reportVizSuggestionsInteraction('suggestion_accepted', properties);
   },
+
+  suggestionSaved: (properties: { pluginId: string; fromSuggestions: boolean }) => {
+    reportVizSuggestionsInteraction('suggestion_saved', properties);
+  },
 };
 
 const reportVizSuggestionsInteraction = (name: string, properties?: Record<string, unknown>) => {

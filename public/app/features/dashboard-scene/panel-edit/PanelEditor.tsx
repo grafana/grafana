@@ -21,6 +21,7 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -52,7 +53,7 @@ export interface PanelEditorState extends SceneObjectState {
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
-  pluginLoadErrror?: string;
+  pluginLoadError?: string;
   /**
    * Waiting for library panel or panel plugin to load
    */
@@ -166,7 +167,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (retry < 100) {
         setTimeout(() => this.waitForPlugin(retry + 1), retry * 10);
       } else {
-        this.setState({ pluginLoadErrror: 'Failed to load panel plugin' });
+        this.setState({ pluginLoadError: 'Failed to load panel plugin' });
       }
       return;
     }
@@ -239,6 +240,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         listMode: OptionFilter.All,
         isVizPickerOpen: this.state.isNewPanel,
         isNewPanel: this.state.isNewPanel,
+        suggestionApplied: false,
       });
 
       this.setState({
@@ -334,6 +336,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
+
+    if (this.state.optionsPane?.state.suggestionApplied) {
+      const panel = this.state.panelRef.resolve();
+      VizSuggestionsInteractions.suggestionSaved({
+        pluginId: panel.state.pluginId,
+        fromSuggestions: true,
+      });
+    }
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;
