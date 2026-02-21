@@ -2,6 +2,7 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   createTheme,
+  Field,
   FieldConfig,
   FieldType,
   MutableDataFrame,
@@ -19,7 +20,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { getFieldKeyLabel, prepSeries, prepConfig, PrepConfigOpts } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -258,5 +259,38 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[1].config.unit).toBeUndefined();
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
+  });
+});
+
+describe('getFieldKeyLabel', () => {
+  const baseField: Field = {
+    name: 'orders.raw_customers_first_name',
+    type: FieldType.string,
+    config: {},
+    values: [],
+  };
+
+  it('should return displayNameFromDS when set', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayNameFromDS: 'Orders Raw Customers First Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('Orders Raw Customers First Name');
+  });
+
+  it('should fall back to field name when displayNameFromDS is not set', () => {
+    const field: Field = {
+      ...baseField,
+      config: {},
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
+  });
+
+  it('should not use config.displayName (panel-level overrides are not datasource keys)', () => {
+    const field: Field = {
+      ...baseField,
+      config: { displayName: 'Panel Override Name' },
+    };
+    expect(getFieldKeyLabel(field)).toBe('orders.raw_customers_first_name');
   });
 });

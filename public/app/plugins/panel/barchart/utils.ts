@@ -42,6 +42,14 @@ import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
+/**
+ * Return the best human-readable key label for a field, preferring the
+ * datasource-provided display name and falling back to the raw field name.
+ */
+export function getFieldKeyLabel(field: Field): string {
+  return field.config.displayNameFromDS ?? field.name;
+}
+
 interface BarSeries {
   series: DataFrame[];
   _rest: Field[];
