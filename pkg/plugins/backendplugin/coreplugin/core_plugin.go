@@ -2,6 +2,7 @@ package coreplugin
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/otel/trace"
 
@@ -100,17 +101,41 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 
 func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
-	if cp.QueryChunkedDataHandler != nil {
-		raw, isRaw := w.(backendplugin.RawChunkReceiver)
-		if isRaw {
-			w = backend.NewChunkedDataWriter(req.Format, raw.ReceivedChunk)
-		}
-
-		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+	if raw, isRaw := w.(backendplugin.RawChunkReceiver); isRaw {
+		w = backend.NewChunkedDataWriter(req.Format, raw.ReceivedChunk)
 	}
 
-	return plugins.ErrMethodNotImplemented
+	if cp.QueryChunkedDataHandler != nil {
+		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	} else if cp.QueryDataHandler == nil {
+		return plugins.ErrMethodNotImplemented
+	}
+
+	// Fallback to executing a regular Query and sending the results as chunks.
+	resp, err := cp.QueryDataHandler.QueryData(ctx, &backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Queries:       req.Queries,
+		Headers:       req.Headers,
+		// TODO format
+	})
+	if err != nil {
+		return err
+	}
+
+	for refID, res := range resp.Responses {
+		for idx, frame := range res.Frames {
+			if err = w.WriteFrame(ctx, refID, fmt.Sprintf("%d", idx), frame); err != nil {
+				return err
+			}
+		}
+		if res.Error != nil {
+			if err = w.WriteError(ctx, refID, res.Status, res.Error); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

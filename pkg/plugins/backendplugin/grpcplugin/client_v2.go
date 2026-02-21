@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync/atomic"
 
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -33,6 +34,9 @@ type ClientV2 struct {
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
+
+	// Chunking will fallback to DataQuery
+	chunkUnimplemented atomic.Bool
 }
 
 func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
@@ -162,6 +166,14 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	protoResp, err := c.queryData(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return backend.FromProto().QueryDataResponse(protoResp)
+}
+
+func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	if c.DataClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
@@ -188,10 +200,13 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
-	return backend.FromProto().QueryDataResponse(protoResp)
+	return protoResp, nil
 }
 
 func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if c.chunkUnimplemented.Load() {
+		return c.queryChunkedDataFacade(ctx, req, w)
+	}
 	if c.DataClient == nil {
 		return plugins.ErrMethodNotImplemented
 	}
@@ -200,7 +215,9 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 	stream, err := c.DataClient.QueryChunkedData(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return plugins.ErrMethodNotImplemented
+			// The first query finds out it is unsupported and then tries DataQuery
+			c.chunkUnimplemented.Store(true)
+			return c.queryChunkedDataFacade(ctx, req, w)
 		}
 		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
 			return handleGrpcStatusError(ctx, errorSource, err)
@@ -247,6 +264,75 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			return err
 		}
 	}
+}
+
+func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	raw, isRaw := w.(backendplugin.RawChunkReceiver)
+
+	// Execute a regular QueryData non-chunked request (using JSON encoding if raw)
+	protoResp, err := c.queryData(ctx,
+		&backend.QueryDataRequest{
+			PluginContext: req.PluginContext,
+			Queries:       req.Queries,
+			Headers:       req.Headers,
+			// FORMAT... JSON!!!! (TODO)
+			// https://github.com/grafana/grafana-plugin-sdk-go/pull/1491
+		})
+	if err != nil {
+		return err
+	}
+
+	// The raw handler can skip decode and then re-encode
+	if isRaw {
+		for refId, res := range protoResp.Responses {
+			for idx, frame := range res.Frames {
+				// TODO: verify requested format
+				if req.Format == backend.DataFrameFormat_JSON && frame[0] != '{' {
+					f, err := data.UnmarshalArrowFrame(frame)
+					if err != nil {
+						return err
+					}
+					frame, err = f.MarshalJSON()
+					if err != nil {
+						return err
+					}
+				}
+
+				if err = raw.ReceivedChunk(&pluginv2.QueryChunkedDataResponse{
+					RefId:   refId,
+					FrameId: fmt.Sprintf("%d", idx),
+					Frame:   frame,
+				}); err != nil {
+					return err
+				}
+			}
+			if res.Error != "" {
+				if err = raw.ReceivedChunk(&pluginv2.QueryChunkedDataResponse{
+					RefId:       refId,
+					Error:       res.Error,
+					ErrorSource: res.ErrorSource,
+				}); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
+	// Send the responses as individual chunks
+	rsp, err := backend.FromProto().QueryDataResponse(protoResp)
+	if err != nil {
+		return err
+	}
+	for refId, res := range rsp.Responses {
+		for idx, frame := range res.Frames {
+			w.WriteFrame(ctx, refId, fmt.Sprintf("%d", idx), frame)
+		}
+		if res.Error != nil {
+			w.WriteError(ctx, refId, res.Status, res.Error)
+		}
+	}
+	return nil
 }
 
 func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
