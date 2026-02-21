@@ -189,6 +189,20 @@ You might need to reload the dashboard for this feature to work.
 
 The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets. Enabling this option requires the map to reinitialize.
 
+#### Sync view to dashboard variable
+
+Stores the current map's view extents in a dashboard variable of your choosing.
+This is particularly useful for dynamically querying data based on the map's current extents.
+
+To use the option, follow these steps:
+
+1. Create a **Custom** type dashboard variable.
+2. Return to panel configuration and toggle on this switch.
+3. Select the newly created variable from the **Variable name** drop-down list.
+4. Use the variable in your queries.
+
+The variable contains comma-separated coordinates (EPSG:4326): `minLon,minLat,maxLon,maxLat`
+
 ### Map layers options
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.

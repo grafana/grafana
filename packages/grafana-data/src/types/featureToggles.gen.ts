@@ -619,6 +619,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
@@ -1407,11 +1412,6 @@ export interface FeatureToggles {
   * @default false
   */
   elasticsearchRawDSLQuery?: boolean;
-  /**
-  * Enables app platform API for annotations
-  * @default false
-  */
-  kubernetesAnnotations?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false

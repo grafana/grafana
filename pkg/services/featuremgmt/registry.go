@@ -969,6 +969,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardTemplatesAssistantButton",
+			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
@@ -2219,13 +2227,6 @@ var (
 			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPartnerPluginsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "kubernetesAnnotations",
-			Description: "Enables app platform API for annotations",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false",
 		},
 		{
