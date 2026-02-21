@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
@@ -14,6 +14,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: mockGetInstanceSettings,
   }),
+  reportInteraction: jest.fn(),
 }));
 
 // Mutable state object for the mock queryRunner
@@ -384,6 +385,48 @@ describe('PanelDataPaneNext', () => {
 
         dataPane.deleteTransformation(3);
         expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('transformation tracking', () => {
+      beforeEach(() => {
+        jest.mocked(reportInteraction).mockClear();
+      });
+
+      it('reports grafana_panel_transformations_clicked with action add when addTransformation is called', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns');
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'seriesToColumns',
+          action: 'add',
+        });
+      });
+
+      it('reports grafana_panel_transformations_clicked with action edit when updateTransformation is called', () => {
+        const oldConfig = mockTransformations[1];
+        const newConfig = { id: 'reduce', options: { mode: 'sum' } };
+
+        dataPane.updateTransformation(oldConfig, newConfig);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'reduce',
+          action: 'edit',
+        });
+      });
+
+      it('reports grafana_panel_transformations_clicked with action delete when deleteTransformation is called', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'reduce',
+          action: 'delete',
+          total_transformations: 2,
+        });
       });
     });
 

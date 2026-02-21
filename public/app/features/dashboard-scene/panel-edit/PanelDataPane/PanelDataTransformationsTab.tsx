@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneDataTransformer,
@@ -199,6 +200,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         )}
         confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
         onConfirm={() => {
+          reportInteraction('grafana_panel_transformations_clicked', {
+            context: 'transformations_list',
+            action: 'delete_all',
+            total_transformations: 0,
+          });
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);
         }}
@@ -242,11 +248,27 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <TransformationOperationRows
                 onChange={(index, transformation) => {
+                  if (transformation?.id) {
+                    reportInteraction('grafana_panel_transformations_clicked', {
+                      context: 'transformations_list',
+                      type: transformation.id,
+                      action: 'edit',
+                    });
+                  }
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
                   model.onChangeTransformations(newTransformations);
                 }}
                 onRemove={(index) => {
+                  const removed = transformations[index];
+                  if (removed?.id) {
+                    reportInteraction('grafana_panel_transformations_clicked', {
+                      context: 'transformations_list',
+                      type: removed.id,
+                      action: 'remove',
+                      total_transformations: transformations.length - 1,
+                    });
+                  }
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index, 1);
                   model.onChangeTransformations(newTransformations);

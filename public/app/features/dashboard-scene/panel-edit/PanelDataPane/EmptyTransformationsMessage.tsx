@@ -82,8 +82,9 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
 
   const handleTransformationClick = (transformationId: string) => {
     reportInteraction('grafana_panel_transformations_clicked', {
-      type: transformationId,
       context: 'empty_transformations_placeholder',
+      type: transformationId,
+      action: 'add',
     });
     props.onAddTransformation?.(transformationId);
   };
