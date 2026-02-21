@@ -101,6 +101,15 @@ export type PanelOptionsSupplier<TOptions> = (
   context: StandardEditorContext<TOptions>
 ) => void;
 
+/**
+ * Context passed to presets supplier
+ * @alpha
+ */
+export interface PresetsSupplierContext<TOptions = unknown, TFieldConfigOptions extends object = {}> {
+  options?: TOptions;
+  fieldConfig?: FieldConfigSource<TFieldConfigOptions>;
+}
+
 export class PanelPlugin<
   TOptions = any,
   TFieldConfigOptions extends object = {},
@@ -118,6 +127,9 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
+  private presetsSupplier?: (
+    context: PresetsSupplierContext<TOptions, TFieldConfigOptions>
+  ) => Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -449,6 +461,32 @@ export class PanelPlugin<
         });
       },
     };
+  }
+
+  /**
+   * @alpha
+   */
+  setPresetsSupplier(
+    supplier: (
+      context: PresetsSupplierContext<TOptions, TFieldConfigOptions>
+    ) => Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void
+  ): this {
+    this.presetsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   */
+  getPresets(
+    context: PresetsSupplierContext<TOptions, TFieldConfigOptions>
+  ): Array<VisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    return this.presetsSupplier?.(context)?.map((preset) => {
+      if (!preset.name) {
+        return { ...preset, name: this.meta.name };
+      }
+      return preset;
+    });
   }
 
   hasPluginId(pluginId: string) {

@@ -134,7 +134,7 @@ function signatureMapper(spec: v0alpha1Spec): PluginSignatureStatus | undefined 
 }
 
 function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
-  const { id, name, hideFromList = false, skipDataQuery = false, suggestions } = spec.pluginJson;
+  const { id, name, hideFromList = false, skipDataQuery = false, suggestions, presets } = spec.pluginJson;
   const state = stateMapper(spec);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
@@ -155,6 +155,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
     sort,
     skipDataQuery,
     suggestions,
+    presets,
     state,
     baseUrl,
     signature,

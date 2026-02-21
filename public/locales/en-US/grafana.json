@@ -11889,9 +11889,17 @@
       "title-click-to-close": "Click again to close this section",
       "tooltip-delete": "Delete"
     },
+    "presets": {
+      "back-button": "Back",
+      "back-button-tooltip": "Go back",
+      "configure-panel": "Configure panel",
+      "configure-panel-aria-label": "Configure {{presetName}} panel",
+      "select-style": "Select style",
+      "skip": "Skip"
+    },
     "visualization-suggestions": {
-      "edit": "Edit",
-      "edit-aria-label": "Edit {{suggestionName}} visualization",
+      "configure-panel": "Configure panel",
+      "configure-panel-aria-label": "Configure {{suggestionName}} panel",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -11901,7 +11909,9 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
-      "unknown-viz-type": "Unknown visualization type"
+      "unknown-viz-type": "Unknown visualization type",
+      "view-style-options": "View style options",
+      "view-style-options-aria-label": "View style options for {{suggestionName}}"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
@@ -14530,6 +14540,14 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
+    },
+    "presets": {
+      "area": "Area",
+      "default": "Default",
+      "smooth": "Smooth",
+      "step": "Step",
+      "step-filled": "Step filled",
+      "step-hue": "Step hue"
     },
     "span-nulls-editor": {
       "gaps-options": {
