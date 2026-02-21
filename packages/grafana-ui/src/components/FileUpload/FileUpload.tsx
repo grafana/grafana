@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useId, useState } from 'react';
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -42,7 +41,7 @@ export const FileUpload = ({
 }: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
-  const id = uuidv4();
+  const id = useId();
 
   const onChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
