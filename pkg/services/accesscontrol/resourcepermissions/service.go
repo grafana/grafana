@@ -61,6 +61,9 @@ type Store interface {
 
 	// DeleteResourcePermissions will delete all permissions for supplied resource id
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
+
+	// GetPermissionIDByRoleName returns the permission ID for a given role name and org ID
+	GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error)
 }
 
 func New(cfg *setting.Cfg,
