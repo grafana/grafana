@@ -37,7 +37,9 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
+When running multiple instances of Grafana, all alert rules are evaluated on all instances by default. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
+
+If you want to reduce this duplication, you can enable [single-node evaluation mode](#single-node-evaluation-mode) so that only one instance evaluates alert rules.
 
 You can find this duplication in state history and it is a good way to [verify your high availability setup](#verify-your-high-availability-setup).
 
@@ -158,6 +160,51 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
    ha_peer_timeout = 15s
    ha_reconnect_timeout = 2m
    ```
+
+## Single-node evaluation mode
+
+By default, all Grafana instances in a high-availability cluster evaluate all alert rules. This means query load on data sources is multiplied by the number of Grafana instances. Single-node evaluation mode changes this so that only one instance evaluates alert rules, reducing query load from N times to 1.
+
+**To enable single-node evaluation mode**, add the following to your `[unified_alerting]` section:
+
+```ini
+[unified_alerting]
+ha_single_node_evaluation = true
+```
+
+This setting requires high availability clustering to be configured (either Memberlist or Redis).
+
+### How it works
+
+The Grafana instance at cluster position 0 (the primary) is responsible for evaluating all alert rules. Other instances skip evaluation entirely.
+
+- **Alert broadcasting:** The primary instance broadcasts fired alerts to all other instances through the cluster communication channel. This ensures that every instance's embedded Alertmanager has the current alerts, which is needed for failure recovery and for the Alertmanager API to return correct data on all instances.
+- **API consistency:** Non-primary instances read alert state directly from the database, so API endpoints like `/api/v1/rules` and `/api/v2/alerts` return correct data on all instances.
+- **Automatic failure recovery:** When the primary instance becomes unavailable, the cluster reassigns positions and a new instance becomes responsible for evaluation. During failure recovery, there is a brief gap in evaluations, but existing alert states remain in the database and Alertmanagers continue sending notifications.
+
+### Tradeoffs
+
+| Default HA (all instances evaluate)         | Single-node evaluation mode                  |
+| ------------------------------------------- | -------------------------------------------- |
+| Redundant evaluation on all nodes           | Only one node evaluates                      |
+| Higher query load on data sources (N times) | Reduced query load (1 time)                  |
+| No evaluation gap on instance failure       | Brief evaluation gap during failure recovery |
+
+### Monitor single-node evaluation mode
+
+You can verify that single-node evaluation mode is working correctly by monitoring the following metrics.
+
+| Metric                                                                        | Description                                                                                                                          |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `alertmanager_peer_position`                                                    | The position of each instance in the cluster. The instance at position 0 is the primary and evaluates all alert rules.               |
+| `alertmanager_alerts_received_total`                                            | Total number of alerts received by each instance. Non-primary instances should receive alerts through the cluster broadcast channel. |
+| `alertmanager_alerts{state="active"}`                                           | Number of active alerts on each instance. This value should be the same across all instances.                                        |
+| `alertmanager_oversized_gossip_message_dropped_total{key="alerts:broadcast"}`   | Number of broadcast messages dropped due to a full message queue. A non-zero value indicates message loss.                           |
+| `alertmanager_oversized_gossip_message_failure_total{key="alerts:broadcast"}`   | Number of broadcast messages that failed to send to a peer.                                                                          |
+| `alertmanager_oversized_gossip_message_sent_total{key="alerts:broadcast"}`      | Number of broadcast messages sent to peers.                                                                                          |
+| `alertmanager_oversize_gossip_message_duration_seconds{key="alerts:broadcast"}` | Duration of broadcast message sends. Useful for detecting network latency between peers.                                             |
+
+You can confirm that alert broadcasting is working by comparing `alertmanager_alerts{state="active"}` across all instances. If the values match, non-primary instances are receiving broadcast alerts from the primary.
 
 ## Verify your high availability setup
 
