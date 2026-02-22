@@ -37,7 +37,7 @@ const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
 
 const mockPut = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2beta1',
+    apiVersion: 'dashboard.grafana.app/v2beta2',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name,
@@ -53,7 +53,7 @@ const mockPut = jest.fn().mockImplementation((url, data) => {
 
 const mockPost = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2beta1',
+    apiVersion: 'dashboard.grafana.app/v2beta2',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name || 'restored-dash',
@@ -237,7 +237,7 @@ describe('v2 dashboard API', () => {
       });
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards/existing-dash',
+        '/apis/dashboard.grafana.app/v2beta2/namespaces/default/dashboards/existing-dash',
         {
           metadata: {
             name: 'existing-dash',
@@ -275,7 +275,7 @@ describe('v2 dashboard API', () => {
 
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards/existing-dash',
+        '/apis/dashboard.grafana.app/v2beta2/namespaces/default/dashboards/existing-dash',
         {
           metadata: {
             name: 'existing-dash',
@@ -458,7 +458,7 @@ describe('v2 dashboard API', () => {
 
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2beta1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v2beta2/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             resourceVersion: '',
@@ -501,7 +501,7 @@ describe('v2 dashboard API', () => {
       await api.restoreDashboard(dashboardToRestore);
 
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2beta1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v2beta2/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             annotations: expect.objectContaining({

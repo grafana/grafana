@@ -431,7 +431,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2beta1');
+      expect(transformed.apiVersion).toBe('v2beta2');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -839,7 +839,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2beta2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -1120,7 +1120,7 @@ describe('ResponseTransformers', () => {
         };
       })
     );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
     ) as GridLayoutItemKind;

@@ -177,7 +177,7 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
     'migrated_dashboards_output'
   );
 
-  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
+  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta2';
 
   // Known backend/frontend drift: these files produce different output from the backend
   // conversion vs the frontend transformation. Each entry should be fixed and removed.
