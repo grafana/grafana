@@ -7,6 +7,8 @@ import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
 import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explore/state/query';
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
+import { setVariablesAction } from 'app/features/explore/state/variables';
+import { deserializeVariables } from 'app/features/explore/state/variablesSerialization';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { ExploreItemState } from 'app/types/explore';
 import { ThunkDispatch } from 'app/types/store';
@@ -51,6 +53,11 @@ export function syncFromURL(
 
           if (update.queries) {
             dispatch(setQueriesAction({ exploreId, queries: withUniqueRefIds(queries) }));
+          }
+
+          if (update.variables && urlPane.variables !== undefined) {
+            const variables = urlPane.variables.length > 0 ? deserializeVariables(urlPane.variables) : [];
+            dispatch(setVariablesAction({ exploreId, variables }));
           }
 
           if (update.queries || update.range) {

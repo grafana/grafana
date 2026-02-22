@@ -46,12 +46,27 @@ export interface TraceSearchTag {
 }
 
 /** @internal */
+export interface ExploreUrlVariable {
+  name: string;
+  label?: string;
+  description?: string;
+  query: string;
+  isMulti?: boolean;
+  includeAll?: boolean;
+  allValue?: string;
+  allowCustomValue?: boolean;
+  value?: string | string[];
+  text?: string | string[];
+}
+
+/** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
   queries: T[];
   range: URLRange;
   panelsState?: ExplorePanelsState;
   compact?: boolean;
+  variables?: ExploreUrlVariable[];
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {

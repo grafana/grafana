@@ -2,6 +2,7 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 import { ExploreUrlState, toURLRange } from '@grafana/data';
 import { clearQueryKeys } from 'app/core/utils/explore';
+import { serializeVariableSet } from 'app/features/explore/state/variablesSerialization';
 import { ExploreItemState } from 'app/types/explore';
 
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
@@ -14,6 +15,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
     compact: pane.compact,
+    variables: pane.variableSet ? serializeVariableSet(pane.variableSet) : undefined,
   };
 }
 
