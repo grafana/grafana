@@ -29,6 +29,7 @@ export function PanelHeaderMenu({ items }: Props) {
               key={item.text}
               label={item.text}
               icon={item.iconClassName}
+              prefix={item.prefix}
               childItems={item.subMenu ? renderItems(item.subMenu) : undefined}
               url={item.href}
               onClick={item.onClick}
