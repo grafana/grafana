@@ -67,14 +67,14 @@ describe('QuickAdd', () => {
   it('shows isCreateAction options when clicked', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    expect(screen.getByRole('link', { name: 'New child 1' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'New child 3' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New child 1' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New child 3' })).toBeInTheDocument();
   });
 
   it('reports interaction when a menu item is clicked', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    await userEvent.click(screen.getByRole('link', { name: 'New child 1' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'New child 1' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
       url: '#',
@@ -90,21 +90,21 @@ describe('QuickAdd', () => {
     it('shows a `Dashboard from template` button when the feature flag is enabled', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.getByRole('link', { name: 'Dashboard from template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
     });
 
     it('does not show a `Dashboard from template` button when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.queryByRole('link', { name: 'Dashboard from template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Dashboard from template' })).not.toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {
       setup();
 
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const link = screen.getByRole('link', { name: 'Dashboard from template' });
+      const link = screen.getByRole('menuitem', { name: 'Dashboard from template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
   });

@@ -85,9 +85,9 @@ describe('MenuItem', () => {
     expect(await screen.findByTestId(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
   });
 
-  it('renders with role="link" when URL is passed', async () => {
+  it('renders with role="menuitem" when URL is passed (default for menu semantics)', () => {
     render(<MenuItem label="URL Item" url="/some-url" />);
-    expect(screen.getByRole('link', { name: 'URL Item' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
   it('renders with expected role when URL and role are passed', async () => {
