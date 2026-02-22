@@ -626,6 +626,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "sceneCsvExport",
+			Description:  "Enables CSV export using scenes dashboard architecture",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "drilldownRecommendations",
 			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:        FeatureStageExperimental,

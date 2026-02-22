@@ -77,6 +77,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-23,dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
+2026-02-11,sceneCsvExport,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-17,drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-28,panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true

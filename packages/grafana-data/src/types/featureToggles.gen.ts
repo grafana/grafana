@@ -409,6 +409,11 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enables CSV export using scenes dashboard architecture
+  * @default false
+  */
+  sceneCsvExport?: boolean;
+  /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
   */

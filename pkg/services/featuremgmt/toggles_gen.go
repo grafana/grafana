@@ -247,6 +247,10 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
