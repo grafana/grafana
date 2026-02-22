@@ -228,7 +228,7 @@
     "jimp": "^1.6.0",
     "jsdom-testing-mocks": "^1.13.1",
     "known-css-properties": "^0.37.0",
-    "lerna": "9.0.3",
+    "lerna": "9.0.4",
     "madge": "^8.0.0",
     "mini-css-extract-plugin": "2.9.2",
     "msw": "2.10.4",
