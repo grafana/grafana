@@ -110,6 +110,37 @@ describe('SqlExpr', () => {
       expect(updatedQuery.format).toBe('alerting');
     });
   });
+
+  it('quotes table names with spaces in the initial query', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'gdp per capita' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('`gdp per capita`');
+  });
+
+  it('does not quote simple table names without spaces', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('A');
+    expect(updatedQuery.expression).not.toContain('`A`');
+  });
 });
 
 describe('Schema Inspector feature toggle', () => {
