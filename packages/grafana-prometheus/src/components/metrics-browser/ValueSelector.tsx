@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FixedSizeList } from 'react-window';
+import { List, type RowComponentProps } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -9,6 +9,38 @@ import { LIST_ITEM_SIZE } from '../../constants';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesMetricsBrowser, getStylesValueSelector } from './styles';
+
+type ValueRowProps = {
+  lv: string[];
+  lk: string;
+  selectedLabelValues: Record<string, string[]>;
+  onLabelValueClick: (labelKey: string, name: string, selected: boolean) => void;
+  valueSearchTerm: string;
+};
+
+function ValueRowComponent({
+  index,
+  style,
+  lv,
+  lk,
+  selectedLabelValues,
+  onLabelValueClick,
+  valueSearchTerm,
+}: RowComponentProps<ValueRowProps>) {
+  const value = lv[index];
+  const isSelected = selectedLabelValues[lk]?.includes(value);
+  return (
+    <div style={style}>
+      <PromLabel
+        name={value}
+        value={value}
+        active={isSelected}
+        onClick={(name) => onLabelValueClick(lk, name, !isSelected)}
+        searchTerm={valueSearchTerm}
+      />
+    </div>
+  );
+}
 
 export function ValueSelector() {
   const styles = useStyles2(getStylesValueSelector);
@@ -78,30 +110,14 @@ export function ValueSelector() {
                 <div className={styles.valueTitle}>
                   <PromLabel name={lk} active={true} hidden={false} facets={lv.length} onClick={onLabelKeyClick} />
                 </div>
-                <FixedSizeList
-                  height={Math.min(200, LIST_ITEM_SIZE * (lv.length || 0))}
-                  itemCount={lv.length || 0}
-                  itemSize={28}
-                  itemKey={(i) => lv[i]}
-                  width={200}
+                <List
+                  rowComponent={ValueRowComponent}
+                  rowCount={lv.length || 0}
+                  rowHeight={28}
+                  rowProps={{ lv, lk, selectedLabelValues, onLabelValueClick, valueSearchTerm }}
+                  style={{ height: Math.min(200, LIST_ITEM_SIZE * (lv.length || 0)), width: 200 }}
                   className={styles.valueList}
-                >
-                  {({ index, style }) => {
-                    const value = lv[index];
-                    const isSelected = selectedLabelValues[lk]?.includes(value);
-                    return (
-                      <div style={style}>
-                        <PromLabel
-                          name={value}
-                          value={value}
-                          active={isSelected}
-                          onClick={(name) => onLabelValueClick(lk, name, !isSelected)}
-                          searchTerm={valueSearchTerm}
-                        />
-                      </div>
-                    );
-                  }}
-                </FixedSizeList>
+                />
               </div>
             );
           })}

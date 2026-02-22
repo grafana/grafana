@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FixedSizeList } from 'react-window';
+import { List, type RowComponentProps } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -9,6 +9,41 @@ import { LIST_ITEM_SIZE } from '../../constants';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesMetricSelector } from './styles';
+
+type MetricRowProps = {
+  filteredMetrics: Array<{ name: string; details?: string }>;
+  selectedMetric: string;
+  metricSearchTerm: string;
+  setMetricSearchTerm: (term: string) => void;
+  onMetricClick: (name: string) => void;
+};
+
+function MetricRowComponent({
+  index,
+  style,
+  filteredMetrics,
+  selectedMetric,
+  metricSearchTerm,
+  setMetricSearchTerm,
+  onMetricClick,
+}: RowComponentProps<MetricRowProps>) {
+  const metric = filteredMetrics[index];
+  return (
+    <div style={style}>
+      <PromLabel
+        name={metric.name}
+        value={metric.name}
+        title={metric.details}
+        active={metric.name === selectedMetric}
+        onClick={(name: string, _value: string | undefined) => {
+          setMetricSearchTerm('');
+          onMetricClick(name);
+        }}
+        searchTerm={metricSearchTerm}
+      />
+    </div>
+  );
+}
 
 export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);
@@ -65,34 +100,14 @@ export function MetricSelector() {
           className={styles.valueListWrapper}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
-          <FixedSizeList
-            height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
-            itemCount={filteredMetrics.length}
-            itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => filteredMetrics[i].name}
-            width={300}
+          <List
+            rowComponent={MetricRowComponent}
+            rowCount={filteredMetrics.length}
+            rowHeight={LIST_ITEM_SIZE}
+            rowProps={{ filteredMetrics, selectedMetric, metricSearchTerm, setMetricSearchTerm, onMetricClick }}
+            style={{ height: Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE), width: 300 }}
             className={styles.valueList}
-          >
-            {({ index, style }) => {
-              const metric = filteredMetrics[index];
-              return (
-                <div style={style}>
-                  <PromLabel
-                    name={metric.name}
-                    value={metric.name}
-                    title={metric.details}
-                    active={metric.name === selectedMetric}
-                    onClick={(name: string, value: string | undefined) => {
-                      // Resetting search to prevent empty results
-                      setMetricSearchTerm('');
-                      onMetricClick(name);
-                    }}
-                    searchTerm={metricSearchTerm}
-                  />
-                </div>
-              );
-            }}
-          </FixedSizeList>
+          />
         </div>
       </div>
     </div>
