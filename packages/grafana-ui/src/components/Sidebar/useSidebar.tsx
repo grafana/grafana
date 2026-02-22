@@ -23,6 +23,7 @@ export interface SidebarContextValue {
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  onToggleIsHidden: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -51,7 +52,7 @@ export interface UseSideBarOptions {
    */
   persistanceKey?: string;
   /** Whether the sidebar is hidden */
-  isHidden?: boolean;
+  defaultIsHidden?: boolean;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -68,13 +69,14 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
-  isHidden = false,
+  defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
 
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 280);
+  const [isHidden, setIsHidden] = useSidebarSavedState(persistanceKey, 'hidden', defaultIsHidden);
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
@@ -126,6 +128,8 @@ export function useSidebar({
     [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
+  const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
+
   return {
     isDocked,
     onToggleDock,
@@ -141,6 +145,7 @@ export function useSidebar({
     contentMargin,
     isHidden,
     onClosePane,
+    onToggleIsHidden,
   };
 }
 
