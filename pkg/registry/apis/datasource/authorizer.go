@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -14,15 +15,25 @@ import (
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "resource", attr.GetResource())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "subresource", attr.GetSubresource())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "verb", attr.GetVerb())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "name", attr.GetName())
+
 			if !attr.IsResourceRequest() {
+				backend.Logger.Info("+++++++++++++++++++ auth for datasource, IsResourceRequest false")
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "user.groups", user.GetGroups())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "user.permissions", user.GetPermissions())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "user.globalpermissions", user.GetGlobalPermissions())
 
 			uidScope := datasources.ScopeProvider.GetResourceScopeUID(attr.GetName())
+			backend.Logger.Info("+++++++++++++++++++ auth for datasource", "uidScope", uidScope)
 
 			// Must have query permission to access any subresource
 			if attr.GetSubresource() != "" {
@@ -69,8 +80,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case "delete":
 				action = datasources.ActionDelete
 			default:
-				//b.log.Info("unknown verb", "verb", attr.GetVerb())
-				return authorizer.DecisionDeny, "unsupported verb", nil // Unknown verb
+				return authorizer.DecisionDeny, "unsupported verb", nil
 			}
 			ok, err := b.accessControl.Evaluate(ctx, user,
 				ac.EvalPermission(action, uidScope))
