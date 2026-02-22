@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -10,6 +12,7 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { CompatibilityBadge, CompatibilityState } from './CompatibilityBadge';
 import { GnetDashboard } from './types';
+import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
 interface Details {
   id: string;
@@ -25,7 +28,8 @@ interface Props {
   imageUrl?: string;
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
-  onClick: () => void;
+  onClick: (customizeWithAssistant?: boolean) => void;
+  onClose?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
@@ -36,12 +40,14 @@ interface Props {
   compatibilityState?: CompatibilityState;
   /** Handler called when Check button is clicked in the badge */
   onCompatibilityCheck?: () => void;
+  showAssistantButton?: boolean;
 }
 
 function DashboardCardComponent({
   title,
   imageUrl,
   onClick,
+  onClose,
   dashboard,
   details,
   isLogo,
@@ -51,6 +57,7 @@ function DashboardCardComponent({
   showCompatibilityBadge,
   compatibilityState,
   onCompatibilityCheck,
+  showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -64,6 +71,34 @@ function DashboardCardComponent({
       />
     </Tooltip>
   );
+
+  const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
+
+  // Create structured context item with template metadata for the Assistant
+  const templateContext = useMemo(
+    () =>
+      createAssistantContextItem('structured', {
+        hidden: false,
+        title: buildTemplateContextTitle(dashboard),
+        data: buildTemplateContextData(dashboard, kind),
+      }),
+    [dashboard, kind]
+  );
+
+  const onUseAssistantClick = () => {
+    if (assistantAvailable) {
+      openAssistant?.({
+        origin: 'dashboard-library/use-dashboard',
+        mode: 'dashboarding',
+        prompt: buildAssistantPrompt(),
+        context: [templateContext],
+        autoSend: true,
+      });
+      // these both closes the modal and redirects the user the the template dashboard url
+      onClose?.();
+      onClick?.(true);
+    }
+  };
 
   return (
     <Card className={styles.card} noMargin>
@@ -114,13 +149,18 @@ function DashboardCardComponent({
         )}
       </div>
       <Card.Actions className={styles.actionsContainer}>
-        <Button variant="secondary" onClick={onClick}>
+        <Button variant="secondary" onClick={() => onClick()}>
           {kind === 'template_dashboard' ? (
-            <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+            <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
           ) : (
             <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
+        {assistantAvailable && showAssistantButton && (
+          <Button variant="secondary" fill="text" onClick={onUseAssistantClick} icon="ai-sparkle">
+            <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+          </Button>
+        )}
         {!isCompatibilityAppEnabled && detailsButton}
         {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
           <CompatibilityBadge
@@ -281,6 +321,7 @@ function getStyles(theme: GrafanaTheme2) {
     actionsContainer: css({
       marginTop: 0,
       alignItems: 'center',
+      flexWrap: 'nowrap',
     }),
     detailsContainer: css({
       width: '340px',
