@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
@@ -19,15 +20,27 @@ interface PanelWrapperProps {
 }
 
 function PanelWrapper({ panel, isLazy, containerRef }: PanelWrapperProps) {
+  const panelPathId = panel.getPathId();
+  const isClone = isRepeatCloneOrChildOf(panel);
+
   if (isLazy) {
     return (
-      <LazyLoader key={panel.state.key!} ref={containerRef} className={panelWrapper}>
+      <LazyLoader
+        key={panel.state.key!}
+        ref={containerRef}
+        className={`${panelWrapper}${isClone ? ' dashboard-repeat-clone-panel' : ''}`}
+        data-selection-path-id={panelPathId}
+      >
         <panel.Component model={panel} />
       </LazyLoader>
     );
   }
   return (
-    <div className={panelWrapper} ref={containerRef}>
+    <div
+      className={`${panelWrapper}${isClone ? ' dashboard-repeat-clone-panel' : ''}`}
+      ref={containerRef}
+      data-selection-path-id={panelPathId}
+    >
       <panel.Component model={panel} />
     </div>
   );

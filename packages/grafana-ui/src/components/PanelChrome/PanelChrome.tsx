@@ -173,7 +173,13 @@ export function PanelChrome({
 
   // Highlight the full panel when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
-  const onHeaderEnter = React.useCallback(() => setSelectableHighlight(true), []);
+  const onHeaderEnter = React.useCallback((evt: React.MouseEvent) => {
+    // Repeated clone panels should not show selectable hover styling.
+    if (evt.currentTarget instanceof Element && evt.currentTarget.closest('.dashboard-repeat-clone-panel')) {
+      return;
+    }
+    setSelectableHighlight(true);
+  }, []);
   const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally

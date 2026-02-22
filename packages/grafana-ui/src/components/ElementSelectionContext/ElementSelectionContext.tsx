@@ -22,6 +22,7 @@ export interface ElementSelectionContextState {
 
 export interface ElementSelectionContextItem {
   id: string;
+  pathId?: string;
 }
 
 export const ElementSelectionContext = createContext<ElementSelectionContextState | undefined>(undefined);
@@ -59,7 +60,13 @@ export function useElementSelection(id: string | undefined): UseElementSelection
         window.getSelection()?.empty();
       }
 
-      context.onSelect({ id }, { ...options, multi: options.multi ?? evt.shiftKey });
+      const target = evt.target instanceof Element ? evt.target : null;
+      const selectionPathId = target?.closest('[data-selection-path-id]')?.getAttribute('data-selection-path-id');
+
+      context.onSelect(
+        { id, pathId: selectionPathId ?? undefined },
+        { ...options, multi: options.multi ?? evt.shiftKey }
+      );
     },
     [context, id]
   );

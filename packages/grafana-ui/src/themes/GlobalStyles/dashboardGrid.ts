@@ -91,6 +91,14 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    // Repeated clone panels should not show selectable hover styling, mirroring repeated rows behavior.
+    '.dashboard-repeat-clone-panel .dashboard-selectable-element': {
+      '&:hover': {
+        outline: 'none',
+        backgroundColor: 'transparent',
+      },
+    },
+
     '.dashboard-canvas-controls': {
       opacity: 0,
 
