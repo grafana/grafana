@@ -1,4 +1,4 @@
-import { getZone } from '@grafana/data';
+import { getTimeZoneInfo } from '@grafana/data';
 
 /**
  * React calendar doesn't support showing dates in other time zones, so attempting to show
@@ -9,13 +9,13 @@ import { getZone } from '@grafana/data';
  * See also https://github.com/wojtekmaj/react-calendar/issues/511#issuecomment-835333976
  */
 export function adjustDateForReactCalendar(date: Date, timeZone: string): Date {
-  const zone = getZone(timeZone);
-  if (!zone) {
+  const zoneInfo = getTimeZoneInfo(timeZone, date.getTime());
+  if (!zoneInfo) {
     return date;
   }
 
-  // get utc offset for timezone preference
-  const timezonePrefOffset = zone.utcOffset(date.getTime());
+  // get utc offset for timezone preference using the offset from TimeZoneInfo
+  const timezonePrefOffset = -zoneInfo.offsetInMins;
 
   // get utc offset for local timezone
   const localOffset = date.getTimezoneOffset();

@@ -1,9 +1,10 @@
 import { memoize } from 'lodash';
-import moment from 'moment-timezone';
 
 import { TimeZone } from '../types/time';
 
 import { getTimeZone } from './common';
+import countryAndZones from './country-and-zones.json';
+import { getTimeZones as getDayjsTimeZones, guessTimeZone } from './moment_wrapper';
 
 export enum InternalTimeZones {
   default = '',
@@ -23,7 +24,15 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
 };
 
 export const getZone = (timeZone: string) => {
-  return moment.tz.zone(timeZone);
+  try {
+    // Validate timezone using Intl API
+    Intl.DateTimeFormat(undefined, { timeZone });
+    return {
+      name: timeZone,
+    };
+  } catch (e) {
+    return null;
+  }
 };
 
 export interface TimeZoneCountry {
@@ -63,7 +72,7 @@ export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZone
     initial.push(...includeInternal);
   }
 
-  return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
+  return getDayjsTimeZones().reduce((zones: TimeZone[], zone: string) => {
     const countriesForZone = countriesByTimeZone[zone];
 
     if (!Array.isArray(countriesForZone) || countriesForZone.length === 0) {
@@ -134,7 +143,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
     }
 
     case InternalTimeZones.localBrowserTime: {
-      const tz = moment.tz.guess(true);
+      const tz = guessTimeZone();
       const info = mapToInfo(tz, timestamp);
 
       return {
@@ -161,18 +170,36 @@ const abbrevationWithoutOffset = (abbrevation: string): string => {
 };
 
 const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
-  const momentTz = moment.tz.zone(timeZone);
-  if (!momentTz) {
+  try {
+    // Validate timezone using Intl API
+    Intl.DateTimeFormat(undefined, { timeZone: timeZone.toString() });
+  } catch (e) {
     return undefined;
   }
 
+  // Get timezone info using Intl API
+  const date = new Date(timestamp);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timeZone.toString(),
+    timeZoneName: 'short',
+    hour: 'numeric',
+    minute: 'numeric',
+  });
+  const parts = formatter.formatToParts(date);
+  const timeZoneName = parts.find((part) => part.type === 'timeZoneName')?.value || '';
+
+  // Calculate offset
+  const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timeZone.toString() }));
+  const offsetInMins = (tzDate.getTime() - utcDate.getTime()) / (1000 * 60);
+
   return {
     name: timeZone,
-    ianaName: momentTz.name,
+    ianaName: timeZone,
     zone: timeZone,
     countries: countriesByTimeZone[timeZone] ?? [],
-    abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
-    offsetInMins: momentTz.utcOffset(timestamp),
+    abbreviation: abbrevationWithoutOffset(timeZoneName),
+    offsetInMins,
   };
 };
 
@@ -425,28 +452,34 @@ const countryByCode: Record<string, string> = {
   ZW: 'Zimbabwe',
 };
 
+// Build countriesByTimeZone from the JSON data exported from moment-timezone
+// This ensures accurate timezone-to-country mappings
 const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
-    const timeZones = moment.tz.zonesForCountry(code);
-    return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
-      if (!all[timeZone]) {
-        all[timeZone] = [];
+  const result: Record<string, TimeZoneCountry[]> = {};
+
+  for (const countryData of countryAndZones) {
+    const countryCode = countryData.name;
+    const countryName = countryByCode[countryCode];
+
+    if (!countryName) {
+      continue;
+    }
+
+    const country: TimeZoneCountry = {
+      code: countryCode,
+      name: countryName,
+    };
+
+    for (const zone of countryData.zones) {
+      if (!result[zone]) {
+        result[zone] = [];
       }
 
-      const name = countryByCode[code];
-
-      if (!name) {
-        return all;
+      if (!result[zone].some((c) => c.code === countryCode)) {
+        result[zone].push(country);
       }
+    }
+  }
 
-      // Fix: Only include Antarctica if timezone starts with "Antarctica/"
-      // https://github.com/grafana/grafana/issues/104688
-      if (code === 'AQ' && !timeZone.startsWith('Antarctica/')) {
-        return all;
-      }
-
-      all[timeZone].push({ code, name });
-      return all;
-    }, all);
-  }, {});
+  return result;
 })();

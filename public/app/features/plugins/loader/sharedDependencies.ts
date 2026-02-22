@@ -98,7 +98,9 @@ export const sharedDependenciesMap = {
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins
   lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
-  moment: () => import('moment').then((module) => ({ ...module, __useDefault: true })),
+  // Moment migration: expose dayjs and dateTime utilities for external plugins
+  moment: () => import('dayjs').then((module) => ({ ...module, __useDefault: true })),
+  dayjs: () => import('dayjs').then((module) => ({ ...module, __useDefault: true })),
   prismjs: () => import('prismjs'),
   react: () => import('react'),
   // Externalise react/jsx-runtime to align with runtime version of react.

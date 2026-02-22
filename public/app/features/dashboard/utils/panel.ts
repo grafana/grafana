@@ -1,20 +1,13 @@
 import { isString as _isString } from 'lodash';
 
-import {
-  TimeRange,
-  AppEvents,
-  rangeUtil,
-  dateMath,
-  PanelModel as IPanelModel,
-  dateTimeAsMoment,
-  store,
-} from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { UnlinkModal } from 'app/features/dashboard-scene/scene/UnlinkModal';
@@ -129,13 +122,13 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     }
 
     if (_isString(timeRange.raw.from)) {
-      const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
-      const toTimezone = dateTimeAsMoment(timeRange.to).tz();
-      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;
+      const timeSrv = getTimeSrv();
+      const timezone = timeSrv.timeModel?.getTimezone() ?? 'browser';
+      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, timezone)!;
       newTimeData.timeInfo = timeFromInfo.display;
       newTimeData.timeRange = {
         from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to, undefined, toTimezone)!,
+        to: dateMath.parse(timeFromInfo.to, undefined, timezone)!,
         raw: {
           from: timeFromInfo.from,
           to: timeFromInfo.to,
