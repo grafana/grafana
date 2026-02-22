@@ -10,7 +10,8 @@ import {
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { colorSchemes } from './palettes';
-import { Options, defaultOptions, HeatmapColorMode } from './types';
+import { Options, HeatmapColorMode } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {

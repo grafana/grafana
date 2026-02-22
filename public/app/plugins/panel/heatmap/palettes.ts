@@ -4,7 +4,8 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HeatmapColorOptions, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
+import { HeatmapColorOptions, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
 
