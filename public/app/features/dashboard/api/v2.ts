@@ -33,7 +33,7 @@ import { isV0V1StoredVersion } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
-  version: 'v2beta1',
+  version: 'v2beta2',
   resource: 'dashboards',
 };
 

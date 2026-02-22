@@ -83,7 +83,12 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
 
     expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
     const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-    expect(dataTransformer.state.transformations[0]).toEqual(panel.spec.data.spec.transformations[0].spec);
+    const expectedTransformation = panel.spec.data.spec.transformations[0];
+    expect(dataTransformer.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
 
     expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
     const queryRunner = getQueryRunnerFor(vizPanel)!;

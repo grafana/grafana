@@ -270,9 +270,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
-    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
-    );
+    const expectedTransformation = getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0];
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
   });
 
   it('should set panel ds if it is mixed DS', () => {

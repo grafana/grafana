@@ -162,7 +162,7 @@ export function ensureV2Response(
       // sometimes we can have a v2 spec returned through legacy api like public dashboard
       // in that case we need to return dashboard as it is, since the conversion is not needed
       return {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2beta2',
         kind: 'DashboardWithAccessInfo',
         metadata,
         spec: dto.dashboard,
@@ -224,7 +224,7 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2beta1',
+    apiVersion: 'v2beta2',
     kind: 'DashboardWithAccessInfo',
     metadata,
     spec,
@@ -678,10 +678,13 @@ export function buildPanelKind(p: Panel): PanelKind {
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
   return transformations.map((t) => {
     return {
-      kind: t.id,
+      kind: 'Transformation' as const,
+      group: t.id,
       spec: {
-        ...t,
+        disabled: t.disabled,
+        filter: t.filter,
         ...(t.topic !== undefined && { topic: transformDataTopic(t.topic) }),
+        options: t.options,
       },
     };
   });
@@ -1205,7 +1208,10 @@ function transformV2PanelToV1Panel(
           ...q.spec.query.spec,
         };
       }),
-      transformations: panel.data.spec.transformations.map((t) => t.spec),
+      transformations: panel.data.spec.transformations.map((t) => ({
+        id: t.group,
+        ...t.spec,
+      })),
       gridPos,
       ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
         cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,

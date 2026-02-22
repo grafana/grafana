@@ -177,7 +177,7 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
     'migrated_dashboards_output'
   );
 
-  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
+  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta2';
 
   // Get v0alpha1 and v1beta1 input files recursively from all subdirectories
   const v1beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {

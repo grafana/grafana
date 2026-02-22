@@ -208,6 +208,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     $data: dataProvider,
     transformations: panel.data.spec.transformations.map((t) => {
       return {
+        id: t.group,
         ...t.spec,
         topic: transformDataTopic(t.spec.topic),
       };
