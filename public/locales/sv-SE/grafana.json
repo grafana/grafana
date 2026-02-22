@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Tyst start och slut",
       "placeholder-select-time-range": "Välj tidsintervall"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "i {{duration}}"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Redigera",
       "title-recreate": "Skapa om",
-      "title-unsilence": "Häv tystnaden"
+      "title-unsilence": "Häv tystnaden",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Det gick inte att hämta instrumentpanel"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Skicka anpassad feedback",
       "footer-text": "Detta innehåll är AI-genererat med <2>Grafanas LLM-tillägg </2>",
@@ -7282,7 +7314,14 @@
       "title": "Versioner"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "Visa verktyg för att göra mätningar på kartan",
     "description-show-scale": "Ange skala för kartan",
     "description-show-zoom": "Visa zoomkontrollknappar i det övre vänstra hörnet",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Lager"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Visa mätverktyg",
     "name-show-scale": "Visa skala",
     "name-show-zoom": "Visa zoomkontroll",
+    "name-sync-view-variable": "",
     "name-tooltip": "Verktygstips",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Inga strängfält hittades"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Lager {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Instanssynkronisering kräver att alla resurser hanteras. Befintliga resurser kommer att migreras automatiskt.",
       "migrate-resources-description": "",
       "options": "Alternativ",
       "repository-error": "Fel i lagringsplats",
       "repository-error-message": "Det gick inte att kontrollera lagringsplatsens status. Verifiera lagringsplatskonfigurationen och försök igen.",
       "repository-unhealthy": "Lagringsplatsen kan inte synkroniseras. Avbryt tilldelningen och försök igen när problemet har lösts. Se detaljer nedan.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Välj uppdateringsintervall med aktuellt intervall {{durationAriaLabel}} valt"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Aktivera livestreaming",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Stäng av automatisk uppdatering",
       "label": "Av"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Inga matchande tystnader hittades;",
       "noConfig": "Skapa en ny kontaktpunkt för att skapa en konfiguration med standardvärdena eller kontakta din administratör för att konfigurera Alertmanager.",
       "recreate-button": "Skapa om",
-      "unsilence-button": "Häv tystnaden"
+      "unsilence-button": "Häv tystnaden",
+      "view-button": ""
     }
   },
   "silences-table": {

@@ -1753,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3176,6 +3181,17 @@
       "label-silence-start-and-end": "Potlačit začátek a konec",
       "placeholder-select-time-range": "Vybrat časový rozsah"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "pro {{duration}}"
     },
@@ -3484,7 +3500,8 @@
       },
       "title-edit": "Upravit",
       "title-recreate": "Znovu vytvořit",
-      "title-unsilence": "Zrušit potlačení"
+      "title-unsilence": "Zrušit potlačení",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5451,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Nepodařilo se načíst nástěnku"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Odeslat vlastní zpětnou vazbu",
       "footer-text": "Tento obsah je generován umělou inteligencí pomocí <2>pluginu Grafana LLM</2>",
@@ -7344,7 +7376,14 @@
       "title": "Verze"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8684,6 +8723,8 @@
     "description-show-measure": "Zobrazit nástroje pro měření na mapě",
     "description-show-scale": "Uveďte měřítko mapy",
     "description-show-zoom": "Zobrazit tlačítka pro ovládání přiblížení v levém horním rohu",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Vrstva"
@@ -8745,7 +8786,9 @@
     "name-show-measure": "Zobrazit nástroje pro měření",
     "name-show-scale": "Zobrazit měřítko",
     "name-show-zoom": "Zobrazit ovládání přiblížení",
+    "name-sync-view-variable": "",
     "name-tooltip": "Popisek",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nebyla nalezena žádná pole řetězce"
     },
@@ -8798,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Vrstva {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -13028,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Synchronizace instancí vyžaduje správu všech zdrojů. Stávající zdroje budou migrovány automaticky.",
       "migrate-resources-description": "",
       "options": "Možnosti",
       "repository-error": "Chyba úložiště",
       "repository-error-message": "Nelze zkontrolovat stav úložiště. Ověřte konfiguraci úložiště a zkuste to znovu.",
       "repository-unhealthy": "Úložiště nelze synchronizovat. Zrušte zajištění a zkuste to znovu, jakmile bude problém vyřešen. Podrobnosti naleznete níže.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13520,15 +13569,12 @@
       "duration-selected": "Vyberte časový interval obnovení se zvoleným aktuálním intervalem {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Zapnout živé vysílání",
       "label": "Živě"
     },
     "off-option": {
-      "aria-label": "Vypnout automatické obnovení",
       "label": "Vypnuto"
     },
     "tooltip": {
@@ -14058,7 +14104,8 @@
       "no-matching-silences": "Nebyla nalezena žádná odpovídající potlačení;",
       "noConfig": "Vytvořte nový kontaktní bod a konfiguraci pomocí výchozích hodnot nebo se obraťte na správce pro nastavení správce výstrah.",
       "recreate-button": "Znovu vytvořit",
-      "unsilence-button": "Zrušit potlačení"
+      "unsilence-button": "Zrušit potlačení",
+      "view-button": ""
     }
   },
   "silences-table": {

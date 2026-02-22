@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3122,6 +3127,17 @@
       "label-silence-start-and-end": "静默开始和结束",
       "placeholder-select-time-range": "选择时间范围"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "时长为 {{duration}}"
     },
@@ -3430,7 +3446,8 @@
       },
       "title-edit": "编辑",
       "title-recreate": "重新创建",
-      "title-unsilence": "取消静默"
+      "title-unsilence": "取消静默",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5373,6 +5390,21 @@
         "failed-to-fetch-dashboard": "获取数据面板失败"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "发送自定义反馈",
       "footer-text": "此内容使用 <2>Grafana LLM 插件</2>通过 AI 生成",
@@ -7251,7 +7283,14 @@
       "title": "版本"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8585,6 +8624,8 @@
     "description-show-measure": "在地图上显示用于测量的工具",
     "description-show-scale": "标注地图比例",
     "description-show-zoom": "在左上角显示缩放控制按钮",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "图层"
@@ -8646,7 +8687,9 @@
     "name-show-measure": "显示测量工具",
     "name-show-scale": "显示比例",
     "name-show-zoom": "显示缩放控制",
+    "name-sync-view-variable": "",
     "name-tooltip": "工具提示",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "未找到字符串字段"
     },
@@ -8699,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "图层{{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12848,12 +12894,15 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "实例同步要求所有资源均处于受管状态。现有资源将自动迁移。",
       "migrate-resources-description": "",
       "options": "选项",
       "repository-error": "存储库错误",
       "repository-error-message": "无法检查存储库状态。请验证存储库配置，然后重试。",
       "repository-unhealthy": "存储库无法同步。取消预置，并在问题解决后重试。请参阅下面的详细信息。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13325,15 +13374,12 @@
       "duration-selected": "以当前所选间隔 {{durationAriaLabel}} 选择刷新时间间隔"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "开启直播流",
       "label": "直播"
     },
     "off-option": {
-      "aria-label": "关闭自动刷新",
       "label": "关"
     },
     "tooltip": {
@@ -13860,7 +13906,8 @@
       "no-matching-silences": "未找到匹配的静默；",
       "noConfig": "创建一个新的联络点以使用默认值创建配置，或联系您的管理员以设置 Alertmanager。",
       "recreate-button": "重新创建",
-      "unsilence-button": "取消静默"
+      "unsilence-button": "取消静默",
+      "view-button": ""
     }
   },
   "silences-table": {

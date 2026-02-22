@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Sessize alma başlangıcı ve bitişi",
       "placeholder-select-time-range": "Bir zaman aralığı seçin"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "{{duration}} boyunca"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Düzenle",
       "title-recreate": "Yeniden oluştur",
-      "title-unsilence": "Sessize almayı kaldır"
+      "title-unsilence": "Sessize almayı kaldır",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Pano alınamadı"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Özel geri bildirim gönder",
       "footer-text": "Bu içerik <2>Grafana LLM eklentisi</2> kullanılarak yapay zekâ ile oluşturulmuştur",
@@ -7282,7 +7314,14 @@
       "title": "Sürümler"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": "Kaydedilen sorgulardan ekle"
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "Harita üzerinde ölçüm yapmak için araçları göster",
     "description-show-scale": "Harita ölçeğini belirtin",
     "description-show-zoom": "Sol üst köşedeki yakınlaştırma kontrol düğmelerini göster",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Katman"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Ölçüm araçlarını göster",
     "name-show-scale": "Ölçeği göster",
     "name-show-zoom": "Yakınlaştırma kontrolünü göster",
+    "name-sync-view-variable": "",
     "name-tooltip": "Araç ipucu",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Dize alanı bulunamadı"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "{{name}} katmanı"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Örnek senkronizasyonu için tüm kaynakların yönetilmesi gerekir. Mevcut kaynaklar otomatik olarak taşınacaktır.",
       "migrate-resources-description": "",
       "options": "Seçenekler",
       "repository-error": "Depo hatası",
       "repository-error-message": "Depo durumu kontrol edilemiyor. Lütfen depo yapılandırmasını doğrulayın ve tekrar deneyin.",
       "repository-unhealthy": "Depo senkronize edilemiyor. Sağlamayı iptal edin ve sorun çözüldükten sonra tekrar deneyin. Aşağıdaki ayrıntılara bakın.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Geçerli aralık {{durationAriaLabel}} seçiliyken yenileme zaman aralığını seçin"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Canlı yayını aç",
       "label": "Canlı"
     },
     "off-option": {
-      "aria-label": "Otomatik yenilemeyi kapat",
       "label": "Kapalı"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Eşleşen sessize alma bulunamadı;",
       "noConfig": "Varsayılan değerleri kullanarak bir yapılandırma oluşturmak için yeni bir iletişim noktası oluşturun veya Alertmanager'ı ayarlamak için yöneticinizle iletişime geçin.",
       "recreate-button": "Yeniden oluştur",
-      "unsilence-button": "Sessize almayı kaldır"
+      "unsilence-button": "Sessize almayı kaldır",
+      "view-button": ""
     }
   },
   "silences-table": {

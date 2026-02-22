@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Silenciar início e fim",
       "placeholder-select-time-range": "Selecionar intervalo de tempo"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "durante {{duration}}"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Editar",
       "title-recreate": "Criar de novo",
-      "title-unsilence": "Cancelar silêncio"
+      "title-unsilence": "Cancelar silêncio",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Falha ao obter o painel de controlo"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Enviar comentários personalizados",
       "footer-text": "Este conteúdo é gerado por IA com o <2>plugin Grafana LLM</2>",
@@ -7282,7 +7314,14 @@
       "title": "Versões"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "Mostrar ferramentas para fazer medições no mapa",
     "description-show-scale": "Indicar a escala do mapa",
     "description-show-zoom": "Mostrar botões de controlo de zoom no canto superior esquerdo",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Camada"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Mostrar ferramentas de medição",
     "name-show-scale": "Mostrar escala",
     "name-show-zoom": "Mostrar controlo de zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Descrição",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nenhum campo de string encontrado"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Camada {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Não foi possível obter um repositório que não está em bom estado"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "A sincronização de instâncias requer que todos os recursos sejam geridos. Os recursos existentes serão migrados automaticamente.",
       "migrate-resources-description": "",
       "options": "Opções",
       "repository-error": "Erro de repositório",
       "repository-error-message": "Não foi possível verificar o estado do repositório. Verifique a configuração do repositório e tente novamente.",
       "repository-unhealthy": "O repositório não pode ser sincronizado. Cancele o provisionamento e tente novamente assim que o problema for resolvido. Veja os detalhes abaixo.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Escolha o intervalo de tempo de atualização com o intervalo atual {{durationAriaLabel}} selecionado"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Ativar transmissão ao vivo",
       "label": "Em direto"
     },
     "off-option": {
-      "aria-label": "Desativar atualização automática",
       "label": "Desligado"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Não foram encontrados silêncios correspondentes;",
       "noConfig": "Crie um novo ponto de contacto para criar uma configuração utilizando os valores padrão ou contacte o seu administrador para configurar o Alertmanager.",
       "recreate-button": "Criar de novo",
-      "unsilence-button": "Cancelar silêncio"
+      "unsilence-button": "Cancelar silêncio",
+      "view-button": ""
     }
   },
   "silences-table": {
