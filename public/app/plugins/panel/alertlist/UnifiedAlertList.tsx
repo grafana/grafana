@@ -61,15 +61,20 @@ function getStateList(state: StateFilter) {
   return Object.entries(state).reduce(reducer, []);
 }
 
+// In grouped mode, instances from multiple alert rules are merged into arbitrary groups,
+// so the per-rule backend limit of INSTANCES_DISPLAY_LIMIT is too low — a single group
+// can easily exceed it by combining instances across rules. We use a higher limit here.
+const GROUPED_INSTANCES_LIMIT = 100;
+
 const fetchPromAndRuler = ({
   dispatch,
-  limitInstances,
+  limitAlerts,
   matcherList,
   dataSourceName,
   stateList,
 }: {
   dispatch: ThunkDispatch;
-  limitInstances: boolean;
+  limitAlerts: number | undefined;
   matcherList?: Matcher[] | undefined;
   dataSourceName?: string;
   stateList: string[];
@@ -78,7 +83,7 @@ const fetchPromAndRuler = ({
     dispatch(
       fetchPromAndRulerRulesAction({
         rulesSourceName: dataSourceName,
-        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        limitAlerts,
         matcher: matcherList,
         state: stateList,
       })
@@ -86,7 +91,7 @@ const fetchPromAndRuler = ({
   } else {
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
-        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        limitAlerts,
         matcher: matcherList,
         state: stateList,
       })
@@ -143,13 +148,20 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
+  const isGroupedMode = options.groupMode === GroupMode.Custom;
+  const effectiveLimitAlerts = isGroupedMode
+    ? GROUPED_INSTANCES_LIMIT
+    : limitInstances
+      ? INSTANCES_DISPLAY_LIMIT
+      : undefined;
+
   const {
     currentData: grafanaPromRules = [],
     isLoading: grafanaRulesLoading,
     refetch: refetchGrafanaPromRules,
   } = usePrometheusRulesByNamespaceQuery(
     {
-      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+      limitAlerts: effectiveLimitAlerts,
       matcher: matcherList,
       state: stateList,
     },
@@ -159,7 +171,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     if (!promRulesRequests.loading) {
-      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
     }
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
       if (shouldFetchGrafanaRules) {
@@ -167,7 +179,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       }
 
       if (!dataSourceName || dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-        fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+        fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
       }
     });
     return () => {
@@ -178,7 +190,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dashboard,
     matcherList,
     stateList,
-    limitInstances,
+    effectiveLimitAlerts,
     dataSourceName,
     refetchGrafanaPromRules,
     shouldFetchGrafanaRules,
@@ -187,10 +199,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
-      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitAlerts: INSTANCES_DISPLAY_LIMIT, matcherList, dataSourceName, stateList });
       toggleLimit(true);
     } else {
-      fetchPromAndRuler({ dispatch, limitInstances: false, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitAlerts: undefined, matcherList, dataSourceName, stateList });
       toggleLimit(false);
     }
   };
