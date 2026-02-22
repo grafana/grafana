@@ -7,6 +7,8 @@
 
 import { z } from 'zod';
 
+import { config } from '@grafana/runtime';
+
 import type { MutableDashboardScene, MutationResult } from '../types';
 
 export interface MutationContext {
@@ -21,7 +23,7 @@ export type PermissionCheck = (scene: MutableDashboardScene) => PermissionCheckR
  * A complete mutation command: schema, handler, permission, and metadata.
  *
  * Each command file exports a single MutationCommand. The registry collects
- * them and the MutationExecutor iterates over them generically.
+ * them and the DashboardMutationClient iterates over them generically.
  */
 export interface MutationCommand<T = unknown> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
@@ -53,6 +55,34 @@ export function requiresEdit(scene: MutableDashboardScene): PermissionCheckResul
  * No permission requirements -- read-only operations.
  */
 export function readOnly(_scene: MutableDashboardScene): PermissionCheckResult {
+  return { allowed: true };
+}
+
+/**
+ * Requires the dashboardNewLayouts feature toggle AND edit permissions.
+ * Used by all layout mutation commands (row/tab CRUD, panel movement).
+ */
+export function requiresNewDashboardLayouts(scene: MutableDashboardScene): PermissionCheckResult {
+  if (!config.featureToggles.dashboardNewLayouts) {
+    return {
+      allowed: false,
+      error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',
+    };
+  }
+  return requiresEdit(scene);
+}
+
+/**
+ * Requires the dashboardNewLayouts feature toggle (read-only).
+ * Used by GET_LAYOUT and other read-only layout commands.
+ */
+export function requiresNewDashboardLayoutsReadOnly(_scene: MutableDashboardScene): PermissionCheckResult {
+  if (!config.featureToggles.dashboardNewLayouts) {
+    return {
+      allowed: false,
+      error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',
+    };
+  }
   return { allowed: true };
 }
 

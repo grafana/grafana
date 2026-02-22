@@ -11,11 +11,14 @@
 
 import type { SceneObject, SceneObjectState } from '@grafana/scenes';
 
+import type { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+
 /**
  * Minimal subset of DashboardSceneState that the mutation system needs.
  */
 export interface MutableDashboardSceneState extends SceneObjectState {
   isEditing?: boolean;
+  body: DashboardLayoutManager;
 }
 
 /**

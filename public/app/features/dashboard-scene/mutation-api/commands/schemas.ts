@@ -417,6 +417,78 @@ export const variableKindSchema = z.discriminatedUnion('kind', [
 
 export const emptyPayloadSchema = z.object({}).strict();
 
+// Layout building-block schemas (v2beta1)
+
+export const elementReferenceSchema = z.object({
+  kind: z.literal('ElementReference').optional().default('ElementReference'),
+  name: z.string().describe('Element key in the dashboard elements map'),
+});
+
+export const layoutPathSchema = z
+  .string()
+  .regex(/^\/([a-z]+\/\d+(\/[a-z]+\/\d+)*)?$/)
+  .describe(
+    'Path to a location in the layout tree, from GET_LAYOUT output. ' +
+      'Examples: "/" (root), "/rows/0" (first row), "/tabs/1/rows/0" (first row inside second tab).'
+  );
+
+export const gridPositionSchema = z
+  .object({
+    x: z.number().optional().describe('Column position (0-23 in a 24-column grid)'),
+    y: z.number().optional().describe('Row position'),
+    width: z.number().optional().describe('Width in grid columns (1-24)'),
+    height: z.number().optional().describe('Height in grid units'),
+  })
+  .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
+
+export const rowRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 RowRepeatOptions');
+
+export const tabRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 TabRepeatOptions');
+
+export const rowsLayoutRowSpecSchema = z.object({
+  title: z.string().optional().describe('Row heading title'),
+  collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
+  hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
+  fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
+  repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+});
+
+export const partialRowSpecSchema = z
+  .object({
+    title: z.string().optional().describe('Row heading title'),
+    collapse: z.boolean().optional().describe('Whether the row is collapsed'),
+    hideHeader: z.boolean().optional().describe('Hide the row header'),
+    fillScreen: z.boolean().optional().describe('Row fills viewport height'),
+    repeat: rowRepeatOptionsSchema
+      .optional()
+      .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
+  })
+  .describe('Fields to update (partial RowsLayoutRowSpec)');
+
+export const tabsLayoutTabSpecSchema = z.object({
+  title: z.string().optional().describe('Tab title'),
+  repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+});
+
+export const partialTabSpecSchema = z
+  .object({
+    title: z.string().optional().describe('Tab title'),
+    repeat: tabRepeatOptionsSchema
+      .optional()
+      .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
+  })
+  .describe('Fields to update (partial TabsLayoutTabSpec)');
+
 // Payload schemas -- one per mutation command.
 // These compose the building-block schemas above into the exact shape
 // each command's `payload` field expects.
@@ -435,6 +507,120 @@ export const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
 });
 
+// Layout payload schemas
+
+export const getLayoutPayloadSchema = emptyPayloadSchema;
+
+export const addRowPayloadSchema = z.object({
+  row: z.object({
+    kind: z.literal('RowsLayoutRow').optional().default('RowsLayoutRow'),
+    spec: rowsLayoutRowSpecSchema,
+  }),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/tabs/0" to add inside a tab.'),
+  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+});
+
+export const removeRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")'),
+  moveContentTo: layoutPathSchema
+    .optional()
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+});
+
+export const updateRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the row'),
+  spec: partialRowSpecSchema,
+});
+
+export const moveRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Current path to the row (e.g., "/rows/2", "/tabs/0/rows/1")'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
+  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+});
+
+export const addTabPayloadSchema = z.object({
+  tab: z.object({
+    kind: z.literal('TabsLayoutTab').optional().default('TabsLayoutTab'),
+    spec: tabsLayoutTabSpecSchema,
+  }),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0" to add inside a row.'),
+  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+});
+
+export const removeTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")'),
+  moveContentTo: layoutPathSchema
+    .optional()
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+});
+
+export const updateTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the tab'),
+  spec: partialTabSpecSchema,
+});
+
+export const moveTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Current path to the tab (e.g., "/tabs/2", "/rows/0/tabs/1")'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
+  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+});
+
+export const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
+
+export const autoGridOptionsSchema = z
+  .object({
+    maxColumnCount: z.number().optional().describe('Maximum number of columns'),
+    columnWidthMode: z
+      .enum(['narrow', 'standard', 'wide', 'custom'])
+      .optional()
+      .describe('Column width preset. Use "custom" with columnWidth for pixel values.'),
+    columnWidth: z
+      .number()
+      .optional()
+      .describe('Custom column width in pixels (only used when columnWidthMode is "custom")'),
+    rowHeightMode: z
+      .enum(['short', 'standard', 'tall', 'custom'])
+      .optional()
+      .describe('Row height preset. Use "custom" with rowHeight for pixel values.'),
+    rowHeight: z.number().optional().describe('Custom row height in pixels (only used when rowHeightMode is "custom")'),
+    fillScreen: z.boolean().optional().describe('Whether the grid fills the viewport height'),
+  })
+  .describe('Options for AutoGridLayout only. Rejected for other layout types.');
+
+export const updateLayoutPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
+  layoutType: layoutTypeSchema
+    .optional()
+    .describe(
+      'Target layout type. If omitted, keeps current type and just applies options. ' +
+        'Group conversions: RowsLayout <-> TabsLayout. Grid conversions: GridLayout <-> AutoGridLayout.'
+    ),
+  options: autoGridOptionsSchema.optional().describe('AutoGridLayout properties. Rejected for other layout types.'),
+});
+
+export const movePanelPayloadSchema = z.object({
+  element: elementReferenceSchema.describe('Element to move, identified by name'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'),
+  position: gridPositionSchema
+    .optional()
+    .describe(
+      'New grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields. ' +
+        'Ignored for AutoGridLayout targets.'
+    ),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -447,4 +633,15 @@ export const payloads = {
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
   listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
+  getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
+  addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),
+  removeRow: removeRowPayloadSchema.describe('Remove a row from the dashboard layout'),
+  updateRow: updateRowPayloadSchema.describe('Update a row in the dashboard layout'),
+  moveRow: moveRowPayloadSchema.describe('Move or reorder a row in the dashboard layout'),
+  addTab: addTabPayloadSchema.describe('Add a new tab to the dashboard layout'),
+  removeTab: removeTabPayloadSchema.describe('Remove a tab from the dashboard layout'),
+  updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
+  moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
+  movePanel: movePanelPayloadSchema.describe('Move a panel to a different group or position'),
+  updateLayout: updateLayoutPayloadSchema.describe('Update the layout type and/or properties at a given path'),
 };
