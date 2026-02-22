@@ -88,12 +88,14 @@ func Test_runConcurrentlyIfNeeded_DeadlineExceeded(t *testing.T) {
 
 func TestCheckOrigin(t *testing.T) {
 	testCases := []struct {
-		name           string
-		origin         string
-		appURL         string
-		allowedOrigins []string
-		success        bool
-		host           string
+		name                  string
+		origin                string
+		appURL                string
+		allowedOrigins        []string
+		csrfAdditionalHeaders []string
+		requestHeaders        map[string]string
+		success               bool
+		host                  string
 	}{
 		{
 			name:    "empty_origin",
@@ -165,6 +167,87 @@ func TestCheckOrigin(t *testing.T) {
 			success: true,
 			host:    "example.com",
 		},
+		{
+			name:                  "valid_origin_with_x_forwarded_host",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "example.com"},
+			success:               true,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "valid_origin_with_x_forwarded_host_with_port",
+			origin:                "https://example.com:443",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "example.com:443"},
+			success:               true,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "valid_origin_with_multiple_headers_first_matches",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host", "X-Original-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "example.com", "X-Original-Host": "other.com"},
+			success:               true,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "valid_origin_with_multiple_headers_second_matches",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host", "X-Original-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "other.com", "X-Original-Host": "example.com"},
+			success:               true,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "mismatch_origin_with_x_forwarded_host",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "other.com"},
+			success:               false,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "header_present_but_not_configured",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": "example.com"},
+			success:               false,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "empty_header_value",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": ""},
+			success:               false,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "no_headers_configured_existing_behavior",
+			origin:                "http://localhost:3000",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{},
+			requestHeaders:        map[string]string{},
+			success:               true,
+			host:                  "localhost:3000",
+		},
+		{
+			name:                  "invalid_header_value_format",
+			origin:                "https://example.com",
+			appURL:                "http://localhost:3000/",
+			csrfAdditionalHeaders: []string{"X-Forwarded-Host"},
+			requestHeaders:        map[string]string{"X-Forwarded-Host": ":::"},
+			success:               false,
+			host:                  "localhost:3000",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -177,13 +260,20 @@ func TestCheckOrigin(t *testing.T) {
 			originGlobs, err := setting.GetAllowedOriginGlobs(tc.allowedOrigins)
 			require.NoError(t, err)
 
-			checkOrigin := getCheckOriginFunc(appURL, tc.allowedOrigins, originGlobs)
+			csrfAdditionalHeaders := tc.csrfAdditionalHeaders
+			if csrfAdditionalHeaders == nil {
+				csrfAdditionalHeaders = []string{}
+			}
+			checkOrigin := getCheckOriginFunc(appURL, tc.allowedOrigins, originGlobs, csrfAdditionalHeaders)
 
 			r := httptest.NewRequest("GET", tc.appURL, nil)
 			r.Host = tc.host
 			r.Header.Set("Origin", tc.origin)
+			for k, v := range tc.requestHeaders {
+				r.Header.Set(k, v)
+			}
 			require.Equal(t, tc.success, checkOrigin(r),
-				"origin %s, appURL: %s", tc.origin, tc.appURL,
+				"origin %s, appURL: %s, headers: %v", tc.origin, tc.appURL, tc.requestHeaders,
 			)
 		})
 	}
