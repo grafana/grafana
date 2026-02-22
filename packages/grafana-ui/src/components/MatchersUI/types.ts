@@ -12,7 +12,8 @@ export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {
 export interface MatcherUIProps<T> {
   matcher: FieldMatcherInfo<T>;
   id?: string;
-  data: DataFrame[];
+  series: DataFrame[];
+  annotations?: DataFrame[];
   options: T;
   onChange: (options: T) => void;
 }

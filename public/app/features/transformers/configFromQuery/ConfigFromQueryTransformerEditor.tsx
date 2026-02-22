@@ -80,7 +80,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         >
           <matcherUI.component
             matcher={matcherUI.matcher}
-            data={input}
+            series={input}
             options={currentMatcher.options}
             onChange={onMatcherConfigChange}
           />
