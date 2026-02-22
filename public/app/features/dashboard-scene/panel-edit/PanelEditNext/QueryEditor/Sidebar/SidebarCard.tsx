@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT } from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -193,7 +193,7 @@ function getStyles(
 
     card: css({
       position: 'relative',
-      minHeight: '30px',
+      minHeight: `${SIDEBAR_CARD_HEIGHT}px`,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
