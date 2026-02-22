@@ -1,0 +1,101 @@
+name: External PR Weekly Digest
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      stale_days:
+        description: 'Number of days without activity to consider PR stale'
+        required: false
+        type: number
+        default: 30
+      dry_run:
+        description: 'Dry run mode (print report but skip Slack notification)'
+        required: false
+        type: boolean
+        default: false
+      team_filter:
+        description: 'Filter to specific team (leave empty for all)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  id-token: write
+
+env:
+  STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
+
+    steps:
+      - name: Validate manual trigger
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          ACTOR: ${{ github.actor }}
+          TEAM_FILTER: ${{ inputs.team_filter }}
+        run: |
+          echo "::notice::Manual trigger by $ACTOR"
+          if [ -n "$TEAM_FILTER" ]; then
+            ALLOWED_TEAMS="alerting dashboard"
+            if [[ ! " $ALLOWED_TEAMS " == *" $TEAM_FILTER "* ]]; then
+              echo "::error::Invalid team_filter: $TEAM_FILTER. Allowed values: $ALLOWED_TEAMS (or empty for all)"
+              exit 1
+            fi
+            echo "::notice::Team filter validated: $TEAM_FILTER"
+          else
+            echo "::notice::No team filter - will process all enabled teams"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/workflows/scripts/utils.mts
+            .github/workflows/scripts/pr-digest.mts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: '22'
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        with:
+          repo_secrets: |
+            OPENAI_API_KEY=community-openai:key
+            SLACK_BOT_TOKEN=community-slack-bot:token
+
+      - name: Get all PRs
+        id: fetch-prs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts fetch
+
+      - name: Process teams and send reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+          STALE_DAYS: ${{ env.STALE_THRESHOLD_DAYS }}
+          REPO: ${{ github.repository }}
+          ALL_PRS: ${{ steps.fetch-prs.outputs.all_prs }}
+          EXTERNAL_PRS: ${{ steps.fetch-prs.outputs.external_prs }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          TEAM_FILTER: ${{ inputs.team_filter || '' }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts process
+
+      - name: No PRs summary
+        if: steps.fetch-prs.outputs.external_prs == '[]'
+        run: |
+          echo "No open external PRs found."
+          echo "Skipping Slack notification."

@@ -1,0 +1,33 @@
+name: External PR Notify Trigger
+
+on:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers]
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-pr-trigger-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    name: Capture PR metadata for handler
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'pr/external') &&
+      !contains(github.event.pull_request.labels.*.name, 'pr/auto-triaged')
+
+    steps:
+      - name: Save PR number for handler workflow
+        run: |
+          echo '${{ github.event.pull_request.number }}' > pr-number.txt
+          echo "PR number: $(cat pr-number.txt)"
+
+      - name: Upload PR number
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: pr-number
+          path: pr-number.txt
+          retention-days: 1

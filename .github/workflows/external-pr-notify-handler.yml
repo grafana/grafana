@@ -1,0 +1,147 @@
+name: External PR Notify Handler
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows: ["External PR Notify Trigger"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: notify-pr-handler-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    name: Notify and label external PR
+    runs-on: ubuntu-latest
+    # Only run if trigger workflow succeeded
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Download PR number
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: pr-number
+          path: /tmp/pr-number
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Get PR number
+        id: validate
+        run: |
+          PR_NUMBER=$(cat /tmp/pr-number/pr-number.txt)
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid PR number: $PR_NUMBER"
+            exit 1
+          fi
+
+          echo "Processing PR #$PR_NUMBER"
+          printf '%s\n' "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/workflows/scripts/utils.mts
+            .github/workflows/scripts/pr-notify.mts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: '22'
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        with:
+          repo_secrets: |
+            OPENAI_API_KEY=community-openai:key
+            SLACK_BOT_TOKEN=community-slack-bot:token
+
+      - name: Get PR metadata
+        id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts metadata
+
+      - name: Check for enabled team matches
+        id: check-teams
+        if: steps.metadata.outputs.skip_processing != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts check-teams
+
+      - name: No enabled team - skip triage
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team != 'true'
+        run: |
+          echo "::notice::No enabled team matches this PR - skipping classification and notification"
+          echo "This PR will not be triaged (no type/size labels, no welcome comment)"
+
+      - name: Classify PR type
+        id: classify
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
+        env:
+          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts classify
+
+      - name: Add classification labels
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          PR_TYPE: ${{ steps.classify.outputs.type }}
+          PR_SIZE: ${{ steps.metadata.outputs.size }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts labels
+
+      - name: Match teams and send notifications
+        id: notify
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          AREA_LABELS: ${{ steps.metadata.outputs.area_labels }}
+          ALL_FILES_B64: ${{ steps.metadata.outputs.all_files_b64 }}
+          PR_SIZE: ${{ steps.metadata.outputs.size }}
+          PR_TYPE: ${{ steps.classify.outputs.type }}
+          PR_ADDITIONS: ${{ steps.metadata.outputs.additions }}
+          PR_DELETIONS: ${{ steps.metadata.outputs.deletions }}
+          PR_AUTHOR: ${{ steps.metadata.outputs.author }}
+          TITLE_B64: ${{ steps.metadata.outputs.title_b64 }}
+          FILES_B64: ${{ steps.metadata.outputs.files_b64 }}
+          CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts notify
+
+      - name: Post welcome comment
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true' && steps.notify.outputs.notification_sent == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          PR_TYPE: ${{ steps.classify.outputs.type }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts welcome
+
+      - name: Add auto-triaged label
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true' && steps.notify.outputs.notification_sent == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts auto-triaged

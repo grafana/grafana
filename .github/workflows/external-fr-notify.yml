@@ -1,0 +1,82 @@
+name: External FR Notify
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+concurrency:
+  group: notify-fr-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    name: Notify team about new FR
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.issue.labels.*.name, 'type/feature-request') &&
+      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/workflows/scripts/utils.mts
+            .github/workflows/scripts/fr-notify.mts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: '22'
+
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        with:
+          repo_secrets: |
+            SLACK_BOT_TOKEN=community-slack-bot:token
+
+      - name: Get issue metadata
+        id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts metadata
+
+      - name: Match teams and send notifications
+        id: notify
+        if: steps.metadata.outputs.skip_processing != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          AREA_LABELS: ${{ steps.metadata.outputs.area_labels }}
+          TITLE_B64: ${{ steps.metadata.outputs.title_b64 }}
+          AUTHOR: ${{ steps.metadata.outputs.author }}
+          CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts notify
+
+      - name: Post welcome comment
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts welcome
+
+      - name: Add auto-triaged label
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts auto-triaged
