@@ -275,6 +275,25 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[0].Text)
 	})
 
+	t.Run("Should use plugin name when Text is not provided in nav config, and custom Text when provided", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDObservability, SortWeight: 1},                       // No Text - should use plugin.Name
+			"test-app2": {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Custom Label"}, // Text provided
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 2)
+		// test-app1 has no Text in config → uses plugin.Name
+		require.Equal(t, "Test app1 name", monitoringNode.Children[0].Text)
+		// test-app2 has Text in config → uses custom Text
+		require.Equal(t, "Custom Label", monitoringNode.Children[1].Text)
+	})
+
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app2": {SectionID: navtree.NavIDObservability, SortWeight: 2},
