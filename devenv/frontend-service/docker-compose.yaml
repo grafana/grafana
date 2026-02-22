@@ -85,7 +85,7 @@ services:
       GF_LOG_FRONTEND_CUSTOM_ENDPOINT: http://localhost:12347/collect
 
   goff:
-    image: gofeatureflag/go-feature-flag:latest
+    image: gofeatureflag/go-feature-flag:latest@sha256:40589e1953785e9eadd82c260bd0b341b8427a60a75136571f38193221d98e84
     command: /go-feature-flag --config /config/config.yaml
     ports:
       - 1031:1031/tcp
