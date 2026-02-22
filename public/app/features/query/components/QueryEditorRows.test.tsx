@@ -1,4 +1,5 @@
-import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
@@ -246,26 +247,22 @@ describe('QueryEditorRows', () => {
   });
 
   it('Should have proper keyboard navigation for expand/collapse buttons', async () => {
+    const user = userEvent.setup();
     renderScenario();
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
 
     for (const childQuery of queryEditorRows) {
       const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
+      act(() => toggleExpandButton.focus());
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'true');
 
-      expect(toggleExpandButton).toBeInTheDocument();
-      // Verify the button is focusable via keyboard navigation
-      expect(toggleExpandButton.getAttribute('tabIndex')).toBe('0');
+      // Toggle with Enter
+      await user.keyboard('{Enter}');
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'false');
 
-      // Verify the button has proper ARIA attributes
-      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('true');
-      expect(toggleExpandButton.getAttribute('aria-controls')).toBeTruthy();
-
-      // Verify clicking still works for mouse users
-      fireEvent.click(toggleExpandButton);
-      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('false');
-
-      fireEvent.click(toggleExpandButton);
-      expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('true');
+      // Toggle with Space
+      await user.keyboard(' ');
+      expect(toggleExpandButton).toHaveAttribute('aria-expanded', 'true');
     }
   });
 
