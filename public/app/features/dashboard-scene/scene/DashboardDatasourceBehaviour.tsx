@@ -138,6 +138,25 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
           }
         });
         transformerSubs.push(transformerSub);
+      } else {
+        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
+        // so we re-run when the source panel's data updates (e.g. after variable resolution or
+        // time range change). Without this, the dashboard-datasource panel can read stale data
+        // when it runs before the source panels complete and never updates.
+        const onSourceDataChange = (
+          newState: typeof sourcePanelQueryRunner.state,
+          oldState: typeof sourcePanelQueryRunner.state
+        ) => {
+          const newRequestId = newState.data?.request?.requestId;
+          const oldRequestId = oldState.data?.request?.requestId;
+          const hasNewRequest = newRequestId !== oldRequestId;
+          const isStreaming = newState.data?.state === LoadingState.Streaming;
+          if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
+            queryRunner.runQueries();
+          }
+        };
+        const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
+        transformerSubs.push(queryRunnerSub);
       }
     }
 
