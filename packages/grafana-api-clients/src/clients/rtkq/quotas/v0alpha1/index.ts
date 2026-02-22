@@ -1,0 +1,16 @@
+export { BASE_URL, API_GROUP, API_VERSION } from './baseAPI';
+import { generatedAPI as rawAPI } from './endpoints.gen';
+
+export * from './endpoints.gen';
+export const generatedAPI = rawAPI.enhanceEndpoints({
+  addTagTypes: ['QuotaUsage'],
+  endpoints: {
+    getUsage: {
+      providesTags: ['QuotaUsage'],
+    },
+  },
+});
+
+export function invalidateQuotaUsage(dispatch: (action: unknown) => void) {
+  dispatch(generatedAPI.util.invalidateTags(['QuotaUsage']));
+}

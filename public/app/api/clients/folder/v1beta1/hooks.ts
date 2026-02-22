@@ -1,6 +1,7 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -280,6 +281,7 @@ export function useDeleteFolderMutationFacade() {
       // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
       // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
       notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
+      invalidateQuotaUsage(dispatch);
     }
     return result;
   };
@@ -320,6 +322,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
     }
 
     refresh({ parentsOf: folderUIDs });
+    invalidateQuotaUsage(dispatch);
     return { data: undefined };
   };
 }
@@ -425,6 +428,7 @@ export function useCreateFolder() {
     const result = await createFolder(apiPayload);
     refresh({ childrenOf: folder.parentUid });
     deletedDashboardsCache.clear();
+    invalidateQuotaUsage(dispatch);
 
     return {
       ...result,
