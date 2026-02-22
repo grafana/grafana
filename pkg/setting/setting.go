@@ -643,7 +643,9 @@ type Cfg struct {
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
 	// SimulatedNetworkLatency is used for testing only
-	SimulatedNetworkLatency time.Duration
+	SimulatedNetworkLatency       time.Duration
+	TenantApiServerAddress        string
+	TenantWatcherAllowInsecureTLS bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
