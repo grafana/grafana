@@ -25,6 +25,9 @@ const loadingTeam = {
 };
 
 export function buildNavModel(team: Team): NavModelItem {
+  // Means team is not loaded yet and we have just a placeholder team object
+  const isLoadingTeam = team === loadingTeam;
+
   const navModel: NavModelItem = {
     img: team.avatarUrl,
     id: 'team-' + team.uid,
@@ -47,10 +50,7 @@ export function buildNavModel(team: Team): NavModelItem {
   // While team is loading we leave the members tab
   // With RBAC the Members tab is available when user has ActionTeamsPermissionsRead for this team
   // With Legacy it will always be present
-  if (
-    team === loadingTeam ||
-    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)
-  ) {
+  if (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
     navModel.children!.unshift({
       active: false,
       icon: 'users-alt',
@@ -68,8 +68,6 @@ export function buildNavModel(team: Team): NavModelItem {
     url: `org/teams/edit/${team.uid}/groupsync`,
   };
 
-  const isLoadingTeam = team === loadingTeam;
-
   if (highlightTrial()) {
     teamGroupSync.tabSuffix = () =>
       ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge', eventVariant: 'trial' });
@@ -86,6 +84,25 @@ export function buildNavModel(team: Team): NavModelItem {
     navModel.children!.push({
       ...teamGroupSync,
       tabSuffix: () => ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge' }),
+    });
+  }
+
+  // Section for team folders tab
+  if (
+    // If team is loading we won't show this which is probably fine so we don't end up with bad urls.
+    !isLoadingTeam &&
+    config.featureToggles.teamFolders &&
+    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team)
+  ) {
+    // Add it after settings tab
+    // TODO: this array construction could probably be simplified so we don't have to do random splicing and unshifts
+    const settingsTabIndex = navModel.children!.findIndex((child) => child.id === `team-settings-${team.uid}`);
+    navModel.children!.splice(settingsTabIndex + 1, 0, {
+      active: false,
+      icon: 'folder-open',
+      id: `team-folders-${team.uid}`,
+      text: t('teams.build-nav-model.team-folders.text.folders', 'Folders'),
+      url: `org/teams/edit/${team.uid}/folders`,
     });
   }
 
