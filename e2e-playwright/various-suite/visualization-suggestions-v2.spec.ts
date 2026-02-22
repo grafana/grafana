@@ -223,7 +223,10 @@ test.describe(
 
       // Press the empty-state Create new panel button
       await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
-      await page.getByText('Configure').first().click();
+      await page
+        .getByRole('button', { name: /^Configure/ })
+        .first()
+        .click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
 
       // Verify we see suggestions on load

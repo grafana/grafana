@@ -5672,11 +5672,10 @@
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
     },
     "new-panel": {
-      "configure-button": "Configure",
-      "configure-button-menu": "Toggle menu",
+      "configure-button": "Configure new visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
-      "menu-open-panel-editor": "Configure",
-      "menu-use-library-panel": "Use library panel",
+      "menu-use-library-panel": "Select library panel",
+      "menu-use-saved-query": "Use saved query",
       "missing-config": "Missing panel configuration",
       "suggestions": {
         "empty-state-message": "Run a query to start seeing suggested visualizations"
