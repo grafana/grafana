@@ -194,7 +194,7 @@ func TestValidateCreate(t *testing.T) {
 					},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: 7,
 		},
 		{
 			name: "cannot create a circular reference",
@@ -356,7 +356,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: 4,
 		},
 		{
 			name: "error when moving exceeds max depth",
@@ -387,7 +387,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
+			maxDepth:    4,
 			expectedErr: "[folder.maximum-depth-reached]",
 		},
 		{

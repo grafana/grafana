@@ -27,7 +27,6 @@ var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of its
 const (
 	GeneralFolderUID      = "general"
 	RootFolderUID         = ""
-	MaxNestedFolderDepth  = 4
 	SharedWithMeFolderUID = "sharedwithme"
 )
 

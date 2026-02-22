@@ -528,6 +528,12 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	// AbsoluteMaxNestedFolderDepth is the hard ceiling for folder nesting depth.
+	// The SQL query builders use this value to generate JOIN chains.
+	AbsoluteMaxNestedFolderDepth int
+
+	Folder FolderSettings
+
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
@@ -1425,6 +1431,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+	cfg.Folder = readFolderSettings(iniFile)
+	cfg.AbsoluteMaxNestedFolderDepth = absoluteMaxNestedFolderDepth
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)

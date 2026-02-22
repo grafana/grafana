@@ -484,7 +484,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	folderStoreImpl := folderimpl.ProvideStore(sqlStore)
+	folderStoreImpl := folderimpl.ProvideStore(sqlStore, cfg)
 	publicDashboardStoreImpl := database3.ProvideStore(sqlStore, cfg, featureToggles)
 	publicDashboardServiceWrapperImpl := service4.ProvideServiceWrapper(publicDashboardStoreImpl)
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)
@@ -1175,7 +1175,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	folderStoreImpl := folderimpl.ProvideStore(sqlStore)
+	folderStoreImpl := folderimpl.ProvideStore(sqlStore, cfg)
 	publicDashboardStoreImpl := database3.ProvideStore(sqlStore, cfg, featureToggles)
 	publicDashboardServiceWrapperImpl := service4.ProvideServiceWrapper(publicDashboardStoreImpl)
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)

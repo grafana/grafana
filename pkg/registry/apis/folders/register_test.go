@@ -143,10 +143,11 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
-				storage:    us,
-				parents:    newParentsGetter(us, 2), // Max Depth of 2
+				namespacer:           func(_ int64) string { return "123" },
+				folderSvc:            foldertest.NewFakeService(),
+				storage:              us,
+				parents:              newParentsGetter(us, 4),
+				maxNestedFolderDepth: 4,
 			}
 
 			tt.input.obj.Name = tt.input.name
@@ -482,7 +483,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+				parents:    newParentsGetter(us, 7),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -576,7 +577,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+				parents:    newParentsGetter(us, 7),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -682,7 +683,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
-		parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+		parents:    newParentsGetter(us, 7),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
