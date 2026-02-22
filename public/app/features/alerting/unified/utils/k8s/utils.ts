@@ -1,6 +1,7 @@
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { ObjectMeta, ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
+import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';
 
@@ -15,7 +16,7 @@ export const shouldUseK8sApi = (alertmanager?: string) => {
 };
 
 type EntityToCheck = {
-  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  metadata?: ObjectMeta;
 };
 
 /**
@@ -71,4 +72,15 @@ export function isProvisionedResource(provenance?: string): boolean {
 
 export function isImportedResource(provenance?: string): boolean {
   return provenance === KnownProvenance.ConvertedPrometheus;
+}
+
+export function receiverConfigToK8sIntegration(config: GrafanaManagedReceiverConfig): ReceiverIntegration {
+  return {
+    uid: config.uid,
+    disableResolveMessage: config.disableResolveMessage,
+    secureFields: config.secureFields,
+    settings: config.settings,
+    type: config.type,
+    version: config.version ?? 'v1',
+  };
 }
