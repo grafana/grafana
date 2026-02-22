@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,8 +15,8 @@ import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { dashboard, optionsPane, containerRef, containerHeight, containerWidth, splitter } =
-    usePanelEditorShell(model);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { dashboard, optionsPane, splitter } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
@@ -29,7 +30,7 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
-          <VizAndDataPaneNext model={model} containerHeight={containerHeight} containerWidth={containerWidth} />
+          <VizAndDataPaneNext model={model} />
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>

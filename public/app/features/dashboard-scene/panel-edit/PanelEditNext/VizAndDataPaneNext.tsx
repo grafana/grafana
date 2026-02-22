@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,7 +7,6 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { PanelEditor } from '../PanelEditor';
-import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
@@ -14,12 +14,9 @@ import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
 import { SidebarSize } from './constants';
 import { useVizAndDataPaneLayout } from './hooks';
 
-export function VizAndDataPaneNext({
-  model,
-  containerHeight = 800,
-  containerWidth = 800,
-}: SceneComponentProps<PanelEditor> & { containerHeight?: number; containerWidth?: number }) {
-  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight, containerWidth);
+export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
@@ -28,15 +25,8 @@ export function VizAndDataPaneNext({
 
   const nextDataPane = scene.dataPane;
 
-  const sidebarSizeClass = css({
-    height: layout.sidebarSize === SidebarSize.Mini ? '100%' : layout.expandedSidebarHeight,
-  });
-  const dataPaneSizeClass = css({
-    height: '100%',
-  });
-
   return (
-    <div className={styles.pageContainer} style={grid.gridStyles}>
+    <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
       {scene.controls && (
         <div className={styles.controlsWrapper}>
           <scene.controls.Component model={scene.controls} />
@@ -44,7 +34,7 @@ export function VizAndDataPaneNext({
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <scene.panelToShow.Component model={scene.panelToShow} />
-        <div className={styles.vizResizerWrapper}>
+        <div className={styles.vizResizeHandle}>
           <div
             ref={layout.vizResizeHandle.ref}
             className={layout.vizResizeHandle.className}
@@ -53,19 +43,20 @@ export function VizAndDataPaneNext({
         </div>
       </div>
       <QueryEditorContextWrapper dataPane={nextDataPane}>
-        <div className={cx(styles.sidebar, sidebarSizeClass)}>
-          <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarContent}>
+            <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
+          </div>
+          <div className={styles.sidebarResizeHandle}>
             <div
-              style={{ height: '100%', width: 2 }}
-              ref={layout.sidebarResize.handleRef}
-              className={layout.sidebarResize.className}
+              ref={layout.sidebarResizeHandle.ref}
+              className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
               data-testid="sidebar-resizer"
             />
           </div>
         </div>
-        <div className={cx(styles.dataPane, dataPaneSizeClass)}>
-          {grid.splitterState.collapsed ? (
+        <div className={styles.dataPane}>
+          {layout.isDataPaneCollapsed ? (
             <div className={styles.expandDataPane}>
               <Button
                 tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
@@ -87,30 +78,29 @@ export function VizAndDataPaneNext({
 }
 
 function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
-  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
       display: 'grid',
       gap: theme.spacing(2),
-      gridTemplateColumns: `auto 1fr`,
       overflow: 'hidden',
-      [scrollReflowMediaQuery]: {
-        gridTemplateColumns: `100%`,
-      },
+      paddingBottom: theme.spacing(2),
     }),
     sidebar: css({
       gridArea: 'sidebar',
-      overflow: 'hidden',
       position: 'relative',
-      boxSizing: 'border-box',
-      paddingBottom: theme.spacing(2),
       paddingLeft: theme.spacing(2),
+      minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    sidebarContent: css({
+      height: '100%',
     }),
     viz: css({
       gridArea: 'viz',
       overflow: 'visible',
-      height: '100%',
       position: 'relative',
+      minHeight: 0,
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
@@ -118,8 +108,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     dataPane: css({
       gridArea: 'data-pane',
       overflow: 'hidden',
-      boxSizing: 'border-box',
-      paddingBottom: theme.spacing(2),
+      minHeight: 0,
     }),
     controlsWrapper: css({
       gridArea: 'controls',
@@ -141,20 +130,27 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     expandDataPane: css({
       display: 'flex',
-      flexDirection: 'row',
       padding: theme.spacing(1),
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderRight: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-      flexGrow: 1,
       justifyContent: 'space-around',
     }),
-    vizResizerWrapper: css({
+    vizResizeHandle: css({
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
-      width: '100%',
+    }),
+    sidebarResizeHandle: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+    }),
+    resizeHandlePill: css({
+      height: '100%',
+      width: 2,
     }),
   };
 }
