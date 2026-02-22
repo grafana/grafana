@@ -58,6 +58,10 @@ const meta: Meta = {
 };
 
 interface StoryProps extends Partial<Props> {
+  height: number;
+  width: number;
+  orientation: VizOrientation;
+  displayMode: BarGaugeDisplayMode;
   numeric: number;
   title: string;
   minValue: number;
@@ -88,7 +92,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
   };
   field.display = getDisplayProcessor({ field, theme });
 
-  const props: Partial<Props> = {
+  const props = {
     theme,
     lcdCellWidth: storyProps.lcdCellWidth,
     itemSpacing: storyProps.itemSpacing,
