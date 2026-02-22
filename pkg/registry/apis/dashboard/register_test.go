@@ -17,6 +17,7 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2beta2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta2"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -181,6 +182,7 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2beta2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
@@ -193,16 +195,18 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2beta2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
-			name: "should return v2alpha1 as the default if dashboards v2 is enabled",
+			name: "should return v2beta2 as the default if dashboards v2 is enabled",
 			enabledFeatures: []string{
 				featuremgmt.FlagDashboardNewLayouts,
 			},
 			expected: []schema.GroupVersion{
+				dashv2beta2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
