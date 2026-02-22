@@ -92,7 +92,7 @@ func ProvideService(
 
 	if cfg != nil {
 		if !enabled {
-			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
+			return &staticService{cfg: cfg, statusReader: statusReader}, nil
 		}
 
 		if cfg != nil {
@@ -101,7 +101,7 @@ func ProvideService(
 
 			// If both are fully on unified (Mode5), the dynamic service is not needed.
 			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-				return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
+				return &staticService{cfg: cfg, statusReader: statusReader}, nil
 			}
 
 			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
@@ -117,7 +117,6 @@ func ProvideService(
 		},
 		enabled:      enabled,
 		statusReader: statusReader,
-		metrics:      metrics,
 	}, nil
 }
 
@@ -125,7 +124,6 @@ type service struct {
 	db           *keyvalueDB
 	enabled      bool
 	statusReader unifiedmigrations.MigrationStatusReader
-	metrics      *Metrics
 }
 
 func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
@@ -133,8 +131,6 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 	if err != nil {
 		return nil, err
 	}
-
-	m.logStorageModeComparison(gr, status)
 
 	if m.enabled && status.Runtime {
 		// Dynamic storage behavior
@@ -147,18 +143,20 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 		}, nil
 	}
 
-	if status.ReadUnified {
-		if status.WriteLegacy {
-			// Write both, read unified
-			return &dualWriter{legacy: legacy, unified: unified, readUnified: true}, nil
-		}
+	// Use MigrationStatusReader for non-runtime mode selection.
+	mode, modeErr := m.statusReader.GetStorageMode(context.Background(), gr)
+	if modeErr != nil {
+		return nil, modeErr
+	}
+
+	switch mode {
+	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
+	case unifiedmigrations.StorageModeDualWrite:
+		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true}, nil
+	default:
+		return legacy, nil
 	}
-	if status.WriteUnified {
-		// Write both, read legacy
-		return &dualWriter{legacy: legacy, unified: unified}, nil
-	}
-	return legacy, nil
 }
 
 // Hardcoded list of resources that should be controlled by the database (eventually everything?)
@@ -269,41 +267,4 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 	}
 	status.UpdateKey++
 	return status, m.db.set(ctx, status)
-}
-
-// logStorageModeComparison logs the storage mode from MigrationStatusReader alongside the
-// current status for observability. This allows validating that the new mode determination
-// agrees with the existing behavior before switching over in a future PR.
-func (m *service) logStorageModeComparison(gr schema.GroupResource, status StorageStatus) {
-	if m.statusReader == nil {
-		return
-	}
-	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
-	if err != nil {
-		logger.Warn("Failed to get storage mode from MigrationStatusReader",
-			"resource", gr.String(), "error", err)
-		return
-	}
-
-	currentMode := storageModeFromStatus(status)
-	if currentMode != newMode && m.metrics != nil {
-		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
-	}
-
-	logger.Info("Storage mode comparison",
-		"resource", gr.String(),
-		"newMode", newMode.String(),
-		"currentMode", currentMode.String(),
-	)
-}
-
-// storageModeFromStatus derives a StorageMode from the current StorageStatus.
-func storageModeFromStatus(status StorageStatus) unifiedmigrations.StorageMode {
-	if status.ReadUnified && status.WriteUnified && !status.WriteLegacy {
-		return unifiedmigrations.StorageModeUnified
-	}
-	if status.WriteUnified {
-		return unifiedmigrations.StorageModeDualWrite
-	}
-	return unifiedmigrations.StorageModeLegacy
 }
