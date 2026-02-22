@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, DropResult, DragStart } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,10 +9,11 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
@@ -25,6 +26,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { tabs, key } = model.useState();
   const currentTab = model.getCurrentTab();
   const dashboard = getDashboardSceneFor(model);
+  const orchestrator = getLayoutOrchestratorFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
@@ -42,24 +44,22 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   const isClone = isRepeatCloneOrChildOf(model);
 
+  const onBeforeDragStart = (start: DragStart) => {
+    const sourceTabsManagerId = start.source.droppableId;
+    const draggedTabId = start.draggableId;
+    orchestrator?.startTabDrag(sourceTabsManagerId, draggedTabId);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const targetIndex = result.destination?.index;
+    orchestrator?.stopTabDrag(targetIndex);
+  };
+
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
-        <DragDropContext
-          onBeforeDragStart={(start) => model.forceSelectTab(start.draggableId)}
-          onDragEnd={(result) => {
-            if (!result.destination) {
-              return;
-            }
-
-            if (result.destination.index === result.source.index) {
-              return;
-            }
-
-            model.moveTab(result.source.index, result.destination.index);
-          }}
-        >
-          <div className={styles.tabsRow}>
+        <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
+          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
             <Droppable droppableId={key!} direction="horizontal">
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>

@@ -21,6 +21,7 @@ import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -35,10 +36,14 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTabSlug?: string;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutGroup {
+export class TabsLayoutManager
+  extends SceneObjectBase<TabsLayoutManagerState>
+  implements DashboardLayoutGroup, DashboardDropTarget
+{
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isDashboardDropTarget = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -241,6 +246,33 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         this._confirmConvertMixedGrids(availableIds);
       },
     });
+  }
+
+  /**
+   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
+   * @param {number } insertIndexInRepeatedTabs - the index where the tab would be inserted if repeated tabs were included as separate entries
+   */
+  public mapTabInsertIndex(insertIndexInRepeatedTabs: number): number {
+    const { tabs } = this.state;
+    const insertAt = Math.max(0, insertIndexInRepeatedTabs);
+    let groupStart = 0;
+
+    for (let tabIndex = 0; tabIndex < tabs.length; tabIndex++) {
+      const groupSize = 1 + (tabs[tabIndex].state.repeatedTabs?.length ?? 0);
+      const groupEnd = groupStart + groupSize;
+
+      if (insertAt <= groupStart) {
+        return tabIndex;
+      }
+
+      if (insertAt < groupEnd) {
+        return tabIndex + 1;
+      }
+
+      groupStart = groupEnd;
+    }
+
+    return tabs.length;
   }
 
   private _confirmConvertMixedGrids(availableIds: Set<string>) {

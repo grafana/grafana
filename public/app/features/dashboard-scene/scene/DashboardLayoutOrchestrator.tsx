@@ -16,6 +16,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel } from '../utils/utils';
 
@@ -87,12 +88,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  private _draggedTab: TabItem | undefined;
+  private _targetTabIndex: number | undefined;
 
   public constructor() {
     super({});
 
     this._onPointerMove = this._onPointerMove.bind(this);
     this._stopDraggingSync = this._stopDraggingSync.bind(this);
+
+    this._onTabDragPointerMove = this._onTabDragPointerMove.bind(this);
+    this._onTabDragPointerUp = this._onTabDragPointerUp.bind(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -101,8 +107,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
+      document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
+      document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
       this._cleanupDragState();
@@ -257,6 +265,144 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Add pointerup listener to handle drop after cross-tab switch
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
+  }
+
+  public startTabDrag(sourceTabsManagerId: string, draggedTabId: string): void {
+    this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
+
+    this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
+
+    document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
+    document.body.addEventListener('pointermove', this._onTabDragPointerMove);
+  }
+
+  private _onTabDragPointerMove(evt: PointerEvent) {
+    const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
+
+    // Tabs can be dropped only to TabsLayoutManager
+    if (dropTarget instanceof TabsLayoutManager) {
+      this._lastDropTarget = dropTarget;
+    } else {
+      this._lastDropTarget = null;
+    }
+  }
+
+  private _onTabDragPointerUp(evt: PointerEvent) {
+    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY);
+    if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
+      this._targetTabIndex = this._lastDropTarget
+        ?.getTabsIncludingRepeats()
+        .findIndex((t) => t.state.key === tabUnderMouse);
+    }
+
+    document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
+    document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
+    // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
+    // Finishing dropping in here would remove elements from dom causing pangea to think the element is still being
+    // dragged and won't fire onDragEnd until container is re-rendered or removed (e.g. when row is collapsed).
+  }
+
+  /**
+   * Single entry point for handling tab drag end. If the tab was dropped from a different manager we use values
+   * calculated by layout orchestrator.
+   */
+  public stopTabDrag(targetIndex: number | undefined): void {
+    if (this._sourceDropTarget === null || !(this._sourceDropTarget instanceof TabsLayoutManager)) {
+      return;
+    }
+
+    if (this._lastDropTarget === null || !(this._lastDropTarget instanceof TabsLayoutManager)) {
+      return;
+    }
+
+    const sourceManager = this._sourceDropTarget;
+    const destinationManager = this._lastDropTarget;
+    targetIndex = targetIndex ?? this._targetTabIndex ?? destinationManager.getTabsIncludingRepeats().length;
+
+    const tab = this._draggedTab;
+
+    if (!tab) {
+      return;
+    }
+
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === tab);
+    this._draggedTab = undefined;
+
+    // moving within the same TabsLayoutManager
+    if (sourceManager === destinationManager) {
+      if (sourceIndex === targetIndex) {
+        return;
+      }
+      sourceManager.moveTab(sourceIndex, targetIndex);
+      return;
+    }
+    // moving to a different TabsLayoutManager
+    else {
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
+      // When moving a tab into a new tab group, make it the active tab.
+      this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
+    }
+  }
+
+  private _moveTabBetweenManagers(
+    tab: TabItem,
+    source: TabsLayoutManager,
+    destination: TabsLayoutManager,
+    destinationIndex: number
+  ) {
+    const prevSourceTabs = [...source.state.tabs];
+    const prevSourceSlug = source.state.currentTabSlug;
+    const prevDestinationTabs = [...destination.state.tabs];
+    const prevDestinationSlug = destination.state.currentTabSlug;
+
+    dashboardEditActions.moveElement({
+      source,
+      movedObject: tab,
+      perform: () => {
+        const sourceTabs = [...prevSourceTabs];
+        const destTabs = [...prevDestinationTabs];
+
+        const fromIndex = sourceTabs.findIndex((t) => t === tab);
+        if (fromIndex < 0) {
+          return;
+        }
+
+        sourceTabs.splice(fromIndex, 1);
+
+        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
+        destTabs.splice(clampedDestinationIndex, 0, tab);
+
+        // If the moved tab was active in source, pick a sensible new active tab.
+        let nextSourceSlug = prevSourceSlug;
+        if (prevSourceSlug === tab.getSlug()) {
+          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
+          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
+        }
+
+        // Important: avoid briefly parenting the same SceneObject in two places.
+        // Remove from source first, then clear parent, then add to destination.
+        source.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
+        tab.clearParent();
+        destination.setState({
+          tabs: destTabs,
+          currentTabSlug: tab.getSlug(),
+        });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+      },
+      undo: () => {
+        // Reverse order for the same parenting reason as in perform().
+        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
+        tab.clearParent();
+        source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+      },
+    });
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {
@@ -773,6 +919,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return null;
     }
 
+    return this._findDropTargetByKey(key);
+  }
+
+  private _findDropTargetByKey(key: string): DashboardDropTarget | null {
     const sceneObject = sceneGraph.findByKey(this._getDashboard(), key);
 
     if (!sceneObject || !isDashboardDropTarget(sceneObject)) {
