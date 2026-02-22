@@ -647,7 +647,7 @@
 
 ### Features and enhancements
 
-- ** Alerting:** Add feedback buttons for the new AI helpers (Enterprise)
+- **Alerting:** Add feedback buttons for the new AI helpers (Enterprise)
 - **Access:** Remove plugin app access in plugin basic role seeder (Enterprise)
 - **Actions:** Infinity authentication [#109493](https://github.com/grafana/grafana/pull/109493), [@adela-almasan](https://github.com/adela-almasan)
 - **Alerting:** Add GMA export to the new list page [#109784](https://github.com/grafana/grafana/pull/109784), [@konrad147](https://github.com/konrad147)
@@ -3445,7 +3445,7 @@
 - **VizTooltip:** Allow setting the `maxWidth` option. [#88652](https://github.com/grafana/grafana/issues/88652), [@adela-almasan](https://github.com/adela-almasan)
 - **Auth:** Add org to role mappings support to GitHub integration . [#88537](https://github.com/grafana/grafana/issues/88537), [@mgyongyosi](https://github.com/mgyongyosi)
 - **CloudWatch:** Handle permissions error and update docs. [#88524](https://github.com/grafana/grafana/issues/88524), [@iwysiu](https://github.com/iwysiu)
-- ** Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Correctly handle duplicating notification templates. [#88487](https://github.com/grafana/grafana/issues/88487), [@gillesdemey](https://github.com/gillesdemey)
 - **Alerting:** Mute Timing service to prevent changing provenance status to none. [#88462](https://github.com/grafana/grafana/issues/88462), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Alerting:** Ensure we fetch AM config before saving new configuration. [#88458](https://github.com/grafana/grafana/issues/88458), [@tomratcliffe](https://github.com/tomratcliffe)
 - **Alerting:** Remove regex reference in silences filter tooltip. [#88455](https://github.com/grafana/grafana/issues/88455), [@tomratcliffe](https://github.com/tomratcliffe)
