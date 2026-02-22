@@ -179,6 +179,17 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
 
   const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta2';
 
+  const goldenFilesExist = existsSync(outputDir) && existsSync(migratedOutput);
+
+  it('golden files must be generated before running this suite', () => {
+    if (!goldenFilesExist) {
+      throw new Error(
+        'Golden files not found. Run "make generate-golden-files" from apps/dashboard/ to generate them.\n' +
+          `  Missing: ${!existsSync(outputDir) ? outputDir : ''} ${!existsSync(migratedOutput) ? migratedOutput : ''}`
+      );
+    }
+  });
+
   // Get v0alpha1 and v1beta1 input files recursively from all subdirectories
   const v1beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
     const fileName = path.basename(relativePath);

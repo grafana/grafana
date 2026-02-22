@@ -207,8 +207,7 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 
 			expectedOutputPath := filepath.Join(outputDir, expectedOutputFile)
 
-			// If OUTPUT_OVERRIDE is set, write the file instead of comparing
-			if shouldOverrideOutput() {
+			if shouldRegenerateChecksums() {
 				writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath, expectedOutputFile)
 				return
 			}
