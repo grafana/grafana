@@ -48,60 +48,118 @@ setPluginImportUtils({
 });
 
 describe('VizPanelHeaderActions', () => {
-  it('renders PanelGroupByAction when the group by variable applies to the panel', async () => {
-    const { headerActions } = await buildScene();
+  describe('supportsApplicability', () => {
+    it('is true when applicability is enabled and DS matches', async () => {
+      const { headerActions } = await buildScene();
 
-    expect(headerActions.state.supportsApplicability).toBe(true);
-  });
-
-  it('does not set when applicability is disabled', async () => {
-    const { headerActions } = await buildScene({ applicabilityEnabled: false });
-
-    expect(headerActions.state.supportsApplicability).toBe(false);
-  });
-
-  it('does not set when the datasource uid does not match', async () => {
-    const { headerActions } = await buildScene({
-      variableDatasourceUid: 'other-ds',
+      expect(headerActions.state.supportsApplicability).toBe(true);
     });
 
-    expect(headerActions.state.supportsApplicability).toBe(false);
+    it('is false when applicability is disabled', async () => {
+      const { headerActions } = await buildScene({ applicabilityEnabled: false });
+
+      expect(headerActions.state.supportsApplicability).toBe(false);
+    });
+
+    it('is false when the variable DS does not match', async () => {
+      const { headerActions } = await buildScene({ variableDatasourceUid: 'other-ds' });
+
+      expect(headerActions.state.supportsApplicability).toBe(false);
+    });
+
+    it('becomes false when variable DS changes to a different one', async () => {
+      const { headerActions, groupByVariable } = await buildScene();
+
+      expect(headerActions.state.supportsApplicability).toBe(true);
+
+      groupByVariable.setState({ datasource: { uid: 'ds-2' } });
+
+      expect(headerActions.state.supportsApplicability).toBe(false);
+    });
+
+    it('becomes false when variable applicability becomes disabled', async () => {
+      const { headerActions, groupByVariable } = await buildScene();
+
+      expect(headerActions.state.supportsApplicability).toBe(true);
+
+      groupByVariable.setState({ applicabilityEnabled: false });
+
+      expect(headerActions.state.supportsApplicability).toBe(false);
+    });
+
+    it('becomes false when queryRunner changes DS to a different one', async () => {
+      const { headerActions, queryRunner } = await buildScene();
+
+      expect(headerActions.state.supportsApplicability).toBe(true);
+
+      queryRunner.setState({ datasource: { uid: 'ds-2' } });
+
+      expect(headerActions.state.supportsApplicability).toBe(false);
+    });
   });
 
-  it('does not set if variable ds changes to a different type', async () => {
-    const { headerActions, groupByVariable } = await buildScene();
+  describe('isGroupByActionSupported', () => {
+    it('is true when group by variable DS matches query DS', async () => {
+      const { headerActions } = await buildScene();
 
-    expect(headerActions.state.supportsApplicability).toBe(true);
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+    });
 
-    groupByVariable.setState({ datasource: { uid: 'ds-2' } });
+    it('is false when group by variable DS does not match query DS', async () => {
+      const { headerActions } = await buildScene({ variableDatasourceUid: 'other-ds' });
 
-    expect(headerActions.state.supportsApplicability).toBe(false);
-  });
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
 
-  it('does not set if variable applicability becomes disabled', async () => {
-    const { headerActions, groupByVariable } = await buildScene();
+    it('becomes false when group by variable DS changes to a different one', async () => {
+      const { headerActions, groupByVariable } = await buildScene();
 
-    expect(headerActions.state.supportsApplicability).toBe(true);
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
 
-    groupByVariable.setState({ applicabilityEnabled: false });
+      groupByVariable.setState({ datasource: { uid: 'ds-2' } });
 
-    expect(headerActions.state.supportsApplicability).toBe(false);
-  });
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
 
-  it('sdoes not set if queryRunner changes datasource to different one than vars', async () => {
-    const { headerActions, queryRunner } = await buildScene();
+    it('becomes false when queryRunner changes queries DS to a different one', async () => {
+      const { headerActions, queryRunner } = await buildScene();
 
-    expect(headerActions.state.supportsApplicability).toBe(true);
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
 
-    queryRunner.setState({ datasource: { uid: 'ds-2' } });
+      queryRunner.setState({
+        datasource: { uid: 'ds-2' },
+        queries: [{ refId: 'A', datasource: { uid: 'ds-2' } }],
+      });
 
-    expect(headerActions.state.supportsApplicability).toBe(false);
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
+
+    it('becomes true when a group by variable is added to the dashboard', async () => {
+      const { headerActions, variableSet, groupByVariable } = await buildScene({ withoutGroupBy: true });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+
+      variableSet.setState({ variables: [groupByVariable] });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+    });
+
+    it('becomes false when the group by variable is removed', async () => {
+      const { headerActions, variableSet } = await buildScene();
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(true);
+
+      variableSet.setState({ variables: [] });
+
+      expect(headerActions.state.isGroupByActionSupported).toBe(false);
+    });
   });
 });
 
 interface BuildSceneOptions {
   applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
+  withoutGroupBy?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -139,10 +197,12 @@ async function buildScene(options?: BuildSceneOptions) {
 
   const panel = new VizPanel(panelState);
 
+  const variableSet = new SceneVariableSet({
+    variables: options?.withoutGroupBy ? [] : [groupByVariable],
+  });
+
   const scene = new DashboardScene({
-    $variables: new SceneVariableSet({
-      variables: [groupByVariable],
-    }),
+    $variables: variableSet,
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
@@ -150,5 +210,5 @@ async function buildScene(options?: BuildSceneOptions) {
 
   await new Promise((r) => setTimeout(r, 1));
 
-  return { headerActions, panel, groupByVariable, queryRunner };
+  return { headerActions, panel, groupByVariable, queryRunner, variableSet };
 }
