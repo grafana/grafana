@@ -20,7 +20,7 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
 import { RawQueryEditor } from './RawQueryEditor';
-import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery, changeRawDSLQuery } from './state';
+import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchDataQuery, ElasticsearchOptions>;
 
@@ -155,8 +155,8 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
 
       {isCodeEditor && rawDSLFeatureEnabled && (
         <RawQueryEditor
-          value={value.rawDSLQuery}
-          onChange={(rawDSLQuery) => dispatch(changeRawDSLQuery(rawDSLQuery))}
+          value={value.query}
+          onChange={(query) => dispatch(changeQuery(query))}
           onRunQuery={onRunQuery}
         />
       )}

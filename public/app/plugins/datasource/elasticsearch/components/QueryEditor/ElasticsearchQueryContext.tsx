@@ -8,7 +8,7 @@ import { combineReducers, useStatelessReducer, DispatchContext } from '../../hoo
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer, rawDSLQueryReducer, editorTypeReducer, initQuery } from './state';
+import { aliasPatternReducer, queryReducer, queryTypeReducer, editorTypeReducer, initQuery } from './state';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchDataQuery | undefined>(undefined);
@@ -41,10 +41,10 @@ export const ElasticsearchProvider = ({
   );
 
   const reducer = combineReducers<
-    Pick<ElasticsearchDataQuery, 'query' | 'rawDSLQuery' | 'alias' | 'editorType' | 'metrics' | 'bucketAggs'>
+    Pick<ElasticsearchDataQuery, 'query' | 'queryType' | 'alias' | 'editorType' | 'metrics' | 'bucketAggs'>
   >({
     query: queryReducer,
-    rawDSLQuery: rawDSLQueryReducer,
+    queryType: queryTypeReducer,
     alias: aliasPatternReducer,
     editorType: editorTypeReducer,
     metrics: metricsReducer,

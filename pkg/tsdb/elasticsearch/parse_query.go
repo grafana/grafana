@@ -21,11 +21,15 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
-		rawDSLQuery := model.Get("rawDSLQuery").MustString()
 
 		var editorType *string
 		if et := model.Get("editorType").MustString(); et != "" {
 			editorType = &et
+		}
+
+		var queryType *string
+		if qt := model.Get("queryType").MustString(); qt != "" {
+			queryType = &qt
 		}
 
 		bucketAggs, err := parseBucketAggs(model)
@@ -44,7 +48,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 
 		queries = append(queries, &Query{
 			RawQuery:      rawQuery,
-			RawDSLQuery:   rawDSLQuery,
+			QueryType:     queryType,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
 			Alias:         alias,
