@@ -841,4 +841,8 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )

@@ -16,7 +16,7 @@ export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
-  setDisplayedFields?: unknown;
+  permalinkedLogId?: string;
   showControls?: boolean;
   showCopyLogLink?: boolean;
   showInspectLogLine?: boolean;

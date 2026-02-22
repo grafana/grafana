@@ -15,7 +15,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 
-import { LogsVisualisationType } from '../../explore/Logs/Logs';
+import { LogsVisualisationType } from '../../explore/Logs/constants';
 
 import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';

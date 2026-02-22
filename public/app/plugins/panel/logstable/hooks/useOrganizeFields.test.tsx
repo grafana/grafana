@@ -69,6 +69,7 @@ describe('useOrganizeFields', () => {
           options: {},
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
@@ -91,6 +92,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
@@ -115,6 +117,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
       await waitFor(() => {
@@ -138,6 +141,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: true,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
       await waitFor(() => {
@@ -159,12 +163,33 @@ describe('useOrganizeFields', () => {
           options: {},
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions).not.toBeDefined();
+      });
+    });
+
+    test('fieldConfig defaults', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: { custom: { filterable: true } }, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+        expect(organizedFields.current.organizedFrame?.fields[0].config.custom.filterable).toBe(true);
       });
     });
   });

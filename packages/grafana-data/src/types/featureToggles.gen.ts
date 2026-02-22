@@ -1542,4 +1542,9 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }
