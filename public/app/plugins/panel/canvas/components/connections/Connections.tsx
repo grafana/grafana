@@ -26,6 +26,10 @@ import {
   HALF_SIZE,
 } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+import {
+  updateConnectionsAfterIndividualMove as sharedUpdateIndividual,
+  updateConnectionsAfterGroupMove as sharedUpdateGroup,
+} from './connectionMovementUtils';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
 export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
@@ -677,6 +681,42 @@ export class Connections {
   // used for moveable actions
   connectionsNeedUpdate = (element: ElementState): boolean => {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
+  };
+
+  // Update connection coordinates when an individual element is moved
+  updateConnectionsAfterIndividualMove = (movedElement: ElementState) => {
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
+
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
+      }
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
+
+    sharedUpdateIndividual(movedElement, this.state, calculateCoords);
+  };
+
+  // Update connection coordinates based on what's selected in a group move
+  updateConnectionsAfterGroupMove = (movedElements: ElementState[], selectedTargets: Array<HTMLElement | SVGElement>) => {
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
+
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
+      }
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
+
+    sharedUpdateGroup(movedElements, selectedTargets, this.state, calculateCoords);
   };
 
   renderElement() {
