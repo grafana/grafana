@@ -209,6 +209,22 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			// Annotations subresource for dashboards
+			// Uses dashboard scope (dashboards:uid:...) but annotation actions
+			"dashboards/annotations": translation{
+				resource:  "dashboards",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    "annotations:read",
+					utils.VerbList:   "annotations:read",
+					utils.VerbWatch:  "annotations:read",
+					utils.VerbCreate: "annotations:create",
+					utils.VerbUpdate: "annotations:write",
+					utils.VerbPatch:  "annotations:write",
+					utils.VerbDelete: "annotations:delete",
+				},
+				folderSupport: true,
+			},
 		},
 		"folder.grafana.app": {
 			"folders": newFolderTranslation(),
