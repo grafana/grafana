@@ -1,24 +1,25 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import server from '@grafana/test-utils/server';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
+
+import { PROVISIONING_API_BASE as BASE, setupProvisioningMswServer } from '../../mocks/server';
 
 import { Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+
+setupProvisioningMswServer();
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
     getAppEvents: jest.fn(),
-    locationService: {
-      partial: jest.fn(),
-    },
     config: {
       ...actual.config,
       panels: {
@@ -33,18 +34,6 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('../../hooks/useProvisionedRequestHandler', () => {
   return {
     useProvisionedRequestHandler: jest.fn(),
-  };
-});
-
-jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () => {
-  return {
-    useCreateOrUpdateRepositoryFile: jest.fn(),
-  };
-});
-
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
-  return {
-    useGetResourceRepositoryView: jest.fn(),
   };
 });
 
@@ -72,11 +61,6 @@ jest.mock('react-router-dom-v5-compat', () => {
   };
 });
 
-// Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
-}));
-
 // Mock the new hooks that depend on router context
 jest.mock('../../hooks/usePRBranch', () => ({
   usePRBranch: jest.fn().mockReturnValue(undefined),
@@ -98,8 +82,6 @@ jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
 });
 
 function setup(props: Partial<Props> = {}) {
-  const user = userEvent.setup();
-
   const mockDashboard: Dashboard = {
     title: 'Test Dashboard',
     panels: [],
@@ -157,32 +139,23 @@ function setup(props: Partial<Props> = {}) {
   };
 
   return {
-    user,
     props: defaultProps,
     ...render(<SaveProvisionedDashboardForm {...defaultProps} />),
   };
 }
-
-const mockRequestBase = {
-  isSuccess: true,
-  isError: false,
-  isLoading: false,
-  error: null,
-  data: { resource: { upsert: {} } },
-};
 
 describe('SaveProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
-    const mockRequest = { ...mockRequestBase, isSuccess: false };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([jest.fn(), mockRequest]);
   });
 
-  it('should render the form with correct fields for a new dashboard', () => {
+  it('should render the form with correct fields for a new dashboard', async () => {
     setup();
-    expect(screen.getByRole('form')).toBeInTheDocument();
+
+    // Wait for async RTK Query operations to settle
+    expect(await screen.findByRole('form')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /title/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /description/i })).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
@@ -193,10 +166,11 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it('should render the form with correct fields for an existing dashboard', () => {
+  it('should render the form with correct fields for an existing dashboard', async () => {
     // existing dashboards show "Common Options" instead of the title/desc fields
     setup({ isNew: false });
-    expect(screen.getByTestId('common-options')).toBeInTheDocument();
+
+    expect(await screen.findByTestId('common-options')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
@@ -205,11 +179,17 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save a new dashboard successfully', async () => {
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+    let capturedRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'New Dashboard' } } },
+        });
+      })
+    );
 
-    const { user, props } = setup();
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
       kind: 'Dashboard',
@@ -224,6 +204,8 @@ describe('SaveProvisionedDashboardForm', () => {
         schemaVersion: 36,
       },
     };
+
+    const { user, props } = setup();
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
@@ -245,20 +227,26 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAction).toHaveBeenCalledWith({
-        ref: 'dashboard/2023-01-01-abcde',
-        name: 'test-repo',
-        path: 'test-dashboard.json',
-        message: 'Initial commit',
-        body: newDashboard,
-      });
+      expect(capturedRequest).not.toBeNull();
     });
+
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Initial commit');
+    expect(capturedRequest?.body).toEqual(newDashboard);
   });
 
   it('should update an existing dashboard successfully', async () => {
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+    let capturedRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
 
     const updatedDashboard = {
       apiVersion: 'dashboard.grafana.app/vXyz',
@@ -301,27 +289,27 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.type(commentInput, 'Update dashboard');
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
+
     await waitFor(() => {
-      expect(mockAction).toHaveBeenCalledWith({
-        ref: 'dashboard/2023-01-01-abcde',
-        name: 'test-repo',
-        path: 'test-dashboard.json',
-        message: 'Update dashboard',
-        body: updatedDashboard,
-      });
+      expect(capturedRequest).not.toBeNull();
     });
+
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Update dashboard');
+    expect(capturedRequest?.body).toEqual(updatedDashboard);
   });
 
-  it('should show error when save fails', async () => {
-    const mockAction = jest.fn();
-    const mockRequest = {
-      ...mockRequestBase,
-      isSuccess: false,
-      isError: true,
-      error: 'Failed to save dashboard',
-    };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
-    const { user, props } = setup();
+  it('should send correct request body when save returns an error', async () => {
+    let capturedRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({ message: 'Failed to save dashboard' }, { status: 500 });
+      })
+    );
+
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
       kind: 'Dashboard',
@@ -336,6 +324,8 @@ describe('SaveProvisionedDashboardForm', () => {
         schemaVersion: 36,
       },
     };
+
+    const { user, props } = setup();
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
@@ -357,14 +347,13 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAction).toHaveBeenCalledWith({
-        ref: 'dashboard/2023-01-01-abcde',
-        name: 'test-repo',
-        path: 'error-dashboard.json',
-        message: 'Error commit',
-        body: newDashboard,
-      });
+      expect(capturedRequest).not.toBeNull();
     });
+
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/error-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Error commit');
+    expect(capturedRequest?.body).toEqual(newDashboard);
   });
 
   it('should disable save button when dashboard is not dirty', () => {
@@ -448,9 +437,16 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save dashboard with raw JSON from editor', async () => {
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+    let capturedRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Raw JSON Dashboard' } } },
+        });
+      })
+    );
 
     const rawJson = JSON.stringify({
       title: 'Raw JSON Dashboard',
@@ -503,13 +499,12 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(mockAction).toHaveBeenCalledWith({
-        ref: 'dashboard/2023-01-01-abcde',
-        name: 'test-repo',
-        path: 'test-dashboard.json',
-        message: 'Save with raw JSON',
-        body: dashboardFromRawJson,
-      });
+      expect(capturedRequest).not.toBeNull();
     });
+
+    expect(capturedRequest?.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(capturedRequest?.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+    expect(capturedRequest?.url.searchParams.get('message')).toBe('Save with raw JSON');
+    expect(capturedRequest?.body).toEqual(dashboardFromRawJson);
   });
 });
