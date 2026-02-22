@@ -394,6 +394,13 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   editorType?: string;
   /**
+   * Metadata for variable queries
+   */
+  meta?: {
+    textField?: string;
+    valueField?: string;
+  };
+  /**
    * List of metric aggregations
    */
   metrics?: Array<MetricAggregation>;
