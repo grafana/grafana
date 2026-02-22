@@ -3183,10 +3183,6 @@
       "save-silence": "Save silence",
       "saving": "Saving..."
     },
-    "silences-filter": {
-      "search-by-matchers-tooltip": "Filter silences by using a comma separated list of matchers, e.g.",
-      "search-query-input-placeholder-search": "Search"
-    },
     "silences-table": {
       "label-section-expired": "Expired silences ({{numExpired}})",
       "text-loading-silences": "Loading silences...",
