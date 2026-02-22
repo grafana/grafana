@@ -65,6 +65,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DashboardMutationBehavior } from '../mutation-api/DashboardMutationBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -234,6 +235,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
+        new DashboardMutationBehavior(),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,

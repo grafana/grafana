@@ -21,7 +21,7 @@ export type PermissionCheck = (scene: MutableDashboardScene) => PermissionCheckR
  * A complete mutation command: schema, handler, permission, and metadata.
  *
  * Each command file exports a single MutationCommand. The registry collects
- * them and the MutationExecutor iterates over them generically.
+ * them and the DashboardMutationClient iterates over them generically.
  */
 export interface MutationCommand<T = unknown> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
