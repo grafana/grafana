@@ -847,3 +847,5 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
   },
 ]
 `;
+
+exports[`Can create a new grafana managed alert using simplified routing switch modes enabled switch modes are intiallized depending on the local storage - 1 1`] = `[]`;
