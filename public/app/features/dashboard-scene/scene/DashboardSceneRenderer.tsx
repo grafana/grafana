@@ -1,9 +1,10 @@
+import { DragDropContext, DropResult, BeforeCapture, DragStart } from '@hello-pangea/dnd';
 import { useContext, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { ScopesContext } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { sceneGraph, SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
@@ -13,6 +14,10 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -95,6 +100,60 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
+  const handleBeforeCapture = (before: BeforeCapture) => {
+    const draggable = sceneGraph.findByKey(model, before.draggableId);
+    if (draggable instanceof RowItem) {
+      model.state.layoutOrchestrator?.startRowDrag(draggable);
+    } else if (draggable instanceof TabItem) {
+      model.state.layoutOrchestrator?.startTabDrag(draggable);
+    }
+  };
+
+  const handleBeforeDragStart = (start: DragStart) => {
+    if (start.type === 'ROW') {
+      const rowsManager = sceneGraph.findByKey(model, start.source.droppableId);
+      if (rowsManager instanceof RowsLayoutManager) {
+        rowsManager.forceSelectRow(start.draggableId);
+      }
+    }
+    if (start.type === 'TAB') {
+      const tabsManager = sceneGraph.findByKey(model, start.source.droppableId);
+      if (tabsManager instanceof TabsLayoutManager) {
+        tabsManager.forceSelectTab(start.draggableId);
+      }
+    }
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (result.type === 'ROW') {
+      // Stop tracking row drag in orchestrator
+      model.state.layoutOrchestrator?.stopRowDrag();
+
+      if (!result.destination) {
+        return;
+      }
+
+      if (result.destination.index === result.source.index) {
+        return;
+      }
+
+      const rowsManager = sceneGraph.findByKey(model, result.source.droppableId);
+      if (rowsManager instanceof RowsLayoutManager) {
+        rowsManager.moveRow(result.draggableId, result.source.index, result.destination.index);
+      }
+
+      return;
+    }
+
+    if (result.type === 'TAB') {
+      model.state.layoutOrchestrator?.stopTabDrag(
+        result.destination?.droppableId,
+        result.source.index,
+        result.destination?.index
+      );
+    }
+  };
+
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
@@ -105,7 +164,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             dashboard={model}
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}
-            body={renderBody()}
+            body={
+              <DragDropContext
+                onBeforeCapture={handleBeforeCapture}
+                onBeforeDragStart={handleBeforeDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                {renderBody()}
+              </DragDropContext>
+            }
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
