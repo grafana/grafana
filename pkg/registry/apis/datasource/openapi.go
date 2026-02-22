@@ -104,6 +104,17 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 										},
 									},
 								},
+								"text/event-stream": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											SchemaProps: spec.SchemaProps{
+												Description: "Server sent event stream: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events",
+												Type:        []string{"string"},
+												Format:      "",
+											},
+										},
+									},
+								},
 							},
 						},
 					},

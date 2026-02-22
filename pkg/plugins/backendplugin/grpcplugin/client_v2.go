@@ -5,17 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync/atomic"
+
+	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/hashicorp/go-plugin"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -32,6 +34,9 @@ type ClientV2 struct {
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
+
+	// Chunking will fallback to DataQuery
+	chunkUnimplemented atomic.Bool
 }
 
 func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
@@ -161,6 +166,14 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	protoResp, err := c.queryData(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return backend.FromProto().QueryDataResponse(protoResp)
+}
+
+func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	if c.DataClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
@@ -187,10 +200,13 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
-	return backend.FromProto().QueryDataResponse(protoResp)
+	return protoResp, nil
 }
 
 func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if c.chunkUnimplemented.Load() {
+		return c.queryChunkedDataFacade(ctx, req, w)
+	}
 	if c.DataClient == nil {
 		return plugins.ErrMethodNotImplemented
 	}
@@ -199,13 +215,17 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 	stream, err := c.DataClient.QueryChunkedData(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return plugins.ErrMethodNotImplemented
+			// The first query finds out it is unsupported and then tries DataQuery
+			c.chunkUnimplemented.Store(true)
+			return c.queryChunkedDataFacade(ctx, req, w)
 		}
 		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
 			return handleGrpcStatusError(ctx, errorSource, err)
 		}
 		return fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
+
+	raw, isRaw := w.(chunked.RawChunkReceiver)
 
 	for {
 		chunk, err := stream.Recv()
@@ -214,6 +234,16 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 				return nil
 			}
 			return err
+		}
+
+		if isRaw {
+			if err = raw.OnChunk(chunk); err != nil {
+				return err
+			}
+		}
+
+		if chunk.Format != pluginv2.DataFrameFormat_ARROW {
+			return fmt.Errorf("this client only accepts arrow format")
 		}
 
 		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
@@ -225,16 +255,44 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			chunkStatus := backend.Status(chunk.Status)
 			errorSource := backend.ErrorSource(chunk.ErrorSource)
 			chunkErr := backend.NewErrorWithSource(errors.New(chunk.Error), errorSource)
-			if err := w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr); err != nil {
+			if err = w.WriteError(ctx, chunk.RefId, chunkStatus, chunkErr); err != nil {
 				return err
 			}
-			continue
 		}
 
-		if err := w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
+		if err = w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
 			return err
 		}
 	}
+}
+
+func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	raw, isRaw := w.(chunked.RawChunkReceiver)
+
+	// Execute a regular QueryData non-chunked request (using JSON encoding if raw)
+	protoResp, err := c.queryData(ctx,
+		&backend.QueryDataRequest{
+			PluginContext: req.PluginContext,
+			Queries:       req.Queries,
+			Headers:       req.Headers,
+			// FORMAT... JSON!!!! (TODO)
+			// https://github.com/grafana/grafana-plugin-sdk-go/pull/1491
+		})
+	if err != nil {
+		return err
+	}
+
+	// The raw handler can skip decode and then re-encode
+	if isRaw {
+		return chunked.ProcessRawResponse(ctx, req.Format, protoResp, raw)
+	}
+
+	// Send the responses as individual chunks
+	rsp, err := backend.FromProto().QueryDataResponse(protoResp)
+	if err != nil {
+		return err
+	}
+	return chunked.ProcessTypedResponse(ctx, rsp, w)
 }
 
 func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

@@ -10,9 +10,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -29,7 +30,7 @@ var (
 )
 
 func (r *subQueryREST) New() runtime.Object {
-	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	// This is added as the "ResponseType" regardless what ProducesObject() says :)
 	return &dsV0.QueryDataResponse{}
 }
 
@@ -66,14 +67,14 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		dqr := data.QueryDataRequest{}
+		dqr := dataWrap.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		queries, dsRef, err := data.ToDataSourceQueries(dqr)
+		queries, dsRef, err := dataWrap.ToDataSourceQueries(dqr)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -85,6 +86,18 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
+
+		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
+			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+				Queries:       queries,
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
+			}, chunked.NewHTTPWriter(w)); err != nil {
+				responder.Error(fmt.Errorf("error running chunked query %w", err))
+			}
+			return
+		}
 
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,

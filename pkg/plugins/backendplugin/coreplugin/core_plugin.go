@@ -3,11 +3,12 @@ package coreplugin
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -99,12 +100,28 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 
 func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
-	if cp.QueryChunkedDataHandler != nil {
-		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+	if raw, isRaw := w.(chunked.RawChunkReceiver); isRaw {
+		w = backend.NewChunkedDataWriter(req.Format, raw.OnChunk) // converts to requested format
 	}
 
-	return plugins.ErrMethodNotImplemented
+	if cp.QueryChunkedDataHandler != nil {
+		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	} else if cp.QueryDataHandler == nil {
+		return plugins.ErrMethodNotImplemented
+	}
+
+	// Fallback to executing a regular Query and sending the results as chunks.
+	resp, err := cp.QueryDataHandler.QueryData(ctx, &backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Queries:       req.Queries,
+		Headers:       req.Headers,
+		// TODO format
+	})
+	if err != nil {
+		return err
+	}
+	return chunked.ProcessTypedResponse(ctx, resp, w)
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
