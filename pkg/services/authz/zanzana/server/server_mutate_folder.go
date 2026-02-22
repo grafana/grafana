@@ -8,10 +8,11 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func (s *Server) mutateFolders(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateFolders(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateFolder")
 	defer span.End()
 
@@ -61,7 +62,7 @@ func (s *Server) mutateFolders(ctx context.Context, store *storeInfo, operations
 	return nil
 }
 
-func (s *Server) getFolderWriteTuple(ctx context.Context, store *storeInfo, req *authzextv1.SetFolderParentOperation) (*openfgav1.TupleKey, error) {
+func (s *Server) getFolderWriteTuple(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.SetFolderParentOperation) (*openfgav1.TupleKey, error) {
 	// Folder is at the root level
 	if req.GetParent() == "" {
 		return nil, nil
@@ -71,15 +72,15 @@ func (s *Server) getFolderWriteTuple(ctx context.Context, store *storeInfo, req 
 		return nil, fmt.Errorf("folder UID contains invalid characters: %s", req.GetFolder())
 	}
 
-	tuple := zanzana.NewFolderParentTuple(req.GetFolder(), req.GetParent())
+	tuple := common.NewFolderParentTuple(req.GetFolder(), req.GetParent())
 	return tuple, nil
 }
 
-func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, folderUID string, parentUID string, deleteExisting bool) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+func (s *Server) getFolderDeleteTuples(ctx context.Context, store *zanzana.StoreInfo, folderUID string, parentUID string, deleteExisting bool) ([]*openfgav1.TupleKeyWithoutCondition, error) {
 	tupleKeysToDelete := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 
 	if folderUID != "" && parentUID != "" && !deleteExisting {
-		tuple := zanzana.NewFolderParentTuple(folderUID, parentUID)
+		tuple := common.NewFolderParentTuple(folderUID, parentUID)
 		tupleKeysToDelete = append(tupleKeysToDelete, &openfgav1.TupleKeyWithoutCondition{
 			User:     tuple.GetUser(),
 			Relation: tuple.GetRelation(),
@@ -105,16 +106,16 @@ func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, fo
 	return tupleKeysToDelete, nil
 }
 
-func (s *Server) listFolderParents(ctx context.Context, store *storeInfo, folderUID string) ([]*openfgav1.Tuple, error) {
+func (s *Server) listFolderParents(ctx context.Context, store *zanzana.StoreInfo, folderUID string) ([]*openfgav1.Tuple, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listFolderParents")
 	defer span.End()
 
-	object := zanzana.NewFolderIdent(folderUID)
+	object := common.NewFolderIdent(folderUID)
 	resp, err := s.openFGAClient.Read(ctx, &openfgav1.ReadRequest{
 		StoreId: store.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
 			Object:   object,
-			Relation: zanzana.RelationParent,
+			Relation: common.RelationParent,
 		},
 	})
 	if err != nil {

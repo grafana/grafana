@@ -15,6 +15,7 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -41,6 +42,10 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(time.Since(t).Seconds())
 	}(time.Now())
+
+	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
+		return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
 
 	res, err := s.batchCheck(ctx, r)
 	if err != nil {
@@ -132,7 +137,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 // This is the broadest permission - if granted, access to all resources of that type is allowed.
 func (s *Server) runGroupResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -193,7 +198,7 @@ func (s *Server) runGroupResourcePhase(
 // This applies to generic resources that support folder-based permissions (like dashboards).
 func (s *Server) runFolderPermissionPhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -266,7 +271,7 @@ func (s *Server) runFolderPermissionPhase(
 // This handles cases where access is granted via folder subresource relations.
 func (s *Server) runFolderSubresourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -338,7 +343,7 @@ func (s *Server) runFolderSubresourcePhase(
 // This is the most granular check - access granted directly on the resource itself.
 func (s *Server) runDirectResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -469,7 +474,7 @@ func (s *Server) addTypedResourceDirectChecks(
 // sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
 func (s *Server) doBatchCheck(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
 ) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	if len(checks) == 0 {
@@ -505,7 +510,7 @@ func (s *Server) doBatchCheck(
 // executeBatchCheck sends a single OpenFGA BatchCheck request.
 func (s *Server) executeBatchCheck(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
 ) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	openfgaReq := &openfgav1.BatchCheckRequest{

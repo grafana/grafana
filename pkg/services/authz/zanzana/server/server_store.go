@@ -8,17 +8,17 @@ import (
 	"github.com/openfga/language/pkg/go/transformer"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-// StoreIdentity contains the basic identifying information for an OpenFGA store.
-// This is used to minimize memory allocation when listing stores.
-type StoreIdentity struct {
-	ID   string
-	Name string
+// GetOrCreateStore returns store information about store for a given namespace.
+// This is used by the reconciler to access store IDs for direct operations.
+func (s *Server) GetOrCreateStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
+	return s.getStoreInfo(ctx, namespace)
 }
 
-func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo, error) {
+func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
 	s.storesMU.Lock()
 	defer s.storesMU.Unlock()
 	info, ok := s.stores[namespace]
@@ -36,14 +36,43 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 		return nil, err
 	}
 
-	info = storeInfo{
+	info = zanzana.StoreInfo{
 		ID:      store.GetId(),
+		Name:    store.GetName(),
 		ModelID: modelID,
 	}
 
 	s.stores[namespace] = info
 
 	return &info, nil
+}
+
+func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
+	s.storesMU.Lock()
+	defer s.storesMU.Unlock()
+	info, ok := s.stores[namespace]
+	if ok {
+		return &zanzana.StoreInfo{
+			ID:   info.ID,
+			Name: info.Name,
+		}, nil
+	}
+
+	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
+	}
+
+	for _, s := range res.GetStores() {
+		if s.GetName() == namespace {
+			return &zanzana.StoreInfo{
+				ID:   s.GetId(),
+				Name: s.GetName(),
+			}, nil
+		}
+	}
+
+	return nil, zanzana.ErrStoreNotFound
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
@@ -113,8 +142,8 @@ func (s *Server) loadModel(ctx context.Context, storeID string, modules []transf
 // ListAllStores returns all OpenFGA stores with pagination support.
 // Each store name corresponds to a namespace in the system.
 // Returns only ID and Name to minimize memory allocation.
-func (s *Server) ListAllStores(ctx context.Context) ([]StoreIdentity, error) {
-	var stores []StoreIdentity
+func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error) {
+	var stores []zanzana.StoreInfo
 	var continuationToken string
 
 	for {
@@ -126,7 +155,7 @@ func (s *Server) ListAllStores(ctx context.Context) ([]StoreIdentity, error) {
 		}
 
 		for _, store := range res.GetStores() {
-			stores = append(stores, StoreIdentity{
+			stores = append(stores, zanzana.StoreInfo{
 				ID:   store.GetId(),
 				Name: store.GetName(),
 			})
