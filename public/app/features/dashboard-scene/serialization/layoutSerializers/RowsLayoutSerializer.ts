@@ -6,17 +6,19 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
 
-export function serializeRowsLayout(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
+export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.filter((row) => !row.state.repeatSourceKey).map(serializeRow),
+      rows: layoutManager.state.rows
+        .filter((row) => !row.state.repeatSourceKey)
+        .map((row) => serializeRow(row, isSnapshot)),
     },
   };
 }
 
-export function serializeRow(row: RowItem): RowsLayoutRowKind {
-  const layout = row.state.layout.serialize();
+export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowKind {
+  const layout = row.state.layout.serialize(isSnapshot);
 
   // Normalize Y coordinates to be relative within the row
   // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row

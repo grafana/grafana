@@ -135,20 +135,36 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
       return [];
     }
 
-    if (repeater.state.repeatedPanels) {
+    const vizPanels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])];
+
+    // If repeats haven't been processed yet, fall back to serializing the source panel only.
+    if (vizPanels.length === 1) {
+      return [gridItemToGridLayoutItemKind(repeater)];
+    }
+
+    if (vizPanels.length > 1) {
       const { h, w, columnCount } = calculateGridItemDimensions(repeater);
-      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
+      const panels = vizPanels.map((panel, index) => {
         let x = 0,
           y = 0;
         if (repeater.state.repeatDirection === 'v') {
-          x = repeater.state.x!;
-          y = index * h;
+          x = repeater.state.x ?? 0;
+          y = (repeater.state.y ?? 0) + index * h;
         } else {
-          x = (index % columnCount) * w;
-          y = repeater.state.y! + Math.floor(index / columnCount) * h;
+          x = (repeater.state.x ?? 0) + (index % columnCount) * w;
+          y = (repeater.state.y ?? 0) + Math.floor(index / columnCount) * h;
         }
 
         const gridPos = { x, y, w, h };
+
+        if (panel.state.repeatSourceKey && !panel.state.key) {
+          throw new Error('Snapshot serialization expected repeat clone to have a key');
+        }
+
+        const elementName =
+          panel.state.repeatSourceKey && panel.state.key
+            ? panel.state.key
+            : dashboardSceneGraph.getElementIdentifierForVizPanel(repeater.state.body);
 
         const result: GridLayoutItemKind = {
           kind: 'GridLayoutItem',
@@ -157,15 +173,9 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
             y: gridPos.y,
             width: gridPos.w,
             height: gridPos.h,
-            repeat: {
-              mode: 'variable',
-              value: repeater.state.variableName!,
-              maxPerRow: repeater.getMaxPerRow(),
-              direction: repeater.state.repeatDirection,
-            },
             element: {
               kind: 'ElementReference',
-              name: panel.state.key!,
+              name: elementName,
             },
           },
         };
