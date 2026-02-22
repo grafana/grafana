@@ -11578,11 +11578,16 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "clear-filter-tooltip": "Clear filter",
       "close": "Close menu",
+      "collapse-all-sections": "Collapse all sections",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "expand-all-sections": "Expand all sections",
       "list-label": "Navigation",
       "open": "Open menu",
+      "search-input-label": "Search menu",
+      "search-placeholder": "Search menu",
       "undock": "Undock menu"
     },
     "megamenu-item": {

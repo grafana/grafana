@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -196,3 +196,11 @@ export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
     }
   }, [isDocked]);
 }
+
+export const getSectionExpanded = (link: NavModelItem) => {
+  return store.get(`grafana.navigation.expanded[${link.id}]`) === 'true';
+};
+
+export const setSectionExpanded = (link: NavModelItem, expanded: boolean) => {
+  return store.set(`grafana.navigation.expanded[${link.id}]`, expanded);
+};
