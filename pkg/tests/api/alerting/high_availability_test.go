@@ -389,13 +389,34 @@ func assertPosition0IsEvaluator(t *testing.T, grafanas []*haGrafana) {
 
 	baselines := make([]int, len(grafanas))
 	for i, g := range grafanas {
-		baselines[i] = getEvalTotal(t, g.Addr)
+		i := i
+		addr := g.Addr
+		require.Eventually(t, func() bool {
+			baselines[i] = getEvalTotal(t, addr)
+			return baselines[i] >= 0
+		}, 15*time.Second, 250*time.Millisecond, "evaluation metric should be available on %s", addr)
 	}
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		metricsAvailable := true
 		for i, g := range grafanas {
 			pos := getPeerPosition(t, g.Addr)
 			evals := getEvalTotal(t, g.Addr)
+
+			// Metrics scraping can transiently fail while instances are still warming up.
+			// Retry the assertion loop until all metrics are available in the same sample.
+			if pos < 0 || evals < 0 {
+				metricsAvailable = false
+				continue
+			}
+
+			// If an instance restarted and the counter reset, re-baseline and retry.
+			if evals < baselines[i] {
+				baselines[i] = evals
+				metricsAvailable = false
+				continue
+			}
+
 			isEvaluating := evals > baselines[i]
 
 			if pos == 0 {
@@ -404,7 +425,8 @@ func assertPosition0IsEvaluator(t *testing.T, grafanas []*haGrafana) {
 				assert.False(c, isEvaluating, "position %d node should not be evaluating", pos)
 			}
 		}
-	}, 30*time.Second, 1*time.Second)
+		assert.True(c, metricsAvailable, "expected all HA metrics endpoints to be reachable")
+	}, 60*time.Second, 1*time.Second)
 }
 
 // assertIdenticalAlertGroups verifies that all nodes have identical alert groups.

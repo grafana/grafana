@@ -2265,15 +2265,17 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 						require.Equal(t, locTC.folderUID, meta.GetFolder(), "Dashboard folder reference does not match")
 					}
 
-					// Try to GET the dashboard with the test user
-					getResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
-						User:   userTC.user,
-						Method: http.MethodGet,
-						Path:   dashboardPath,
-					}, &struct{}{})
-
-					require.Equal(t, http.StatusOK, getResp.Response.StatusCode,
-						"User %s should be able to GET dashboard: %s", userTC.name, getResp.Response.Status)
+					// Permission updates are asynchronous under Zanzana; wait until the
+					// creator can read the dashboard before asserting the response body.
+					var getResp apis.K8sResponse[struct{}]
+					require.Eventually(t, func() bool {
+						getResp = apis.DoRequest(ctx.Helper, apis.RequestParams{
+							User:   userTC.user,
+							Method: http.MethodGet,
+							Path:   dashboardPath,
+						}, &struct{}{})
+						return getResp.Response != nil && getResp.Response.StatusCode == http.StatusOK
+					}, 10*time.Second, 100*time.Millisecond, "User %s should be able to GET dashboard", userTC.name)
 
 					// Extract the dashboard object from the GET response
 					var dashObj map[string]interface{}

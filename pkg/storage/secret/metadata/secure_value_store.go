@@ -97,8 +97,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 
 		// Some other concurrent request may have created the version we're trying to create,
 		// if that's the case, we'll retry with a new version up to max attempts.
-		maxAttempts := 3
-		attempts := 0
+		maxVersionAttempts := 3
+		versionAttempts := 0
 		for {
 			sv.Status.Version = version
 
@@ -134,8 +134,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 			res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 			if err != nil {
 				if sql.IsRowAlreadyExistsError(err) {
-					if attempts < maxAttempts {
-						attempts += 1
+					if versionAttempts < maxVersionAttempts {
+						versionAttempts += 1
 						version += 1
 						continue
 					}
