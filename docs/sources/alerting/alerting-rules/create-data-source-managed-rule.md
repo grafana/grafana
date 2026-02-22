@@ -137,6 +137,15 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
 ---
 
+{{< admonition type="caution" >}}
+Starting March 2026 in Alerting, datasource-managed alerts can not be created in new stacks for Grafana Cloud.
+New Grafana Cloud stacks use Grafana-managed alerting (GMA) by default.Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
+
+This means:
+- Users are no longer able to create alert rules in Mimir and Loki.
+- Cloud Alertmanager will not be available and Grafana will not provision the data source for it.
+{{< /admonition >}}
+
 # Configure data source-managed alert rules
 
 Data source-managed alert rules are alert rules that are stored in the data source, such as in Prometheus or Loki, rather than in Grafana.
@@ -199,14 +208,6 @@ For more information, refer to the [Mimir Ruler API](/docs/mimir/latest/referenc
 Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
 
 If you do not want to manage alert rules for a particular data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
-
-#### Provisioning
-
-Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
-
-To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
-
-[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Set alert rule name
 
