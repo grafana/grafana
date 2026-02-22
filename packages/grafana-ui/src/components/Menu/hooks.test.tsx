@@ -171,7 +171,7 @@ describe('useMenuFocus', () => {
     const [handleKeys2] = result.current;
     rerender(getMenuElement(ref, handleKeys2, undefined, onClick));
 
-    await user.type(screen.getByTestId(testid), '{ }');
+    await user.type(screen.getByTestId(testid), ' ');
 
     expect(onClick).toHaveBeenCalled();
   });
