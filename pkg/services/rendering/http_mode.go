@@ -8,27 +8,12 @@ import (
 	"io"
 	"io/fs"
 	"mime"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
-
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-var netTransport = &http.Transport{
-	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 5 * time.Second,
-}
-
-var netClient = &http.Client{
-	Transport: otelhttp.NewTransport(netTransport),
-}
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
 const rateLimiterHeader = "X-Tenant-ID"
@@ -170,7 +155,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	logger.Debug("calling remote rendering service", "url", u)
 
 	// make request to renderer server
-	resp, err := netClient.Do(req)
+	resp, err := rs.netClient.Do(req)
 	if err != nil {
 		logger.Error("Failed to send request to remote rendering service", "error", err)
 		var urlErr *url.Error
