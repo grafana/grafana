@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "baseUrl": "public/",
     "outDir": "public/dist",
+    "rootDir": ".",
     "rootDirs": ["public/"],
     "allowJs": true,
     "strict": true,
@@ -13,6 +14,7 @@
     "isolatedModules": true,
     "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "types": ["systemjs", "webpack-env", "gtag.js", "trusted-types"],
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     }
