@@ -2101,7 +2101,9 @@
       "select-namespace": "Select namespace"
     },
     "navigation": {
+      "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
@@ -2329,8 +2331,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues."
       }
     },
     "panel-alert-tab-content": {
@@ -11229,9 +11230,17 @@
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "View alerts and active notifications",
+      "title": "Alert activity"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
+    },
+    "alerting-alerts": {
+      "subtitle": "Visualize active and pending alerts",
+      "title": "Alert activity"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
