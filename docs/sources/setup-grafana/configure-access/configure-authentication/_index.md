@@ -66,19 +66,19 @@ Fields explanation:
 Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
 For example, you can have [SAML](saml/) (Enterprise only) and [Generic OAuth](generic-oauth/) configured, but you can not have two different [Generic OAuth](generic-oauth/) configurations.
 
-> Note: Grafana does not support multiple identity providers resolving the same user. Ensure there are no user account overlaps between the different providers
+> Note: Grafana does not support multiple identity providers resolving the same user. Make sure no user account overlaps between the different providers.
 
 In scenarios where you have multiple identity providers of the same type, there are a couple of options:
 
-- Use different Grafana instances each configured with a given identity provider.
+- Use different Grafana instances, each configured with a given identity provider.
 - Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
 - If SAML is supported by the identity provider, you can configure one [Generic OAuth](generic-oauth/) and one [SAML](saml/) (Enterprise only).
 
 ## Using the same email address to login with different identity providers
 
-If users want to use the same email address with multiple identity providers (for example, Grafana.Com OAuth and Google OAuth), you can configure Grafana to use the email address as the unique identifier for the user. This is done by enabling the `oauth_allow_insecure_email_lookup` option, which is disabled by default. Please note that enabling this option can lower the security of your Grafana instance. If you enable this option, you should also ensure that the `Allowed organization`, `Allowed groups` and `Allowed domains` settings are configured correctly to prevent unauthorized access.
+If users want to use the same email address with multiple identity providers (for example, Grafana.Com OAuth and Google OAuth), you can configure Grafana to use the email address as the unique identifier for the user. To do so, enable the `oauth_allow_insecure_email_lookup` option, which is disabled by default. Refer to the [Enable email lookup](#enable-email-lookup) section for details.
 
-To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
+Note that enabling this option can lower the security of your Grafana instance. If you enable this option, make sure that the `Allowed organization`, `Allowed groups` and `Allowed domains` settings are configured correctly to prevent unauthorized access.
 
 ## Multi-factor authentication (MFA/2FA)
 
@@ -88,14 +88,30 @@ We strongly recommend integrating an external identity provider (IdP) that suppo
 
 ## Login and short-lived tokens
 
-> The following applies when using Grafana's basic authentication, LDAP (without Auth proxy) or OAuth integration.
+> The following applies if you're using Grafana basic authentication, LDAP (without Auth proxy) or OAuth integration.
 
-Grafana uses short-lived tokens as a mechanism for verifying authenticated users.
-These short-lived tokens are rotated on an interval specified by `token_rotation_interval_minutes` for active authenticated users.
+Grafana uses short-lived tokens to verify authenticated users.
 
-Inactive authenticated users will remain logged in for a duration specified by `login_maximum_inactive_lifetime_duration`.
-This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
-This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
+You can set up the following parameters:
+
+- `token_rotation_interval_minutes`: Specifies the rotation interval of the token for active authenticated users.
+- `login_maximum_lifetime_duration`: Specifies for how long a user remains authenticated before being prompted to authenticate again.
+- `login_maximum_inactive_lifetime_duration`: Specifies for how long inactive authenticated users will remain logged in. 
+  - A user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
+
+### Force logout
+
+Under certain circumstances you may require your users to re-authenticate before their session naturally expires. While Grafana doesn't offer Admin session revocation as standard functionality, you have the following workarounds if you need to force the logout of a user:
+
+- Delete the user's token `user_auth_token` from the database. This requires database access as is not available to Grafana Cloud customers.
+- Set `login_maximum_lifetime_duration` to 1 minute, wait for the logout to take effect (usually it's executed in under 10 minutes), then reset `login_maximum_lifetime_duration` to its usual value. 
+
+Use cases include:
+
+- SSO migrations: Force re-auth to pick up new IdP/permissions
+- Security incidents: Immediate response to credential compromise
+- Permission changes: Ensure role changes take effect immediately
+- Employee offboarding: Revoke access without waiting for session expiry
 
 ## Session handling with SSO
 
