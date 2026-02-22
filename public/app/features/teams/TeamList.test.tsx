@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -6,6 +6,10 @@ import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { appEvents } from '../../core/app_events';
+import { ShowModalReactEvent } from '../../types/events';
+
+import { TeamDeleteModal } from './TeamDeleteModal';
 import TeamList from './TeamList';
 
 setBackendSrv(backendSrv);
@@ -27,13 +31,19 @@ describe('TeamList', () => {
     );
   });
 
-  it('deletes a team', async () => {
+  it('clicks the delete button and opens the TeamDeleteModal', async () => {
     const mockTeam = MOCK_TEAMS[0];
-    const { user } = render(<TeamList />);
-    await user.click(await screen.findByRole('button', { name: `Delete team ${mockTeam.spec.title}` }));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    jest.spyOn(appEvents, 'publish');
+    render(<TeamList />);
+    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
 
-    await waitFor(() => expect(screen.queryByText(mockTeam.spec.title)).not.toBeInTheDocument());
+    expect(appEvents.publish).toHaveBeenCalledWith(
+      new ShowModalReactEvent(
+        expect.objectContaining({
+          component: TeamDeleteModal,
+        })
+      )
+    );
   });
 
   describe('when user has access to create a team', () => {

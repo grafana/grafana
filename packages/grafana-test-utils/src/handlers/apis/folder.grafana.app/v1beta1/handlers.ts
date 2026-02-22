@@ -283,7 +283,21 @@ const folderCountsHandler = () =>
     }
   );
 
+const getFolderListHandler = () =>
+  http.get<{ namespace: string }>('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', ({ params }) => {
+    const { namespace } = params;
+    const folders = mockTree.map(({ item }, index) => folderToAppPlatform(item, index + 1, namespace));
+
+    return HttpResponse.json({
+      kind: 'FolderList',
+      apiVersion: 'folder.grafana.app/v1beta1',
+      metadata: {},
+      items: folders,
+    });
+  });
+
 export default [
+  getFolderListHandler(),
   getFolderHandler(),
   getFolderParentsHandler(),
   createFolderHandler(),

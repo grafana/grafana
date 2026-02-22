@@ -14340,7 +14340,15 @@
       "columns": {
         "aria-label-delete-button": "Delete team {{teamName}}",
         "aria-label-edit-team": "Edit team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "Delete",
+          "title": "Delete"
+        },
+        "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
+        "delete-modal-invalid-title": "Cannot delete team",
+        "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1> \".",
         "title-edit-team": "Edit team",
+        "tooltip-delete-button": "Delete {{teamName}}",
         "tooltip-edit-team": "Edit team"
       },
       "loading-teams": "Loading teams...",
