@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -124,13 +125,150 @@ func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
-	list, err := w.inner.List(srvCtx, options)
-	if err != nil {
-		return nil, err
+	// If no limit is specified, fetch all and filter
+	if options.Limit == 0 {
+		list, err := w.inner.List(srvCtx, options)
+		if err != nil {
+			return nil, err
+		}
+		return w.authorizer.FilterList(ctx, list)
 	}
 
-	// Enforce authorization based on the user permissions after retrieving the list
-	return w.authorizer.FilterList(ctx, list)
+	// For paginated requests, fetch and filter based on limit
+	return w.fetchAndFilterUntilFull(ctx, srvCtx, options)
+}
+
+func (w *Wrapper) fetchAndFilterUntilFull(ctx context.Context, srvCtx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	const (
+		maxIterations       = 10
+		overFetchMultiplier = 3
+	)
+
+	var (
+		accumulatedList runtime.Object
+		totalCollected  int64
+		continueToken   = options.Continue
+	)
+
+	for iteration := 0; iteration < maxIterations && totalCollected < options.Limit; iteration++ {
+		fetchOptions := options.DeepCopy()
+		fetchOptions.Continue = continueToken
+		fetchOptions.Limit = (options.Limit - totalCollected) * overFetchMultiplier
+
+		list, err := w.inner.List(srvCtx, fetchOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		unfilteredContinue, _, err := getListMetadata(list)
+		if err != nil {
+			return nil, err
+		}
+
+		filteredList, err := w.authorizer.FilterList(ctx, list)
+		if err != nil {
+			return nil, err
+		}
+
+		_, itemCount, err := getListMetadata(filteredList)
+		if err != nil {
+			return nil, err
+		}
+
+		if itemCount > 0 {
+			if accumulatedList == nil {
+				accumulatedList = filteredList
+			} else {
+				if err := appendToList(accumulatedList, filteredList); err != nil {
+					return nil, err
+				}
+			}
+			totalCollected += int64(itemCount)
+		}
+
+		continueToken = unfilteredContinue
+
+		if continueToken == "" {
+			break
+		}
+	}
+
+	if accumulatedList == nil {
+		accumulatedList = w.inner.NewList()
+	}
+
+	finalContinue := ""
+	if totalCollected >= options.Limit && continueToken != "" {
+		finalContinue = continueToken
+	}
+
+	return truncateList(accumulatedList, options.Limit, finalContinue)
+}
+
+func getListMetadata(list runtime.Object) (continueToken string, itemCount int, err error) {
+	listMeta, err := meta.ListAccessor(list)
+	if err != nil {
+		return "", 0, fmt.Errorf("unable to access list metadata: %w", err)
+	}
+
+	count := 0
+	if err := meta.EachListItem(list, func(obj runtime.Object) error {
+		count++
+		return nil
+	}); err != nil {
+		return "", 0, fmt.Errorf("unable to count list items: %w", err)
+	}
+
+	return listMeta.GetContinue(), count, nil
+}
+
+func appendToList(dest, source runtime.Object) error {
+	sourceItems := []runtime.Object{}
+	if err := meta.EachListItem(source, func(obj runtime.Object) error {
+		sourceItems = append(sourceItems, obj)
+		return nil
+	}); err != nil {
+		return fmt.Errorf("unable to iterate source list: %w", err)
+	}
+
+	destItems := []runtime.Object{}
+	if err := meta.EachListItem(dest, func(obj runtime.Object) error {
+		destItems = append(destItems, obj)
+		return nil
+	}); err != nil {
+		return fmt.Errorf("unable to iterate dest list: %w", err)
+	}
+
+	allItems := append(destItems, sourceItems...)
+	if err := meta.SetList(dest, allItems); err != nil {
+		return fmt.Errorf("unable to set combined list: %w", err)
+	}
+
+	return nil
+}
+
+func truncateList(list runtime.Object, limit int64, continueToken string) (runtime.Object, error) {
+	items := []runtime.Object{}
+	if err := meta.EachListItem(list, func(obj runtime.Object) error {
+		if int64(len(items)) < limit {
+			items = append(items, obj)
+		}
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("unable to iterate list items: %w", err)
+	}
+
+	if err := meta.SetList(list, items); err != nil {
+		return nil, fmt.Errorf("unable to set list items: %w", err)
+	}
+
+	listMeta, err := meta.ListAccessor(list)
+	if err != nil {
+		return nil, fmt.Errorf("unable to access list metadata: %w", err)
+	}
+	listMeta.SetContinue(continueToken)
+
+	return list, nil
 }
 
 func (w *Wrapper) NamespaceScoped() bool {
