@@ -40,6 +40,31 @@ const (
 	CustomHeaderValue = "httpHeaderValue"
 )
 
+// requiredURL contains the set of data sources that require a URL.
+var requiredURL = map[string]bool{
+	DS_GRAPHITE:          true,
+	DS_INFLUXDB:          true,
+	DS_INFLUXDB_08:       true,
+	DS_ES:                true,
+	DS_PROMETHEUS:        true,
+	DS_AMAZON_PROMETHEUS: true,
+	DS_AZURE_PROMETHEUS:  true,
+	DS_ALERTMANAGER:      true,
+	DS_JAEGER:            true,
+	DS_LOKI:              true,
+	DS_OPENTSDB:          true,
+	DS_TEMPO:             true,
+	DS_ZIPKIN:            true,
+	DS_MYSQL:             true,
+	DS_POSTGRES:          true,
+	DS_MSSQL:             true,
+}
+
+// RequiresURL returns true if the given datasource type requires a URL.
+func RequiresURL(dsType string) bool {
+	return requiredURL[dsType]
+}
+
 type DsAccess string
 
 type DataSource struct {

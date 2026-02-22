@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,17 +9,21 @@ import (
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -53,20 +56,10 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 
 		uid := web.Params(c.Req)[":uid"]
 
-		// fetch the datasource type so we know which api group to call
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid) // nolint:staticcheck
-		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
-				return response.Error(http.StatusNotFound, "Data source not found", nil)
-			}
-			return response.Error(http.StatusInternalServerError, "Failed to lookup datasource connection", err)
+		conn, errResp := hs.getConnectionByUID(c, uid)
+		if errResp != nil {
+			return errResp
 		}
-
-		if len(conns.Items) > 1 {
-			return response.Error(http.StatusConflict, "duplicate datasource connections found with this name", nil)
-		}
-
-		conn := conns.Items[0]
 
 		k8sDS, err := hs.getK8sDataSource(c, conn.APIGroup, conn.APIVersion, conn.Name)
 		if err != nil {
@@ -85,6 +78,79 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 		dto.AccessControl = getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
 
 		return response.JSON(http.StatusOK, &dto)
+	})
+}
+
+func (hs *HTTPServer) updateDataSourceByUIDK8sHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs) {
+		return routing.Wrap(hs.UpdateDataSourceByUID)
+	}
+
+	// datasourcesRerouteLegacyCRUDAPIs requires these flags to be enabled
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
+		!hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			return response.Error(http.StatusInternalServerError,
+				"datasourcesRerouteLegacyCRUDAPIs requires queryService and queryServiceWithConnections feature flags",
+				nil)
+		})
+	}
+
+	return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("updateDataSourceByUIDK8sHandler"), time.Since(start).Seconds())
+		}()
+
+		uid := web.Params(c.Req)[":uid"]
+
+		// Parse request body
+		cmd := datasources.UpdateDataSourceCommand{}
+		if err := web.Bind(c.Req, &cmd); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		cmd.OrgID = c.GetOrgID()
+		cmd.UID = uid
+
+		conn, errResp := hs.getConnectionByUID(c, uid)
+		if errResp != nil {
+			return errResp
+		}
+
+		converter := dsconverter.NewConverter(hs.namespacer, conn.APIGroup, conn.Plugin, []string{})
+
+		// Convert the update command to datasource v0alpha1
+		ds, err := converter.FromUpdateCommand(&cmd, conn.APIVersion)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "failed to convert update command", err)
+		}
+
+		updatedDS, err := hs.updateK8sDataSource(c, conn.APIGroup, conn.APIVersion, ds)
+		if err != nil {
+			return hs.handleK8sError(err)
+		}
+
+		// Convert response back to legacy format
+		legacyDS, err := converter.AsLegacyDatasource(updatedDS)
+		if err != nil {
+			return hs.handleK8sError(err)
+		}
+
+		dto := hs.convertModelToDtos(c.Req.Context(), legacyDS)
+
+		// Notify live about the update (copying from the legacy API)
+		if hs.Live != nil {
+			hs.Live.HandleDatasourceUpdate(c.GetOrgID(), dto.UID)
+		}
+
+		return response.JSON(http.StatusOK, util.DynMap{
+			"message":    "Datasource updated",
+			"id":         legacyDS.ID,
+			"name":       cmd.Name,
+			"datasource": dto,
+		})
 	})
 }
 
@@ -107,17 +173,69 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 		return nil, err
 	}
 
-	data, err := result.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal datasource: %w", err)
-	}
-
 	var ds datasourceV0.DataSource
-	if err := json.Unmarshal(data, &ds); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal datasource: %w", err)
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &ds); err != nil {
+		return nil, fmt.Errorf("failed to convert datasource: %w", err)
 	}
 
 	return &ds, nil
+}
+
+// updateK8sDataSource updates a datasource config via the K8s API
+func (hs *HTTPServer) updateK8sDataSource(c *contextmodel.ReqContext, group, version string, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
+	client, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create k8s client: %w", err)
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: "datasources",
+	}
+
+	namespace := hs.namespacer(c.GetOrgID())
+
+	// Convert DataSource to unstructured
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert datasource to unstructured: %w", err)
+	}
+
+	result, err := client.Resource(gvr).Namespace(namespace).Update(c.Req.Context(), &unstructured.Unstructured{Object: unstructuredObj}, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedDS datasourceV0.DataSource
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &updatedDS); err != nil {
+		return nil, fmt.Errorf("failed to convert updated datasource: %w", err)
+	}
+
+	return &updatedDS, nil
+}
+
+// getConnectionByUID fetches the datasource connection by UID and returns it
+// along with any error response. Multiple results for the given UID are treated
+// as an error.
+func (hs *HTTPServer) getConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnection, response.Response) {
+	conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid) // nolint:staticcheck
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return nil, response.Error(http.StatusInternalServerError, "Failed to lookup datasource connection", err)
+	}
+
+	if len(conns.Items) == 0 {
+		return nil, response.Error(http.StatusNotFound, "Data source not found", nil)
+	}
+
+	if len(conns.Items) > 1 {
+		return nil, response.Error(http.StatusConflict, "duplicate datasource connections found with this name", nil)
+	}
+
+	return &conns.Items[0], nil
 }
 
 // handleK8sError converts K8s API errors to HTTP responses

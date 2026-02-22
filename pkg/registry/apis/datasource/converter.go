@@ -166,6 +166,56 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	return cmd, nil
 }
 
+// FromUpdateCommand converts a legacy UpdateDataSourceCommand to datasource
+// v0alpha1 resource, for sending PUT requests to the /apis endpoint.
+func (r *Converter) FromUpdateCommand(cmd *datasources.UpdateDataSourceCommand, apiVersion string) (*datasourceV0.DataSource, error) {
+	ds := &datasourceV0.DataSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: r.group + "/" + apiVersion,
+			Kind:       "DataSource",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cmd.UID,
+			Namespace: r.mapper(cmd.OrgID),
+		},
+		Spec: datasourceV0.UnstructuredSpec{},
+	}
+
+	ds.Spec.SetTitle(cmd.Name).
+		SetAccess(string(cmd.Access)).
+		SetURL(cmd.URL).
+		SetDatabase(cmd.Database).
+		SetUser(cmd.User).
+		SetBasicAuth(cmd.BasicAuth).
+		SetBasicAuthUser(cmd.BasicAuthUser).
+		SetWithCredentials(cmd.WithCredentials).
+		SetIsDefault(cmd.IsDefault).
+		SetReadOnly(cmd.ReadOnly)
+
+	if cmd.JsonData != nil && !cmd.JsonData.IsEmpty() {
+		ds.Spec.SetJSONData(cmd.JsonData.Interface())
+	}
+
+	// Handle secure JSON data - convert raw values to inline secure values
+	if len(cmd.SecureJsonData) > 0 {
+		ds.Secure = make(common.InlineSecureValues)
+		for k, v := range cmd.SecureJsonData {
+			if v == "" {
+				// Empty string means remove the secure value
+				ds.Secure[k] = common.InlineSecureValue{
+					Remove: true,
+				}
+			} else {
+				ds.Secure[k] = common.InlineSecureValue{
+					Create: common.RawSecureValue(v),
+				}
+			}
+		}
+	}
+
+	return ds, nil
+}
+
 func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
@@ -256,6 +306,8 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)
+	} else {
+		legacyDS.JsonData = simplejson.New()
 	}
 
 	// Only the keys are exposed, values are never returned
