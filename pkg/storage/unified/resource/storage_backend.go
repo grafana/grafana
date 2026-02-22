@@ -11,6 +11,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -36,6 +37,26 @@ const (
 	defaultEventPruningInterval = 5 * time.Minute
 	clusterScopeNamespace       = "__cluster__"
 )
+
+var (
+	// sharedSnowflakeNode is initialized once to avoid race conditions.
+	// The snowflake library's NewNode() writes to global variables (Epoch, timeShift, etc.)
+	// that ID.Time() reads. Creating multiple nodes concurrently causes data races.
+	// Using a shared node ensures thread-safe ID generation.
+	sharedSnowflakeNode     *snowflake.Node
+	sharedSnowflakeNodeOnce sync.Once
+)
+
+func getSharedSnowflakeNode() *snowflake.Node {
+	sharedSnowflakeNodeOnce.Do(func() {
+		var err error
+		sharedSnowflakeNode, err = snowflake.NewNode(rand.Int64N(1024))
+		if err != nil {
+			panic(fmt.Sprintf("failed to create snowflake node: %v", err))
+		}
+	})
+	return sharedSnowflakeNode
+}
 
 // convertClusterNamespaceToEmpty converts the internal __cluster__ namespace back to empty string
 // for cluster-scoped resources when returning to users
@@ -119,10 +140,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		logger = log.NewNopLogger()
 	}
 
-	s, err := snowflake.NewNode(rand.Int64N(1024))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
-	}
 	eventStore := newEventStore(kv)
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
@@ -141,7 +158,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		snowflake:                    s,
+		snowflake:                    getSharedSnowflakeNode(),
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
@@ -151,7 +168,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 	}
-	err = backend.initPruner(ctx)
+	err := backend.initPruner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}

@@ -35,7 +35,8 @@ var (
 	root            *logManager
 	now             = time.Now
 	logTimeFormat   = time.RFC3339Nano
-	ctxLogProviders = []ContextualLogProviderFunc{}
+	ctxLogProviders   = []ContextualLogProviderFunc{}
+	ctxLogProvidersMu sync.RWMutex
 )
 
 const (
@@ -220,7 +221,10 @@ func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...any) err
 
 func FromContext(ctx context.Context) []any {
 	args := []any{}
-	for _, p := range ctxLogProviders {
+	ctxLogProvidersMu.RLock()
+	providers := ctxLogProviders
+	ctxLogProvidersMu.RUnlock()
+	for _, p := range providers {
 		if pArgs, exists := p(ctx); exists {
 			args = append(args, pArgs...)
 		}
@@ -295,7 +299,9 @@ type ContextualLogProviderFunc func(ctx context.Context) ([]any, bool)
 // RegisterContextualLogProvider registers a ContextualLogProviderFunc
 // that will be used to provide context when Logger.FromContext is called.
 func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
+	ctxLogProvidersMu.Lock()
 	ctxLogProviders = append(ctxLogProviders, mw)
+	ctxLogProvidersMu.Unlock()
 }
 
 type logParamsContextKey struct{}

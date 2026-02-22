@@ -24,7 +24,10 @@ type streamDecoder struct {
 	predicate   storage.SelectionPredicate
 	codec       runtime.Codec
 	cancelWatch context.CancelFunc
-	done        sync.WaitGroup
+
+	mu     sync.Mutex
+	closed bool
+	done   sync.WaitGroup
 }
 
 func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
@@ -52,7 +55,13 @@ func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Obj
 
 // nolint: gocyclo // we may be able to simplify this in the future, but this is a complex function by nature
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	d.mu.Lock()
+	if d.closed {
+		d.mu.Unlock()
+		return watch.Error, nil, io.EOF
+	}
 	d.done.Add(1)
+	d.mu.Unlock()
 	defer d.done.Done()
 decode:
 	for {
@@ -214,15 +223,22 @@ decode:
 }
 
 func (d *streamDecoder) Close() {
+	// Mark as closed to prevent new Decode operations from starting
+	d.mu.Lock()
+	d.closed = true
+	d.mu.Unlock()
+
+	// Cancel the context to interrupt any in-progress Decode
+	d.cancelWatch()
+
+	// Wait for any in-progress decode operation to finish
+	d.done.Wait()
+
 	// Close the send stream
 	err := d.client.CloseSend()
 	if err != nil {
 		klog.Errorf("error closing watch stream: %s", err)
 	}
-	// Cancel the send context
-	d.cancelWatch()
-	// Wait for all decode operations to finish
-	d.done.Wait()
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)

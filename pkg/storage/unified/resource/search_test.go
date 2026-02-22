@@ -336,16 +336,16 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Wait until indexing is finished.
-	search.wg.Wait()
-
-	require.NotEmpty(t, search.buildIndexCalls)
-
 	// Wait until new index is put into cache.
 	require.Eventually(t, func() bool {
 		idx := support.search.GetIndex(key)
 		return idx != nil
-	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+	}, 2*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+
+	// Verify buildIndexCalls is populated (must be checked after Eventually since BuildIndex runs in background)
+	search.mu.Lock()
+	require.NotEmpty(t, search.buildIndexCalls)
+	search.mu.Unlock()
 
 	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
 	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
@@ -354,7 +354,6 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg sync.WaitGroup
 }
 
 func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
@@ -364,9 +363,6 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	m.wg.Add(1)
-	defer m.wg.Done()
-
 	time.Sleep(1 * time.Second)
 
 	// Simulate erroring out when context is cancelled.
