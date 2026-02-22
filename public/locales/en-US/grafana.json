@@ -5027,7 +5027,7 @@
           }
         }
       },
-      "name": "Auto grid",
+      "name": "Auto",
       "options": {
         "custom-min-height": {
           "clear": "Clear"
@@ -6386,10 +6386,12 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query",
-      "tooltip-add-new-annotation-query": "Add new annotation query"
+      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {
