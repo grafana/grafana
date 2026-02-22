@@ -2441,6 +2441,14 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "functionalSharedPreferences",
+			Description:  "Whether to use the new SharedPreferences functional component",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
