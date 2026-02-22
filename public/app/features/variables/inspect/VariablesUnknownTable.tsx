@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { BaseVariableModel, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 
@@ -80,7 +80,7 @@ function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
 
   return (
-    <h5>
+    <Text variant="h5">
       <Trans i18nKey="variables.variables-unknown-table.collapse-label">Renamed or missing variables</Trans>
       <Tooltip
         content={t(
@@ -90,7 +90,7 @@ function CollapseLabel(): ReactElement {
       >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
-    </h5>
+    </Text>
   );
 }
 

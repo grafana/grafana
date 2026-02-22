@@ -56,7 +56,7 @@ describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {
     });
     render(<DashList {...props} />);
 
-    const headings = (await screen.findAllByRole('heading')).map((heading) => heading.textContent);
+    const headings = (await screen.findAllByTestId('dashlist-header')).map((heading) => heading.textContent);
     expect(headings).toEqual(['Starred dashboards', 'Recently viewed dashboards', 'Search']);
   });
 
