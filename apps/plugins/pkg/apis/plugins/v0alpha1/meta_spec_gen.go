@@ -41,6 +41,7 @@ type MetaJSONData struct {
 	State         *MetaJSONDataState `json:"state,omitempty"`
 	Streaming     *bool              `json:"streaming,omitempty"`
 	Suggestions   *bool              `json:"suggestions,omitempty"`
+	Presets       *bool              `json:"presets,omitempty"`
 	Tracing       *bool              `json:"tracing,omitempty"`
 	Iam           *MetaIAM           `json:"iam,omitempty"`
 	// +listType=atomic

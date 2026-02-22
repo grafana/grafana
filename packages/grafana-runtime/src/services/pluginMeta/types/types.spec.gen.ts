@@ -38,6 +38,7 @@ export interface JSONData {
 	state?: "alpha" | "beta" | "stable" | "deprecated";
 	streaming?: boolean;
 	suggestions?: boolean;
+	presets?: boolean;
 	tracing?: boolean;
 	iam?: IAM;
 	// +listType=atomic

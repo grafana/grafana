@@ -23,6 +23,8 @@ export interface PanelPluginMeta extends PluginMeta {
   skipDataQuery?: boolean;
   /** Indicates that the panel implements suggestions */
   suggestions?: boolean;
+  /** Indicates that the panel implements presets */
+  presets?: boolean;
   /** Indicates that panel should not be available in visualisation picker */
   hideFromList?: boolean;
   /** Sort order */
