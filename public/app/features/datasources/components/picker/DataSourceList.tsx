@@ -1,7 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { useRef } from 'react';
-import * as React from 'react';
-import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -38,7 +36,6 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
-  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
@@ -52,7 +49,6 @@ export function DataSourceList(props: DataSourceListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
-    keyboardEvents: props.keyboardEvents,
     containerRef: containerRef,
   });
 

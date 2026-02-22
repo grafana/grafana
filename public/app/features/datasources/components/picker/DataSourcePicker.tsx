@@ -4,9 +4,8 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
-import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,7 +13,6 @@ import { Trans, t } from '@grafana/i18n';
 import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource, useDatasources } from '../../hooks';
@@ -76,8 +74,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
-  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+
+  const listContainerRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
+
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -91,14 +91,13 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     []
   );
 
-  // Used to position the popper correctly and to bring back the focus when navigating from footer to input
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
-  // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
   const currentDataSourceInstanceSettings = useDatasource(current);
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
+
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -111,6 +110,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+
   const favoriteDataSources = useFavoriteDatasources();
   const placement = 'bottom-start';
 
@@ -153,7 +153,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: onClose,
+      onClose,
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -162,6 +162,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     },
     ref
   );
+
   const { dialogProps } = useDialog(
     {
       'aria-label': 'Opened data source picker list',
@@ -174,51 +175,130 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     markerElement?.focus();
   }
 
-  function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
-    // From the input, it navigates to the footer
-    if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
-      keyEvent.preventDefault();
-      footerRef?.focus();
+  function getFocusableListItems(): HTMLElement[] {
+    if (!listContainerRef.current) {
+      return [];
     }
-    // From the input, if we navigate back, it closes the dropdown
-    if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
-      onClose();
-    }
-    onKeyDown(keyEvent);
+    return Array.from(
+      listContainerRef.current.querySelectorAll<HTMLElement>(
+        'button, [role="option"], [role="listitem"] [tabindex="0"]'
+      )
+    ).filter((el) => el.offsetParent !== null);
   }
 
-  function onNavigateOutsiteFooter(e: React.KeyboardEvent<HTMLButtonElement>) {
-    // When navigating back, the dropdown keeps open and the input element is focused.
+  function transferFocusToList(direction: 'down' | 'up') {
+    setTimeout(() => {
+      const items = getFocusableListItems();
+      if (items.length === 0) {
+        return;
+      }
+      const target = direction === 'down' ? items[0] : items[items.length - 1];
+      target.focus();
+    }, 0);
+  }
+
+  function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
+    switch (keyEvent.key) {
+      case 'ArrowDown':
+        keyEvent.preventDefault();
+        if (!isOpen) {
+          setOpen(true);
+        }
+        transferFocusToList('down');
+        break;
+
+      case 'ArrowUp':
+        keyEvent.preventDefault();
+        if (!isOpen) {
+          setOpen(true);
+        }
+        transferFocusToList('up');
+        break;
+
+      case 'Enter':
+        keyEvent.preventDefault();
+        if (!isOpen) {
+          setOpen(true);
+        }
+        transferFocusToList('down');
+        break;
+
+      case 'Tab':
+        if (isOpen) {
+          if (!keyEvent.shiftKey) {
+            keyEvent.preventDefault();
+            footerRef?.focus();
+          } else {
+            onClose();
+          }
+        }
+        break;
+
+      case 'Escape':
+        if (isOpen) {
+          onClose();
+        }
+        break;
+    }
+  }
+
+  function onKeyDownList(keyEvent: React.KeyboardEvent<HTMLDivElement>) {
+    switch (keyEvent.key) {
+      case 'ArrowDown': {
+        keyEvent.preventDefault();
+        const items = getFocusableListItems();
+        const currentIdx = items.findIndex((el) => el === document.activeElement);
+        const next = items[currentIdx + 1];
+        if (next) {
+          next.focus();
+          // Scroll the newly focused item into view inside the ScrollContainer
+          next.scrollIntoView({ block: 'nearest' });
+        }
+        break;
+      }
+
+      case 'ArrowUp': {
+        keyEvent.preventDefault();
+        const items = getFocusableListItems();
+        const currentIdx = items.findIndex((el) => el === document.activeElement);
+        if (currentIdx <= 0) {
+          // At the top — return focus to the search input
+          markerElement?.focus();
+        } else {
+          const prev = items[currentIdx - 1];
+          if (prev) {
+            prev.focus();
+            prev.scrollIntoView({ block: 'nearest' });
+          }
+        }
+        break;
+      }
+
+      case 'Escape':
+        keyEvent.preventDefault();
+        onClose();
+        break;
+
+      case 'Tab':
+        if (!keyEvent.shiftKey) {
+          keyEvent.preventDefault();
+          footerRef?.focus();
+        } else {
+          keyEvent.preventDefault();
+          markerElement?.focus();
+        }
+        break;
+    }
+  }
+
+  function onNavigateOutsideFooter(e: React.KeyboardEvent<HTMLButtonElement>) {
     if (e.shiftKey) {
       e.preventDefault();
-      markerElement?.focus();
-      // When navigating forward, the dropdown closes and the element next to the input element is focused.
+      transferFocusToList('up');
     } else {
       onClose();
     }
   }
-
-  useEffect(() => {
-    const sub = keyboardEvents.subscribe({
-      next: (keyEvent) => {
-        switch (keyEvent?.code) {
-          case 'ArrowDown':
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
-          case 'ArrowUp':
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
-          case 'Escape':
-            onClose();
-            keyEvent.preventDefault();
-            break;
-        }
-      },
-    });
-    return () => sub.unsubscribe();
-  });
 
   return (
     <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
@@ -245,12 +325,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
-          onFocus={() => {
-            setInputHasFocus(true);
-          }}
-          onBlur={() => {
-            setInputHasFocus(false);
-          }}
+          onFocus={() => setInputHasFocus(true)}
+          onBlur={() => setInputHasFocus(false)}
           onKeyDown={onKeyDownInput}
           value={filterTerm}
           onChange={(e) => {
@@ -262,8 +338,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           }}
           ref={handleReference}
           disabled={disabled}
-        ></Input>
+        />
       </div>
+
       {isOpen ? (
         <Portal>
           <div {...underlayProps} />
@@ -272,10 +349,11 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               {...restProps}
               style={floatingStyles}
               ref={refs.setFloating}
+              listContainerRef={listContainerRef}
               footerRef={setFooterRef}
               current={currentValue}
               filterTerm={filterTerm}
-              keyboardEvents={keyboardEvents}
+              onKeyDownList={onKeyDownList}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 onClose();
                 if (ds.uid !== currentValue?.uid) {
@@ -291,7 +369,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               }}
               onClose={onClose}
               onDismiss={onClose}
-              onNavigateOutsiteFooter={onNavigateOutsiteFooter}
+              onNavigateOutsideFooter={onNavigateOutsideFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
             />
@@ -322,19 +400,21 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
 }
 
 export interface PickerContentProps extends DataSourcePickerProps {
-  keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
   onClose: () => void;
   onDismiss: () => void;
   footerRef: (element: HTMLElement | null) => void;
-  onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  listContainerRef: React.RefObject<HTMLDivElement>;
+  onKeyDownList: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+  onNavigateOutsideFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources, listContainerRef, onKeyDownList } =
+    props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -347,25 +427,37 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer showScrollIndicators>
-        <DataSourceList
-          {...props}
-          favoriteDataSources={favoriteDataSources}
-          enableKeyboardNavigation
-          className={styles.dataSourceList}
-          current={current}
-          onChange={changeCallback}
-          filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
-          onClickEmptyStateCTA={() =>
-            reportInteraction(INTERACTION_EVENT_NAME, {
-              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-            })
-          }
-          dataSources={dataSources}
-        ></DataSourceList>
-      </ScrollContainer>
+      {/*
+        listContainerRef wraps the ScrollContainer so getFocusableListItems()
+        only queries inside the scrollable list, not the footer.
+        onKeyDownList intercepts arrow keys here so focus moves between items
+        instead of the browser scrolling the page.
+        ScrollContainer is INSIDE the ref div so it still clips to maxHeight
+        set by the floating-ui size middleware — giving the original 4-item
+        visible / scroll-for-more behaviour.
+      */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- key-event delegation wrapper for list, not a focusable control */}
+      <div ref={listContainerRef} onKeyDown={onKeyDownList} className={styles.listWrapper}>
+        <ScrollContainer showScrollIndicators>
+          <DataSourceList
+            {...props}
+            favoriteDataSources={favoriteDataSources}
+            enableKeyboardNavigation
+            className={styles.dataSourceList}
+            current={current}
+            onChange={changeCallback}
+            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+              })
+            }
+            dataSources={dataSources}
+          />
+        </ScrollContainer>
+      </div>
       <FocusScope>
-        <Footer {...props} onChange={changeCallback} onNavigateOutsiteFooter={props.onNavigateOutsiteFooter} />
+        <Footer {...props} onChange={changeCallback} onNavigateOutsideFooter={props.onNavigateOutsideFooter} />
       </FocusScope>
     </div>
   );
@@ -381,6 +473,13 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
+    }),
+    listWrapper: css({
+      flex: 1,
+      minHeight: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
     }),
     picker: css({
       background: theme.colors.background.secondary,
@@ -407,7 +506,7 @@ function Footer({ onClose, onChange, ...props }: FooterProps) {
 
   const onKeyDownLastButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Tab') {
-      props.onNavigateOutsiteFooter(e);
+      props.onNavigateOutsideFooter(e);
     }
   };
 
