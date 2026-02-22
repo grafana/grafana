@@ -2,6 +2,7 @@ name: Check Frontend Test Coverage
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - '**/*.js'
@@ -120,7 +121,7 @@ jobs:
         run: |
           TEAMS='${{ needs.setup.outputs.opted-in-teams }}'
           TEAM_LIST=$(echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"' | tr '\n' '\n')
-          
+
           {
             echo "message<<EOF"
             echo "## ⚠️ Frontend Test Coverage Checks Skipped"
@@ -347,7 +348,7 @@ jobs:
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
           fi
-          
+
           # Always capture the markdown output
           {
             echo "markdown<<EOF"
