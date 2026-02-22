@@ -1,10 +1,13 @@
 ---
-description: Learn about Git Sync, the Grafana feature for storing and managing dashboards within GitHub repositories.
+description: Learn about Git Sync, the Grafana feature for storing and managing dashboards within Git repositories.
 keywords:
   - dashboards
   - git integration
   - git sync
+  - git
   - github
+  - gitlab
+  - bitbucket
   - observability
   - configuration
   - as code
@@ -32,45 +35,34 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available **based on the different tiers** but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 
 **Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
-Git Sync in Grafana lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code. You and your team can version control, collaborate, and automate deployments efficiently.
+Git Sync in Grafana lets you synchronize your resources so you can store your dashboards as JSON files in any Git provider and manage them as code. You and your team can version control, collaborate, and automate deployments efficiently.
 
 ## How it works
 
-Git Sync allows you to connect external resources with your Grafana instance. After setup, all synchronized resources live under the `provisioned` folder. You can continue to have unprovisioned resources outside that folder.
+Git Sync allows you to connect external resources with your Grafana instance. After setup, all synchronized resources live in Git under the provisioned folder, and you can continue to have non-provisioned resources outside that folder.
 
 Git Sync is bidirectional. You can modify provisioned resources both from the Grafana UI or from the synced repository, and changes will be reflected in both places.
 
-Refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts) and [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for further details.
+Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for further details, including usage tiers.
+
+Refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts) for more information on how Git Sync works.
 
 ### Make changes in the Grafana UI
 
-Whenever you modify a dashboard directly from the UI, you can also commit those changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
+Whenever you modify a dashboard directly from the UI, you can also commit those changes to your synchronized Git repositories upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
-### Make changes in your GitHub repositories
+### Make changes in your Git repositories
 
-Your Grafana instance polls the provisioned GitHub resources to synchronize. If you made any changes in GitHub, they will be updated in the Grafana database as well. The Grafana UI reads from the database and updates the UI to reflect these changes.
+Your Grafana instance polls the provisioned Git resources to synchronize. If you made any changes in your synchronized Git repositories, they will be updated in the Grafana database as well. The Grafana UI reads from the database and updates the UI to reflect these changes.
 
 - Without webhooks, Grafana polls for changes at the specified interval. The default polling interval is 60 seconds, and you can change this setting in the Grafana UI.
 - If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
-
-## Resource support and compatibility
-
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
-
-If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
-
-A resource can be:
-
-| Is the resource? | **Compatible**                                                             | **Incompatible**                                                                                |
-| ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
-| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
 
 ## Common use cases
 
