@@ -110,10 +110,10 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
     const labelFilter = templateSrv.replace(query.labelFilter ?? '', request.scopedVars);
 
     // Convert label filter to API matchers
-    let groupLabels: CreateNotificationqueryMatcher[] = [];
+    let labels: CreateNotificationqueryMatcher[] = [];
     if (labelFilter && labelFilter.trim()) {
       const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-      groupLabels = matchers.map(matcherToAPIFormat);
+      labels = matchers.map(matcherToAPIFormat);
     }
 
     const notificationResult = await getNotifications(
@@ -122,7 +122,7 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
       isNotificationStatus(statusFilter) ? statusFilter : undefined,
       isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
       receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
-      groupLabels
+      labels
     );
 
     const dataFrame = notificationsToDataFrame(notificationResult);
@@ -192,7 +192,7 @@ export const getNotifications = async (
   status?: CreateNotificationqueryNotificationStatus,
   outcome?: CreateNotificationqueryNotificationOutcome,
   receiver?: string,
-  groupLabels?: CreateNotificationqueryMatcher[]
+  labels?: CreateNotificationqueryMatcher[]
 ): Promise<CreateNotificationqueryResponse> => {
   const result = await dispatch(
     notificationsApi.endpoints.createNotificationquery.initiate(
@@ -204,7 +204,7 @@ export const getNotifications = async (
           status: status,
           outcome: outcome,
           receiver: receiver,
-          groupLabels: groupLabels || [],
+          labels: labels || [],
         },
       },
       // @ts-expect-error forceRefetch is a valid RTK Query initiate option but not included in generated types
