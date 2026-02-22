@@ -2402,6 +2402,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "appPluginAPIServer",
+			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "alertingIgnorePendingForNoDataAndError",
 			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
 			Stage:        FeatureStageExperimental,

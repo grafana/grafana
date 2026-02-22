@@ -298,6 +298,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-19,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
+2026-02-11,appPluginAPIServer,experimental,@grafana/plugins-platform-backend,false,true,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
