@@ -64,6 +64,8 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
     return getTagValueOptions(tag.key).then((tags) => tags.map(toSelectableValue));
   };
 
+  const isRegexOperator = operator === '=~' || operator === '!~';
+
   return (
     <div className="gf-form">
       {condition != null && (
@@ -98,7 +100,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
       <Seg
         allowCustomValue
         value={tag.value}
-        loadOptions={getTagValueSegmentOptions}
+        loadOptions={isRegexOperator ? undefined : getTagValueSegmentOptions}
         onChange={(v) => {
           const value = v.value ?? '';
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
