@@ -852,6 +852,13 @@ func (alertRule *AlertRule) ContactPointRouting() *ContactPointRouting {
 	return alertRule.NotificationSettings.ContactPointRouting
 }
 
+func (alertRule *AlertRule) PolicyRouting() *PolicyRouting {
+	if alertRule.NotificationSettings == nil {
+		return nil
+	}
+	return alertRule.NotificationSettings.PolicyRouting
+}
+
 func (alertRule *AlertRule) ResourceType() string {
 	return "alertRule"
 }

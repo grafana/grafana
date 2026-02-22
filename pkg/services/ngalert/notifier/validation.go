@@ -22,6 +22,9 @@ type ErrorReceiverDoesNotExist struct {
 type ErrorTimeIntervalDoesNotExist struct {
 	ErrorReferenceInvalid
 }
+type ErrorRouteDoesNotExist struct {
+	ErrorReferenceInvalid
+}
 
 func (e ErrorReceiverDoesNotExist) Error() string {
 	return fmt.Sprintf("receiver %s does not exist", e.Reference)
@@ -29,6 +32,10 @@ func (e ErrorReceiverDoesNotExist) Error() string {
 
 func (e ErrorTimeIntervalDoesNotExist) Error() string {
 	return fmt.Sprintf("time interval %s does not exist", e.Reference)
+}
+
+func (e ErrorRouteDoesNotExist) Error() string {
+	return fmt.Sprintf("notification policy %s does not exist", e.Reference)
 }
 
 // ContactPointRoutingValidator validates ContactPointRouting against the current Alertmanager configuration
@@ -43,7 +50,10 @@ type NotificationSettingsValidator interface {
 
 // staticNotificationSettingsValidator is a NotificationSettingsValidator that uses static pre-fetched values to validate
 // models.NotificationSettings.
-type staticNotificationSettingsValidator staticContactPointValidator
+type staticNotificationSettingsValidator struct {
+	*staticContactPointValidator
+	availableRoutes map[string]struct{}
+}
 
 // staticContactPointValidator is a ContactPointRoutingValidator that uses static pre-fetched values to validate
 // models.ContactPointRouting.
@@ -92,7 +102,18 @@ func NewContactPointRoutingValidator[R receiver](am apiAlertingConfig[R]) Contac
 
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
 func NewNotificationSettingsValidator(cfg *definitions.PostableUserConfig) NotificationSettingsValidator {
-	return staticNotificationSettingsValidator(newStaticContactPointValidator(&cfg.AlertmanagerConfig))
+	validator := newStaticContactPointValidator(&cfg.AlertmanagerConfig)
+
+	availableRoutes := make(map[string]struct{}, len(cfg.ManagedRoutes)+1)
+	for routeName := range cfg.ManagedRoutes {
+		availableRoutes[routeName] = struct{}{}
+	}
+	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+
+	return staticNotificationSettingsValidator{
+		staticContactPointValidator: &validator,
+		availableRoutes:             availableRoutes,
+	}
 }
 
 // Validate checks that models.ContactPointRouting is valid and that references exist.
@@ -124,7 +145,12 @@ func (n staticNotificationSettingsValidator) Validate(settings models.Notificati
 	}
 
 	if settings.ContactPointRouting != nil {
-		return staticContactPointValidator(n).Validate(*settings.ContactPointRouting)
+		return n.staticContactPointValidator.Validate(*settings.ContactPointRouting)
+	}
+	if settings.PolicyRouting != nil {
+		if _, ok := n.availableRoutes[settings.PolicyRouting.Policy]; !ok {
+			return ErrorRouteDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.PolicyRouting.Policy}}
+		}
 	}
 	return nil
 }

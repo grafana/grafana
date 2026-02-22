@@ -16,6 +16,9 @@ import (
 // GroupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
 const GroupByAll = "..."
 
+const DefaultRoutingTreeName = "user-defined"
+const NamedRouteLabel = "__grafana_managed_route__"
+
 // DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
@@ -29,6 +32,7 @@ type ListContactPointRoutingsQuery struct {
 // automatically generate labels and an associated matching route containing the given settings.
 type NotificationSettings struct {
 	ContactPointRouting *ContactPointRouting
+	PolicyRouting       *PolicyRouting
 }
 
 func NotificationSettingsFromContact(cpr ContactPointRouting) NotificationSettings {
@@ -37,12 +41,27 @@ func NotificationSettingsFromContact(cpr ContactPointRouting) NotificationSettin
 	}
 }
 
+func NotificationSettingsFromPolicy(policy string) NotificationSettings {
+	return NotificationSettings{
+		PolicyRouting: &PolicyRouting{Policy: policy},
+	}
+}
+
 func (s *NotificationSettings) Validate() error {
 	if s == nil {
 		return nil
 	}
+	if s.PolicyRouting != nil && s.ContactPointRouting != nil {
+		return errors.New("only one of policy routing or contact point routing can be specified")
+	}
+	if s.PolicyRouting == nil && s.ContactPointRouting == nil {
+		return errors.New("at least one of policy routing or contact point routing must be specified")
+	}
 	if s.ContactPointRouting != nil {
 		return s.ContactPointRouting.Validate()
+	}
+	if s.PolicyRouting != nil {
+		return s.PolicyRouting.Validate()
 	}
 	return nil
 }
@@ -51,7 +70,13 @@ func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
 	if s == nil || other == nil {
 		return s == nil && other == nil
 	}
-	return s.ContactPointRouting.Equals(other.ContactPointRouting)
+	if !s.ContactPointRouting.Equals(other.ContactPointRouting) {
+		return false
+	}
+	if !s.PolicyRouting.Equals(other.PolicyRouting) {
+		return false
+	}
+	return true
 }
 
 func (s *NotificationSettings) Fingerprint(features featuremgmt.FeatureToggles) data.Fingerprint {
@@ -61,6 +86,9 @@ func (s *NotificationSettings) Fingerprint(features featuremgmt.FeatureToggles) 
 	if s.ContactPointRouting != nil {
 		return s.ContactPointRouting.Fingerprint(features)
 	}
+	if s.PolicyRouting != nil {
+		return s.PolicyRouting.Fingerprint(features)
+	}
 	return data.Fingerprint(0)
 }
 
@@ -68,8 +96,13 @@ func (s *NotificationSettings) ToLabels(features featuremgmt.FeatureToggles) dat
 	if s == nil {
 		return make(data.Labels)
 	}
+	// NotificationSettings with both ContactPointRouting and PolicyRouting is invalid, however, if we somehow get into
+	// this state at a point when labels are required for alert routing, we let ContactPointRouting take precedence.
 	if s.ContactPointRouting != nil {
 		return s.ContactPointRouting.ToLabels(features)
+	}
+	if s.PolicyRouting != nil {
+		return s.PolicyRouting.ToLabels(features)
 	}
 	return make(data.Labels)
 }
@@ -253,4 +286,46 @@ func (s *ContactPointRouting) Fingerprint(features featuremgmt.FeatureToggles) d
 	}
 
 	return data.Fingerprint(h.Sum64())
+}
+
+// PolicyRouting routes alerts based on a defined named notification policy.
+type PolicyRouting struct {
+	Policy string
+}
+
+func (s *PolicyRouting) Validate() error {
+	if s.Policy == "" {
+		return errors.New("policy must be specified")
+	}
+	return nil
+}
+
+func (s *PolicyRouting) IsDefault() bool {
+	return s.Policy == "" || s.Policy == DefaultRoutingTreeName
+}
+
+func (s *PolicyRouting) Equals(other *PolicyRouting) bool {
+	if s == nil || other == nil {
+		return s == nil && other == nil
+	}
+	return s.Policy == other.Policy
+}
+
+func (s *PolicyRouting) Fingerprint(_ featuremgmt.FeatureToggles) data.Fingerprint {
+	h := fnv.New64()
+	_, _ = h.Write(unsafe.Slice(unsafe.StringData(s.Policy), len(s.Policy))) //nolint:gosec
+	return data.Fingerprint(h.Sum64())
+}
+
+func (s *PolicyRouting) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		return make(data.Labels)
+	}
+	if s.IsDefault() {
+		return make(data.Labels)
+	}
+	return data.Labels{
+		NamedRouteLabel: s.Policy,
+	}
 }
