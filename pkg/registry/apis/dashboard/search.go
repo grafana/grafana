@@ -236,6 +236,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "createdBy",
+										In:          "query",
+										Description: "filter by the user who created the resource (format: user:<uid>)",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "explain",
 										In:          "query",
 										Description: "add debugging info that may help explain why the result matched",
@@ -562,6 +571,14 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
 			Operator: operator,
 			Values:   vals,
+		})
+	}
+
+	if v := queryParams.Get("createdBy"); v != "" {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED_BY,
+			Operator: "=",
+			Values:   []string{v},
 		})
 	}
 

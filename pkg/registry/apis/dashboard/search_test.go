@@ -1162,6 +1162,22 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"createdBy filter": {
+			queryString: "createdBy=user:abc123",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "createdBy", Operator: "=", Values: []string{"user:abc123"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 	}
 
 	for name, tt := range tests {
