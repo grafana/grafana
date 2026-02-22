@@ -215,6 +215,19 @@
     },
     {
       "metadata": {
+        "name": "alertingCompactRulesResponse",
+        "resourceVersion": "1771489897330",
+        "creationTimestamp": "2026-02-19T08:31:37Z"
+      },
+      "spec": {
+        "description": "Returns compact API responses for alert rules list, reducing payload size by omitting the query, notification settings, and metadata",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableDMAinUI",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

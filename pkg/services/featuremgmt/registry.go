@@ -731,6 +731,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alertingCompactRulesResponse",
+			Description: "Returns compact API responses for alert rules list, reducing payload size by omitting the query, notification settings, and metadata",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:            "jitterAlertRulesWithinGroups",
 			Description:     "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
 			FrontendOnly:    false,

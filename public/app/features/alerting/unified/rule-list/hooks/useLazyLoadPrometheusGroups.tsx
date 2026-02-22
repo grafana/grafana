@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
 
@@ -14,7 +14,7 @@ import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
  * @param pageSize - Number of groups to display per page
  * @returns Groups loaded so far and controls for navigating through rule groups
  */
-export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
+export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO | GrafanaPromRuleGroupDTO>(
   groupsGenerator: AsyncIterator<TGroup>,
   pageSize: number,
   filter?: (group: TGroup) => boolean

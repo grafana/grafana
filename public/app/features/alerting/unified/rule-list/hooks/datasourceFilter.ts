@@ -1,4 +1,4 @@
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleCompact, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 
@@ -72,6 +72,6 @@ export function getDatasourceFilter(filterState: RulesFilter) {
 
   return {
     groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, dsGroupFilterConfig),
-    ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, dsRuleFilterConfig),
+    ruleMatches: (rule: PromRuleCompact) => ruleMatches(rule, normalizedFilterState, dsRuleFilterConfig),
   };
 }

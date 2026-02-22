@@ -12,11 +12,10 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import {
   EditableRuleIdentifier,
   GrafanaRuleIdentifier,
-  Rule,
   RuleGroupIdentifierV2,
   RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleCompact, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
@@ -32,7 +31,7 @@ import { createRelativeUrl } from '../../utils/url';
 
 type RuleProps = RequireAtLeastOne<{
   rule?: RulerRuleDTO;
-  promRule?: Rule;
+  promRule?: PromRuleCompact;
 }>;
 
 type Props = RuleProps & {
@@ -134,7 +133,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   );
 }
 
-function getIsProvisioned(rule?: RulerRuleDTO, promRule?: Rule): boolean {
+function getIsProvisioned(rule?: RulerRuleDTO, promRule?: PromRuleCompact): boolean {
   if (rule) {
     return isProvisionedRule(rule);
   }
@@ -149,7 +148,7 @@ function getIsProvisioned(rule?: RulerRuleDTO, promRule?: Rule): boolean {
 function getEditableIdentifier(
   groupIdentifier: RuleGroupIdentifierV2,
   rule?: RulerRuleDTO,
-  promRule?: Rule
+  promRule?: PromRuleCompact
 ): EditableRuleIdentifier | undefined {
   if (rule) {
     return ruleId.fromRulerRuleAndGroupIdentifierV2(groupIdentifier, rule);

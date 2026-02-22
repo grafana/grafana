@@ -15,6 +15,7 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { shouldUseCompactRulesResponse } from '../../featureToggles';
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
@@ -69,7 +70,10 @@ interface GetIteratorResult {
 
 export function useFilteredRulesIteratorProvider() {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
+    limitAlerts: 0,
+    compact: shouldUseCompactRulesResponse(),
+  });
 
   const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
