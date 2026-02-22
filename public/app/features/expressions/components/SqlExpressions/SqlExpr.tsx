@@ -71,7 +71,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  \`${vars[0]}\`
 LIMIT
   10`;
 
