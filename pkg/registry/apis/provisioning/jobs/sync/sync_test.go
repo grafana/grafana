@@ -67,7 +67,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -122,7 +122,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
