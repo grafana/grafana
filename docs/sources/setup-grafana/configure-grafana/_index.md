@@ -292,10 +292,13 @@ executed with working directory set to the installation path.
 
 #### `enable_gzip`
 
-Set this option to `true` to enable HTTP compression, this can improve
-transfer speed and bandwidth utilization. It is recommended that most
-users set it to `true`. By default it is set to `false` for compatibility
-reasons.
+{{< admonition type="note" >}}
+Deprecated: Use `enable_compression` instead.
+{{< /admonition >}}
+
+#### `enable_compression`
+
+Enables or disables HTTP response compression. Supports zstd, Brotli, gzip, and deflate encodings. By default it's set to `true`. Set to `false` to disable compression. When not explicitly set, it falls back to the value of `enable_gzip`. 
 
 #### `cert_file`
 
