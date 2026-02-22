@@ -1767,6 +1767,20 @@
     },
     {
       "metadata": {
+        "name": "forwardTeamHeadersTempo",
+        "resourceVersion": "1771611370728",
+        "creationTimestamp": "2026-02-20T18:16:10Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendServiceSettingsOverrides",
         "resourceVersion": "1771419300836",
         "creationTimestamp": "2026-02-18T12:55:00Z",

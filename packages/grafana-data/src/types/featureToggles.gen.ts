@@ -1542,4 +1542,9 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  forwardTeamHeadersTempo?: boolean;
 }

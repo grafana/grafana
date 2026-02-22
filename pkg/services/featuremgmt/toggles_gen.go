@@ -841,4 +841,8 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagForwardTeamHeadersTempo
+	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
+	FlagForwardTeamHeadersTempo = "forwardTeamHeadersTempo"
 )
