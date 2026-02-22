@@ -10357,6 +10357,13 @@
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
   },
+  "legend": {
+    "container": {
+      "content": "Showing too many series will impact browser performance",
+      "show-all-series": "Show all series",
+      "show-only-series": "Showing {{shown}} / {{total}} series"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Library panel with this name already exists",
