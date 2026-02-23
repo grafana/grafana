@@ -121,18 +121,18 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	// TODO have a way of including enterprise manifests
-	if !slices.ContainsFunc(AppManifests(), func(m app.Manifest) bool {
-		return m.ManifestData.Group == req.Options.Key.Group
-	}) {
-		return false
-	}
-
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
 		return false
 	}
 
 	if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+		return false
+	}
+
+	// TODO have a way of including enterprise manifests
+	if !slices.ContainsFunc(AppManifests(), func(m app.Manifest) bool {
+		return m.ManifestData.Group == req.Options.Key.Group
+	}) {
 		return false
 	}
 
