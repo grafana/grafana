@@ -504,13 +504,14 @@ describe('PanelDataPaneNext', () => {
 
   /**
    * Tests for resolveDatasourceRef — the synchronous resolution step that runs before
-   * loadDatasource to guarantee queryRunner.state.datasource is always set.
+   * loadDatasource. Returns a DataSourceRef to pass into loadDatasource; does NOT mutate
+   * queryRunner to avoid bleeding into the dashboard save path.
    *
    * Priority chain (mirrors legacy PanelEditorQueries.componentDidMount):
-   *   1. queryRunner.state.datasource already set      → no-op
-   *   2. queries[0] has explicit datasource            → no-op (loadDatasource will use it)
-   *   3. localStorage has a resolvable datasource UID  → use it
-   *   4. localStorage UID is stale / no entry          → fall back to configured default
+   *   1. queryRunner.state.datasource already set      → returns undefined (loadDatasource uses it directly)
+   *   2. queries[0] has explicit datasource            → returns undefined (same)
+   *   3. localStorage has a resolvable datasource UID  → returns that ref
+   *   4. localStorage UID is stale / no entry          → returns the configured default ref
    */
   describe('resolveDatasourceRef', () => {
     const promSettings: DataSourceInstanceSettings = {
@@ -548,9 +549,10 @@ describe('PanelDataPaneNext', () => {
     let mockGetLastUsed: jest.Mock;
     let testDataPane: PanelDataPaneNext;
 
-    const callResolveDatasourceRef = () => {
-      (testDataPane as unknown as { resolveDatasourceRef: () => void }).resolveDatasourceRef();
-    };
+    const callResolveDatasourceRef = () =>
+      (
+        testDataPane as unknown as { resolveDatasourceRef: () => ReturnType<typeof getDataSourceRef> | undefined }
+      ).resolveDatasourceRef();
 
     beforeEach(() => {
       mockGetLastUsed = jest.fn();
@@ -568,22 +570,21 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
-    it('should use the localStorage datasource when it is available and resolvable', () => {
+    it('should return the localStorage datasource ref when it is available and resolvable', () => {
       mockGetLastUsed.mockReturnValue({ datasourceUid: promSettings.uid });
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
         return uid === promSettings.uid ? promSettings : undefined;
       });
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
       expect(mockGetLastUsed).toHaveBeenCalledWith('test-dashboard-uid');
-      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
-        datasource: getDataSourceRef(promSettings),
-      });
+      expect(result).toEqual(getDataSourceRef(promSettings));
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should fall back to default when the localStorage UID is stale (not found in registry)', () => {
+    it('should return the default datasource ref when the localStorage UID is stale (not found in registry)', () => {
       mockGetLastUsed.mockReturnValue({ datasourceUid: 'deleted-or-renamed-uid' });
       mockGetInstanceSettings.mockImplementation((ref: string) => {
         // Stale UID resolves to nothing; default resolves correctly.
@@ -593,14 +594,13 @@ describe('PanelDataPaneNext', () => {
         return undefined;
       });
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
-      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
-        datasource: getDataSourceRef(defaultSettings),
-      });
+      expect(result).toEqual(getDataSourceRef(defaultSettings));
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should fall back to default when there is no localStorage entry for this dashboard', () => {
+    it('should return the default datasource ref when there is no localStorage entry for this dashboard', () => {
       mockGetLastUsed.mockReturnValue(undefined);
       mockGetInstanceSettings.mockImplementation((ref: string) => {
         if (ref === config.defaultDatasource) {
@@ -609,70 +609,68 @@ describe('PanelDataPaneNext', () => {
         return undefined;
       });
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
-      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
-        datasource: getDataSourceRef(defaultSettings),
-      });
+      expect(result).toEqual(getDataSourceRef(defaultSettings));
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should do nothing when queryRunner already has a datasource set', () => {
+    it('should return undefined when queryRunner already has a datasource set', () => {
       mockQueryRunnerState.datasource = { uid: 'already-set-uid', type: 'prometheus' };
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
+      expect(result).toBeUndefined();
       expect(mockGetLastUsed).not.toHaveBeenCalled();
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should do nothing when the first query already has an explicit datasource', () => {
+    it('should return undefined when the first query already has an explicit datasource', () => {
       mockQueryRunnerState.datasource = undefined;
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
-      // loadDatasource will infer the datasource from queries[0] — no need to set it here.
+      // loadDatasource will infer the datasource from queries[0] — no need to resolve here.
+      expect(result).toBeUndefined();
       expect(mockGetLastUsed).not.toHaveBeenCalled();
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should use the dashboard uid as the localStorage key (not an empty string for unsaved dashboards)', () => {
+    it('should use the dashboard uid as the localStorage key (empty string for unsaved dashboards)', () => {
       mockGetDashboardSceneFor.mockReturnValue({ state: { uid: '' } });
       mockGetLastUsed.mockReturnValue(undefined);
       mockGetInstanceSettings.mockReturnValue(defaultSettings);
 
-      callResolveDatasourceRef();
+      const result = callResolveDatasourceRef();
 
       expect(mockGetLastUsed).toHaveBeenCalledWith('');
       // Falls back to default — editor should still open, not break
-      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
-        datasource: getDataSourceRef(defaultSettings),
-      });
+      expect(result).toEqual(getDataSourceRef(defaultSettings));
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
     describe('integration with loadDatasource', () => {
-      // Make setState propagate into mockQueryRunnerState for all integration tests so
-      // loadDatasource reads the datasource that resolveDatasourceRef just resolved.
       beforeEach(() => {
-        (mockQueryRunner.setState as jest.Mock).mockImplementation((updates: Partial<typeof mockQueryRunnerState>) => {
-          Object.assign(mockQueryRunnerState, updates);
-        });
-
         jest
           .spyOn(require('app/features/datasources/components/picker/utils'), 'storeLastUsedDataSourceInLocalStorage')
           .mockImplementation(jest.fn());
       });
 
-      const callLoadDatasource = () =>
-        (testDataPane as unknown as { loadDatasource: () => Promise<void> }).loadDatasource();
+      const callLoadDatasource = (resolvedRef?: ReturnType<typeof getDataSourceRef>) =>
+        (
+          testDataPane as unknown as {
+            loadDatasource: (ref?: ReturnType<typeof getDataSourceRef>) => Promise<void>;
+          }
+        ).loadDatasource(resolvedRef);
 
       it('should load the default datasource when the panel has no datasource and localStorage has no entry (original bug scenario)', async () => {
         // Exact conditions that triggered "Failed to load datasource for this query":
         // - queryRunner has no datasource (saved with default / never explicitly set)
         // - no query-level datasource either
         // - no localStorage entry for this dashboard
-        // Without resolveDatasourceRef, loadDatasource had nothing to load and silently
-        // left panelDsSettings undefined, causing the error in the query editor.
+        // Without resolveDatasourceRef passing a resolved ref into loadDatasource, loadDatasource
+        // had nothing to load and silently left panelDsSettings undefined, causing the error.
         mockQueryRunnerState.datasource = undefined;
         mockQueryRunnerState.queries = [{ refId: 'A' }];
         mockGetLastUsed.mockReturnValue(undefined);
@@ -687,12 +685,14 @@ describe('PanelDataPaneNext', () => {
           }),
         });
 
-        callResolveDatasourceRef();
-        await callLoadDatasource();
+        const resolvedRef = callResolveDatasourceRef();
+        await callLoadDatasource(resolvedRef);
 
         expect(testDataPane.state.datasource).toBe(defaultDatasource);
         expect(testDataPane.state.dsSettings).toBe(defaultSettings);
         expect(testDataPane.state.dsError).toBeUndefined();
+        // queryRunner must remain untouched — no bleed into the save path
+        expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       });
 
       it('should result in a loaded datasource after resolveDatasourceRef + loadDatasource when localStorage has a valid entry', async () => {
@@ -705,12 +705,14 @@ describe('PanelDataPaneNext', () => {
           getInstanceSettings: jest.fn().mockReturnValue(promSettings),
         });
 
-        callResolveDatasourceRef();
-        await callLoadDatasource();
+        const resolvedRef = callResolveDatasourceRef();
+        await callLoadDatasource(resolvedRef);
 
         expect(testDataPane.state.datasource).toBe(promDatasource);
         expect(testDataPane.state.dsSettings).toBe(promSettings);
         expect(testDataPane.state.dsError).toBeUndefined();
+        // queryRunner must remain untouched — no bleed into the save path
+        expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       });
     });
   });
@@ -1199,9 +1201,7 @@ describe('PanelDataPaneNext', () => {
 
     it('should throw when the target datasource cannot be found in the registry', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockQueryRunnerState.queries = [
-        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
-      ];
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
       mockGetInstanceSettings.mockReturnValue(undefined); // not found
 
@@ -1210,9 +1210,7 @@ describe('PanelDataPaneNext', () => {
 
     it('should run queries after the datasource change', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockQueryRunnerState.queries = [
-        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
-      ];
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
       mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
 

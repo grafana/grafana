@@ -77,8 +77,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   }
 
   private onActivate() {
-    this.resolveDatasourceRef();
-    this.loadDatasource();
+    const resolvedRef = this.resolveDatasourceRef();
+    this.loadDatasource(resolvedRef);
 
     // Subscribe to datasource changes on the queryRunner
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
@@ -94,7 +94,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   }
 
   /**
-   * Synchronously resolves and writes back queryRunner.state.datasource before loadDatasource runs.
+   * Synchronously resolves a datasource ref to use when queryRunner has no explicit datasource set.
+   * Returns the resolved ref without mutating queryRunner — the caller passes it to loadDatasource.
    *
    * In Grafana's data model, null/undefined is a valid datasource ref meaning "use the default."
    * Panels stored this way (the common case for any panel that never had an explicit datasource
@@ -102,24 +103,28 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
    * has nothing to load, silently leaves panelDsSettings undefined, and the query editor shows
    * "Failed to load datasource" for every query that inherits its datasource from the panel.
    *
+   * We deliberately do NOT write back to queryRunner here. Writing to queryRunner would bleed into
+   * the dashboard save path (both V1 and V2 serializers read queryRunner.state.datasource), silently
+   * persisting an explicit datasource UID onto panels that were saved with none.
+   *
    * Resolution priority (mirrors legacy PanelEditorQueries.componentDidMount):
-   *   1. Already set on queryRunner — nothing to do.
-   *   2. Inferred from the first query's explicit datasource.
+   *   1. Already set on queryRunner — returns undefined (loadDatasource will use it directly).
+   *   2. Inferred from the first query's explicit datasource — returns undefined (same).
    *   3. Last-used datasource stored in localStorage for this dashboard.
    *   4. Grafana's configured default datasource.
    *
    * getInstanceSettings() is a synchronous cache lookup, so this is safe to call
    * synchronously before the async loadDatasource.
    */
-  private resolveDatasourceRef() {
+  private resolveDatasourceRef(): DataSourceRef | undefined {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
-      return;
+      return undefined;
     }
 
-    // Already have an explicit ref on the runner or the first query — nothing to do.
+    // Already have an explicit ref on the runner or the first query — loadDatasource handles it.
     if (queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource) {
-      return;
+      return undefined;
     }
 
     // Try the last-used datasource for this dashboard from localStorage.
@@ -129,19 +134,16 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (lastUsedDatasource?.datasourceUid) {
       const dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource.datasourceUid });
       if (dsSettings) {
-        queryRunner.setState({ datasource: getDataSourceRef(dsSettings) });
-        return;
+        return getDataSourceRef(dsSettings);
       }
     }
 
     // Fall back to the Grafana-configured default datasource.
     const defaultDsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
-    if (defaultDsSettings) {
-      queryRunner.setState({ datasource: getDataSourceRef(defaultDsSettings) });
-    }
+    return defaultDsSettings ? getDataSourceRef(defaultDsSettings) : undefined;
   }
 
-  private async loadDatasource() {
+  private async loadDatasource(resolvedRef?: DataSourceRef) {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
@@ -149,9 +151,12 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     try {
-      // resolveDatasourceRef() has already populated queryRunner.state.datasource if it was
-      // missing, so datasourceToLoad will be non-null in the normal flow.
-      const datasourceToLoad = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
+      // queryRunner.state.datasource takes precedence; resolvedRef is the fallback computed by
+      // resolveDatasourceRef() for panels that have no explicit datasource in their model.
+      // resolvedRef is intentionally not written back to queryRunner to avoid mutating the model
+      // and bleeding into the dashboard save path.
+      const datasourceToLoad =
+        queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource ?? resolvedRef;
       if (!datasourceToLoad) {
         this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
         return;
