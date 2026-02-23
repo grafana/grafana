@@ -55,10 +55,15 @@ func NewRepository(
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
+	ghClient, err := factory.New(ctx, token, config.Spec.GitHub.URL)
+	if err != nil {
+		return nil, fmt.Errorf("create github client: %w", err)
+	}
+
 	return &githubRepository{
 		config:        config,
 		GitRepository: gitRepo,
-		gh:            factory.New(ctx, token), // TODO, baseURL from config
+		gh:            ghClient,
 		owner:         owner,
 		repo:          repo,
 	}, nil
