@@ -8,43 +8,8 @@ import (
 )
 
 // BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
-// Returns nil if the condition hasn't changed to avoid unnecessary patches.
-func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
-	// Check if condition already exists and is unchanged
-	existingCondition := meta.FindStatusCondition(existingConditions, newCondition.Type)
-	if existingCondition != nil &&
-		existingCondition.Status == newCondition.Status &&
-		existingCondition.Reason == newCondition.Reason &&
-		existingCondition.Message == newCondition.Message &&
-		existingCondition.ObservedGeneration == generation {
-		// Condition hasn't changed, no need to patch
-		return nil
-	}
-
-	// Clone the conditions to avoid mutating the original
-	conditions := make([]metav1.Condition, len(existingConditions))
-	copy(conditions, existingConditions)
-
-	// Ensure ObservedGeneration is set
-	newCondition.ObservedGeneration = generation
-
-	// Use meta.SetStatusCondition to handle LastTransitionTime correctly
-	meta.SetStatusCondition(&conditions, newCondition)
-
-	// Return patch operation to replace the entire conditions array
-	return []map[string]interface{}{
-		{
-			"op":    "replace",
-			"path":  "/status/conditions",
-			"value": conditions,
-		},
-	}
-}
-
-// BuildConditionsPatchOps creates a single conditions patch operation for multiple conditions at once.
-// This avoids the problem of multiple separate patches to /status/conditions overwriting each other.
-// Returns nil if none of the conditions have changed.
-func BuildConditionsPatchOps(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
+// Accepts one or more conditions. Returns nil if none of the conditions have changed to avoid unnecessary patches.
+func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
 	anyChanged := false
 	for _, newCondition := range newConditions {
 		existing := meta.FindStatusCondition(existingConditions, newCondition.Type)

@@ -244,24 +244,24 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 		expectedSyncStatus metav1.ConditionStatus
 	}{
 		{
-			name:               "successful sync sets SyncSuccessful condition",
+			name:               "successful sync sets Succeeded condition",
 			syncError:          nil,
 			jobState:           provisioning.JobStateSuccess,
-			expectedSyncReason: provisioning.ReasonSyncSuccessful,
+			expectedSyncReason: provisioning.ReasonPullSuccessful,
 			expectedSyncStatus: metav1.ConditionTrue,
 		},
 		{
-			name:               "failed sync sets SyncFailed condition",
+			name:               "failed sync sets Failed condition",
 			syncError:          errors.New("sync operation failed"),
 			jobState:           provisioning.JobStateError,
-			expectedSyncReason: provisioning.ReasonSyncFailed,
+			expectedSyncReason: provisioning.ReasonPullFailed,
 			expectedSyncStatus: metav1.ConditionFalse,
 		},
 		{
-			name:               "quota exceeded sets SyncQuotaExceeded condition",
+			name:               "quota exceeded sets QuotaExceeded condition",
 			syncError:          &quotas.QuotaExceededError{Err: fmt.Errorf("repository is over quota")},
 			jobState:           provisioning.JobStateWarning,
-			expectedSyncReason: provisioning.ReasonSyncQuotaExceeded,
+			expectedSyncReason: provisioning.ReasonQuotaExceeded,
 			expectedSyncStatus: metav1.ConditionFalse,
 		},
 	}
@@ -322,7 +322,7 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 						return false
 					}
 					for _, c := range conditions {
-						if c.Type == provisioning.ConditionTypeSyncStatus {
+						if c.Type == provisioning.ConditionTypePullStatus {
 							capturedSyncCondition = c
 							return true
 						}
@@ -356,7 +356,7 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			require.Equal(t, provisioning.ConditionTypeSyncStatus, capturedSyncCondition.Type)
+			require.Equal(t, provisioning.ConditionTypePullStatus, capturedSyncCondition.Type)
 			require.Equal(t, tt.expectedSyncReason, capturedSyncCondition.Reason)
 			require.Equal(t, tt.expectedSyncStatus, capturedSyncCondition.Status)
 

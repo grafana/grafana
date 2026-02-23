@@ -242,7 +242,7 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 	}
 }
 
-func TestBuildConditionsPatchOps(t *testing.T) {
+func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 	fixedTime := metav1.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
 
 	tests := []struct {
@@ -265,10 +265,10 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					Message: "Within quota: 5/100 resources",
 				},
 				{
-					Type:    provisioning.ConditionTypeSyncStatus,
+					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonSyncSuccessful,
-					Message: "Sync completed successfully",
+					Reason:  provisioning.ReasonPullSuccessful,
+					Message: "Pull completed successfully",
 				},
 			},
 			expectPatch:        true,
@@ -286,10 +286,10 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					LastTransitionTime: fixedTime,
 				},
 				{
-					Type:               provisioning.ConditionTypeSyncStatus,
+					Type:               provisioning.ConditionTypePullStatus,
 					Status:             metav1.ConditionTrue,
-					Reason:             provisioning.ReasonSyncSuccessful,
-					Message:            "Sync completed successfully",
+					Reason:             provisioning.ReasonPullSuccessful,
+					Message:            "Pull completed successfully",
 					ObservedGeneration: 1,
 					LastTransitionTime: fixedTime,
 				},
@@ -303,10 +303,10 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					Message: "Within quota: 5/100 resources",
 				},
 				{
-					Type:    provisioning.ConditionTypeSyncStatus,
+					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonSyncSuccessful,
-					Message: "Sync completed successfully",
+					Reason:  provisioning.ReasonPullSuccessful,
+					Message: "Pull completed successfully",
 				},
 			},
 			expectPatch: false,
@@ -323,10 +323,10 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					LastTransitionTime: fixedTime,
 				},
 				{
-					Type:               provisioning.ConditionTypeSyncStatus,
+					Type:               provisioning.ConditionTypePullStatus,
 					Status:             metav1.ConditionTrue,
-					Reason:             provisioning.ReasonSyncSuccessful,
-					Message:            "Sync completed successfully",
+					Reason:             provisioning.ReasonPullSuccessful,
+					Message:            "Pull completed successfully",
 					ObservedGeneration: 1,
 					LastTransitionTime: fixedTime,
 				},
@@ -340,9 +340,9 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					Message: "Within quota: 5/100 resources",
 				},
 				{
-					Type:    provisioning.ConditionTypeSyncStatus,
+					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionFalse,
-					Reason:  provisioning.ReasonSyncFailed,
+					Reason:  provisioning.ReasonPullFailed,
 					Message: "network error",
 				},
 			},
@@ -370,10 +370,10 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 					Message: "Within quota: 5/100 resources",
 				},
 				{
-					Type:    provisioning.ConditionTypeSyncStatus,
+					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonSyncSuccessful,
-					Message: "Sync completed successfully",
+					Reason:  provisioning.ReasonPullSuccessful,
+					Message: "Pull completed successfully",
 				},
 			},
 			expectPatch:        true,
@@ -383,7 +383,7 @@ func TestBuildConditionsPatchOps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			patchOps := BuildConditionsPatchOps(tt.existingConditions, tt.generation, tt.newConditions...)
+			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newConditions...)
 
 			if !tt.expectPatch {
 				assert.Nil(t, patchOps, "expected no patch operations")

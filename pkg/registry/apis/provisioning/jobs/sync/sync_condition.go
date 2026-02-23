@@ -9,32 +9,28 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
-// EvaluateSyncCondition creates a SyncStatus condition based on the outcome of a sync (pull) operation.
-// True = last sync succeeded, False = last sync failed.
-func EvaluateSyncCondition(syncError error) metav1.Condition {
-	if syncError == nil {
+// EvaluatePullCondition creates a PullStatus condition based on the outcome of a pull operation.
+// True = last pull succeeded, False = last pull failed.
+func EvaluatePullCondition(pullError error) metav1.Condition {
+	if pullError == nil {
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeSyncStatus,
+			Type:    provisioning.ConditionTypePullStatus,
 			Status:  metav1.ConditionTrue,
-			Reason:  provisioning.ReasonSyncSuccessful,
-			Message: "Sync completed successfully",
+			Reason:  provisioning.ReasonPullSuccessful,
+			Message: "Pull completed successfully",
 		}
 	}
 
+	reason := provisioning.ReasonPullFailed
 	var quotaErr *quotas.QuotaExceededError
-	if errors.As(syncError, &quotaErr) {
-		return metav1.Condition{
-			Type:    provisioning.ConditionTypeSyncStatus,
-			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonSyncQuotaExceeded,
-			Message: syncError.Error(),
-		}
+	if errors.As(pullError, &quotaErr) {
+		reason = provisioning.ReasonQuotaExceeded
 	}
 
 	return metav1.Condition{
-		Type:    provisioning.ConditionTypeSyncStatus,
+		Type:    provisioning.ConditionTypePullStatus,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonSyncFailed,
-		Message: syncError.Error(),
+		Reason:  reason,
+		Message: pullError.Error(),
 	}
 }
