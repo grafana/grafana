@@ -14,7 +14,7 @@ import {
 } from '../QueryEditorContext';
 
 import { AlertIndicator } from './AlertIndicator';
-import { AlertsView } from './AlertsView';
+import { AlertsView } from './Alerts/AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarFooter } from './SidebarFooter';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
