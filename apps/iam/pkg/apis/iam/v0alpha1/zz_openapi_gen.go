@@ -256,7 +256,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{
@@ -1619,7 +1619,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{
@@ -2511,7 +2511,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"title", "description", "group", "permissions", "permissionsOmitted"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{

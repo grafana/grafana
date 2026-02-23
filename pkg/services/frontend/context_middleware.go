@@ -91,6 +91,7 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 	evalCtx := openfeature.NewEvaluationContext(openFeatureNamespace, map[string]any{
 		"namespace": openFeatureNamespace,
+		"hostname":  hostname,
 	})
 	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 

@@ -60,8 +60,9 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
-	plugins := []string{}
-	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+	allPlugins := hs.pluginStore.Plugins(c.Req.Context())
+	plugins := make([]string, 0, len(allPlugins))
+	for _, p := range allPlugins {
 		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
 	}
 	keys["plugins"] = sortedHash(plugins, hash)
@@ -306,7 +307,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RendererDefaultImageWidth:           hs.Cfg.RendererDefaultImageWidth,
 		RendererDefaultImageHeight:          hs.Cfg.RendererDefaultImageHeight,
 		RendererDefaultImageScale:           hs.Cfg.RendererDefaultImageScale,
-		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme,
 		GrafanaJavascriptAgent:              hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                    hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:                  hs.Cfg.PluginAdminEnabled,

@@ -413,7 +413,7 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	switch protocol {
 	case setting.HTTPScheme:
 		protocol = "http"
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
+	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 		protocol = "https"
 	default:
 		// TODO: Handle other schemes?

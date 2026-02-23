@@ -1,9 +1,9 @@
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -75,9 +75,11 @@ const lokiDataSource = mockDataSource({
 });
 
 describe('Step2AlertRules', () => {
-  const originalFeatureToggles = config.featureToggles;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    // useAsync from react-use triggers state updates outside act() when parsing YAML
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     setupDataSources(prometheusDataSource, lokiDataSource);
     grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
 
@@ -110,6 +112,10 @@ describe('Step2AlertRules', () => {
         })
       )
     );
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('Step2Content rendering', () => {
@@ -176,24 +182,11 @@ describe('Step2AlertRules', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByText(/rules yaml file/i)).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid-file-upload-input-field')).toBeInTheDocument();
     });
 
-    it('should only show YAML source option when feature flag is enabled', () => {
-      // Default: feature flag is off
-      config.featureToggles.alertingImportYAMLUI = false;
-      const { rerender } = render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
-        </TestWrapper>
-      );
-
-      expect(screen.queryByRole('radio', { name: /yaml file/i })).not.toBeInTheDocument();
-      expect(screen.queryByText(/import from a prometheus rules yaml file/i)).not.toBeInTheDocument();
-
-      // Enable feature flag
-      config.featureToggles.alertingImportYAMLUI = true;
-      rerender(
+    it('should show YAML source option', () => {
+      render(
         <TestWrapper>
           <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
         </TestWrapper>
@@ -202,10 +195,6 @@ describe('Step2AlertRules', () => {
       expect(screen.getByRole('radio', { name: /yaml file/i })).toBeInTheDocument();
       expect(screen.getByText(/import from a prometheus rules yaml file/i)).toBeInTheDocument();
     });
-  });
-
-  afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
   });
 
   describe('useStep2Validation hook', () => {
@@ -332,6 +321,73 @@ describe('Step2AlertRules', () => {
       );
 
       expect(onResult).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('YAML validation and source switching', () => {
+    it('should show validation error immediately when uploading an invalid YAML file', async () => {
+      const invalidYaml = new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' });
+
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      const uploadInput = screen.getByTestId('data-testid-file-upload-input-field');
+      await userEvent.upload(uploadInput, invalidYaml);
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to parse yaml file/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should clear YAML file when switching from yaml to datasource source', async () => {
+      const yamlFile = new File(['groups: []'], 'rules.yaml', { type: 'text/yaml' });
+
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml', rulesYamlFile: yamlFile }}>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      // Switch to datasource
+      const datasourceRadio = screen.getByRole('radio', { name: /data source/i });
+      await userEvent.click(datasourceRadio);
+
+      // Switch back to yaml — file should be cleared
+      const yamlRadio = screen.getByRole('radio', { name: /yaml file/i });
+      await userEvent.click(yamlRadio);
+
+      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+    });
+
+    it('should not block validation when switching from yaml with error to datasource', async () => {
+      const onResult = jest.fn();
+
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <ValidationHookWrapper canImport={true} onResult={onResult} />
+        </TestWrapper>
+      );
+
+      // Upload an invalid file to trigger validation error
+      const invalidYaml = new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' });
+      const uploadInput = screen.getByTestId('data-testid-file-upload-input-field');
+      await userEvent.upload(uploadInput, invalidYaml);
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to parse yaml file/i)).toBeInTheDocument();
+      });
+
+      // Switch to datasource — error should be cleared and not block validation
+      const datasourceRadio = screen.getByRole('radio', { name: /data source/i });
+      await userEvent.click(datasourceRadio);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument();
+      });
     });
   });
 });

@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )

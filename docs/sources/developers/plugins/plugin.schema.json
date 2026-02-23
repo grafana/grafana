@@ -247,8 +247,7 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "profiling", "sql", "enterprise", "iot", "other"]
+      "description": "Plugin category used on the Add new connection page. Can be one from the list: \"tsdb\", \"logging\", \"cloud\", \"tracing\", \"profiling\", \"sql\", \"enterprise\", \"iot\", \"other\", empty string or custom string"
     },
     "enterpriseFeatures": {
       "type": "object",
