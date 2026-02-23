@@ -396,6 +396,8 @@ function getTranslatedThemeName(theme: ThemeRegistryItem) {
       return t('shared.preferences.theme.light-label', 'Light');
     case 'system':
       return t('shared.preferences.theme.system-label', 'System preference');
+    case 'sunrise':
+      return t('shared.preferences.theme.sunrise-label', 'Sunrise');
     default:
       return theme.name;
   }
