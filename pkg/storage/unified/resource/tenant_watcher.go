@@ -174,8 +174,7 @@ func NewTenantWatcher(ctx context.Context, kv KV, writeEvent EventAppender, cfg 
 	}
 
 	factory.Start(tw.stopCh)
-	factory.WaitForCacheSync(tw.stopCh)
-	logger.Info("tenant watcher started and cache synced")
+	logger.Info("tenant watcher started")
 
 	return tw, nil
 }
