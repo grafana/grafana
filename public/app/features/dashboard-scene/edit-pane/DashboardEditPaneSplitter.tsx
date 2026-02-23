@@ -19,6 +19,7 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
@@ -125,7 +126,12 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
-        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+        <div
+          className={styles.scrollContainer}
+          ref={onBodyRef}
+          onPointerDown={onClearSelection}
+          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+        >
           {body}
         </div>
 
@@ -230,6 +236,9 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
+    }),
+    scrollContainerNoSidebar: css({
+      paddingRight: theme.spacing(2),
     }),
     body: css({
       label: 'body',

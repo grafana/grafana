@@ -1,10 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
-
 import {
   GetSnapshotResponseDto,
   SnapshotDto,
@@ -16,8 +12,12 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
-  useGetLocalPluginListQuery,
-} from '../api';
+} from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
+
+import { useGetLocalPluginListQuery } from '../api';
 import { maybeAPIError } from '../api/errors';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 

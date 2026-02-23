@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { combineLatest, map, Observable } from 'rxjs';
+import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
 
 import {
   PluginExtensionTypes,
@@ -13,7 +13,7 @@ import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
-import { pluginExtensionRegistries } from './registry/setup';
+import { getPluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
 import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
 import {
@@ -38,22 +38,25 @@ export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
-  const { addedComponentsRegistry, addedLinksRegistry } = pluginExtensionRegistries;
 
-  return combineLatest([
-    addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
-    addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
-  ]).pipe(
-    map(([components, links]) =>
-      getPluginExtensions({
-        ...options,
-        addedComponentsRegistry: {
-          [extensionPointId]: components,
-        },
-        addedLinksRegistry: {
-          [extensionPointId]: links,
-        },
-      })
+  return from(getPluginExtensionRegistries()).pipe(
+    switchMap((registries) =>
+      combineLatest([
+        registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+        registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+      ]).pipe(
+        map(([components, links]) =>
+          getPluginExtensions({
+            ...options,
+            addedComponentsRegistry: {
+              [extensionPointId]: components,
+            },
+            addedLinksRegistry: {
+              [extensionPointId]: links,
+            },
+          })
+        )
+      )
     )
   );
 };

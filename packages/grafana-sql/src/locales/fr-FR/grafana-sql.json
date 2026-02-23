@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inactivité maximale automatique",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Si activé, il définit automatiquement le nombre maximal de <i>connexions inactives</i> à la même valeur que <i> connexions ouvertes maximales</i>. Si le nombre maximal de connexions ouvertes n’est pas défini, la valeur par défaut sera utilisée ({{defaultMaxIdle}}).",
+        "content-max-idle": "Le nombre maximal de connexions dans le pool de connexions inactives. Si <i>connexions ouvertes maximales</i> est supérieur à 0, mais inférieur à <i>connexions inactives maximales</i>, alors <i>connexions inactives maximales</i> sera réduit pour correspondre à la limite de <i>connexions ouvertes maximales</i>. Si défini à 0, aucune connexion inactive n’est conservée.",
         "content-max-lifetime": "La durée maximale en secondes pendant laquelle une connexion peut être réutilisée. Si la valeur est 0, les connexions sont réutilisées pour toujours.",
-        "content-max-open": "",
+        "content-max-open": "Le nombre maximal de connexions ouvertes à la base de données. Si <i>connexions inactives maximales</i> est supérieur à 0 et que <i>connexions ouvertes maximales</i> est inférieur à <i>connexions inactives maximales</i>, alors <i>connexions inactives maximales</i> sera réduit pour correspondre à la limite de <i>connexions ouvertes maximales</i>. Si défini à 0, aucune limite n’est appliquée au nombre de connexions ouvertes.",
         "max-idle": "Inactivité maximale",
         "max-lifetime": "Durée de vie maximale",
         "max-open": "Ouverture maximale",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Votre requête n’est pas valide. Consultez les détails ci-dessous. <br />Cependant, vous pouvez toujours exécuter cette requête.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Champ de texte",
+          "valueField": "Champ de valeur"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Requête de format"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Cette requête traitera <strong>{{bytes}}</strong> lors de son exécution.",
         "validating-query": "Validation de la requête..."
       },
       "raw-editor": {

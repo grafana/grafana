@@ -10,7 +10,8 @@ import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
-import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
+import { UsagesToNetwork, VariableUsageTree } from '../inspect/types';
+import { getVariableUsages } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier } from '../utils';
 

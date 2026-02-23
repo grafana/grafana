@@ -27,11 +27,14 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { buildVizPanel } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -39,9 +42,9 @@ import {
   getQueryRunnerFor,
   isLibraryPanel,
 } from '../utils/utils';
-import { isPanelKindV2 } from '../v2schema/validation';
+import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
 
-export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
+export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames' | 'panel-layout';
 
 export interface InspectJsonTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -70,11 +73,15 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
     const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
+    const isV2 = isDashboardV2Spec(dashboard.getSaveModel());
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
-        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+        label: isV2
+          ? t('dashboard.inspect-json.panel-spec-label', 'Panel Spec')
+          : t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
         description: t(
           'dashboard.inspect-json.panel-json-description',
           'The model saved in the dashboard JSON that configures how everything works.'
@@ -82,6 +89,17 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
         value: 'panel-json',
       },
     ];
+
+    if (isV2 && panel.parent instanceof DashboardGridItem) {
+      options.push({
+        label: t('dashboard.inspect-json.panel-layout-label', 'Panel Layout'),
+        description: t(
+          'dashboard.inspect-json.panel-layout-description',
+          'The grid position and size of the panel in the dashboard.'
+        ),
+        value: 'panel-layout',
+      });
+    }
 
     if (dataProvider) {
       options.push({
@@ -114,8 +132,6 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   };
 
   public onApplyChange = () => {
-    const panel = this.state.panelRef.resolve();
-    const dashboard = getDashboardSceneFor(panel);
     let jsonObj: unknown;
     try {
       jsonObj = JSON.parse(this.state.jsonText);
@@ -126,71 +142,155 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (isDashboardV2Spec(dashboard.getSaveModel())) {
-      if (!isPanelKindV2(jsonObj)) {
-        this.setState({
-          error: t(
-            'dashboard-scene.inspect-json-tab.error-invalid-v2-panel',
-            'Panel JSON did not pass validation. Please check the JSON and try again.'
-          ),
-        });
-        return;
-      }
-      const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
-
-      if (!dashboard.state.isEditing) {
-        dashboard.onEnterEditMode();
-      }
-
-      reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
-        panel_type_changed: panel.state.pluginId !== jsonObj.spec.vizConfig.group,
-        panel_id_changed: getPanelIdForVizPanel(panel) !== jsonObj.spec.id,
-        panel_grid_pos_changed: false, // Grid cant be edited from inspect in v2 panels.
-        panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(vizPanel.state.$data)),
-      });
-
-      panel.setState(vizPanel.state);
-      this.state.onClose();
-    } else {
-      const panelModel = new PanelModel(jsonObj);
-      const gridItem = buildGridItemForPanel(panelModel);
-      const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-      if (!(panel.parent instanceof DashboardGridItem)) {
-        console.error('Cannot update state of panel', panel, gridItem);
-        return;
-      }
-
-      this.state.onClose();
-
-      if (!dashboard.state.isEditing) {
-        dashboard.onEnterEditMode();
-      }
-
-      panel.parent.setState(newState);
-
-      // Force the grid layout to re-render with the new positions
-      const layout = sceneGraph.getLayout(panel);
-      if (layout instanceof SceneGridLayout) {
-        layout.forceRender();
-      }
-
-      //Report relevant updates
-      reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
-        panel_type_changed: panel.state.pluginId !== panelModel.type,
-        panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
-        panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
-        panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
-      });
+    if (this.state.source === 'panel-layout') {
+      this.applyLayoutChange(jsonObj);
+    } else if (this.state.source === 'panel-json') {
+      this.applyPanelJsonChange(jsonObj);
     }
   };
+
+  private applyLayoutChange(jsonObj: unknown) {
+    if (!isGridLayoutItemKind(jsonObj)) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-invalid-layout',
+          'Layout JSON did not pass validation. Please check the JSON and try again.'
+        ),
+      });
+      return;
+    }
+
+    const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
+    const gridItem = panel.parent;
+
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Cannot update layout: panel parent is not a DashboardGridItem');
+      return;
+    }
+
+    const originalElementName = dashboardSceneGraph.getElementIdentifierForVizPanel(panel);
+    if (jsonObj.spec.element.name !== originalElementName) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-element-changed',
+          'Cannot change the element reference. Only layout properties (x, y, width, height) can be modified.'
+        ),
+      });
+      return;
+    }
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
+    const oldState = gridItem.state;
+    const newLayoutState = {
+      x: jsonObj.spec.x,
+      y: jsonObj.spec.y,
+      width: jsonObj.spec.width,
+      height: jsonObj.spec.height,
+    };
+
+    gridItem.setState(newLayoutState);
+
+    // Force the grid layout to re-render with the new positions
+    const layout = sceneGraph.getLayout(panel);
+    if (layout instanceof SceneGridLayout) {
+      layout.forceRender();
+    }
+
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: false,
+      panel_id_changed: false,
+      panel_grid_pos_changed:
+        oldState.x !== newLayoutState.x ||
+        oldState.y !== newLayoutState.y ||
+        oldState.width !== newLayoutState.width ||
+        oldState.height !== newLayoutState.height,
+      panel_targets_changed: false,
+    });
+
+    this.state.onClose();
+  }
+
+  private applyPanelJsonChange(jsonObj: unknown) {
+    const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
+
+    if (isDashboardV2Spec(dashboard.getSaveModel())) {
+      this.applyV2PanelChange(jsonObj, panel, dashboard);
+    } else {
+      this.applyV1PanelChange(jsonObj, panel, dashboard);
+    }
+  }
+
+  private applyV2PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
+    if (!isPanelKindV2(jsonObj)) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-invalid-v2-panel',
+          'Panel JSON did not pass validation. Please check the JSON and try again.'
+        ),
+      });
+      return;
+    }
+
+    const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: panel.state.pluginId !== jsonObj.spec.vizConfig.group,
+      panel_id_changed: getPanelIdForVizPanel(panel) !== jsonObj.spec.id,
+      panel_grid_pos_changed: false,
+      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(vizPanel.state.$data)),
+    });
+
+    panel.setState(vizPanel.state);
+    this.state.onClose();
+  }
+
+  private applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
+    const panelModel = new PanelModel(jsonObj);
+    const gridItem = buildGridItemForPanel(panelModel);
+    const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    if (!(panel.parent instanceof DashboardGridItem)) {
+      console.error('Cannot update state of panel', panel, gridItem);
+      return;
+    }
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
+    panel.parent.setState(newState);
+
+    // Force the grid layout to re-render with the new positions
+    const layout = sceneGraph.getLayout(panel);
+    if (layout instanceof SceneGridLayout) {
+      layout.forceRender();
+    }
+
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: panel.state.pluginId !== panelModel.type,
+      panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
+      panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
+      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
+    });
+
+    this.state.onClose();
+  }
 
   public onCodeEditorBlur = (value: string) => {
     this.setState({ jsonText: value });
   };
 
   public isEditable() {
-    if (this.state.source !== 'panel-json') {
+    if (!['panel-json', 'panel-layout'].includes(this.state.source)) {
       return false;
     }
 
@@ -311,6 +411,20 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
           objToStringify = getPanelDataFrames(dataProvider.state.data);
         }
       }
+      break;
+    }
+
+    case 'panel-layout': {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelLayout');
+
+      const gridItem = panel.parent;
+
+      if (gridItem instanceof DashboardGridItem) {
+        if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+          objToStringify = gridItemToGridLayoutItemKind(gridItem);
+        }
+      }
+      break;
     }
   }
 

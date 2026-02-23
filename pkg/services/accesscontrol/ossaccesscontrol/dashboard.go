@@ -31,35 +31,11 @@ type DashboardPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontrol.ActionAnnotationsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
-func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		return append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
-	}
-	return DashboardViewActions
-}
-
-func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		return append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
-	}
-	return DashboardEditActions
-}
-
-func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		return append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
-	}
-	return DashboardAdminActions
-}
-
-func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
 	if !cfg.RBAC.PermissionsWildcardSeed("dashboard") {
 		return nil
 	}
@@ -70,7 +46,7 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 			DisplayName: "Viewer",
 			Description: "View all dashboards",
 			Group:       "Dashboards",
-			Permissions: accesscontrol.PermissionsForActions(getDashboardViewActions(features), dashboards.ScopeDashboardsAll),
+			Permissions: accesscontrol.PermissionsForActions(DashboardViewActions, dashboards.ScopeDashboardsAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Viewer"},
@@ -82,7 +58,7 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 			DisplayName: "Editor",
 			Description: "Edit all dashboards.",
 			Group:       "Dashboards",
-			Permissions: accesscontrol.PermissionsForActions(getDashboardEditActions(features), dashboards.ScopeDashboardsAll),
+			Permissions: accesscontrol.PermissionsForActions(DashboardEditActions, dashboards.ScopeDashboardsAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Editor"},
@@ -94,7 +70,7 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 			DisplayName: "Admin",
 			Description: "Administer all dashboards.",
 			Group:       "Dashboards",
-			Permissions: accesscontrol.PermissionsForActions(getDashboardAdminActions(features), dashboards.ScopeDashboardsAll),
+			Permissions: accesscontrol.PermissionsForActions(DashboardAdminActions, dashboards.ScopeDashboardsAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Admin"},
@@ -171,9 +147,9 @@ func ProvideDashboardPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  getDashboardViewActions(features),
-			"Edit":  getDashboardEditActions(features),
-			"Admin": getDashboardAdminActions(features),
+			"View":  DashboardViewActions,
+			"Edit":  DashboardEditActions,
+			"Admin": DashboardAdminActions,
 		},
 		ReaderRoleName: "Permission reader",
 		WriterRoleName: "Permission writer",

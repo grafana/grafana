@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -54,7 +53,8 @@ func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, res
 
 // RunOptions configures a migration run.
 type RunOptions struct {
-	DriverName string
+	DriverName       string
+	UsingDistributor bool
 }
 
 // Run executes the migration logic for all organizations.
@@ -116,7 +116,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 
 	startTime := time.Now()
 
-	migrateOpts := legacy.MigrateOptions{
+	migrateOpts := MigrateOptions{
 		Namespace:   info.Value,
 		Resources:   r.resources,
 		WithHistory: true, // Migrate with full history
@@ -134,6 +134,19 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 	if response.Error != nil {
 		r.log.Error("Migration reported error", "org_id", info.OrgID, "error", response.Error.String(), "duration", time.Since(startTime))
 		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
+	}
+
+	migrationFinishedAt := time.Now()
+
+	err = r.unifiedMigrator.RebuildIndexes(ctx, RebuildIndexOptions{
+		UsingDistributor:    opts.UsingDistributor,
+		NamespaceInfo:       info,
+		Resources:           r.resources,
+		MigrationFinishedAt: migrationFinishedAt,
+	})
+	if err != nil {
+		r.log.Error("Rebuilding indexes failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
+		return fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	// Validate the migration results

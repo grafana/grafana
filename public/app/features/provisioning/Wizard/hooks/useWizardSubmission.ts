@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -7,7 +7,6 @@ import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { dataToSpec } from '../../utils/data';
 import { getFormErrors } from '../../utils/getFormErrors';
-import { GitHubAppStepRef } from '../GitHubAppStep';
 import { Step } from '../Stepper';
 import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
@@ -19,7 +18,6 @@ export interface UseWizardSubmissionParams {
     spec: RepositorySpec,
     token?: string
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
-  githubAppStepRef: RefObject<GitHubAppStepRef>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
 }
@@ -34,7 +32,6 @@ export function useWizardSubmission({
   currentStepConfig,
   methods,
   submitData,
-  githubAppStepRef,
   setStepStatusInfo,
   onSuccess,
 }: UseWizardSubmissionParams): UseWizardSubmissionReturn {
@@ -52,44 +49,28 @@ export function useWizardSubmission({
 
   const handleSubmit = useCallback(async () => {
     const { getValues, trigger, setError } = methods;
+    const formData = getValues();
 
     if (currentStepConfig?.submitOnNext) {
-      if (activeStep === 'githubApp') {
-        const formData = getValues();
-        const currentGithubAppMode = formData.githubAppMode;
-
-        if (currentGithubAppMode === 'existing') {
-          const isValid = await trigger('githubApp.connectionName');
-          if (isValid) {
-            onSuccess();
-          }
-          return;
-        } else if (currentGithubAppMode === 'new') {
-          setIsSubmitting(true);
-          try {
-            await githubAppStepRef.current?.submit();
-          } finally {
-            setIsSubmitting(false);
-          }
-          return;
-        }
-      }
-
+      setStepStatusInfo({ status: 'idle' });
       const fieldsToValidate =
-        activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
+        activeStep === 'connection' || activeStep === 'authType'
+          ? (['repository'] as const)
+          : (['repository', 'repository.title'] as const);
 
       const isValid = await trigger(fieldsToValidate);
+
       if (!isValid) {
         return;
       }
 
       setIsSubmitting(true);
       try {
-        const formData = getValues();
         const connectionName =
           formData.githubAuthType === 'github-app' ? formData.githubApp?.connectionName : undefined;
         const spec = dataToSpec(formData.repository, connectionName);
         const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
+
         const rsp = await submitData(spec, token);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
@@ -127,7 +108,6 @@ export function useWizardSubmission({
           });
         }
       } catch (error) {
-        const formData = getValues();
         if (isFetchError(error)) {
           const errors = getFormErrors(error.data);
           // Check for special case: token error when using GitHub App
@@ -142,9 +122,20 @@ export function useWizardSubmission({
               },
             });
           } else if (errors.length > 0) {
+            const visibleFields = currentStepConfig?.formFields;
             for (const [field, errorMessage] of errors) {
-              setError(field, errorMessage);
+              if (!visibleFields || visibleFields.includes(field)) {
+                setError(field, errorMessage);
+              }
             }
+            const combinedMessage = errors.map(([, err]) => err.message).join('\n');
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: combinedMessage,
+              },
+            });
           } else {
             setStepStatusInfo({
               status: 'error',
@@ -179,7 +170,6 @@ export function useWizardSubmission({
     currentStepConfig,
     methods,
     submitData,
-    githubAppStepRef,
     setStepStatusInfo,
     onSuccess,
     repositoryRequestFailed,

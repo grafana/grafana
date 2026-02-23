@@ -78,6 +78,30 @@ describe('RadialGauge', () => {
       expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
       expect(screen.queryByLabelText('Neutral 85')).not.toBeInTheDocument();
     });
+
+    it('should render percentage labels', () => {
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          min={50}
+          max={150}
+          thresholds={{
+            mode: ThresholdsMode.Percentage,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 90, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 0%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 65%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 90%')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 100%')).toBeInTheDocument();
+    });
   });
 
   describe('thresholds bar', () => {
@@ -100,6 +124,27 @@ describe('RadialGauge', () => {
 
       expect(screen.getByRole('img')).toBeInTheDocument();
       expect(screen.getAllByTestId('radial-gauge-thresholds-bar')).toHaveLength(2);
+    });
+
+    it('should render thresholds bar for percentage thresholds', () => {
+      render(
+        <RadialGaugeExample
+          thresholdsBar
+          min={200}
+          max={300}
+          thresholds={{
+            mode: ThresholdsMode.Percentage,
+            steps: [
+              { value: 0, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 90, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getAllByTestId('radial-gauge-thresholds-bar')).toHaveLength(3);
     });
 
     it('should not render thresholds bar if min === max', () => {

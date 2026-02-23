@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -71,6 +73,16 @@ func FullSync(
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
+
+	// Check quota before applying changes
+	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
+		span.SetAttributes(attribute.Bool("pre_check_quota", false))
+		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
+		progress.SetFinalMessage(ctx, "sync skipped: repository is already over quota and incoming changes do not free enough resources")
+
+		return nil
+	}
+	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
 	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
 }
@@ -348,4 +360,49 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 	defer cancel()
 
 	fn(timeoutCtx)
+}
+
+// checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
+// Returns a QuotaExceededError if the sync should be blocked, nil otherwise.
+func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, changes []ResourceFileChange, tracer tracing.Tracer) error {
+	if !quotas.IsQuotaExceeded(repo.Config().Status.Conditions) {
+		return nil
+	}
+
+	cfg := repo.Config()
+	quotaUsage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+
+	// Calculate the net change in resource count (positive for additions, negative for deletions)
+	var netChange int64
+	allDeletions := true
+	for _, change := range changes {
+		if change.Action != repository.FileActionDeleted {
+			allDeletions = false
+		}
+
+		switch change.Action {
+		case repository.FileActionCreated:
+			netChange++
+		case repository.FileActionDeleted:
+			netChange--
+		case repository.FileActionUpdated, repository.FileActionRenamed, repository.FileActionIgnored:
+			// change does not affect quota
+		default:
+			logger.Error("unknown change action", "action", change.Action)
+		}
+	}
+
+	// If only deletions, allow the sync since it can only reduce resource usage.
+	if allDeletions {
+		return nil
+	}
+
+	if !quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange) {
+		return quotas.NewQuotaExceededError(fmt.Errorf(
+			"usage %d/%d, incoming changes do not free enough resources",
+			quotaUsage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository,
+		))
+	}
+
+	return nil
 }

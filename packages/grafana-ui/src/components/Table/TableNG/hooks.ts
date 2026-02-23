@@ -6,7 +6,15 @@ import { compareArrayValues, Field, FieldType, formattedValueToString, reduceFie
 import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, FooterFieldState, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import {
+  FilterType,
+  FooterFieldState,
+  SortByBehavior,
+  TableRow,
+  TableSortByFieldState,
+  TableSummaryRow,
+  TypographyCtx,
+} from './types';
 import {
   getDisplayName,
   processNestedTableRows,
@@ -96,6 +104,25 @@ export interface SortedRowsResult {
   rows: TableRow[];
   sortColumns: SortColumn[];
   setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+}
+
+interface ManagedSortProps {
+  sortByBehavior: SortByBehavior;
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+  sortBy?: TableSortByFieldState[];
+}
+
+export function useManagedSort({ sortByBehavior, setSortColumns, sortBy }: ManagedSortProps) {
+  useEffect(() => {
+    if (sortByBehavior === 'managed' && sortBy) {
+      setSortColumns(
+        sortBy.map(({ displayName, desc }) => ({
+          columnKey: displayName,
+          direction: desc === true ? 'DESC' : 'ASC',
+        }))
+      );
+    }
+  }, [setSortColumns, sortBy, sortByBehavior]);
 }
 
 export function useSortedRows(

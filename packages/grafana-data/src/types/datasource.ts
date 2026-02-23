@@ -22,12 +22,21 @@ import { RawTimeRange, TimeRange } from './time';
 import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
+export interface DataSourceConfigValidationAPI {
+  registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  validate: () => Promise<boolean>;
+  isValid: () => boolean;
+  getErrors: () => Record<string, string>;
+  setError: (field: string, message: string) => void;
+  clearError: (field: string) => void;
+}
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
   SecureJSONData = {},
 > {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
+  validation?: DataSourceConfigValidationAPI;
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
@@ -326,6 +335,13 @@ abstract class DataSourceApi<
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag keys for group by variables. Implementing this method independently from getTagKeys
+   * allows a datasource to support group by variables without necessarily supporting adhoc filters,
+   * and vice versa.
+   */
+  getGroupByKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters

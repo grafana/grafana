@@ -303,7 +303,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 		return result.Path() == "test/path" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 
@@ -346,7 +346,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "test/path", "new/location/path", "", "Move test/path to new/location/path").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	syncError := errors.New("sync failed")
@@ -552,7 +552,7 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	})).Return()
 
 	// Add expectations for sync worker (called when ref is empty)
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -614,7 +614,7 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 
 	// Add expectations for sync worker (called when ref is empty)
 	mockSyncWorker := jobs.NewMockWorker(t)
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -918,7 +918,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
 	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
 	mockProgress.On("TooManyErrors").Return(nil).Once()
-	mockProgress.On("ResetResults").Once()
+	mockProgress.On("ResetResults", false).Once()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified

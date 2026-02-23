@@ -9,19 +9,19 @@ import (
 )
 
 const (
-	TEAM_BINDING_SUBJECT_NAME = "subject_name"
-	TEAM_BINDING_TEAM_REF     = "team_ref"
-	TEAM_BINDING_PERMISSION   = "permission"
-	TEAM_BINDING_EXTERNAL     = "external"
+	TEAM_BINDING_SUBJECT    = "subject"
+	TEAM_BINDING_TEAM       = "team"
+	TEAM_BINDING_PERMISSION = "permission"
+	TEAM_BINDING_EXTERNAL   = "external"
 )
 
 var TeamBindingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	TEAM_BINDING_SUBJECT_NAME: {
-		Name: TEAM_BINDING_SUBJECT_NAME, Type: resourcepb.ResourceTableColumnDefinition_STRING,
+	TEAM_BINDING_SUBJECT: {
+		Name: TEAM_BINDING_SUBJECT, Type: resourcepb.ResourceTableColumnDefinition_STRING,
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true},
 	},
-	TEAM_BINDING_TEAM_REF: {
-		Name: TEAM_BINDING_TEAM_REF, Type: resourcepb.ResourceTableColumnDefinition_STRING,
+	TEAM_BINDING_TEAM: {
+		Name: TEAM_BINDING_TEAM, Type: resourcepb.ResourceTableColumnDefinition_STRING,
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true},
 	},
 	TEAM_BINDING_PERMISSION: {
@@ -58,10 +58,10 @@ func (b *teamBindingDocumentBuilder) BuildDocument(ctx context.Context, key *res
 	}
 
 	doc.Fields = map[string]any{
-		TEAM_BINDING_SUBJECT_NAME: tb.Spec.Subject.Name,
-		TEAM_BINDING_TEAM_REF:     tb.Spec.TeamRef.Name,
-		TEAM_BINDING_PERMISSION:   string(tb.Spec.Permission),
-		TEAM_BINDING_EXTERNAL:     tb.Spec.External,
+		TEAM_BINDING_SUBJECT:    tb.Spec.Subject.Name,
+		TEAM_BINDING_TEAM:       tb.Spec.TeamRef.Name,
+		TEAM_BINDING_PERMISSION: string(tb.Spec.Permission),
+		TEAM_BINDING_EXTERNAL:   tb.Spec.External,
 	}
 
 	return doc, nil

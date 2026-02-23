@@ -28,6 +28,7 @@ import (
 	"github.com/youmark/pkcs8"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -222,6 +223,7 @@ type HTTPServer struct {
 	tlsCerts                        TLSCerts
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsConnectionClient              datasource.ConnectionClient
 }
 
 type TLSCerts struct {
@@ -384,6 +386,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
+		dsConnectionClient: datasource.NewConnectionClient(cfg, clientConfigProvider),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
@@ -450,7 +453,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.httpSrv.ErrorLog = stdlog.New(customErrorLogger, "", 0)
 
 	switch hs.Cfg.Protocol {
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
+	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 		if err := hs.configureTLS(); err != nil {
 			return err
 		}
@@ -496,7 +499,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			}
 			return err
 		}
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
+	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 		if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
@@ -525,7 +528,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
 		return listener, nil
-	case setting.SocketScheme:
+	case setting.SocketScheme, setting.SocketHTTP2Scheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
 			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
@@ -837,7 +840,7 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
 		}
 	}
-	if protocol == "h2" {
+	if protocol == "h2" || protocol == "socket_h2" {
 		return []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -962,7 +965,7 @@ func (hs *HTTPServer) configureTLS() error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	if hs.Cfg.Protocol == setting.HTTP2Scheme {
+	if hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme {
 		hs.httpSrv.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
 	}
 

@@ -1,10 +1,20 @@
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator, FALLBACK_COLOR, FieldDisplay, getFieldColorMode, GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  getFieldColorMode,
+  GrafanaTheme2,
+  ThresholdsMode,
+} from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { GradientStop, RadialShape } from './types';
-import { getFieldConfigMinMax, getFieldDisplayProcessor, getValuePercentageForValue } from './utils';
+import { getFormattedThresholds } from '../Gauge/utils';
+
+import { DEFAULT_DECIMALS } from './constants';
+import { GradientStop } from './types';
+import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
   theme: GrafanaTheme2,
@@ -15,24 +25,19 @@ export function buildGradientColors(
 
   // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {
-    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const thresholds = fieldDisplay.field.thresholds?.steps ?? [];
-
-    const result: Array<{ color: string; percent: number }> = [
-      { color: displayProcessor(min).color ?? baseColor, percent: 0 },
-    ];
-
-    for (const threshold of thresholds) {
-      if (threshold.value > min && threshold.value < max) {
-        const percent = (threshold.value - min) / (max - min);
-        result.push({ color: theme.visualization.getColorByName(threshold.color), percent });
-      }
-    }
-
-    result.push({ color: displayProcessor(max).color ?? baseColor, percent: 1 });
-
-    return result;
+    return getFormattedThresholds(
+      fieldDisplay.field.decimals ?? DEFAULT_DECIMALS,
+      fieldDisplay.field,
+      theme,
+      false
+    ).map((threshold) => {
+      const percent = getThresholdPercentageValue(
+        threshold,
+        fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
+        fieldDisplay
+      );
+      return { color: theme.visualization.getColorByName(threshold.color), percent };
+    });
   }
 
   // Handle continuous color modes before other by-value modes
@@ -162,12 +167,18 @@ export function getBarEndcapColors(gradientStops: GradientStop[], percent = 1): 
   return [startColor, endColor];
 }
 
-export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape): string {
-  const colorStrings = gradientStops.map((stop) => `${stop.color} ${(stop.percent * 100).toFixed(2)}%`);
-  if (shape === 'circle') {
-    return `conic-gradient(from 0deg, ${colorStrings.join(', ')})`;
+export function getGradientCss(gradientStops: GradientStop[], startAngle: number, endAngle: number): string {
+  const range = (endAngle + 360 - startAngle) % 360 || 360;
+
+  const gradientSections = [
+    `from ${startAngle}deg`,
+    gradientStops.map((stop) => `${stop.color} ${(stop.percent * range).toFixed(2)}deg`).join(', '),
+  ];
+  if (range !== 360) {
+    gradientSections.push(`#0000 0 ${range.toFixed(2)}deg`);
   }
-  return `linear-gradient(90deg, ${colorStrings.join(', ')})`;
+
+  return `conic-gradient(${gradientSections.join(', ')})`;
 }
 
 // the theme does not make the full palette available to us, and we

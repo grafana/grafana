@@ -10,7 +10,7 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link rel="icon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
+    <link rel="icon" id="grafana_favicon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
 
@@ -372,6 +372,22 @@
 
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
+
+          // Set custom fav icon if set in whitelabeling settings
+          const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
+          if (customFavIcon) {
+            let favicon = document.getElementById('grafana_favicon');
+
+            if (!favicon) {
+              favicon = document.createElement('link');
+              favicon.rel = 'icon';
+              favicon.type = 'image/png';
+              favicon.id = 'grafana_favicon';
+              document.head.appendChild(favicon);
+            }
+
+            favicon.href = customFavIcon;
+          }
         }
 
         window.__grafana_boot_data_promise = initGrafana()

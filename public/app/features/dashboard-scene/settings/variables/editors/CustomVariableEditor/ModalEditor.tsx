@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariableModel } from '@grafana/data';
@@ -7,12 +7,11 @@ import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
+import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 
-import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
-import { validateJsonQuery } from './CustomVariableEditor';
 import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
 
 interface ModalEditorProps {
@@ -29,10 +28,10 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
+    previewOptions,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal,
     onValuesFormatChange,
     onQueryChange,
@@ -41,7 +40,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -69,7 +68,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview options={options} hasMultiProps={valuesFormat === 'json'} />
+          <VariableValuesPreview options={previewOptions} staticOptions={[]} />
         </div>
       </Stack>
       <Modal.ButtonRow>
@@ -94,49 +93,47 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   );
 }
 
-function useModalEditor({ variable, onClose }: ModalEditorProps) {
-  const initialValuesFormatRef = useRef(variable.state.valuesFormat);
-  const initialQueryRef = useRef(variable.state.query);
-  const [valuesFormat, setValuesFormat] = useState(() => variable.state.valuesFormat);
-  const [query, setQuery] = useState(() => variable.state.query);
-  const [prevQuery, setPrevQuery] = useState('');
-  const [queryValidationError, setQueryValidationError] = useState<Error>();
+export function useDraftVariable(variable: CustomVariable) {
+  const draftVariableRef = useRef<CustomVariable>();
+  if (!draftVariableRef.current) {
+    draftVariableRef.current = new CustomVariable(variable.state);
+  }
+  const initialStateRef = useRef({ ...variable.state });
+  return { draftVariable: draftVariableRef.current, initialState: initialStateRef.current };
+}
 
-  const options = useMemo(() => {
-    if (valuesFormat === 'csv') {
-      return variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-        value,
-        label: value === label ? '' : label,
-      }));
-    } else {
-      return variable.transformJsonToOptions(query);
+function useModalEditor({ variable, onClose }: ModalEditorProps) {
+  const { draftVariable, initialState } = useDraftVariable(variable);
+  const { valuesFormat, query, options } = draftVariable.useState();
+  const [queryValidationError, setQueryValidationError] = useState<Error>();
+  const [stashedQuery, setStashedQuery] = useState('');
+
+  const updateDraftState = async (newState: Partial<typeof draftVariable.state>) => {
+    draftVariable.setState(newState);
+    try {
+      await lastValueFrom(draftVariable.validateAndUpdate());
+      setQueryValidationError(undefined);
+    } catch (error) {
+      setQueryValidationError(error instanceof Error ? error : new Error(String(error)));
     }
-  }, [query, valuesFormat, variable]);
+  };
 
   return {
+    previewOptions: options,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal: onClose,
-    onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
-      setQuery(prevQuery);
-      setValuesFormat(newFormat);
-      setQueryValidationError(undefined);
-      if (query !== prevQuery) {
-        setPrevQuery(query);
+    async onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
+      const nextQuery = stashedQuery;
+      if (query !== stashedQuery) {
+        setStashedQuery(query);
       }
+      await updateDraftState({ valuesFormat: newFormat, query: nextQuery });
     },
-    onQueryChange(event: FormEvent<HTMLTextAreaElement>) {
-      setPrevQuery('');
-      if (valuesFormat === 'json') {
-        const validationError = validateJsonQuery(event.currentTarget.value);
-        setQueryValidationError(validationError);
-        if (validationError) {
-          return;
-        }
-      }
-      setQuery(event.currentTarget.value);
+    async onQueryChange(event: FormEvent<HTMLTextAreaElement>) {
+      setStashedQuery('');
+      await updateDraftState({ query: event.currentTarget.value });
     },
     onSaveOptions() {
       dashboardEditActions.edit({
@@ -144,9 +141,9 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
           if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query, value: undefined });
+            variable.setState({ valuesFormat: 'csv', query });
           } else {
-            variable.setState({ valuesFormat, query, value: undefined });
+            variable.setState({ valuesFormat, query });
           }
 
           if (valuesFormat === 'json') {
@@ -154,23 +151,13 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
           }
 
           await lastValueFrom(variable.validateAndUpdate!());
+          onClose();
         },
         undo: async () => {
-          variable.setState({
-            valuesFormat: initialValuesFormatRef.current,
-            query: initialQueryRef.current,
-            value: undefined,
-          });
-
-          if (initialValuesFormatRef.current === 'json') {
-            variable.setState({ allowCustomValue: false });
-            variable.setState({ allValue: undefined });
-          }
-
+          variable.setState(initialState);
           await lastValueFrom(variable.validateAndUpdate!());
         },
       });
-      onClose();
     },
   };
 }

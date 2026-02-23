@@ -36,11 +36,13 @@ export const LogListContext = createContext<LogListContextData>({
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
+  setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
   timestampResolution: 'ns',
+  unwrappedColumns: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
@@ -80,6 +82,7 @@ export const defaultValue: LogListContextData = {
   setPrettifyJSON: jest.fn(),
   setSyntaxHighlighting: jest.fn(),
   setTimestampResolution: jest.fn(),
+  setUnwrappedColumns: jest.fn(),
   setWrapLogMessage: jest.fn(),
   downloadLogs: jest.fn(),
   filterLevels: [],
@@ -91,6 +94,7 @@ export const defaultValue: LogListContextData = {
   displayedFields: [],
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
+  unwrappedColumns: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: jest.fn(),
@@ -119,6 +123,7 @@ export const defaultProps: Props = {
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   timestampResolution: 'ms',
+  unwrappedColumns: false,
   wrapLogMessage: true,
 };
 
@@ -143,6 +148,7 @@ export const LogListContextProvider = ({
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   timestampResolution = 'ms',
+  unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
@@ -185,6 +191,7 @@ export const LogListContextProvider = ({
         sortOrder,
         syntaxHighlighting,
         timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
       }}
     >

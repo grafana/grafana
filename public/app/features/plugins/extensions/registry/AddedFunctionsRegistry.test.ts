@@ -1,22 +1,14 @@
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
-import { isGrafanaDevMode } from '../utils';
+import { basicApp } from '../test-fixtures/config.apps';
 
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
-
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scneario)
-  isGrafanaDevMode: jest.fn().mockReturnValue(false),
-}));
 
 jest.mock('../logs/log', () => {
   const { createLogMock } = jest.requireActual('../logs/testUtils');
@@ -29,55 +21,24 @@ jest.mock('../logs/log', () => {
 });
 
 describe('addedFunctionsRegistry', () => {
-  const originalApps = config.apps;
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedFunctions: [],
-      addedLinks: [],
-      addedComponents: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedFunctionsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
+    config.buildInfo.env = 'production';
   });
 
   it('should return empty registry when no extensions registered', async () => {
-    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+    const addedFunctionsRegistry = await createRegistry();
     const observable = addedFunctionsRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
   });
 
   it('should be possible to register function extensions in the registry', async () => {
-    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+    const addedFunctionsRegistry = await createRegistry();
 
     addedFunctionsRegistry.register({
       pluginId,
@@ -122,7 +83,7 @@ describe('addedFunctionsRegistry', () => {
   });
 
   it('should not emit when registering with empty configs', async () => {
-    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+    const addedFunctionsRegistry = await createRegistry();
     const observable = addedFunctionsRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -147,7 +108,7 @@ describe('addedFunctionsRegistry', () => {
   });
 
   it('should not change registry state when registering with empty configs after previous registrations', async () => {
-    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+    const addedFunctionsRegistry = await createRegistry();
 
     // First register some extensions
     addedFunctionsRegistry.register({
@@ -178,7 +139,7 @@ describe('addedFunctionsRegistry', () => {
   it('should be possible to asynchronously register function extensions for the same placement (different plugins)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -245,7 +206,7 @@ describe('addedFunctionsRegistry', () => {
   it('should be possible to asynchronously register function extensions for a different placement (different plugin)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first plugin
     reactiveRegistry.register({
@@ -314,7 +275,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should be possible to asynchronously register function extensions for the same placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -368,7 +329,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should be possible to asynchronously register function extensions for a different placement (same plugin)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
 
     // Register extensions for the first extension point
     reactiveRegistry.register({
@@ -424,7 +385,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should notify subscribers when the registry changes', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -484,7 +445,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should give the last version of the registry for new subscribers', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -518,9 +479,9 @@ describe('addedFunctionsRegistry', () => {
     });
   });
 
-  it('should not register a function extension if it has an invalid fn function', () => {
+  it('should not register a function extension if it has an invalid fn function', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -546,9 +507,9 @@ describe('addedFunctionsRegistry', () => {
     expect(registry).toEqual({});
   });
 
-  it('should not register a function extension if it has invalid properties (empty title)', () => {
+  it('should not register a function extension if it has invalid properties (empty title)', async () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedFunctionsRegistry();
+    const reactiveRegistry = await createRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -574,7 +535,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should not be possible to register a function on a read-only registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new AddedFunctionsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
 
     expect(() => {
@@ -597,7 +558,7 @@ describe('addedFunctionsRegistry', () => {
 
   it('should pass down fresh registrations to the read-only version of the registry', async () => {
     const pluginId = 'grafana-basic-app';
-    const registry = new AddedFunctionsRegistry();
+    const registry = await createRegistry();
     const readOnlyRegistry = registry.readOnly();
     const subscribeCallback = jest.fn();
     let readOnlyState;
@@ -631,18 +592,15 @@ describe('addedFunctionsRegistry', () => {
 
   it('should not register a function added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedFunctionsRegistry();
+    const registry = await createRegistry();
     const fnConfig = {
       title: 'Function 1',
       description: 'Function 1 description',
       targets: 'grafana/dashboard/panel/menu',
       fn: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedFunctions = [];
 
     registry.register({
       pluginId,
@@ -657,9 +615,9 @@ describe('addedFunctionsRegistry', () => {
 
   it('should register a function added by core Grafana in dev-mode even if the meta-info is missing', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedFunctionsRegistry();
+    const registry = await createRegistry();
     const fnConfig = {
       title: 'Function 1',
       description: 'Function 1 description',
@@ -679,19 +637,13 @@ describe('addedFunctionsRegistry', () => {
   });
 
   it('should register a function added by a plugin in production mode even if the meta-info is missing', async () => {
-    // Production mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-
-    const registry = new AddedFunctionsRegistry();
+    const registry = await createRegistry();
     const fnConfig = {
       title: 'Function 1',
       description: 'Function 1 description',
       targets: 'grafana/dashboard/panel/menu',
       fn: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedFunctions = [];
 
     registry.register({
       pluginId,
@@ -706,18 +658,20 @@ describe('addedFunctionsRegistry', () => {
 
   it('should register a function added by a plugin in dev-mode if the meta-info is present', async () => {
     // Enabling dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    config.buildInfo.env = 'development';
 
-    const registry = new AddedFunctionsRegistry();
     const fnConfig = {
       title: 'Function 1',
       description: 'Function 1 description',
       targets: ['grafana/dashboard/panel/menu'],
       fn: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    config.apps[pluginId].extensions.addedFunctions = [fnConfig];
+    const { description, targets, title } = fnConfig;
+    const app = {
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedFunctions: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,
@@ -732,7 +686,7 @@ describe('addedFunctionsRegistry', () => {
 
   describe('asObservableSlice', () => {
     it('should return the selected slice from the registry', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/dashboard/panel/menu';
 
       registry.register({
@@ -760,7 +714,7 @@ describe('addedFunctionsRegistry', () => {
     });
 
     it('should return undefined when the selected key does not exist', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
 
       await expect(observable).toEmitValuesWith((received) => {
@@ -770,7 +724,7 @@ describe('addedFunctionsRegistry', () => {
     });
 
     it('should only emit when the selected slice changes (distinctUntilChanged)', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/dashboard/panel/menu';
       const subscribeCallback = jest.fn();
 
@@ -833,7 +787,7 @@ describe('addedFunctionsRegistry', () => {
     });
 
     it('should deep freeze the selected slice', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/dashboard/panel/menu';
 
       registry.register({
@@ -861,7 +815,7 @@ describe('addedFunctionsRegistry', () => {
     });
 
     it('should work with read-only registries', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const readOnlyRegistry = registry.readOnly();
       const extensionPointId = 'grafana/dashboard/panel/menu';
 
@@ -890,7 +844,7 @@ describe('addedFunctionsRegistry', () => {
     });
 
     it('should emit immediately to new subscribers with the current slice value', async () => {
-      const registry = new AddedFunctionsRegistry();
+      const registry = await createRegistry();
       const extensionPointId = 'grafana/dashboard/panel/menu';
 
       registry.register({

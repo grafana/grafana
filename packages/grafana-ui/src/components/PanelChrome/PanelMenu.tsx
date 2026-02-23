@@ -38,8 +38,13 @@ export function PanelMenu({
     [onOpenMenu]
   );
 
+  const overlay = () => {
+    const menuContent = typeof menu === 'function' ? menu() : menu;
+    return <div className={dragClassCancel}>{menuContent}</div>;
+  };
+
   return (
-    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
+    <Dropdown overlay={overlay} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
       <Button
         aria-label={t('grafana-ui.panel-menu.label', 'Menu for panel {{ title }}', { title: title ?? 'Untitled' })}
         title={t('grafana-ui.panel-menu.title', 'Menu')}

@@ -12,7 +12,7 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
@@ -32,11 +32,11 @@ import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPa
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -48,12 +48,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const {
     handleSubmit,
-    watch,
     setError,
     clearErrors,
     formState: { errors },
   } = methods;
-  const workflow = watch('workflow');
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
@@ -164,8 +162,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 hidePath
               />
@@ -199,7 +196,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
 
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
   const defaultWorkflow = getDefaultWorkflow(repository);
@@ -220,7 +217,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
       folderPath={isRootPage ? '/' : folderPath}
     />
   );

@@ -168,7 +168,7 @@ func (fam *RemotePrimaryForkedAlertmanager) PutAlerts(ctx context.Context, alert
 	return fam.remote.PutAlerts(ctx, alerts)
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return fam.remote.GetReceivers(ctx)
 }
 

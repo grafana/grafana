@@ -1,4 +1,4 @@
-import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';

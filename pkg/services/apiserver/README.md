@@ -2,11 +2,6 @@
 
 ## Basic Setup
 
-```ini
-[feature_toggles]
-kubernetesPlaylists = true
-```
-
 Start Grafana:
 
 ```bash
@@ -63,7 +58,6 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServerEnsureKubectlAccess = true
-kubernetesPlaylists = true
 
 [unified_storage.playlists.playlist.grafana.app]
 dualWriterMode = 2

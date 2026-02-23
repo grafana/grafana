@@ -1,0 +1,402 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "Query service",
+    "title": "datasource.grafana.app/v0alpha1"
+  },
+  "paths": {
+    "/apis/datasource.grafana.app/v0alpha1/": {
+      "get": {
+        "tags": [
+          "API Discovery"
+        ],
+        "description": "Describe the available kubernetes resources",
+        "operationId": "getAPIResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections": {
+      "get": {
+        "tags": [
+          "Connections"
+        ],
+        "description": "List data source connections across all types",
+        "operationId": "listDataSourceConnections",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "datasource name (UID in legacy grafana APIs)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plugin",
+            "in": "query",
+            "description": "plugin identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "List of all datasource instances across all datasource apiservers",
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "default": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query": {
+      "post": {
+        "tags": [
+          "Query"
+        ],
+        "description": "Query any datasources (with expressions)",
+        "operationId": "queryDatasources",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequestSchema"
+              },
+              "examples": {
+                "A": {
+                  "summary": "Random walk (testdata)",
+                  "description": "Use testdata to execute a random walk query",
+                  "value": "{\n\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\"scenarioId\": \"random_walk_table\",\n\t\t\t\t\t\t\t\t\"seriesCount\": 1,\n\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\"type\": \"grafana-testdata-datasource\",\n\t\t\t\t\t\t\t\t\"uid\": \"PD8C576611E62080A\"\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\"intervalMs\": 60000,\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 20\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t],\n\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t}"
+                },
+                "B": {
+                  "summary": "With deprecated datasource name",
+                  "description": "Includes an old style string for datasource reference",
+                  "value": "{\n\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\t\"type\": \"grafana-googlesheets-datasource\",\n\t\t\t\t\t\t\t\t\t\"uid\": \"b1808c48-9fc9-4045-82d7-081781f8a553\"\n\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\"cacheDurationSeconds\": 300,\n\t\t\t\t\t\t\t\t\"spreadsheet\": \"spreadsheetID\",\n\t\t\t\t\t\t\t\t\"datasourceId\": 4,\n\t\t\t\t\t\t\t\t\"intervalMs\": 30000,\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 794\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\"refId\": \"Z\",\n\t\t\t\t\t\t\t\t\"datasource\": \"old\",\n\t\t\t\t\t\t\t\t\"maxDataPoints\": 10,\n\t\t\t\t\t\t\t\t\"timeRange\": {\n\t\t\t\t\t\t\t\t\t\"from\": \"100\",\n\t\t\t\t\t\t\t\t\t\"to\": \"200\"\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t],\n\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t}"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "QueryDataResponse"
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query/sqlschemas": {
+      "post": {
+        "tags": [
+          "Query"
+        ],
+        "description": "Send the same request you would send to /query, and get a schema that will represent the response",
+        "operationId": "querySQLSchemas",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "SQLSchemas returns info about what the Schema for a DS query will be like if the query were to be used an input to SQL expressions. So effectively post SQL expressions input conversion.",
+                  "type": "object",
+                  "required": [
+                    "sqlSchemas"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "sqlSchemas": {
+                      "description": "SchemaInfo for each requested query by refID",
+                      "type": "object",
+                      "additionalProperties": {
+                        "default": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "QueryRequestSchema": {
+        "description": "Schema for a set of queries sent to the query method",
+        "type": "object",
+        "required": [
+          "queries"
+        ],
+        "properties": {
+          "$schema": {
+            "description": "helper",
+            "type": "string"
+          },
+          "debug": {
+            "type": "boolean"
+          },
+          "from": {
+            "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
+            "type": "string"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "to": {
+            "description": "To end time in epoch timestamps in milliseconds or relative using Grafana time units.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse": {
+        "description": "todo... improve schema",
+        "type": "object",
+        "additionalProperties": true
+      },
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse": {
+        "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "results": {
+            "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
+                }
+              ]
+            }
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "datasource.grafana.app",
+            "kind": "QueryDataResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
+        "description": "APIResource specifies the name of a resource and whether it is namespaced.",
+        "type": "object",
+        "required": [
+          "name",
+          "singularName",
+          "namespaced",
+          "kind",
+          "verbs"
+        ],
+        "properties": {
+          "categories": {
+            "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "group": {
+            "description": "group is the preferred group of the resource.  Empty implies the group of the containing resource list. For subresources, this may have a different value, for example: Scale\".",
+            "type": "string"
+          },
+          "kind": {
+            "description": "kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "name is the plural name of the resource.",
+            "type": "string",
+            "default": ""
+          },
+          "namespaced": {
+            "description": "namespaced indicates if a resource is namespaced or not.",
+            "type": "boolean",
+            "default": false
+          },
+          "shortNames": {
+            "description": "shortNames is a list of suggested short names of the resource.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "singularName": {
+            "description": "singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely. The singularName is more correct for reporting status on a single item and both singular and plural are allowed from the kubectl CLI interface.",
+            "type": "string",
+            "default": ""
+          },
+          "storageVersionHash": {
+            "description": "The hash value of the storage version, the version this resource is converted to when written to the data store. Value must be treated as opaque by clients. Only equality comparison on the value is valid. This is an alpha feature and may change or be removed in the future. The field is populated by the apiserver only if the StorageVersionHash feature gate is enabled. This field will remain optional even if it graduates.",
+            "type": "string"
+          },
+          "verbs": {
+            "description": "verbs is a list of supported kube verbs (this includes get, list, watch, create, update, patch, delete, deletecollection, and proxy)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "version": {
+            "description": "version is the preferred version of the resource.  Empty implies the version of the containing resource list For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)\".",
+            "type": "string"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
+        "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
+        "type": "object",
+        "required": [
+          "groupVersion",
+          "resources"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "groupVersion": {
+            "description": "groupVersion is the group and version this APIResourceList is for.",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "resources": {
+            "description": "resources contains the name of the resources and if they are namespaced.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      }
+    }
+  }
+}

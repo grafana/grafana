@@ -19,7 +19,7 @@ export function TokenPermissionsInfo({ type }: { type: InstructionAvailability }
         </TextLink>
         <Trans i18nKey="provisioning.token-permissions-info.and-click">and click</Trans>
         <strong>"{createTokenButtonText}".</strong>
-        <Trans i18nKey="provisioning.token-permissions-info.make-sure">Make sure to include these permissions</Trans>:
+        <Trans i18nKey="provisioning.token-permissions-info.make-sure">Create a token with these permissions</Trans>:
       </Stack>
 
       <ul className={styles.permissionsList}>

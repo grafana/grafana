@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 

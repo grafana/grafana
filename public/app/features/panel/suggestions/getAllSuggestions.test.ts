@@ -12,6 +12,7 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
@@ -37,11 +38,9 @@ jest.mock('app/core/app_events', () => ({
 config.featureToggles.externalVizSuggestions = true;
 
 let idx = 0;
-for (const pluginId of panelsToCheckFirst) {
-  if (pluginId === 'geomap') {
-    continue;
-  }
-  config.panels[pluginId] = {
+
+function getPanelPluginMeta(pluginId: string) {
+  return {
     id: pluginId,
     module: `core:plugin/${pluginId}`,
     sort: idx++,
@@ -63,11 +62,22 @@ for (const pluginId of panelsToCheckFirst) {
   };
 }
 
+function getPanelPlugins() {
+  const plugins = [];
+  for (const pluginId of panelsToCheckFirst) {
+    if (pluginId === 'geomap') {
+      continue;
+    }
+    plugins.push(getPanelPluginMeta(pluginId));
+  }
+  return plugins;
+}
+
 jest.mock('../state/util', () => {
   const originalModule = jest.requireActual('../state/util');
   return {
     ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
+    getAllPanelPluginMeta: jest.fn().mockImplementation(() => getPanelPlugins()),
   };
 });
 
@@ -81,6 +91,8 @@ class ScenarioContext {
     this.data = scenarioData;
 
     beforeAll(async () => {
+      const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
+      setPanelPluginMetas(metas);
       await this.run();
     });
   }
@@ -92,7 +104,7 @@ class ScenarioContext {
       timeRange: getDefaultTimeRange(),
     };
 
-    const result = await getAllSuggestions(panelData);
+    const result = await getAllSuggestions(panelData.series);
     this.suggestions = result.suggestions;
   }
 
@@ -480,8 +492,36 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   });
 });
 
+scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'chart',
+      },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+      ],
+    }),
+  ]);
+
+  it('should stable-ly sort the results', async () => {
+    const dataSummary = getPanelDataSummary(ctx.data);
+    const timeseriesPlugin = await pluginImporter.importPanel(getPanelPluginMeta('timeseries'));
+    const timeseriesSuggestions = timeseriesPlugin.getSuggestions(dataSummary);
+    if (!timeseriesSuggestions) {
+      throw new Error('No suggestions from timeseries plugin');
+    }
+    for (let i = 0; i < timeseriesSuggestions.length; i++) {
+      const suggestion = timeseriesSuggestions[i];
+      expect(ctx.suggestions[i].name).toEqual(suggestion.name);
+    }
+  });
+});
+
 describe('sortSuggestions', () => {
-  it('should sort suggestions correctly by score', () => {
+  it('should sort suggestions correctly by score', async () => {
     const suggestions = [
       { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
       { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
@@ -498,14 +538,14 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
     expect(suggestions[2].pluginId).toBe('table');
   });
 
-  it('should sort suggestions based on core module', () => {
+  it('should sort suggestions based on core module', async () => {
     const suggestions = [
       {
         pluginId: 'fake-external-panel',
@@ -533,7 +573,7 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
@@ -546,18 +586,14 @@ describe('sortSuggestions', () => {
 
 describe('Visualization suggestions error handling', () => {
   it('returns result with hasErrors flag', async () => {
-    const result = await getAllSuggestions({
-      series: [
-        toDataFrame({
-          fields: [
-            { name: 'Time', type: FieldType.time, values: [1, 2] },
-            { name: 'Max', type: FieldType.number, values: [1, 10] },
-          ],
-        }),
-      ],
-      state: LoadingState.Done,
-      timeRange: getDefaultTimeRange(),
-    });
+    const result = await getAllSuggestions([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Max', type: FieldType.number, values: [1, 10] },
+        ],
+      }),
+    ]);
 
     expect(result).toHaveProperty('suggestions');
     expect(result).toHaveProperty('hasErrors');

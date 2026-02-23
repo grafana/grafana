@@ -4,6 +4,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const OpenAPIPrefix = "com.github.grafana.grafana.apps.scope.pkg.apis.scope.v0alpha1."
+
 /*
 Please keep pkg/promlib/models/query.go and pkg/promlib/models/scope.go in sync
 with this file until this package is out of the grafana/grafana module.
@@ -15,6 +17,10 @@ type Scope struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec ScopeSpec `json:"spec,omitempty"`
+}
+
+func (Scope) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Scope"
 }
 
 type ScopeSpec struct {
@@ -29,6 +35,10 @@ type ScopeSpec struct {
 	Filters []ScopeFilter `json:"filters,omitempty"`
 }
 
+func (ScopeSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeSpec"
+}
+
 type ScopeFilter struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -36,6 +46,10 @@ type ScopeFilter struct {
 	// +listType=atomic
 	Values   []string       `json:"values,omitempty"`
 	Operator FilterOperator `json:"operator"`
+}
+
+func (ScopeFilter) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeFilter"
 }
 
 // Type of the filter operator.
@@ -60,6 +74,10 @@ type ScopeList struct {
 	Items []Scope `json:"items,omitempty"`
 }
 
+func (ScopeList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeList"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeDashboardBinding struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -67,6 +85,10 @@ type ScopeDashboardBinding struct {
 
 	Spec   ScopeDashboardBindingSpec   `json:"spec,omitempty"`
 	Status ScopeDashboardBindingStatus `json:"status,omitempty"`
+}
+
+func (ScopeDashboardBinding) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeDashboardBinding"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -77,12 +99,20 @@ type ScopeDashboardBindingList struct {
 	Items []ScopeDashboardBinding `json:"items,omitempty"`
 }
 
+func (ScopeDashboardBindingList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeDashboardBindingList"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FindScopeDashboardBindingsResults struct {
 	metav1.TypeMeta `json:",inline"`
 
 	Items   []ScopeDashboardBinding `json:"items,omitempty"`
 	Message string                  `json:"message,omitempty"`
+}
+
+func (FindScopeDashboardBindingsResults) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FindScopeDashboardBindingsResults"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -93,9 +123,17 @@ type ScopeNode struct {
 	Spec ScopeNodeSpec `json:"spec,omitempty"`
 }
 
+func (ScopeNode) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNode"
+}
+
 type ScopeDashboardBindingSpec struct {
 	Dashboard string `json:"dashboard"`
 	Scope     string `json:"scope"`
+}
+
+func (ScopeDashboardBindingSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeDashboardBindingSpec"
 }
 
 // Type of the item.
@@ -121,6 +159,10 @@ type ScopeDashboardBindingStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	GroupsConditions []metav1.Condition `json:"groupsConditions,omitempty"`
+}
+
+func (ScopeDashboardBindingStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeDashboardBindingStatus"
 }
 
 type NodeType string
@@ -163,6 +205,10 @@ type ScopeNodeSpec struct {
 	RedirectPath string `json:"redirectPath,omitempty"`
 }
 
+func (ScopeNodeSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNodeSpec"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeNodeList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -171,12 +217,20 @@ type ScopeNodeList struct {
 	Items []ScopeNode `json:"items,omitempty"`
 }
 
+func (ScopeNodeList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNodeList"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FindScopeNodeChildrenResults struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []ScopeNode `json:"items,omitempty"`
+}
+
+func (FindScopeNodeChildrenResults) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FindScopeNodeChildrenResults"
 }
 
 // Scoped navigation types
@@ -190,6 +244,10 @@ type ScopeNavigation struct {
 	Status ScopeNavigationStatus `json:"status,omitempty"`
 }
 
+func (ScopeNavigation) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigation"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeNavigationList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -198,12 +256,20 @@ type ScopeNavigationList struct {
 	Items []ScopeNavigation `json:"items,omitempty"`
 }
 
+func (ScopeNavigationList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigationList"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FindScopeNavigationsResults struct {
 	metav1.TypeMeta `json:",inline"`
 
 	Items   []ScopeNavigation `json:"items,omitempty"`
 	Message string            `json:"message,omitempty"`
+}
+
+func (FindScopeNavigationsResults) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FindScopeNavigationsResults"
 }
 
 type ScopeNavigationSpec struct {
@@ -215,6 +281,10 @@ type ScopeNavigationSpec struct {
 	PreLoadSubScopeChildren bool `json:"preLoadSubScopeChildren,omitempty"`
 	// Makes the subscope not selectable, only serving as a way to build the tree.
 	DisableSubScopeSelection bool `json:"disableSubScopeSelection,omitempty"`
+}
+
+func (ScopeNavigationSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigationSpec"
 }
 
 // Type of the item.
@@ -240,6 +310,10 @@ type ScopeNavigationStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	GroupsConditions []metav1.Condition `json:"groupsConditions,omitempty"`
+}
+
+func (ScopeNavigationStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigationStatus"
 }
 
 // Type of the filter operator.

@@ -14,8 +14,10 @@ WHERE
     AND u.uid = {{ .Arg .Query.UserUID }}
   {{ end }}
   {{- if .Query.Pagination.Continue }}
-    AND tm.id >= {{ .Arg .Query.Pagination.Continue }}
+    AND tm.id > {{ .Arg .Query.Pagination.Continue }}
   {{- end }}
-AND NOT tm.external
+  {{- if ne .Query.External nil }}
+    AND tm.external = {{ .Arg .ExternalValue }}
+  {{- end }}
 ORDER BY t.id ASC
 LIMIT {{ .Arg .Query.Pagination.Limit }};

@@ -29,7 +29,7 @@ import (
 func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
 	logger := log.New("openfga.server")
 
-	opts := []server.OpenFGAServiceV1Option{
+	opts := []server.OpenFGAServiceV1Option{ //nolint:prealloc
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
 
@@ -192,12 +192,12 @@ func withListOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServiceV
 	return opts
 }
 
-func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
+func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, grpcSrv grpcserver.Provider) (*http.Server, error) {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	addr := srv.GetAddress()
+	addr := grpcSrv.GetAddress()
 	// Wait until GRPC server is initialized
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -205,7 +205,7 @@ func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Prov
 	retries := 0
 	for addr == "" && retries < maxRetries {
 		<-ticker.C
-		addr = srv.GetAddress()
+		addr = grpcSrv.GetAddress()
 		retries++
 	}
 	if addr == "" {

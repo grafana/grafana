@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -211,7 +212,8 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 				},
 				nil,
 				ssosettingstests.NewFakeService(),
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				nil)
 
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
 			if (err != nil) != tt.wantErr {
@@ -725,7 +727,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				cfg,
 				ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				ssosettingstests.NewFakeService(),
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				nil)
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)
 			if tt.wantErr {
@@ -906,11 +909,55 @@ func TestSocialGoogle_Validate(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "fails if validate_id_token is enabled and jwk_set_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if validate_id_token is enabled and jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "https://www.googleapis.com/oauth2/v3/certs",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false even when jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "https://www.googleapis.com/oauth2/v3/certs",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -999,7 +1046,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1052,7 +1099,7 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email)
 
@@ -1156,11 +1203,115 @@ func TestSocialGoogle_AuthCodeURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 			gotURL := s.AuthCodeURL(tc.state, tc.opts...)
 			parsedURL, err := url.Parse(gotURL)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.wantURL, parsedURL)
+		})
+	}
+}
+
+func TestSocialGoogle_extractFromToken_WithIDTokenValidation(t *testing.T) {
+	validKey, validKeyID := createTestRSAKey(t)
+	invalidKey, _ := createTestRSAKey(t)
+
+	// Create a mock JWKS server
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jwksData := createJWKSResponse(t, validKey, validKeyID)
+		_, _ = w.Write(jwksData)
+	}))
+	defer jwksServer.Close()
+
+	claims := map[string]any{
+		"sub":            "123456789",
+		"email":          "test@example.com",
+		"email_verified": true,
+		"name":           "Test User",
+		"exp":            time.Now().Add(time.Hour).Unix(),
+		"iat":            time.Now().Unix(),
+	}
+
+	tests := []struct {
+		name          string
+		validateToken bool
+		jwkSetURL     string
+		tokenKey      *rsa.PrivateKey
+		tokenKeyID    string
+		wantData      bool
+		wantError     error
+	}{
+		{
+			name:          "valid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      validKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+		},
+		{
+			name:          "invalid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantData:      false,
+			wantError:     fmt.Errorf("signing key not found for kid: test-key-id"),
+		},
+		{
+			name:          "validation disabled should extract without signature check",
+			validateToken: false,
+			jwkSetURL:     "",
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			}
+			if tc.validateToken {
+				info.ValidateIDToken = true
+				info.JwkSetURL = tc.jwkSetURL
+			}
+
+			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+			// Sign the token
+			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)
+
+			// Create OAuth token with ID token
+			token := &oauth2.Token{
+				AccessToken: "access-token",
+			}
+			token = token.WithExtra(map[string]any{
+				"id_token": idToken,
+			})
+
+			// Create HTTP client
+			client := &http.Client{}
+
+			// Extract from token
+			data, err := s.extractFromToken(context.Background(), client, token)
+
+			if tc.wantError != nil {
+				require.ErrorContains(t, err, tc.wantError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.wantData {
+				require.NotNil(t, data, "Expected user data but got nil")
+				assert.Equal(t, "test@example.com", data.Email)
+				assert.Equal(t, "Test User", data.Name)
+			} else {
+				require.Nil(t, data, "Expected nil data but got user data")
+			}
 		})
 	}
 }

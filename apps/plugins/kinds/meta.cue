@@ -7,13 +7,13 @@ metaV0Alpha1: {
 		spec: {
 			pluginJson: #JSONData
 			class:      "core" | "external"
-			module?: {
+			module: {
 				path:             string
 				hash?:            string
-				loadingStrategy?: "fetch" | "script"
+				loadingStrategy: "fetch" | "script"
 			}
-			baseURL?: string
-			signature?: {
+			baseURL: string
+			signature: {
 				status: "internal" | "valid" | "invalid" | "modified" | "unsigned"
 				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
 				org?:   string

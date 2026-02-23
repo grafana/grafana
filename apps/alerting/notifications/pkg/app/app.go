@@ -33,6 +33,7 @@ func New(cfg app.Config) (app.App, error) {
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
+			{Kind: v0alpha1.InhibitionRuleKind()},
 			{
 				Kind: v0alpha1.ReceiverKind(),
 				CustomRoutes: map[simple.AppCustomRoute]simple.AppCustomRouteHandler{
@@ -45,6 +46,15 @@ func New(cfg app.Config) (app.App, error) {
 			{Kind: v0alpha1.RoutingTreeKind()},
 			{Kind: v0alpha1.TemplateGroupKind()},
 			{Kind: v0alpha1.TimeIntervalKind()},
+		},
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v0alpha1": {
+				{
+					Namespaced: true,
+					Path:       "/integrationtypeschemas",
+					Method:     "GET",
+				}: customCfg.IntegrationTypeSchemaHandler.HandleGetSchemas,
+			},
 		},
 	}
 

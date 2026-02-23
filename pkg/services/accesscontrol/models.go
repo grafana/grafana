@@ -235,6 +235,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -454,6 +460,11 @@ const (
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
+
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
 
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"

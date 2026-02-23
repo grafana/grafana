@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Text, Tooltip } from '@grafana/ui';
+import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Tooltip } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FolderDTO } from 'app/types/folders';
 
@@ -32,13 +32,13 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const [createTeamFolder, setCreateTeamFolder] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | undefined>(undefined);
+  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | null>(null);
 
   const handleTeamFolderToggle = () => {
     setCreateTeamFolder(!createTeamFolder);
   };
 
-  const handleTeamSelectorChange = (ownerRef: OwnerReference) => {
+  const handleTeamSelectorChange = (ownerRef: OwnerReference | null) => {
     setSelectedTeam(ownerRef);
   };
 
@@ -101,14 +101,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
               </Tooltip>
             </Box>
 
-            {createTeamFolder && (
-              <Stack gap={1} direction="column">
-                <Text element="p">
-                  <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
-                </Text>
-                <OwnerReferenceSelector onChange={handleTeamSelectorChange} />
-              </Stack>
-            )}
+            {createTeamFolder && <OwnerReferenceSelector onChange={handleTeamSelectorChange} />}
           </>
         )}
       </Stack>

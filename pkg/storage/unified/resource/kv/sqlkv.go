@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	DataSection   = "unified/data"
-	EventsSection = "unified/events"
+	DataSection           = "unified/data"
+	EventsSection         = "unified/events"
+	LastImportTimeSection = "unified/lastimport"
 )
 
 var _ KV = &SqlKV{}
@@ -50,13 +51,14 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		return nil, fmt.Errorf("section is required")
 	}
 
-	if section != DataSection && section != EventsSection {
-		return nil, fmt.Errorf("invalid section: %s", section)
-	}
-
-	tableName := "resource_events"
-	if section == DataSection {
+	tableName := ""
+	switch section {
+	case EventsSection:
+		tableName = "resource_events"
+	case DataSection:
 		tableName = "resource_history"
+	default:
+		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
 	return &queryBuilder{
@@ -85,6 +87,11 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
+		if section == LastImportTimeSection {
+			k.lastImportTimeKeys(ctx, opt, yield)
+			return
+		}
+
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
 			yield("", err)
@@ -107,22 +114,23 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			yield("", err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			if err := rows.Scan(&key); err != nil {
-				yield("", fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
-			if !yield(strings.TrimPrefix(key, section+"/"), nil) {
+			if shouldYield = yield(strings.TrimPrefix(key, section+"/"), nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield("", fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -171,13 +179,14 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			var value []byte
 			if err := rows.Scan(&key, &value); err != nil {
-				yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
@@ -185,13 +194,13 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 				Key:   strings.TrimPrefix(key, section+"/"),
 				Value: io.NopCloser(bytes.NewReader(value)),
 			}
-			if !yield(kv, nil) {
+			if shouldYield = yield(kv, nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -200,11 +209,14 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
-	if section != DataSection && section != EventsSection {
-		return nil, fmt.Errorf("invalid section: %s", section)
-	}
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
+	}
+	if section == LastImportTimeSection {
+		return k.saveLastImportTime(ctx, key)
+	}
+	if section != DataSection && section != EventsSection {
+		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
 	return &sqlWriteCloser{
@@ -328,6 +340,10 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 		return fmt.Errorf("key is required")
 	}
 
+	if section == LastImportTimeSection {
+		return k.deleteLastImportTime(ctx, key)
+	}
+
 	qb, err := k.getQueryBuilder(section)
 	if err != nil {
 		return err
@@ -370,8 +386,8 @@ func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
 
-func closeRows[T any](rows *sql.Rows, yield func(T, error) bool) {
-	if err := rows.Close(); err != nil {
+func closeRows[T any](rows *sql.Rows, yield func(T, error) bool, shouldYield bool) {
+	if err := rows.Close(); err != nil && shouldYield {
 		var zero T
 		yield(zero, fmt.Errorf("error closing rows: %w", err))
 	}

@@ -167,44 +167,13 @@ describe('PanelDataTransformationsTab', () => {
     expect(reduce).toBeNull();
   });
 
-  it('renders SQL transformation card in empty state when feature toggles are enabled', async () => {
-    const originalTransformationsToggle = config.featureToggles.transformationsEmptyPlaceholder;
-    const originalSqlToggle = config.featureToggles.sqlExpressions;
-
+  it('renders the new empty transformations message with transformationsEmptyPlaceholder on', async () => {
     config.featureToggles.transformationsEmptyPlaceholder = true;
-    config.featureToggles.sqlExpressions = true;
+    const modelMock = createModelMock(mockData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
-    try {
-      const modelMock = createModelMock(mockData);
-      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
-
-      // Should show SQL transformation card in empty state
-      expect(screen.getByText('Transform with SQL')).toBeInTheDocument();
-      expect(screen.getByTestId('go-to-queries-button')).toBeInTheDocument();
-    } finally {
-      config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
-      config.featureToggles.sqlExpressions = originalSqlToggle;
-    }
-  });
-
-  it('does not render SQL transformation card when sqlExpressions toggle is disabled', async () => {
-    const originalTransformationsToggle = config.featureToggles.transformationsEmptyPlaceholder;
-    const originalSqlToggle = config.featureToggles.sqlExpressions;
-
-    config.featureToggles.transformationsEmptyPlaceholder = true;
-    config.featureToggles.sqlExpressions = false;
-
-    try {
-      const modelMock = createModelMock(mockData);
-      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
-
-      // Should not show SQL transformation card
-      expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('go-to-queries-button')).not.toBeInTheDocument();
-    } finally {
-      config.featureToggles.transformationsEmptyPlaceholder = originalTransformationsToggle;
-      config.featureToggles.sqlExpressions = originalSqlToggle;
-    }
+    // Should show SQL transformation card in empty state
+    expect(screen.getByText('Add a Transformation')).toBeInTheDocument();
   });
 });
 

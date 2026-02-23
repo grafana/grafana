@@ -34,6 +34,7 @@ type ManagedRoute struct {
 	Routes         []*definition.Route
 
 	Provenance models.Provenance
+	Origin     models.ResourceOrigin
 }
 
 func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
@@ -85,6 +86,7 @@ func NewManagedRoute(name string, r *definition.Route) *ManagedRoute {
 		Routes:         r.Routes,
 
 		Provenance: models.Provenance(r.Provenance),
+		Origin:     models.ResourceOriginGrafana,
 	}
 }
 
@@ -109,6 +111,15 @@ func (m ManagedRoutes) Sort() {
 		}
 		return strings.Compare(a.Name, b.Name)
 	})
+}
+
+func (m ManagedRoutes) Contains(name string) bool {
+	for _, r := range m {
+		if r.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func WithManagedRoutes(root *definitions.Route, managedRoutes map[string]*definition.Route) *definitions.Route {
