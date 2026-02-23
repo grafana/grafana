@@ -91,6 +91,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggableItem: css({
       marginBottom: theme.spacing(SIDEBAR_CARD_SPACING),
+      '[data-dragging] &': {
+        pointerEvents: 'none',
+      },
     }),
     dropIndicator: css({
       position: 'absolute',

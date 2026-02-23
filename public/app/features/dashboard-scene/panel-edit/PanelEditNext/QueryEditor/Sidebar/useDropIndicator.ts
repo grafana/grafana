@@ -30,9 +30,9 @@ export function useDropIndicator({ itemHeight, itemSpacing, onDragStart, onDragE
       return;
     }
 
-    // Lock container height to prevent the placeholder animation from pushing siblings
     container.style.height = `${container.getBoundingClientRect().height}px`;
     container.style.overflow = 'hidden';
+    document.documentElement.dataset.dragging = '';
   }, []);
 
   const handleDragStart = useCallback(
@@ -62,6 +62,7 @@ export function useDropIndicator({ itemHeight, itemSpacing, onDragStart, onDragE
         containerRef.current.style.height = '';
         containerRef.current.style.overflow = '';
       }
+      delete document.documentElement.dataset.dragging;
       setIndicator(null);
       onDragEnd(result);
     },
