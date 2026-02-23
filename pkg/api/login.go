@@ -51,35 +51,34 @@ var (
 	errForbiddenRedirectTo = errors.New("forbidden redirect_to cookie value")
 )
 
-func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
+func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) (string, error) {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
-		return errInvalidRedirectTo
+		return "", errInvalidRedirectTo
 	}
 
 	if to.IsAbs() {
-		return errAbsoluteRedirectTo
+		return "", errAbsoluteRedirectTo
 	}
 
 	if to.Host != "" {
-		return errForbiddenRedirectTo
+		return "", errForbiddenRedirectTo
 	}
 
-	if redirectDenyRe.MatchString(to.Path) {
-		return errForbiddenRedirectTo
+	if redirectDenyRe.MatchString(to.Path) || redirectDenyRe.MatchString(to.Fragment) {
+		return "", errForbiddenRedirectTo
 	}
 
 	if to.Path != "/" && !redirectAllowRe.MatchString(to.Path) {
-		return errForbiddenRedirectTo
+		return "", errForbiddenRedirectTo
 	}
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
 	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
-		return errInvalidRedirectTo
+		return "", errInvalidRedirectTo
 	}
-
-	return nil
+	return to.String(), nil
 }
 
 func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
