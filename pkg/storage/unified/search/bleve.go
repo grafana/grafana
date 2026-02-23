@@ -1346,9 +1346,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if access != nil {
-		verb := utils.VerbList // TODO: Why list ? Should get get ?
+		verb := utils.VerbGet
 		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-			verb = utils.VerbPatch // TODO: Why patch ?
+			verb = utils.VerbUpdate
 		}
 
 		// Build resource -> verb mapping for batch authorization
@@ -1358,7 +1358,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// Handle federation
 		for _, federated := range req.Federated {
-			resources[federated.Resource] = utils.VerbList // TODO: Why list ? Should get get ?
+			resources[federated.Resource] = utils.VerbGet
 		}
 
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
