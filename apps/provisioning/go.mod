@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/provisioning
 
-go 1.26.0
+go 1.25.7
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
@@ -9,14 +9,14 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260203131350-b83e80394acc
-	github.com/grafana/grafana-app-sdk v0.51.3
-	github.com/grafana/grafana-app-sdk/logging v0.51.1
+	github.com/grafana/grafana-app-sdk v0.51.4
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/nanogit v0.3.5
 	github.com/migueleliasweb/go-github-mock v1.5.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/oauth2 v0.34.0
+	golang.org/x/oauth2 v0.35.0
 	k8s.io/apimachinery v0.35.1
 	k8s.io/apiserver v0.35.1
 	k8s.io/client-go v0.35.1
@@ -93,7 +93,7 @@ require (
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect

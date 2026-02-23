@@ -48,10 +48,11 @@ func ProvideService() *Service {
 }
 
 var (
-	_ backend.QueryDataHandler      = (*Service)(nil)
-	_ backend.CallResourceHandler   = (*Service)(nil)
-	_ backend.AdmissionHandler      = (*Service)(nil)
-	_ backend.CollectMetricsHandler = (*Service)(nil)
+	_ backend.QueryDataHandler        = (*Service)(nil)
+	_ backend.QueryChunkedDataHandler = (*Service)(nil)
+	_ backend.CallResourceHandler     = (*Service)(nil)
+	_ backend.AdmissionHandler        = (*Service)(nil)
+	_ backend.CollectMetricsHandler   = (*Service)(nil)
 )
 
 type Service struct {
@@ -66,6 +67,10 @@ type Service struct {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return s.queryMux.QueryData(ctx, req)
+}
+
+func (s *Service) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return s.queryMux.QueryChunkedData(ctx, req, w)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
