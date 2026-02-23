@@ -86,28 +86,28 @@ func newModuleServer(opts Options,
 	}
 
 	s := &ModuleServer{
-		opts:              opts,
-		apiOpts:           apiOpts,
-		context:           rootCtx,
-		shutdownFn:        shutdownFn,
-		shutdownFinished:  make(chan struct{}),
-		log:               log.New("base-server"),
-		features:          features,
-		cfg:               cfg,
-		pidFile:           opts.PidFile,
-		version:           opts.Version,
-		commit:            opts.Commit,
-		buildBranch:       opts.BuildBranch,
-		storageMetrics:    storageMetrics,
-		indexMetrics:      indexMetrics,
-		promGatherer:      promGatherer,
-		registerer:        reg,
-		license:           license,
-		moduleRegisterer:  moduleRegisterer,
-		storageBackend:    storageBackend,
-		hooksService:      hooksService,
-		searchClient:      searchClient,
-		readinessNotifier: NewReadinessNotifier(),
+		opts:             opts,
+		apiOpts:          apiOpts,
+		context:          rootCtx,
+		shutdownFn:       shutdownFn,
+		shutdownFinished: make(chan struct{}),
+		log:              log.New("base-server"),
+		features:         features,
+		cfg:              cfg,
+		pidFile:          opts.PidFile,
+		version:          opts.Version,
+		commit:           opts.Commit,
+		buildBranch:      opts.BuildBranch,
+		storageMetrics:   storageMetrics,
+		indexMetrics:     indexMetrics,
+		promGatherer:     promGatherer,
+		registerer:       reg,
+		license:          license,
+		moduleRegisterer: moduleRegisterer,
+		storageBackend:   storageBackend,
+		hooksService:     hooksService,
+		searchClient:     searchClient,
+		healthNotifier:   NewHealthNotifier(),
 	}
 
 	return s, nil
@@ -155,9 +155,9 @@ type ModuleServer struct {
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
 
-	// readinessNotifier is shared between the InstrumentationServer and the OperatorServer
+	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
 	// so that operators can signal readiness to the /readyz endpoint.
-	readinessNotifier *ReadinessNotifier
+	healthNotifier *HealthNotifier
 
 	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
 	// StorageServer and SearchServer module registrations. This is intended for tests.
@@ -308,10 +308,10 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 							Commit:      s.commit,
 							BuildBranch: s.buildBranch,
 						},
-						CLIContext:        cliContext,
-						Config:            s.cfg,
-						Registerer:        s.registerer,
-						ReadinessNotifier: s.readinessNotifier,
+						CLIContext:     cliContext,
+						Config:         s.cfg,
+						Registerer:     s.registerer,
+						HealthNotifier: s.healthNotifier,
 					}
 					return op.RunFunc(deps)
 				},

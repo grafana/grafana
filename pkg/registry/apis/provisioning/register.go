@@ -914,7 +914,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {})
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
@@ -931,7 +931,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {})
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {

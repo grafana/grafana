@@ -10,11 +10,11 @@ import (
 
 // OperatorDependencies contains all the dependencies that operators need
 type OperatorDependencies struct {
-	BuildInfo         standalone.BuildInfo
-	CLIContext        *cli.Context
-	Config            *setting.Cfg
-	Registerer        prometheus.Registerer
-	ReadinessNotifier *ReadinessNotifier
+	BuildInfo      standalone.BuildInfo
+	CLIContext     *cli.Context
+	Config         *setting.Cfg
+	Registerer     prometheus.Registerer
+	HealthNotifier *HealthNotifier
 }
 
 // Operator represents an app operator that is available in the Grafana binary

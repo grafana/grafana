@@ -131,10 +131,9 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	if deps.ReadinessNotifier != nil {
-		deps.ReadinessNotifier.SetReady()
-	}
-
-	controller.Run(ctx, controllerCfg.NumberOfWorkers())
+	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+		logger.Info("repository operator is ready")
+		deps.HealthNotifier.SetReady()
+	})
 	return nil
 }
