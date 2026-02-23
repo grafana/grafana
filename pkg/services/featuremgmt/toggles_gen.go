@@ -774,10 +774,6 @@ const (
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
-	// FlagKubernetesAnnotations
-	// Enables app platform API for annotations
-	FlagKubernetesAnnotations = "kubernetesAnnotations"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"

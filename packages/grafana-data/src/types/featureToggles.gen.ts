@@ -1413,11 +1413,6 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
-  * Enables app platform API for annotations
-  * @default false
-  */
-  kubernetesAnnotations?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */

@@ -249,6 +249,7 @@ func setupWorkers(
 	exportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
+		resourceLister,
 		export.ExportAll,
 		stageIfPossible,
 		metrics,

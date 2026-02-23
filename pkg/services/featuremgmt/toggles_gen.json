@@ -2146,7 +2146,8 @@
       "metadata": {
         "name": "kubernetesAnnotations",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-06T18:22:20Z"
+        "creationTimestamp": "2025-11-06T18:22:20Z",
+        "deletionTimestamp": "2026-02-19T21:17:23Z"
       },
       "spec": {
         "description": "Enables app platform API for annotations",

@@ -5,6 +5,7 @@ import {
   getListedPanelPluginIds,
   getPanelPluginMeta,
   getPanelPluginMetas,
+  getPanelPluginMetasMap,
   getPanelPluginVersion,
   isPanelPluginInstalled,
 } from './panels';
@@ -21,6 +22,11 @@ export function useAppPluginMeta(pluginId: string) {
 
 export function usePanelPluginMetas() {
   const { loading, error, value } = useAsync(async () => getPanelPluginMetas());
+  return { loading, error, value };
+}
+
+export function usePanelPluginMetasMap() {
+  const { loading, error, value } = useAsync(async () => getPanelPluginMetasMap());
   return { loading, error, value };
 }
 
