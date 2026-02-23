@@ -625,7 +625,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	names := []string{}
+	names := make([]string, 0, len(found.Items))
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}

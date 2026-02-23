@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -751,6 +752,63 @@ func TestCheckQuotas(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func Test_resourceVersionTime(t *testing.T) {
+	// Reference time: 2026-01-15 12:00:00 UTC
+	refTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+
+	// Build a snowflake ID for refTime (node=0, sequence=0).
+	snowflakeRV := (refTime.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+
+	// Build a microsecond Unix timestamp for refTime (SQL backend format).
+	microRV := refTime.UnixMicro()
+
+	tests := []struct {
+		name      string
+		rv        int64
+		wantClose time.Time
+	}{
+		{
+			name:      "snowflake ID",
+			rv:        snowflakeRV,
+			wantClose: refTime,
+		},
+		{
+			name:      "microsecond timestamp",
+			rv:        microRV,
+			wantClose: refTime,
+		},
+		{
+			name:      "zero",
+			rv:        0,
+			wantClose: time.UnixMicro(0),
+		},
+		{
+			name:      "negative",
+			rv:        -1,
+			wantClose: time.UnixMicro(-1),
+		},
+		{
+			name:      "small positive",
+			rv:        12345,
+			wantClose: time.UnixMicro(12345),
+		},
+		{
+			name:      "sequential counter",
+			rv:        1000000,
+			wantClose: time.UnixMicro(1000000),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resourceVersionTime(tt.rv)
+			diff := got.Sub(tt.wantClose).Abs()
+			require.Less(t, diff, time.Second,
+				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)
 		})
 	}
 }

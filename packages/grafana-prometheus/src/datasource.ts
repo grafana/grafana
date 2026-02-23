@@ -565,6 +565,12 @@ export class PrometheusDatasource
       .map((k) => ({ value: k, text: k }));
   }
 
+  // By implementing getGroupByKeys we add group by variable support independently from adhoc filters.
+  // It delegates to getTagKeys
+  async getGroupByKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
+  }
+
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options.timeRange) {

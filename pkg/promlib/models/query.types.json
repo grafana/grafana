@@ -1,6 +1,6 @@
 {
   "kind": "QueryTypeDefinitionList",
-  "apiVersion": "query.grafana.app/v0alpha1",
+  "apiVersion": "datasource.grafana.app/v0alpha1",
   "metadata": {
     "resourceVersion": "1711372744903"
   },
