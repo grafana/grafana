@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "angular-migrations-test"
+  },
   "spec": {
     "annotations": {
       "list": [

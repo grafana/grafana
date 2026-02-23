@@ -93,7 +93,7 @@ func TestV1ConversionObjectMetaOnError(t *testing.T) {
 		require.True(t, target.Status.Conversion.Failed)
 		require.Equal(t, source.Name, target.Name)
 		require.Equal(t, source.Namespace, target.Namespace)
-		require.Equal(t, dashv2alpha1.VERSION, target.APIVersion)
+		require.Equal(t, dashv2alpha1.APIVERSION, target.APIVersion)
 	})
 
 	t.Run("v1 to v2beta1 sets ObjectMeta on error", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestV1ConversionObjectMetaOnError(t *testing.T) {
 		require.True(t, target.Status.Conversion.Failed)
 		require.Equal(t, source.Name, target.Name)
 		require.Equal(t, source.Namespace, target.Namespace)
-		require.Equal(t, dashv2beta1.VERSION, target.APIVersion)
+		require.Equal(t, dashv2beta1.APIVERSION, target.APIVersion)
 	})
 }
 

@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v1beta1.datagrid_metric_values.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

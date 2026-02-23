@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v16.span_zero_demo.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

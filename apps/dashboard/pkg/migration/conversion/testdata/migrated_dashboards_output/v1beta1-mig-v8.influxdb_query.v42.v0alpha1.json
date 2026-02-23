@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v8.influxdb_query.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

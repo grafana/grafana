@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v38.timeseries_table_display_mode.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

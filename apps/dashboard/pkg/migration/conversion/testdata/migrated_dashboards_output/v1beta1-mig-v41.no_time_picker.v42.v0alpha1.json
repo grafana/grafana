@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v41.no_time_picker.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

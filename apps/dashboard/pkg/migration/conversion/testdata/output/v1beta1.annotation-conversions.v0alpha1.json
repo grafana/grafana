@@ -1,7 +1,12 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "annotation-conversions-test",
+    "labels": {
+      "test": "annotation-conversions"
+    }
+  },
   "spec": {
     "annotations": {
       "list": [

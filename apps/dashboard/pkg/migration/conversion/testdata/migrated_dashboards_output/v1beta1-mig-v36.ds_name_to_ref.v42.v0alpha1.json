@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v36.ds_name_to_ref.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

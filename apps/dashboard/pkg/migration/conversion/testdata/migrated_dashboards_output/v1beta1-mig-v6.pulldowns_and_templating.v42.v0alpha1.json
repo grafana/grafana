@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v6.pulldowns_and_templating.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

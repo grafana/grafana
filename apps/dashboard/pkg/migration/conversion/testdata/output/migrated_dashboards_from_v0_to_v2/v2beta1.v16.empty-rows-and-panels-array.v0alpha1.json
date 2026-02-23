@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v16.empty-rows-and-panels-array.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

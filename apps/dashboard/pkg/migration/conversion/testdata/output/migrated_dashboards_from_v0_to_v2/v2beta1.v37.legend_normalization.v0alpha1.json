@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v37.legend_normalization.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

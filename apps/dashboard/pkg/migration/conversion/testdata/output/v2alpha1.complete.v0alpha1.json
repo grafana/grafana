@@ -1,7 +1,15 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "test-v2alpha1-complete",
+    "labels": {
+      "category": "test"
+    },
+    "annotations": {
+      "description": "Complete example of v2alpha1 dashboard features"
+    }
+  },
   "spec": {
     "annotations": {
       "list": [

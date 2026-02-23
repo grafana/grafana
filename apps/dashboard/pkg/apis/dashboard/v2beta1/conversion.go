@@ -12,18 +12,20 @@ func (d *Dashboard) GetStoredVersion() string {
 	return ""
 }
 
-func (d *Dashboard) GetAPIVersion() string {
+func (d *Dashboard) GetVersion() string {
 	return VERSION
 }
 
+func (d *Dashboard) GetAPIVersion() string {
+	return APIVERSION
+}
+
 func (d *Dashboard) SetConversionStatus(storedVersion string, failed bool, errMsg *string, source interface{}) {
-	d.Status = DashboardStatus{
-		Conversion: &DashboardConversionStatus{
-			StoredVersion: ptr.To(storedVersion),
-			Failed:        failed,
-			Error:         errMsg,
-			Source:        source,
-		},
+	d.Status.Conversion = &DashboardConversionStatus{
+		StoredVersion: ptr.To(storedVersion),
+		Failed:        failed,
+		Error:         errMsg,
+		Source:        source,
 	}
 }
 

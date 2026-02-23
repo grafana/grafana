@@ -1,7 +1,12 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "dashboard-properties-test",
+    "labels": {
+      "test": "dashboard-properties"
+    }
+  },
   "spec": {
     "annotations": {
       "list": [

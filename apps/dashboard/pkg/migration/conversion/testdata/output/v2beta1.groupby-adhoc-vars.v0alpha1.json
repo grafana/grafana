@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "test-v2alpha1-groupby-adhoc-vars"
+  },
   "spec": {
     "annotations": {
       "list": []

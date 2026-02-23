@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v23.multi_variable_alignment.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

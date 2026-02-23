@@ -1,7 +1,13 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "bom-in-links-test",
+    "namespace": "org-1",
+    "labels": {
+      "test": "bom-stripping"
+    }
+  },
   "spec": {
     "description": "Testing that BOM characters are stripped from URLs during conversion",
     "editable": true,

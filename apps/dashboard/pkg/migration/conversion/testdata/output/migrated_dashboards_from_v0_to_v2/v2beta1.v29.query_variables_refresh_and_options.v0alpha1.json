@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v29.query_variables_refresh_and_options.v42"
+  },
   "spec": {
     "annotations": {
       "list": [

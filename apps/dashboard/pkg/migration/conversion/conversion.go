@@ -17,7 +17,11 @@ type DashboardConversion interface {
 	// GetStoredVersion returns the stored version from status.conversion.storedVersion,
 	// or empty string if not set.
 	GetStoredVersion() string
-	// GetAPIVersion returns the API version of this dashboard (e.g., "v2beta1").
+	// GetVersion returns the short version string (e.g., "v2beta1").
+	// Used for storedVersion in conversion status.
+	GetVersion() string
+	// GetAPIVersion returns the full API version (e.g., "dashboard.grafana.app/v2beta1").
+	// Used for the apiVersion field on the dashboard TypeMeta.
 	GetAPIVersion() string
 	// SetConversionStatus sets the conversion status on the dashboard.
 	SetConversionStatus(storedVersion string, failed bool, errMsg *string, source interface{})
@@ -40,7 +44,7 @@ func getStoredVersion(in DashboardConversion) string {
 	if sv := in.GetStoredVersion(); sv != "" {
 		return sv
 	}
-	return in.GetAPIVersion()
+	return in.GetVersion()
 }
 
 func setConversionStatus(in DashboardConversion, out DashboardConversion, err error, source interface{}) {
@@ -62,7 +66,7 @@ func setMetadata(in, out DashboardConversion) {
 // normalizeConversion wraps a conversion function with both metrics and status handling.
 // It ensures:
 // - Conversion status is always set (on success and failure)
-// - Metadata (ObjectMeta, APIVersion, Kind) is set on error
+// - Metadata (ObjectMeta, APIVersion, Kind) is always set
 // - Default spec is ensured on error (to prevent JSON marshaling errors)
 // - Metrics are tracked
 func normalizeConversion(
@@ -75,8 +79,9 @@ func normalizeConversion(
 
 		err := conversionFunc(a, b, scope)
 
+		setMetadata(inConv, outConv)
+
 		if err != nil {
-			setMetadata(inConv, outConv)
 			outConv.EnsureDefaultSpec()
 		}
 

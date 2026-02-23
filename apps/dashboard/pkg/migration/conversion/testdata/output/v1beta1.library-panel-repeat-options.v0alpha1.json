@@ -1,7 +1,12 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "library-panel-repeat-options-test",
+    "labels": {
+      "test": "library-panel-repeat"
+    }
+  },
   "spec": {
     "annotations": {
       "list": []

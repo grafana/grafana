@@ -1,7 +1,9 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {},
+  "metadata": {
+    "name": "v15.no-op-migration.v42"
+  },
   "spec": {
     "annotations": {
       "list": [
