@@ -1,5 +1,6 @@
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { LoadingBar } from '@grafana/ui';
 
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
@@ -17,9 +18,16 @@ export function QueriesAndTransformationsView() {
 
   const isLoading = data?.state === LoadingState.Loading || data?.state === undefined;
 
-  // TODO: fix
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <LoadingBar
+        width={400}
+        ariaLabel={t(
+          'query-editor-next.sidebar.loading-queries-transformations',
+          'Loading queries and transformations'
+        )}
+      />
+    );
   }
 
   return (
