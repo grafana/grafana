@@ -227,10 +227,9 @@ const TeamList = () => {
 
               const { data: foldersData, isError, error } = await foldersQueryRef.current;
 
-              if (isError) {
-                if (error && error.name === 'AbortError') {
-                  return;
-                }
+              const isAbortError = error && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
+
+              if (isError && !isAbortError) {
                 notifyApp.error(
                   t(
                     'teams.team-list.failed-to-check-folders',
@@ -238,6 +237,10 @@ const TeamList = () => {
                   )
                 );
                 console.error(error);
+                return;
+              }
+
+              if (isAbortError) {
                 return;
               }
 
