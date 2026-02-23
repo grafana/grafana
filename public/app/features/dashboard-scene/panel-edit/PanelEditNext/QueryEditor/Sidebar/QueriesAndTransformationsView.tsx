@@ -15,7 +15,7 @@ export function QueriesAndTransformationsView() {
   const { transformations } = usePanelContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-  const isLoading = data?.state === LoadingState.Loading;
+  const isLoading = data?.state === LoadingState.Loading || data?.state === undefined;
 
   // TODO: fix
   if (isLoading) {
