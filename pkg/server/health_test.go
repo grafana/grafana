@@ -83,7 +83,7 @@ func TestRegisterHealthEndpoints(t *testing.T) {
 	t.Run("livez returns 200", func(t *testing.T) {
 		resp, err := http.Get(srv.URL + "/livez")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestRegisterHealthEndpoints(t *testing.T) {
 	t.Run("readyz returns 503 when not ready", func(t *testing.T) {
 		resp, err := http.Get(srv.URL + "/readyz")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestRegisterHealthEndpoints(t *testing.T) {
 		h.SetReady()
 		resp, err := http.Get(srv.URL + "/readyz")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -118,7 +118,7 @@ func TestRegisterHealthEndpoints(t *testing.T) {
 		h.SetNotReady()
 		resp, err := http.Get(srv.URL + "/readyz")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -129,14 +129,14 @@ func TestRegisterHealthEndpoints(t *testing.T) {
 	t.Run("livez rejects POST", func(t *testing.T) {
 		resp, err := http.Post(srv.URL+"/livez", "text/plain", nil)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 	})
 
 	t.Run("readyz rejects POST", func(t *testing.T) {
 		resp, err := http.Post(srv.URL+"/readyz", "text/plain", nil)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 	})
 }
