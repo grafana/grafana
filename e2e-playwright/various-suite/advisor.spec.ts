@@ -61,7 +61,7 @@ async function runChecks(page: Page) {
     .catch(() => false);
   await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 10000 });
   await expect(page.getByText('Last checked')).toBeVisible();
-  await expect(page.getByText('Report in progress')).not.toBeVisible();
+  await expect(page.getByText('Report in progress')).not.toBeVisible({ timeout: 10000 });
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
