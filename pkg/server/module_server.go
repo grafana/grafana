@@ -153,6 +153,10 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+
+	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
+	// StorageServer and SearchServer module registrations. This is intended for tests.
+	StorageServiceOptions []sql.ServiceOption
 }
 
 // init initializes the server and its services.
@@ -251,7 +255,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -259,7 +263,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

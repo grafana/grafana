@@ -207,7 +207,7 @@ func TestGetFilters(t *testing.T) {
 	t.Run("Parsing filters on single line with should return expected result", func(t *testing.T) {
 		filter := `rendering:debug oauth.generic_oauth:debug testwithoutlevel provisioning.dashboard:debug`
 		filters := getFilters(util.SplitString(filter))
-		keys := []string{}
+		keys := make([]string, 0, len(filters))
 		for k := range filters {
 			keys = append(keys, k)
 		}
@@ -242,7 +242,7 @@ func TestGetFilters(t *testing.T) {
           plugin.installer:debug \
           plugin.signature.validator:debug`
 		filters := getFilters(util.SplitString(filter))
-		keys := []string{}
+		keys := make([]string, 0, len(filters))
 		for k := range filters {
 			keys = append(keys, k)
 		}

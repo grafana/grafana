@@ -252,6 +252,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
+            createdBy: queryArg.createdBy,
             explain: queryArg.explain,
             panelTitleSearch: queryArg.panelTitleSearch,
           },
@@ -690,6 +691,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   limit?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
+  /** filter by the user who created the resource (format: user:<uid>) */
+  createdBy?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */

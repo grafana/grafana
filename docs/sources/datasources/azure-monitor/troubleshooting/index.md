@@ -15,26 +15,10 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot Azure Monitor data source issues
 weight: 500
 last_reviewed: 2025-12-04
-refs:
-  configure-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
 ---
 
 # Troubleshoot Azure Monitor data source issues
@@ -255,7 +239,7 @@ These errors are specific to the Traces query type.
 
 ## Template variable errors
 
-For detailed troubleshooting of template variables, refer to the [template variables troubleshooting section](ref:template-variables).
+For detailed troubleshooting of template variables, refer to the [template variables troubleshooting section](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ### Variables return no values
 
@@ -290,7 +274,7 @@ These errors indicate problems with network connectivity between Grafana and Azu
 1. Verify network connectivity from Grafana to Azure endpoints.
 2. Check firewall rules allow outbound HTTPS (port 443) to Azure services.
 3. For private networks, ensure Private Link or VPN is configured correctly.
-4. For Grafana Cloud, configure [Private Data Source Connect](ref:configure-azure-monitor) if accessing private resources.
+4. For Grafana Cloud, configure [Private Data Source Connect](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) if accessing private resources.
 
 ### SSL/TLS certificate errors
 

@@ -1,4 +1,5 @@
 import { render, RenderResult, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { dateTime, TimeRange } from '@grafana/data';
 
@@ -116,6 +117,70 @@ describe('TimePickerContent', () => {
     it('renders without timezone picker', () => {
       renderComponent({ value: absoluteValue, hideTimeZone: true });
       expect(screen.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Time Shortcut Parsing', () => {
+    it('shows custom time option when typing a valid time shortcut', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '30m');
+
+      expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
+    });
+
+    it('does not show custom time option for compound durations', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '1h30m');
+
+      expect(screen.queryByText(/Last 1 hour 30 minutes/i)).not.toBeInTheDocument();
+    });
+
+    it('uses singular form for single units', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '1h');
+
+      expect(screen.getByText('Last 1 hour')).toBeInTheDocument();
+    });
+
+    it('does not show duplicate options if custom shortcut matches existing option', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '5m');
+
+      const options = screen.getAllByText(/Last 5 minutes/i);
+      expect(options).toHaveLength(1);
+    });
+
+    it('filters existing options while showing custom shortcut', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '45m');
+
+      expect(screen.getByText('Last 45 minutes')).toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
+    });
+
+    it('does not show custom option for invalid time shortcuts', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, 'invalid');
+
+      expect(screen.queryByText(/Last invalid/i)).not.toBeInTheDocument();
     });
   });
 });

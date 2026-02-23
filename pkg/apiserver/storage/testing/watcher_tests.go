@@ -1220,7 +1220,7 @@ func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T
 func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interface) {
 	trueVal, falseVal := true, false
 	addEventsFromCreatedPods := func(createdInitialPods []*example.Pod) []watch.Event {
-		var ret []watch.Event
+		ret := make([]watch.Event, 0, len(createdInitialPods))
 		for _, createdPod := range createdInitialPods {
 			ret = append(ret, watch.Event{Type: watch.Added, Object: createdPod})
 		}

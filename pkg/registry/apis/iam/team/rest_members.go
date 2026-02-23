@@ -162,7 +162,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		parsedResult, err := parseResults(searchResult, searchRequest.Offset)
+		parsedResult, err := parseResults(searchResult)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -186,7 +186,7 @@ func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetMembersBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse) (iamv0alpha1.GetMembersBody, error) {
 	if result == nil {
 		return iamv0alpha1.GetMembersBody{}, nil
 	}
