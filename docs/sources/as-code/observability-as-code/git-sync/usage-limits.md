@@ -57,7 +57,7 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 | Pure Git     | Cloud, OSS, Enterprise | Personal Access Token               |
 | GitHub       | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
 | GitLab       | Cloud, Enterprise      | Personal Access Token               |
-| Bitbucket    | Cloud, Enterprise      | Personal Access Token               |
+| Bitbucket    | Cloud, Enterprise      | API token with scopes              |
 
 ### The Pure Git repository type
 

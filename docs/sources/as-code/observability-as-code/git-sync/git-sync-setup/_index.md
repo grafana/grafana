@@ -102,6 +102,13 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
   1. Click on **Configure repository** to proceed.
   1. Paste the **Repository URL** for your GitHub repository into the text box.
 
+Note that your GitHub App must have the following permissions:
+
+- **Contents**: Read and write permission
+- **Metadata**: Read-only permission
+- **Pull requests**: Read and write permission
+- **Webhooks**: Read and write permission
+
 Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitLab
@@ -121,7 +128,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Bitbucket
 
-If you want to configure Git Sync for Bitbucket, you need a Bitbucket Personal Access Token. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket), go to **Create App passwords** and create a token with these permissions:
+If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token with scopes. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket) and create an API token with these permissions:
 
 - **Repositories**: Read and write permission
 - **Pull requests**: Read and write permission
@@ -129,7 +136,7 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket Personal A
 
 Return to Grafana and fill in the following fields:
 
-1. Paste the token into the **Project Access Token** text box.
+1. Paste the token into the **API Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
