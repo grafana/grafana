@@ -454,8 +454,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// parse the datakey to get the action and resource version
 			dk, err := ParseKey(dataKey)
 			if err != nil {
-				b.log.Error("failed to parse datakey '%s': %s", dataKey, err)
-				continue
+				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
 			// update the next end key for pagination. We will use this to continue scanning in the next batch
@@ -504,20 +503,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		if keysProcessed == 0 {
 			break
 		}
-
-		// Parse and get the next end key to ensure we can continue paginating. If we can't parse it, we should stop to avoid an infinite loop.
-		nk, err := ParseKey(endKey)
-		if err != nil {
-			b.log.Error("failed to parse nextEndKey '%s': %s", endKey, err)
-			break
-		}
-		key = ListRequestKey{
-			Group:     group,
-			Resource:  resourceName,
-			Namespace: nk.Namespace,
-			Name:      nk.Name,
-		}
-		endKey = key.Prefix()
 
 		totalDeleted += keysDeleted
 
