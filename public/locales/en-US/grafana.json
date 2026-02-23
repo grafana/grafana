@@ -12438,9 +12438,6 @@
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
     },
-    "check-repository": {
-      "check": "Check"
-    },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
