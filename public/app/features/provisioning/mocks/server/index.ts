@@ -4,12 +4,8 @@ import { setBackendSrv, setGrafanaLiveSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import allHandlers from './all-handlers';
-
-export { PROVISIONING_API_BASE } from './constants';
-
 export function setupProvisioningMswServer() {
-  const server = setupMockServer(allHandlers);
+  const server = setupMockServer();
 
   beforeAll(() => {
     setBackendSrv(backendSrv);

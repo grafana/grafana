@@ -1,10 +1,11 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
-import { PROVISIONING_API_BASE as BASE, setupProvisioningMswServer } from '../mocks/server';
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ConnectionForm } from './ConnectionForm';
 

@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { PROVISIONING_API_BASE as BASE } from '../constants';
+export const BASE = '/apis/provisioning.grafana.app/v0alpha1/namespaces/:namespace';
 
 // --- Default response data ---
 
@@ -22,7 +22,7 @@ const defaultRepositoryList = {
         observedGeneration: 1,
         health: {
           healthy: true,
-          checked: Date.now(),
+          checked: 1704067200000,
           message: [],
         },
       },
@@ -50,7 +50,7 @@ const defaultConnection = {
         status: 'True',
         reason: 'Available',
         message: 'Connection is available',
-        lastTransitionTime: new Date().toISOString(),
+        lastTransitionTime: '2024-01-01T00:00:00Z',
         observedGeneration: 1,
       },
     ],
@@ -68,52 +68,51 @@ const defaultFileResponse = {
 
 // --- Handler factories ---
 
-export const settingsHandler = (response = defaultSettings) =>
-  http.get(`${BASE}/settings`, () => HttpResponse.json(response));
+const settingsHandler = (response = defaultSettings) => http.get(`${BASE}/settings`, () => HttpResponse.json(response));
 
-export const statsHandler = (response = defaultStats) => http.get(`${BASE}/stats`, () => HttpResponse.json(response));
+const statsHandler = (response = defaultStats) => http.get(`${BASE}/stats`, () => HttpResponse.json(response));
 
-export const listRepositoriesHandler = (response = defaultRepositoryList) =>
+const listRepositoriesHandler = (response = defaultRepositoryList) =>
   http.get(`${BASE}/repositories`, () => HttpResponse.json(response));
 
-export const getRepositoryRefsHandler = (response = defaultRefs) =>
+const getRepositoryRefsHandler = (response = defaultRefs) =>
   http.get(`${BASE}/repositories/:name/refs`, () => HttpResponse.json(response));
 
-export const getRepositoryFilesHandler = (response = defaultRepositoryFiles) =>
+const getRepositoryFilesHandler = (response = defaultRepositoryFiles) =>
   http.get(`${BASE}/repositories/:name/files/`, () => HttpResponse.json(response));
 
-export const createRepositoryHandler = (response = defaultRepository) =>
+const createRepositoryHandler = (response = defaultRepository) =>
   http.post(`${BASE}/repositories`, () => HttpResponse.json(response));
 
-export const replaceRepositoryHandler = (response = defaultRepository) =>
+const replaceRepositoryHandler = (response = defaultRepository) =>
   http.put(`${BASE}/repositories/:name`, () => HttpResponse.json(response));
 
-export const testRepositoryHandler = () =>
+const testRepositoryHandler = () =>
   http.post(`${BASE}/repositories/:name/test`, () => HttpResponse.json({ success: true }));
 
-export const createRepositoryJobsHandler = () =>
+const createRepositoryJobsHandler = () =>
   http.post(`${BASE}/repositories/:name/jobs`, () =>
     HttpResponse.json({ spec: { action: 'pull' }, status: { state: 'success' } })
   );
 
-export const createConnectionHandler = (response = defaultConnection) =>
+const createConnectionHandler = (response = defaultConnection) =>
   http.post(`${BASE}/connections`, () => HttpResponse.json(response));
 
-export const replaceConnectionHandler = (response = defaultConnection) =>
+const replaceConnectionHandler = (response = defaultConnection) =>
   http.put(`${BASE}/connections/:name`, () => HttpResponse.json(response));
 
-export const listConnectionsHandler = () => http.get(`${BASE}/connections`, () => HttpResponse.json({ items: [] }));
+const listConnectionsHandler = () => http.get(`${BASE}/connections`, () => HttpResponse.json({ items: [] }));
 
-export const getConnectionRepositoriesHandler = () =>
+const getConnectionRepositoriesHandler = () =>
   http.get(`${BASE}/connections/:name/repositories`, () => HttpResponse.json({ items: [] }));
 
-export const createRepositoryFileHandler = (response = defaultFileResponse) =>
+const createRepositoryFileHandler = (response = defaultFileResponse) =>
   http.post(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(response));
 
-export const replaceRepositoryFileHandler = (response = defaultFileResponse) =>
+const replaceRepositoryFileHandler = (response = defaultFileResponse) =>
   http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(response));
 
-export const getRepositoryResourcesHandler = () =>
+const getRepositoryResourcesHandler = () =>
   http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items: [] }));
 
 // --- Combined default handlers ---

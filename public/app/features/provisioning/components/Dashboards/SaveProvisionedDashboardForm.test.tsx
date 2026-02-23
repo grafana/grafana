@@ -3,13 +3,14 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
-import { PROVISIONING_API_BASE as BASE, setupProvisioningMswServer } from '../../mocks/server';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 

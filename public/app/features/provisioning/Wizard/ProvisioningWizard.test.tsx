@@ -5,10 +5,11 @@ import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { PROVISIONING_API_BASE as BASE, setupProvisioningMswServer } from '../mocks/server';
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
