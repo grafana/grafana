@@ -12768,6 +12768,10 @@
       "show-more": "show more",
       "truncated": "Message truncated"
     },
+    "missing-folder-metadata-banner": {
+      "message": "Permissions may not persist if the folder is moved or renamed in Git.",
+      "title": "This folder is missing stable ID metadata."
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
