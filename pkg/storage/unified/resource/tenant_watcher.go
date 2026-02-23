@@ -216,7 +216,7 @@ func (tw *TenantWatcher) markResourcesPendingDelete() {
 	tw.log.Info("marking tenant resources pending delete")
 }
 
-// clearPendingDelete removes the pending-delete record for a tenant from the KV store, if one exists.
+// clearPendingDelete removes the pending-delete record for a tenant from the KV store, if one exists, and unmarks all resources for the tenant as pending delete.
 func (tw *TenantWatcher) clearPendingDelete(name string) {
 	// TODO
 	// Remove the pending delete record from the KV store.
