@@ -79,7 +79,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: "advisor.grafana.app"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
