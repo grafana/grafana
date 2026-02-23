@@ -319,16 +319,25 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       // then make sure we keep that.
       // This will trigger onInputValueChange to load async options
       if (menuBeingOpened && changes.inputValue === state.inputValue) {
-        changes.inputValue = '';
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
       }
 
       if (menuBeingClosed) {
         // Flush the selected item to the input when the menu is closed
         if (changes.selectedItem) {
-          changes.inputValue = itemToString(changes.selectedItem);
+          changes = {
+            ...changes,
+            inputValue: itemToString(changes.selectedItem),
+          };
         } else if (changes.inputValue !== '') {
           // Otherwise if no selected value, clear any search from the input
-          changes.inputValue = '';
+          changes = {
+            ...changes,
+            inputValue: '',
+          };
         }
       }
 
