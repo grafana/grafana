@@ -1796,6 +1796,20 @@
     },
     {
       "metadata": {
+        "name": "functionalSharedPreferences",
+        "resourceVersion": "1771763406238",
+        "creationTimestamp": "2026-02-22T12:30:06Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"
