@@ -12408,10 +12408,10 @@
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
-      "token-description": "Bitbucket App Password with repository permissions",
-      "token-label": "App Password",
+      "token-description": "Bitbucket API Token with repository permissions",
+      "token-label": "API Token",
       "token-required": "Bitbucket token is required",
-      "token-user-description": "The username that will be used to access the repository with the app password",
+      "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
       "url-required": "Repository URL is required"
@@ -12973,8 +12973,8 @@
     "token-permissions-info": {
       "and-click": "and click",
       "bitbucket": {
-        "create-token-button": "Create App passwords",
-        "token-text": "Bitbucket Personal Access Token"
+        "create-token-button": "Create API Token with scopes",
+        "token-text": "Bitbucket API tokens"
       },
       "gitlab": {
         "create-token-button": "Add new token",

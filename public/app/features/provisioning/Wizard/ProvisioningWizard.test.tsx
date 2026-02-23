@@ -63,7 +63,7 @@ async function navigateToConnectionStep(
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
-      bitbucket: 'ATBBxxxxxxxxxxxxxxxx',
+      bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
     };
     await typeIntoTokenField(user, tokenPlaceholders[type], data.token);
@@ -406,7 +406,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
       // Auth step fields
-      expect(screen.getByText('App Password *')).toBeInTheDocument();
+      expect(screen.getByText('API Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
 
@@ -448,7 +448,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('ATBBxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('ATATTxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
@@ -456,7 +456,7 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
-      await typeIntoTokenField(user, 'ATBBxxxxxxxxxxxxxxxx', 'test-token');
+      await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,

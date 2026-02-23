@@ -95,6 +95,10 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagProvisioningFolderMetadata
+	// Allow setting folder metadata for provisioned folders
+	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -418,10 +422,6 @@ const (
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
-
-	// FlagNewFiltersUI
-	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-	FlagNewFiltersUI = "newFiltersUI"
 
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
