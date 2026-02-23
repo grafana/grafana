@@ -163,9 +163,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
 
-	// Start the cleanup background job.
-	go backend.runCleanups(ctx)
-
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
 		tw, err := NewTenantWatcher(ctx, kv, func(ctx context.Context, event *WriteEvent) (int64, error) {
@@ -176,6 +173,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		}
 		backend.tenantWatcher = tw
 	}
+
+	// Start the cleanup background job.
+	go backend.runCleanups(ctx)
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
