@@ -109,6 +109,14 @@ function getGlobalActions(): CommandPaletteAction[] {
       parent: 'preferences/theme',
       priority: PREFERENCES_PRIORITY,
     },
+    {
+      id: 'preferences/sunrise-theme',
+      name: t('command-palette.action.sunrise-theme', 'Sunrise'),
+      keywords: 'sunrise theme',
+      perform: () => changeTheme('sunrise'),
+      parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
+    },
   ];
 
   if (process.env.NODE_ENV === 'development') {
