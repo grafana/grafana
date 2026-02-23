@@ -207,6 +207,7 @@ func (tw *TenantWatcher) markPendingDelete(name string, deleteAfter string) {
 	tw.log.Info("marking tenant pending delete", "tenant", name, "delete_after", deleteAfter)
 }
 
+/*
 func (tw *TenantWatcher) markResourcesPendingDelete() {
 	// TODO
 	// 1. List all resources for the tenant from the kv datastore
@@ -214,6 +215,7 @@ func (tw *TenantWatcher) markResourcesPendingDelete() {
 	// 3. When completed, store something either in the kv store or write it to the tenant on the tenant apiserver
 	tw.log.Info("marking tenant resources pending delete")
 }
+*/
 
 // clearPendingDelete removes the pending-delete record for a tenant from the KV store, if one exists, and unmarks all resources for the tenant as pending delete.
 func (tw *TenantWatcher) clearPendingDelete(name string) {
