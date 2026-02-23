@@ -12827,6 +12827,7 @@
       "no-repositories": "No repositories configured"
     },
     "repository-overview": {
+      "branch": "Branch:",
       "checked": "Checked:",
       "connection-status": "Connection status:",
       "finished": "Last successful pull:",
@@ -12836,7 +12837,9 @@
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
+      "path": "Path:",
       "pull-status": "Pull status",
+      "repo-url": "Repository URL:",
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
