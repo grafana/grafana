@@ -12,6 +12,7 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
@@ -21,7 +22,7 @@ import {
   VizOrientation,
 } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { clearPanelPluginCache, getPanelPluginMeta } from 'app/features/plugins/importPanelPlugin';
+import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
 import { panelsToCheckFirst } from './consts';
@@ -37,11 +38,9 @@ jest.mock('app/core/app_events', () => ({
 config.featureToggles.externalVizSuggestions = true;
 
 let idx = 0;
-for (const pluginId of panelsToCheckFirst) {
-  if (pluginId === 'geomap') {
-    continue;
-  }
-  config.panels[pluginId] = {
+
+function getPanelPluginMeta(pluginId: string) {
+  return {
     id: pluginId,
     module: `core:plugin/${pluginId}`,
     sort: idx++,
@@ -63,11 +62,22 @@ for (const pluginId of panelsToCheckFirst) {
   };
 }
 
+function getPanelPlugins() {
+  const plugins = [];
+  for (const pluginId of panelsToCheckFirst) {
+    if (pluginId === 'geomap') {
+      continue;
+    }
+    plugins.push(getPanelPluginMeta(pluginId));
+  }
+  return plugins;
+}
+
 jest.mock('../state/util', () => {
   const originalModule = jest.requireActual('../state/util');
   return {
     ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
+    getAllPanelPluginMeta: jest.fn().mockImplementation(() => getPanelPlugins()),
   };
 });
 
@@ -81,6 +91,8 @@ class ScenarioContext {
     this.data = scenarioData;
 
     beforeAll(async () => {
+      const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
+      setPanelPluginMetas(metas);
       await this.run();
     });
   }
@@ -509,7 +521,7 @@ scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
 });
 
 describe('sortSuggestions', () => {
-  it('should sort suggestions correctly by score', () => {
+  it('should sort suggestions correctly by score', async () => {
     const suggestions = [
       { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
       { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
@@ -526,14 +538,14 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
     expect(suggestions[2].pluginId).toBe('table');
   });
 
-  it('should sort suggestions based on core module', () => {
+  it('should sort suggestions based on core module', async () => {
     const suggestions = [
       {
         pluginId: 'fake-external-panel',
@@ -561,7 +573,7 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');

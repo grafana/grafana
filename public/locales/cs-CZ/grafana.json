@@ -605,6 +605,12 @@
       "title-restore-version": "Obnovit verzi",
       "title-restoring-alertmanager-configuration": "Probíhá obnovení konfigurace správce výstrah"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Třídit",
       "label-filter-placeholder-search-alerts-by-labels": "Hledat výstrahy podle štítků",
@@ -1692,14 +1698,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_few": "",
         "will-import-rules-count_many": "",
@@ -1716,8 +1714,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1727,6 +1723,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1745,16 +1742,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1765,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1792,7 +1785,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1821,7 +1816,15 @@
         "target-datasource-description": "Vyberte zdroj dat, který bude dotazován importovanými pravidly. Ujistěte se, že metriky použité v importovaných pravidlech jsou v tomto zdroji dat k dispozici.",
         "target-datasource-required": "Vyberte cílový zdroj dat"
       },
-      "yaml-error": "Nepodařilo se analyzovat soubor YAML: {{error}}"
+      "yaml-error": "Nepodařilo se analyzovat soubor YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_few": "",
+      "renamed-intervals_many": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_few": "",
+      "renamed-receivers_many": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2683,6 +2686,13 @@
       "resample-to": "Převzorkovat do",
       "upsample": "Zvýšit vzorkovací frekvenci"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Vedení kabelu"
     },
@@ -2911,8 +2921,8 @@
       },
       "rulerrule-loading-error": "Pravidlo se nepodařilo načíst",
       "toggle": {
-        "go-back-to-old-look": "Zpět na starý vzhled",
-        "try-out-the-new-look": "Vyzkoušejte nový vzhled!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Neznámý typ pravidla"
     },
@@ -3170,6 +3180,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Potlačit začátek a konec",
       "placeholder-select-time-range": "Vybrat časový rozsah"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "pro {{duration}}"
@@ -3479,7 +3500,8 @@
       },
       "title-edit": "Upravit",
       "title-recreate": "Znovu vytvořit",
-      "title-unsilence": "Zrušit potlačení"
+      "title-unsilence": "Zrušit potlačení",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5446,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Nepodařilo se načíst nástěnku"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Odeslat vlastní zpětnou vazbu",
       "footer-text": "Tento obsah je generován umělou inteligencí pomocí <2>pluginu Grafana LLM</2>",
@@ -7339,7 +7376,14 @@
       "title": "Verze"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8679,6 +8723,8 @@
     "description-show-measure": "Zobrazit nástroje pro měření na mapě",
     "description-show-scale": "Uveďte měřítko mapy",
     "description-show-zoom": "Zobrazit tlačítka pro ovládání přiblížení v levém horním rohu",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Vrstva"
@@ -8740,7 +8786,9 @@
     "name-show-measure": "Zobrazit nástroje pro měření",
     "name-show-scale": "Zobrazit měřítko",
     "name-show-zoom": "Zobrazit ovládání přiblížení",
+    "name-sync-view-variable": "",
     "name-tooltip": "Popisek",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nebyla nalezena žádná pole řetězce"
     },
@@ -8793,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Vrstva {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9894,12 +9945,16 @@
       },
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Žádná data"
       },
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
       "sparkline": {
         "no-data": "žádné údaje"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11830,6 +11885,8 @@
     },
     "user-invite-form": {
       "back": "Zpět",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-mail nebo uživatelské jméno",
       "label-name": "Název",
       "label-send-invite-email": "Odeslat e-mail s pozvánkou",
@@ -12793,6 +12850,7 @@
       "loading-finished-job": "Načítání dokončené úlohy…",
       "no-job-found": "Nebyla nalezena žádná úloha",
       "no-job-found-message": "Úloha mohla být odstraněna nebo se nepodařilo ji načíst. Zrušte aktuální proces a začněte znovu.",
+      "retry-action": "",
       "starting": "Spouštění…",
       "status": {
         "title-error-running-job": "Chyba při spouštění úlohy",
@@ -12863,6 +12921,7 @@
       "source-code": "Zdrojový kód"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Jen pro čtení",
       "settings": "Nastavení",
       "view": "Zobrazit"
@@ -12991,8 +13050,9 @@
       "label-pending-step": "Nevyřízený krok"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatické vyžádání zakázáno",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Odstraňování",
+      "disabled": "",
       "error": "Chyba",
       "pending": "Nevyřízeno",
       "pulling": "Stahování",
@@ -13014,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Nelze stáhnout nezdravé úložiště"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Synchronizace instancí vyžaduje správu všech zdrojů. Stávající zdroje budou migrovány automaticky.",
       "migrate-resources-description": "",
       "options": "Možnosti",
       "repository-error": "Chyba úložiště",
       "repository-error-message": "Nelze zkontrolovat stav úložiště. Ověřte konfiguraci úložiště a zkuste to znovu.",
       "repository-unhealthy": "Úložiště nelze synchronizovat. Zrušte zajištění a zkuste to znovu, jakmile bude problém vyřešen. Podrobnosti naleznete níže.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13326,6 +13389,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13367,9 +13434,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13386,17 +13456,28 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
-      "transformations": "Transformace"
+      "transformations": "Transformace",
+      "alerts_one": "",
+      "alerts_few": "",
+      "alerts_many": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_few": "",
+      "footer-items_many": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13488,15 +13569,12 @@
       "duration-selected": "Vyberte časový interval obnovení se zvoleným aktuálním intervalem {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Zapnout živé vysílání",
       "label": "Živě"
     },
     "off-option": {
-      "aria-label": "Vypnout automatické obnovení",
       "label": "Vypnuto"
     },
     "tooltip": {
@@ -14026,7 +14104,8 @@
       "no-matching-silences": "Nebyla nalezena žádná odpovídající potlačení;",
       "noConfig": "Vytvořte nový kontaktní bod a konfiguraci pomocí výchozích hodnot nebo se obraťte na správce pro nastavení správce výstrah.",
       "recreate-button": "Znovu vytvořit",
-      "unsilence-button": "Zrušit potlačení"
+      "unsilence-button": "Zrušit potlačení",
+      "view-button": ""
     }
   },
   "silences-table": {

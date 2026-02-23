@@ -62,6 +62,16 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client, p.registry)
 }
 
+// EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
+func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
+	mg.AddCreateMigration()
+	sec := cfg.Raw.Section("database")
+	return mg.RunMigrations(ctx,
+		sec.Key("migration_locking").MustBool(true),
+		sec.Key("locking_attempt_timeout_sec").MustInt())
+}
+
 func RegisterMigrations(
 	ctx context.Context,
 	migrator UnifiedMigrator,
@@ -91,9 +101,9 @@ func RegisterMigrations(
 	sec := cfg.Raw.Section("database")
 	db := mg.DBEngine.DB().DB
 	maxOpenConns := db.Stats().MaxOpenConnections
-	if maxOpenConns <= 2 {
-		// migrations require at least 3 connections due to extra GRPC connections
-		db.SetMaxOpenConns(3)
+	if maxOpenConns <= 3 {
+		// migrations require at least 4 connections due to extra GRPC connections and DB lock
+		db.SetMaxOpenConns(4)
 		defer db.SetMaxOpenConns(maxOpenConns)
 	}
 	err := mg.RunMigrations(ctx,

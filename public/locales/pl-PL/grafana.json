@@ -605,6 +605,12 @@
       "title-restore-version": "Przywróć wersję",
       "title-restoring-alertmanager-configuration": "Przywracanie konfiguracji menedżera alertów"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sortuj",
       "label-filter-placeholder-search-alerts-by-labels": "Szukaj alertów według etykiet",
@@ -1692,14 +1698,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_few": "",
         "will-import-rules-count_many": "",
@@ -1716,8 +1714,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1727,6 +1723,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1745,16 +1742,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1765,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1792,7 +1785,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1821,7 +1816,15 @@
         "target-datasource-description": "Wybierz źródło danych, do którego zaimportowane reguły będą wysyłać zapytania. Upewnij się, że wskaźniki używane w zaimportowanych regułach są dostępne w tym źródle danych.",
         "target-datasource-required": "Wybierz docelowe źródło danych"
       },
-      "yaml-error": "Nie udało się przetworzyć pliku YAML: {{error}}"
+      "yaml-error": "Nie udało się przetworzyć pliku YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_few": "",
+      "renamed-intervals_many": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_few": "",
+      "renamed-receivers_many": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2683,6 +2686,13 @@
       "resample-to": "Zmień próbkowanie na",
       "upsample": "Zwiększ próbkowanie"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Trasa"
     },
@@ -2911,8 +2921,8 @@
       },
       "rulerrule-loading-error": "Nie udało się załadować reguły",
       "toggle": {
-        "go-back-to-old-look": "Wróć do wcześniejszego wyglądu",
-        "try-out-the-new-look": "Wypróbuj nowy wygląd!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Nieznany typ reguły"
     },
@@ -3170,6 +3180,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Początek i koniec ciszy",
       "placeholder-select-time-range": "Wybierz zakres czasu"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "przez {{duration}}"
@@ -3479,7 +3500,8 @@
       },
       "title-edit": "Edytuj",
       "title-recreate": "Utwórz ponownie",
-      "title-unsilence": "Usuń wyciszenie"
+      "title-unsilence": "Usuń wyciszenie",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5446,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Nie udało się pobrać pulpitu"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Prześlij niestandardową opinię",
       "footer-text": "Ta treść została wygenerowana przez sztuczną inteligencję za pomocą <2>wtyczki Grafana LLM</2>",
@@ -7339,7 +7376,14 @@
       "title": "Wersje"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8679,6 +8723,8 @@
     "description-show-measure": "Pokaż narzędzia do wykonywania pomiarów na mapie",
     "description-show-scale": "Wskaż skalę mapy",
     "description-show-zoom": "Pokaż przyciski sterowania powiększeniem w lewym górnym rogu",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Warstwa"
@@ -8740,7 +8786,9 @@
     "name-show-measure": "Pokaż narzędzia pomiarowe",
     "name-show-scale": "Pokaż skalę",
     "name-show-zoom": "Pokaż sterowanie powiększeniem",
+    "name-sync-view-variable": "",
     "name-tooltip": "Podpowiedź",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nie znaleziono pól ciągów"
     },
@@ -8793,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Warstwa {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9894,12 +9945,16 @@
       },
       "inspect-drawer-title": "Sprawdź wartość",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Brak danych"
       },
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
       "sparkline": {
         "no-data": "b.d."
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11830,6 +11885,8 @@
     },
     "user-invite-form": {
       "back": "Wstecz",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "Adres e-mail lub nazwa użytkownika",
       "label-name": "Nazwa",
       "label-send-invite-email": "Wyślij e-maila z zaproszeniem",
@@ -12793,6 +12850,7 @@
       "loading-finished-job": "Wczytywanie zakończonego zadania…",
       "no-job-found": "Nie znaleziono zadania",
       "no-job-found-message": "Zadanie mogło zostać usunięte lub nie można go pobrać. Anuluj bieżący proces i zacznij od początku.",
+      "retry-action": "",
       "starting": "Uruchamianie…",
       "status": {
         "title-error-running-job": "Błąd uruchamiania zadania",
@@ -12863,6 +12921,7 @@
       "source-code": "Kod źródłowy"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Tylko do odczytu",
       "settings": "Ustawienia",
       "view": "Wyświetl"
@@ -12991,8 +13050,9 @@
       "label-pending-step": "Oczekujący krok"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatyczne operacje pull wyłączone",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Usuwanie",
+      "disabled": "",
       "error": "Błąd",
       "pending": "Oczekuje",
       "pulling": "Operacja pull",
@@ -13014,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Nie można pobrać danych z niesprawnego repozytorium"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Synchronizacja instancji wymaga, aby wszystkie zasoby były objęte zarządzaniem. Istniejące zasoby zostaną przeniesione automatycznie.",
       "migrate-resources-description": "",
       "options": "Opcje",
       "repository-error": "Błąd repozytorium",
       "repository-error-message": "Nie można sprawdzić statusu repozytorium. Sprawdź konfigurację repozytorium i spróbuj ponownie.",
       "repository-unhealthy": "Nie można zsynchronizować repozytorium. Anuluj aprowizację i spróbuj ponownie po rozwiązaniu problemu. Zobacz szczegóły poniżej.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13326,6 +13389,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13367,9 +13434,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13386,17 +13456,28 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Wybierz kartę {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
-      "transformations": "Transformacje"
+      "transformations": "Transformacje",
+      "alerts_one": "",
+      "alerts_few": "",
+      "alerts_many": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_few": "",
+      "footer-items_many": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13488,15 +13569,12 @@
       "duration-selected": "Wybierz interwał odświeżania z wybranym bieżącym interwałem {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Włącz transmisję na żywo",
       "label": "Na żywo"
     },
     "off-option": {
-      "aria-label": "Wyłącz automatyczne odświeżanie",
       "label": "Wył."
     },
     "tooltip": {
@@ -14026,7 +14104,8 @@
       "no-matching-silences": "Nie znaleziono pasujących wyciszeń;",
       "noConfig": "Utwórz nowy punkt kontaktowy, aby utworzyć konfigurację przy użyciu wartości domyślnych, lub skontaktuj się z administratorem, aby skonfigurować Alertmanager.",
       "recreate-button": "Utwórz ponownie",
-      "unsilence-button": "Usuń wyciszenie"
+      "unsilence-button": "Usuń wyciszenie",
+      "view-button": ""
     }
   },
   "silences-table": {

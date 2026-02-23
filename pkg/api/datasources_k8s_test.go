@@ -13,7 +13,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -138,6 +138,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 					featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
 					featuremgmt.FlagQueryService,
 					featuremgmt.FlagQueryServiceWithConnections,
+					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 				),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: &mockDirectRestConfigProvider{host: "http://localhost", transport: &mockRoundTripper{statusCode: tt.statusCode, responseBody: tt.responseBody}},

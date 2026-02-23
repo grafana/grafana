@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,38 +6,39 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QueryEditorTypeConfig, QUERY_EDITOR_COLORS } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
 
 interface SidebarCardProps {
-  config: QueryEditorTypeConfig;
-  isSelected: boolean;
-  id: string;
   children: React.ReactNode;
-  onClick: () => void;
-  onDuplicate?: () => void;
-  onDelete: () => void;
-  onToggleHide: () => void;
-  showAddButton: boolean;
+  id: string;
+  isSelected: boolean;
   item: ActionItem;
+  onClick: () => void;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
+  onToggleHide?: () => void;
+  variant?: 'default' | 'ghost';
 }
 
 export const SidebarCard = ({
-  config,
-  isSelected,
-  id,
   children,
-  onClick,
-  onDuplicate,
-  onDelete,
-  onToggleHide,
-  showAddButton = true,
+  id,
+  isSelected,
   item,
+  onClick,
+  onDelete,
+  onDuplicate,
+  onToggleHide,
+  variant = 'default',
 }: SidebarCardProps) => {
-  const hasAddButton = showAddButton;
-  const styles = useStyles2(getStyles, { config, isSelected, hasAddButton });
+  const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
+  const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+
+  const styles = useStyles2(getStyles, { isSelected, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -67,6 +68,19 @@ export const SidebarCard = ({
     }
   };
 
+  if (variant === 'ghost') {
+    return (
+      <div className={styles.wrapper} aria-hidden>
+        <div className={cx(styles.card, styles.ghostCard)}>
+          <div className={styles.cardContent}>
+            <div className={styles.ghostCardIcon} />
+            <div className={styles.ghostCardTitle} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrapper}>
       <div
@@ -81,25 +95,40 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
-        <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-          <Actions
-            handleResetFocus={handleResetFocus}
-            item={item}
-            onDelete={onDelete}
-            onDuplicate={onDuplicate}
-            onToggleHide={onToggleHide}
-          />
-        </div>
+        {hasActions && (
+          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+            <Actions
+              handleResetFocus={handleResetFocus}
+              item={item}
+              onDelete={onDelete}
+              onDuplicate={onDuplicate}
+              onToggleHide={onToggleHide}
+            />
+          </div>
+        )}
       </div>
-      {hasAddButton && <AddCardButton afterRefId={id} />}
+      <AddCardButton variant={addVariant} afterId={id} />
     </div>
   );
 };
 
+const ghostCardPulse = keyframes`
+  from, to { opacity: 0.1; }
+  50% { opacity: 0.8; }
+`;
+
 function getStyles(
   theme: GrafanaTheme2,
-  { config, isSelected, hasAddButton }: { config: QueryEditorTypeConfig; isSelected?: boolean; hasAddButton?: boolean }
+  {
+    isSelected,
+    item,
+  }: {
+    isSelected?: boolean;
+    item: ActionItem;
+  }
 ) {
+  const borderColor = getEditorBorderColor(theme, item.type, item.alertState);
+
   const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
@@ -128,42 +157,38 @@ function getStyles(
       position: 'relative',
       marginInlineStart: theme.spacing(2),
 
-      // The hover-zone pseudo-elements and add-button visibility rules are
-      // only needed when the card has an AddCardButton.
-      ...(hasAddButton && {
-        // Two slim pseudo-element strips extend the hover zone to the left and
-        // below the card, covering the path to the "+" button without overlapping
-        // the card's clickable area.
+      // Two slim pseudo-element strips extend the hover zone to the left and
+      // below the card, covering the path to the "+" button without overlapping
+      // the card's clickable area.
 
-        // Left strip: narrow gutter running along the card's left edge and below.
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: `calc(-1 * ${theme.spacing(3.5)})`,
-          width: theme.spacing(3.5),
-          height: `calc(100% + ${theme.spacing(1.5)})`,
-        },
+      // Left strip: narrow gutter running along the card's left edge and below.
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: `calc(-1 * ${theme.spacing(3.5)})`,
+        width: theme.spacing(3.5),
+        height: `calc(100% + ${theme.spacing(1.5)})`,
+      },
 
-        // Bottom strip: runs along the card's bottom edge extending to the left.
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: '100%',
-          left: `calc(-1 * ${theme.spacing(3.5)})`,
-          width: `calc(100% + ${theme.spacing(3.5)})`,
-          height: theme.spacing(1.5),
-        },
+      // Bottom strip: runs along the card's bottom edge extending to the left.
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '100%',
+        left: `calc(-1 * ${theme.spacing(3.5)})`,
+        width: `calc(100% + ${theme.spacing(3.5)})`,
+        height: theme.spacing(1.5),
+      },
 
-        '&:hover': {
-          zIndex: 1,
-        },
+      '&:hover': {
+        zIndex: 1,
+      },
 
-        '&:hover [data-add-button], & [data-menu-open]': {
-          opacity: 1,
-          pointerEvents: 'auto',
-        },
-      }),
+      '&:hover [data-add-button], & [data-menu-open]': {
+        opacity: 1,
+        pointerEvents: 'auto',
+      },
     }),
 
     card: css({
@@ -175,7 +200,7 @@ function getStyles(
       justifyContent: 'space-between',
       width: '100%',
       background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
-      borderLeft: `${isSelected ? 3 : 1}px solid ${config.color}`,
+      borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
       cursor: 'pointer',
 
       // This transitions the background color of the card when it is hovered.
@@ -193,7 +218,6 @@ function getStyles(
         pointerEvents: 'auto',
       },
     }),
-
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,
@@ -217,8 +241,47 @@ function getStyles(
         }),
       },
     }),
+
     hidden: css({
       opacity: 0.7,
+    }),
+
+    ghostCard: css({
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      background: 'transparent',
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        borderColor: theme.colors.border.strong,
+        borderLeftColor: borderColor,
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color'], {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+
+    ghostCardIcon: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.border.weak,
+      flexShrink: 0,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
+      },
+    }),
+
+    ghostCardTitle: css({
+      height: theme.spacing(1.5),
+      flex: 1,
+      maxWidth: '70%',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.border.weak,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
+      },
     }),
   };
 }

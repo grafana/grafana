@@ -43,7 +43,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
 | `cloudWatchRoundUpEndTime`            | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
-| `newFiltersUI`                        | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                          | Yes                |
 | `alertingQueryAndExpressionsStepMode` | Enables step mode for alerting queries and expressions                                                                                                        | Yes                |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            | Yes                |
 | `useSessionStorageForRedirection`     | Use session storage for handling the redirection after login                                                                                                  | Yes                |
@@ -82,6 +81,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
+| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |

@@ -596,6 +596,12 @@
       "title-restore-version": "還原版本",
       "title-restoring-alertmanager-configuration": "正在還原 Alertmanager 設定"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "排序",
       "label-filter-placeholder-search-alerts-by-labels": "按標籤搜尋警報",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1762,7 +1767,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1791,7 +1798,9 @@
         "target-datasource-description": "選擇匯入規則所要查詢的資料來源。請確保匯入規則中使用的指標在此資料來源中為可用。",
         "target-datasource-required": "請選擇目標資料來源"
       },
-      "yaml-error": "無法剖析 YAML 檔案：{{error}}"
+      "yaml-error": "無法剖析 YAML 檔案：{{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2641,13 @@
       "resample-to": "重新取樣為",
       "upsample": "向上取樣"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "路由"
     },
@@ -2860,8 +2876,8 @@
       },
       "rulerrule-loading-error": "無法載入規則",
       "toggle": {
-        "go-back-to-old-look": "恢復舊外觀",
-        "try-out-the-new-look": "試試新外觀！"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "未知的規則類型"
     },
@@ -3110,6 +3126,17 @@
     "silence-period": {
       "label-silence-start-and-end": "靜音開始和結束",
       "placeholder-select-time-range": "選擇時間範圍"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "用於 {{duration}}"
@@ -3419,7 +3446,8 @@
       },
       "title-edit": "編輯",
       "title-recreate": "重新建立",
-      "title-unsilence": "取消靜音"
+      "title-unsilence": "取消靜音",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5362,6 +5390,21 @@
         "failed-to-fetch-dashboard": "擷取儀表板失敗"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "傳送自訂意見回饋",
       "footer-text": "此內容是使用 <2>Grafana LLM 外掛程式</2> AI 所產生",
@@ -7240,7 +7283,14 @@
       "title": "版本"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8574,6 +8624,8 @@
     "description-show-measure": "顯示在地圖上進行測量的工具",
     "description-show-scale": "註明地圖比例",
     "description-show-zoom": "在左上角顯示縮放控制按鈕",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "層次"
@@ -8635,7 +8687,9 @@
     "name-show-measure": "顯示測量工具",
     "name-show-scale": "顯示比例",
     "name-show-zoom": "顯示縮放控制",
+    "name-sync-view-variable": "",
     "name-tooltip": "工具提示",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "未找到字串欄位"
     },
@@ -8688,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "圖層 {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9759,12 +9816,16 @@
       },
       "inspect-drawer-title": "檢查值",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "無資料"
       },
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
       "sparkline": {
         "no-data": "無資料"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11662,6 +11723,8 @@
     },
     "user-invite-form": {
       "back": "返回",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "電子郵件或使用者名稱",
       "label-name": "名稱",
       "label-send-invite-email": "傳送邀請電子郵件",
@@ -12607,6 +12670,7 @@
       "loading-finished-job": "正在載入已完成的作業…",
       "no-job-found": "找不到任務",
       "no-job-found-message": "作業可能已被刪除或無法檢索。取消目前的流程，然後再次開始。",
+      "retry-action": "",
       "starting": "正在開始…",
       "status": {
         "title-error-running-job": "執行作業時發生錯誤",
@@ -12677,6 +12741,7 @@
       "source-code": "原始碼"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "唯讀",
       "settings": "設定",
       "view": "檢視"
@@ -12805,8 +12870,9 @@
       "label-pending-step": "待處理步驟"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "自動拉取已停用",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "正在刪除",
+      "disabled": "",
       "error": "錯誤",
       "pending": "待處理",
       "pulling": "正在拉取",
@@ -12828,12 +12894,15 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "執行個體同步需要將所有資源納入管理。現有資源將自動移轉。",
       "migrate-resources-description": "",
       "options": "選項",
       "repository-error": "儲存庫錯誤",
       "repository-error-message": "無法檢查儲存庫狀態。請驗證儲存庫設定，然後再試一次。",
       "repository-unhealthy": "無法同步儲存庫。取消佈建，並在問題解決後再試一次。請參閱下方詳情。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13137,6 +13206,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13178,9 +13251,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,17 +13273,22 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "選取卡片 {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
-      "transformations": "轉換"
+      "transformations": "轉換",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13293,15 +13374,12 @@
       "duration-selected": "選擇重新整理時間間隔，目前已選取「{{durationAriaLabel}}」間隔"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "開啟即時串流",
       "label": "即時"
     },
     "off-option": {
-      "aria-label": "關閉自動重新整理",
       "label": "關閉"
     },
     "tooltip": {
@@ -13828,7 +13906,8 @@
       "no-matching-silences": "沒有找到匹配的靜音；",
       "noConfig": "建立新的聯絡點，以使用預設值建立設定；或請聯絡您的系統管理員以設定 Alertmanager。",
       "recreate-button": "重新建立",
-      "unsilence-button": "取消靜音"
+      "unsilence-button": "取消靜音",
+      "view-button": ""
     }
   },
   "silences-table": {

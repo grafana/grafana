@@ -596,6 +596,12 @@
       "title-restore-version": "버전 복구",
       "title-restoring-alertmanager-configuration": "Alertmanager 구성 복원 중"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "정렬",
       "label-filter-placeholder-search-alerts-by-labels": "라벨로 경고 검색",
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1762,7 +1767,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1791,7 +1798,9 @@
         "target-datasource-description": "가져온 규칙으로 쿼리할 데이터 소스를 선택합니다. 가져온 규칙에 사용된 메트릭을 이 데이터 소스에서 사용할 수 있는지 확인하세요.",
         "target-datasource-required": "대상 데이터 소스를 선택하세요."
       },
-      "yaml-error": "YAML 파일 파싱에 실패: {{error}}"
+      "yaml-error": "YAML 파일 파싱에 실패: {{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2632,6 +2641,13 @@
       "resample-to": "리샘플 기준",
       "upsample": "업샘플"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "라우팅"
     },
@@ -2860,8 +2876,8 @@
       },
       "rulerrule-loading-error": "규칙 로딩 실패",
       "toggle": {
-        "go-back-to-old-look": "이전 디자인으로 돌아가기",
-        "try-out-the-new-look": "새로운 디자인을 체험해 보세요!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "알 수 없는 규칙 유형"
     },
@@ -3110,6 +3126,17 @@
     "silence-period": {
       "label-silence-start-and-end": "알림 끄기 시작 및 종료",
       "placeholder-select-time-range": "시간 범위 선택"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "{{duration}} 동안"
@@ -3419,7 +3446,8 @@
       },
       "title-edit": "편집",
       "title-recreate": "재생성",
-      "title-unsilence": "알림 끄기 해제"
+      "title-unsilence": "알림 끄기 해제",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5362,6 +5390,21 @@
         "failed-to-fetch-dashboard": "대시보드 가져오기 실패"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "사용자 지정 피드백 전송",
       "footer-text": "이 콘텐츠는 <2>Grafana LLM 플러그인</2>을 사용하여 AI로 생성되었습니다.",
@@ -7240,7 +7283,14 @@
       "title": "버전"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8574,6 +8624,8 @@
     "description-show-measure": "지도에 측정 도구 표시",
     "description-show-scale": "지도 배율 표시",
     "description-show-zoom": "왼쪽 상단에 확대/축소 제어 버튼 표시",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "레이어"
@@ -8635,7 +8687,9 @@
     "name-show-measure": "측정 도구 표시",
     "name-show-scale": "배율 표시",
     "name-show-zoom": "확대/축소 제어 표시",
+    "name-sync-view-variable": "",
     "name-tooltip": "툴팁",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "문자열 필드를 찾을 수 없습니다"
     },
@@ -8688,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "{{name}} 레이어"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9759,12 +9816,16 @@
       },
       "inspect-drawer-title": "값 검사",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "데이터 없음"
       },
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
       "sparkline": {
         "no-data": "데이터 없음"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11662,6 +11723,8 @@
     },
     "user-invite-form": {
       "back": "뒤로",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "이메일 또는 사용자 이름",
       "label-name": "이름",
       "label-send-invite-email": "초대 이메일 전송",
@@ -12607,6 +12670,7 @@
       "loading-finished-job": "완료된 작업 로딩 중...",
       "no-job-found": "작업을 찾을 수 없습니다",
       "no-job-found-message": "작업이 삭제되었거나 작업을 검색할 수 없습니다. 현재 프로세스를 취소하고 다시 시작하세요.",
+      "retry-action": "",
       "starting": "시작하는 중...",
       "status": {
         "title-error-running-job": "작업 실행 중 오류 발생",
@@ -12677,6 +12741,7 @@
       "source-code": "소스 코드"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "읽기 전용",
       "settings": "설정",
       "view": "보기"
@@ -12805,8 +12870,9 @@
       "label-pending-step": "보류 중인 단계"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "자동 풀링 비활성화됨",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "삭제 중",
+      "disabled": "",
       "error": "오류",
       "pending": "대기 중",
       "pulling": "풀링",
@@ -12828,12 +12894,15 @@
       "tooltip-unhealthy-repository": "상태가 좋지 않은 리포지토리를 가져올 수 없습니다"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "인스턴스 동기화를 위해서는 모든 리소스를 관리해야 합니다. 기존 리소스는 자동으로 마이그레이션됩니다.",
       "migrate-resources-description": "",
       "options": "옵션",
       "repository-error": "리포지토리 오류",
       "repository-error-message": "리포지토리 상태를 확인할 수 없습니다. 리포지토리 구성을 확인한 후 다시 시도하세요.",
       "repository-unhealthy": "리포지토리를 동기화할 수 없습니다. 프로비저닝을 취소하고 문제가 해결되면 다시 시도하세요. 아래 세부 정보를 참조하세요.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13137,6 +13206,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13178,9 +13251,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13197,17 +13273,22 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "{{id}} 카드 선택",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
-      "transformations": "변환"
+      "transformations": "변환",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13293,15 +13374,12 @@
       "duration-selected": "현재 선택한 간격인 {{durationAriaLabel}}(으)로 새로 고침 시간 간격을 선택합니다"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "라이브 스트리밍 켜기",
       "label": "라이브"
     },
     "off-option": {
-      "aria-label": "자동 새로 고침 끄기",
       "label": "끄기"
     },
     "tooltip": {
@@ -13828,7 +13906,8 @@
       "no-matching-silences": "일치하는 알림 끄기를 찾을 수 없습니다.",
       "noConfig": "기본값을 사용하여 구성을 생성할 수 있도록 새 연락처를 생성하거나 관리자에게 문의하여 Alertmanager를 설정하세요.",
       "recreate-button": "재생성",
-      "unsilence-button": "알림 끄기 해제"
+      "unsilence-button": "알림 끄기 해제",
+      "view-button": ""
     }
   },
   "silences-table": {

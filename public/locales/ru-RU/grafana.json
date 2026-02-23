@@ -605,6 +605,12 @@
       "title-restore-version": "Восстановление версии",
       "title-restoring-alertmanager-configuration": "Восстановление конфигурации обработчика оповещений Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Сортировать",
       "label-filter-placeholder-search-alerts-by-labels": "Поиск оповещений по меткам",
@@ -1692,14 +1698,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_few": "",
         "will-import-rules-count_many": "",
@@ -1716,8 +1714,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1727,6 +1723,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1745,16 +1742,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_few": "",
-        "renamed-intervals_many": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_few": "",
-        "renamed-receivers_many": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1765,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1792,7 +1785,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1821,7 +1816,15 @@
         "target-datasource-description": "Выберите источник данных, к которому будут отправляться запросы в рамках импортированных правил. Убедитесь, что метрики, используемые в импортированных правилах, доступны в этом источнике данных.",
         "target-datasource-required": "Выберите целевой источник данных"
       },
-      "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
+      "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_few": "",
+      "renamed-intervals_many": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_few": "",
+      "renamed-receivers_many": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2683,6 +2686,13 @@
       "resample-to": "Изменить частоту выборки на",
       "upsample": "Увеличить частоту выборки"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Маршрутизация"
     },
@@ -2911,8 +2921,8 @@
       },
       "rulerrule-loading-error": "Не удалось загрузить правило",
       "toggle": {
-        "go-back-to-old-look": "Вернуться к предыдущему виду",
-        "try-out-the-new-look": "Попробуйте новый вид."
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Неизвестный тип правила"
     },
@@ -3170,6 +3180,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Начало и окончание временного отключения",
       "placeholder-select-time-range": "Выбрать временной диапазон"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "в течение {{duration}}"
@@ -3479,7 +3500,8 @@
       },
       "title-edit": "Редактировать",
       "title-recreate": "Повторно создать",
-      "title-unsilence": "Отменить временное отключение"
+      "title-unsilence": "Отменить временное отключение",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5446,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Не удалось получить дашборд"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Отправить пользовательский отзыв",
       "footer-text": "Этот контент создан с помощью ИИ с использованием <2>плагина Grafana LLM</2>",
@@ -7339,7 +7376,14 @@
       "title": "Версии"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": "Добавить из сохраненных запросов"
     },
@@ -8679,6 +8723,8 @@
     "description-show-measure": "Показывать инструменты для выполнения измерений на карте",
     "description-show-scale": "Показывать масштаб карты",
     "description-show-zoom": "Показывать кнопки управления масштабом в верхнем левом углу",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Слой"
@@ -8740,7 +8786,9 @@
     "name-show-measure": "Показывать инструменты для измерения",
     "name-show-scale": "Показывать масштаб",
     "name-show-zoom": "Показывать элементы управления масштабом",
+    "name-sync-view-variable": "",
     "name-tooltip": "Подсказка",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Строковые поля не найдены"
     },
@@ -8793,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Слой {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9894,12 +9945,16 @@
       },
       "inspect-drawer-title": "Проверить значение",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Нет данных"
       },
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
       "sparkline": {
         "no-data": "нет данных"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11830,6 +11885,8 @@
     },
     "user-invite-form": {
       "back": "Назад",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "Адрес электронной почты или имя пользователя",
       "label-name": "Имя",
       "label-send-invite-email": "Отправить приглашение по электронной почте",
@@ -12793,6 +12850,7 @@
       "loading-finished-job": "Загрузка завершенного задания...",
       "no-job-found": "Задание не найдено",
       "no-job-found-message": "Задание могло быть удалено или его не удалось получить. Отмените текущий процесс и начните сначала.",
+      "retry-action": "",
       "starting": "Запуск...",
       "status": {
         "title-error-running-job": "Ошибка при выполнении задания",
@@ -12863,6 +12921,7 @@
       "source-code": "Исходный код"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Только для чтения",
       "settings": "Параметры",
       "view": "Просмотр"
@@ -12991,8 +13050,9 @@
       "label-pending-step": "Предстоящий шаг"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Автоматическое извлечение данных отключено",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Удаление",
+      "disabled": "",
       "error": "Ошибка",
       "pending": "В ожидании",
       "pulling": "Извлечение",
@@ -13014,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Для синхронизации экземпляра необходимо, чтобы все ресурсы были управляемыми. Уже имеющиеся ресурсы будут перенесены автоматически.",
       "migrate-resources-description": "",
       "options": "Параметры",
       "repository-error": "Ошибка репозитория",
       "repository-error-message": "Не удалось проверить состояние репозитория. Проверьте конфигурацию и повторите попытку.",
       "repository-unhealthy": "Невозможно синхронизировать репозиторий. Отмените подготовку и повторите попытку после устранения проблемы. Подробные сведения см. ниже.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13326,6 +13389,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13367,9 +13434,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13386,17 +13456,28 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Выбрать карту {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
-      "transformations": "Преобразования"
+      "transformations": "Преобразования",
+      "alerts_one": "",
+      "alerts_few": "",
+      "alerts_many": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_few": "",
+      "footer-items_many": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13488,15 +13569,12 @@
       "duration-selected": "Выбрать интервал времени обновления с использованием текущего интервала {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Включить потоковую передачу в реальном времени",
       "label": "В реальном времени"
     },
     "off-option": {
-      "aria-label": "Выключить автообновление",
       "label": "Выкл."
     },
     "tooltip": {
@@ -14026,7 +14104,8 @@
       "no-matching-silences": "Соответствующие отключения не найдены;",
       "noConfig": "Создайте новую точку контакта, чтобы создать конфигурацию с использованием значений по умолчанию, или обратитесь к администратору для настройки обработчика оповещений Alertmanager.",
       "recreate-button": "Повторно создать",
-      "unsilence-button": "Отменить временное отключение"
+      "unsilence-button": "Отменить временное отключение",
+      "view-button": ""
     }
   },
   "silences-table": {

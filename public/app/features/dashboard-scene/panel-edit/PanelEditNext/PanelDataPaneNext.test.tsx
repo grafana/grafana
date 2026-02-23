@@ -301,6 +301,44 @@ describe('PanelDataPaneNext', () => {
       mockPanel.state.$data = mockTransformer;
     });
 
+    describe('addTransformation', () => {
+      it('should append a transformation to the end by default', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns');
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'reduce', options: {} },
+            { id: 'filter', options: {} },
+            { id: 'seriesToColumns', options: {} },
+          ],
+        });
+        expect(mockTransformer.reprocessTransformations).toHaveBeenCalled();
+      });
+
+      it('should insert a transformation after a specific index', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns', 0);
+
+        expect(mockTransformer.setState).toHaveBeenCalledWith({
+          transformations: [
+            { id: 'organize', options: {} },
+            { id: 'seriesToColumns', options: {} },
+            { id: 'reduce', options: {} },
+            { id: 'filter', options: {} },
+          ],
+        });
+      });
+
+      it('should not throw when $data is not SceneDataTransformer', () => {
+        mockPanel.state.$data = undefined;
+        expect(() => dataPane.addTransformation('seriesToColumns')).not.toThrow();
+      });
+    });
+
     describe('reorderTransformations', () => {
       it('should update transformations and reprocess when $data is SceneDataTransformer', () => {
         jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});

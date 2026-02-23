@@ -599,6 +599,12 @@
       "title-restore-version": "Återställ versionen",
       "title-restoring-alertmanager-configuration": "Återställer konfigurationen för Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sortera",
       "label-filter-placeholder-search-alerts-by-labels": "Sök varningar efter etiketter",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1745,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1772,7 +1773,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1801,7 +1804,11 @@
         "target-datasource-description": "Välj den datakälla som de importerade reglerna ska fråga. Se till att mätvärden som används i de importerade reglerna är tillgängliga i den här datakällan.",
         "target-datasource-required": "Välj en måldatakälla"
       },
-      "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}"
+      "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2656,13 @@
       "resample-to": "Sampla om till",
       "upsample": "Sampla upp"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Routing"
     },
@@ -2877,8 +2891,8 @@
       },
       "rulerrule-loading-error": "Det gick inte att ladda regeln",
       "toggle": {
-        "go-back-to-old-look": "Gå tillbaka till det gamla utseendet",
-        "try-out-the-new-look": "Prova det nya utseendet!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Okänd regeltyp"
     },
@@ -3130,6 +3144,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Tyst start och slut",
       "placeholder-select-time-range": "Välj tidsintervall"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "i {{duration}}"
@@ -3439,7 +3464,8 @@
       },
       "title-edit": "Redigera",
       "title-recreate": "Skapa om",
-      "title-unsilence": "Häv tystnaden"
+      "title-unsilence": "Häv tystnaden",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5390,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Det gick inte att hämta instrumentpanel"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Skicka anpassad feedback",
       "footer-text": "Detta innehåll är AI-genererat med <2>Grafanas LLM-tillägg </2>",
@@ -7273,7 +7314,14 @@
       "title": "Versioner"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8609,6 +8657,8 @@
     "description-show-measure": "Visa verktyg för att göra mätningar på kartan",
     "description-show-scale": "Ange skala för kartan",
     "description-show-zoom": "Visa zoomkontrollknappar i det övre vänstra hörnet",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Lager"
@@ -8670,7 +8720,9 @@
     "name-show-measure": "Visa mätverktyg",
     "name-show-scale": "Visa skala",
     "name-show-zoom": "Visa zoomkontroll",
+    "name-sync-view-variable": "",
     "name-tooltip": "Verktygstips",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Inga strängfält hittades"
     },
@@ -8723,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Lager {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9804,12 +9859,16 @@
       },
       "inspect-drawer-title": "Inspektera värde",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Inga data"
       },
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
       "sparkline": {
         "no-data": "inga data"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11718,6 +11777,8 @@
     },
     "user-invite-form": {
       "back": "Tillbaka",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-post eller användarnamn",
       "label-name": "Namn",
       "label-send-invite-email": "Skicka inbjudan per e-post",
@@ -12669,6 +12730,7 @@
       "loading-finished-job": "Läser in färdigt jobb …",
       "no-job-found": "Inget jobb hittades",
       "no-job-found-message": "Jobbet kan ha raderats eller kunde inte hämtas. Avbryt den aktuella processen och börja om.",
+      "retry-action": "",
       "starting": "Startar …",
       "status": {
         "title-error-running-job": "Ett fel uppstod när ett jobb kördes",
@@ -12739,6 +12801,7 @@
       "source-code": "Källkod"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Skrivskyddad",
       "settings": "Inställningar",
       "view": "Visa"
@@ -12867,8 +12930,9 @@
       "label-pending-step": "Väntande steg"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatisk hämtning inaktiverad",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Raderar",
+      "disabled": "",
       "error": "Fel",
       "pending": "Väntande",
       "pulling": "Hämtar",
@@ -12890,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Det gick inte att hämta en ohälsosam lagringsplats"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Instanssynkronisering kräver att alla resurser hanteras. Befintliga resurser kommer att migreras automatiskt.",
       "migrate-resources-description": "",
       "options": "Alternativ",
       "repository-error": "Fel i lagringsplats",
       "repository-error-message": "Det gick inte att kontrollera lagringsplatsens status. Verifiera lagringsplatskonfigurationen och försök igen.",
       "repository-unhealthy": "Lagringsplatsen kan inte synkroniseras. Avbryt tilldelningen och försök igen när problemet har lösts. Se detaljer nedan.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13200,6 +13267,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13241,9 +13312,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,17 +13334,24 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Välj kort {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
-      "transformations": "Omvandlingar"
+      "transformations": "Omvandlingar",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13358,15 +13439,12 @@
       "duration-selected": "Välj uppdateringsintervall med aktuellt intervall {{durationAriaLabel}} valt"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Aktivera livestreaming",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Stäng av automatisk uppdatering",
       "label": "Av"
     },
     "tooltip": {
@@ -13894,7 +13972,8 @@
       "no-matching-silences": "Inga matchande tystnader hittades;",
       "noConfig": "Skapa en ny kontaktpunkt för att skapa en konfiguration med standardvärdena eller kontakta din administratör för att konfigurera Alertmanager.",
       "recreate-button": "Skapa om",
-      "unsilence-button": "Häv tystnaden"
+      "unsilence-button": "Häv tystnaden",
+      "view-button": ""
     }
   },
   "silences-table": {

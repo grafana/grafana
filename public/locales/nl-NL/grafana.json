@@ -599,6 +599,12 @@
       "title-restore-version": "Versie herstellen",
       "title-restoring-alertmanager-configuration": "Configuratie van Alertmanager herstellen"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Sorteren",
       "label-filter-placeholder-search-alerts-by-labels": "Waarschuwingen zoeken op labels",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1745,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1772,7 +1773,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1801,7 +1804,11 @@
         "target-datasource-description": "Selecteer de gegevensbron die wordt opgevraagd door de geïmporteerde regels. Zorg ervoor dat de metriek die in de geïmporteerde regels worden gebruikt, beschikbaar is in deze gegevensbron.",
         "target-datasource-required": "Selecteer eerst een doelgegevensbron"
       },
-      "yaml-error": "Kan YAML-bestand niet parseren: {{error}}"
+      "yaml-error": "Kan YAML-bestand niet parseren: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2656,13 @@
       "resample-to": "Resample naar",
       "upsample": "Upsample"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Routekeuze"
     },
@@ -2877,8 +2891,8 @@
       },
       "rulerrule-loading-error": "Kan de regel niet laden",
       "toggle": {
-        "go-back-to-old-look": "Terug naar het oude uiterlijk",
-        "try-out-the-new-look": "Probeer het nieuwe uiterlijk"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Onbekend regeltype"
     },
@@ -3130,6 +3144,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Demp het begin en einde",
       "placeholder-select-time-range": "Selecteer een tijdbereik"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "gedurende {{duration}}"
@@ -3439,7 +3464,8 @@
       },
       "title-edit": "Bewerken",
       "title-recreate": "Opnieuw aanmaken",
-      "title-unsilence": "Dempen ongedaan maken"
+      "title-unsilence": "Dempen ongedaan maken",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5390,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Kan dashboard niet ophalen"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Aangepaste feedback verzenden",
       "footer-text": "Deze inhoud is AI-gegenereerd met behulp van de <2>Grafana LLM-plug-in</2>",
@@ -7273,7 +7314,14 @@
       "title": "Versies"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8609,6 +8657,8 @@
     "description-show-measure": "Tools voor het maken van metingen op de kaart weergeven",
     "description-show-scale": "Kaartschaal aangeven",
     "description-show-zoom": "Zoomknoppen in de linkerbovenhoek weergeven",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Laag"
@@ -8670,7 +8720,9 @@
     "name-show-measure": "Meetinstrumenten weergeven",
     "name-show-scale": "Toon schaal",
     "name-show-zoom": "Zoomknop weergeven",
+    "name-sync-view-variable": "",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Geen stringvelden gevonden"
     },
@@ -8723,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Laag {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9804,12 +9859,16 @@
       },
       "inspect-drawer-title": "Waarde inspecteren",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Geen gegevens"
       },
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
       "sparkline": {
         "no-data": "geen gegevens"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11718,6 +11777,8 @@
     },
     "user-invite-form": {
       "back": "Terug",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-mailadres of gebruikersnaam",
       "label-name": "Naam",
       "label-send-invite-email": "E-mailuitnodiging verzenden",
@@ -12669,6 +12730,7 @@
       "loading-finished-job": "Voltooide taak laden...",
       "no-job-found": "Geen taak gevonden",
       "no-job-found-message": "De taak is mogelijk verwijderd of kon niet worden opgehaald. Annuleer het huidige proces en begin opnieuw.",
+      "retry-action": "",
       "starting": "Starten...",
       "status": {
         "title-error-running-job": "Er is een fout opgetreden bij het uitvoeren van de taak",
@@ -12739,6 +12801,7 @@
       "source-code": "Broncode"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Alleen lezen",
       "settings": "Instellingen",
       "view": "Weergave"
@@ -12867,8 +12930,9 @@
       "label-pending-step": "Stap in afwachting"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Automatische pulling uitgeschakeld",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Verwijderen",
+      "disabled": "",
       "error": "Fout",
       "pending": "In afwachting",
       "pulling": "Ophalen",
@@ -12890,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Voor instantiesynchronisatie moeten alle bronnen worden beheerd. Bestaande bronnen worden automatisch gemigreerd.",
       "migrate-resources-description": "",
       "options": "Opties",
       "repository-error": "Repository-fout",
       "repository-error-message": "Kan de status van de repository niet controleren. Controleer de repository-configuratie en probeer het opnieuw.",
       "repository-unhealthy": "De repository kan niet worden gesynchroniseerd. Annuleer de provisioning en probeer het opnieuw zodra het probleem is opgelost. Zie details hieronder.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13200,6 +13267,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13241,9 +13312,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,17 +13334,24 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Kaart {{id}} selecteren",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
-      "transformations": "Transformaties"
+      "transformations": "Transformaties",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13358,15 +13439,12 @@
       "duration-selected": "Kies een vernieuwingsinterval; momenteel is {{durationAriaLabel}} geselecteerd"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Livestreaming inschakelen",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Automatisch vernieuwen uitschakelen",
       "label": "Uit"
     },
     "tooltip": {
@@ -13894,7 +13972,8 @@
       "no-matching-silences": "Geen overeenkomende dempingen gevonden;",
       "noConfig": "Maak een nieuw contactpunt om een configuratie te maken met behulp van de standaardwaarden of neem contact op met je beheerder om de Alertmanager in te stellen.",
       "recreate-button": "Opnieuw aanmaken",
-      "unsilence-button": "Dempen ongedaan maken"
+      "unsilence-button": "Dempen ongedaan maken",
+      "view-button": ""
     }
   },
   "silences-table": {

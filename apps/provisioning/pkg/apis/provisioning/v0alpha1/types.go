@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -734,6 +735,7 @@ func (TestResults) OpenAPIModelName() string {
 // does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
 // communicate validation or external reference errors that users can resolve by editing spec fields.
 // TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
+// +k8s:deepcopy-gen=false
 type ErrorDetails struct {
 	// Type is a machine-readable description of the cause of the error.
 	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
@@ -755,8 +757,24 @@ type ErrorDetails struct {
 
 	// BadValue is the value of the field that was determined to be invalid, if applicable.
 	// This can be any type. This field is optional and may be omitted if not relevant.
-	// FIXME: DeepCopyInto and DeepCopy are not generated for interface{} or any
-	// BadValue interface{} `json:"badValue,omitempty"`
+	BadValue any `json:"badValue,omitempty"`
+}
+
+// DeepCopy copies the receiver, creating a new ErrorDetails.
+func (in *ErrorDetails) DeepCopy() *ErrorDetails {
+	if in == nil {
+		return nil
+	}
+
+	out := new(ErrorDetails)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto copies the receiver, writing into out.
+func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
+	//nolint:errcheck,gosec // this format is taken from the other generated DeepCopyInto functions.
+	resource.CopyObjectInto(out, in)
 }
 
 func (ErrorDetails) OpenAPIModelName() string {

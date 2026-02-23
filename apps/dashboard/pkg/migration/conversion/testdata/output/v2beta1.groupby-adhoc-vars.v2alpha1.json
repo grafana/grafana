@@ -35,6 +35,10 @@
             "type": "prometheus",
             "uid": "gdev-prometheus"
           },
+          "defaultValue": {
+            "text": "defaultText",
+            "value": "defaultValue"
+          },
           "current": {
             "text": "text7",
             "value": "value7"
@@ -60,6 +64,7 @@
               "key": "key1",
               "operator": "=",
               "value": "value1",
+              "origin": "dashboard",
               "condition": "AND"
             },
             {
@@ -74,6 +79,7 @@
               "key": "key3",
               "operator": "=",
               "value": "value3",
+              "origin": "dashboard",
               "condition": "AND"
             }
           ],

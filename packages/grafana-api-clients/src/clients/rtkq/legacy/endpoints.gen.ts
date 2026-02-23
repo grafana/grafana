@@ -882,7 +882,12 @@ const injectedRtkApi = api
         providesTags: ['datasources'],
       }),
       getDataSourceCacheConfig: build.query<GetDataSourceCacheConfigApiResponse, GetDataSourceCacheConfigApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache` }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache`,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         providesTags: ['enterprise'],
       }),
       setDataSourceCacheConfig: build.mutation<SetDataSourceCacheConfigApiResponse, SetDataSourceCacheConfigApiArg>({
@@ -890,6 +895,9 @@ const injectedRtkApi = api
           url: `/datasources/${queryArg.dataSourceUid}/cache`,
           method: 'POST',
           body: queryArg.cacheConfigSetter,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
         }),
         invalidatesTags: ['enterprise'],
       }),
@@ -898,11 +906,23 @@ const injectedRtkApi = api
         invalidatesTags: ['enterprise'],
       }),
       disableDataSourceCache: build.mutation<DisableDataSourceCacheApiResponse, DisableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/disable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/disable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       enableDataSourceCache: build.mutation<EnableDataSourceCacheApiResponse, EnableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/enable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/enable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       queryMetricsWithExpressions: build.mutation<
@@ -2727,10 +2747,12 @@ export type CallDatasourceResourceWithUidApiArg = {
 export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
 export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
@@ -2740,10 +2762,12 @@ export type CleanDataSourceCacheApiArg = {
 export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | QueryDataResponseContainsTheResultsFromAQueryDataRequest

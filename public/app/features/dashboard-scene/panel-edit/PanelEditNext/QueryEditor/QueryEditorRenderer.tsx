@@ -85,6 +85,7 @@ export function QueryEditorRenderer() {
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <QueryEditorComponent
+          key={selectedQuery.refId}
           app={CoreApp.Dashboard}
           data={filteredData}
           datasource={datasource}

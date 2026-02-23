@@ -29,6 +29,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       register,
       formState: { errors },
       setValue,
+      watch,
     } = useFormContext();
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
@@ -45,11 +46,13 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     const { getLastBranch } = useLastBranch();
     const prBranch = usePRBranch();
     const lastBranch = getLastBranch(repository?.name);
+    const selectedBranch = watch('ref');
 
     const branchOptions = useBranchDropdownOptions({
       repository,
       prBranch,
       lastBranch,
+      selectedBranch,
       branchData,
       canPushToConfiguredBranch,
       canPushToNonConfiguredBranch,

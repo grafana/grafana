@@ -599,6 +599,12 @@
       "title-restore-version": "Ripristina versione",
       "title-restoring-alertmanager-configuration": "Ripristino della configurazione di Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Ordina",
       "label-filter-placeholder-search-alerts-by-labels": "Cerca avvisi per etichette",
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1745,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1772,7 +1773,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1801,7 +1804,11 @@
         "target-datasource-description": "Seleziona l'origine dati che verrà interrogata dalle regole importate. Assicurati che le metriche utilizzate nelle regole importate siano disponibili in questa origine dati.",
         "target-datasource-required": "Seleziona un'origine dei dati di destinazione"
       },
-      "yaml-error": "Impossibile analizzare il file YAML: {{error}}"
+      "yaml-error": "Impossibile analizzare il file YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2649,6 +2656,13 @@
       "resample-to": "Ricampiona a",
       "upsample": "Aumenta campionamento"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Instradamento"
     },
@@ -2877,8 +2891,8 @@
       },
       "rulerrule-loading-error": "Impossibile caricare la regola",
       "toggle": {
-        "go-back-to-old-look": "Torna al vecchio design",
-        "try-out-the-new-look": "Prova il nuovo design!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Tipo di regola sconosciuto"
     },
@@ -3130,6 +3144,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Disattiva audio all'inizio e alla fine",
       "placeholder-select-time-range": "Seleziona l'intervallo di tempo"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "per {{duration}}"
@@ -3439,7 +3464,8 @@
       },
       "title-edit": "Modifica",
       "title-recreate": "Ricrea",
-      "title-unsilence": "Riattiva audio"
+      "title-unsilence": "Riattiva audio",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5390,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Impossibile recuperare la dashboard"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Invia feedback personalizzato",
       "footer-text": "Questo contenuto è generato dall'IA utilizzando il <2>componente aggiuntivo Grafana LLM</2>",
@@ -7273,7 +7314,14 @@
       "title": "Versioni"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8609,6 +8657,8 @@
     "description-show-measure": "Mostra gli strumenti per effettuare misurazioni sulla mappa",
     "description-show-scale": "Indica la scala della mappa",
     "description-show-zoom": "Mostra i pulsanti di controllo dello zoom nell'angolo in alto a sinistra",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Livelli"
@@ -8670,7 +8720,9 @@
     "name-show-measure": "Mostra strumenti di misurazione",
     "name-show-scale": "Mostra scala",
     "name-show-zoom": "Mostra controllo zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Suggerimento",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nessun campo stringa trovato"
     },
@@ -8723,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Livello {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9804,12 +9859,16 @@
       },
       "inspect-drawer-title": "Ispeziona valore",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Nessun dato"
       },
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
       "sparkline": {
         "no-data": "nessun dato disponibile"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -11718,6 +11777,8 @@
     },
     "user-invite-form": {
       "back": "Indietro",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-mail o nome utente",
       "label-name": "Nome",
       "label-send-invite-email": "Invia email di invito",
@@ -12669,6 +12730,7 @@
       "loading-finished-job": "Caricamento attività terminata in corso...",
       "no-job-found": "Nessuna attività trovata",
       "no-job-found-message": "L'attività potrebbe essere stata eliminata o non è stato possibile recuperarla. Annulla il processo corrente e ricomincia.",
+      "retry-action": "",
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
@@ -12739,6 +12801,7 @@
       "source-code": "Codice sorgente"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Solo lettura",
       "settings": "Impostazioni",
       "view": "Visualizza"
@@ -12867,8 +12930,9 @@
       "label-pending-step": "Passaggio in sospeso"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Pull automatico disabilitato",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Eliminazione in corso",
+      "disabled": "",
       "error": "Errore",
       "pending": "In sospeso",
       "pulling": "Pull in corso",
@@ -12890,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La sincronizzazione delle istanze richiede che tutte le risorse siano gestite. Le risorse esistenti verranno migrate automaticamente.",
       "migrate-resources-description": "",
       "options": "Opzioni",
       "repository-error": "Errore del repository",
       "repository-error-message": "Impossibile verificare lo stato del repository. Verifica la configurazione del repository e riprova.",
       "repository-unhealthy": "Impossibile sincronizzare il repository. Annulla il provisioning e riprova una volta risolto il problema. Visualizza i dettagli sottostanti.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13200,6 +13267,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13241,9 +13312,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13260,17 +13334,24 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Seleziona scheda {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
-      "transformations": "Trasformazioni"
+      "transformations": "Trasformazioni",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13358,15 +13439,12 @@
       "duration-selected": "Scegli l'intervallo di tempo di aggiornamento con l'intervallo corrente {{durationAriaLabel}} selezionato"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Attiva lo streaming in tempo reale",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Disattiva l'aggiornamento automatico",
       "label": "Off"
     },
     "tooltip": {
@@ -13894,7 +13972,8 @@
       "no-matching-silences": "Nessuna disattivazione audio corrispondente trovata;",
       "noConfig": "Crea un nuovo punto di contatto per creare una configurazione utilizzando i valori predefiniti o contatta l'amministratore per impostare Alertmanager.",
       "recreate-button": "Ricrea",
-      "unsilence-button": "Riattiva audio"
+      "unsilence-button": "Riattiva audio",
+      "view-button": ""
     }
   },
   "silences-table": {

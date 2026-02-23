@@ -363,7 +363,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 func TestTeamMembersREST_parseResults(t *testing.T) {
 	t.Run("should return empty body when result is nil", func(t *testing.T) {
-		result, err := parseResults(nil, 0)
+		result, err := parseResults(nil)
 		require.NoError(t, err)
 		require.Empty(t, result.Items)
 	})
@@ -378,7 +378,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Empty(t, result.Items)
 		require.Contains(t, err.Error(), "500 error searching")
@@ -389,7 +389,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: nil,
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.NoError(t, err)
 		require.Empty(t, result.Items)
 	})
@@ -405,7 +405,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				Rows: []*resourcepb.ResourceTableRow{},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "required column 'subject' not found")
 		require.Empty(t, result.Items)
@@ -422,7 +422,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				Rows: []*resourcepb.ResourceTableRow{},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "required column 'team' not found")
 		require.Empty(t, result.Items)
@@ -439,7 +439,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				Rows: []*resourcepb.ResourceTableRow{},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "required column 'permission' not found")
 		require.Empty(t, result.Items)
@@ -456,7 +456,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				Rows: []*resourcepb.ResourceTableRow{},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "required column 'external' not found")
 		require.Empty(t, result.Items)
@@ -491,7 +491,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.NoError(t, err)
 		require.Len(t, result.Items, 2)
 
@@ -527,7 +527,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "mismatch number of columns and cells")
 		require.Empty(t, result.Items)
@@ -556,7 +556,7 @@ func TestTeamMembersREST_parseResults(t *testing.T) {
 				},
 			},
 		}
-		result, err := parseResults(searchResult, 0)
+		result, err := parseResults(searchResult)
 		require.NoError(t, err)
 		require.Len(t, result.Items, 1)
 		require.Equal(t, "user1", result.Items[0].User)

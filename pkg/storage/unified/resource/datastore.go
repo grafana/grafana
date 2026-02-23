@@ -567,7 +567,7 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 		}
 
 		keys = keys[len(batch):]
-		stringKeys := make([]string, len(batch))
+		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())
 		}
