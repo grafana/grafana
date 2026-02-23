@@ -2,7 +2,7 @@ import { getBuiltInThemes } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 export function getSelectableThemes() {
-  const allowedExtraThemes = [];
+  const allowedExtraThemes = ['sunrise'];
 
   if (config.featureToggles.grafanaconThemes) {
     allowedExtraThemes.push('desertbloom');
