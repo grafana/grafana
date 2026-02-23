@@ -103,7 +103,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260220113344-1de0d0f76785 // indirect
+	github.com/grafana/alerting v0.0.0-20260223141834-e7c68baa899e // indirect
 	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
