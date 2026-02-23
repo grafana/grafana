@@ -17,6 +17,7 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+      textDecoration: 'none',
       color: theme.colors.text.primary,
       ...theme.typography.code,
       fontWeight: theme.typography.fontWeightLight,
