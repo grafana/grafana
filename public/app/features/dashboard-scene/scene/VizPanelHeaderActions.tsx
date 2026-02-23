@@ -55,27 +55,35 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   // checks if applicability is supported, otherwise no point in using this action, will show same
   // results as the dashboard groupBy var
   private setApplicabilitySupport(groupByDs?: DataSourceRef | null, groupByApplicability?: boolean) {
-    this.setState({
-      supportsApplicability: verifyDrilldownApplicability(
-        this,
-        this._queryRunnerDatasource,
-        groupByDs ?? this._groupByVar?.state.datasource ?? null,
-        groupByApplicability ?? this._groupByVar?.state.applicabilityEnabled ?? false
-      ),
-    });
+    const supportsApplicability = verifyDrilldownApplicability(
+      this,
+      this._queryRunnerDatasource,
+      groupByDs ?? this._groupByVar?.state.datasource ?? null,
+      groupByApplicability ?? this._groupByVar?.state.applicabilityEnabled ?? false
+    );
+
+    if (supportsApplicability !== this.state.supportsApplicability) {
+      this.setState({ supportsApplicability });
+    }
   }
 
   // checks if the action should appear on the panel aka if the DSs match
   private updateGroupByActionSupport() {
     const queryRunner = this.getQueryRunner();
     const queries = queryRunner?.state.queries ?? [];
-    const groupByDsUid = this._groupByVar?.state.datasource?.uid;
+    const groupByDsUid = this._groupByVar?.state.datasource?.uid
+      ? sceneGraph.interpolate(this, this._groupByVar.state.datasource.uid)
+      : undefined;
 
-    this.setState({
-      isGroupByActionSupported: Boolean(
-        this._groupByVar && groupByDsUid && queries.some((q) => q.datasource?.uid === groupByDsUid)
-      ),
-    });
+    const isGroupByActionSupported = Boolean(
+      this._groupByVar &&
+        groupByDsUid &&
+        queries.some((q) => sceneGraph.interpolate(this, q.datasource?.uid) === groupByDsUid)
+    );
+
+    if (isGroupByActionSupported !== this.state.isGroupByActionSupported) {
+      this.setState({ isGroupByActionSupported });
+    }
   }
 
   private subscribeToGroupByChanges() {
