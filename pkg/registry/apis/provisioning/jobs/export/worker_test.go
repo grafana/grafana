@@ -1106,10 +1106,10 @@ func TestExportWorker_ProcessQuotaUnlimited(t *testing.T) {
 // TestExportWorker_ConfigurationDisabled tests that export functionality is disabled when configuration flag is false
 func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 	tests := []struct {
-		name        string
-		enabled     bool
-		wantErr     bool
-		wantErrMsg  string
+		name       string
+		enabled    bool
+		wantErr    bool
+		wantErrMsg string
 	}{
 		{
 			name:       "export job fails when disabled by configuration",

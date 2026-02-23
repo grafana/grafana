@@ -156,10 +156,10 @@ func TestMigrationWorker_Process(t *testing.T) {
 // TestMigrationWorker_ConfigurationDisabled tests that migrate functionality is disabled when configuration flag is false
 func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 	tests := []struct {
-		name        string
-		enabled     bool
-		wantErr     bool
-		wantErrMsg  string
+		name       string
+		enabled    bool
+		wantErr    bool
+		wantErrMsg string
 	}{
 		{
 			name:       "migrate job fails when disabled by configuration",
