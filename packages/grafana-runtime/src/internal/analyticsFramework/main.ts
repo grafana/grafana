@@ -1,3 +1,7 @@
+/**
+ * @alpha
+ */
+
 import { reportInteraction } from '@grafana/runtime';
 
 import { Event, EventProperty } from './types';

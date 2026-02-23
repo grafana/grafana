@@ -1,3 +1,7 @@
+/**
+ * @alpha
+ */
+
 type DataType = string | number | boolean | null | undefined;
 
 export type EventProperty = {
