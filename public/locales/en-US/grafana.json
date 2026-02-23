@@ -14304,6 +14304,7 @@
         "tooltip-delete-button": "Delete {{teamName}}",
         "tooltip-edit-team": "Edit team"
       },
+      "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
