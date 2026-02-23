@@ -11,7 +11,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
-  usePanelPluginMetasMap: jest.fn().mockReturnValue({ loading: false, value: {} }),
+  usePanelPluginMetasMap: jest.fn().mockReturnValue({ loading: false, value: {}, error: undefined }),
 }));
 
 function setup(dashboard: DashboardModel, editIndex?: number) {

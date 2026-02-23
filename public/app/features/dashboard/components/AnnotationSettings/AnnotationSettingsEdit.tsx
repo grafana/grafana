@@ -15,19 +15,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { AnnotationPanelFilter } from '@grafana/schema';
-import {
-  Button,
-  Checkbox,
-  Field,
-  FieldSet,
-  Input,
-  MultiSelect,
-  Select,
-  useStyles2,
-  Stack,
-  Alert,
-  LoadingPlaceholder,
-} from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, Input, MultiSelect, Select, useStyles2, Stack, Alert } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -157,7 +145,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     return -1;
   };
 
-  const { loading, value: panelPluginMetas } = usePanelPluginMetasMap();
+  const { loading, value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
 
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
@@ -175,14 +163,6 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         .sort(sortFn) ?? [],
     [dashboard, panelPluginMetas]
   );
-
-  if (loading) {
-    return (
-      <LoadingPlaceholder
-        text={t('dashboard.annotation-settings-edit.loading-placeholder-text', 'Loading panels...')}
-      />
-    );
-  }
 
   return (
     <div>
@@ -251,23 +231,34 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         >
           <>
             <Select
+              isLoading={loading}
               options={getPanelFilters()}
               value={panelFilter}
               onChange={onFilterTypeChange}
               data-testid={selectors.components.Annotations.annotationsTypeInput}
             />
             {panelFilter !== PanelFilterType.AllPanels && (
-              <MultiSelect
-                options={panels}
-                value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
-                onChange={onAddFilterPanelID}
-                isClearable={true}
-                placeholder={t('dashboard.annotation-settings-edit.placeholder-choose-panels', 'Choose panels')}
-                width={100}
-                closeMenuOnSelect={false}
-                className={styles.select}
-                data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
-              />
+              <>
+                {panelPluginMetasError && (
+                  <Alert
+                    title={t('dashboard.annotation-settings-edit.error-loading-panels', 'Failed to load panel plugins')}
+                    severity="warning"
+                  >
+                    {panelPluginMetasError.message}
+                  </Alert>
+                )}
+                <MultiSelect
+                  options={panels}
+                  value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                  onChange={onAddFilterPanelID}
+                  isClearable={true}
+                  placeholder={t('dashboard.annotation-settings-edit.placeholder-choose-panels', 'Choose panels')}
+                  width={100}
+                  closeMenuOnSelect={false}
+                  className={styles.select}
+                  data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
+                />
+              </>
             )}
           </>
         </Field>
