@@ -4,7 +4,7 @@ import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Job, JobSpec, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
@@ -79,6 +79,16 @@ const getJobColumns = () => [
   },
 ];
 
+type OptionKeys = Exclude<keyof JobSpec, 'action' | 'repository'>;
+
+const ACTION_TO_SPEC_KEY: Partial<Record<NonNullable<JobSpec['action']>, OptionKeys>> = {
+  'fix-folder-metadata': 'fixFolderMetadata',
+};
+
+function actionToSpecKey(action: NonNullable<JobSpec['action']>): OptionKeys | undefined {
+  return ACTION_TO_SPEC_KEY[action] ?? (action as OptionKeys);
+}
+
 interface ExpandedRowProps {
   row: Job;
 }
@@ -96,7 +106,8 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     if (!action) {
       return v;
     }
-    const def = row.spec?.[action];
+    const specKey = actionToSpecKey(action);
+    const def = specKey ? row.spec?.[specKey] : undefined;
     if (!def) {
       return v;
     }
