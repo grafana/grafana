@@ -1,7 +1,8 @@
-export type EventProperty = {
-  [key: string]: string | string[] | number | boolean | undefined;
-};
+type DataType = string | number | boolean | null | undefined;
 
+export type EventProperty = {
+  [key: string]: DataType | DataType[];
+};
 export interface Event {
   repo?: string;
   feature: string;
