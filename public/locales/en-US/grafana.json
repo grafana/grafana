@@ -13364,13 +13364,15 @@
       },
       "alerts_one": "Alerts ({{count}})",
       "alerts_other": "Alerts ({{count}})",
+      "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
+      "transformations": "Transformations",
+      "view-toggle": "View"
     },
     "transformation-debug": {
       "input-data": "Input data",
