@@ -17,6 +17,18 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
+
+# Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
+BUILD_NUMBER ?= local
+BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
+BUILD_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+BUILD_STAMP := $(shell echo $${SOURCE_DATE_EPOCH:-$$(date +%s 2>/dev/null)})
+GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
+	-X main.commit=$(BUILD_COMMIT) \
+	-X main.buildBranch=$(BUILD_BRANCH) \
+	-X main.buildstamp=$(BUILD_STAMP)
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
@@ -38,7 +50,7 @@ all: deps build
 
 .PHONY: deps-go
 deps-go: ## Install backend dependencies.
-	$(GO) run $(GO_RACE_FLAG) build.go setup
+	go mod download
 
 .PHONY: deps-js
 deps-js: node_modules ## Install frontend dependencies.
@@ -276,33 +288,28 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: ## Build all Go binaries.
-	@echo "build go files with updated workspace"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
+build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+	@echo "build go binaries"
+	$(GO) build -buildvcs=false \
+		-trimpath \
+		$(GO_RACE_FLAG) 
+		$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
+		-ldflags "$(GO_LDFLAGS)" \
+		-o ./bin/grafana \
+		./pkg/cmd/grafana
 
 .PHONY: build-go-fast
 build-go-fast: ## Build all Go binaries without updating workspace.
 	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
 
 .PHONY: build-backend
-build-backend: ## Build Grafana backend.
+build-backend: gen-themes ## Build Grafana backend.
 	@echo "build backend"
-	$(MAKE) gen-themes
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
+	$(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
 .PHONY: build-air
 build-air: build-backend
 	@cp ./bin/grafana ./bin/grafana-air
-
-.PHONY: build-server
-build-server: ## Build Grafana server.
-	@echo "build server"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
-
-.PHONY: build-cli
-build-cli: ## Build Grafana CLI application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 .PHONY: build-js
 build-js: ## Build frontend assets.
