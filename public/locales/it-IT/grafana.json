@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Disattiva audio all'inizio e alla fine",
       "placeholder-select-time-range": "Seleziona l'intervallo di tempo"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "per {{duration}}"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Modifica",
       "title-recreate": "Ricrea",
-      "title-unsilence": "Riattiva audio"
+      "title-unsilence": "Riattiva audio",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Impossibile recuperare la dashboard"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Invia feedback personalizzato",
       "footer-text": "Questo contenuto è generato dall'IA utilizzando il <2>componente aggiuntivo Grafana LLM</2>",
@@ -7282,7 +7314,14 @@
       "title": "Versioni"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "Mostra gli strumenti per effettuare misurazioni sulla mappa",
     "description-show-scale": "Indica la scala della mappa",
     "description-show-zoom": "Mostra i pulsanti di controllo dello zoom nell'angolo in alto a sinistra",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Livelli"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Mostra strumenti di misurazione",
     "name-show-scale": "Mostra scala",
     "name-show-zoom": "Mostra controllo zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Suggerimento",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nessun campo stringa trovato"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Livello {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La sincronizzazione delle istanze richiede che tutte le risorse siano gestite. Le risorse esistenti verranno migrate automaticamente.",
       "migrate-resources-description": "",
       "options": "Opzioni",
       "repository-error": "Errore del repository",
       "repository-error-message": "Impossibile verificare lo stato del repository. Verifica la configurazione del repository e riprova.",
       "repository-unhealthy": "Impossibile sincronizzare il repository. Annulla il provisioning e riprova una volta risolto il problema. Visualizza i dettagli sottostanti.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Scegli l'intervallo di tempo di aggiornamento con l'intervallo corrente {{durationAriaLabel}} selezionato"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Attiva lo streaming in tempo reale",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Disattiva l'aggiornamento automatico",
       "label": "Off"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Nessuna disattivazione audio corrispondente trovata;",
       "noConfig": "Crea un nuovo punto di contatto per creare una configurazione utilizzando i valori predefiniti o contatta l'amministratore per impostare Alertmanager.",
       "recreate-button": "Ricrea",
-      "unsilence-button": "Riattiva audio"
+      "unsilence-button": "Riattiva audio",
+      "view-button": ""
     }
   },
   "silences-table": {

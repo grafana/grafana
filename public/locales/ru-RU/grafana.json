@@ -1753,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3176,6 +3181,17 @@
       "label-silence-start-and-end": "Начало и окончание временного отключения",
       "placeholder-select-time-range": "Выбрать временной диапазон"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "в течение {{duration}}"
     },
@@ -3484,7 +3500,8 @@
       },
       "title-edit": "Редактировать",
       "title-recreate": "Повторно создать",
-      "title-unsilence": "Отменить временное отключение"
+      "title-unsilence": "Отменить временное отключение",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5451,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Не удалось получить дашборд"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Отправить пользовательский отзыв",
       "footer-text": "Этот контент создан с помощью ИИ с использованием <2>плагина Grafana LLM</2>",
@@ -7344,7 +7376,14 @@
       "title": "Версии"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": "Добавить из сохраненных запросов"
     },
@@ -8684,6 +8723,8 @@
     "description-show-measure": "Показывать инструменты для выполнения измерений на карте",
     "description-show-scale": "Показывать масштаб карты",
     "description-show-zoom": "Показывать кнопки управления масштабом в верхнем левом углу",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Слой"
@@ -8745,7 +8786,9 @@
     "name-show-measure": "Показывать инструменты для измерения",
     "name-show-scale": "Показывать масштаб",
     "name-show-zoom": "Показывать элементы управления масштабом",
+    "name-sync-view-variable": "",
     "name-tooltip": "Подсказка",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Строковые поля не найдены"
     },
@@ -8798,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Слой {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -13028,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Для синхронизации экземпляра необходимо, чтобы все ресурсы были управляемыми. Уже имеющиеся ресурсы будут перенесены автоматически.",
       "migrate-resources-description": "",
       "options": "Параметры",
       "repository-error": "Ошибка репозитория",
       "repository-error-message": "Не удалось проверить состояние репозитория. Проверьте конфигурацию и повторите попытку.",
       "repository-unhealthy": "Невозможно синхронизировать репозиторий. Отмените подготовку и повторите попытку после устранения проблемы. Подробные сведения см. ниже.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13520,15 +13569,12 @@
       "duration-selected": "Выбрать интервал времени обновления с использованием текущего интервала {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Включить потоковую передачу в реальном времени",
       "label": "В реальном времени"
     },
     "off-option": {
-      "aria-label": "Выключить автообновление",
       "label": "Выкл."
     },
     "tooltip": {
@@ -14058,7 +14104,8 @@
       "no-matching-silences": "Соответствующие отключения не найдены;",
       "noConfig": "Создайте новую точку контакта, чтобы создать конфигурацию с использованием значений по умолчанию, или обратитесь к администратору для настройки обработчика оповещений Alertmanager.",
       "recreate-button": "Повторно создать",
-      "unsilence-button": "Отменить временное отключение"
+      "unsilence-button": "Отменить временное отключение",
+      "view-button": ""
     }
   },
   "silences-table": {

@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Némítás kezdete és vége",
       "placeholder-select-time-range": "Időtartomány kijelölése"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "eddig: {{duration}}"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Szerkesztés",
       "title-recreate": "Újbóli létrehozás",
-      "title-unsilence": "Némítás megszüntetése"
+      "title-unsilence": "Némítás megszüntetése",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Az irányítópult lekérése nem sikerült"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Egyéni visszajelzés küldése",
       "footer-text": "Ez a tartalom mesterséges intelligencia által lett generálva a <2>Grafana LLM bővítmény</2> használatával",
@@ -7282,7 +7314,14 @@
       "title": "Verziók"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "A térképen történő mérésekhez szükséges eszközök megjelenítése",
     "description-show-scale": "Térkép méretarányának jelzése",
     "description-show-zoom": "Nagyítási vezérlőgombok megjelenítése a bal felső sarokban",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Réteg"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Mérőeszközök megjelenítése",
     "name-show-scale": "Méretarány megjelenítése",
     "name-show-zoom": "Nagyításvezérlő megjelenítése",
+    "name-sync-view-variable": "",
     "name-tooltip": "Elemleírás",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nem található szöveges mező"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Réteg: {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "A példányszinkronizáláshoz az összes erőforrásnak felügyelet alatt kell állnia. A meglévő erőforrások áttelepítése automatikusan megtörténik.",
       "migrate-resources-description": "",
       "options": "Beállítások",
       "repository-error": "Adattárhiba",
       "repository-error-message": "Nem lehet ellenőrizni az adattár állapotát. Ellenőrizze az adattár konfigurációját, és próbálkozzon újra.",
       "repository-unhealthy": "Az adattár nem szinkronizálható. Szakítsa meg a kiépítést, és próbálja újra, miután a probléma megoldódott. A részleteket lásd alább.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Válassza ki a frissítési időintervallumot, miközben a jelenlegi {{durationAriaLabel}} intervallum is ki van választva"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Élő közvetítés bekapcsolása",
       "label": "Élő"
     },
     "off-option": {
-      "aria-label": "Automatikus frissítés kikapcsolása",
       "label": "Ki"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Nem találhatók egyező némítások;",
       "noConfig": "Hozzon létre egy új kapcsolattartási pontot egy konfiguráció létrehozásához az alapértelmezett értékekkel, vagy vegye fel a kapcsolatot a rendszergazdával a Riasztáskezelő beállításához.",
       "recreate-button": "Újbóli létrehozás",
-      "unsilence-button": "Némítás megszüntetése"
+      "unsilence-button": "Némítás megszüntetése",
+      "view-button": ""
     }
   },
   "silences-table": {

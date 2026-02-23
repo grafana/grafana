@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3140,6 +3145,17 @@
       "label-silence-start-and-end": "Mise en sourdine au début et à la fin",
       "placeholder-select-time-range": "Sélectionner la plage temporelle"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "pour {{duration}}"
     },
@@ -3448,7 +3464,8 @@
       },
       "title-edit": "Modifier",
       "title-recreate": "Recréer",
-      "title-unsilence": "Réactiver le son"
+      "title-unsilence": "Réactiver le son",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5399,6 +5416,21 @@
         "failed-to-fetch-dashboard": "Échec de la récupération du tableau de bord"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Envoyer un commentaire personnalisé",
       "footer-text": "Ce contenu est généré par l’IA à l’aide du <2>plugin Grafana LLM</2>",
@@ -7282,7 +7314,14 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8618,6 +8657,8 @@
     "description-show-measure": "Afficher les outils de mesure sur la carte",
     "description-show-scale": "Indiquer l’échelle cartographique",
     "description-show-zoom": "Afficher les boutons de contrôle du zoom dans le coin supérieur gauche",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Couche"
@@ -8679,7 +8720,9 @@
     "name-show-measure": "Afficher les outils de mesure",
     "name-show-scale": "Afficher l’échelle",
     "name-show-zoom": "Afficher le contrôle du zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Infobulle",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Aucun champ de type chaîne de caractères trouvé"
     },
@@ -8732,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Calque {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12908,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La synchronisation de l’instance nécessite que toutes les ressources soient gérées. Les ressources existantes seront migrées automatiquement.",
       "migrate-resources-description": "",
       "options": "Options",
       "repository-error": "Erreur du référentiel",
       "repository-error-message": "Impossible de vérifier l’état du référentiel. Veuillez vérifier la configuration du référentiel et réessayer.",
       "repository-unhealthy": "Le référentiel ne peut pas être synchronisé. Annulez le provisionnement et réessayez une fois le problème résolu. Voir les détails ci-dessous.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13390,15 +13439,12 @@
       "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Activer la diffusion en direct",
       "label": "En direct"
     },
     "off-option": {
-      "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
     },
     "tooltip": {
@@ -13926,7 +13972,8 @@
       "no-matching-silences": "Aucune mise en sourdine correspondante trouvée ;",
       "noConfig": "Créez un nouveau point de contact pour créer une configuration à l'aide des valeurs par défaut ou contactez votre administrateur pour configurer Alertmanager.",
       "recreate-button": "Recréer",
-      "unsilence-button": "Réactiver le son"
+      "unsilence-button": "Réactiver le son",
+      "view-button": ""
     }
   },
   "silences-table": {
