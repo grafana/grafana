@@ -179,6 +179,11 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			// Create mock migrator
 			mockMigrator := NewMockMigrator(t)
 
+			// Set up mock expectations for when enabled
+			if tt.enabled {
+				mockMigrator.On("Migrate", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			}
+
 			// Create migration worker
 			worker := NewMigrationWorker(mockMigrator, tt.enabled)
 
@@ -202,7 +207,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 
 			// Create mock progress recorder
 			progress := jobs.NewMockJobProgressRecorder(t)
-			progress.On("SetTotal", context.Background(), int64(10)).Maybe()
+			progress.On("SetTotal", context.Background(), 10).Maybe()
 
 			// Process the job
 			err := worker.Process(context.Background(), mockRepo, job, progress)

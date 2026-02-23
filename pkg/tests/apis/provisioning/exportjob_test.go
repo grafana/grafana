@@ -432,8 +432,6 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		"dashboard3 should now be managed by second repo")
 }
 
-
-
 func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -456,20 +454,20 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 			Path:   "",
 		},
 	}
-	
+
 	// Trigger job and wait for it to complete (will fail)
 	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-	
+
 	// Check that job failed with the expected error message
 	status, found, err := unstructured.NestedMap(job.Object, "status")
 	require.NoError(t, err)
 	require.True(t, found, "job should have status")
-	
-	result, found, err := unstructured.NestedString(status, "result")
+
+	state, found, err := unstructured.NestedString(status, "state")
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, "error", result, "job should have error result")
-	
+	require.Equal(t, "error", state, "job should have error state")
+
 	message, found, err := unstructured.NestedString(status, "message")
 	require.NoError(t, err)
 	require.True(t, found)
