@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -800,6 +799,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
+
+			// Export worker wrapped with feature flag check
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
@@ -807,7 +808,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
-				b.features,
+				b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport),
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
@@ -821,21 +822,25 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 			)
 
+			// Migration worker with feature flag check
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 				cleaner,
 				exportWorker,
 				syncWorker,
 			)
-			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
+			migrationWorker := migrate.NewMigrationWorker(
+				unifiedStorageMigrator,
+				b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport),
+			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker()
-			workers := []jobs.Worker{ //nolint:prealloc
+
+			// All workers registered - export/migrate will check feature flag at runtime
+			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
-				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
 				syncWorker,

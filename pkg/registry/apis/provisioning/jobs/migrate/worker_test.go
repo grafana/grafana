@@ -151,3 +151,73 @@ func TestMigrationWorker_Process(t *testing.T) {
 		})
 	}
 }
+
+// TestMigrationWorker_ConfigurationDisabled tests that migrate functionality is disabled when configuration flag is false
+func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
+	tests := []struct {
+		name        string
+		enabled     bool
+		wantErr     bool
+		wantErrMsg  string
+	}{
+		{
+			name:       "migrate job fails when disabled by configuration",
+			enabled:    false,
+			wantErr:    true,
+			wantErrMsg: "migrate functionality is disabled by configuration",
+		},
+		{
+			name:    "migrate job proceeds when enabled",
+			enabled: true,
+			wantErr: false, // Will fail at later stage due to minimal mocks, but configuration check passes
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock migrator
+			mockMigrator := NewMockMigrator(t)
+
+			// Create migration worker
+			worker := NewMigrationWorker(mockMigrator, tt.enabled)
+
+			// Create a mock repository (ReaderWriter interface required)
+			mockRepo := repository.NewMockReaderWriter(t)
+
+			// Create a test job
+			job := provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-migrate-job",
+					Namespace: "default",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Message: "Test migration",
+					},
+				},
+			}
+
+			// Create mock progress recorder
+			progress := jobs.NewMockJobProgressRecorder(t)
+			progress.On("SetTotal", context.Background(), int64(10)).Maybe()
+
+			// Process the job
+			err := worker.Process(context.Background(), mockRepo, job, progress)
+
+			// Verify results
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErrMsg)
+			} else {
+				// When enabled, job proceeds past configuration check
+				// It may fail later due to minimal mocks, but the configuration check passed
+				if err != nil {
+					// Job failed due to mocking, not configuration - that's okay
+					assert.NotContains(t, err.Error(), "disabled by configuration")
+				}
+			}
+		})
+	}
+}

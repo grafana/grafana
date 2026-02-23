@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -215,6 +214,7 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
 	}
 	features := featuremgmt.ProvideToggles(featureManager)
+	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -262,7 +262,7 @@ func setupWorkers(
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		features,
+		exportEnabled,
 	)
 	workers = append(workers, exportWorker)
 
@@ -273,7 +273,7 @@ func setupWorkers(
 		exportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, features)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
 	workers = append(workers, migrationWorker)
 
 	// Delete
@@ -283,10 +283,6 @@ func setupWorkers(
 	// Move
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, moveWorker)
-
-	// Fix Metadata (no-op placeholder)
-	fixMetadataWorker := fixfoldermetadata.NewWorker()
-	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest
 	urlProvider, err := controllerCfg.URLProvider()

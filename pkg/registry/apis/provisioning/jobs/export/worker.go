@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -29,7 +28,7 @@ type ExportWorker struct {
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
-	features            featuremgmt.FeatureToggles
+	enabled             bool
 }
 
 func NewExportWorker(
@@ -39,7 +38,7 @@ func NewExportWorker(
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
-	features featuremgmt.FeatureToggles,
+	enabled bool,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -48,7 +47,7 @@ func NewExportWorker(
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
-		features:            features,
+		enabled:             enabled,
 	}
 }
 
@@ -58,9 +57,8 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	// Check if export feature is enabled
-	if !r.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport) {
-		return fmt.Errorf("export functionality is disabled: %s feature flag is not enabled", featuremgmt.FlagProvisioningExport)
+	if !r.enabled {
+		return fmt.Errorf("export functionality is disabled by configuration")
 	}
 
 	options := job.Spec.Push
