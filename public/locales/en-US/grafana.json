@@ -12375,6 +12375,7 @@
       "placeholder-branch": "Select or enter branch name",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
+      "suffix-new-branch": "New branch",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
