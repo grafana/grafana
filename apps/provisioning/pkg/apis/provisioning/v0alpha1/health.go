@@ -28,6 +28,10 @@ const (
 	// This is an aggregated condition that can track multiple quota types (e.g., dashboards synced by repository).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
 	ConditionTypeResourceQuota = "ResourceQuota"
+
+	// ConditionTypeSyncStatus indicates the outcome of the last completed sync (pull) operation.
+	// True = last sync succeeded, False = last sync failed (quota exceeded, general error, etc.).
+	ConditionTypeSyncStatus = "SyncStatus"
 )
 
 // Condition reasons for the Ready condition
@@ -65,6 +69,16 @@ const (
 	ReasonQuotaReached = "QuotaReached"
 	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
 	ReasonQuotaExceeded = "QuotaExceeded"
+)
+
+// Condition reasons for the SyncStatus condition
+const (
+	// ReasonSyncSuccessful indicates the last sync completed successfully.
+	ReasonSyncSuccessful = "SyncSuccessful"
+	// ReasonSyncQuotaExceeded indicates the last sync was interrupted because a quota limit was exceeded.
+	ReasonSyncQuotaExceeded = "SyncQuotaExceeded"
+	// ReasonSyncFailed indicates the last sync failed due to an error.
+	ReasonSyncFailed = "SyncFailed"
 )
 
 type HealthStatus struct {

@@ -220,18 +220,19 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
 	}
 
-	// Update Quota condition based on stats and configured limits.
-	// Quotas are evaluated here in the sync worker (pull) rather than in the controller because:
+	// Update conditions based on sync outcome and quota evaluation.
+	// Both conditions are evaluated here in the sync worker (pull) because:
 	// 1. The sync worker performs reconciliation and eventually cleans up resources, so it has
 	//    the most up-to-date view of what resources actually exist.
 	// 2. The sync worker is responsible for updating stats after each sync operation, making it
 	//    the natural place to evaluate quotas against those stats.
-	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
+	// 3. This ensures conditions reflect the actual state after reconciliation,
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
-		patchOperations = append(patchOperations, quotaConditionOps...)
+	syncCondition := EvaluateSyncCondition(syncError)
+	if conditionOps := controller.BuildConditionsPatchOps(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
 	}
 
 	// Only patch the specific fields we want to update, not the entire status

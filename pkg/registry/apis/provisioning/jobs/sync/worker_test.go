@@ -235,6 +235,136 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 	}
 }
 
+func TestSyncWorker_Process_SyncCondition(t *testing.T) {
+	tests := []struct {
+		name               string
+		syncError          error
+		jobState           provisioning.JobState
+		expectedSyncReason string
+		expectedSyncStatus metav1.ConditionStatus
+	}{
+		{
+			name:               "successful sync sets SyncSuccessful condition",
+			syncError:          nil,
+			jobState:           provisioning.JobStateSuccess,
+			expectedSyncReason: provisioning.ReasonSyncSuccessful,
+			expectedSyncStatus: metav1.ConditionTrue,
+		},
+		{
+			name:               "failed sync sets SyncFailed condition",
+			syncError:          errors.New("sync operation failed"),
+			jobState:           provisioning.JobStateError,
+			expectedSyncReason: provisioning.ReasonSyncFailed,
+			expectedSyncStatus: metav1.ConditionFalse,
+		},
+		{
+			name:               "quota exceeded sets SyncQuotaExceeded condition",
+			syncError:          &quotas.QuotaExceededError{Err: fmt.Errorf("repository is over quota")},
+			jobState:           provisioning.JobStateWarning,
+			expectedSyncReason: provisioning.ReasonSyncQuotaExceeded,
+			expectedSyncStatus: metav1.ConditionFalse,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clientFactory := resources.NewMockClientFactory(t)
+			repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+			repositoryPatchFn := NewMockRepositoryPatchFn(t)
+			syncer := NewMockSyncer(t)
+			readerWriter := &mockReaderWriter{
+				MockRepository: repository.NewMockRepository(t),
+				MockVersioned:  repository.NewMockVersioned(t),
+			}
+			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+
+			repoConfig := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "test-namespace",
+					Generation: 1,
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						LastRef: "existing-ref",
+					},
+				},
+			}
+			readerWriter.MockRepository.On("Config").Return(repoConfig)
+
+			progressRecorder.On("SetMessage", mock.Anything, "update sync status at start").Return()
+			repositoryPatchFn.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+			mockRepoResources := resources.NewMockRepositoryResources(t)
+			mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+			repoResourcesFactory.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+			mockClients := resources.NewMockResourceClients(t)
+			clientFactory.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
+
+			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
+			progressRecorder.On("StrictMaxErrors", 20).Return()
+			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", tt.syncError)
+			progressRecorder.On("Complete", mock.Anything, tt.syncError).Return(provisioning.JobStatus{State: tt.jobState})
+			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
+
+			var capturedSyncCondition metav1.Condition
+			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
+				mock.MatchedBy(func(patch map[string]interface{}) bool {
+					return patch["path"] == "/status/sync"
+				}),
+				mock.MatchedBy(func(patch map[string]interface{}) bool {
+					if patch["path"] != "/status/conditions" {
+						return false
+					}
+					conditions, ok := patch["value"].([]metav1.Condition)
+					if !ok || len(conditions) == 0 {
+						return false
+					}
+					for _, c := range conditions {
+						if c.Type == provisioning.ConditionTypeSyncStatus {
+							capturedSyncCondition = c
+							return true
+						}
+					}
+					return false
+				}),
+			).Return(nil).Once()
+
+			worker := NewSyncWorker(
+				clientFactory,
+				repoResourcesFactory,
+				repositoryPatchFn.Execute,
+				syncer,
+				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				tracing.NewNoopTracerService(),
+				10,
+			)
+
+			job := provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action: provisioning.JobActionPull,
+					Pull:   &provisioning.SyncJobOptions{},
+				},
+			}
+
+			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
+			if tt.syncError != nil {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.Equal(t, provisioning.ConditionTypeSyncStatus, capturedSyncCondition.Type)
+			require.Equal(t, tt.expectedSyncReason, capturedSyncCondition.Reason)
+			require.Equal(t, tt.expectedSyncStatus, capturedSyncCondition.Status)
+
+			repositoryPatchFn.AssertExpectations(t)
+		})
+	}
+}
+
 func TestSyncWorker_Process(t *testing.T) {
 	tests := []struct {
 		name           string

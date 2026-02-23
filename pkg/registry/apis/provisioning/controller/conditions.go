@@ -41,6 +41,44 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 	}
 }
 
+// BuildConditionsPatchOps creates a single conditions patch operation for multiple conditions at once.
+// This avoids the problem of multiple separate patches to /status/conditions overwriting each other.
+// Returns nil if none of the conditions have changed.
+func BuildConditionsPatchOps(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
+	anyChanged := false
+	for _, newCondition := range newConditions {
+		existing := meta.FindStatusCondition(existingConditions, newCondition.Type)
+		if existing == nil ||
+			existing.Status != newCondition.Status ||
+			existing.Reason != newCondition.Reason ||
+			existing.Message != newCondition.Message ||
+			existing.ObservedGeneration != generation {
+			anyChanged = true
+			break
+		}
+	}
+
+	if !anyChanged {
+		return nil
+	}
+
+	conditions := make([]metav1.Condition, len(existingConditions))
+	copy(conditions, existingConditions)
+
+	for _, newCondition := range newConditions {
+		newCondition.ObservedGeneration = generation
+		meta.SetStatusCondition(&conditions, newCondition)
+	}
+
+	return []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/conditions",
+			"value": conditions,
+		},
+	}
+}
+
 // buildReadyConditionWithReason creates a Ready condition with a specific reason.
 // This allows for granular error classification (InvalidSpec, AuthenticationFailed, ServiceUnavailable, RateLimited).
 func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reason string) metav1.Condition {
