@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { QueryEditorType } from '../constants';
+
 import { QueryEditorBody } from './Body/QueryEditorBody';
 import { QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
@@ -11,15 +13,22 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
-  const { queryOptions, showingDatasourceHelp, pendingExpression } = useQueryEditorUIContext();
+
+  const { cardType } = useQueryEditorUIContext();
+  const { queryOptions, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
   const { isQueryOptionsOpen } = queryOptions;
+  const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
+  const isAlertView = cardType === QueryEditorType.Alert;
+
+  const shouldShowFooter = !hasPendingPicker && !isQueryOptionsOpen && !isAlertView;
+  const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;
 
   return (
     <div className={styles.container}>
       <ContentHeaderSceneWrapper />
-      {!pendingExpression && showingDatasourceHelp && <DatasourceHelpPanel />}
+      {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
       <QueryEditorBody />
-      {!pendingExpression && !isQueryOptionsOpen && <QueryEditorFooter />}
+      {shouldShowFooter && <QueryEditorFooter />}
     </div>
   );
 }

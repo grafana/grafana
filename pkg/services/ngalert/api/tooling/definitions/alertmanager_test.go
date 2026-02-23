@@ -361,7 +361,7 @@ receivers:
 									},
 								},
 							},
-							InhibitRules:  []config.InhibitRule{},
+							InhibitRules:  []InhibitRule{},
 							TimeIntervals: []config.TimeInterval{},
 						},
 						Receivers: []*PostableApiReceiver{

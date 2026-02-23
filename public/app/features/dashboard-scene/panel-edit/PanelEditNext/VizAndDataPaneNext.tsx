@@ -17,8 +17,9 @@ import { useVizAndDataPaneLayout } from './hooks';
 export function VizAndDataPaneNext({
   model,
   containerHeight = 800,
-}: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
-  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
+  containerWidth = 800,
+}: SceneComponentProps<PanelEditor> & { containerHeight?: number; containerWidth?: number }) {
+  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight, containerWidth);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
@@ -27,12 +28,8 @@ export function VizAndDataPaneNext({
 
   const nextDataPane = scene.dataPane;
 
-  const vizSizeClass = css({
-    height: layout.vizResize.height,
-  });
   const sidebarSizeClass = css({
     height: layout.sidebarSize === SidebarSize.Mini ? '100%' : layout.expandedSidebarHeight,
-    width: layout.sidebarResize.width,
   });
   const dataPaneSizeClass = css({
     height: '100%',
@@ -45,10 +42,14 @@ export function VizAndDataPaneNext({
           <scene.controls.Component model={scene.controls} />
         </div>
       )}
-      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout }, vizSizeClass)}>
+      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <scene.panelToShow.Component model={scene.panelToShow} />
         <div className={styles.vizResizerWrapper}>
-          <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
+          <div
+            ref={layout.vizResizeHandle.ref}
+            className={layout.vizResizeHandle.className}
+            data-testid="viz-resizer"
+          />
         </div>
       </div>
       <QueryEditorContextWrapper dataPane={nextDataPane}>
@@ -137,9 +138,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     fixedSizeViz: css({
       height: '100vh',
-    }),
-    fullSizeEditor: css({
-      height: 'max-content',
     }),
     expandDataPane: css({
       display: 'flex',

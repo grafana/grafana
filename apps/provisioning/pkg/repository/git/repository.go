@@ -151,8 +151,8 @@ func isValidGitURL(gitURL string) bool {
 		return false
 	}
 
-	// Must be HTTPS
-	if parsed.Scheme != "https" {
+	// Must be HTTPS or HTTP (HTTP allowed for local development)
+	if parsed.Scheme != "https" && parsed.Scheme != "http" {
 		return false
 	}
 

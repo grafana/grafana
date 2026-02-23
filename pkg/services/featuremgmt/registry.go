@@ -265,6 +265,22 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningFolderMetadata",
+			Description:     "Allow setting folder metadata for provisioned folders",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
+			Name:            "provisioningExport",
+			Description:     "Enable export functionality for provisioned resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -517,6 +533,22 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableResourceEndpoint",
+			Description:     "Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
+			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -642,6 +674,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardFiltersOverview",
+			Description:  "Enables the dashboard filters overview pane",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -655,6 +695,14 @@ var (
 			Description:  "Enables generating table data as PDF in reporting",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "reportingV2Layouts",
+			Description:  "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
 		},
@@ -937,6 +985,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardTemplatesAssistantButton",
+			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
@@ -955,6 +1011,14 @@ var (
 		{
 			Name:         "alertingSavedSearches",
 			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingTriageSavedSearches",
+			Description:  "Enables saved searches for the Alert Activity page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
@@ -1079,13 +1143,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-		},
-		{
-			Name:        "newFiltersUI",
-			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "vizActionsAuth",
@@ -1777,14 +1834,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesExternalGroupMapping",
-			Description:  "Routes external group mapping requests from /api to the /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -1956,11 +2005,11 @@ var (
 		{
 			Name:         "restrictedPluginApis",
 			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaPluginsPlatformSquad,
 			HideFromDocs: true,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
@@ -2006,6 +2055,15 @@ var (
 			Description:  "Enables the alerting triage feature",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false, // changes navtree in backend
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingAlertsActivityBanner",
+			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -2189,13 +2247,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "kubernetesAnnotations",
-			Description: "Enables app platform API for annotations",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
@@ -2329,7 +2380,23 @@ var (
 		},
 		{
 			Name:         "kubernetesTeamsHandlerRedirect",
-			Description:  "Redirects the request to teams related endpoints to the app platform API",
+			Description:  "Redirects the request of the team endpoints to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesExternalGroupMappingsApi",
+			Description:  "Enables external group mapping APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesExternalGroupMappingsRedirect",
+			Description:  "Redirects the request of the external group mapping endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2374,7 +2441,32 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-		}}
+		},
+		{
+			Name:         "react19",
+			Description:  "Whether to use the new React 19 runtime",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "frontendServiceUseSettingsService",
+			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "functionalSharedPreferences",
+			Description:  "Whether to use the new SharedPreferences functional component",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+	}
 )
 
 //go:embed toggles_gen.json

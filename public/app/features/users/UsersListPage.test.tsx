@@ -29,7 +29,6 @@ const setup = (propOverrides?: object) => {
     page: 1,
     totalPages: 1,
     perPage: 30,
-    externalUserMngInfo: '',
     fetchInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),

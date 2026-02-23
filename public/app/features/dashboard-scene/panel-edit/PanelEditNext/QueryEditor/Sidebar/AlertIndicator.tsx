@@ -1,44 +1,46 @@
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { useAlertingContext } from '../QueryEditorContext';
+import { QueryEditorType } from '../../constants';
+import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { EMPTY_ALERT } from '../types';
 
-/**
- * Displays a clickable bell icon button showing the number of alert rules associated with this panel.
- * The button is always blue. Clicking it selects the first alert and shows alert cards in the sidebar.
- * Used in the QueryStack header to provide visibility of alerting configuration.
- */
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();
-  // const { setSelectedAlert } = useQueryEditorUIContext();
+  const { cardType, setSelectedAlert } = useQueryEditorUIContext();
 
   if (loading) {
     return null;
   }
 
-  if (alertRules.length === 0) {
-    return null;
-  }
+  const isAlertView = cardType === QueryEditorType.Alert;
+  const hasAlerts = alertRules.length > 0;
 
   const handleClick = () => {
-    // Select the first alert to show the alerts view
-    // if (alertRules.length > 0) {
-    //   setSelectedAlert(alertRules[0]);
-    // }
-    console.log('Alert indicator clicked');
+    if (isAlertView) {
+      setSelectedAlert(null);
+    } else {
+      setSelectedAlert(hasAlerts ? alertRules[0] : EMPTY_ALERT);
+    }
   };
+
+  const helperText = isAlertView
+    ? t('query-editor-next.sidebar.alert-indicator.button-label-hide', 'Hide alert rules')
+    : t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules');
+
+  const buttonText = `(${alertRules.length})`;
 
   return (
     <Button
-      tooltip={t('query-editor-next.sidebar.alert-indicator.tooltip', 'View alert rules')}
+      aria-label={helperText}
       fill="text"
-      variant="primary"
-      icon="bell"
-      size="sm"
+      icon={isAlertView ? 'times' : 'bell'}
       onClick={handleClick}
-      aria-label={t('query-editor-next.sidebar.alert-indicator.button-label', 'View alert rules')}
+      size="sm"
+      tooltip={helperText}
+      variant="primary"
     >
-      ({alertRules.length})
+      {isAlertView ? t('query-editor-next.sidebar.alert-indicator.close', 'Close') : buttonText}
     </Button>
   );
 }

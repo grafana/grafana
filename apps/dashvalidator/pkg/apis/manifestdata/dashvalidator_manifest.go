@@ -6,7 +6,6 @@
 package manifestdata
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -19,12 +18,6 @@ import (
 	v1alpha1 "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/dashvalidator/v1alpha1"
 )
 
-var (
-	rawSchemaDashboardCompatibilityScorev1alpha1     = []byte(`{"DashboardCompatibilityScore":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"DataSourceMapping":{"additionalProperties":false,"description":"DataSourceMapping specifies a datasource to validate dashboard queries against.\nMaps logical datasource references in the dashboard to actual datasource instances.","properties":{"name":{"description":"Optional human-readable name for display in results.\nIf not provided, UID will be used in error messages.\nExample: \"Production Prometheus (US-West)\"","type":"string"},"type":{"description":"Type of datasource plugin.\nMVP: Only \"prometheus\" supported.\nFuture: \"mysql\", \"postgres\", \"elasticsearch\", etc.","type":"string"},"uid":{"description":"Unique identifier of the datasource instance.\nExample: \"prometheus-prod-us-west\"","type":"string"}},"required":["uid","type"],"type":"object"},"DataSourceResult":{"additionalProperties":false,"description":"DataSourceResult contains validation results for a single datasource.\nProvides aggregate statistics and per-query breakdown of compatibility.","properties":{"checkedQueries":{"description":"Number of queries successfully validated.\nMay be less than totalQueries if some queries couldn't be parsed.","type":"integer"},"compatibilityScore":{"description":"Overall compatibility score for this datasource (0-100).\nCalculated as: (foundMetrics / totalMetrics) * 100\nUsed to calculate the global compatibilityScore in status.","type":"number"},"foundMetrics":{"description":"Number of metrics that exist in the datasource schema.\nfoundMetrics \u003c= totalMetrics","type":"integer"},"missingMetrics":{"description":"Array of metric names that were referenced but don't exist.\nUseful for debugging why a dashboard shows \"no data\".\nExample for Prometheus: [\"http_requests_total\", \"api_latency_seconds\"]","items":{"type":"string"},"type":"array"},"name":{"description":"Optional display name (matches DataSourceMapping.name if provided)","type":"string"},"queryBreakdown":{"description":"Per-query breakdown showing which specific queries have issues.\nOne entry per query target (refId: \"A\", \"B\", \"C\", etc.) in each panel.\nAllows pinpointing exactly which panel/query needs fixing.","items":{"$ref":"#/components/schemas/QueryBreakdown"},"type":"array"},"totalMetrics":{"description":"Total number of unique metrics/identifiers referenced across all queries.\nFor Prometheus: metric names extracted from PromQL expressions.\nFor SQL datasources: table and column names.","type":"integer"},"totalQueries":{"description":"Total number of queries in the dashboard targeting this datasource.\nIncludes all panel targets/queries that reference this datasource.","type":"integer"},"type":{"description":"Datasource type (matches DataSourceMapping.type)","type":"string"},"uid":{"description":"Datasource UID that was validated (matches DataSourceMapping.uid)","type":"string"}},"required":["uid","type","totalQueries","checkedQueries","totalMetrics","foundMetrics","missingMetrics","queryBreakdown","compatibilityScore"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"QueryBreakdown":{"additionalProperties":false,"description":"QueryBreakdown provides compatibility details for a single query within a panel.\nGranular per-query results allow users to identify exactly which queries need fixing.\n\nNote: A panel can have multiple queries (refId: \"A\", \"B\", \"C\", etc.),\nso there may be multiple QueryBreakdown entries for the same panelID.","properties":{"compatibilityScore":{"description":"Compatibility percentage for this individual query (0-100).\nCalculated as: (foundMetrics / totalMetrics) * 100\n100 = query will work perfectly, 0 = query will return no data.","type":"number"},"foundMetrics":{"description":"Number of those metrics that exist in the datasource.\nfoundMetrics \u003c= totalMetrics","type":"integer"},"missingMetrics":{"description":"Array of missing metric names specific to this query.\nHelps identify exactly which part of a query expression will fail.\nEmpty array means query is fully compatible.","items":{"type":"string"},"type":"array"},"panelID":{"description":"Numeric panel ID from dashboard JSON.\nUsed to correlate with dashboard structure.","type":"integer"},"panelTitle":{"description":"Human-readable panel title for context.\nExample: \"CPU Usage\", \"Request Rate\"","type":"string"},"queryRefId":{"description":"Query identifier within the panel.\nValues: \"A\", \"B\", \"C\", etc. (from panel.targets[].refId)\nUniquely identifies which query in a multi-query panel this refers to.","type":"string"},"totalMetrics":{"description":"Number of unique metrics referenced in this specific query.\nFor Prometheus: metrics extracted from the PromQL expr.\nExample: rate(http_requests_total[5m]) references 1 metric.","type":"integer"}},"required":["panelTitle","panelID","queryRefId","totalMetrics","foundMetrics","missingMetrics","compatibilityScore"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboardJson":{"additionalProperties":true,"description":"Complete dashboard JSON object to validate.\nMust be a v1 dashboard schema (contains \"panels\" array).\nv2 dashboards (with \"elements\" structure) are not yet supported.","type":"object"},"datasourceMappings":{"description":"Array of datasources to validate against.\nThe validator will check dashboard queries against each datasource\nand provide per-datasource compatibility results.\n\nMVP: Only single datasource supported (array length = 1), Prometheus type only.\nFuture: Will support multiple datasources for dashboards with mixed queries.","items":{"$ref":"#/components/schemas/DataSourceMapping"},"type":"array"}},"required":["dashboardJson","datasourceMappings"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"compatibilityScore":{"description":"Overall compatibility score across all datasources (0-100).\nCalculated as: (total found metrics / total referenced metrics) * 100\n\nScore interpretation:\n- 100: Perfect compatibility, all queries will work\n- 80-99: Excellent, minor missing metrics\n- 50-79: Fair, significant missing metrics\n- 0-49: Poor, most queries will fail","type":"number"},"datasourceResults":{"description":"Per-datasource validation results.\nArray length matches spec.datasourceMappings.\nEach element contains detailed metrics and query-level breakdown.","items":{"$ref":"#/components/schemas/DataSourceResult"},"type":"array"},"lastChecked":{"description":"ISO 8601 timestamp of when validation was last performed.\nExample: \"2024-01-15T10:30:00Z\"","type":"string"},"message":{"description":"Human-readable summary of validation result.\nExamples: \"All queries compatible\", \"3 missing metrics found\"","type":"string"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"required":["compatibilityScore","datasourceResults"],"type":"object"}}`)
-	versionSchemaDashboardCompatibilityScorev1alpha1 app.VersionSchema
-	_                                                = json.Unmarshal(rawSchemaDashboardCompatibilityScorev1alpha1, &versionSchemaDashboardCompatibilityScorev1alpha1)
-)
-
 var appManifestData = app.ManifestData{
 	AppName:          "dashvalidator",
 	Group:            "dashvalidator.grafana.app",
@@ -33,15 +26,7 @@ var appManifestData = app.ManifestData{
 		{
 			Name:   "v1alpha1",
 			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "DashboardCompatibilityScore",
-					Plural:     "DashboardCompatibilityScores",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Schema:     &versionSchemaDashboardCompatibilityScorev1alpha1,
-				},
-			},
+			Kinds:  []app.ManifestVersionKind{},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/check": {
@@ -309,9 +294,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("dashvalidator")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"DashboardCompatibilityScore/v1alpha1": v1alpha1.DashboardCompatibilityScoreKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.

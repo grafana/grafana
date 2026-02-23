@@ -28,6 +28,7 @@ export interface UseWizardNavigationReturn {
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
+  goToStep: (stepId: WizardStep) => void;
 }
 
 export function useWizardNavigation({
@@ -84,7 +85,13 @@ export function useWizardNavigation({
         workflowsEnabled: getWorkflows(formData.repository),
         ...(repoType === 'github' && { githubAuthType }),
       });
-      navigate(PROVISIONING_URL);
+      // Navigate to repository status page instead of listing page
+      const repoName = formData.repositoryName;
+      if (repoName) {
+        navigate(`${PROVISIONING_URL}/${repoName}`);
+      } else {
+        navigate(PROVISIONING_URL);
+      }
     } else {
       let nextStepIndex = currentStepIndex + 1;
 
@@ -125,6 +132,24 @@ export function useWizardNavigation({
     setStepStatusInfo,
   ]);
 
+  const goToStep = useCallback(
+    (stepId: WizardStep) => {
+      const targetIndex = steps.findIndex((s) => s.id === stepId);
+      if (targetIndex >= 0) {
+        setActiveStep(stepId);
+        // Only keep steps completed before the target
+        setCompletedSteps((prev) =>
+          prev.filter((s) => {
+            const sIndex = steps.findIndex((st) => st.id === s);
+            return sIndex < targetIndex;
+          })
+        );
+        setStepStatusInfo({ status: 'idle' });
+      }
+    },
+    [steps, setStepStatusInfo]
+  );
+
   return {
     activeStep,
     completedSteps,
@@ -134,5 +159,6 @@ export function useWizardNavigation({
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   };
 }

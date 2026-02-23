@@ -12,6 +12,7 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
@@ -25,7 +26,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 
   private _groupByVar?: GroupByVariable;
   private _groupBySub?: Unsubscribable;
-  private _queryRunnerDatasource?: DataSourceRef;
+  private _queryRunnerDatasource?: DataSourceRef | null;
 
   constructor(state: Partial<VizPanelHeaderActionsState>) {
     super({
@@ -66,7 +67,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     const queryRunner = this.getQueryRunner();
 
     this._groupByVar = vars.state.variables.find((variable) => variable instanceof GroupByVariable);
-    this._queryRunnerDatasource = queryRunner?.state.datasource;
+    this._queryRunnerDatasource = queryRunner ? getDatasourceFromQueryRunner(queryRunner) : undefined;
 
     this.setAplicabilitySupport();
 
@@ -89,8 +90,9 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
     // update query runner datasource changes
     this._subs.add(
       queryRunner?.subscribeToState((n, p) => {
-        if (n.datasource !== p.datasource) {
-          this._queryRunnerDatasource = n.datasource;
+        // Datasource can be on queryRunner itself (mixed panels) or on the first query
+        if (n.datasource !== p.datasource || n.queries !== p.queries) {
+          this._queryRunnerDatasource = getDatasourceFromQueryRunner(queryRunner);
 
           this.setAplicabilitySupport();
         }

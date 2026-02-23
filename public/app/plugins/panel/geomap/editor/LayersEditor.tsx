@@ -7,7 +7,8 @@ import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { getLayersOptions } from '../layers/registry';
-import { Options, MapLayerState, GeomapInstanceState } from '../types';
+import { type Options } from '../panelcfg.gen';
+import { MapLayerState, GeomapInstanceState } from '../types';
 
 type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapInstanceState>;
 
