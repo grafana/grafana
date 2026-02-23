@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2"
 )
 
 const (
