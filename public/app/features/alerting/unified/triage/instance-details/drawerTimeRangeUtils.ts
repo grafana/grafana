@@ -1,3 +1,5 @@
+import { maxBy } from 'lodash';
+
 import type { TimeRange } from '@grafana/data';
 import type { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
@@ -12,14 +14,12 @@ export function getMaxQueryEvaluationWindowSeconds(rule: GrafanaRuleDefinition):
     return 0;
   }
   const dataQueries = rule.data.filter((q: AlertQuery) => isAlertQueryOfAlertData(q));
-  let maxFrom = 0;
-  for (const q of dataQueries) {
-    const rtr = q.relativeTimeRange;
-    if (rtr && typeof rtr.from === 'number' && rtr.from > maxFrom) {
-      maxFrom = rtr.from;
-    }
-  }
-  return maxFrom;
+  const queryWithMaxFrom = maxBy(dataQueries, (q) =>
+    typeof q.relativeTimeRange?.from === 'number' ? q.relativeTimeRange.from : -Infinity
+  );
+  return queryWithMaxFrom && typeof queryWithMaxFrom.relativeTimeRange?.from === 'number'
+    ? queryWithMaxFrom.relativeTimeRange.from
+    : 0;
 }
 
 /**

@@ -29,6 +29,7 @@ import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
+import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
@@ -191,10 +192,11 @@ export interface InstanceLocationProps {
 
 export function InstanceLocation({ folderTitle, groupName, ruleName, namespaceUid, ruleUid }: InstanceLocationProps) {
   const groupUrl =
-    namespaceUid != null
-      ? `/alerting/${GRAFANA_RULES_SOURCE_NAME}/namespaces/${encodeURIComponent(namespaceUid)}/groups/${encodeURIComponent(groupName)}/view`
+    namespaceUid != null ? groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, namespaceUid, groupName) : undefined;
+  const ruleViewUrl =
+    ruleUid != null
+      ? rulesNav.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, { uid: ruleUid, ruleSourceName: 'grafana' })
       : undefined;
-  const ruleViewUrl = ruleUid ? `/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUid}/view` : undefined;
 
   return (
     <Stack direction="row" alignItems="center" gap={1}>
