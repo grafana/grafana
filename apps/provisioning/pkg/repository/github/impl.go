@@ -24,6 +24,35 @@ const (
 	maxPRFiles  = 1000 // Maximum number of files allowed in a pull request
 )
 
+func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error) {
+	protection, _, err := r.gh.Repositories.GetBranchProtection(ctx, owner, repository, branch)
+	if err != nil {
+		if errors.Is(err, github.ErrBranchNotProtected) {
+			return nil, nil
+		}
+
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusForbidden, http.StatusNotFound:
+				return nil, nil
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get branch protection: %w", err)
+	}
+
+	bp := &BranchProtection{
+		RequiredPullRequestReviews: protection.RequiredPullRequestReviews != nil,
+		RequiredStatusChecks:       protection.RequiredStatusChecks != nil,
+		EnforceAdmins:              protection.EnforceAdmins != nil && protection.EnforceAdmins.Enabled,
+		Restrictions:               protection.Restrictions != nil,
+		LockBranch:                 protection.LockBranch != nil && protection.LockBranch.GetEnabled(),
+	}
+
+	return bp, nil
+}
+
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err != nil {

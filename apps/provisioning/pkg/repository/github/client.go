@@ -24,6 +24,9 @@ type Client interface {
 	// Repositories
 	GetRepository(ctx context.Context, owner, repository string) (Repository, error)
 
+	// Branch protection
+	GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error)
+
 	// Commits
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
@@ -83,4 +86,37 @@ type WebhookConfig struct {
 	// The secret to use when sending events to the URL.
 	// If fetched from GitHub, this is empty as it contains no useful information.
 	Secret string
+}
+
+// BranchProtection holds the subset of GitHub branch protection rules
+// that are relevant for determining whether direct pushes are allowed.
+type BranchProtection struct {
+	RequiredPullRequestReviews bool
+	RequiredStatusChecks       bool
+	EnforceAdmins              bool
+	Restrictions               bool
+	LockBranch                 bool
+}
+
+// BlocksDirectPush returns human-readable reasons why direct pushes would be
+// blocked. An empty slice means direct pushes are allowed.
+func (bp *BranchProtection) BlocksDirectPush() []string {
+	if bp == nil {
+		return nil
+	}
+
+	var reasons []string
+	if bp.RequiredPullRequestReviews {
+		reasons = append(reasons, "required pull request reviews")
+	}
+	if bp.RequiredStatusChecks {
+		reasons = append(reasons, "required status checks")
+	}
+	if bp.Restrictions {
+		reasons = append(reasons, "push restrictions")
+	}
+	if bp.LockBranch {
+		reasons = append(reasons, "branch is locked")
+	}
+	return reasons
 }

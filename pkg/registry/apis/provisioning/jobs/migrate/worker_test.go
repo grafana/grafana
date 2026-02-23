@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -39,7 +40,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 		},
 	}
 
-	worker := NewMigrationWorker(nil)
+	worker := NewMigrationWorker(nil, true)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,7 +51,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 }
 
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
-	worker := NewMigrationWorker(NewMockMigrator(t))
+	worker := NewMigrationWorker(NewMockMigrator(t), true)
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
@@ -128,7 +129,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			unifiedMigrator := NewMockMigrator(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 
-			worker := NewMigrationWorker(unifiedMigrator)
+			worker := NewMigrationWorker(unifiedMigrator, true)
 
 			if tt.setupMocks != nil {
 				tt.setupMocks(unifiedMigrator, progressRecorder)
