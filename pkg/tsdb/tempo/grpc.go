@@ -31,7 +31,7 @@ var (
 	logger = backend.NewLoggerWith("logger", "tsdb.tempo")
 
 	// gRPC client metrics - initialized lazily
-	grpcRequestsTotal *prometheus.CounterVec
+	grpcRequestsTotal   *prometheus.CounterVec
 	grpcRequestDuration *prometheus.HistogramVec
 	grpcInFlightRequests *prometheus.GaugeVec
 
