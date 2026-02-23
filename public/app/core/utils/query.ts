@@ -31,8 +31,14 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
   return [...queries, q];
 }
 
+const QUERY_SERVICE_URL_RE = /^\/apis\/query\.grafana\.app\/[^/]+\/namespaces\/[^/]+\/query/;
+
 export function isDataQuery(url: string): boolean {
   if (url.indexOf('api/datasources/proxy') !== -1 || url.indexOf('api/ds/query') !== -1) {
+    return true;
+  }
+
+  if (QUERY_SERVICE_URL_RE.test(url)) {
     return true;
   }
 
