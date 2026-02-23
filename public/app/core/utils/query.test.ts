@@ -1,6 +1,6 @@
 import { DataQuery } from '@grafana/data';
 
-import { queryIsEmpty } from './query';
+import { queryIsEmpty, isDataQuery } from './query';
 
 interface TestQuery extends DataQuery {
   name?: string;
@@ -20,5 +20,27 @@ describe('queryIsEmpty', () => {
   it('should return false if query only includes props that are not defined in the DataQuery interface', () => {
     const testQuery: TestQuery = { refId: 'A', name: 'test' };
     expect(queryIsEmpty(testQuery)).toEqual(false);
+  });
+});
+
+describe('isDataQuery', () => {
+  it('should return false for empty-string', () => {
+    const url = '';
+    expect(isDataQuery(url)).toEqual(false);
+  });
+
+  it('should return true if URL starts with /api/ds/query', () => {
+    const url = '/api/ds/query?a=b';
+    expect(isDataQuery(url)).toEqual(true);
+  });
+
+  it('should return true if URL starts with /api/ds/query', () => {
+    const url = '/api/datasources/proxy/a/b/c';
+    expect(isDataQuery(url)).toEqual(true);
+  });
+
+  it('should return false for other URLs', () => {
+    const url = '/api/something/else';
+    expect(isDataQuery(url)).toEqual(false);
   });
 });
