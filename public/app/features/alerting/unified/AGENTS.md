@@ -5,9 +5,9 @@ globs:
   - 'public/app/features/alerting/**'
 ---
 
-# Alerting Squad - Claude Code Configuration
+# Alerting Squad - Agent Configuration
 
-This file provides context for Claude Code when working on the Grafana Alerting codebase. It contains alerting-specific patterns and references to Grafana's coding standards.
+This file provides context for AI agents when working on the Grafana Alerting codebase. It contains alerting-specific patterns and references to Grafana's coding standards.
 
 ## Project Context
 
@@ -102,7 +102,7 @@ This file provides context for Claude Code when working on the Grafana Alerting 
 
 ### RTK Query (Primary - Preferred)
 
-**IMPORTANT**: Our direction is to use RTK Query for data fetching, NOT Redux. Do not create new RTKQ endpoints, those should be created manually.
+**IMPORTANT**: Our direction is to use RTK Query for data fetching, NOT Redux.
 
 - API slices in `api/` directory
 - Custom base query in `api/alertingApi.ts`
@@ -116,6 +116,64 @@ import { useGetAlertRulesQuery } from '../api/alertRuleApi';
 
 const { data, isLoading, error } = useGetAlertRulesQuery(params);
 ```
+
+### Using Auto-Generated API Clients (`@grafana/api-clients`)
+
+**IMPORTANT**: When consuming an API endpoint, always prefer the auto-generated clients from `@grafana/api-clients` over creating custom RTK Query endpoints manually. Do not create new RTKQ endpoints by hand — use the generated ones instead.
+
+The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v0alpha1`).
+
+**When the auto-generated client works as-is** — just import and use it directly:
+
+```typescript
+import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
+const { data } = generatedAPI.useListReceiversQuery(params);
+```
+
+**When the auto-generated client is incomplete** (e.g., missing request body types), use `enhanceEndpoints` to override the endpoint while still using the generated client as base. This avoids creating a fully manual RTKQ endpoint:
+
+```typescript
+import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
+// Define the missing body type
+interface TestReceiverIntegrationBody {
+  integration: { type: string; settings: Record<string, unknown> };
+  alert: { labels: Record<string, string>; annotations: Record<string, string> };
+}
+
+// Extend the generated arg with the correct body type
+export interface CreateReceiverTestOverrideArg extends CreateReceiverTestApiArg {
+  body: TestReceiverIntegrationBody;
+}
+
+// TODO: Remove this override once the auto-generated client includes the request body type
+const enhancedApi = generatedAPI.enhanceEndpoints({
+  endpoints: {
+    createReceiverTest: (endpoint) => {
+      endpoint.query = (queryArg: CreateReceiverTestOverrideArg) => ({
+        url: `/receivers/${queryArg.name}/test`,
+        method: 'POST' as const,
+        body: queryArg.body,
+      });
+    },
+  },
+});
+
+// Re-export with correct types
+export function useCreateReceiverTestMutation() {
+  const [originalTrigger, state] = enhancedApi.useCreateReceiverTestMutation();
+  const trigger = (arg: CreateReceiverTestOverrideArg) => originalTrigger(arg);
+  return [trigger, state] as const;
+}
+```
+
+**Key rules**:
+
+1. Always start from `@grafana/api-clients` — never skip it to write a manual RTKQ endpoint
+2. If the generated client has gaps (missing body, wrong types), use `enhanceEndpoints` to patch it
+3. Mark overrides with a `TODO` comment so they can be removed when the generated client is fixed
+4. Place enhanced API wrappers in the `api/` directory (e.g., `api/testReceiversApi.ts`)
 
 ### Redux Toolkit (Legacy)
 
@@ -398,10 +456,12 @@ import { TextLink } from '@grafana/ui';
 
 ### Adding a New API Endpoint
 
-1. ✅ Add to relevant API slice in `api/` (RTK Query)
-2. ✅ Add helper to `mockApi.ts` for testing
-3. ✅ Handle loading/error states in UI
-4. ✅ Test with MSW
+1. ✅ Check if the endpoint exists in `@grafana/api-clients` — always prefer auto-generated clients
+2. ✅ If the generated client is incomplete, use `enhanceEndpoints` to patch it (see [Using Auto-Generated API Clients](#using-auto-generated-api-clients-grafanaapi-clients))
+3. ✅ Place the wrapper in the `api/` directory
+4. ✅ Add helper to `mockApi.ts` for testing
+5. ✅ Handle loading/error states in UI
+6. ✅ Test with MSW
 
 ### Creating a New Form
 
@@ -490,5 +550,5 @@ gh pr diff 67890
 
 ---
 
-**Last Updated**: 2025-11-21
+**Last Updated**: 2026-02-23
 **Maintained By**: Alerting Squad
