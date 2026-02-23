@@ -20,6 +20,58 @@ To improve the consistency across Grafana we encourage devs to use tokens instea
 
 Instead of using `0` to remove a previously set border-radius, use `unset`.
 
+### `no-invalid-css-properties`
+
+Disallow invalid CSS property names in Emotion `css()` calls.
+
+This rule catches typos and invalid CSS properties in Emotion's `css()` function calls, helping prevent bugs where styles are silently ignored by browsers. It uses the [`known-css-properties`](https://www.npmjs.com/package/known-css-properties) package (the same one used by Stylelint) to validate property names against all standard CSS properties.
+
+The rule automatically converts camelCase property names to kebab-case for validation and allows:
+
+- Valid CSS properties (e.g., `paddingLeft`, `backgroundColor`)
+- CSS custom properties/variables (e.g., `--my-custom-property`)
+- Nested selectors and pseudo-classes (e.g., `&:hover`, `& > div`)
+- At-rules (e.g., `@media`, `@supports`)
+- HTML tag selectors (e.g., `button`, `span`)
+
+#### Examples
+
+```tsx
+// Bad ❌ - Typo in property name
+const styles = css({
+  addingLeft: 10, // Should be "paddingLeft"
+  backgroudColor: 'red', // Should be "backgroundColor"
+});
+
+// Good ✅ - Valid CSS properties
+const styles = css({
+  paddingLeft: 10,
+  backgroundColor: 'red',
+});
+
+// Good ✅ - CSS custom properties
+const styles = css({
+  '--my-custom-property': '10px',
+});
+
+// Good ✅ - Nested selectors and pseudo-classes
+const styles = css({
+  '&:hover': {
+    backgroundColor: 'blue',
+  },
+  '& > span': {
+    color: 'red',
+  },
+});
+
+// Good ✅ - Media queries
+const styles = css({
+  '@media (max-width: 768px)': {
+    display: 'none',
+  },
+});
+```
+
 ### `no-unreduced-motion`
 
 Avoid direct use of `animation*` or `transition*` properties.

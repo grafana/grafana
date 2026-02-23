@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 
 import { LogRowModel, store } from '@grafana/data';
 
-import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { LogListModel } from './processing';

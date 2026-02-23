@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -20,11 +21,16 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister RepositoryLister
+	lister      RepositoryLister
+	quotaGetter quotas.QuotaGetter
 }
 
-func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
-	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
+func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quotaGetter quotas.QuotaGetter) Validator {
+	// Default to 10 repositories for backward compatibility when using the old constructor
+	return &VerifyAgainstExistingRepositoriesValidator{
+		lister:      lister,
+		quotaGetter: quotaGetter,
+	}
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -33,7 +39,7 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Vali
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a folder sync repository if an instance repository already exists in the namespace.
 // - Git repositories must not have duplicate or overlapping paths with existing repositories.
-// - The total number of repositories in a single namespace cannot exceed 10.
+// - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
@@ -72,24 +78,41 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 				continue
 			}
 			if v.URL() == cfg.URL() {
-				if v.Path() == cfg.Path() {
+				// Allow duplicate paths only when both paths are empty (repository root)
+				if v.Path() == cfg.Path() && cfg.Path() != "" {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
 				}
 
-				relPath, err := filepath.Rel(v.Path(), cfg.Path())
-				if err != nil {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-				}
-				// https://pkg.go.dev/path/filepath#Rel
-				// Rel will return "../" if the relative paths are not related
-				if !strings.HasPrefix(relPath, "../") {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
+				// Skip parent/child conflict check when both paths are empty (both at repository root)
+				if v.Path() != "" || cfg.Path() != "" {
+					relPath, err := filepath.Rel(v.Path(), cfg.Path())
+					if err != nil {
+						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
+					}
+					// https://pkg.go.dev/path/filepath#Rel
+					// Rel will return "../" if the relative paths are not related
+					if !strings.HasPrefix(relPath, "../") {
+						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
+							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
+					}
 				}
 			}
 		}
+	}
+
+	// Get quota status for the namespace
+	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+	}
+
+	// Check repository limit (0 = unlimited, > 0 = use value)
+	maxRepos := quotaStatus.MaxRepositories
+	// Early return if unlimited (0) to avoid unnecessary counting.
+	if maxRepos == 0 {
+		return nil
 	}
 
 	// Count repositories excluding the current one being created/updated
@@ -100,9 +123,9 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	if count >= 10 {
+	if count >= int(maxRepos) {
 		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")}
+			fmt.Sprintf("Maximum number of %d repositories reached", maxRepos))}
 	}
 
 	return nil

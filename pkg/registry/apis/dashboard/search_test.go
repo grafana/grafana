@@ -772,7 +772,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 
 	tests := map[string]struct {
 		queryString           string
@@ -1152,6 +1152,22 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
 						{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1"}},
 					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"createdBy filter": {
+			queryString: "createdBy=user:abc123",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "createdBy", Operator: "=", Values: []string{"user:abc123"}}},
 				},
 				Query:     "",
 				Limit:     50,

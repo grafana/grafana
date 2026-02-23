@@ -6,9 +6,10 @@ pluginV0Alpha1: {
 	scope:  "Namespaced"
 	schema: {
 		spec: {
-			id:      string
-			version: string
-			url?:    string
+			id:        string
+			version:   string
+			url?:      string
+			parentId?: string
 		}
 	}
 }

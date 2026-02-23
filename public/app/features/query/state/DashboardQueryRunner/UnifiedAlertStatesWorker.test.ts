@@ -170,8 +170,8 @@ describe('UnifiedAlertStatesWorker', () => {
         const results = received[0];
         expect(results).toEqual({
           alertStates: [
-            { id: 0, state: AlertState.Alerting, dashboardId: 12345, panelId: 1 },
-            { id: 1, state: AlertState.Pending, dashboardId: 12345, panelId: 2 },
+            { id: 0, state: AlertState.Alerting, dashboardUID: 'a uid', panelId: 1 },
+            { id: 1, state: AlertState.Pending, dashboardUID: 'a uid', panelId: 2 },
           ],
           annotations: [],
         });

@@ -9,7 +9,7 @@ import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
+import { DashboardBrandingFooter } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import {
@@ -109,7 +109,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
       <div className={styles.body}>
         <body.Component model={body} />
       </div>
-      <PublicDashboardFooter />
+      <DashboardBrandingFooter />
     </Page>
   );
 }

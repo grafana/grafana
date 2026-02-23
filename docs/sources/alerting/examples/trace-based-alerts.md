@@ -37,7 +37,7 @@ You can create trace-based alerts in Grafana Alerting using two main approaches:
 
 This guide provides introductory examples and distinct approaches for setting up **trace-based alerts** in Grafana. Tracing data is commonly collected using **OpenTelemetry (OTel)** instrumentation. OTel allows you to integrate trace data from a wide range of applications and environments into Grafana.
 
-## **Alerting on span metrics**
+## Alerting on span metrics
 
 OpenTelemetry provides processors that convert tracing data into Prometheus-style metrics.
 
@@ -101,9 +101,9 @@ histogram_quantile(0.95,
 ) > 2
 ```
 
-Here’s the query breakdown
+Here’s the query breakdown:
 
-- `traces_span_metrics_duration_seconds`  
+- `traces_span_metrics_duration_seconds`
   It’s a native histogram produced from spans using Alloy or the OTEL collector. The metric is filtered by:
   - `service_name="<SERVICE_NAME>"` targets a particular service.
   - `span_kind="SPAN_KIND_SERVER"` selects spans handling inbound requests.
@@ -111,16 +111,16 @@ Here’s the query breakdown
 
   _You should query `traces_spanmetrics_latency` when using other span metric generators._
 
-- `rate(...[10m])`  
-  Converts the histogram into a per-second histogram over the last 10 minutes (the distribution of spans per second during that period).  
+- `rate(...[10m])`
+  Converts the histogram into a per-second histogram over the last 10 minutes (the distribution of spans per second during that period).
   This makes the time window explicit and ensures latencies can be calculated over the last 10 minutes using `histogram_*` functions.
-- `sum by (span_name)( … )`  
+- `sum by (span_name)( … )`
   Merges all series that share the same `span_name`. This creates a [multidimensional alert](https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/) that generates one alert instance per span name (operation).
-- `histogram_quantile(0.95, ...)`  
-  Calculates p95 latency from the histogram after applying the rate.  
+- `histogram_quantile(0.95, ...)`
+  Calculates p95 latency from the histogram after applying the rate.
   The query runs as an **instant Prometheus query**, returning a single value for the 10-minute window.
-- `> 2`  
-  Defines the threshold condition. It returns only series whose p95 latency exceeds 2 seconds.  
+- `> 2`
+  Defines the threshold condition. It returns only series whose p95 latency exceeds 2 seconds.
   Alternatively, you can set this threshold as a Grafana Alerting expression in the UI, as shown in the following screenshot.
 
   {{< figure src="/media/docs/alerting/trace-based-alertrule-screenshot.png" max-width="750px" caption="Alert rule querying span metrics and using threshold expression" >}}
@@ -200,26 +200,26 @@ The following query calculates the fraction of failed server spans for each serv
 
 Here’s the query breakdown
 
-- `traces_span_metrics_calls_total`  
-   A counter metric produced from spans that tracks the number of completed span operations.
+- `traces_span_metrics_calls_total`
+  A counter metric produced from spans that tracks the number of completed span operations.
   - `span_kind="SPAN_KIND_SERVER"` selects spans handling inbound requests.
   - `status_code="STATUS_CODE_ERROR"` selects only spans that ended in error.
   - Omitting the `status_code` filter in the denominator includes all spans, returning the total span count.
 
   _Check whether your metric generator instead creates the `traces_spanmetrics_calls_total` metric, and adjust the metric name._
 
-- `rate(...[10m])`  
-  Converts the cumulative histogram into a per-second histogram over the last 10 minutes (the distribution of spans per second during that period).  
+- `rate(...[10m])`
+  Converts the cumulative histogram into a per-second histogram over the last 10 minutes (the distribution of spans per second during that period).
   This makes the time window explicit and ensures counters can be calculated over the last 10 minutes.
-- `sum by (service, span_name)( … )`  
-  Aggregates per service and operation, creating one alert instance for each `(service, span_name)` combination.  
+- `sum by (service, span_name)( … )`
+  Aggregates per service and operation, creating one alert instance for each `(service, span_name)` combination.
   This is a [multidimensional alert](https://grafana.com/docs/grafana/latest/alerting/best-practices/multi-dimensional-alerts/) that applies to all services, helping identify which service and corresponding operation is failing.
-- `sum by () (...) / sum by () (...)`  
-  Divides failed spans by total spans to calculate the error rate per operation.  
-  The result is a ratio between `0` and `1,` where `1` means all operations failed.  
+- `sum by () (...) / sum by () (...)`
+  Divides failed spans by total spans to calculate the error rate per operation.
+  The result is a ratio between `0` and `1,` where `1` means all operations failed.
   The query runs as an **instant Prometheus query**, returning a single value for the 10-minute window.
-- `> 0.2`  
-  Defines the threshold condition. It returns only series whose error rate is higher than 20% of spans.  
+- `> 0.2`
+  Defines the threshold condition. It returns only series whose error rate is higher than 20% of spans.
   Alternatively, you can set this threshold as a Grafana Alerting expression in the UI.
 
 ### Enable traffic guardrails
@@ -295,25 +295,25 @@ With **head sampling**, alerting on span metrics should be done with caution, si
 
 With **tail sampling**, it’s important to generate span metrics before a sampling decision is made. [Grafana Cloud Adaptive Traces](https://grafana.com/docs/grafana-cloud/adaptive-telemetry/adaptive-traces/) handle this automatically. With Alloy or the OpenTelemetry Collector, make sure the SpanMetrics connector runs before the filtering or [tail sampling processor](https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.processor.tail_sampling/).
 
-## **Using TraceQL (experimental)**
+## Using TraceQL
 
-**TraceQL** is a query language for searching and filtering traces in **Grafana Tempo**, which uses a syntax similar to `PromQL` and `LogQL`.
+TraceQL is a query language for searching and filtering traces in Grafana Tempo, which uses a syntax similar to `PromQL` and `LogQL`.
 
 With TraceQL, you can skip converting tracing data into span metrics and query raw trace data directly. It provides a more flexible filtering based on the trace structure, attributes, or resource metadata, and can detect issues faster as it does not wait for metric generation.
 
-However, keep in mind that TraceQL is not suitable for all scenarios. For example:
+TraceQL isn't suitable for all scenarios. For example:
 
-- **Inadequate for long-term analysis**  
+- **Inadequate for long-term analysis**
   Trace data has a significantly shorter retention period than metrics. For historical monitoring, it’s recommended to convert key tracing data into metrics to ensure the persistence of important data.
-- **Inadequate for alerting after sampling**  
+- **Inadequate for alerting after sampling**
   TraceQL can only query traces that are actually stored in Tempo. If sampling drops a large portion of traces, TraceQL-based alerts may miss real issues. Refer to [consider sampling](#consider-sampling) for guidance on how to generate span metrics before sampling.
 
   {{< admonition type="caution" >}}
 
-  TraceQL alerting is available in Grafana v12.1 or higher, supported as an [experimental feature](https://grafana.com/docs/release-life-cycle/).  
-  Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+  TraceQL alerting is available in Grafana v12.1 or higher, supported as an [experimental feature](https://grafana.com/docs/release-life-cycle/).
+  Engineering and on-call support isn't available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
-  While TraceQL can be powerful for exploring and detecting issues directly from trace data, **alerting with TraceQL should not be used in production environments yet**. Use it for testing and experimentation at this moment.
+  While TraceQL can be powerful for exploring and detecting issues directly from trace data, **alerting with TraceQL shouldn't be used in production environments yet**. Use it for testing and experimentation at this moment.
 
   {{< /admonition >}}
 
@@ -323,6 +323,8 @@ Follow these steps to create the alert:
 
 1. Enable TraceQL alerting
    To use TraceQL in alerts, you must enable the [**`tempoAlerting`** feature flag in your Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles).
+
+   If you use Grafana Cloud, contact Support to enable TraceQL alerting.
 
 2. Configure the alert query
 

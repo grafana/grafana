@@ -289,6 +289,129 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 	}
 }
 
+func TestClassifyConnectionError(t *testing.T) {
+	testCases := []struct {
+		name           string
+		testResults    *provisioning.TestResults
+		expectedReason string
+	}{
+		{
+			name: "successful test",
+			testResults: &provisioning.TestResults{
+				Success: true,
+				Code:    http.StatusOK,
+			},
+			expectedReason: provisioning.ReasonAvailable,
+		},
+		{
+			name: "validation error (422)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusUnprocessableEntity,
+				Errors:  []provisioning.ErrorDetails{{Detail: "missing required field"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "bad request (400)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusBadRequest,
+				Errors:  []provisioning.ErrorDetails{{Detail: "invalid appID"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "unauthorized (401)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusUnauthorized,
+				Errors:  []provisioning.ErrorDetails{{Detail: "invalid credentials"}},
+			},
+			expectedReason: provisioning.ReasonAuthenticationFailed,
+		},
+		{
+			name: "forbidden (403)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusForbidden,
+				Errors:  []provisioning.ErrorDetails{{Detail: "permission denied"}},
+			},
+			expectedReason: provisioning.ReasonAuthenticationFailed,
+		},
+		{
+			name: "not found (404)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusNotFound,
+				Errors:  []provisioning.ErrorDetails{{Detail: "app not found"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "internal server error (500)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusInternalServerError,
+				Errors:  []provisioning.ErrorDetails{{Detail: "secret decryption failed"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "bad gateway (502)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusBadGateway,
+				Errors:  []provisioning.ErrorDetails{{Detail: "token generation failed"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "service unavailable (503)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusServiceUnavailable,
+				Errors:  []provisioning.ErrorDetails{{Detail: "GitHub API unavailable"}},
+			},
+			expectedReason: provisioning.ReasonServiceUnavailable,
+		},
+		{
+			name: "gateway timeout (504)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusGatewayTimeout,
+				Errors:  []provisioning.ErrorDetails{{Detail: "connection timeout"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "too many requests (429)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusTooManyRequests,
+				Errors:  []provisioning.ErrorDetails{{Detail: "rate limit exceeded"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
+			name: "unknown error code defaults to invalid configuration",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    999,
+				Errors:  []provisioning.ErrorDetails{{Detail: "unknown error"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reason := classifyConnectionError(tc.testResults)
+			assert.Equal(t, tc.expectedReason, reason)
+		})
+	}
+}
+
 func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -298,6 +421,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		expectError    bool
 		expectPatches  bool
 		expectedHealth bool
+		expectedReason string
 	}{
 		{
 			name: "successful health check with status change",
@@ -319,9 +443,10 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			},
 			expectPatches:  true,
 			expectedHealth: true,
+			expectedReason: provisioning.ReasonAvailable,
 		},
 		{
-			name: "failed health check",
+			name: "failed health check - authentication failed",
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-conn",
@@ -336,16 +461,17 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			},
 			testResults: &provisioning.TestResults{
 				Success: false,
-				Code:    http.StatusBadRequest,
+				Code:    http.StatusUnauthorized,
 				Errors: []provisioning.ErrorDetails{
-					{Detail: "connection failed"},
+					{Detail: "invalid credentials"},
 				},
 			},
 			expectPatches:  true,
 			expectedHealth: false,
+			expectedReason: provisioning.ReasonAuthenticationFailed,
 		},
 		{
-			name: "no status change - no patches",
+			name: "failed health check - service unavailable",
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-conn",
@@ -354,7 +480,43 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: true,
+						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusServiceUnavailable,
+				Errors: []provisioning.ErrorDetails{
+					{Detail: "service unavailable"},
+				},
+			},
+			expectPatches:  true,
+			expectedHealth: false,
+			expectedReason: provisioning.ReasonServiceUnavailable,
+		},
+		{
+			name: "no status change - no patches",
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-conn",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Status: provisioning.ConnectionStatus{
+					Health: provisioning.HealthStatus{
+						Healthy: true,
 						Checked: time.Now().Add(-20 * time.Second).UnixMilli(),
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:               provisioning.ConditionTypeReady,
+							Status:             metav1.ConditionTrue,
+							Reason:             provisioning.ReasonAvailable,
+							Message:            "Resource is available",
+							ObservedGeneration: 1,
+							LastTransitionTime: metav1.Now(),
+						},
 					},
 				},
 			},
@@ -403,9 +565,32 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
 
 			if tt.expectPatches {
-				assert.Len(t, patchOps, 1)
+				// Should have 2 patches: health and condition
+				assert.Len(t, patchOps, 2)
+
+				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, "/status/health", patchOps[0]["path"])
+
+				// Second patch should be conditions with Ready condition
+				assert.Equal(t, "replace", patchOps[1]["op"])
+				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
+
+				// Verify Ready condition is set correctly
+				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
+				require.True(t, ok, "conditions should be of type []metav1.Condition")
+				require.Len(t, conditions, 1, "should have exactly one condition")
+
+				readyCondition := conditions[0]
+				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
+
+				if tt.expectedHealth {
+					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
+					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
+				} else {
+					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
+					assert.Equal(t, tt.expectedReason, readyCondition.Reason)
+				}
 			} else {
 				assert.Empty(t, patchOps)
 			}

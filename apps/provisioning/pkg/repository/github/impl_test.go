@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1716,6 +1716,292 @@ func TestDefaultListOptions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := defaultListOptions(tt.maxItems)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGithubClient_GetRepository(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		wantRepo    Repository
+		wantErr     error
+	}{
+		{
+			name: "successful repository retrieval",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            github.Ptr(int64(12345)),
+							Name:          github.Ptr("test-repo"),
+							DefaultBranch: github.Ptr("main"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo: Repository{
+				ID:            12345,
+				Name:          "test-repo",
+				DefaultBranch: "main",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with master as default branch",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            github.Ptr(int64(67890)),
+							Name:          github.Ptr("legacy-repo"),
+							DefaultBranch: github.Ptr("master"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "legacy-repo",
+			wantRepo: Repository{
+				ID:            67890,
+				Name:          "legacy-repo",
+				DefaultBranch: "master",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with develop as default branch",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            github.Ptr(int64(11111)),
+							Name:          github.Ptr("dev-repo"),
+							DefaultBranch: github.Ptr("develop"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "dev-repo",
+			wantRepo: Repository{
+				ID:            11111,
+				Name:          "dev-repo",
+				DefaultBranch: "develop",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with empty fields",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// GitHub API returns nil pointers for missing fields
+						repo := &github.Repository{
+							ID:            nil,
+							Name:          nil,
+							DefaultBranch: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "empty-repo",
+			wantRepo: Repository{
+				ID:            0,
+				Name:          "",
+				DefaultBranch: "",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "nonexistent-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "unauthorized access",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "private-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "forbidden access",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "restricted-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "rate limit exceeded",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "API rate limit exceeded",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "internal server error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal Server Error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("failed to get repository"),
+		},
+		{
+			name: "repository with special characters in name",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            github.Ptr(int64(99999)),
+							Name:          github.Ptr("test-repo-with-dashes_and_underscores"),
+							DefaultBranch: github.Ptr("main"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo-with-dashes_and_underscores",
+			wantRepo: Repository{
+				ID:            99999,
+				Name:          "test-repo-with-dashes_and_underscores",
+				DefaultBranch: "main",
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			got, err := client.GetRepository(context.Background(), tt.owner, tt.repository)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr.Error())
+				assert.Equal(t, tt.wantRepo, got)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantRepo, got)
+			}
 		})
 	}
 }

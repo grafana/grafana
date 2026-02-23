@@ -21,7 +21,6 @@ jest.mock('../../utils/interactions', () => ({
     trackAddPanelClick: jest.fn(),
     trackGroupRowClick: jest.fn(),
     trackGroupTabClick: jest.fn(),
-    trackUngroupClick: jest.fn(),
     trackPastePanelClick: jest.fn(),
   },
 }));
@@ -45,12 +44,6 @@ jest.mock('./useClipboardState', () => ({
   useClipboardState: () => ({
     hasCopiedPanel: true,
   }),
-}));
-
-// mock ungroupLayout
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-  groupLayout: jest.fn(),
 }));
 
 setPluginImportUtils({
@@ -88,6 +81,7 @@ describe('CanvasGridAddActions', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   describe('tracking scene actions', () => {
     it('should call DashboardInteractions.trackAddPanelClick when clicking on add panel button', async () => {
       const scene = buildTestScene();
@@ -122,28 +116,8 @@ describe('CanvasGridAddActions', () => {
       expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalled();
     });
 
-    it('should call DashboardInteractions.trackUngroupClick when clicking on ungroup panels in row layout', async () => {
-      const scene = buildTestScene();
-      const layoutManager = (scene.state.body as TabsLayoutManager).state.tabs[0].state.layout as RowsLayoutManager;
-      const user = userEvent.setup();
-      render(<CanvasGridAddActions layoutManager={layoutManager} />);
-
-      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.ungroup));
-      expect(DashboardInteractions.trackUngroupClick).toHaveBeenCalled();
-    });
-
-    it('should call DashboardInteractions.trackUngroupClick when clicking on ungroup panels in tab layout', async () => {
-      const scene = buildTestScene();
-      const layoutManager = (
-        ((scene.state.body as TabsLayoutManager).state.tabs[0].state.layout as RowsLayoutManager).state.rows[0].state
-          .layout as TabsLayoutManager
-      ).state.tabs[0].state.layout;
-      const user = userEvent.setup();
-      render(<CanvasGridAddActions layoutManager={layoutManager} />);
-
-      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.ungroup));
-      expect(DashboardInteractions.trackUngroupClick).toHaveBeenCalled();
-    });
+    // Note: Ungroup functionality has been moved to TabsLayoutManagerRenderer and RowsLayoutManagerRenderer
+    // Tests for ungroup tracking should be added to those components' test files
 
     it('should call DashboardInteractions.trackPastePanel when clicking on the paste panel button', async () => {
       const scene = buildTestScene();

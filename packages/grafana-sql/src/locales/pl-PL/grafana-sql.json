@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Automatyczny maksymalny czas bezczynności",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Jeśli ta opcja jest włączona, automatycznie ustawia maksymalną liczbę <i>bezczynnych połączeń</i> na tę samą wartość co <i>maksymalna liczba otwartych połączeń</i>. Jeśli maksymalna liczba otwartych połączeń nie jest określona, zostanie ustawiona wartość domyślna ({{defaultMaxIdle}}).",
+        "content-max-idle": "Maksymalna liczba połączeń w puli bezczynnych połączeń. Jeśli <i>maksymalna liczba otwartych połączeń</i> jest większa niż 0, ale mniejsza niż <i>maksymalna liczba bezczynnych połączeń</i>, to <i>maksymalna liczba bezczynnych połączeń</i> zostanie zmniejszona, aby dopasować ją do limitu <i>maksymalnej liczby otwartych połączeń</i>. Jeśli ustawiono wartość 0, nie są zachowywane żadne bezczynne połączenia.",
         "content-max-lifetime": "Maksymalny czas w sekundach, przez który połączenie może być ponownie użyte. Jeśli ustawiono wartość 0, połączenia są ponownie wykorzystywane bez daty zakończenia.",
-        "content-max-open": "",
+        "content-max-open": "Maksymalna liczba otwartych połączeń z bazą danych. Jeśli <i>maksymalna liczba bezczynnych połączeń</i> jest większa niż 0, a <i>maksymalna liczba otwartych połączeń</i> jest mniejsza niż <i>maksymalna liczba bezczynnych połączeń</i>, to <i>maksymalna liczba bezczynnych połączeń</i> zostanie zmniejszona, aby dopasować ją do limitu <i>maksymalnej liczby otwartych połączeń</i>. Jeśli ustawiono wartość 0, liczba otwartych połączeń nie jest ograniczona.",
         "max-idle": "Maks. czas bezczynności",
         "max-lifetime": "Maks. czas istnienia",
         "max-open": "Maks. czas otwarcia",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Zapytanie jest nieprawidłowe. Szczegóły znajdziesz poniżej. <br />Nadal jednak możesz uruchomić to zapytanie.",
         "editor-modes": {
           "label-builder": "Konstruktor",
           "label-code": "Kod"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Pole tekstowe",
+          "valueField": "Pole wartości"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatuj zapytanie"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> To zapytanie przetworzy <strong>{{bytes}}</strong> po uruchomieniu.",
         "validating-query": "Sprawdzanie poprawności zapytania…"
       },
       "raw-editor": {

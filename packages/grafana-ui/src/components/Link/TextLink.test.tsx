@@ -36,6 +36,8 @@ describe('TextLink', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', link);
   });
   it('should turn it into a relative url, if not external', () => {
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     locationUtil.initialize({
       config: { appSubUrl: '/grafana' } as GrafanaConfig,
       getVariablesUrlParams: jest.fn(),
@@ -47,6 +49,7 @@ describe('TextLink', () => {
         <TextLink href={link}>Link to Grafana</TextLink>
       </MemoryRouter>
     );
+    jest.spyOn(console, 'warn').mockRestore();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/after-sub-url');
   });
   it('should fire onclick', async () => {

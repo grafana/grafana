@@ -7,8 +7,18 @@ package v0alpha1
 // DeleteJobOptionsApplyConfiguration represents a declarative configuration of the DeleteJobOptions type for use
 // with apply.
 type DeleteJobOptionsApplyConfiguration struct {
-	Ref       *string                         `json:"ref,omitempty"`
-	Paths     []string                        `json:"paths,omitempty"`
+	// Ref to the branch or commit hash to delete from
+	Ref *string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
+	// Resources to delete
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the paths.
 	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
 }
 

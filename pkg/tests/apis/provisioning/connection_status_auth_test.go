@@ -29,7 +29,8 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -41,15 +42,17 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			},
 		},
 	}}
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
+
+	connectionName := c.GetName()
 
 	t.Run("admin can GET connection status", func(t *testing.T) {
 		var statusCode int
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -62,7 +65,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 		result := helper.EditorREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -76,7 +79,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 		result := helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 

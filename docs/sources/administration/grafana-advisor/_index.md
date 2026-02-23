@@ -39,7 +39,7 @@ To set up Grafana Advisor you need:
 
 ### Enable feature toggles
 
-To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 To enable the required feature toggles, add them to your Grafana configuration file:
 
@@ -121,11 +121,15 @@ This guide walks you through creating a Grafana alert that monitors Advisor chec
 7. Provide a token name and set an appropriate expiration date
 8. Click **Generate token**
 
-> **Important**: Copy the token value immediately and store it securely - you won't be able to see it again
+{{< admonition type="caution" >}}
+Copy the token value immediately and store it securely - you won't be able to see it again.
+{{< /admonition >}}
 
 ### Step 2: Set up the Grafana Infinity data source
 
-> **Important**: Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< admonition type="note" >}}
+Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+{{< /admonition >}}
 
 1. Go to **Connections → Add new connection**
 2. Search for "Infinity"
@@ -202,3 +206,138 @@ Select your preferred evaluation (e.g. every 24 hours) and notification settings
 Click **Save** and check the alert is being triggered.
 
 Your alert is now configured to monitor Advisor results and notify you when failures are detected!
+
+## How to manage Advisor using the Grafana CLI `grafanactl`
+
+The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) documentation.
+
+It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
+
+{{< tabs >}}
+{{< tab-content name="Get the list of checks" >}}
+
+```bash
+grafanactl resources get checks -o wide
+```
+
+For a more detailed view, you can get the list of elements checked and failing inspecting the JSON output:
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["TYPE","CHECKED","FAILURES"],
+  (
+    [.items[] | {
+      type: .metadata.labels["advisor.grafana.app/type"],
+      ts: .metadata.creationTimestamp,
+      count: (.status.report.count // 0),
+      failures: ((.status.report.failures // []) | length)
+    }]
+    | group_by(.type)
+    | map(sort_by(.ts) | last)
+    | sort_by(.type)
+    | .[]
+    | [.type, (.count | tostring), (.failures | tostring)]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Get the list of check types" >}}
+
+```bash
+grafanactl resources get checktypes -o wide
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Show all failures across every check type" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["SEVERITY","ITEM","RULE","TYPE"],
+  (
+    [.items[] | {
+      type: .metadata.labels["advisor.grafana.app/type"],
+      ts: .metadata.creationTimestamp,
+      failures: (.status.report.failures // [])
+    }]
+    | group_by(.type)
+    | map(sort_by(.ts) | last)
+    | map(select((.failures | length) > 0))
+    | .[]
+    | .type as $t
+    | .failures[]
+    | [.severity, .item, .stepID, $t]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Run checks for a type" >}}
+
+Create the check resource and push it:
+
+```bash
+mkdir -p resources/Check/
+echo '{
+  "kind":"Check",
+  "metadata":{
+    "name":"check-manual",
+    "labels":{"advisor.grafana.app/type":"datasource"}, # Replace with the check type you want to run
+    "namespace":"<namespace>" # Replace with the namespace of your Grafana instance or "default" for on-premise
+  },
+  "apiVersion":"advisor.grafana.app/v0alpha1",
+  "spec":{"data":{}},
+  "status":{
+    "report":{
+      "count":0,
+      "failures":[]
+    }
+  }
+}' > resources/Check/check-manual.json
+grafanactl push checks/check-manual
+```
+
+Then wait for the check to run and the results to be available:
+
+```bash
+grafanactl resources get checks/check-manual -o json | jq '.status.report'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Get plugins that need an update" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["PLUGIN","SEVERITY","PLUGIN PATH"],
+  (
+    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "plugin")]
+    | sort_by(.metadata.creationTimestamp) | last
+    | .status.report.failures[]?
+    | select(.stepID == "update")
+    | [.item, .severity, (.links[0].url // "-")]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< tab-content name="Unhealthy datasources" >}}
+
+```bash
+grafanactl resources get checks -o json | jq -r '
+  ["DATASOURCE","SEVERITY","DATASOURCE PATH"],
+  (
+    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "datasource")]
+    | sort_by(.metadata.creationTimestamp) | last
+    | .status.report.failures[]?
+    | select(.stepID == "health-check")
+    | [.item, .severity, (.links[0].url // "-")]
+  )
+  | @tsv
+' | column -t -s $'\t'
+```
+
+{{< /tab-content >}}
+{{< /tabs >}}

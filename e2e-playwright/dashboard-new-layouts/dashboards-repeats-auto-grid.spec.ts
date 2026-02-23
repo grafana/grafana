@@ -21,7 +21,6 @@ const repeatOptions = [1, 2, 3, 4];
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
@@ -45,7 +44,7 @@ test.describe(
 
       await switchToAutoGrid(page, dashboardPage);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).first().click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
@@ -108,6 +107,7 @@ test.describe(
         )
       ).toBeHidden();
     });
+
     test('can update repeats in edit pane', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -124,11 +124,13 @@ test.describe(
       // select first/original repeat panel to activate edit pane
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer)
         .click();
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
         .fill(`${newTitleBase}$c1`);
+
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title')).blur();
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
@@ -262,6 +264,7 @@ test.describe(
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
     });
+
     test('can move repeated panels', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -401,6 +404,7 @@ test.describe(
         )
       ).toBeVisible();
     });
+
     test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -427,6 +431,7 @@ test.describe(
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer)
         .click();
 
       const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(

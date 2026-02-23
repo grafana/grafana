@@ -138,6 +138,7 @@ func (s *Service) List(
 		query.OrgID,
 		query.DashboardUID,
 		int64(query.Limit),
+		int64(query.Start),
 		query.ContinueToken,
 	)
 	if err != nil {
@@ -237,14 +238,26 @@ func (s *Service) getDashboardVersionThroughK8s(
 }
 
 func (s *Service) listDashboardVersionsThroughK8s(
-	ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string,
+	ctx context.Context, orgID int64, dashboardUID string, limit int64, start int64, continueToken string,
 ) (*unstructured.UnstructuredList, error) {
 	labelSelector := utils.LabelKeyGetHistory + "=true"
 	fieldSelector := "metadata.name=" + dashboardUID
+
+	// We need to fetch (start + limit) items to be able to skip the first 'start' items
+	// and return 'limit' items after that offset.
+	//
+	// Note: This implementation fetches items in memory and then slices them, which works well
+	// for typical use cases (small offsets, < 100 versions per dashboard), but may be inefficient
+	// for dashboards with many versions (>1000) and large offset values.
+	// K8s doesn't support native offset pagination - it only supports token-based pagination
+	// (Limit + Continue). An alternative would be to skip pages using Continue tokens, but this
+	// adds complexity for minimal practical benefit given typical dashboard version counts.
+	totalToFetch := start + limit
+
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 		LabelSelector: labelSelector,
 		FieldSelector: fieldSelector,
-		Limit:         limit,
+		Limit:         totalToFetch,
 		Continue:      continueToken,
 	})
 	if err != nil {
@@ -258,20 +271,33 @@ func (s *Service) listDashboardVersionsThroughK8s(
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
-	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the limit or there are no more pages
+	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the total or there are no more pages
 	continueToken = out.GetContinue()
-	for (len(out.Items) < int(limit)) && (continueToken != "") {
+	for (len(out.Items) < int(totalToFetch)) && (continueToken != "") {
 		tempOut, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 			LabelSelector: labelSelector,
 			FieldSelector: fieldSelector,
 			Continue:      continueToken,
-			Limit:         limit - int64(len(out.Items)),
+			Limit:         totalToFetch - int64(len(out.Items)),
 		})
 		if err != nil {
 			return nil, err
 		}
 		out.Items = append(out.Items, tempOut.Items...)
 		continueToken = tempOut.GetContinue()
+	}
+
+	// Apply the offset (start) by skipping the first 'start' items
+	if start > 0 && len(out.Items) > int(start) {
+		out.Items = out.Items[start:]
+	} else if start > 0 {
+		// If start is greater than or equal to the number of items, return empty list
+		out.Items = []unstructured.Unstructured{}
+	}
+
+	// Ensure we don't return more than 'limit' items after applying the offset
+	if int64(len(out.Items)) > limit {
+		out.Items = out.Items[:limit]
 	}
 
 	// Update the continue token on the response to reflect the actual position after all fetched items.

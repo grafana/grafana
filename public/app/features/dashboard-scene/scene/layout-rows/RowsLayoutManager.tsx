@@ -9,7 +9,7 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -60,8 +60,8 @@ export class RowsLayoutManager
     icon: 'list-ul',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeRowsLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeRowsLayout(this, isSnapshot);
   }
 
   public readonly descriptor = RowsLayoutManager.descriptor;

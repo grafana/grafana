@@ -7,34 +7,21 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupTestNotifier(t *testing.T) (*pollingNotifier, *eventStore) {
-	db := setupTestBadgerDB(t)
-	t.Cleanup(func() {
-		err := db.Close()
-		require.NoError(t, err)
-	})
-	kv := NewBadgerKV(db)
-	eventStore := newEventStore(kv)
+	eventStore := newEventStore(setupBadgerKV(t))
 	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
 	return notifier.(*pollingNotifier), eventStore
 }
 
 func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	kv, err := NewSQLKV(eDB)
-	require.NoError(t, err)
-	eventStore := newEventStore(kv)
+	eventStore := newEventStore(setupSqlKV(t))
 	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
 	return notifier.(*pollingNotifier), eventStore
 }

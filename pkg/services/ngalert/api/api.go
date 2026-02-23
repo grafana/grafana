@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -67,11 +69,14 @@ type API struct {
 	StateManager         state.AlertInstanceManager
 	RuleStatusReader     apiprometheus.StatusReader
 	AccessControl        ac.AccessControl
-	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
+	ReceiverTestService  *notifier.ReceiverTestingService
+	RouteService         *routes.Service
+	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
+	InhibitionRules      *inhibition_rules.Service
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
@@ -180,6 +185,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
 		log:                 logger,
 		policies:            api.Policies,
+		routeService:        api.RouteService,
 		contactPointService: api.ContactPointService,
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,

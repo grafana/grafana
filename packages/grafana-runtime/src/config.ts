@@ -85,6 +85,7 @@ export class GrafanaBootConfig {
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  /** @deprecated it will be removed in a future release, use isPanelPluginInstalled, getPanelPluginVersion or getListedPanelPluginIds instead */
   panels: { [key: string]: PanelPluginMeta } = {};
   /** @deprecated it will be removed in a future release, use isAppPluginInstalled or getAppPluginVersion instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};
@@ -105,6 +106,7 @@ export class GrafanaBootConfig {
   externalUserMngInfo = '';
   externalUserMngAnalytics = false;
   externalUserMngAnalyticsParams = '';
+  externalUserUpgradeLinkUrl = '';
   allowOrgCreate = false;
   feedbackLinksEnabled = true;
   disableLoginForm = false;
@@ -136,6 +138,7 @@ export class GrafanaBootConfig {
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  liveNamespaced = false; // orgId vs namespace
   liveMessageSizeLimit = 65536;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -160,7 +163,6 @@ export class GrafanaBootConfig {
     performanceInstrumentalizationEnabled: false,
     cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
-    webVitalsAttribution: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };
@@ -175,6 +177,7 @@ export class GrafanaBootConfig {
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  awsPerDatasourceHTTPProxyEnabled = false;
   azure: AzureSettingsGrafanaData = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
@@ -185,6 +188,7 @@ export class GrafanaBootConfig {
   caching = {
     enabled: false,
     cleanCacheEnabled: true,
+    defaultTTLMs: 300000,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
@@ -322,7 +326,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   // Although most flags can not be changed from the URL in production,
   // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI', 'dashboardSceneSolo']);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {

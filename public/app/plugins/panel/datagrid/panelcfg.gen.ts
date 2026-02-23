@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/datagrid/panelcfg.cue file.
+
 export interface Options {
   selectedSeries: number;
 }

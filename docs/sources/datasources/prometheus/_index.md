@@ -113,6 +113,7 @@ The following documentation will help you get started working with Prometheus an
 - [Configure the Prometheus data source](ref:configure-prometheus-data-source)
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
+- [Troubleshooting](troubleshooting/)
 
 ## Exemplars
 

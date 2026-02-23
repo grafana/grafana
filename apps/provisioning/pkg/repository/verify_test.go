@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
 // verifyTestStorage implements StorageLister for verify tests
@@ -29,6 +30,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		existingRepos   []provisioning.Repository
 		wantErr         bool
 		wantErrContains string
+		maxRepositories int64
 	}{
 		{
 			name: "allows first repository with instance sync",
@@ -38,8 +40,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
 				},
 			},
-			existingRepos: []provisioning.Repository{},
-			wantErr:       false,
+			existingRepos:   []provisioning.Repository{},
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids instance sync when other repos exist",
@@ -54,6 +57,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: "Instance repository can only be created when no other repositories exist",
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids folder sync when instance repo exists",
@@ -73,6 +77,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: "Cannot create folder repository when instance repository exists",
+			maxRepositories: 10,
 		},
 		{
 			name: "allows folder sync when no instance repo exists",
@@ -90,7 +95,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids duplicate git path",
@@ -118,6 +124,33 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: ErrRepositoryDuplicatePath.Error(),
+			maxRepositories: 10,
+		},
+		{
+			name: "allows duplicate empty paths in same repo",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:  "https://github.com/org/repo",
+							Path: "",
+						},
+					},
+				},
+			},
+			wantErr: false,
 		},
 		{
 			name: "forbids parent folder conflict",
@@ -145,6 +178,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
+			maxRepositories: 10,
 		},
 		{
 			name: "allows different paths in same repo",
@@ -170,7 +204,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "allows same path in different repos",
@@ -196,7 +231,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids more than 10 repositories",
@@ -215,6 +251,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}(),
 			wantErr:         true,
 			wantErrContains: "Maximum number of 10 repositories reached",
+			maxRepositories: 10,
 		},
 		{
 			name: "allows updating existing repo (doesn't count self)",
@@ -234,7 +271,45 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				}
 				return repos
 			}(),
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
+		},
+		{
+			name: "allows unlimited repositories when maxRepositories is 0",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				repos := make([]provisioning.Repository, 20)
+				for i := 0; i < 20; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				return repos
+			}(),
+			wantErr:         false,
+			maxRepositories: 0,
+		},
+		{
+			name: "enforces custom maxRepositories limit",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				repos := make([]provisioning.Repository, 5)
+				for i := 0; i < 5; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				return repos
+			}(),
+			wantErr:         true,
+			wantErrContains: "Maximum number of 5 repositories reached",
+			maxRepositories: 5,
 		},
 	}
 
@@ -242,8 +317,10 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			validator := NewVerifyAgainstExistingRepositoriesValidator(lister)
-			errList := validator.Validate(context.Background(), tt.cfg)
+			quotaStatus := provisioning.QuotaStatus{MaxRepositories: tt.maxRepositories}
+			quotaGetter := quotas.NewFixedQuotaGetter(quotaStatus)
+			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister, quotaGetter)
+			errList := validatorRaw.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {
 				require.NotEmpty(t, errList, "expected validation errors")

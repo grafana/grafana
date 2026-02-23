@@ -355,10 +355,18 @@ export function SelectBase<T, Rest = {}>({
                 role="button"
                 aria-label={t('grafana-ui.select.clear-value', 'Clear value')}
                 className={styles.singleValueRemove}
+                tabIndex={0}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    clearValue();
+                  }
                 }}
               />
             );

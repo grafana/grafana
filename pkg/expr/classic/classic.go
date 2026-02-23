@@ -61,7 +61,7 @@ type condition struct {
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
 func (cmd *ConditionsCmd) NeedsVars() []string {
-	vars := []string{}
+	vars := make([]string, 0, len(cmd.Conditions))
 	for _, c := range cmd.Conditions {
 		vars = append(vars, c.InputRefID)
 	}

@@ -26,6 +26,7 @@ type BuildOpts struct {
 	skipRpmGen      bool
 	skipDebGen      bool
 	printGenVersion bool
+	binarySuffix    string
 }
 
 // BuildOptsFromFlags reads the cmd args to assemble a BuildOpts object. This function calls flag.Parse()
@@ -50,6 +51,7 @@ func BuildOptsFromFlags() BuildOpts {
 	flag.BoolVar(&opts.skipRpmGen, "skipRpm", false, "skip rpm package generation (default: false)")
 	flag.BoolVar(&opts.skipDebGen, "skipDeb", false, "skip deb package generation (default: false)")
 	flag.BoolVar(&opts.printGenVersion, "gen-version", false, "generate Grafana version and output (default: false)")
+	flag.StringVar(&opts.binarySuffix, "suffix", "", "suffix to append to binary name")
 	flag.Parse()
 
 	opts.buildID = shortenBuildID(buildIDRaw)

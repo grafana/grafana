@@ -8,6 +8,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
 
+import {
+  DOCS_URL_FILE_PROVISIONING,
+  DOCS_URL_HTTP_API_PROVISIONING,
+  DOCS_URL_TERRAFORM_PROVISIONING,
+} from '../../utils/docs';
+
 import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
 
 interface FileExportPreviewProps {
@@ -103,10 +109,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
           {{ name }} format is only valid for File Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_FILE_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>
@@ -120,10 +123,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
           {{ name }} format is only valid for API Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_HTTP_API_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>
@@ -137,10 +137,7 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
           {{ name }} format is only valid for Terraform Provisioning.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
-            external
-          >
+          <TextLink href={DOCS_URL_TERRAFORM_PROVISIONING} external>
             Read more in the docs.
           </TextLink>
         </Trans>

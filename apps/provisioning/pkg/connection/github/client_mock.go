@@ -192,9 +192,9 @@ func (_c *MockClient_GetAppInstallation_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// ListInstallationRepositories provides a mock function with given fields: ctx, installationID
-func (_m *MockClient) ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error) {
-	ret := _m.Called(ctx, installationID)
+// ListInstallationRepositories provides a mock function with given fields: ctx
+func (_m *MockClient) ListInstallationRepositories(ctx context.Context) ([]Repository, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInstallationRepositories")
@@ -202,19 +202,19 @@ func (_m *MockClient) ListInstallationRepositories(ctx context.Context, installa
 
 	var r0 []Repository
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]Repository, error)); ok {
-		return rf(ctx, installationID)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]Repository, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []Repository); ok {
-		r0 = rf(ctx, installationID)
+	if rf, ok := ret.Get(0).(func(context.Context) []Repository); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]Repository)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, installationID)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -229,14 +229,13 @@ type MockClient_ListInstallationRepositories_Call struct {
 
 // ListInstallationRepositories is a helper method to define mock.On call
 //   - ctx context.Context
-//   - installationID string
-func (_e *MockClient_Expecter) ListInstallationRepositories(ctx interface{}, installationID interface{}) *MockClient_ListInstallationRepositories_Call {
-	return &MockClient_ListInstallationRepositories_Call{Call: _e.mock.On("ListInstallationRepositories", ctx, installationID)}
+func (_e *MockClient_Expecter) ListInstallationRepositories(ctx interface{}) *MockClient_ListInstallationRepositories_Call {
+	return &MockClient_ListInstallationRepositories_Call{Call: _e.mock.On("ListInstallationRepositories", ctx)}
 }
 
-func (_c *MockClient_ListInstallationRepositories_Call) Run(run func(ctx context.Context, installationID string)) *MockClient_ListInstallationRepositories_Call {
+func (_c *MockClient_ListInstallationRepositories_Call) Run(run func(ctx context.Context)) *MockClient_ListInstallationRepositories_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -246,7 +245,7 @@ func (_c *MockClient_ListInstallationRepositories_Call) Return(_a0 []Repository,
 	return _c
 }
 
-func (_c *MockClient_ListInstallationRepositories_Call) RunAndReturn(run func(context.Context, string) ([]Repository, error)) *MockClient_ListInstallationRepositories_Call {
+func (_c *MockClient_ListInstallationRepositories_Call) RunAndReturn(run func(context.Context) ([]Repository, error)) *MockClient_ListInstallationRepositories_Call {
 	_c.Call.Return(run)
 	return _c
 }

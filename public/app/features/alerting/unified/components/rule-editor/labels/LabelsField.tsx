@@ -11,6 +11,7 @@ import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DOCS_URL_ANNOTATION_LABEL } from '../../../utils/docs';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown, { AsyncOptionsLoader } from '../../AlertLabelDropdown';
@@ -407,7 +408,7 @@ function LabelsField() {
             {getLabelText(type)}
           </Text>
           <NeedHelpInfo
-            externalLink={'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'}
+            externalLink={DOCS_URL_ANNOTATION_LABEL}
             linkText={`Read about labels`}
             contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."

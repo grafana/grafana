@@ -57,7 +57,7 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 // shouldUseK8sAPIs returns true if both feature flags for K8s API redirect are enabled
 func (a *api) shouldUseK8sAPIs() bool {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	return a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) &&
+	return a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis)
 }
 
@@ -199,7 +199,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) &&
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
 		if err == nil {

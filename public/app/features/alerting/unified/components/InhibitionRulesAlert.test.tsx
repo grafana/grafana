@@ -8,6 +8,7 @@ import {
   setAlertmanagerConfig,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { DOCS_URL_INHIBITION_RULES } from 'app/features/alerting/unified/utils/docs';
 
 import { InhibitionRulesAlert } from './InhibitionRulesAlert';
 
@@ -68,10 +69,7 @@ describe('InhibitionRulesAlert', () => {
 
     const link = await screen.findByRole('link', { name: /Learn more about inhibition rules/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute(
-      'href',
-      'https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/#inhibition-rules'
-    );
+    expect(link).toHaveAttribute('href', DOCS_URL_INHIBITION_RULES);
   });
 
   it('should not render when alertmanagerSourceName is empty', async () => {

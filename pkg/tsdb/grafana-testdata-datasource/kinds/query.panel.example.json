@@ -23,6 +23,16 @@
         "timeStep": 1000
       },
       "scenarioId": "predictable_pulse"
+    },
+    {
+      "refId": "C",
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "TheUID"
+      },
+      "scenarioId": "random_walk",
+      "seriesCount": 10,
+      "spread": 0.2
     }
   ]
 }

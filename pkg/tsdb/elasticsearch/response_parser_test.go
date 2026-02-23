@@ -340,7 +340,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		require.Equal(t, 17, len(frame.Fields))
+		require.Equal(t, 18, len(frame.Fields))
 		// Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -348,19 +348,27 @@ func TestProcessLogsResponse(t *testing.T) {
 		// Second is log line
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 		require.Equal(t, "line", frame.Fields[1].Name)
-		// Correctly renames lvl field to level
-		require.Equal(t, "level", frame.Fields[11].Name)
+		// Correctly preserves lvl field name and also adds level field for UI
+		fieldMap := make(map[string]*data.Field)
+		for _, field := range frame.Fields {
+			fieldMap[field.Name] = field
+		}
+		require.Contains(t, fieldMap, "lvl", "Should have original field name for filtering")
+		require.Contains(t, fieldMap, "level", "Should have level field for UI display")
 		// Correctly uses string types
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+		require.Equal(t, data.FieldTypeNullableString, fieldMap["line"].Type())
 		// Correctly detects float64 types
-		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[7].Type())
+		require.Contains(t, fieldMap, "float")
+		require.Equal(t, data.FieldTypeNullableFloat64, fieldMap["float"].Type())
 		// Correctly detects json types
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type()) //nolint:staticcheck
+		require.Contains(t, fieldMap, "shapes")
+		require.Equal(t, data.FieldTypeNullableJSON, fieldMap["shapes"].Type()) //nolint:staticcheck
 		// Correctly flattens fields
-		require.Equal(t, "nested.field.double_nested", frame.Fields[13].Name)
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[13].Type())
+		require.Contains(t, fieldMap, "nested.field.double_nested")
+		require.Equal(t, data.FieldTypeNullableString, fieldMap["nested.field.double_nested"].Type())
 		// Correctly detects type even if first value is null
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[16].Type())
+		require.Contains(t, fieldMap, "xyz")
+		require.Equal(t, data.FieldTypeNullableString, fieldMap["xyz"].Type())
 	})
 
 	t.Run("Log query with highlight", func(t *testing.T) {

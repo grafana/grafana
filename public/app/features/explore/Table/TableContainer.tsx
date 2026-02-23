@@ -67,7 +67,10 @@ export class TableContainer extends PureComponent<Props, State> {
     }
     // tries to estimate table height, with a min of 300 and a max of 600
     // if there are multiple tables, there is no min
-    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+    const height = Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+
+    // esure minimum height of 300
+    return Math.max(height, 300);
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
@@ -103,9 +106,22 @@ export class TableContainer extends PureComponent<Props, State> {
     if (dataFrames?.length) {
       dataFrames = dataFrames.map((frame) => {
         frame.fields.forEach((field, index) => {
-          const hidden = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
-          field.config.custom = { hidden };
-          dataLimited = dataLimited || hidden;
+          const custom = field.config.custom ?? {};
+
+          const hiddenByColumnLimit = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
+          dataLimited = dataLimited || hiddenByColumnLimit;
+
+          const hiddenByDatasource = custom.hideFrom?.viz === true || custom.hidden === true;
+          const hidden = hiddenByDatasource || hiddenByColumnLimit;
+
+          field.config.custom = {
+            ...custom,
+            hidden,
+            hideFrom: {
+              ...custom.hideFrom,
+              viz: hidden,
+            },
+          };
         });
         return frame;
       });

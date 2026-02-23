@@ -18,7 +18,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { Dashboard, DashboardLink, VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
@@ -67,9 +67,7 @@ export interface ScopeMeta {
 }
 
 export class DashboardModel implements TimeModel {
-  /** @deprecated use UID */
-  id: any;
-  // TODO: use propert type and fix all the places where uid is set to null
+  // TODO: use proper type and fix all the places where uid is set to null
   uid: any;
   title: string;
   description: any;
@@ -145,7 +143,6 @@ export class DashboardModel implements TimeModel {
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
-    this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || meta?.uid || null;
     this.revision = data.revision ?? undefined;
@@ -1257,10 +1254,7 @@ export class DashboardModel implements TimeModel {
       canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
 
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return canEdit;
-    }
-    return this.canEditDashboard() && canEdit;
+    return canEdit;
   }
 
   canDeleteAnnotations(dashboardUID?: string) {
@@ -1273,10 +1267,7 @@ export class DashboardModel implements TimeModel {
       canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
 
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return canDelete;
-    }
-    return canDelete && this.canEditDashboard();
+    return canDelete;
   }
 
   canAddAnnotations() {
@@ -1286,12 +1277,7 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
-    // If RBAC is enabled there are additional conditions to check.
-    if (config.featureToggles.annotationPermissionUpdate) {
-      return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
-    }
-
-    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd) && this.canEditDashboard();
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {

@@ -138,7 +138,10 @@ export function ValuesFormatSelector({ valuesFormat, onValuesFormatChange }: Val
               Provide a JSON representing an array of objects, where each object can have any number of properties.
               <br />
               Check{' '}
-              <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
+              <TextLink
+                href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/variables/add-template-variables/#add-a-custom-variable"
+                external
+              >
                 our docs
               </TextLink>{' '}
               for more information.
