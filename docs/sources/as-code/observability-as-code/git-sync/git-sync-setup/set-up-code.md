@@ -72,7 +72,7 @@ spec:
     installationID: '<GITHUB_INSTALL_ID>'
 secure:
   privateKey:
-    create: '<GITHUB_PRIVATE_KEY'
+    create: '<GITHUB_PRIVATE_KEY>'
 ```
 
 Replace the placeholders with your values:
