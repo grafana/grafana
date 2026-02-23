@@ -1,29 +1,27 @@
-import { DropResult } from '@hello-pangea/dnd';
-
+import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
 
-import { Transformation } from '../types';
+import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
 import { TransformationCard } from './TransformationCard';
+import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
-interface QueriesAndTransformationsViewProps {
-  queries: DataQuery[];
-  transformations: Transformation[];
-  onQueryDragEnd: (result: DropResult) => void;
-  onTransformationDragEnd: (result: DropResult) => void;
-}
+export function QueriesAndTransformationsView() {
+  const { queries, data } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-export function QueriesAndTransformationsView({
-  queries,
-  transformations,
-  onQueryDragEnd,
-  onTransformationDragEnd,
-}: QueriesAndTransformationsViewProps) {
+  const isLoading = data?.state === LoadingState.Loading;
+
+  // TODO: fix
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <QuerySidebarCollapsableHeader
