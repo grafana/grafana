@@ -1,6 +1,5 @@
 import { screen } from '@testing-library/react';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
@@ -23,11 +22,7 @@ describe('QueryEditorSidebar', () => {
   it('should render loading bar when data is loading', () => {
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       qrState: {
-        data: {
-          state: LoadingState.Loading,
-          series: [],
-          timeRange: getDefaultTimeRange(),
-        },
+        isLoading: true,
       },
     });
 

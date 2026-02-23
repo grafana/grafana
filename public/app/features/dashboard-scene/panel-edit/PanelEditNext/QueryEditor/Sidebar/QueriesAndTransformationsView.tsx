@@ -1,4 +1,3 @@
-import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LoadingBar } from '@grafana/ui';
 
@@ -12,11 +11,9 @@ import { TransformationCard } from './TransformationCard';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 export function QueriesAndTransformationsView() {
-  const { queries, data } = useQueryRunnerContext();
+  const { queries, isLoading } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
-
-  const isLoading = data?.state === LoadingState.Loading || data?.state === undefined;
 
   if (isLoading) {
     return (

@@ -68,7 +68,7 @@ export function QueryEditorContextWrapper({
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      isLoading: queryRunnerState?.data?.state === LoadingState.Loading || queryRunnerState?.data?.state === undefined,
       queryError,
     }),
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
