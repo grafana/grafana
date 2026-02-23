@@ -21,6 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// sqliteDateTimeFormat is used for created/updated columns to avoid
+// platform-dependent time string conversion (e.g. Windows vs Unix).
+// SQLite accepts "YYYY-MM-DD HH:MM:SS" and avoids "unsupported time format" on Windows.
+const sqliteDateTimeFormat = "2006-01-02 15:04:05.000"
+
 const DEFAULT_BATCH_SIZE = 999
 
 type FolderStoreImpl struct {
@@ -68,12 +73,13 @@ func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCo
 		createdBy := cmd.SignedInUser.UserID
 	*/
 	var lastInsertedID int64
+	nowStr := time.Now().UTC().Format(sqliteDateTimeFormat)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql string
 		var args []any
 		if cmd.ParentUID == "" {
 			sql = "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
-			args = []any{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			args = []any{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, nowStr, nowStr}
 		} else {
 			if cmd.ParentUID != folder.GeneralFolderUID {
 				if _, err := ss.Get(ctx, folder.GetFolderQuery{
@@ -84,7 +90,7 @@ func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCo
 				}
 			}
 			sql = "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
-			args = []any{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			args = []any{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, nowStr, nowStr}
 		}
 
 		var err error
@@ -126,7 +132,7 @@ func (ss *FolderStoreImpl) Delete(ctx context.Context, UIDs []string, orgID int6
 }
 
 func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
-	updated := time.Now()
+	updatedStr := time.Now().UTC().Format(sqliteDateTimeFormat)
 	uid := cmd.UID
 
 	var foldr *folder.Folder
@@ -138,7 +144,7 @@ func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCo
 		sql := strings.Builder{}
 		sql.WriteString("UPDATE folder SET ")
 		columnsToUpdate := []string{"updated = ?"}
-		args := []any{updated}
+		args := []any{updatedStr}
 		if cmd.NewDescription != nil {
 			columnsToUpdate = append(columnsToUpdate, "description = ?")
 			args = append(args, *cmd.NewDescription)
@@ -199,9 +205,10 @@ func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCo
 // The full path is a string that contains the titles of all parent folders separated by a slash.
 // For example, if the folder structure is:
 //
-//	A
-//	└── B
-//	    └── C
+// A
+// └── B
+//
+//     └── C
 //
 // The full path of C is "A/B/C".
 // The full path of B is "A/B".
@@ -209,8 +216,8 @@ func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCo
 // If a folder contains a slash in its title, it is escaped with a backslash.
 // For example, if the folder structure is:
 //
-//	A
-//	└── B/C
+// A
+// └── B/C
 //
 // The full path of C is "A/B\/C".
 func (ss *FolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
@@ -278,11 +285,11 @@ func (ss *FolderStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQu
 
 	// covered by UQE_folder_org_id_uid
 	recQuery := `
-		WITH RECURSIVE RecQry AS (
-			SELECT * FROM folder WHERE uid = ? AND org_id = ?
-			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.uid = r.parent_uid and f.org_id = r.org_id
-		)
-		SELECT * FROM RecQry;
+	WITH RECURSIVE RecQry AS (
+		SELECT * FROM folder WHERE uid = ? AND org_id = ?
+		UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.uid = r.parent_uid and f.org_id = r.org_id
+	)
+	SELECT * FROM RecQry;
 	`
 
 	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
@@ -440,9 +447,10 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 // The full path is a string that contains the titles of all parent folders separated by a slash.
 // For example, if the folder structure is:
 //
-//	A
-//	└── B
-//	    └── C
+// A
+// └── B
+//
+//     └── C
 //
 // The full path of C is "A/B/C".
 // The full path of B is "A/B".
@@ -450,17 +458,18 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 // If a folder contains a slash in its title, it is escaped with a backslash.
 // For example, if the folder structure is:
 //
-//	A
-//	└── B/C
+// A
+// └── B/C
 //
 // The full path of C is "A/B\/C".
 //
 // If FullpathUIDs is true it computes a string that contains the UIDs of all parent folders separated by slash.
 // For example, if the folder structure is:
 //
-//	A (uid: "uid1")
-//	└── B (uid: "uid2")
-//	    └── C (uid: "uid3")
+// A (uid: "uid1")
+// └── B (uid: "uid2")
+//
+//     └── C (uid: "uid3")
 //
 // The full path UIDs of C is "uid1/uid2/uid3".
 // The full path UIDs of B is "uid1/uid2".
@@ -573,7 +582,7 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid and f.org_id = r.org_id
 		)
 		SELECT * FROM RecQry;
-	`
+		`
 		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 			err := sess.SQL(recQuery, ancestor_uid, orgID).Find(&folders)
 			if err != nil {
