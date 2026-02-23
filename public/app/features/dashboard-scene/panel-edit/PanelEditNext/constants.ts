@@ -40,6 +40,7 @@ export const QUERY_EDITOR_COLORS = {
     hoverBg: '#1D293D',
     headerBg: '#20262F',
   },
+  error: '#D10E5C',
 };
 
 export interface QueryEditorTypeConfig {
