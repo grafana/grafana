@@ -61,6 +61,7 @@ async function runChecks(page: Page) {
     .catch(() => false);
   await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 10000 });
   await expect(page.getByText('Last checked')).toBeVisible();
+  await expect(page.getByText('Report in progress')).not.toBeVisible();
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
@@ -78,8 +79,7 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    // Skip until flakiness is resolved
-    test.skip('should detect an issue and fix it', async ({ page }) => {
+    test('should detect an issue and fix it', async ({ page }) => {
       await expectEmptyReport(page);
       const dsName = await createEmptyDatasource(page);
       await runChecks(page);
