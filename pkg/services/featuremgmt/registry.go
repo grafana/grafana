@@ -265,6 +265,22 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningFolderMetadata",
+			Description:     "Allow setting folder metadata for provisioned folders",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
+			Name:            "provisioningExport",
+			Description:     "Enable export functionality for provisioned resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1119,13 +1135,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-		},
-		{
-			Name:        "newFiltersUI",
-			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "vizActionsAuth",
@@ -1988,11 +1997,11 @@ var (
 		{
 			Name:         "restrictedPluginApis",
 			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaPluginsPlatformSquad,
 			HideFromDocs: true,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",
@@ -2440,6 +2449,14 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "functionalSharedPreferences",
+			Description:  "Whether to use the new SharedPreferences functional component",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
 		},
 	}
 )

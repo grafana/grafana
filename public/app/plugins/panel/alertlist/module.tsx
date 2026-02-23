@@ -74,6 +74,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'maxItems',
       description: t('alertlist.description-max-items', 'Maximum alerts to display'),
       defaultValue: 20,
+      showIf: (options) => options.groupMode !== GroupMode.Custom,
       category: optionsCategory,
     })
     .addSelect({

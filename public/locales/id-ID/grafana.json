@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3122,6 +3127,17 @@
       "label-silence-start-and-end": "Kesenyapan mulai dan berakhir",
       "placeholder-select-time-range": "Pilih rentang waktu"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "selama {{duration}}"
     },
@@ -3430,7 +3446,8 @@
       },
       "title-edit": "Edit",
       "title-recreate": "Buat ulang",
-      "title-unsilence": "Batalkan Senyap"
+      "title-unsilence": "Batalkan Senyap",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5373,6 +5390,21 @@
         "failed-to-fetch-dashboard": "Gagal mengambil dasbor"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Kirim umpan balik kustom",
       "footer-text": "Konten ini dibuat AI menggunakan <2>plugin Grafana LLM</2>",
@@ -7251,7 +7283,14 @@
       "title": "Versi"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": "Tambahkan dari kueri tersimpan"
     },
@@ -8585,6 +8624,8 @@
     "description-show-measure": "Tampilkan alat untuk melakukan pengukuran di peta",
     "description-show-scale": "Tunjukkan skala peta",
     "description-show-zoom": "Tampilkan tombol kontrol zoom di sudut kiri atas",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -8646,7 +8687,9 @@
     "name-show-measure": "Tampilkan alat ukur",
     "name-show-scale": "Tampilkan skala",
     "name-show-zoom": "Tampilkan kontrol zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Tidak ada bidang string yang ditemukan"
     },
@@ -8699,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "Lapisan {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12848,12 +12894,15 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Sinkronisasi instance memerlukan semua sumber daya untuk dikelola. Sumber daya yang sudah ada akan dimigrasikan secara otomatis.",
       "migrate-resources-description": "",
       "options": "Opsi",
       "repository-error": "Kesalahan repositori",
       "repository-error-message": "Tidak dapat memeriksa status repositori. Harap verifikasi konfigurasi repositori dan coba lagi.",
       "repository-unhealthy": "Repositori tidak dapat disinkronkan. Batalkan penyediaan dan coba lagi setelah masalah terselesaikan. Lihat detail di bawah ini.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13325,15 +13374,12 @@
       "duration-selected": "Pilih interval waktu muat ulang dengan interval saat ini {{durationAriaLabel}} yang dipilih"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Aktifkan streaming langsung",
       "label": "Langsung"
     },
     "off-option": {
-      "aria-label": "Nonaktifkan muat ulang otomatis",
       "label": "Nonaktif"
     },
     "tooltip": {
@@ -13860,7 +13906,8 @@
       "no-matching-silences": "Tidak ada kesenyapan yang cocok;",
       "noConfig": "Buat titik kontak baru untuk membuat konfigurasi menggunakan nilai default atau hubungi administrator Anda untuk mengatur Alertmanager.",
       "recreate-button": "Buat ulang",
-      "unsilence-button": "Batalkan Senyap"
+      "unsilence-button": "Batalkan Senyap",
+      "view-button": ""
     }
   },
   "silences-table": {

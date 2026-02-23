@@ -6,7 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { Options, MapViewConfig, GeomapInstanceState } from '../types';
+import { type Options, type MapViewConfig } from '../panelcfg.gen';
+import { GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
 import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';

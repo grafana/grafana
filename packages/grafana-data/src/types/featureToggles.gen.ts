@@ -179,6 +179,16 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Allow setting folder metadata for provisioned folders
+  * @default false
+  */
+  provisioningFolderMetadata?: boolean;
+  /**
+  * Enable export functionality for provisioned resources
+  * @default false
+  */
+  provisioningExport?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -714,11 +724,6 @@ export interface FeatureToggles {
   * @default false
   */
   dataplaneAggregator?: boolean;
-  /**
-  * Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-  * @default true
-  */
-  newFiltersUI?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1264,7 +1269,7 @@ export interface FeatureToggles {
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
   * Enables sharing a list of APIs with a list of plugins
-  * @default false
+  * @default true
   */
   restrictedPluginApis?: boolean;
   /**
@@ -1542,4 +1547,9 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
+  /**
+  * Whether to use the new SharedPreferences functional component
+  * @default false
+  */
+  functionalSharedPreferences?: boolean;
 }

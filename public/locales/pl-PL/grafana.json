@@ -1753,8 +1753,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3176,6 +3181,17 @@
       "label-silence-start-and-end": "Początek i koniec ciszy",
       "placeholder-select-time-range": "Wybierz zakres czasu"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "przez {{duration}}"
     },
@@ -3484,7 +3500,8 @@
       },
       "title-edit": "Edytuj",
       "title-recreate": "Utwórz ponownie",
-      "title-unsilence": "Usuń wyciszenie"
+      "title-unsilence": "Usuń wyciszenie",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5451,6 +5468,21 @@
         "failed-to-fetch-dashboard": "Nie udało się pobrać pulpitu"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Prześlij niestandardową opinię",
       "footer-text": "Ta treść została wygenerowana przez sztuczną inteligencję za pomocą <2>wtyczki Grafana LLM</2>",
@@ -7344,7 +7376,14 @@
       "title": "Wersje"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8684,6 +8723,8 @@
     "description-show-measure": "Pokaż narzędzia do wykonywania pomiarów na mapie",
     "description-show-scale": "Wskaż skalę mapy",
     "description-show-zoom": "Pokaż przyciski sterowania powiększeniem w lewym górnym rogu",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Warstwa"
@@ -8745,7 +8786,9 @@
     "name-show-measure": "Pokaż narzędzia pomiarowe",
     "name-show-scale": "Pokaż skalę",
     "name-show-zoom": "Pokaż sterowanie powiększeniem",
+    "name-sync-view-variable": "",
     "name-tooltip": "Podpowiedź",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nie znaleziono pól ciągów"
     },
@@ -8798,6 +8841,9 @@
     },
     "utils": {
       "get-next-layer-name": "Warstwa {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -13028,12 +13074,15 @@
       "tooltip-unhealthy-repository": "Nie można pobrać danych z niesprawnego repozytorium"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Synchronizacja instancji wymaga, aby wszystkie zasoby były objęte zarządzaniem. Istniejące zasoby zostaną przeniesione automatycznie.",
       "migrate-resources-description": "",
       "options": "Opcje",
       "repository-error": "Błąd repozytorium",
       "repository-error-message": "Nie można sprawdzić statusu repozytorium. Sprawdź konfigurację repozytorium i spróbuj ponownie.",
       "repository-unhealthy": "Nie można zsynchronizować repozytorium. Anuluj aprowizację i spróbuj ponownie po rozwiązaniu problemu. Zobacz szczegóły poniżej.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13520,15 +13569,12 @@
       "duration-selected": "Wybierz interwał odświeżania z wybranym bieżącym interwałem {{durationAriaLabel}}"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Włącz transmisję na żywo",
       "label": "Na żywo"
     },
     "off-option": {
-      "aria-label": "Wyłącz automatyczne odświeżanie",
       "label": "Wył."
     },
     "tooltip": {
@@ -14058,7 +14104,8 @@
       "no-matching-silences": "Nie znaleziono pasujących wyciszeń;",
       "noConfig": "Utwórz nowy punkt kontaktowy, aby utworzyć konfigurację przy użyciu wartości domyślnych, lub skontaktuj się z administratorem, aby skonfigurować Alertmanager.",
       "recreate-button": "Utwórz ponownie",
-      "unsilence-button": "Usuń wyciszenie"
+      "unsilence-button": "Usuń wyciszenie",
+      "view-button": ""
     }
   },
   "silences-table": {
