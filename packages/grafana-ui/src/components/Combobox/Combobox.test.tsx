@@ -98,13 +98,13 @@ describe('Combobox', () => {
     expect(input).toHaveAttribute('placeholder', 'Select an option');
   });
 
-  it('renders icon', async () => {
+  it('renders icon for selected option', async () => {
     render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
     expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
     expect(screen.getByTestId('icon-keyboard')).toBeVisible();
   });
 
-  it('renders prefix before option icon', async () => {
+  it('renders the prefix icon rather than the option icon for selected option', async () => {
     render(
       <Combobox
         prefixIcon={'ai'}
