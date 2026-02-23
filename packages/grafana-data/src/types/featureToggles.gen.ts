@@ -1567,4 +1567,9 @@ export interface FeatureToggles {
   * @default true
   */
   rememberUserOrgForSso?: boolean;
+  /**
+  * Registers the dsabstraction app for querying datasources via unified SQL
+  * @default false
+  */
+  dsAbstractionApp?: boolean;
 }

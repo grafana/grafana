@@ -241,7 +241,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
@@ -308,3 +308,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-22,functionalSharedPreferences,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-02-25,managedPluginsV2,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-02-25,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
+2026-02-23,dsAbstractionApp,experimental,@grafana/grafana-datasources-core-services,false,false,false

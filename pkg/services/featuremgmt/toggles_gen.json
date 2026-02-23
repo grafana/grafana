@@ -1489,6 +1489,20 @@
     },
     {
       "metadata": {
+        "name": "dsAbstractionApp",
+        "resourceVersion": "1771859936935",
+        "creationTimestamp": "2026-02-23T15:18:56Z"
+      },
+      "spec": {
+        "description": "Registers the dsabstraction app for querying datasources via unified SQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-12-12T22:20:04Z"

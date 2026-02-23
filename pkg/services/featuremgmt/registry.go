@@ -2483,6 +2483,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "true", // enabled by default
 		},
+		{
+			Name:         "dsAbstractionApp",
+			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 

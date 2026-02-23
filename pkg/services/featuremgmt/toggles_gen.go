@@ -849,4 +849,8 @@ const (
 	// FlagRememberUserOrgForSso
 	// Remember the last viewed organization for users using SSO
 	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
+
+	// FlagDsAbstractionApp
+	// Registers the dsabstraction app for querying datasources via unified SQL
+	FlagDsAbstractionApp = "dsAbstractionApp"
 )
