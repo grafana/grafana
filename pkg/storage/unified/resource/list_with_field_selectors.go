@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -120,12 +121,10 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	// Excluding enterprise apps for now.
 	// TODO have a way of including enterprise manifests
-	excludedGroups := []string{
-		"scope.grafana.app",
-	}
-	if slices.Contains(excludedGroups, req.Options.Key.Group) {
+	if !slices.ContainsFunc(AppManifests(), func(m app.Manifest) bool {
+		return m.ManifestData.Group == req.Options.Key.Group
+	}) {
 		return false
 	}
 
