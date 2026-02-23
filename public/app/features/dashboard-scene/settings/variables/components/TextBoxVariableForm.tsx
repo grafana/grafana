@@ -29,7 +29,7 @@ export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur, inl
         placeholder={t('dashboard-scene.text-box-variable-form.placeholder-default-value-if-any', '(optional)')}
         onChange={onChange}
         onBlur={onBlur}
-        width={30}
+        grow={inline}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
       />
     </>

@@ -9,21 +9,46 @@ import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas } from './types';
 
 let panels: PanelPluginMetas = {};
+let panelsByAliasIDs: PanelPluginMetas = {};
 
 function initialized(): boolean {
   return Boolean(Object.keys(panels).length);
+}
+
+function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
+  const keys = Object.keys(panels);
+  const panelsByAliasIDs: PanelPluginMetas = {};
+
+  for (let i = 0; i < keys.length; i++) {
+    const pluginId = keys[i];
+    const panel = panels[pluginId];
+    const aliases = panel?.aliasIDs;
+
+    if (!aliases?.length) {
+      continue;
+    }
+
+    for (let j = 0; j < aliases.length; j++) {
+      const alias = aliases[j];
+      panelsByAliasIDs[alias] = panel;
+    }
+  }
+
+  return panelsByAliasIDs;
 }
 
 async function initPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     // eslint-disable-next-line no-restricted-syntax
     panels = config.panels;
+    panelsByAliasIDs = resolveAliasIDs(panels);
     return;
   }
 
   const metas = await initPluginMetas();
   const mapper = getPanelPluginMapper();
   panels = mapper(metas);
+  panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
 export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
@@ -48,7 +73,17 @@ export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginM
   }
 
   const panel = panels[pluginId];
-  return panel ? structuredClone(panel) : null;
+  if (panel) {
+    return structuredClone(panel);
+  }
+
+  // Check alias values before failing
+  const aliased = panelsByAliasIDs[pluginId];
+  if (aliased) {
+    return structuredClone(aliased);
+  }
+
+  return null;
 }
 
 /**
@@ -86,12 +121,14 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
   }
 
   panels = structuredClone(override);
+  panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     panels = settings.panels;
+    panelsByAliasIDs = resolveAliasIDs(panels);
 
     // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
     // eslint-disable-next-line no-restricted-syntax
@@ -102,4 +139,5 @@ export async function refetchPanelPluginMetas(): Promise<void> {
   const metas = await refetchPluginMetas();
   const mapper = getPanelPluginMapper();
   panels = mapper(metas);
+  panelsByAliasIDs = resolveAliasIDs(panels);
 }

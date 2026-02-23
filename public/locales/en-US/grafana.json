@@ -1745,8 +1745,13 @@
         "namespace-desc": "Filter by namespace (optional)",
         "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "override-warning-body": "The target folder already contains alert rules that share the same namespace as the rules being imported. These existing rules may be overwritten or removed during the import.",
+        "override-warning-details": "Rules that might be overwritten",
+        "override-warning-title": "Some existing rules may be overwritten",
         "pause-alerting": "Pause imported alert rules",
         "pause-recording": "Pause imported recording rules",
+        "plugin-rules-warning-body": "Rules managed by plugins, integrations, or Synthetic Monitoring have been detected and will not be imported.",
+        "plugin-rules-warning-title": "Some rules are excluded from import",
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
         "policy-title": "Notification Routing",
         "policy-tree": "Policy tree",
@@ -1834,10 +1839,18 @@
       "apply": "Apply"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "The selected time range is shorter than the rule's query evaluation window so a graph may not be available.",
+        "title": "Time range shorter than evaluation window"
+      },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
       "no-history": "No recent state changes",
-      "state-history": "Recent State Changes"
+      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
+      "state-history": "Recent State Changes",
+      "state-nodata": {
+        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
+      }
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -3140,6 +3153,17 @@
       "label-silence-start-and-end": "Silence start and end",
       "placeholder-select-time-range": "Select time range"
     },
+    "silence-view": {
+      "affected-alerts": "Affected alerts",
+      "alert-rule": "Alert rule",
+      "error": "Error loading silence",
+      "loading": "Loading silence...",
+      "matchers": "Matching labels",
+      "page-nav": {
+        "parent": "Silences",
+        "text": "Silence"
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "for {{duration}}"
     },
@@ -3448,7 +3472,8 @@
       },
       "title-edit": "Edit",
       "title-recreate": "Recreate",
-      "title-unsilence": "Unsilence"
+      "title-unsilence": "Unsilence",
+      "title-view": "View"
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5010,7 +5035,7 @@
           }
         }
       },
-      "name": "Auto grid",
+      "name": "Auto",
       "options": {
         "custom-min-height": {
           "clear": "Clear"
@@ -5398,6 +5423,21 @@
       "message": {
         "failed-to-fetch-dashboard": "Failed to fetch dashboard"
       }
+    },
+    "filters-overview": {
+      "apply": "Apply",
+      "apply-close": "Apply and close",
+      "close": "Close",
+      "empty": "No labels available",
+      "groupby": "GroupBy",
+      "missing-adhoc": "No ad hoc filters available",
+      "operator": "Operator",
+      "search": {
+        "aria-label": "Search filters",
+        "placeholder": "Search..."
+      },
+      "title": "Edit filters",
+      "value": "Value"
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Send custom feedback",
@@ -6103,6 +6143,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "Clear search",
+      "no-transformations-found": "No transformations found",
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
@@ -6240,11 +6282,12 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
+      "customize-with-assistant-button": "Customize with Assistant",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
       "use-dashboard-button": "Use dashboard",
-      "use-template-button": "Use template"
+      "view-template-button": "View template"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -6354,10 +6397,12 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query",
-      "tooltip-add-new-annotation-query": "Add new annotation query"
+      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {
@@ -7282,7 +7327,14 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "Select operator",
+  "dashboard.filters-overview.value.placeholder": "Select values",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "All filters",
+      "filters": "Filters",
+      "open": "Open filters overview pane"
+    },
     "panel-queries": {
       "add-from-saved-queries": "Add from saved queries"
     },
@@ -7836,6 +7888,11 @@
       "continue-without-saving": "Continue without saving",
       "save-correlation": "Save correlation",
       "title-unsaved-changes-to-correlation": "Unsaved changes to correlation"
+    },
+    "custom-container": {
+      "body-find-plugin": "Failed to find a panel plugin with the id <1>{{pluginId}}</1>.",
+      "error-with-stack": "Failed to get panel plugin",
+      "title-find-plugin": "Failed to find plugin"
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
@@ -8618,6 +8675,8 @@
     "description-show-measure": "Show tools for making measurements on the map",
     "description-show-scale": "Indicate map scale",
     "description-show-zoom": "Show zoom control buttons in the upper left corner",
+    "description-sync-view-variable": "Store view bounds in a dashboard variable for use in queries",
+    "description-variable-name": "Specify the dashboard variable to store view bounds",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -8679,7 +8738,9 @@
     "name-show-measure": "Show measure tools",
     "name-show-scale": "Show scale",
     "name-show-zoom": "Show zoom control",
+    "name-sync-view-variable": "Sync view to dashboard variable",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "Variable name",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "No string fields found"
     },
@@ -8732,6 +8793,9 @@
     },
     "utils": {
       "get-next-layer-name": "Layer {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": "Select variable"
     }
   },
   "get-enterprise": {
@@ -12321,6 +12385,7 @@
       "placeholder-branch": "Select or enter branch name",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
+      "suffix-new-branch": "New branch",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
@@ -12357,10 +12422,10 @@
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
-      "token-description": "Bitbucket App Password with repository permissions",
-      "token-label": "App Password",
+      "token-description": "Bitbucket API Token with repository permissions",
+      "token-label": "API Token",
       "token-required": "Bitbucket token is required",
-      "token-user-description": "The username that will be used to access the repository with the app password",
+      "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
       "url-required": "Repository URL is required"
@@ -12386,9 +12451,6 @@
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
-    },
-    "check-repository": {
-      "check": "Check"
     },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
@@ -12776,6 +12838,7 @@
       "no-repositories": "No repositories configured"
     },
     "repository-overview": {
+      "branch": "Branch:",
       "checked": "Checked:",
       "connection-status": "Connection status:",
       "finished": "Last successful pull:",
@@ -12785,7 +12848,9 @@
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
+      "path": "Path:",
       "pull-status": "Pull status",
+      "repo-url": "Repository URL:",
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
@@ -12908,19 +12973,22 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
+      "field-errors": "Configuration errors detected",
+      "field-errors-message": "There are issues with the repository configuration. Please review your settings.",
       "instance-migrate-resources-description": "Instance sync requires all resources to be managed. Existing resources will be migrated automatically.",
       "migrate-resources-description": "Import existing dashboards from connected external storage into the provisioning folder created in the previous step",
       "options": "Options",
       "repository-error": "Repository error",
       "repository-error-message": "Unable to check repository status. Please verify the repository configuration and try again.",
       "repository-unhealthy": "The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.",
+      "review-configuration": "Review configuration",
       "text-checking-repository": "Checking repository status..."
     },
     "token-permissions-info": {
       "and-click": "and click",
       "bitbucket": {
-        "create-token-button": "Create App passwords",
-        "token-text": "Bitbucket Personal Access Token"
+        "create-token-button": "Create API Token with scopes",
+        "token-text": "Bitbucket API tokens"
       },
       "gitlab": {
         "create-token-button": "Add new token",
@@ -13390,15 +13458,12 @@
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
     "auto-option": {
-      "aria-label": "",
-      "label": ""
+      "label": "Auto"
     },
     "live-option": {
-      "aria-label": "Turn on live streaming",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
     "tooltip": {
@@ -13926,7 +13991,8 @@
       "no-matching-silences": "No matching silences found;",
       "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
       "recreate-button": "Recreate",
-      "unsilence-button": "Unsilence"
+      "unsilence-button": "Unsilence",
+      "view-button": "View"
     }
   },
   "silences-table": {
@@ -14293,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Delete team {{teamName}}",
         "aria-label-edit-team": "Edit team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "Delete",
+          "title": "Delete"
+        },
+        "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
+        "delete-modal-invalid-title": "Cannot delete team",
+        "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1> \".",
         "title-edit-team": "Edit team",
+        "tooltip-delete-button": "Delete {{teamName}}",
         "tooltip-edit-team": "Edit team"
       },
+      "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"

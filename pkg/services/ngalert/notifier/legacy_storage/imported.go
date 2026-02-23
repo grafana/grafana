@@ -5,9 +5,11 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type ImportedConfigRevision struct {
@@ -151,4 +153,63 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 	mr.Provenance = models.ProvenanceConvertedPrometheus
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
+}
+
+func (e ImportedConfigRevision) GetInhibitRules() (definitions.ManagedInhibitionRules, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	importedRules := e.importedConfig.InhibitRules
+	if len(importedRules) == 0 {
+		return nil, nil
+	}
+
+	return BuildManagedInhibitionRules(e.identifier, importedRules)
+}
+
+func BuildManagedInhibitionRules(identifier string, rules []definitions.InhibitRule) (definitions.ManagedInhibitionRules, error) {
+	scopedRules := applyManagedRouteMatcher(identifier, rules)
+
+	res := make(definitions.ManagedInhibitionRules, len(scopedRules))
+	for i, rule := range scopedRules {
+		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
+
+		intFmt := "%d"
+		if padLength := ualert.UIDMaxLength - len(namePrefix); padLength >= 0 {
+			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
+		}
+		name := fmt.Sprintf(namePrefix+intFmt, i)
+
+		ir, err := InhibitRuleToInhibitionRule(name, rule, definitions.Provenance(models.ProvenanceConvertedPrometheus))
+		if err != nil {
+			return nil, err
+		}
+		res[name] = ir
+	}
+
+	return res, nil
+}
+
+func applyManagedRouteMatcher(identifier string, rules []definitions.InhibitRule) []definitions.InhibitRule {
+	result := make([]config.InhibitRule, 0, len(rules))
+	matcher := managedRouteMatcher(identifier)
+
+	for _, rule := range rules {
+		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
+		sm = append(sm, matcher)
+		sm = append(sm, rule.SourceMatchers...)
+
+		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
+		tm = append(tm, matcher)
+		tm = append(tm, rule.TargetMatchers...)
+
+		result = append(result, definitions.InhibitRule{
+			SourceMatchers: sm,
+			TargetMatchers: tm,
+			Equal:          slices.Clone(rule.Equal),
+		})
+	}
+
+	return result
 }

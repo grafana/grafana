@@ -97,6 +97,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   } = useWizardNavigation({
     steps,
     canSkipSync,
@@ -227,6 +228,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
+                goToStep={goToStep}
               />
             </div>
 
