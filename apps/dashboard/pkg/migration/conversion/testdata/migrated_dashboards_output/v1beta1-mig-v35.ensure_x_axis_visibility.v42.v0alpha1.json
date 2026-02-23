@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v35.ensure_x_axis_visibility.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

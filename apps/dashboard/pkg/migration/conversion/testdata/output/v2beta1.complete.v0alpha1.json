@@ -1,15 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "test-v2alpha1-complete",
-    "labels": {
-      "category": "test"
-    },
-    "annotations": {
-      "description": "Complete example of v2alpha1 dashboard features"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [
@@ -433,7 +425,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2beta1"
+      "storedVersion": "v2alpha1"
     }
   }
 }

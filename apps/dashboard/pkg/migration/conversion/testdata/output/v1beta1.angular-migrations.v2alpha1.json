@@ -1855,7 +1855,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v0alpha1"
     }
   }
 }

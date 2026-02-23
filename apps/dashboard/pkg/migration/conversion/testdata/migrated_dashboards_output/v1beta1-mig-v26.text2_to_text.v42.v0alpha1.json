@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v26.text2_to_text.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

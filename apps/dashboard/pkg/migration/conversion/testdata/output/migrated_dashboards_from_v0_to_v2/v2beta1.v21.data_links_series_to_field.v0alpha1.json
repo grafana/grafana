@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v21.data_links_series_to_field.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

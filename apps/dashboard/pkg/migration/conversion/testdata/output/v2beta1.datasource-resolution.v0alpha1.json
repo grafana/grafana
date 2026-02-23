@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "test-v2beta1-datasource-resolution"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

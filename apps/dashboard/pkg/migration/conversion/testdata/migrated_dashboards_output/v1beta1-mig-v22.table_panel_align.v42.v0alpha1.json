@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v22.table_panel_align.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

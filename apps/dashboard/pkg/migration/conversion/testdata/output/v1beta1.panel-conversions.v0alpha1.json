@@ -1,12 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "panel-conversions-test",
-    "labels": {
-      "test": "panel-conversions"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": []

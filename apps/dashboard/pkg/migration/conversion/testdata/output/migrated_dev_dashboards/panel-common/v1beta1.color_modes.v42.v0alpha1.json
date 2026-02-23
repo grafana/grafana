@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v1beta1.color_modes.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

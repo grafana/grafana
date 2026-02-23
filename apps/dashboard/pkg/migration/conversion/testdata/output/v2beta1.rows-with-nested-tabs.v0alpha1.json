@@ -1,22 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "ivx9964",
-    "namespace": "stacks-5756",
-    "uid": "627d3b09-32b6-4e0c-b5b7-b94be6fc94b6",
-    "resourceVersion": "1764589364114772",
-    "generation": 1,
-    "creationTimestamp": "2025-12-01T11:42:44Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "363903738712064"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:ff3wylp4sgpa8a",
-      "grafana.app/folder": "",
-      "grafana.app/saved-from-ui": "Grafana Cloud"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

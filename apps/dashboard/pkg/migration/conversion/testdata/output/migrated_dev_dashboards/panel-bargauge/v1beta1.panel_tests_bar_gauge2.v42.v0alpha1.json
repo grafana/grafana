@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v1beta1.panel_tests_bar_gauge2.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

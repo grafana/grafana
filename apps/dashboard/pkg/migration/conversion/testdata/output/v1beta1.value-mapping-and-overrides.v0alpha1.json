@@ -1,17 +1,7 @@
 {
-  "kind": "DashboardWithAccessInfo",
+  "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "value-mapping-test",
-    "namespace": "default",
-    "uid": "value-mapping-test",
-    "resourceVersion": "1765384157199094",
-    "generation": 2,
-    "creationTimestamp": "2025-11-19T20:09:28Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "646372978987008"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [
@@ -574,7 +564,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v0alpha1"
     }
   }
 }

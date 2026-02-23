@@ -1,22 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "ad5vfcn",
-    "namespace": "default",
-    "uid": "dlMZZl6GndU8gJLUQSmgZxXBPCNXyXhNBeQJhHXl0r4X",
-    "resourceVersion": "2",
-    "generation": 2,
-    "creationTimestamp": "2025-11-28T10:14:21Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "288"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:eex2ofwuj0agwd",
-      "grafana.app/updatedBy": "user:eex2ofwuj0agwd",
-      "grafana.app/updatedTimestamp": "2025-11-28T10:15:06Z"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

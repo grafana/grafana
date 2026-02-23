@@ -1,22 +1,7 @@
 {
-  "kind": "DashboardWithAccessInfo",
+  "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "adt885j",
-    "namespace": "default",
-    "uid": "yTWet6JgBjlRIWnqRE9ZOmUycfT0tEkr2mljaln1GWIX",
-    "resourceVersion": "2",
-    "generation": 2,
-    "creationTimestamp": "2025-12-16T10:44:31Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "2409"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:u000000001",
-      "grafana.app/updatedBy": "user:u000000001",
-      "grafana.app/updatedTimestamp": "2025-12-16T10:51:14Z"
-    }
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

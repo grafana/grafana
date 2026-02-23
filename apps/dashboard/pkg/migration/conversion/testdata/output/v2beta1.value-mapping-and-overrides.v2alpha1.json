@@ -844,7 +844,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2beta1"
+      "storedVersion": "v1beta1"
     }
   }
 }

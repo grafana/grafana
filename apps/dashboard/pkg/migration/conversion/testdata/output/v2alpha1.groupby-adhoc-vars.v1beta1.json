@@ -88,7 +88,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2alpha1"
+      "storedVersion": "v2beta1"
     }
   }
 }

@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "angular-migrations-test"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [
@@ -1304,7 +1302,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v0alpha1"
     }
   }
 }

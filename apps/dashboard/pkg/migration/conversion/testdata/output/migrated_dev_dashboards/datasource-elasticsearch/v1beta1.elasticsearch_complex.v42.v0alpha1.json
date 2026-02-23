@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v1beta1.elasticsearch_complex.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

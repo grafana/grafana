@@ -1,9 +1,7 @@
 {
-  "kind": "DashboardWithAccessInfo",
+  "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "groupby-test"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

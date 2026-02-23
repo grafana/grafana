@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v14.shared_crosshair_to_graph_tooltip.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [

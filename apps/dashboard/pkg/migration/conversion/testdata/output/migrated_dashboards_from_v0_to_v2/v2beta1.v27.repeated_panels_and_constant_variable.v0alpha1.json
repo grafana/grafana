@@ -1,9 +1,7 @@
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "metadata": {
-    "name": "v27.repeated_panels_and_constant_variable.v42"
-  },
+  "metadata": {},
   "spec": {
     "annotations": {
       "list": [
